@@ -489,3 +489,81 @@
   width: 280px;
   max-width: 100%;
 }
+/* Compact system configuration table */
+.sys-config-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.sys-config-table th,
+.sys-config-table td {
+  padding: 14px 12px;
+  vertical-align: middle;
+}
+
+.sys-config-table th:nth-child(1),
+.sys-config-table td:nth-child(1) { width: 5%; }
+
+.sys-config-table th:nth-child(2),
+.sys-config-table td:nth-child(2) { width: 24%; overflow-wrap: anywhere; }
+
+.sys-config-table th:nth-child(3),
+.sys-config-table td:nth-child(3) { width: 23%; }
+
+.sys-config-table th:nth-child(4),
+.sys-config-table td:nth-child(4) { width: 12%; }
+
+.sys-config-table th:nth-child(5),
+.sys-config-table td:nth-child(5) { width: 28%; }
+
+.sys-config-table th:nth-child(6),
+.sys-config-table td:nth-child(6) { width: 8%; }
+
+.sys-config-value-preview {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sys-config-table tbody tr {
+  height: 64px;
+}
+
+.sys-config-table tbody tr:hover {
+  background: rgba(67, 97, 238, 0.04);
+}
+
+/* System configuration edit button */
+.sys-config-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid #dbe4f3;
+  border-radius: 8px;
+  background: #f5f8ff;
+  color: #4361ee;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #4361ee;
+    border-color: #4361ee;
+    color: white;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #4361ee;
+    outline-offset: 2px;
+  }
+}
+
+.sys-config-table td.sys-config-actions-cell {
+  overflow: visible;
+}

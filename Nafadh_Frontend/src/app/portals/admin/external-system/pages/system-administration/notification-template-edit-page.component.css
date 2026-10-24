@@ -1,0 +1,151 @@
+:host { display: block; }
+
+/* الحاوية: توسيط الكرت أفقيًا وعموديًا بدون سكرول للصفحة */
+.template-edit-container {
+  height: 100vh;
+  height: 100dvh;
+  padding: 0.5rem 0.3rem 10rem; /* زيادة الـ padding السفلي ترفع الصفحة للأعلى */
+  background-color: #F8F9FB;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.page-head,
+.main-card {
+  width: 100%;
+  max-width: 1000px;
+}
+
+/* Breadcrumb */
+.breadcrumb { font-size: 0.8rem; color: #3b6fd4; }
+.breadcrumb i { font-style: normal; color: #9ca3af; margin: 0 0.25rem; }
+.breadcrumb span { color: #111827; font-weight: 500; }
+
+/* Title row */
+.title-row { display: flex; align-items: center; gap: 0.75rem; margin: 0.9rem 0 1rem; }
+.page-title { margin: 0; font-size: 1.3rem; font-weight: 700; color: #111827; }
+.back-arrow-btn {
+  width: 2.2rem; height: 2.2rem; border: 0; border-radius: 0.5rem;
+  background: #E9ECF1; color: #3b6fd4; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.back-arrow-btn:hover { background: #dde2ea; }
+
+/* Card */
+.main-card {
+  background: #fff; border-radius: 1rem; overflow: hidden;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 8%);
+  display: flex; flex-direction: column;
+  max-height: calc(100dvh - 8.5rem);
+}
+.card-banner {
+  flex: none; height: 4.5rem; padding: 0 1.5rem;
+  background: linear-gradient(180deg, #003a8c 0%, #0095c8 100%);
+  display: flex; align-items: center; gap: 0.85rem; color: #fff;
+}
+.banner-icon {
+  width: 2.6rem; height: 2.6rem; border-radius: 50%;
+  background: rgb(255 255 255 / 18%);
+  display: flex; align-items: center; justify-content: center;
+}
+.banner-icon svg { width: 20px; height: 20px; }
+.banner-title { font-size: 1.1rem; font-weight: 700; }
+
+/* جسم الكرت: يسكرول داخليًا فقط إذا ضاقت الشاشة */
+.card-body { padding: 1rem 1.5rem 1.25rem; overflow-y: auto; }
+
+/* Tabs */
+.tabs-header { display: flex; border-bottom: 1px solid #E5E7EB; margin-bottom: 1rem; }
+.tab-item {
+  padding: 0.65rem 1rem; background: transparent; font-family: inherit;
+  border: 1px solid transparent; border-bottom: 0;
+  font-size: 0.9rem; color: #9ca3af; cursor: pointer;
+}
+.tab-item.active {
+  color: #4361ee; background: #fff; border-color: #E5E7EB;
+  border-radius: 0.4rem 0.4rem 0 0; margin-bottom: -1px;
+}
+
+/* Form */
+.form-group { margin-bottom: 0; }
+.form-label { display: block; font-size: 0.9rem; font-weight: 500; color: #111827; margin-bottom: 0.5rem; }
+.req { color: #e53935; }
+.form-label .req { margin-inline-start: 2px; }
+
+.form-control {
+  width: 100%; height: 2.6rem; padding: 0 1rem;
+  border: 1px solid #E5E7EB; border-radius: 0.5rem; background: #fff;
+  font-family: inherit; font-size: 0.9rem; color: #111827; text-align: right; outline: none;
+}
+.form-control:focus { border-color: #4361ee; box-shadow: 0 0 0 3px rgb(67 97 238 / 12%); }
+.form-control.readonly { background: #EEF8FA; border-color: #D9EEF2; cursor: default; }
+
+.names-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+.divider { border: 0; border-top: 1px solid #E5E7EB; margin: 0; }
+
+/* Status */
+.status-block { padding: 1rem 0 1.25rem; }
+.status-block .form-label { margin-bottom: 0.6rem; }
+.checks { display: flex; flex-wrap: wrap; gap: 1.2rem; }
+.checkbox-label { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #111827; cursor: pointer; }
+
+.custom-checkbox {
+  appearance: none; -webkit-appearance: none; margin: 0; cursor: pointer;
+  width: 1.4rem; height: 1.4rem; border-radius: 0.35rem;
+  border: 1.5px solid #D1D5DB; background-color: #fff;
+}
+.custom-checkbox:checked {
+  border: 0; background-color: #4361ee; background-repeat: no-repeat;
+  background-position: center; background-size: 80%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+}
+.custom-checkbox:focus-visible { outline: 2px solid #4361ee; outline-offset: 2px; }
+
+/* ===== تبويبا العربية / الإنجليزية ===== */
+.section-title { margin: 0 0 0.6rem; font-size: 0.95rem; font-weight: 600; color: #111827; }
+
+.vars { margin-bottom: 0.9rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.chip {
+  padding: 0.3rem 0.7rem; background: #fff; color: #0a3a8f;
+  border: 1px solid #0a3a8f; border-radius: 0.45rem;
+  font-family: inherit; font-size: 0.78rem; cursor: pointer;
+}
+.chip:hover { background: #eef3ff; }
+
+.cols { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; align-items: start; padding-bottom: 1rem; }
+.content-label { margin-top: 0.9rem; }
+
+.sms-area { height: 10rem; padding: 0.7rem 1rem; line-height: 1.7; resize: none; }
+.counter { margin-top: 0.4rem; font-size: 0.85rem; color: #9ca3af; text-align: right; }
+
+/* محرر Quill */
+.editor-wrap { border-radius: 0.5rem; overflow: hidden; }
+:host ::ng-deep .editor-wrap quill-editor { display: block; }
+:host ::ng-deep .editor-wrap .ql-toolbar.ql-snow {
+  border: 0; border-bottom: 1px solid #E5E7EB; background: #F6F7F9; padding: 0.5rem 0.75rem;
+}
+:host ::ng-deep .editor-wrap .ql-container.ql-snow { border: 0; font-family: inherit; font-size: 0.9rem; }
+:host ::ng-deep .editor-wrap .ql-editor { height: 9rem; min-height: 9rem; padding: 0.8rem 1rem; line-height: 1.8; text-align: right; overflow-y: auto; }
+:host ::ng-deep .editor-wrap .ql-editor a { color: #3b6fd4; }
+
+/* Buttons */
+.actions { display: flex; gap: 0.6rem; padding-top: 1rem; }
+.btn-secondary, .btn-primary {
+  height: 2.6rem; padding: 0 1.4rem; border-radius: 0.5rem;
+  font-family: inherit; font-size: 0.9rem; cursor: pointer;
+}
+.btn-secondary { background: #fff; color: #4361ee; border: 1px solid #4361ee; }
+.btn-secondary:hover { background: #f3f5ff; }
+.btn-primary { background: #EEF8FA; color: #003a8c; border: 1px solid #D9EEF2; }
+.btn-primary:hover { background: #e0f1f5; }
+
+@media (max-width: 900px) {
+  .template-edit-container { padding: 0.75rem; height: auto; min-height: 100dvh; overflow: auto; justify-content: flex-start; }
+  .main-card { max-height: none; }
+  .names-row, .cols { grid-template-columns: 1fr; }
+}

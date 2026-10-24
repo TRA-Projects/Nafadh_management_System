@@ -18,20 +18,40 @@ import { localeFeature } from './legacy/core/store/locale/locale.reducer';
 import { uiAsyncFeature } from './legacy/core/store/ui-async/ui-async.reducer';
 
 const usersPage = () =>
-  import('./pages/identity-access/admin-identity-users-page.component').then((m) => m.AdminIdentityUsersPageComponent);
-const rolesPage = () =>
-  import('./pages/identity-access/admin-identity-roles-page.component').then((m) => m.AdminIdentityRolesPageComponent);
-const roleCreatePage = () =>
-  import('./pages/identity-access/admin-identity-role-create-page.component').then((m) => m.AdminIdentityRoleCreatePageComponent);
-const groupsPage = () =>
-  import('./pages/identity-access/admin-identity-groups-page.component').then((m) => m.AdminIdentityGroupsPageComponent);
-const groupCreatePage = () =>
-  import('./pages/identity-access/admin-identity-group-create-page.component').then((m) => m.AdminIdentityGroupCreatePageComponent);
-const groupEditPage = () =>
-  import('./pages/identity-access/admin-identity-group-edit-page.component').then((m) => m.AdminIdentityGroupEditPageComponent);
-const groupPagesPage = () =>
-  import('./pages/identity-access/admin-identity-group-pages-page.component').then((m) => m.AdminIdentityGroupPagesPageComponent);
+  import('./pages/identity-access/admin-identity-users-page.component')
+    .then((m) => m.AdminIdentityUsersPageComponent);
 
+const rolesPage = () =>
+  import('./pages/identity-access/admin-identity-roles-page.component')
+    .then((m) => m.AdminIdentityRolesPageComponent);
+
+const roleCreatePage = () =>
+  import('./pages/identity-access/admin-identity-role-create-page.component')
+    .then((m) => m.AdminIdentityRoleCreatePageComponent);
+
+const groupsPage = () =>
+  import('./pages/identity-access/admin-identity-groups-page.component')
+    .then((m) => m.AdminIdentityGroupsPageComponent);
+
+const groupCreatePage = () =>
+  import('./pages/identity-access/admin-identity-group-create-page.component')
+    .then((m) => m.AdminIdentityGroupCreatePageComponent);
+
+const groupEditPage = () =>
+  import('./pages/identity-access/admin-identity-group-edit-page.component')
+    .then((m) => m.AdminIdentityGroupEditPageComponent);
+
+const groupPagesPage = () =>
+  import('./pages/identity-access/admin-identity-group-pages-page.component')
+    .then((m) => m.AdminIdentityGroupPagesPageComponent);
+
+const notificationTemplatesPage = () =>
+  import('./pages/system-administration/notification-templates-page.component')
+    .then((m) => m.NotificationTemplatesPageComponent);
+
+const notificationTemplateEditPage = () =>
+  import('./pages/system-administration/notification-template-edit-page.component')
+    .then((m) => m.NotificationTemplateEditPageComponent);
 
 export const EXTERNAL_ROUTES: Routes = [
   {
@@ -68,7 +88,23 @@ export const EXTERNAL_ROUTES: Routes = [
           import('./pages/system-administration/system-configuration-page.component')
             .then((m) => m.SystemConfigurationPageComponent),
       },
-      { path: 'identity', pathMatch: 'full', redirectTo: 'identity/users' },
+
+      // Notification templates
+      {
+        path: 'notification-templates',
+        loadComponent: notificationTemplatesPage,
+      },
+      {
+        path: 'notification-templates/:id',
+        loadComponent: notificationTemplateEditPage,
+      },
+
+      // Identity and access
+      {
+        path: 'identity',
+        pathMatch: 'full',
+        redirectTo: 'identity/users',
+      },
       {
         path: 'identity/users',
         loadComponent: usersPage,
@@ -123,15 +159,5 @@ export const EXTERNAL_ROUTES: Routes = [
         data: { title: 'Group pages', titleAr: 'صفحات المجموعة' },
       },
     ],
-  },
-  {
-    path: 'notification-templates/:id',
-    providers: [
-      provideState(adminSystemFeature),
-      provideState(localeFeature),
-    ],
-    loadComponent: () =>
-      import('./pages/system-administration/notification-templates-page.component')
-        .then((m) => m.NotificationTemplatesPageComponent),
   },
 ];
