@@ -1,7 +1,50 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { catchError, from, switchMap } from 'rxjs';
 
 import { getAccessToken } from '../auth/auth-token.storage';
 import { hasActiveMockUserSession, isFullMockBackend } from '../environment/environment-flags';
+
+let cachedBiddingToken: string | null = null;
+let cachedForNafadhToken: string | null = null;
+let cachedExpiresAtMs = 0;
+let pendingBiddingTokenPromise: Promise<string> | null = null;
+
+function getBiddingSsoToken(nafadhToken: string): Promise<string> {
+  const now = Date.now();
+  if (
+    cachedBiddingToken &&
+    cachedForNafadhToken === nafadhToken &&
+    now < cachedExpiresAtMs - 60_000
+  ) {
+    return Promise.resolve(cachedBiddingToken);
+  }
+
+  if (pendingBiddingTokenPromise && cachedForNafadhToken === nafadhToken) {
+    return pendingBiddingTokenPromise;
+  }
+
+  cachedForNafadhToken = nafadhToken;
+  pendingBiddingTokenPromise = fetch('https://localhost:7082/api/BiddingSso/token', {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${nafadhToken}` }
+  })
+    .then(async (res) => {
+      if (!res.ok) {
+        throw new Error(`SSO token failed: ${res.status}`);
+      }
+      const data: { token: string; expiresAtUtc?: string } = await res.json();
+      cachedBiddingToken = data.token;
+      cachedExpiresAtMs = data.expiresAtUtc
+        ? new Date(data.expiresAtUtc).getTime()
+        : Date.now() + 55 * 60_000;
+      return data.token;
+    })
+    .finally(() => {
+      pendingBiddingTokenPromise = null;
+    });
+
+  return pendingBiddingTokenPromise;
+}
 
 function shouldSkipBearer(url: string, method: string): boolean {
   const path = url.replace(/^https?:\/\/[^/]+/i, '');
@@ -51,6 +94,20 @@ export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   if (token) {
+    // للطلبات المتجهة فقط إلى باكند المناقصات (58888) نستبدل التوكن بتوكن التوافق
+    if (req.url.includes('localhost:58888')) {
+      return from(getBiddingSsoToken(token)).pipe(
+        switchMap((biddingToken) =>
+          next(req.clone({ setHeaders: { Authorization: `Bearer ${biddingToken}` } }))
+        ),
+        catchError(() => {
+          cachedBiddingToken = null;
+          cachedForNafadhToken = null;
+          return next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
+        })
+      );
+    }
+
     return next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
   }
 
