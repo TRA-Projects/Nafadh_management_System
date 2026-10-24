@@ -11,6 +11,15 @@ export interface SystemVariableDto {
   DescriptionAr?: string;
 }
 
+/** Groups are discovered from SystemConfigGroups in the Training database. */
+export interface SystemConfigGroupDto {
+  code: string;
+  label_en: string;
+  label_ar: string;
+  IsActive: boolean;
+  IsReadOnly: boolean;
+}
+
 export interface SystemConfigValueDto {
   id: string | number;
   code?: string;
