@@ -1,50 +1,16 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { catchError, from, switchMap } from 'rxjs';
+import { from } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 import { getAccessToken } from '../auth/auth-token.storage';
 import { hasActiveMockUserSession, isFullMockBackend } from '../environment/environment-flags';
+import { handleNafadhIdentityMerge } from './nafadh-identity-bridge';
+
+const BIDDING_SSO_URL = 'https://localhost:7082/api/BiddingSso/token';
 
 let cachedBiddingToken: string | null = null;
-let cachedForNafadhToken: string | null = null;
-let cachedExpiresAtMs = 0;
-let pendingBiddingTokenPromise: Promise<string> | null = null;
-
-function getBiddingSsoToken(nafadhToken: string): Promise<string> {
-  const now = Date.now();
-  if (
-    cachedBiddingToken &&
-    cachedForNafadhToken === nafadhToken &&
-    now < cachedExpiresAtMs - 60_000
-  ) {
-    return Promise.resolve(cachedBiddingToken);
-  }
-
-  if (pendingBiddingTokenPromise && cachedForNafadhToken === nafadhToken) {
-    return pendingBiddingTokenPromise;
-  }
-
-  cachedForNafadhToken = nafadhToken;
-  pendingBiddingTokenPromise = fetch('https://localhost:7082/api/BiddingSso/token', {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${nafadhToken}` }
-  })
-    .then(async (res) => {
-      if (!res.ok) {
-        throw new Error(`SSO token failed: ${res.status}`);
-      }
-      const data: { token: string; expiresAtUtc?: string } = await res.json();
-      cachedBiddingToken = data.token;
-      cachedExpiresAtMs = data.expiresAtUtc
-        ? new Date(data.expiresAtUtc).getTime()
-        : Date.now() + 55 * 60_000;
-      return data.token;
-    })
-    .finally(() => {
-      pendingBiddingTokenPromise = null;
-    });
-
-  return pendingBiddingTokenPromise;
-}
+let cachedBiddingTokenExp = 0;
+let inflightSsoExchange: Promise<string | null> | null = null;
 
 function shouldSkipBearer(url: string, method: string): boolean {
   const path = url.replace(/^https?:\/\/[^/]+/i, '');
@@ -61,16 +27,7 @@ function shouldSkipBearer(url: string, method: string): boolean {
   return false;
 }
 
-/** Attaches `Authorization: Bearer` for real API calls */
-export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
-  if (isFullMockBackend()) {
-    return next(req);
-  }
-  if (shouldSkipBearer(req.url, req.method)) {
-    return next(req);
-  }
-
-  // 1. محاولة قراءة التوكن من جلسة نفاذ المسجلة
+function readNafadhToken(): string | null {
   let token: string | null = null;
   const nafadhSession = localStorage.getItem('nafadh_session');
   if (nafadhSession) {
@@ -82,10 +39,8 @@ export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
     }
   }
 
-  // 2. إذا لم يجد جلسة نفاذ، يجرب getAccessToken أو المفاتيح الأخرى
   if (!token) {
     const rawToken = getAccessToken();
-    // تجاهل التوكن الوهمي eyJhbGciOiJub25l
     if (rawToken && !rawToken.startsWith('eyJhbGciOiJub25l')) {
       token = rawToken;
     } else {
@@ -93,27 +48,84 @@ export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
     }
   }
 
-  if (token) {
-    // للطلبات المتجهة فقط إلى باكند المناقصات (58888) نستبدل التوكن بتوكن التوافق
-    if (req.url.includes('localhost:58888')) {
-      return from(getBiddingSsoToken(token)).pipe(
-        switchMap((biddingToken) =>
-          next(req.clone({ setHeaders: { Authorization: `Bearer ${biddingToken}` } }))
-        ),
-        catchError(() => {
-          cachedBiddingToken = null;
-          cachedForNafadhToken = null;
-          return next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
-        })
-      );
-    }
+  return token;
+}
 
-    return next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
+function isBiddingApiRequest(url: string): boolean {
+  return url.includes('localhost:58888') || url.includes('/api/jobseekers/');
+}
+
+function getBiddingSsoToken(nafadhToken: string): Promise<string | null> {
+  const now = Date.now();
+  if (cachedBiddingToken && now < cachedBiddingTokenExp) {
+    return Promise.resolve(cachedBiddingToken);
+  }
+  if (inflightSsoExchange) {
+    return inflightSsoExchange;
+  }
+
+  inflightSsoExchange = fetch(BIDDING_SSO_URL, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${nafadhToken}`,
+      Accept: 'application/json',
+    },
+  })
+    .then(async (res) => {
+      if (!res.ok) return null;
+      const body = await res.json();
+      const ssoToken =
+        body?.token ?? body?.accessToken ?? body?.Data?.token ?? body?.data?.token ?? null;
+      if (ssoToken) {
+        cachedBiddingToken = ssoToken;
+        cachedBiddingTokenExp = Date.now() + 50 * 60 * 1000;
+      }
+      return ssoToken;
+    })
+    .catch(() => null)
+    .finally(() => {
+      inflightSsoExchange = null;
+    });
+
+  return inflightSsoExchange;
+}
+
+/** Attaches `Authorization: Bearer` for real API calls and bridges Nafadh + Bidding Identity data */
+export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
+  if (isFullMockBackend()) {
+    return next(req);
+  }
+  if (shouldSkipBearer(req.url, req.method)) {
+    return next(req);
+  }
+
+  const nafadhToken = readNafadhToken();
+
+  // طلبات النظام الخارجي (58888): تبديل التوكن عبر الجسر + دمج بيانات الهوية والصلاحيات من الداتابيس الاثنين
+  if (isBiddingApiRequest(req.url) && nafadhToken) {
+    return from(getBiddingSsoToken(nafadhToken)).pipe(
+      switchMap((biddingToken) => {
+        const finalToken = biddingToken || nafadhToken;
+        const authedReq = req.clone({
+          setHeaders: { Authorization: `Bearer ${finalToken}` },
+        });
+        return handleNafadhIdentityMerge(authedReq, next, nafadhToken);
+      }),
+    );
+  }
+
+  if (nafadhToken) {
+    return next(req.clone({ setHeaders: { Authorization: `Bearer ${nafadhToken}` } }));
   }
 
   if (hasActiveMockUserSession()) {
-    return next(req.clone({ setHeaders: { Authorization: 'Bearer mock-dev-session' } }));
+    const mockReq = req.clone({ setHeaders: { Authorization: 'Bearer mock-dev-session' } });
+    return isBiddingApiRequest(req.url)
+      ? handleNafadhIdentityMerge(mockReq, next, null)
+      : next(mockReq);
   }
 
-  return next(req);
+  return isBiddingApiRequest(req.url)
+    ? handleNafadhIdentityMerge(req, next, null)
+    : next(req);
 };
