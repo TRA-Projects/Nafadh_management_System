@@ -810,11 +810,13 @@
   </div>
 </div>
 
+
 <!-- ========================================================== -->
-<!-- 5. صفحة كشف درجات المتدربين والنزاهة الأكاديمية (شاشة كاملة) -->
+<!-- كشف درجات المتدربين ومحضر الاختبار الرسمي المعتمد -->
 <!-- ========================================================== -->
 <div *ngIf="isQuizAuditFullPageOpen()" class="quiz-audit-full-page-container" dir="rtl">
 
+  <!-- شريط الإجراءات والرجوع العلوي -->
   <div class="audit-top-actions-bar">
     <button type="button" class="btn-back-nav" (click)="closeQuizAuditFullPage()">
       <span class="back-arrow">&#8594;</span>
@@ -829,6 +831,7 @@
     </div>
   </div>
 
+  <!-- ترويسة المحضر الرسمي المعتمد -->
   <div class="quiz-audit-header-card">
     <div class="quiz-audit-title-meta">
       <div class="quiz-audit-tags-row">
@@ -856,8 +859,7 @@
         </span>
         <span class="meta-chip">
           <i class="fa-regular fa-calendar"></i>
-          <span>التاريخ: <strong dir="ltr">{{ activeQuizForAudit?.startDateTime | date:'dd/MM/yyyy - hh:mm a'
-              }}</strong></span>
+          <span>التاريخ: <strong dir="ltr">{{ activeQuizForAudit?.startDateTime | date:'dd/MM/yyyy - hh:mm a' }}</strong></span>
         </span>
         <span class="meta-chip">
           <i class="fa-regular fa-clock"></i>
@@ -865,29 +867,31 @@
         </span>
         <span class="meta-chip">
           <i class="fa-solid fa-trophy"></i>
-          <span>نسبة النجاح المقررة: <strong class="text-emerald">{{ activeQuizForAudit?.passingPercentage || 50
-              }}%</strong></span>
+          <span>نسبة النجاح المقررة: <strong class="text-emerald">{{ activeQuizForAudit?.passingPercentage || 50 }}%</strong></span>
         </span>
       </div>
     </div>
   </div>
 
+  <!-- مؤشرات الأداء الرسمية الموحدة (KPIs) -->
   <div class="quiz-audit-kpi-grid">
+    <!-- المختبرون الحاضرون -->
     <div class="quiz-audit-kpi-box">
       <div class="kpi-box-top">
         <span class="kpi-box-label">المختبرون الحاضرون</span>
-        <i class="fa-solid fa-user-check kpi-mini-icon text-indigo"></i>
+        <i class="fa-solid fa-user-check text-indigo"></i>
       </div>
-      <div class="kpi-box-val">
+      <div class="kpi-box-val" dir="ltr">
         {{ getQuizAttendeesCount() }} / {{ activeQuizAttempts().length }}
       </div>
       <span class="kpi-sub-text">تم تسليم إجاباتهم ورصدها</span>
     </div>
 
+    <!-- نسبة الاجتياز -->
     <div class="quiz-audit-kpi-box">
       <div class="kpi-box-top">
         <span class="kpi-box-label">نسبة الاجتياز</span>
-        <i class="fa-solid fa-award kpi-mini-icon text-emerald"></i>
+        <i class="fa-solid fa-award text-emerald"></i>
       </div>
       <div class="kpi-box-val text-emerald">
         {{ getQuizPassingRate() }}%
@@ -895,10 +899,11 @@
       <span class="kpi-sub-text">{{ getQuizPassedCount() }} متدربين اجتازوا بنجاح</span>
     </div>
 
+    <!-- متوسط الدرجات -->
     <div class="quiz-audit-kpi-box">
       <div class="kpi-box-top">
         <span class="kpi-box-label">متوسط الدرجات</span>
-        <i class="fa-solid fa-chart-simple kpi-mini-icon text-cyan"></i>
+        <i class="fa-solid fa-chart-simple text-cyan"></i>
       </div>
       <div class="kpi-box-val text-cyan">
         {{ getQuizAverageScore() }}%
@@ -906,10 +911,11 @@
       <span class="kpi-sub-text">المعدل العام للمشاركين</span>
     </div>
 
+    <!-- المتغيبون والراسبون -->
     <div class="quiz-audit-kpi-box">
       <div class="kpi-box-top">
         <span class="kpi-box-label">المتغيبون والراسبون</span>
-        <i class="fa-solid fa-user-xmark kpi-mini-icon text-rose"></i>
+        <i class="fa-solid fa-user-xmark text-rose"></i>
       </div>
       <div class="kpi-box-val text-rose">
         {{ getQuizAbsentCount() }} متغيب · {{ getQuizFailedCount() }} راسب
@@ -917,10 +923,11 @@
       <span class="kpi-sub-text">تشمل أصحاب الأعذار الطبية</span>
     </div>
 
+    <!-- رصد النزاهة والمخالفات -->
     <div class="quiz-audit-kpi-box">
       <div class="kpi-box-top">
-        <span class="kpi-box-label">رصد الغش والمخالفات</span>
-        <i class="fa-solid fa-shield-virus kpi-mini-icon text-amber"></i>
+        <span class="kpi-box-label">رصد النزاهة والمخالفات</span>
+        <i class="fa-solid fa-shield-halved text-amber"></i>
       </div>
       <div class="kpi-box-val text-amber">
         {{ getCheatingSuspectsCount() }} حالة اشتباه
@@ -929,52 +936,55 @@
     </div>
   </div>
 
+  <!-- شريط تبويبات التصفية التفاعلية -->
   <div class="audit-filter-tabs-bar">
     <div class="filter-tabs-list">
-      <button type="button" (click)="auditFilter = 'all'" [class.active]="auditFilter === 'all'"
-        class="audit-filter-box">
+      <button type="button" (click)="auditFilter = 'all'" [class.active]="auditFilter === 'all'" class="audit-filter-box">
         الكل ({{ activeQuizAttempts().length }})
       </button>
 
-      <button type="button" (click)="auditFilter = 'passed'" [class.active]="auditFilter === 'passed'"
-        class="audit-filter-box">
+      <button type="button" (click)="auditFilter = 'passed'" [class.active]="auditFilter === 'passed'" class="audit-filter-box">
         الناجحون ({{ getQuizPassedCount() }})
       </button>
 
-      <button type="button" (click)="auditFilter = 'failed'" [class.active]="auditFilter === 'failed'"
-        class="audit-filter-box">
+      <button type="button" (click)="auditFilter = 'failed'" [class.active]="auditFilter === 'failed'" class="audit-filter-box">
         الراسبون ({{ getQuizFailedCount() }})
       </button>
 
-      <button type="button" (click)="auditFilter = 'absent'" [class.active]="auditFilter === 'absent'"
-        class="audit-filter-box">
+      <button type="button" (click)="auditFilter = 'absent'" [class.active]="auditFilter === 'absent'" class="audit-filter-box">
         المتغيبون والأعذار ({{ getQuizAbsentCount() }})
       </button>
 
-      <button type="button" (click)="auditFilter = 'cheating'" [class.active]="auditFilter === 'cheating'"
-        class="audit-filter-box">
+      <button type="button" (click)="auditFilter = 'cheating'" [class.active]="auditFilter === 'cheating'" class="audit-filter-box">
         سجل النزاهة ورصد الغش ({{ getCheatingSuspectsCount() }})
       </button>
     </div>
   </div>
 
+  <!-- جدول كشف درجات ومحضر الاختبار الرسمي -->
   <div class="quiz-audit-full-table-card">
     <div class="table-responsive">
       <table class="quiz-audit-table-expanded">
         <thead>
           <tr>
             <th>المتدرب</th>
-            <th class="text-center">وقت الدخول والتقديم</th>
-            <th class="text-center">الدرجة المكتسبة</th>
-            <th class="text-center">النسبة</th>
-            <th class="text-center">مؤشر النزاهة / رصد الغش</th>
+            <th class="text-center">وقت التسليم</th>
+            <th class="text-center">الدرجة والنسبة</th>
+            <th class="text-center">مؤشر النزاهة الأكاديمية</th>
             <th class="text-center">حالة الحضور والعذر</th>
-            <th class="text-center">ملاحظة المتدرب</th>
-            <th class="text-center">النتيجة والإجراء</th>
+            <th>ملاحظة المتدرب</th>
+            <th class="text-center">النتيجة والاعتماد</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of filteredQuizAttempts()" class="audit-row-hover">
+          <tr *ngFor="let row of filteredQuizAttempts()"
+            [hidden]="auditFilter === 'passed' ? row.status !== 'Passed' :
+                      auditFilter === 'failed' ? row.status !== 'Failed' :
+                      auditFilter === 'absent' ? ((row.status === 'Passed' || row.status === 'Failed') && !row.excuseStatus && row.submittedAt) :
+                      auditFilter === 'cheating' ? ((row.cheatingRiskPercentage || 0) === 0 && (row.tabSwitchCount || 0) === 0 && (row.cameraDisconnectionsCount || 0) === 0) : false"
+            class="audit-row-hover">
+
+            <!-- المتدرب -->
             <td>
               <div class="audit-trainee-cell">
                 <img [src]="row.traineeAvatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + row.traineeName"
@@ -986,122 +996,121 @@
               </div>
             </td>
 
-            <td class="text-center font-mono" dir="ltr">
-              <span *ngIf="row.submittedAt">
-                {{ row.submittedAt | date:'dd/MM/yyyy hh:mm a' }}
-              </span>
-              <span *ngIf="!row.submittedAt" class="badge-status-neutral">
-                لم يقدم الاختبار
-              </span>
-            </td>
-
-            <td class="text-center font-mono font-bold">
-              {{ row.score !== null && row.score !== undefined ? row.score + ' / ' + (row.totalScore ||
-              activeQuizForAudit?.maxScore || 100) : '-' }}
-            </td>
-
-            <td class="text-center font-bold"
-              [ngClass]="(row.percentage || 0) >= (activeQuizForAudit?.passingPercentage || 50) ? 'text-emerald' : 'text-rose'">
-              {{ row.percentage !== null && row.percentage !== undefined ? row.percentage + '%' : '-' }}
-            </td>
-
+            <!-- وقت التسليم -->
             <td class="text-center">
-              <div class="cheating-indicator-wrapper">
-                <span class="cheating-badge" [ngClass]="{
-                    'cheating-clean': (row.cheatingRiskPercentage || 0) === 0,
-                    'cheating-low': (row.cheatingRiskPercentage || 0) > 0 && (row.cheatingRiskPercentage || 0) <= 25,
-                    'cheating-high': (row.cheatingRiskPercentage || 0) > 25
-                  }">
-                  <i *ngIf="(row.cheatingRiskPercentage || 0) === 0" class="fa-solid fa-shield-halved"></i>
-                  <i *ngIf="(row.cheatingRiskPercentage || 0) > 0" class="fa-solid fa-triangle-exclamation"></i>
-                  <span>نسبة الغش: {{ row.cheatingRiskPercentage ?? 0 }}%</span>
-                </span>
+              <div *ngIf="row.submittedAt" class="score-stat-cell">
+                <span class="font-mono" dir="ltr">{{ row.submittedAt | date:'dd/MM/yyyy' }}</span>
+                <span class="score-stat-sub" dir="ltr">{{ row.submittedAt | date:'hh:mm a' }}</span>
+              </div>
+              <span *ngIf="!row.submittedAt" class="badge-status-neutral">لم يتقدم للاختبار</span>
+            </td>
 
-                <div
-                  *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0 || (row.cameraDisconnectionsCount || 0) > 0"
-                  class="cheating-violations-sub">
-                  <span *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0" class="violation-pill"
-                    title="محاولات فتح تبويبات أخرى">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            <!-- الدرجة والنسبة -->
+            <td class="text-center">
+              <div *ngIf="row.score !== null && row.score !== undefined; else noScoreTpl" class="score-stat-cell">
+                <span class="score-stat-val"
+                  [ngClass]="(row.percentage || 0) >= (activeQuizForAudit?.passingPercentage || 50) ? 'text-indigo' : 'text-rose'">
+                  {{ row.percentage ?? 0 }}%
+                </span>
+                <span class="score-stat-sub" dir="ltr">
+                  ({{ row.score }} / {{ row.totalScore || activeQuizForAudit?.maxScore || 100 }})
+                </span>
+              </div>
+              <ng-template #noScoreTpl>
+                <span class="text-muted-dash">-</span>
+              </ng-template>
+            </td>
+
+            <!-- مؤشر النزاهة الأكاديمية -->
+            <td class="text-center">
+              <span *ngIf="!row.submittedAt" class="text-muted-dash">-</span>
+
+              <span *ngIf="row.submittedAt && (row.cheatingRiskPercentage || 0) === 0" class="integrity-clean-pill">
+                <i class="fa-solid fa-check integrity-clean-icon"></i>
+                <span>نزيه (0%)</span>
+              </span>
+
+              <div *ngIf="row.submittedAt && (row.cheatingRiskPercentage || 0) > 0 && (row.cheatingRiskPercentage || 0) <= 25" class="integrity-warning-box">
+                <span class="integrity-warning-badge">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>اشتباه {{ row.cheatingRiskPercentage }}%</span>
+                </span>
+                <div *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0 || (row.cameraDisconnectionsCount || 0) > 0" class="integrity-sub-violations">
+                  <span *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0" class="integrity-violation-tag">
                     {{ row.tabSwitchCount || row.tabSwitches }} خروج
                   </span>
-                  <span *ngIf="(row.cameraDisconnectionsCount || 0) > 0" class="violation-pill"
-                    title="مخالفات الكاميرا أو غياب الوجه">
-                    <i class="fa-solid fa-video-slash"></i>
+                  <span *ngIf="(row.cameraDisconnectionsCount || 0) > 0" class="integrity-violation-tag">
+                    {{ row.cameraDisconnectionsCount }} كاميرا
+                  </span>
+                </div>
+              </div>
+
+              <div *ngIf="row.submittedAt && (row.cheatingRiskPercentage || 0) > 25" class="integrity-danger-box">
+                <span class="integrity-danger-badge">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>خطر {{ row.cheatingRiskPercentage }}%</span>
+                </span>
+                <div *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0 || (row.cameraDisconnectionsCount || 0) > 0" class="integrity-sub-violations">
+                  <span *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0" class="integrity-violation-tag">
+                    {{ row.tabSwitchCount || row.tabSwitches }} خروج
+                  </span>
+                  <span *ngIf="(row.cameraDisconnectionsCount || 0) > 0" class="integrity-violation-tag">
                     {{ row.cameraDisconnectionsCount }} كاميرا
                   </span>
                 </div>
               </div>
             </td>
 
+            <!-- حالة الحضور والعذر -->
             <td class="text-center">
-              <div class="attendance-excuse-cell">
-                <span *ngIf="row.status === 'Passed' || row.status === 'Failed' || row.submittedAt"
-                  class="badge-attended">
-                  <i class="fa-solid fa-check"></i> حاضر
-                </span>
+              <span *ngIf="row.status === 'Passed' || row.status === 'Failed' || row.submittedAt" class="attendance-present-tag">
+                <i class="fa-solid fa-check attendance-present-icon"></i>
+                <span>حاضر</span>
+              </span>
 
-                <div *ngIf="row.status === 'Absent' || row.status === 'NotAttempted' || !row.submittedAt">
-                  <span class="badge-absent mb-1">
-                    <i class="fa-solid fa-user-xmark"></i> متغيب
+              <div *ngIf="row.status === 'Absent' || row.status === 'NotAttempted' || !row.submittedAt" class="attendance-absent-box">
+                <span class="attendance-absent-badge">متغيب</span>
+
+                <div *ngIf="row.excuseReason || row.excuseStatus" class="excuse-review-group">
+                  <span class="excuse-chip" [ngClass]="{
+                    'excuse-chip-approved': row.excuseStatus === 'Approved',
+                    'excuse-chip-rejected': row.excuseStatus === 'Rejected',
+                    'excuse-chip-pending': row.excuseStatus === 'PendingReview' || row.excuseStatus === 'Pending' || !row.excuseStatus
+                  }">
+                    {{ row.excuseStatus === 'Approved' ? 'عذر معتمد' : row.excuseStatus === 'Rejected' ? 'عذر مرفوض' : 'عذر قيد المراجعة' }}
                   </span>
 
-                  <div *ngIf="row.excuseReason || row.excuseStatus" class="excuse-status-box">
-                    <span class="excuse-badge" [ngClass]="{
-                        'excuse-approved': row.excuseStatus === 'Approved',
-                        'excuse-rejected': row.excuseStatus === 'Rejected',
-                        'excuse-pending': row.excuseStatus === 'PendingReview' || row.excuseStatus === 'Pending'
-                      }">
-                      <i *ngIf="row.excuseStatus === 'Approved'" class="fa-solid fa-check-double"></i>
-                      <i *ngIf="row.excuseStatus === 'Rejected'" class="fa-solid fa-ban"></i>
-                      <i *ngIf="row.excuseStatus === 'PendingReview' || row.excuseStatus === 'Pending'"
-                        class="fa-solid fa-hourglass-half"></i>
-                      <span>
-                        {{ row.excuseStatus === 'Approved' ? 'عذر معتمد' : row.excuseStatus === 'Rejected' ? 'عذر مرفوض'
-                        : 'عذر قيد المراجعة' }}
-                      </span>
-                    </span>
-
-                    <button type="button" (click)="onOpenExcuseModal(row)" class="btn-view-excuse-doc"
-                      title="عرض مستند العذر وتفاصيله">
-                      <i class="fa-solid fa-paperclip"></i>
-                      <span>فحص العذر</span>
-                    </button>
-                  </div>
-
-                  <span *ngIf="!row.excuseReason && (!row.excuseStatus || row.excuseStatus === 'None')"
-                    class="no-excuse-tag">
-                    لم يرفق عذراً
-                  </span>
+                  <button type="button" (click)="onOpenExcuseModal(row)" class="btn-inspect-excuse">
+                    <i class="fa-solid fa-paperclip"></i>
+                    <span>فحص العذر</span>
+                  </button>
                 </div>
+
+                <span *ngIf="!row.excuseReason && (!row.excuseStatus || row.excuseStatus === 'None')" class="no-excuse-tag">
+                  لم يرفق عذراً
+                </span>
               </div>
             </td>
 
+            <!-- ملاحظة المتدرب (كاملة بدون اختصار ...) -->
             <td>
-              <div *ngIf="row.traineeSubmissionNote || row.notes" class="direct-note-cell"
-                [title]="row.traineeSubmissionNote || row.notes">
-                <i class="fa-regular fa-comment-dots"></i>
+              <div *ngIf="row.traineeSubmissionNote || row.notes" class="trainee-note-bubble">
+                <i class="fa-regular fa-comment-dots trainee-note-icon"></i>
                 <span>{{ row.traineeSubmissionNote || row.notes }}</span>
               </div>
               <span *ngIf="!row.traineeSubmissionNote && !row.notes" class="text-muted-dash">-</span>
             </td>
 
+            <!-- النتيجة والاعتماد -->
             <td class="text-center">
-              <div class="result-actions-flex">
-                <span *ngIf="row.status === 'Passed'" class="badge-result-passed">ناجح</span>
-                <span *ngIf="row.status === 'Failed'" class="badge-result-failed">راسب</span>
-                <span
-                  *ngIf="(row.status === 'NotAttempted' || row.status === 'Absent' || !row.status) && !row.submittedAt"
-                  class="badge-result-pending">
-                  متغيب
-                </span>
-
-              </div>
+              <span *ngIf="row.status === 'Passed'" class="badge-result-soft-passed">ناجح</span>
+              <span *ngIf="row.status === 'Failed'" class="badge-result-soft-failed">راسب</span>
+              <span *ngIf="(row.status === 'NotAttempted' || row.status === 'Absent' || !row.status) && !row.submittedAt" class="badge-result-soft-absent">متغيب</span>
             </td>
           </tr>
 
           <tr *ngIf="filteredQuizAttempts().length === 0">
-            <td colspan="8" class="empty-audit-msg">
+            <td colspan="7" class="empty-audit-msg">
               لا توجد سجلات تطابق الفلتر المحدد حالياً.
             </td>
           </tr>
@@ -1110,9 +1119,10 @@
     </div>
   </div>
 
+  <!-- تذييل المحضر الرسمي المعتمد -->
   <div class="quiz-audit-footer-bar">
     <div class="audit-footer-stamp">
-      <i class="fa-solid fa-stamp"></i>
+      <i class="fa-solid fa-stamp text-indigo"></i>
       <span>سجل رسمي معتمد وموثق ببوابة نفاد - معرف الاختبار: #{{ activeQuizForAudit?.quizId }}</span>
     </div>
 
@@ -1344,13 +1354,13 @@
     </div>
   </div>
 
-  <!-- جدول التسليمات البرمجية الكامل بعد إزالة الازدحام -->
+  <!-- جدول التسليمات البرمجية الكامل -->
   <div class="quiz-audit-table-card">
     <table class="quiz-audit-table project-table">
       <thead>
         <tr class="audit-table-header-row">
           <th style="min-width: 200px;">المتدرب</th>
-          <th style="min-width: 260px;">رابط المشروع والكود (GitHub / Swagger)</th>
+          <th style="min-width: 250px;">رابط المشروع والكود (GitHub / Swagger)</th>
           <th style="min-width: 220px;">معايير التقييم البرمجي</th>
           <th class="text-center" style="min-width: 100px;">الدرجة</th>
           <th class="text-center" style="min-width: 110px;">الحالة</th>
@@ -1370,7 +1380,7 @@
                 <div class="trainee-meta-ids">
                   <span class="id-tag-system" title="الرقم التعريفي للمتدرب في النظام">#{{ item.traineeId }}</span>
                   <span class="id-separator">|</span>
-                  <span class="id-tag-civil" title="الرقم المدني الرسمي للمتدرب">رقم المدني: {{ item.civilId }}</span>
+                  <span class="id-tag-civil" title="الرقم المدني الرسمي للمتدرب">المدني: {{ item.civilId }}</span>
                 </div>
               </div>
             </div>
@@ -1381,20 +1391,19 @@
             <div
               style="display: flex; flex-direction: column; gap: 7px; align-items: flex-start; justify-content: center; direction: ltr;">
 
-              <!-- بطاقة مستودع GitHub المحمية بتنسيقات ذاتية صريحة -->
-              <!-- بطاقة مستودع GitHub المحمية: تتسع للنص بالكامل دون أي انكماش -->
+              <!-- بطاقة مستودع GitHub المحمية (مطابقة تماماً لبنية بطاقة Swagger الناجحة) -->
               <a [href]="item.repoUrl" target="_blank" rel="noopener noreferrer"
                 style="display: inline-flex !important; align-items: center !important; gap: 8px !important; background: #f8fafc !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; padding: 6px 12px !important; text-decoration: none !important; box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important; width: fit-content !important; min-width: max-content !important;"
                 title="فتح مستودع GitHub">
 
-                <!-- أيقونة GitHub الرسمية الدقيقة بتقنية SVG -->
+                <!-- أيقونة GitHub الرسمية الدقيقة (SVG مدمج لا يسقط أبداً) -->
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#0f172a"
                   style="flex-shrink: 0 !important; display: block !important;">
                   <path fill-rule="evenodd" clip-rule="evenodd"
                     d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
                 </svg>
 
-                <!-- اسم المستودع كحلي داكن واضح بالكامل دون أي انكماش -->
+                <!-- اسم المستودع كحلي داكن بخط Monospace دون أي اقتطاع أو انكماش -->
                 <span
                   style="color: #0f172a !important; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; font-size: 12px !important; font-weight: 700 !important; white-space: nowrap !important; text-decoration: none !important;">
                   {{ item.repoName || item.repoUrl }}
@@ -1410,7 +1419,7 @@
                 </svg>
               </a>
 
-              <!-- رابط Swagger / المعاينة كبطاقة مصغرة زرقاء أنيقة تحته تماماً -->
+              <!-- رابط Swagger / المعاينة كبطاقة مصغرة أنيقة تحته تماماً -->
               <a *ngIf="item.liveDemoUrl" [href]="item.liveDemoUrl" target="_blank" rel="noopener noreferrer"
                 style="display: inline-flex !important; align-items: center !important; gap: 6px !important; background: #eff6ff !important; border: 1px solid #bfdbfe !important; border-radius: 6px !important; padding: 3px 8px !important; text-decoration: none !important; width: fit-content !important;"
                 title="فتح واجهة Swagger / المعاينة الحية">
@@ -1432,28 +1441,29 @@
                   <polyline points="7 7 17 7 17 17"></polyline>
                 </svg>
               </a>
+
             </div>
           </td>
 
-          <!-- 3. معايير التقييم البرمجي -->
+          <!-- 5. معايير التقييم البرمجي -->
           <td>
             <div *ngIf="item.criteria" class="evaluation-rubric-chips">
-              <div class="rubric-chip" *ngIf="item.criteria.architecture">
+              <div class="rubric-chip" *ngIf="item.criteria.architecture" title="Clean Architecture & المعمارية">
                 <span class="rubric-name">المعمارية</span>
                 <strong class="rubric-score" dir="ltr">{{ item.criteria.architecture.score }}/{{
                   item.criteria.architecture.max }}</strong>
               </div>
-              <div class="rubric-chip" *ngIf="item.criteria.apiDocs">
+              <div class="rubric-chip" *ngIf="item.criteria.apiDocs" title="توثيق Swagger & Endpoints">
                 <span class="rubric-name">Swagger</span>
                 <strong class="rubric-score" dir="ltr">{{ item.criteria.apiDocs.score }}/{{ item.criteria.apiDocs.max
                   }}</strong>
               </div>
-              <div class="rubric-chip" *ngIf="item.criteria.database">
+              <div class="rubric-chip" *ngIf="item.criteria.database" title="قواعد البيانات EF Core">
                 <span class="rubric-name">EF Core</span>
                 <strong class="rubric-score" dir="ltr">{{ item.criteria.database.score }}/{{ item.criteria.database.max
                   }}</strong>
               </div>
-              <div class="rubric-chip" *ngIf="item.criteria.codeQuality">
+              <div class="rubric-chip" *ngIf="item.criteria.codeQuality" title="جودة ونظافة الكود">
                 <span class="rubric-name">جودة الكود</span>
                 <strong class="rubric-score" dir="ltr">{{ item.criteria.codeQuality.score }}/{{
                   item.criteria.codeQuality.max }}</strong>
@@ -1462,7 +1472,7 @@
             <span *ngIf="!item.criteria" class="pending-eval-tag">قيد الفحص</span>
           </td>
 
-          <!-- 4. الدرجة -->
+          <!-- 6. الدرجة -->
           <td class="text-center">
             <div *ngIf="item.score !== null && item.score !== undefined" class="project-score-pill"
               [ngClass]="item.score >= 60 ? 'score-pass-pill' : 'score-fail-pill'">
@@ -1471,11 +1481,14 @@
                 <span class="score-divider">/</span>
                 <span class="score-target">{{ item.maxScore || 100 }}</span>
               </div>
+              <div class="score-mini-progress">
+                <div class="score-mini-progress-bar" [style.width.%]="item.score"></div>
+              </div>
             </div>
             <span *ngIf="item.score === null || item.score === undefined" class="pending-eval-tag">قيد التقييم</span>
           </td>
 
-          <!-- 5. الحالة -->
+          <!-- 7. الحالة -->
           <td class="text-center">
             <span class="excuse-badge" [ngClass]="{
               'excuse-approved': item.status === 'مكتمل ومعتمد',
@@ -1486,7 +1499,7 @@
             </span>
           </td>
 
-          <!-- 6. ملاحظات المقيم كاملة بدون اقتطاع -->
+          <!-- 8. ملاحظات المقيم: تظهر بالكامل من الداتابيس دون أي اقتطاع -->
           <td style="min-width: 260px; max-width: 340px;">
             <div *ngIf="item.reviewerFeedback" class="full-feedback-cell">
               <i class="fa-regular fa-comment-dots feedback-icon"></i>
@@ -1495,7 +1508,7 @@
             <span *ngIf="!item.reviewerFeedback" class="text-muted-dash">-</span>
           </td>
 
-          <!-- 7. الإجراء -->
+          <!-- 9. الإجراء: استعراض كشف التقييم المعتمد كصفحة كاملة -->
           <td class="text-center">
             <button type="button" (click)="onOpenProjectEvaluation(item)" class="btn-view-evaluation-dossier"
               title="استعراض كشف التقييم البرمجي كصفحة كاملة">
@@ -1622,8 +1635,6 @@
 
   <!-- بطاقات التفاصيل التقنية للمشروع (المستودع والمعاينة الحية) -->
   <div class="eval-technical-cards-grid">
-
-    <!-- 1. كارت مستودع GitHub (اليمين) -->
     <div class="eval-tech-card-pro">
       <div class="tech-card-pro-header">
         <i class="fa-brands fa-github text-dark"></i>
@@ -1633,6 +1644,7 @@
         <div *ngIf="(selectedProjectForView || selectedProjectForGrading)?.repoUrl as repo">
           <a [href]="repo" target="_blank" rel="noopener noreferrer" class="tech-repo-link-pro" dir="ltr"
             style="display: inline-flex !important; align-items: center !important; gap: 8px !important; background-color: #f8fafc !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; padding: 8px 14px !important; text-decoration: none !important; width: fit-content !important;">
+            <!-- أيقونة GitHub الرسمية الدقيقة بتقنية SVG -->
             <svg width="18" height="18" viewBox="0 0 24 24" fill="#0f172a"
               style="flex-shrink: 0 !important; display: block !important;">
               <path fill-rule="evenodd" clip-rule="evenodd"
@@ -1673,7 +1685,6 @@
       </div>
     </div>
 
-    <!-- 2. كارت المعاينة الحية والتطبيق المنشور Live Demo (اليسار) -->
     <div class="eval-tech-card-pro">
       <div class="tech-card-pro-header">
         <i class="fa-solid fa-globe text-indigo"></i>
@@ -1698,8 +1709,8 @@
         </div>
       </div>
     </div>
-
   </div>
+
   <!-- مصفوفة معايير التقييم البرمجية المعتمدة (Rubric Evaluation Matrix) -->
   <div class="quiz-audit-full-table-card mb-6" *ngIf="(selectedProjectForView || selectedProjectForGrading)?.criteria">
     <div class="eval-section-banner">

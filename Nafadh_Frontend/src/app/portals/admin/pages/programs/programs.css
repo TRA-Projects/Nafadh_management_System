@@ -4979,3 +4979,259 @@
     background-color: #ffffff !important;
   }
 }
+
+/* ==========================================================
+   كلاسات كشف درجات ومحضر الاختبار الرسمية (Quiz Audit & Dossier)
+   ========================================================== */
+.audit-top-actions-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.btn-print-audit-report {
+  background-color: #0D1C8C !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-print-audit-report:hover {
+  background-color: #091463 !important;
+  box-shadow: 0 4px 12px rgba(13, 28, 140, 0.25) !important;
+}
+
+.score-stat-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.score-stat-val {
+  font-size: 15px;
+  font-weight: 800;
+  font-family: monospace;
+}
+
+.score-stat-sub {
+  font-size: 11.5px;
+  color: #64748b;
+  font-family: monospace;
+}
+
+.integrity-clean-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.integrity-clean-icon {
+  color: #10b981;
+  font-size: 12px;
+}
+
+.integrity-warning-box,
+.integrity-danger-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.integrity-warning-badge {
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.integrity-danger-badge {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.integrity-sub-violations {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.integrity-violation-tag {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.attendance-present-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.attendance-present-icon {
+  color: #059669;
+  font-size: 11px;
+}
+
+.attendance-absent-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.attendance-absent-badge {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.excuse-review-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.excuse-chip {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.excuse-chip-approved {
+  background-color: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.excuse-chip-rejected {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.excuse-chip-pending {
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.btn-inspect-excuse {
+  background: none;
+  border: none;
+  color: #0284c7;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font-family: inherit;
+}
+
+/* ملاحظة المتدرب كاملة بدون أي قص أو اختصار */
+.trainee-note-bubble {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.6;
+  text-align: right;
+  width: fit-content;
+  max-width: 100%;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.trainee-note-icon {
+  color: #64748b;
+  margin-top: 3px;
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.badge-result-soft-passed {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  padding: 3px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+.badge-result-soft-failed {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 3px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+.badge-result-soft-absent {
+  background-color: #f8fafc;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  padding: 3px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+/* ==========================================================
+   إعدادات الطباعة الرسمية A4 بالعرض (Landscape)
+   ========================================================== */
+@media print {
+  @page {
+    size: A4 landscape !important;
+    margin: 8mm 10mm !important;
+  }
+}
