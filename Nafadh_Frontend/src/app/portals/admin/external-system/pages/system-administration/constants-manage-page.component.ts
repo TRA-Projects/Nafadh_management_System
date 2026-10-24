@@ -7,10 +7,11 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { firstValueFrom } from 'rxjs';
 
-import { AdminSystemApiService, type SystemConfigValueDto } from '../../legacy/core/api/services/admin-system-api.service';
+import { AdminSystemApiService, type SystemConfigGroupDto, type SystemConfigValueDto } from '../../legacy/core/api/services/admin-system-api.service';
 import { LocaleService } from '../../legacy/core/locale/locale.service';
 import { SYSTEM_CONFIG_CODES } from '../../legacy/core/profile/system-config-codes';
 import { MANAGEMENT_SYSTEM_LOOKUP_TYPES } from '../../legacy/core/profile/management-system-config-codes';
+import { getArabicConfigGroupLabel } from '../../legacy/core/profile/arabic-system-config-labels';
 import {
   isSubConfigCode,
   mainConfigCodesWithSubCatalog,
@@ -71,10 +72,11 @@ export class ConstantsManagePageComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject(ElementRef<HTMLElement>);
 
-  private readonly allLookupTypes: LookupTypeOption[] = [
+  // Emergency-only catalogue for when the Training groups endpoint is unavailable.
+  private readonly fallbackLookupTypes: LookupTypeOption[] = [
     ...MANAGEMENT_SYSTEM_LOOKUP_TYPES.map((item) => ({
       code: item.code,
-      label: this.locale.isRtl() ? item.labelAr : item.labelEn,
+      label: item.labelAr,
     })),
     { code: SYSTEM_CONFIG_CODES.QUALIFICATION_DEGREES, label: $localize`:@@jobseeker.admin.constants.lookup.qualificationDegrees:Qualification degrees` },
     { code: SYSTEM_CONFIG_CODES.NATIONALITY, label: $localize`:@@jobseeker.admin.constants.lookup.nationalities:Nationalities` },
@@ -145,7 +147,19 @@ export class ConstantsManagePageComponent {
       code: SYSTEM_CONFIG_CODES.BEHAVIOR,
       label: $localize`:@@jobseeker.admin.constants.lookup.behaviors:Behaviors`,
     },
-  ];
+  ].map((item) => ({ ...item, label: getArabicConfigGroupLabel(item.code, item.label) }));
+
+  /** Source of truth: SystemConfigGroups in Nafadh Training, not the TypeScript enum list. */
+  readonly catalogGroups = signal<SystemConfigGroupDto[]>([]);
+  readonly catalogLoading = signal(true);
+  readonly catalogLoadFailed = signal(false);
+  readonly allLookupTypes = computed<LookupTypeOption[]>(() => {
+    if (this.catalogLoadFailed()) return this.fallbackLookupTypes;
+    return this.catalogGroups().map((group) => ({
+      code: group.code,
+      label: getArabicConfigGroupLabel(group.code, group.label_ar, group.label_en),
+    }));
+  });
 
   readonly activeTab = signal<ConstantsTab>('main');
   readonly pageTabs: FormPageTabItem[] = [
@@ -153,9 +167,9 @@ export class ConstantsManagePageComponent {
     { id: 'sub', label: $localize`:@@jobseeker.admin.constants.tabSub:Sub constants` },
   ];
 
-  readonly mainLookupTypes = computed(() => this.allLookupTypes.filter((option) => !isSubConfigCode(option.code)));
+  readonly mainLookupTypes = computed(() => this.allLookupTypes().filter((option) => !isSubConfigCode(option.code)));
   readonly subMainLookupTypes = computed(() =>
-    this.allLookupTypes.filter((option) => (mainConfigCodesWithSubCatalog() as string[]).includes(option.code))
+    this.allLookupTypes().filter((option) => (mainConfigCodesWithSubCatalog() as string[]).includes(option.code))
   );
 
   readonly selectedMainLookupCode = signal('');
@@ -219,10 +233,18 @@ export class ConstantsManagePageComponent {
     return code ? [code] : [];
   });
 
-  readonly isReadOnlyManagementGroup = computed(() => this.selectedLookupCode().startsWith('NFD_'));
+  // UI guard mirrors the Training Backend's NFD_* write protection.
+  readonly isReadOnlyManagementGroup = computed(() => {
+    const code = this.selectedLookupCode();
+    return code.startsWith('NFD_') || this.catalogGroups().some((group) => group.code === code && group.IsReadOnly);
+  });
+
+  readonly canEditSelectedGroup = computed(() =>
+    !!this.selectedLookupCode() && !this.catalogLoading() && !this.catalogLoadFailed() && !this.isReadOnlyManagementGroup()
+  );
 
   readonly canManageSubRows = computed(() => {
-    if (this.isReadOnlyManagementGroup()) return false;
+    if (this.catalogLoading() || this.catalogLoadFailed() || this.isReadOnlyManagementGroup()) return false;
     if (this.activeTab() === 'main') {
       return !!this.selectedMainLookupCode().trim();
     }
@@ -243,7 +265,7 @@ export class ConstantsManagePageComponent {
 
   readonly selectedLookupLabel = computed(() => {
     const code = this.activeTab() === 'main' ? this.selectedMainLookupCode() : this.selectedSubMainLookupCode();
-    const mainLabel = this.allLookupTypes.find((option) => option.code === code)?.label ?? code;
+    const mainLabel = this.allLookupTypes().find((option) => option.code === code)?.label ?? code;
     if (this.activeTab() === 'sub') {
       return $localize`:@@jobseeker.admin.constants.subCatalogForMain:Sub constants — ${mainLabel}:MAIN:`;
     }
@@ -280,6 +302,7 @@ export class ConstantsManagePageComponent {
   readonly codePlaceholder = $localize`:@@jobseeker.admin.constants.codePlaceholder:e.g. FLT`;
 
   constructor() {
+    void this.loadCatalogGroups();
     const onDocClick = (event: MouseEvent): void => {
       if (this.actionsMenuRowId() == null) {
         return;
@@ -296,6 +319,31 @@ export class ConstantsManagePageComponent {
     };
     document.addEventListener('click', onDocClick, true);
     this.destroyRef.onDestroy(() => document.removeEventListener('click', onDocClick, true));
+  }
+
+  /** Refresh without changing the selected group; fall back read-only on API errors. */
+  async loadCatalogGroups(): Promise<void> {
+    this.catalogLoading.set(true);
+    this.catalogLoadFailed.set(false);
+    try {
+      const groups = await firstValueFrom(this.api.getConfigGroups());
+      if (!Array.isArray(groups)) throw new Error('Invalid Training catalogue response');
+      this.catalogGroups.set(groups);
+      const available = new Set(groups.map((group) => group.code));
+      if (this.selectedMainLookupCode() && !available.has(this.selectedMainLookupCode())) {
+        this.selectedMainLookupCode.set('');
+      }
+      if (this.selectedSubMainLookupCode() && !available.has(this.selectedSubMainLookupCode())) {
+        this.selectedSubMainLookupCode.set('');
+        this.selectedSubParentReasonId.set('');
+      }
+    } catch {
+      // Allow the menu to remain discoverable, but do not offer write actions
+      // when we cannot confirm the server's current group catalogue.
+      this.catalogLoadFailed.set(true);
+    } finally {
+      this.catalogLoading.set(false);
+    }
   }
 
   rowActionKey(row: SystemConfigValueDto): string {
@@ -489,7 +537,7 @@ export class ConstantsManagePageComponent {
   }
 
   openEdit(row: SystemConfigValueDto): void {
-    if (this.isReadOnlyManagementGroup()) return;
+    if (this.catalogLoading() || this.catalogLoadFailed() || this.isReadOnlyManagementGroup()) return;
     this.editingId.set(row.id);
     this.form.reset({
       code: row.code ?? String(row.id),
@@ -508,7 +556,7 @@ export class ConstantsManagePageComponent {
   }
 
   async save(): Promise<void> {
-    if (this.isReadOnlyManagementGroup()) return;
+    if (this.catalogLoading() || this.catalogLoadFailed() || this.isReadOnlyManagementGroup()) return;
     const id = this.editingId();
     const isSubTab = this.activeTab() === 'sub';
     const result = await this.formPipeline.run({
