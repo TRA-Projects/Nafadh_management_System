@@ -1370,30 +1370,67 @@
                 <div class="trainee-meta-ids">
                   <span class="id-tag-system" title="الرقم التعريفي للمتدرب في النظام">#{{ item.traineeId }}</span>
                   <span class="id-separator">|</span>
-                  <span class="id-tag-civil" title="الرقم المدني الرسمي للمتدرب">المدني: {{ item.civilId }}</span>
+                  <span class="id-tag-civil" title="الرقم المدني الرسمي للمتدرب">رقم المدني: {{ item.civilId }}</span>
                 </div>
               </div>
             </div>
           </td>
 
-          <!-- 2. رابط المشروع والكود (GitHub + Swagger مباشر ومريح بدون ازدحام) -->
-          <td>
-            <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-start;">
-              <!-- رابط GitHub ينقل فوراً لصفحة المستودع -->
-              <a [href]="item.repoUrl" target="_blank" rel="noopener noreferrer" class="github-repo-link-pill"
+          <!-- 2. رابط المشروع والكود (GitHub / Swagger) بتصميم بطاقة عصرية ومريحة بصرياً ومضبوطة المسافات -->
+          <td style="padding: 12px 18px !important; min-width: 250px; vertical-align: middle;">
+            <div
+              style="display: flex; flex-direction: column; gap: 7px; align-items: flex-start; justify-content: center; direction: ltr;">
+
+              <!-- بطاقة مستودع GitHub المحمية بتنسيقات ذاتية صريحة -->
+              <!-- بطاقة مستودع GitHub المحمية: تتسع للنص بالكامل دون أي انكماش -->
+              <a [href]="item.repoUrl" target="_blank" rel="noopener noreferrer"
+                style="display: inline-flex !important; align-items: center !important; gap: 8px !important; background: #f8fafc !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; padding: 6px 12px !important; text-decoration: none !important; box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important; width: fit-content !important; min-width: max-content !important;"
                 title="فتح مستودع GitHub">
-                <i class="fa-brands fa-github" style="font-size: 15px; color: #1e293b;"></i>
-                <span>{{ item.repoName }}</span>
-                <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px; color: #64748b;"></i>
+
+                <!-- أيقونة GitHub الرسمية الدقيقة بتقنية SVG -->
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#0f172a"
+                  style="flex-shrink: 0 !important; display: block !important;">
+                  <path fill-rule="evenodd" clip-rule="evenodd"
+                    d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                </svg>
+
+                <!-- اسم المستودع كحلي داكن واضح بالكامل دون أي انكماش -->
+                <span
+                  style="color: #0f172a !important; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; font-size: 12px !important; font-weight: 700 !important; white-space: nowrap !important; text-decoration: none !important;">
+                  {{ item.repoName || item.repoUrl }}
+                </span>
+
+                <!-- أيقونة سهم خارجي SVG واضحة -->
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round"
+                  style="flex-shrink: 0 !important; display: block !important;">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
               </a>
 
-              <!-- رابط Swagger / المعاينة الحية إذا كان متوفراً -->
+              <!-- رابط Swagger / المعاينة كبطاقة مصغرة زرقاء أنيقة تحته تماماً -->
               <a *ngIf="item.liveDemoUrl" [href]="item.liveDemoUrl" target="_blank" rel="noopener noreferrer"
-                style="display: inline-flex; align-items: center; gap: 6px; color: #2563eb; text-decoration: none; font-size: 11.5px; font-weight: 600; padding: 2px 4px;"
-                title="فتح واجهة Swagger">
-                <i class="fa-solid fa-globe" style="font-size: 11px;"></i>
-                <span dir="ltr">Swagger / Live Demo</span>
-                <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 9px;"></i>
+                style="display: inline-flex !important; align-items: center !important; gap: 6px !important; background: #eff6ff !important; border: 1px solid #bfdbfe !important; border-radius: 6px !important; padding: 3px 8px !important; text-decoration: none !important; width: fit-content !important;"
+                title="فتح واجهة Swagger / المعاينة الحية">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round"
+                  style="flex-shrink: 0 !important; display: block !important;">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                  </path>
+                </svg>
+                <span
+                  style="color: #1d4ed8 !important; font-size: 11px !important; font-weight: 700 !important; text-decoration: none !important; white-space: nowrap !important;">Swagger
+                  / Live Demo</span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round"
+                  style="flex-shrink: 0 !important; display: block !important;">
+                  <line x1="7" y1="17" x2="17" y2="7"></line>
+                  <polyline points="7 7 17 7 17 17"></polyline>
+                </svg>
               </a>
             </div>
           </td>
@@ -1585,22 +1622,58 @@
 
   <!-- بطاقات التفاصيل التقنية للمشروع (المستودع والمعاينة الحية) -->
   <div class="eval-technical-cards-grid">
+
+    <!-- 1. كارت مستودع GitHub (اليمين) -->
     <div class="eval-tech-card-pro">
       <div class="tech-card-pro-header">
         <i class="fa-brands fa-github text-dark"></i>
         <span>مستودع الكود المصدري على GitHub</span>
       </div>
-      <div class="tech-card-pro-body" style="width: 100%;">
-        <a [href]="(selectedProjectForView || selectedProjectForGrading)?.repoUrl" target="_blank"
-          rel="noopener noreferrer" class="github-repo-link-pill"
-          style="padding: 10px 14px; font-size: 13px; width: fit-content; max-width: 100%;" dir="ltr">
-          <i class="fa-brands fa-github" style="font-size: 16px; color: #1e293b;"></i>
-          <span>{{ (selectedProjectForView || selectedProjectForGrading)?.repoUrl }}</span>
-          <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 11px; color: #64748b;"></i>
-        </a>
+      <div class="tech-card-pro-body">
+        <div *ngIf="(selectedProjectForView || selectedProjectForGrading)?.repoUrl as repo">
+          <a [href]="repo" target="_blank" rel="noopener noreferrer" class="tech-repo-link-pro" dir="ltr"
+            style="display: inline-flex !important; align-items: center !important; gap: 8px !important; background-color: #f8fafc !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; padding: 8px 14px !important; text-decoration: none !important; width: fit-content !important;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#0f172a"
+              style="flex-shrink: 0 !important; display: block !important;">
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+            </svg>
+            <span
+              style="color: #0D1C8C !important; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; font-size: 13px !important; font-weight: 700 !important; text-decoration: none !important;">
+              {{ repo }}
+            </span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round"
+              style="flex-shrink: 0 !important; display: block !important;">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+          <div class="tech-meta-row" dir="ltr" style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+            <span class="branch-pill">
+              <i class="fa-solid fa-code-branch"></i>
+              <span>{{ (selectedProjectForView || selectedProjectForGrading)?.branch || 'main' }}</span>
+            </span>
+            <span class="commit-hash-pill"
+              [title]="(selectedProjectForView || selectedProjectForGrading)?.commitMessage">
+              <i class="fa-solid fa-code-commit"></i>
+              <span>{{ (selectedProjectForView || selectedProjectForGrading)?.commitHash }}</span>
+            </span>
+            <span class="commit-msg-preview"
+              [title]="(selectedProjectForView || selectedProjectForGrading)?.commitMessage">
+              {{ (selectedProjectForView || selectedProjectForGrading)?.commitMessage }}
+            </span>
+          </div>
+        </div>
+        <div *ngIf="!(selectedProjectForView || selectedProjectForGrading)?.repoUrl" class="tech-no-demo-text">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>لم يُدرج رابط مستودع برمجي بعد.</span>
+        </div>
       </div>
     </div>
 
+    <!-- 2. كارت المعاينة الحية والتطبيق المنشور Live Demo (اليسار) -->
     <div class="eval-tech-card-pro">
       <div class="tech-card-pro-header">
         <i class="fa-solid fa-globe text-indigo"></i>
@@ -1625,8 +1698,8 @@
         </div>
       </div>
     </div>
-  </div>
 
+  </div>
   <!-- مصفوفة معايير التقييم البرمجية المعتمدة (Rubric Evaluation Matrix) -->
   <div class="quiz-audit-full-table-card mb-6" *ngIf="(selectedProjectForView || selectedProjectForGrading)?.criteria">
     <div class="eval-section-banner">

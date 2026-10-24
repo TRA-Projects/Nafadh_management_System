@@ -783,7 +783,7 @@ export class AdminPrograms implements OnInit {
     this.selectedExcuseRow = null;
   }
 
- 
+
 
   onViewSubmissionNote(row: any): void {
     this.selectedNoteRow = row;
@@ -793,14 +793,54 @@ export class AdminPrograms implements OnInit {
   // ==========================================================
   // 13. طباعة المحضر الرسمي A4
   // ==========================================================
+  // ==========================================================
+  // 13. طباعة المحضر الرسمي A4 (مع إخفاء الشريط الجانبي والهيدر 100%)
+  // ==========================================================
   onPrintAuditReport(): void {
-    window.print();
+    this.executeCleanPrint();
   }
 
   printOfficialReport(): void {
-    window.print();
+    this.executeCleanPrint();
   }
 
+  private executeCleanPrint(): void {
+    const styleId = 'nafadh-dynamic-print-style';
+    let styleEl = document.getElementById(styleId) as HTMLStyleElement;
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      styleEl.textContent = `
+        @media print {
+          @page { size: A4 landscape; margin: 8mm; }
+          
+          /* إخفاء القائمة الجانبية والشريط العلوي وأزرار التحكم بالكامل */
+          app-sidebar, app-header, app-navbar, aside, nav, header,
+          .sidebar, .main-sidebar, .app-sidebar, .nfd-sidebar,
+          .btn-back-nav, .audit-top-actions-bar, .audit-header-buttons,
+          .action-header-bar, .modal-overlay, button, .filter-buttons-group {
+            display: none !important;
+            visibility: hidden !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+
+          /* جعل محتوى المحضر والكشف يملأ عرض الصفحة 100% بدون أي فراغ جانبي */
+          body, html, main, .main-content, .content-wrapper,
+          .quiz-audit-full-page-container, .project-eval-full-page {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: static !important;
+            background: #ffffff !important;
+          }
+        }
+      `;
+      document.head.appendChild(styleEl);
+    }
+    window.print();
+  }
   // ==========================================================
   // 13.1 سجل ومحضر مشاريع GitHub والواجبات (Full-Page Dossier)
   // ==========================================================

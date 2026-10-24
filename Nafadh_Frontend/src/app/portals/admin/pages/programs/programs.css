@@ -4941,3 +4941,41 @@
   
 }
 
+
+/* ==========================================================
+   إخفاء الشريط الجانبي والهيدر في الطباعة الرسمية A4
+   ========================================================== */
+@media print {
+  /* إخفاء القائمة الجانبية وشريط التنقل العلوي والأزرار نهائياً */
+  app-sidebar,
+  app-header,
+  app-navbar,
+  aside,
+  header,
+  nav,
+  .sidebar,
+  .main-sidebar,
+  .btn-back-nav,
+  .audit-top-actions-bar,
+  .audit-footer-btns,
+  .btn-print-audit-report,
+  .btn-print-mini {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  /* جعل المحتوى يأخذ كامل عرض الورقة 100% بدون أي انزياح */
+  body, html, main, .main-content, .content-wrapper,
+  .quiz-audit-full-page-container, .project-eval-full-page {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    position: static !important;
+    background-color: #ffffff !important;
+  }
+}
