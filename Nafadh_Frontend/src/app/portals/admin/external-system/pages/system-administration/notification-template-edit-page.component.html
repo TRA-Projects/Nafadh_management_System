@@ -5,14 +5,14 @@
     <div class="breadcrumb">
       <a>الرئيسية</a><i>/</i><a>الإدارة</a><i>/</i><span>قالب إشعار</span>
     </div>
-    <div class="title-row">
-      <h1 class="page-title">{{ templateName || 'دعوة للتقديم' }}</h1>
-      <button type="button" (click)="goBack()" class="back-arrow-btn" aria-label="رجوع">
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-        </svg>
-      </button>
-    </div>
+  <div class="title-row">
+  <button type="button" (click)="goBack()" class="back-arrow-btn" aria-label="رجوع">
+    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+  </button>
+  <h1 class="page-title">{{ templateName || 'دعوة للتقديم' }}</h1>
+</div>
   </div>
 
   <!-- Main Card -->
