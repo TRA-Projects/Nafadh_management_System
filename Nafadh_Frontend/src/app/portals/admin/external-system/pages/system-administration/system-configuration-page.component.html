@@ -1,4 +1,4 @@
-<div
+﻿<div
   class="rounded-xl border border-[#ebedf2] bg-white p-3 shadow-sm dark:border-[#191e3a] dark:bg-[#0e1726] sm:p-4 md:p-6"
 >
   <h2 class="min-w-0 text-xl font-bold text-black dark:text-white-light sm:text-2xl" i18n="@@jobseeker.admin.systemConfig.pageTitle">
@@ -21,7 +21,7 @@
 
   <div class="mt-4 rounded-xl border border-[#ebedf2] bg-white dark:border-[#191e3a] dark:bg-[#0e1726] md:overflow-hidden">
     <!-- Mobile / tablet cards -->
-    <div class="p-3 lg:hidden">
+    <div class="hidden">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         @for (row of rows(); track row.Code; let i = $index) {
           <article class="sys-config-card">
@@ -39,7 +39,7 @@
                 </span>
               </div>
               <div class="sys-config-card__actions">
-                <ng-container *ngTemplateOutlet="rowActionsMenu; context: { $implicit: row }" />
+                <button type="button" class="sys-config-edit-btn" (click)="openEdit(row)" title="تعديل الإعداد" aria-label="تعديل الإعداد"><span aria-hidden="true">✎</span><span>تعديل</span></button>
               </div>
             </div>
 
@@ -98,7 +98,7 @@
     </div>
 
     <!-- Desktop table -->
-    <div class="table-responsive hidden lg:block">
+    <div class="table-responsive block">
       <table class="sys-config-table">
         <thead>
           <tr>
@@ -145,11 +145,11 @@
                   } @else if (isEducationDegreeRanksVariable(row) || isNafathValidityCheckVariable(row)) {
                     <span>{{ displayValue(row) }}</span>
                   } @else {
-                    <span class="tabular-nums" [attr.dir]="row.ValueType === 'Time' ? 'ltr' : null">{{ row.Value }}</span>
+                    <span class="sys-config-value-preview" [attr.title]="row.Value" [attr.dir]="row.ValueType === 'Time' ? 'ltr' : null">{{ row.Value }}</span>
                   }
                 </td>
                 <td class="sys-config-actions-cell">
-                  <ng-container *ngTemplateOutlet="rowActionsMenu; context: { $implicit: row }" />
+                  <button type="button" class="sys-config-edit-btn" (click)="openEdit(row)" title="تعديل الإعداد" aria-label="تعديل الإعداد"><span aria-hidden="true">✎</span><span>تعديل</span></button>
                 </td>
               </tr>
             }
@@ -304,3 +304,6 @@
     </div>
   </div>
 }
+
+
+
