@@ -17,6 +17,7 @@ import type {
   RenderedNotificationDto,
   SkillCategoryDto,
   SkillDto,
+  SystemConfigGroupDto,
   SystemConfigValueDto,
   SystemVariableDto,
   NotificationTransactionLogQuery,
@@ -40,6 +41,7 @@ export type {
   SkillCategoryDto,
   SkillDto,
   SystemVariableDto,
+  SystemConfigGroupDto,
   SystemConfigValueDto,
   SystemAuditTrailRowDto,
   SystemAuditValueHistoryRowDto,
@@ -90,6 +92,13 @@ export class AdminSystemApiService {
         map(unwrapData),
         tap((row) => this.store.dispatch(adminSystemActions.systemVariableUpdated({ row })))
       );
+  }
+
+  /** DB-backed list of available groups, including whether each is read-only. */
+  getConfigGroups(): Observable<SystemConfigGroupDto[]> {
+    return this.http
+      .get<ApiData<SystemConfigGroupDto[]> | { Data: SystemConfigGroupDto[] }>(ApiPaths.adminSystemConfigGroups)
+      .pipe(map(unwrapData));
   }
 
   /** Active rows only, unless `includeInactive` (constants admin lists). */
