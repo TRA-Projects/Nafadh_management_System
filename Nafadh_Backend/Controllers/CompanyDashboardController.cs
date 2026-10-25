@@ -313,8 +313,6 @@ namespace Nafadh_Backend.Controllers
                 .ThenByDescending(x =>
                     x.Attendance)
 
-                .Take(15)
-
                 .Select(x => new CompanyDashboardTraineeDTO
                 {
                     TraineeId =
@@ -378,8 +376,6 @@ namespace Nafadh_Backend.Controllers
 
                 .ThenBy(x =>
                     x.Performance)
-
-                .Take(15)
 
                 .ToList();
 
@@ -566,8 +562,6 @@ namespace Nafadh_Backend.Controllers
 
                     .OrderByDescending(w =>
                         w.IssuedDate)
-
-                    .Take(15)
 
                     .Select(w =>
                         new CompanyDashboardWarningDTO
