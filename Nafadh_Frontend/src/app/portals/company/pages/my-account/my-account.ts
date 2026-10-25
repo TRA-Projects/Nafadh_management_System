@@ -62,6 +62,35 @@ export class CompanyMyAccount implements OnInit {
     }
   }
 
+  // حفظ التغييرات في localStorage بعد الحذف أو المسح
+  private saveLocalActivitiesToStorage(activities: any[]): void {
+    localStorage.setItem('company_supervisor_activities', JSON.stringify(activities));
+  }
+
+  // مسح التقييمات المحلية بالكامل
+  clearLocalActivities(): void {
+    this.localActivities.set([]);
+    localStorage.removeItem('company_supervisor_activities');
+  }
+
+  // حذف نشاط محلي فردي حسب الـ Index
+  removeLocalActivity(index: number): void {
+    this.localActivities.update((acts: any[]) => {
+      const updated = acts.filter((_, i) => i !== index);
+      this.saveLocalActivitiesToStorage(updated);
+      return updated;
+    });
+  }
+
+  // إزالة نشاط الخادم من الواجهة محلياً
+  removeServerActivity(activity: any): void {
+    const currentProfile = this.profile();
+    if (currentProfile && currentProfile.recentActivities) {
+      currentProfile.recentActivities = currentProfile.recentActivities.filter((a: any) => a !== activity);
+      this.profile.set({ ...currentProfile });
+    }
+  }
+
   startEditAccount(): void {
     const account = this.profile();
     if (!account) {

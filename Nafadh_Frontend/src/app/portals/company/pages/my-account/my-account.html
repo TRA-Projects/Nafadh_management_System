@@ -623,18 +623,29 @@
 
         }
 
-
-        <!-- ===================================================
-           TAB 3 — Activities
-           =================================================== -->
+<!-- ===================================================
+            TAB 3 — Activities
+            =================================================== -->
         @if (activeTab() === 'activities') {
 
         <section class="card-box full-width">
 
-          <div class="card-title-bar">
-            <h4>
+          <div class="card-title-bar" style="display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0;">
+              سجل النشاطات والتقييمات
             </h4>
+            
+            <!-- زر مسح التقييمات المحلية دفعة واحدة -->
+            @if (localActivities().length > 0) {
+              <button type="button" 
+                      style="background: #fee2e2; color: #dc2626; border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer;"
+                      (click)="clearLocalActivities()">
+                مسح التقييمات الأخيرة
+              </button>
+            }
           </div>
+
+          <div style="margin-top: 1rem;"></div>
 
           <!-- عرض النشاطات المحلية (تقييمات المدربين المضافة حديثاً) -->
           @if (localActivities().length > 0) {
@@ -642,12 +653,22 @@
               <h5 style="font-size: 0.9rem; color: #2563eb; margin-bottom: 0.8rem; font-weight: 700;">التقييمات والأنشطة الأخيرة:</h5>
               <ul class="timeline-list">
                 @for (localAct of localActivities(); track $index) {
-                  <li>
-                    <span class="dot" style="background-color: #2563eb;"></span>
-                    <div class="t-info">
-                      <strong style="color: #1e293b;">{{ localAct.message }}</strong>
-                      <small style="color: #64748b; display: block; margin-top: 4px;">{{ localAct.date }}</small>
+                  <li style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                    <div style="display: flex; gap: 10px; align-items: flex-start; flex: 1;">
+                      <span class="dot" style="background-color: #2563eb; margin-top: 6px;"></span>
+                      <div class="t-info" style="flex: 1;">
+                        <strong style="color: #1e293b;">{{ localAct.message }}</strong>
+                        <small style="color: #64748b; display: block; margin-top: 4px;">{{ localAct.date }}</small>
+                      </div>
                     </div>
+
+                    <!-- زر حذف عنصر محدد من التقييمات المحلية -->
+                    <button type="button" 
+                            style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 0 6px; font-size: 1.2rem; font-weight: bold; line-height: 1;" 
+                            title="حذف النشاط"
+                            (click)="removeLocalActivity($index)">
+                      ×
+                    </button>
                   </li>
                 }
               </ul>
@@ -662,29 +683,39 @@
             activity of account.recentActivities;
             track activity.entityId + activity.action + activity.timestamp
             ) {
-            <li>
-              <span class="dot"></span>
-              <div class="t-info">
-                <strong>
-                  {{ activity.action }}
-                </strong>
-                <small>
-                  {{ activity.entityName }}
-                  @if (activity.entityId) {
-                  — رقم:
-                  {{ activity.entityId }}
-                  }
-                  @if (activity.details) {
-                  —
-                  {{ activity.details }}
-                  }
-                  —
-                  {{
-                  activity.timestamp
-                  | date:'yyyy-MM-dd HH:mm'
-                  }}
-                </small>
+            <li style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+              <div style="display: flex; gap: 10px; align-items: flex-start; flex: 1;">
+                <span class="dot" style="margin-top: 6px;"></span>
+                <div class="t-info" style="flex: 1;">
+                  <strong>
+                    {{ activity.action }}
+                  </strong>
+                  <small style="display: block; margin-top: 4px;">
+                    {{ activity.entityName }}
+                    @if (activity.entityId) {
+                    — رقم:
+                    {{ activity.entityId }}
+                    }
+                    @if (activity.details) {
+                    —
+                    {{ activity.details }}
+                    }
+                    —
+                    {{
+                    activity.timestamp
+                    | date:'yyyy-MM-dd HH:mm'
+                    }}
+                  </small>
+                </div>
               </div>
+
+              <!-- زر حذف نشاط الخادم محلياً من الواجهة -->
+              <button type="button" 
+                      style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 0 6px; font-size: 1.2rem; font-weight: bold; line-height: 1;" 
+                      title="حذف النشاط"
+                      (click)="removeServerActivity(activity)">
+                ×
+              </button>
             </li>
             }
           </ul>
@@ -698,9 +729,7 @@
 
         </section>
 
-        
         }
-
       </div>
 
     </main>
