@@ -6,12 +6,11 @@
       <h1>المحاضرة المباشرة</h1>
       <p>الجلسة رقم {{ sessionId }}</p>
     </div>
+
     <div class="room-status">
-      @if (connected()) {
-        <span class="live-indicator">متصل</span>
-      } @else {
-        <span>غير متصل</span>
-      }
+      <span [class.live-indicator]="connected()">
+        {{ connected() ? 'متصل' : 'غير متصل' }}
+      </span>
     </div>
   </header>
 
@@ -35,74 +34,136 @@
           </div>
         }
       </div>
-
-      <div class="room-controls">
-        <button type="button"
-                [disabled]="!connected()"
-                (click)="toggleMic()">
-          <i [class]="micEnabled()
-            ? 'fa-solid fa-microphone'
-            : 'fa-solid fa-microphone-slash'"></i>
-          {{ micEnabled() ? 'إيقاف المايك' : 'تشغيل المايك' }}
-        </button>
-
-        <button type="button"
-                [disabled]="!connected()"
-                (click)="toggleCamera()">
-          <i [class]="cameraEnabled()
-            ? 'fa-solid fa-video'
-            : 'fa-solid fa-video-slash'"></i>
-          {{ cameraEnabled() ? 'إيقاف الكاميرا' : 'تشغيل الكاميرا' }}
-        </button>
-
-        <button type="button"
-                [disabled]="!connected()"
-                (click)="toggleScreenShare()">
-          <i class="fa-solid fa-desktop"></i>
-          {{ screenSharing()
-            ? 'إيقاف مشاركة الشاشة'
-            : 'مشاركة الشاشة' }}
-        </button>
-
-        <button type="button"
-                class="leave-btn"
-                (click)="leaveSession()">
-          <i class="fa-solid fa-right-from-bracket"></i>
-          مغادرة المحاضرة
-        </button>
-      </div>
     </main>
 
-    <aside class="participants-panel">
-      <h2>
-        <i class="fa-solid fa-users"></i>
-        المشاركون
-      </h2>
+    @if (showParticipants()) {
+      <aside class="participants-panel">
+        <h2>
+          <i class="fa-solid fa-users"></i>
+          المشاركون ({{ participantCount() }})
+        </h2>
 
-      <p>عدد المتصلين: {{ participantCount() }}</p>
+        @if (connected()) {
+          <div class="participant-item">
+            <span>
+              <i class="fa-solid fa-user-tie"></i>
+              أنتِ (المدرب)
+            </span>
+            <i
+              [class]="micEnabled()
+                ? 'fa-solid fa-microphone'
+                : 'fa-solid fa-microphone-slash'">
+            </i>
+          </div>
+        }
 
-      @if (connected()) {
-        <div class="participant-item">
-          <i class="fa-solid fa-user-tie"></i>
-          أنتِ (المدرب)
-        </div>
-      }
-
-      @for (participant of participants(); track participant.identity) {
-        <div class="participant-item">
-          <span>
-            <i class="fa-solid fa-user"></i>
-            {{ participant.name }}
-          </span>
-          <span>
-            <i [class]="participant.micEnabled
-              ? 'fa-solid fa-microphone'
-              : 'fa-solid fa-microphone-slash'"></i>
-          </span>
-        </div>
-      }
-    </aside>
+        @for (participant of participants(); track participant.identity) {
+          <div class="participant-item">
+            <span>
+              <i class="fa-solid fa-user"></i>
+              {{ participant.name }}
+            </span>
+            <i
+              [class]="participant.micEnabled
+                ? 'fa-solid fa-microphone'
+                : 'fa-solid fa-microphone-slash'">
+            </i>
+          </div>
+        } @empty {
+          <p class="empty-participants">
+            لا يوجد مشاركون آخرون حاليًا.
+          </p>
+        }
+      </aside>
+    }
   </div>
+
+  <section class="meeting-toolbar">
+    <div class="toolbar-heading">
+      <h2>
+        المحاضرة المباشرة
+        <i class="fa-solid fa-tower-broadcast"></i>
+      </h2>
+      <p>لوحة التحكم بالمحاضرة داخل نفاذ</p>
+    </div>
+
+    <div class="toolbar-grid">
+      <button
+        type="button"
+        class="tool-button"
+        [class.tool-active]="micEnabled()"
+        [disabled]="!connected()"
+        (click)="toggleMic()">
+        <i [class]="micEnabled()
+          ? 'fa-solid fa-microphone'
+          : 'fa-solid fa-microphone-slash'"></i>
+        <span>{{ micEnabled() ? 'إيقاف المايك' : 'المايك' }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tool-button"
+        [class.tool-active]="cameraEnabled()"
+        [disabled]="!connected()"
+        (click)="toggleCamera()">
+        <i [class]="cameraEnabled()
+          ? 'fa-solid fa-video'
+          : 'fa-solid fa-video-slash'"></i>
+        <span>{{ cameraEnabled() ? 'إيقاف الكاميرا' : 'الكاميرا' }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tool-button"
+        [class.tool-active]="screenSharing()"
+        [disabled]="!connected()"
+        (click)="toggleScreenShare()">
+        <i class="fa-solid fa-arrow-up-from-bracket"></i>
+        <span>
+          {{ screenSharing() ? 'إيقاف المشاركة' : 'مشاركة الشاشة' }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="tool-button"
+        [class.tool-active]="showParticipants()"
+        (click)="toggleParticipantsPanel()">
+        <i class="fa-solid fa-users"></i>
+        <span>المشاركون ({{ participantCount() }})</span>
+      </button>
+
+      <button
+        type="button"
+        class="tool-button"
+        disabled
+        title="تسجيل المحاضرة يحتاج ربطًا بخدمة التسجيل">
+        <i class="fa-regular fa-circle-dot"></i>
+        <span>التسجيل (غير متاح)</span>
+      </button>
+
+      <button
+        type="button"
+        class="tool-button"
+        [class.tool-active]="!speakerMuted()"
+        (click)="toggleSpeaker()">
+        <i [class]="speakerMuted()
+          ? 'fa-solid fa-volume-xmark'
+          : 'fa-solid fa-volume-high'"></i>
+        <span>
+          {{ speakerMuted() ? 'تشغيل الصوت' : 'التحكم بالصوت' }}
+        </span>
+      </button>
+    </div>
+
+    <button
+      type="button"
+      class="end-meeting-btn"
+      (click)="leaveSession()">
+      <i class="fa-solid fa-right-from-bracket"></i>
+      مغادرة المحاضرة
+    </button>
+  </section>
 
   <div #audioContainer class="audio-container"></div>
 </section>

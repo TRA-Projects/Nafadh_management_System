@@ -44,6 +44,8 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
   cameraEnabled = signal(false);
   participantCount = signal(0);
   screenSharing = signal(false);
+  showParticipants = signal(false);
+  speakerMuted = signal(false);
 
   participants = signal<{
     identity: string;
@@ -58,7 +60,7 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private api: TrainerApi
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.sessionId = Number(
@@ -100,6 +102,7 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
 
             if (!screenTrack) {
               this.screenSharing.set(false);
+              this.renderLocalScreenShare();
             }
           });
 
@@ -206,6 +209,10 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
     const element = track.attach();
     element.setAttribute('data-participant', identity);
 
+    if (element instanceof HTMLAudioElement) {
+      element.muted = this.speakerMuted();
+    }
+
     if (track.kind === Track.Kind.Video) {
       element.classList.add('participant-video');
     }
@@ -297,6 +304,7 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
         .setScreenShareEnabled(next);
 
       this.screenSharing.set(next);
+      this.renderLocalScreenShare();
     } catch (error) {
       console.error('Screen sharing failed:', error);
 
@@ -327,6 +335,48 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
     element.classList.add('participant-video');
 
     container.appendChild(element);
+  }
+
+
+  private renderLocalScreenShare(): void {
+    const container = this.videoContainer?.nativeElement;
+
+    if (!container || !this.room) return;
+
+    container
+      .querySelectorAll('[data-local-screen]')
+      .forEach(element => element.remove());
+
+    const publication = this.room.localParticipant
+      .getTrackPublication(Track.Source.ScreenShare);
+
+    const track = publication?.videoTrack;
+
+    if (!track || !this.screenSharing()) return;
+
+    const element = track.attach();
+
+    element.setAttribute('data-local-screen', 'true');
+    element.classList.add('participant-video');
+
+    container.appendChild(element);
+  }
+
+  toggleParticipantsPanel(): void {
+    this.showParticipants.update(value => !value);
+  }
+
+  toggleSpeaker(): void {
+    const muted = !this.speakerMuted();
+
+    this.speakerMuted.set(muted);
+
+    const audioElements =
+      this.audioContainer?.nativeElement.querySelectorAll('audio');
+
+    audioElements?.forEach(audio => {
+      audio.muted = muted;
+    });
   }
 
   async leaveSession(): Promise<void> {

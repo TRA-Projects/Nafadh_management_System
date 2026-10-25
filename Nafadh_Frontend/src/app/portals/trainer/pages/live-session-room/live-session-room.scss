@@ -1,9 +1,10 @@
 
 .live-room-page {
   min-height: 100vh;
-  padding: 28px;
+  padding: 24px;
   background: #f5f7fb;
   color: #172b4d;
+  direction: rtl;
 }
 
 .room-header {
@@ -11,7 +12,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 
   h1 {
     margin: 6px 0;
@@ -42,8 +43,13 @@
 
 .room-content {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
-  gap: 20px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  margin-bottom: 18px;
+
+  &:has(.participants-panel) {
+    grid-template-columns: minmax(0, 1fr) 260px;
+  }
 }
 
 .video-area {
@@ -54,7 +60,7 @@
 }
 
 .video-container {
-  min-height: 420px;
+  min-height: 380px;
   padding: 16px;
   display: flex;
   flex-wrap: wrap;
@@ -81,31 +87,100 @@
   }
 }
 
-.room-controls {
-  padding: 18px;
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  background: #1d304b;
+.meeting-toolbar {
+  background: #192842;
+  color: #fff;
+  padding: 20px 18px 18px;
+  border-radius: 24px;
+}
 
-  button {
-    border: none;
-    border-radius: 10px;
-    padding: 12px 16px;
-    cursor: pointer;
-    background: #e8eef6;
-    color: #172b4d;
+.toolbar-heading {
+  text-align: center;
+  margin-bottom: 18px;
 
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+  h2 {
+    margin: 0 0 8px;
+    font-size: 23px;
+    font-weight: 700;
+
+    i {
+      margin-inline-start: 8px;
+      font-size: 17px;
+      color: #12d987;
     }
   }
 
-  .leave-btn {
-    background: #c83745;
-    color: #fff;
+  p {
+    margin: 0;
+    color: #aebbd0;
+    font-size: 15px;
+  }
+}
+
+.toolbar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.tool-button {
+  min-height: 92px;
+  border: 1px solid transparent;
+  border-radius: 17px;
+  background: #2b3e5b;
+  color: #f3f6ff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font: inherit;
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  i {
+    font-size: 22px;
+  }
+
+  span {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  &:hover:not(:disabled) {
+    background: #365071;
+  }
+
+  &.tool-active {
+    border-color: #46c6a0;
+    background: #294d60;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.end-meeting-btn {
+  width: 100%;
+  min-height: 74px;
+  margin-top: 18px;
+  border: none;
+  border-radius: 17px;
+  background: #b92e48;
+  color: #fff;
+  font: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+
+  &:hover {
+    background: #a5253e;
   }
 }
 
@@ -125,10 +200,15 @@
   padding: 12px;
   background: #f1f5f9;
   border-radius: 10px;
-   display: flex;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.empty-participants {
+  color: #64748b;
+  font-size: 14px;
 }
 
 .room-error {
@@ -153,11 +233,38 @@
     padding: 14px;
   }
 
-  .room-content {
+  .room-content,
+  .room-content:has(.participants-panel) {
     grid-template-columns: 1fr;
   }
 
   .video-container {
     min-height: 280px;
+  }
+
+  .toolbar-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tool-button {
+    min-height: 85px;
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbar-grid {
+    gap: 8px;
+  }
+
+  .meeting-toolbar {
+    padding: 16px 12px;
+  }
+
+  .tool-button span {
+    font-size: 12px;
+  }
+
+  .end-meeting-btn {
+    font-size: 18px;
   }
 }
