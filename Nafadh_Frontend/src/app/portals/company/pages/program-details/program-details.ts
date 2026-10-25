@@ -1,5 +1,8 @@
+
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+
+
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 
@@ -7,6 +10,7 @@ import {
   CompanyProgramBatchDto,
   CompanyProgramDetailsDto,
   CompanyProgramModuleDto,
+
 } from '../../../../core/models/dtos';
 
 interface ProgramInfo {
@@ -42,6 +46,7 @@ interface TraineeRow {
   linkedInUrl?: string;
 }
 
+
 @Component({
   selector: 'app-company-program-details',
   templateUrl: './program-details.html',
@@ -56,6 +61,9 @@ export class CompanyProgramDetails implements OnInit {
   readonly loading = signal(true);
   readonly error = signal('');
 
+
+
+  // بيانات البرنامج والمتدربين
   readonly program = signal<ProgramInfo | null>(null);
   readonly modules = signal<CompanyProgramModuleDto[]>([]);
   readonly trainees = signal<TraineeRow[]>([]);
@@ -63,7 +71,7 @@ export class CompanyProgramDetails implements OnInit {
   readonly supervisorCount = signal(0);
   readonly averageProgress = signal(0);
 
-  // Search & Status Filter Signals
+  // البحث والتصفية
   readonly searchTerm = signal('');
   readonly selectedStatus = signal('all');
 
@@ -73,7 +81,9 @@ export class CompanyProgramDetails implements OnInit {
     const status = this.selectedStatus();
 
     return list.filter((row) => {
-      const matchesStatus = status === 'all' || row.status === status;
+      const matchesStatus =
+        status === 'all' || row.status === status;
+
       const matchesSearch =
         !query ||
         row.name.toLowerCase().includes(query) ||
@@ -91,12 +101,21 @@ export class CompanyProgramDetails implements OnInit {
     return this.program();
   }
 
+  // ============================================================
+  // تهيئة الصفحة
+  // ============================================================
+
   ngOnInit(): void {
-    const programId = Number(this.route.snapshot.paramMap.get('id'));
+    const programId = Number(
+      this.route.snapshot.paramMap.get('id')
+    );
+
     const companyId = this.companyId;
 
     if (!companyId) {
-      this.error.set('لا يمكن تحديد الشركة الحالية من جلسة الدخول.');
+      this.error.set(
+        'لا يمكن تحديد الشركة الحالية من جلسة الدخول.'
+      );
       this.loading.set(false);
       return;
     }
@@ -120,24 +139,32 @@ export class CompanyProgramDetails implements OnInit {
     this.loading.set(true);
     this.error.set('');
 
-    this.api.getCompanyProgramDetails(companyId, programId).subscribe({
-      next: (details) => {
-        this.applyDetails(details);
-      },
+    this.api
+      .getCompanyProgramDetails(companyId, programId)
+      .subscribe({
+        next: (details) => {
+          this.applyDetails(details);
+        },
 
-      error: (error) => {
-        console.error('Failed to load company program details:', error);
+        error: (error) => {
+          console.error(
+            'Failed to load company program details:',
+            error
+          );
 
-        this.program.set(null);
-        this.modules.set([]);
-        this.trainees.set([]);
-        this.supervisorCount.set(0);
-        this.averageProgress.set(0);
+          this.program.set(null);
+          this.modules.set([]);
+          this.trainees.set([]);
+          this.supervisorCount.set(0);
+          this.averageProgress.set(0);
 
-        this.error.set('تعذر تحميل تفاصيل البرنامج من قاعدة البيانات.');
-        this.loading.set(false);
-      },
-    });
+          this.error.set(
+            'تعذر تحميل تفاصيل البرنامج من قاعدة البيانات.'
+          );
+
+          this.loading.set(false);
+        },
+      });
   }
 
   goBack(): void {
@@ -154,20 +181,46 @@ export class CompanyProgramDetails implements OnInit {
   }
 
   // ============================================================
-  // Export (Excel + PDF) — real files built from the loaded data
+  // نتائج الاختبارات
+  // ============================================================
+
+  
+openQuizResults(): void {
+  const program = this.program();
+
+  if (!program) {
+    alert('تعذر تحديد البرنامج الحالي.');
+    return;
+  }
+
+  this.router.navigate([
+    '/company/specialties',
+    program.id,
+    'quiz-results',
+  ]);
+}
+
+
+
+  // ============================================================
+  // تصدير Excel وPDF
   // ============================================================
 
   readonly exporting = signal<'' | 'excel' | 'pdf'>('');
 
   private exportModel() {
     const p = this.p;
+
     if (!p) {
       return null;
     }
 
     const modules = this.modules();
+
     const titleOf = (id?: number | null) =>
-      id ? modules.find((m) => m.moduleId === id)?.title ?? '—' : '—';
+      id
+        ? modules.find((m) => m.moduleId === id)?.title ?? '—'
+        : '—';
 
     return {
       p,
@@ -175,31 +228,43 @@ export class CompanyProgramDetails implements OnInit {
       supervisors: this.supervisorCount(),
       averageProgress: this.averageProgress(),
       trainees: this.trainees(),
+
       modules: modules.map((m, index) => ({
         order: index + 1,
         title: m.title,
         prerequisite: titleOf(m.prerequisiteModuleId),
       })),
+
       batches: p.batches.map((b) => ({
         name: b.batchName,
         start: new Date(b.startDate),
         end: new Date(b.endDate),
         status: this.batchStatusLabel(b.status),
         capacity: Number(b.capacity ?? 0),
-        companyCount: Number(b.companyEnrollmentCount ?? 0),
+        companyCount: Number(
+          b.companyEnrollmentCount ?? 0
+        ),
       })),
     };
   }
 
-  private exportFileName(id: number, extension: 'xlsx' | 'pdf'): string {
+  private exportFileName(
+    id: number,
+    extension: 'xlsx' | 'pdf'
+  ): string {
     const d = new Date();
+
     const stamp =
-      `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+      `${d.getFullYear()}` +
+      `${String(d.getMonth() + 1).padStart(2, '0')}` +
+      `${String(d.getDate()).padStart(2, '0')}`;
+
     return `program-${id}-details-${stamp}.${extension}`;
   }
 
   async exportExcel(): Promise<void> {
     const m = this.exportModel();
+
     if (!m || this.exporting()) {
       return;
     }
@@ -220,7 +285,10 @@ export class CompanyProgramDetails implements OnInit {
         ['التصنيف', p.category],
         ['الأقسام', p.department],
         ['حالة البرنامج', this.programStatusLabel(p.status)],
-        ['الاعتماد للشركة', p.approved ? 'معتمد للشركة' : 'غير معتمد'],
+        [
+          'الاعتماد للشركة',
+          p.approved ? 'معتمد للشركة' : 'غير معتمد',
+        ],
         ['عدد الساعات التدريبية', p.durationHours],
         ['عدد المراحل', m.modules.length],
         ['عدد الدفعات', p.batchCount],
@@ -236,16 +304,44 @@ export class CompanyProgramDetails implements OnInit {
 
       const modulesSheet: (string | number)[][] = [
         ['الترتيب', 'المرحلة', 'تعتمد على'],
-        ...m.modules.map((x) => [x.order, x.title, x.prerequisite]),
+        ...m.modules.map((x) => [
+          x.order,
+          x.title,
+          x.prerequisite,
+        ]),
       ];
 
       const batchesSheet: (string | number | Date)[][] = [
-        ['الدفعة', 'تاريخ البدء', 'تاريخ الانتهاء', 'الحالة', 'السعة (مقعد)', 'متدربو شركتكم'],
-        ...m.batches.map((x) => [x.name, x.start, x.end, x.status, x.capacity, x.companyCount]),
+        [
+          'الدفعة',
+          'تاريخ البدء',
+          'تاريخ الانتهاء',
+          'الحالة',
+          'السعة (مقعد)',
+          'متدربو شركتكم',
+        ],
+        ...m.batches.map((x) => [
+          x.name,
+          x.start,
+          x.end,
+          x.status,
+          x.capacity,
+          x.companyCount,
+        ]),
       ];
 
       const traineesSheet: (string | number)[][] = [
-        ['#', 'المتدرب', 'القسم', 'الدفعة', 'المشرف', 'نسبة الإنجاز (%)', 'الحالة', 'GitHub', 'LinkedIn'],
+        [
+          '#',
+          'المتدرب',
+          'القسم',
+          'الدفعة',
+          'المشرف',
+          'نسبة الإنجاز (%)',
+          'الحالة',
+          'GitHub',
+          'LinkedIn',
+        ],
         ...m.trainees.map((t, i) => [
           i + 1,
           t.name,
@@ -261,13 +357,23 @@ export class CompanyProgramDetails implements OnInit {
 
       const book = XLSX.utils.book_new();
 
-      const add = (name: string, rows: unknown[][], widths: number[]) => {
-        const sheet = XLSX.utils.aoa_to_sheet(rows as never[][], { cellDates: true });
+      const add = (
+        name: string,
+        rows: unknown[][],
+        widths: number[]
+      ) => {
+        const sheet = XLSX.utils.aoa_to_sheet(
+          rows as never[][],
+          { cellDates: true }
+        );
+
         sheet['!cols'] = widths.map((wch) => ({ wch }));
 
-        // Show real dates (dd/mm/yyyy) instead of serial numbers.
         for (const address of Object.keys(sheet)) {
-          if (address[0] !== '!' && sheet[address].t === 'd') {
+          if (
+            address[0] !== '!' &&
+            sheet[address].t === 'd'
+          ) {
             sheet[address].z = 'dd/mm/yyyy';
           }
         }
@@ -278,9 +384,15 @@ export class CompanyProgramDetails implements OnInit {
       add('ملخص البرنامج', summary, [26, 70]);
       add('المراحل', modulesSheet, [10, 44, 36]);
       add('الدفعات', batchesSheet, [22, 16, 16, 14, 14, 16]);
-      add('المتدربون', traineesSheet, [6, 28, 22, 22, 26, 16, 14, 34, 34]);
+      add('المتدربون', traineesSheet, [
+        6, 28, 22, 22, 26, 16, 14, 34, 34,
+      ]);
 
-      XLSX.writeFile(book, this.exportFileName(p.id, 'xlsx'), { cellDates: true });
+      XLSX.writeFile(
+        book,
+        this.exportFileName(p.id, 'xlsx'),
+        { cellDates: true }
+      );
     } catch (error) {
       console.error('Excel export failed:', error);
       alert('تعذر إنشاء ملف Excel.');
@@ -291,6 +403,7 @@ export class CompanyProgramDetails implements OnInit {
 
   async exportPdf(): Promise<void> {
     const m = this.exportModel();
+
     if (!m || this.exporting()) {
       return;
     }
@@ -298,24 +411,50 @@ export class CompanyProgramDetails implements OnInit {
     this.exporting.set('pdf');
 
     const host = document.createElement('div');
+
     host.style.cssText =
-      'position:fixed;left:-10000px;top:0;width:794px;background:#fff;z-index:-1;';
+      'position:fixed;left:-10000px;top:0;width:794px;' +
+      'background:#fff;z-index:-1;';
+
     host.innerHTML = this.buildReportHtml(m);
     document.body.appendChild(host);
 
     try {
-      // Make sure the Arabic web font is ready before rasterising the report.
-      await (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts?.ready;
+      await (
+        document as Document & {
+          fonts?: { ready: Promise<unknown> };
+        }
+      ).fonts?.ready;
 
       const html2pdf = (await import('html2pdf.js')).default;
 
       const options = {
-        margin: [10, 8, 12, 8] as [number, number, number, number],
+        margin: [10, 8, 12, 8] as [
+          number,
+          number,
+          number,
+          number
+        ],
         filename: this.exportFileName(m.p.id, 'pdf'),
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
-        jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const },
-        pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.pdf-title', '.pdf-kpis'] },
+        image: {
+          type: 'jpeg' as const,
+          quality: 0.98,
+        },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+        },
+        jsPDF: {
+          unit: 'mm' as const,
+          format: 'a4' as const,
+          orientation: 'portrait' as const,
+        },
+        pagebreak: {
+          mode: ['css', 'legacy'],
+          avoid: ['tr', '.pdf-title', '.pdf-kpis'],
+        },
       };
 
       await html2pdf()
@@ -339,27 +478,51 @@ export class CompanyProgramDetails implements OnInit {
       .replace(/"/g, '&quot;');
   }
 
-  private buildReportHtml(m: NonNullable<ReturnType<CompanyProgramDetails['exportModel']>>): string {
+  private buildReportHtml(
+    m: NonNullable<ReturnType<CompanyProgramDetails['exportModel']>>
+  ): string {
     const e = (v: unknown) => this.esc(v);
     const { p } = m;
-    const date = (d: Date) => this.formatDate(d.toISOString());
 
-    const kpi = (label: string, value: string | number) =>
-      `<td class="kpi"><b>${e(value)}</b><span>${e(label)}</span></td>`;
+    const date = (d: Date) =>
+      this.formatDate(d.toISOString());
 
-    const table = (headers: string[], rows: string[][]) =>
-      `<table><thead><tr>${headers.map((h) => `<th>${e(h)}</th>`).join('')}</tr></thead>` +
-      `<tbody>${rows
-        .map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`)
-        .join('') || `<tr><td colspan="${headers.length}" class="empty">لا توجد بيانات.</td></tr>`}</tbody></table>`;
+    const kpi = (
+      label: string,
+      value: string | number
+    ) =>
+      `<td class="kpi"><b>${e(value)}</b>` +
+      `<span>${e(label)}</span></td>`;
 
-    const ltr = (v: string) => `<bdi dir="ltr">${e(v)}</bdi>`;
+    const table = (
+      headers: string[],
+      rows: string[][]
+    ) =>
+      `<table><thead><tr>` +
+      `${headers.map((h) => `<th>${e(h)}</th>`).join('')}` +
+      `</tr></thead><tbody>` +
+      `${
+        rows
+          .map(
+            (r) =>
+              `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`
+          )
+          .join('') ||
+        `<tr><td colspan="${headers.length}" class="empty">لا توجد بيانات.</td></tr>`
+      }` +
+      `</tbody></table>`;
+
+    const ltr = (v: string) =>
+      `<bdi dir="ltr">${e(v)}</bdi>`;
 
     const info = [
       ['التصنيف', p.category],
       ['الأقسام', p.department],
       ['حالة البرنامج', this.programStatusLabel(p.status)],
-      ['الاعتماد للشركة', p.approved ? 'معتمد للشركة' : 'غير معتمد'],
+      [
+        'الاعتماد للشركة',
+        p.approved ? 'معتمد للشركة' : 'غير معتمد',
+      ],
       ['الساعات التدريبية', `${p.durationHours} ساعة`],
       ['عدد المشرفين', String(m.supervisors)],
     ];
@@ -403,29 +566,72 @@ export class CompanyProgramDetails implements OnInit {
   </tr></tbody></table>
 
   <div class="pdf-title">بيانات البرنامج</div>
-  <table class="kv"><tbody>${info.map(([k, v]) => `<tr><td>${e(k)}</td><td>${e(v)}</td></tr>`).join('')}</tbody></table>
+  <table class="kv"><tbody>
+    ${info
+      .map(
+        ([k, v]) =>
+          `<tr><td>${e(k)}</td><td>${e(v)}</td></tr>`
+      )
+      .join('')}
+  </tbody></table>
 
   <div class="pdf-title">الطاقة الاستيعابية</div>
   ${table(
-    ['إجمالي المقاعد', 'المقاعد المشغولة', 'المقاعد المتاحة', 'نسبة الإشغال'],
-    [[String(p.capacity), String(p.occupied), String(p.available), `${this.formatPercent(p.percent)}%`]]
+    [
+      'إجمالي المقاعد',
+      'المقاعد المشغولة',
+      'المقاعد المتاحة',
+      'نسبة الإشغال',
+    ],
+    [[
+      String(p.capacity),
+      String(p.occupied),
+      String(p.available),
+      `${this.formatPercent(p.percent)}%`,
+    ]]
   )}
 
   <div class="pdf-title">مراحل الخطة التدريبية (${m.modules.length})</div>
   ${table(
     ['#', 'المرحلة', 'تعتمد على'],
-    m.modules.map((x) => [String(x.order), e(x.title), e(x.prerequisite)])
+    m.modules.map((x) => [
+      String(x.order),
+      e(x.title),
+      e(x.prerequisite),
+    ])
   )}
 
   <div class="pdf-title">الدفعات التدريبية (${m.batches.length})</div>
   ${table(
-    ['الدفعة', 'تاريخ البدء', 'تاريخ الانتهاء', 'الحالة', 'السعة', 'متدربو شركتكم'],
-    m.batches.map((x) => [e(x.name), ltr(date(x.start)), ltr(date(x.end)), e(x.status), String(x.capacity), String(x.companyCount)])
+    [
+      'الدفعة',
+      'تاريخ البدء',
+      'تاريخ الانتهاء',
+      'الحالة',
+      'السعة',
+      'متدربو شركتكم',
+    ],
+    m.batches.map((x) => [
+      e(x.name),
+      ltr(date(x.start)),
+      ltr(date(x.end)),
+      e(x.status),
+      String(x.capacity),
+      String(x.companyCount),
+    ])
   )}
 
   <div class="pdf-title">المتدربون المسجلون (${m.trainees.length})</div>
   ${table(
-    ['#', 'المتدرب', 'القسم', 'الدفعة', 'المشرف', 'الإنجاز', 'الحالة'],
+    [
+      '#',
+      'المتدرب',
+      'القسم',
+      'الدفعة',
+      'المشرف',
+      'الإنجاز',
+      'الحالة',
+    ],
     m.trainees.map((t, i) => [
       String(i + 1),
       e(t.name),
@@ -437,25 +643,43 @@ export class CompanyProgramDetails implements OnInit {
     ])
   )}
 
-  <div class="foot">صدر من بوابة نفاذ – الشركة المستضيفة · ${e(date(m.exportedAt))}</div>
+  <div class="foot">
+    صدر من بوابة نفاذ – الشركة المستضيفة · ${e(date(m.exportedAt))}
+  </div>
 </div>`;
   }
 
-  private applyDetails(details: CompanyProgramDetailsDto): void {
-    const durationHours = Number(details.durationHours ?? 0);
-    // Seats of the open batches (shared capacity vs every company's trainees);
-    // falls back to the older fields when talking to an older backend.
+  // ============================================================
+  // معالجة تفاصيل البرنامج القادمة من API
+  // ============================================================
+
+  private applyDetails(
+    details: CompanyProgramDetailsDto
+  ): void {
+    const durationHours = Number(
+      details.durationHours ?? 0
+    );
+
     const hasOpenSeats =
-      details.openSeatCapacity !== undefined && details.openSeatCapacity !== null;
+      details.openSeatCapacity !== undefined &&
+      details.openSeatCapacity !== null;
 
     const capacity = Number(
-      hasOpenSeats ? details.openSeatCapacity : details.allocatedCapacity ?? 0
+      hasOpenSeats
+        ? details.openSeatCapacity
+        : details.allocatedCapacity ?? 0
     );
+
     const occupied = Number(
-      hasOpenSeats ? details.openSeatOccupied ?? 0 : details.usedCapacity ?? 0
+      hasOpenSeats
+        ? details.openSeatOccupied ?? 0
+        : details.usedCapacity ?? 0
     );
+
     const available = Number(
-      hasOpenSeats ? details.openSeatRemaining ?? 0 : details.remainingCapacity ?? 0
+      hasOpenSeats
+        ? details.openSeatRemaining ?? 0
+        : details.remainingCapacity ?? 0
     );
 
     const utilizationPercentage = this.clamp(
@@ -471,7 +695,9 @@ export class CompanyProgramDetails implements OnInit {
     this.program.set({
       id: details.programId,
       title: details.title?.trim() || 'برنامج تدريبي',
-      description: details.description?.trim() || 'لا يوجد وصف للبرنامج.',
+      description:
+        details.description?.trim() ||
+        'لا يوجد وصف للبرنامج.',
       category: details.category?.trim() || 'غير محدد',
       department: details.departments?.length
         ? details.departments.join('، ')
@@ -485,30 +711,45 @@ export class CompanyProgramDetails implements OnInit {
       approved: Boolean(details.approvedForCompany),
       batchCount: Number(details.batchCount ?? 0),
       enrollmentCount: Number(details.enrollmentCount ?? 0),
-      currentTraineeCount: Number(details.currentTraineeCount ?? 0),
+      currentTraineeCount: Number(
+        details.currentTraineeCount ?? 0
+      ),
       color,
       batches: details.batches ?? [],
     });
 
     this.modules.set(details.modules ?? []);
 
-    const rows: TraineeRow[] = (details.enrollments ?? []).map(
-      (enrollment) => ({
-        enrollmentId: enrollment.enrollmentId,
-        traineeId: enrollment.traineeId,
-        name: enrollment.traineeName?.trim() || 'متدرب بدون اسم',
-        cohort: enrollment.batchName?.trim() || 'غير محدد',
-        department: enrollment.departmentName?.trim() || 'غير محدد',
-        supervisor: enrollment.supervisorName?.trim() || 'غير محدد',
-        status: this.statusLabel(enrollment.completionStatus),
-        progress: this.clamp(Number(enrollment.progressPercentage ?? 0)),
-        gitHubUrl: enrollment.traineeGitHubUrl,
-        linkedInUrl: enrollment.traineeLinkedInUrl,
-      })
-    );
+    const rows: TraineeRow[] = (
+      details.enrollments ?? []
+    ).map((enrollment) => ({
+      enrollmentId: enrollment.enrollmentId,
+      traineeId: enrollment.traineeId,
+      name:
+        enrollment.traineeName?.trim() ||
+        'متدرب بدون اسم',
+      cohort:
+        enrollment.batchName?.trim() || 'غير محدد',
+      department:
+        enrollment.departmentName?.trim() || 'غير محدد',
+      supervisor:
+        enrollment.supervisorName?.trim() || 'غير محدد',
+      status: this.statusLabel(
+        enrollment.completionStatus
+      ),
+      progress: this.clamp(
+        Number(enrollment.progressPercentage ?? 0)
+      ),
+      gitHubUrl: enrollment.traineeGitHubUrl,
+      linkedInUrl: enrollment.traineeLinkedInUrl,
+    }));
 
     this.finishRows(rows);
   }
+
+  // ============================================================
+  // أدوات العرض والتنسيق
+  // ============================================================
 
   utilizationRing(): string {
     const value = this.clamp(this.p?.percent ?? 0);
@@ -521,7 +762,9 @@ export class CompanyProgramDetails implements OnInit {
   }
 
   formatPercent(value: number): string {
-    return Math.round(this.clamp(Number(value ?? 0))).toString();
+    return Math.round(
+      this.clamp(Number(value ?? 0))
+    ).toString();
   }
 
   initials(name: string): string {
@@ -541,7 +784,10 @@ export class CompanyProgramDetails implements OnInit {
   statusClass(value: string): string {
     const status = String(value ?? '').toLowerCase();
 
-    if (status.includes('complete') || status.includes('مكتمل')) {
+    if (
+      status.includes('complete') ||
+      status.includes('مكتمل')
+    ) {
       return 'done';
     }
 
@@ -554,7 +800,10 @@ export class CompanyProgramDetails implements OnInit {
       return 'stopped';
     }
 
-    if (status.includes('fail') || status.includes('متعثر')) {
+    if (
+      status.includes('fail') ||
+      status.includes('متعثر')
+    ) {
       return 'failed';
     }
 
@@ -603,6 +852,10 @@ export class CompanyProgramDetails implements OnInit {
     return date.toLocaleDateString('en-GB');
   }
 
+  // ============================================================
+  // روابط GitHub وLinkedIn
+  // ============================================================
+
   githubUrl(url?: string): string | null {
     return this.socialUrl(url, 'github.com');
   }
@@ -620,18 +873,27 @@ export class CompanyProgramDetails implements OnInit {
     }
 
     const value = url.trim();
-    const normalized = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+
+    const normalized =
+      /^https?:\/\//i.test(value)
+        ? value
+        : `https://${value}`;
 
     try {
       const parsed = new URL(normalized);
 
-      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      if (
+        parsed.protocol !== 'http:' &&
+        parsed.protocol !== 'https:'
+      ) {
         return null;
       }
 
       const host = parsed.hostname.toLowerCase();
+
       const validHost =
-        host === allowedDomain || host.endsWith(`.${allowedDomain}`);
+        host === allowedDomain ||
+        host.endsWith(`.${allowedDomain}`);
 
       return validHost ? parsed.toString() : null;
     } catch {
@@ -639,19 +901,31 @@ export class CompanyProgramDetails implements OnInit {
     }
   }
 
+  // ============================================================
+  // حساب الإحصائيات
+  // ============================================================
+
   private finishRows(rows: TraineeRow[]): void {
     this.trainees.set(rows);
 
     const supervisors = new Set(
       rows
         .map((row) => row.supervisor)
-        .filter((value) => !!value && value !== '—' && value !== 'غير محدد')
+        .filter(
+          (value) =>
+            !!value &&
+            value !== '—' &&
+            value !== 'غير محدد'
+        )
     );
 
     this.supervisorCount.set(supervisors.size);
 
     const average = rows.length
-      ? rows.reduce((sum, row) => sum + row.progress, 0) / rows.length
+      ? rows.reduce(
+          (sum, row) => sum + row.progress,
+          0
+        ) / rows.length
       : 0;
 
     this.averageProgress.set(Math.round(average));
@@ -669,7 +943,10 @@ export class CompanyProgramDetails implements OnInit {
   private statusLabel(value: unknown): string {
     const status = String(value ?? '').toLowerCase();
 
-    if (status.includes('complete') || status.includes('مكتمل')) {
+    if (
+      status.includes('complete') ||
+      status.includes('مكتمل')
+    ) {
       return 'مكتمل';
     }
 
@@ -682,7 +959,10 @@ export class CompanyProgramDetails implements OnInit {
       return 'متوقف';
     }
 
-    if (status.includes('fail') || status.includes('متعثر')) {
+    if (
+      status.includes('fail') ||
+      status.includes('متعثر')
+    ) {
       return 'متعثر';
     }
 

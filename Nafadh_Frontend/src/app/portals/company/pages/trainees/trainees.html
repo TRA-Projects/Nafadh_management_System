@@ -14,9 +14,9 @@
   </header>
 
   <div class="trainee-overview" role="group" aria-label="ملخص المتدربين">
-    <div class="overview-card"><span class="overview-icon">◉</span><span class="overview-label">إجمالي المتدربين</span><strong>{{ trainees.length }}</strong><small>جميع المتدربين المسجلين</small></div>
-    <div class="overview-card"><span class="overview-icon">✓</span><span class="overview-label">المتدربون النشطون</span><strong>{{ activeCount }}</strong><small>قيد التدريب</small></div>
-    <div class="overview-card"><span class="overview-icon">!</span><span class="overview-label">يحتاجون متابعة</span><strong>{{ riskCount }}</strong><small>حالات التعثر</small></div>
+    <div class="overview-card"><span class="overview-icon">◉</span><span class="overview-label">إجمالي المتدربين</span><strong>{{ loading ? "—" : trainees.length }}</strong><small>جميع المتدربين المسجلين</small></div>
+    <div class="overview-card"><span class="overview-icon">✓</span><span class="overview-label">المتدربون النشطون</span><strong>{{ loading ? "—" : activeCount }}</strong><small>قيد التدريب</small></div>
+    <div class="overview-card"><span class="overview-icon">!</span><span class="overview-label">يحتاجون متابعة</span><strong>{{ loading ? "—" : riskCount }}</strong><small>حالات التعثر</small></div>
     <div class="overview-card"><span class="overview-icon">▥</span><span class="overview-label">متوسط الحضور</span><strong>{{ averageAttendance === null ? "—" : averageAttendance + "%" }}</strong><small>للمتدربين ذوي سجلات الحضور</small></div>
   </div>
 
@@ -25,7 +25,7 @@
 
     <div class="filter-field search-field">
       <label for="traineeSearch">بحث عن متدرب</label>
-      <input id="traineeSearch" type="text" placeholder="بحث بالاسم أو الرقم أو المشرف…" [(ngModel)]="search" (ngModelChange)="resetPage()" />
+      <input id="traineeSearch" type="text" placeholder="بحث بالاسم أو رقم التسجيل أو المشرف…" [(ngModel)]="search" (ngModelChange)="resetPage()" />
     </div>
 
     <div class="filter-field">
@@ -89,7 +89,7 @@
 
   </div>
 
-  @if (loading) { <p class="load-message" role="status">جارٍ تحميل بيانات المتدربين...</p> }
+  @if (loading) { <p class="sr-only" role="status">جارٍ تحميل بيانات المتدربين...</p> }
   @if (error) { <div class="load-message error-message" role="alert">{{ error }} <button type="button" class="btn outline" (click)="load()">إعادة المحاولة</button></div> }
 
   <!-- جدول المتدربين -->
@@ -111,14 +111,19 @@
       </thead>
 
       <tbody>
+        @if (loading) {
+        @for (i of skeletonRows; track i) {
+        <tr class="skeleton-row" aria-hidden="true"><td colspan="9"><span class="skeleton-bar"></span></td></tr>
+        }
+        } @else {
         @for (t of paginatedTrainees; track t.enrollmentId) {
         <tr>
           <td data-label="المتدرب" class="name-cell">
             <div class="user">
-              <span class="avatar">@if (t.profileImageUrl) { <img [src]="t.profileImageUrl" alt="" class="trainee-photo" (error)="$any($event.target).style.display='none'" /> } {{ initials(t.name) }}</span>
+              <span class="avatar">@if (t.profileImageUrl) { <img [src]="t.profileImageUrl" alt="" class="trainee-photo" loading="lazy" decoding="async" (error)="$any($event.target).style.display='none'" /> } {{ initials(t.name) }}</span>
               <div>
                 <b>{{ t.name }}</b>
-                <small>#{{ t.id.toString().padStart(4, '0') }}</small>
+                <small>#{{ padId(t.enrollmentId) }}</small>
               </div>
             </div>
           </td>
@@ -138,8 +143,8 @@
             </span>
           </td>
 
-          <td data-label="تاريخ المباشرة" class="date-cell">{{ t.start || "—" }}</td>
-          <td data-label="تاريخ الانتهاء" class="date-cell">{{ t.end && t.end !== "—" ? t.end : "—" }}</td>
+          <td data-label="تاريخ المباشرة" class="date-cell">{{ formatDate(t.start) }}</td>
+          <td data-label="تاريخ الانتهاء" class="date-cell">{{ formatDate(t.end) }}</td>
 
           <td data-label="إجراءات" class="action-cell">
             <div class="actions table-actions">
@@ -183,6 +188,7 @@
             جرّبي تعديل التواريخ أو مسح التصفية.
           </td>
         </tr>
+        }
         }
       </tbody>
     </table>
