@@ -14,6 +14,12 @@ export const COMPANY_ROUTES: Routes = [
       { path: 'trainees/:id/progress', loadComponent: () => import('./pages/trainee-progress/trainee-progress').then((m) => m.CompanyTraineeProgress) },
       { path: 'specialties', loadComponent: () => import('./pages/specialties/specialties').then((m) => m.CompanySpecialties) },
       { path: 'specialties/:id', loadComponent: () => import('./pages/program-details/program-details').then((m) => m.CompanyProgramDetails) },
+{
+  path: 'specialties/:id/quiz-results',
+  loadComponent: () =>
+    import('./pages/quiz-results/quiz-results')
+      .then((m) => m.CompanyQuizResults),
+},
       { path: 'tasks', loadComponent: () => import('./pages/tasks/tasks').then((m) => m.CompanyTasks) },
       { path: 'tasks/:id', loadComponent: () => import('./pages/tasks/plan-workspace').then((m) => m.CompanyPlanWorkspace) },
       { path: 'profile', loadComponent: () => import('./pages/profile/profile').then((m) => m.CompanyProfile) },
@@ -22,12 +28,7 @@ export const COMPANY_ROUTES: Routes = [
       { path: 'reports', loadComponent: () => import('./pages/reports/reports').then((m) => m.ReportsComponent) },
       { path: 'contact', loadComponent: () => import('./pages/contact/contact').then((m) => m.CompanyContact) },
       { path: 'notifications', loadComponent: () => import('./pages/notifications/notifications').then((m) => m.CompanyNotifications) },
-    {
-  path: 'warnings',
-  loadComponent: () =>
-    import('./pages/warnings/warnings')
-      .then((m) => m.WarningsComponent)
-},
+      { path: 'warnings',loadComponent: () => import('./pages/warnings/warnings') .then((m) => m.WarningsComponent) },
     ],
   },
 ];
