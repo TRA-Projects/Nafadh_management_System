@@ -236,6 +236,8 @@ namespace Nafadh_Backend
 
             builder.Services.AddScoped<IQuizAccessService, QuizAccessService>();
             builder.Services.AddScoped<IQuizProctoringService, QuizProctoringService>();
+            // Trainer Portal - LiveKit automatic attendance tracking.
+            builder.Services.AddScoped<SessionAttendanceTrackingService>();
             builder.Services.AddHostedService<ProctoringCleanupService>();
 
             builder.Services.AddScoped<ITraineeEvaluationRepository, TraineeEvaluationRepository>();

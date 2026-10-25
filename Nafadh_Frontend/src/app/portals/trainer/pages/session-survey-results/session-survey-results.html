@@ -1,0 +1,63 @@
+<main class="survey-page" dir="rtl">
+  <header class="page-header">
+    <p class="eyebrow">تقييم المحاضرة</p>
+    <h1>نتائج تقييم الجلسة</h1>
+
+    @if (report(); as data) {
+      <p class="subtitle">
+        {{ data.question }} — الجلسة رقم {{ data.sessionId }}
+      </p>
+    }
+  </header>
+
+  @if (loading()) {
+    <p class="message">جارٍ تحميل نتائج التقييم...</p>
+  } @else if (errorMessage()) {
+    <p class="message error" role="alert">{{ errorMessage() }}</p>
+  } @else if (report(); as data) {
+    <section class="summary-grid">
+      <article class="summary-card rating-card">
+        <span>متوسط التقييم</span>
+
+        @if (data.averageRating !== null) {
+          <strong>{{ data.averageRating }} / 5</strong>
+        } @else {
+          <strong>لا توجد تقييمات</strong>
+        }
+      </article>
+
+      <article class="summary-card">
+        <span>عدد الردود</span>
+        <strong>{{ data.responseCount }} من {{ data.enrolledCount }}</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>نسبة المشاركة</span>
+        <strong>{{ data.responseRatePercent }}%</strong>
+      </article>
+    </section>
+
+    <section class="comments-card">
+      <h2>تقييمات وتعليقات المتدربين</h2>
+
+      @for (response of data.responses; track response.submittedAtUtc) {
+        <article class="response">
+          <div class="response-heading">
+            <strong>المتدرب رقم {{ response.traineeId }}</strong>
+            <span>التقييم: {{ response.rating }} / 5</span>
+          </div>
+
+          <p class="comment">
+            {{ response.comment || 'لم يترك المتدرب تعليقًا.' }}
+          </p>
+
+          <time [attr.datetime]="response.submittedAtUtc">
+            {{ response.submittedAtUtc | date: 'medium' }}
+          </time>
+        </article>
+      } @empty {
+        <p class="empty-state">لا توجد ردود على تقييم هذه الجلسة حتى الآن.</p>
+      }
+    </section>
+  }
+</main>
