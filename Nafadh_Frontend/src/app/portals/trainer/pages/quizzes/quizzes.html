@@ -105,6 +105,22 @@
         المسودات
       </option>
 
+      <option value="scheduled">
+        المجدولة
+      </option>
+
+      <option value="open">
+        المفتوحة
+      </option>
+
+      <option value="closed">
+        المغلقة
+      </option>
+
+      <option value="archived">
+        المؤرشفة
+      </option>
+
     </select>
 
 
@@ -394,7 +410,56 @@
         </span>
 
       </div>
+      <!-- STATUS SUMMARY -->
 
+      <div class="quiz-status-summary">
+
+        @if (getStatusNumber(quiz.status) === 0) {
+
+        <span class="status-summary draft-summary">
+          <i class="fa-solid fa-file-pen"></i>
+          الاختبار محفوظ كمسودة ويمكن تعديله
+        </span>
+
+        }
+
+        @else if (getStatusNumber(quiz.status) === 1) {
+
+        <span class="status-summary scheduled-summary">
+          <i class="fa-solid fa-calendar-days"></i>
+          الاختبار مجدول وسيبدأ في موعده
+        </span>
+
+        }
+
+        @else if (getStatusNumber(quiz.status) === 2) {
+
+        <span class="status-summary open-summary">
+          <i class="fa-solid fa-circle-play"></i>
+          الاختبار مفتوح حاليًا للمتدربين
+        </span>
+
+        }
+
+        @else if (getStatusNumber(quiz.status) === 3) {
+
+        <span class="status-summary closed-summary">
+          <i class="fa-solid fa-lock"></i>
+          الاختبار مغلق ويمكن مراجعة نتائجه
+        </span>
+
+        }
+
+        @else if (getStatusNumber(quiz.status) === 4) {
+
+        <span class="status-summary archived-summary">
+          <i class="fa-solid fa-box-archive"></i>
+          الاختبار مؤرشف
+        </span>
+
+        }
+
+      </div>
 
       <!-- ================================================= -->
       <!-- QUIZ ACTIONS -->
@@ -403,12 +468,16 @@
 
       <div class="quiz-actions">
 
+        @if (canManageQuestions(quiz.status)) {
+
         <button type="button" class="questions-btn" (click)="openQuestionBank(quiz)">
 
           <i class="fa-solid fa-list-check"></i>
           إدارة الأسئلة
 
         </button>
+
+        }
 
         <button type="button" class="btn-results" (click)="openQuizResults(quiz.quizId)">
 
@@ -417,12 +486,16 @@
 
         </button>
 
+        @if (canEditQuiz(quiz.status)) {
+
         <button type="button" class="edit-btn" (click)="openEditForm(quiz)">
 
           <i class="fa-regular fa-pen-to-square"></i>
           تعديل الاختبار
 
         </button>
+
+        }
 
       </div>
 
@@ -816,6 +889,7 @@
             بنك الأسئلة
           </span>
 
+
           <h2 id="question-bank-title">
 
             {{
@@ -824,6 +898,17 @@
             }}
 
           </h2>
+
+
+          <div class="quiz-summary">
+            @if (quizQuestionsLoading()) {
+            <p>جاري حساب درجات الاختبار...</p>
+            } @else {
+            <p>عدد الأسئلة: {{ quizQuestions().length }}</p>
+            <p>مجموع الدرجات: {{ quizTotalPoints() }}</p>
+            }
+          </div>
+
 
           <p class="question-bank-subtitle">
 

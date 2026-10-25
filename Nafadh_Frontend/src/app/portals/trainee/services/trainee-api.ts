@@ -1036,4 +1036,18 @@ getSessionsByBatch(
     );
   }
 
+
+// ابحث عن هذه الدالة في trainee-api.ts وعدلها لتصبح هكذا:
+uploadTraineeProfileImage(traineeId: number, file: File): Observable<any> {
+  const formData = new FormData();
+  
+  // ملاحظة مهمة: الـ Backend يتوقع اسم الحقل "File" (بحرف كبير) بناءً على DTO
+  formData.append('File', file); 
+
+  // المسار الصحيح حسب كود الـ Backend
+  return this.http.post<any>(
+    `${this.base}/Trainee/${traineeId}/profile-image`, 
+    formData
+  );
+}
 }

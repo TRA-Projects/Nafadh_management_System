@@ -683,11 +683,14 @@
           } @else {
             @for (ann of displayAnnouncements(); track ann.announcementId) {
               <div
+                (click)="openAnnouncementPopup(ann)"
+                [style.opacity]="isAnnouncementRead(ann.announcementId) ? 0.6 : 1"
+                [style.background-color]="isAnnouncementRead(ann.announcementId) ? '#f1f5f9' : '#f8fafc'"
+                [style.border-right-color]="isAnnouncementRead(ann.announcementId) ? '#cbd5e1' : '#3b82f6'"
                 style="
                   position: relative;
                   padding: 12px 14px;
                   border-radius: 10px;
-                  background-color: #f8fafc;
                   border: 1px solid #e2e8f0;
                   border-right: 4px solid #3b82f6;
                   display: flex;
@@ -696,8 +699,23 @@
                   gap: 12px;
                   text-align: right;
                   transition: all 0.2s ease;
+                  cursor: pointer;
                 "
               >
+                @if (!isAnnouncementRead(ann.announcementId)) {
+                  <span
+                    style="
+                      position: absolute;
+                      top: 8px;
+                      left: 8px;
+                      width: 10px;
+                      height: 10px;
+                      background: #ef4444;
+                      border-radius: 50%;
+                      box-shadow: 0 0 0 2px #ffffff;
+                    "
+                  ></span>
+                }
                 <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
                   <span style="font-size: 20px; flex-shrink: 0;"><i class="fas fa-bell"></i></span>
                   <div style="min-width: 0; flex: 1;">
@@ -714,7 +732,7 @@
                         إعلان رسمي - ({{ ann.source }})
                       </span>
                       <button
-                        (click)="openAnnouncementPopup(ann)"
+                        (click)="$event.stopPropagation(); openAnnouncementPopup(ann)"
                         style="
                           background: #eff6ff;
                           color: #2563eb;

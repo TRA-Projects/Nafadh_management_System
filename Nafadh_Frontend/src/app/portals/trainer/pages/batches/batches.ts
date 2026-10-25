@@ -894,6 +894,78 @@ getBatchDurationInMonths(
 
   }
 
+  // =====================================================
+  // REMAINING TIME LABEL (الوقت المتبقي بالأشهر والأيام)
+  // =====================================================
+// =====================================================
+  // REMAINING TIME LABEL (الوقت المتبقي بالأشهر والأيام)
+  // =====================================================
+  getRemainingTimeLabel(batch: TrainerBatchDto): string {
+    if (!batch.startDate || !batch.endDate) {
+      return 'غير محدد';
+    }
+
+    if (batch.status === 'Completed') {
+      return 'انتهت الدفعة';
+    }
+
+    if (batch.status === 'Cancelled') {
+      return 'ملغاة';
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const startDate = new Date(batch.startDate);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(batch.endDate);
+    endDate.setHours(0, 0, 0, 0);
+
+    // 1. الدفعة قادمة ولم تبدأ بعد -> نحسب الوقت المتبقي لتبدأ
+    if (batch.status === 'Upcoming' || today < startDate) {
+      const diffTime = startDate.getTime() - today.getTime();
+      const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (totalDays <= 0) {
+        return 'تبدأ اليوم';
+      }
+
+      const months = Math.floor(totalDays / 30);
+      const days = totalDays % 30;
+
+      if (months > 0 && days > 0) {
+        return `تبدأ بعد: ${months} ${months === 1 ? 'شهر' : 'أشهر'} و${days} ${days === 1 ? 'يوم' : 'أيام'}`;
+      } else if (months > 0) {
+        return `تبدأ بعد: ${months} ${months === 1 ? 'شهر' : 'أشهر'}`;
+      } else {
+        return `تبدأ بعد: ${days} ${days === 1 ? 'يوم' : 'أيام'}`;
+      }
+    }
+
+    // 2. الدفعة جارية حالياً -> نحسب الوقت المتبقي لتنتهي
+    if (today >= endDate) {
+      return 'انتهت الدفعة';
+    }
+
+    const diffTime = endDate.getTime() - today.getTime();
+    const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (totalDays <= 0) {
+      return 'تنتهي اليوم';
+    }
+
+    const months = Math.floor(totalDays / 30);
+    const days = totalDays % 30;
+
+    if (months > 0 && days > 0) {
+      return `متبقي: ${months} ${months === 1 ? 'شهر' : 'أشهر'} و${days} ${days === 1 ? 'يوم' : 'أيام'}`;
+    } else if (months > 0) {
+      return `متبقي: ${months} ${months === 1 ? 'شهر' : 'أشهر'}`;
+    } else {
+      return `متبقي: ${days} ${days === 1 ? 'يوم' : 'أيام'}`;
+    }
+  }
 
   // =====================================================
   // SELECT BATCH
@@ -977,7 +1049,20 @@ getBatchDurationInMonths(
 
   }
 
+// =====================================================
+  // CHECK CONTENT & TIME MISMATCH (تحذير توافق المحتوى مع الأيام)
+  // =====================================================
+  hasProgressMismatch(batch: TrainerBatchDto): boolean {
+    const contentProg = this.contentProgress()[batch.batchId] ?? 0;
+    const timeProg = this.getTimeProgress(batch);
 
+    // إذا خلص المحتوى أكثر من 75%، بينما التقدم الزمني للأيام لم يتجاوز 30% مثلاً
+    if (contentProg >= 75 && timeProg < 30) {
+      return true; // يوجد تناقض (المحتوى خلص مبكراً جداً)
+    }
+
+    return false;
+  }
   // =====================================================
   // BATCH IMAGE
   // =====================================================

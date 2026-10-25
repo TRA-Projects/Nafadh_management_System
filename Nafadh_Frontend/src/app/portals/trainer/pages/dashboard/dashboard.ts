@@ -1,9 +1,11 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   computed,
   signal
 } from '@angular/core';
+
 
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -36,7 +38,7 @@ import {
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
-export class TrainerDashboard implements OnInit {
+export class TrainerDashboard implements OnInit, OnDestroy {
 
   // =====================================================
   // STATE
@@ -50,6 +52,10 @@ export class TrainerDashboard implements OnInit {
 
   sessions =
     signal<SessionDto[]>([]);
+    currentTime = signal(Date.now());
+
+private reminderTimer: ReturnType<typeof setInterval> | null = null;
+
 
   traineeCount =
     signal(0);
@@ -510,6 +516,28 @@ sessionForm = {
           this.getSessionDateTime(b)
       );
   });
+    sessionsStartingSoon = computed(() => {
+    const now = this.currentTime();
+    const tenMinutesInMilliseconds = 10 * 60 * 1000;
+
+    return this.sessions()
+      .filter((session) => {
+        const status = String(session.status).toLowerCase();
+        const sessionStartTime = this.getSessionDateTime(session);
+
+        return (
+          (status === 'scheduled' || status === 'postponed') &&
+          sessionStartTime > now &&
+          sessionStartTime <= now + tenMinutesInMilliseconds
+        );
+      })
+      .sort(
+        (a, b) =>
+          this.getSessionDateTime(a) -
+          this.getSessionDateTime(b)
+      );
+  });
+
 
 
   // =====================================================
@@ -593,9 +621,18 @@ sessionForm = {
   // =====================================================
 
   ngOnInit(): void {
-
     this.loadCurrentTrainer();
 
+    this.reminderTimer = setInterval(() => {
+      this.currentTime.set(Date.now());
+    }, 15_000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.reminderTimer !== null) {
+      clearInterval(this.reminderTimer);
+      this.reminderTimer = null;
+    }
   }
 
 

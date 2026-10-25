@@ -29,6 +29,8 @@ namespace Nafadh_Backend.Models
         public string? LearningObjectives { get; set; }
         [MaxLength(300)]
         public string? RecordingUrl { get; set; }
+        // Recording is hidden from trainees by default.
+        public bool IsRecordingVisibleToTrainees { get; set; } = false;
         public string? Summary { get; set; }
         public NFD_SessionStatus Status { get; set; }
 

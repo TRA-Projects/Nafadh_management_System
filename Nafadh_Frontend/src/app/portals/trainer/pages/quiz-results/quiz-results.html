@@ -1,67 +1,839 @@
-
 <section class="results-page" dir="rtl">
 
-  
-<div class="results-header">
+  <!-- ================================
+       PAGE HEADER
+  ================================= -->
 
-  <h2>نتائج الاختبارات</h2>
+  <div class="results-header">
 
-  <button
-    type="button"
-    class="back-btn"
-    (click)="goBack()">
+    <div class="header-content">
 
-    <i class="fa-solid fa-arrow-right"></i>
-    العودة إلى الاختبارات
+      <span class="page-eyebrow">
+        <i class="fa-solid fa-chart-column"></i>
+        متابعة النتائج والتقييمات
+      </span>
 
-  </button>
+      <h2>نتائج الاختبار</h2>
 
-</div>
+      <p>
+        متابعة أداء المتدربين ونتائج محاولاتهم في الاختبار
+      </p>
 
+    </div>
 
-  <p *ngIf="loading()">جاري تحميل النتائج...</p>
-
-  <p class="error" *ngIf="errorMessage()">
-    {{ errorMessage() }}
-  </p>
-
-  <div class="table-wrapper"
-       *ngIf="!loading() && !errorMessage()">
-
-    <table>
-      <thead>
-        <tr>
-          <th>اسم المتدرب</th>
-          <th>الاختبار</th>
-          <th>المحاولة</th>
-          <th>الدرجة</th>
-          <th>النسبة</th>
-          <th>الحالة</th>
-          <th>تاريخ التسليم</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr *ngFor="let result of results()">
-          <td>{{ result.traineeName }}</td>
-          <td>{{ result.quizTitle }}</td>
-          <td>{{ result.attemptNumber }}</td>
-          <td>{{ result.score }}</td>
-          <td>{{ result.percentage }}%</td>
-          <td>{{ result.status }}</td>
-          <td>
-            {{ result.submittedAt
-              ? (result.submittedAt | date:'short')
-              : 'لم يُسلّم' }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <p *ngIf="results().length === 0">
-      لا توجد نتائج لهذا الاختبار.
-    </p>
+    <button type="button" class="back-btn" (click)="goBack()">
+      <i class="fa-solid fa-arrow-right"></i>
+      العودة إلى الاختبارات
+    </button>
 
   </div>
 
+
+
+  <!-- ================================
+       LOADING
+  ================================= -->
+
+  <div class="loading-state" *ngIf="loading()">
+
+    <i class="fa-solid fa-spinner fa-spin"></i>
+
+    <span>جاري تحميل النتائج...</span>
+
+  </div>
+
+
+  <!-- ================================
+       ERROR
+  ================================= -->
+
+  <div class="error-state" *ngIf="!loading() && errorMessage()">
+
+    <div class="error-icon">
+      <i class="fa-solid fa-circle-exclamation"></i>
+    </div>
+
+    <div>
+      <strong>تعذر تحميل النتائج</strong>
+
+      <p>
+        {{ errorMessage() }}
+      </p>
+    </div>
+
+  </div>
+
+
+  <!-- ================================
+       CONTENT
+  ================================= -->
+
+  <ng-container *ngIf="!loading() && !errorMessage()">
+
+    <!-- ==============================
+         STATISTICS
+    =============================== -->
+
+    <div class="stats-grid">
+
+      <!-- Total -->
+
+      <div class="stat-card">
+
+        <div class="stat-icon blue">
+          <i class="fa-solid fa-users"></i>
+        </div>
+
+        <div class="stat-content">
+
+          <span class="stat-label">
+            إجمالي النتائج
+          </span>
+
+          <strong>
+            {{ results().length }}
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <!-- Submitted -->
+
+      <div class="stat-card">
+
+        <div class="stat-icon green">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+
+        <div class="stat-content">
+
+          <span class="stat-label">
+            المحاولات المسلّمة
+          </span>
+
+          <strong>
+            {{ submittedCount() }}
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <!-- Average -->
+
+      <div class="stat-card">
+
+        <div class="stat-icon purple">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+
+        <div class="stat-content">
+
+          <span class="stat-label">
+            متوسط النسبة
+          </span>
+
+          <strong>
+            {{ averagePercentage() }}%
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <!-- Pending Grading -->
+
+      <div class="stat-card">
+
+        <div class="stat-icon teal">
+          <i class="fa-solid fa-hourglass-half"></i>
+        </div>
+
+        <div class="stat-content">
+
+          <span class="stat-label">
+            بانتظار التصحيح
+          </span>
+
+          <strong>
+            {{ gradingPendingCount() }}
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <!-- Passed -->
+
+      <div class="stat-card">
+
+        <div class="stat-icon green">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+
+        <div class="stat-content">
+
+          <span class="stat-label">
+            الناجحون
+          </span>
+
+          <strong>
+            {{ passedCount() }}
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <!-- Failed -->
+
+      <div class="stat-card">
+
+        <div class="stat-icon red">
+          <i class="fa-solid fa-circle-xmark"></i>
+        </div>
+
+        <div class="stat-content">
+
+          <span class="stat-label">
+            الراسبون
+          </span>
+
+          <strong>
+            {{ failedCount() }}
+          </strong>
+
+        </div>
+      </div>
+    </div>
+    <!-- ==============================
+         RESULTS TABLE
+    =============================== -->
+    <!-- RESULTS FILTER -->
+
+    <div class="results-toolbar">
+      <button type="button" class="export-results-btn" (click)="exportResults()"
+        [disabled]="filteredResults().length === 0">
+        <i class="fa-solid fa-file-export"></i>
+
+        تصدير النتائج
+      </button>
+
+      <label class="search-box">
+
+        <i class="fa-solid fa-magnifying-glass"></i>
+
+        <input type="search" placeholder="ابحثي باسم المتدرب أو الدفعة..." [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)" />
+
+      </label>
+
+
+      <select aria-label="تصفية النتائج حسب الحالة" [ngModel]="statusFilter()"
+        (ngModelChange)="statusFilter.set($event)">
+
+        <option value="all">
+          كل النتائج
+        </option>
+
+        <option value="pending">
+          بانتظار التصحيح
+        </option>
+
+        <option value="passed">
+          الناجحون
+        </option>
+
+        <option value="failed">
+          الراسبون
+        </option>
+
+        <option value="submitted">
+          تم التسليم
+        </option>
+
+      </select>
+
+
+      <div class="filtered-count">
+
+        <i class="fa-solid fa-list"></i>
+
+        {{ filteredResults().length }} نتيجة
+
+      </div>
+
+    </div>
+    <div class="results-card">
+
+      <div class="results-card-header">
+
+        <div>
+
+          <h3>
+            نتائج المتدربين
+          </h3>
+
+          <p>
+            عرض جميع محاولات المتدربين المسجلة لهذا الاختبار
+          </p>
+
+        </div>
+
+        <div class="results-count">
+
+          <i class="fa-solid fa-list"></i>
+
+          {{ results().length }} نتيجة
+
+        </div>
+
+      </div>
+
+
+      <!-- ============================
+           EMPTY STATE
+      ============================= -->
+
+      <div class="empty-state" *ngIf="results().length === 0">
+
+        <div class="empty-icon">
+
+          <i class="fa-solid fa-clipboard-list"></i>
+
+        </div>
+
+        <h3>
+          لا توجد نتائج حتى الآن
+        </h3>
+
+        <p>
+          لم يقم أي متدرب بتسليم محاولة لهذا الاختبار حتى الآن.
+        </p>
+
+      </div>
+
+
+      <!-- ============================
+           TABLE
+      ============================= -->
+
+      <div class="table-wrapper" *ngIf="filteredResults().length > 0">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>
+                المتدرب
+              </th>
+
+              <th>
+                الدفعة
+              </th>
+
+              <th>
+                الاختبار
+              </th>
+
+              <th>
+                المحاولة
+              </th>
+
+              <th>
+                الدرجة
+              </th>
+
+              <th>
+                النسبة
+              </th>
+
+              <th>
+                الحالة
+              </th>
+
+              <th>
+                تاريخ التسليم
+              </th>
+
+              <th>
+                الإجراءات
+              </th>
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            <tr *ngFor="let result of filteredResults()">
+
+              <!-- Trainee -->
+
+              <td>
+
+                <div class="trainee-cell">
+
+                  <div class="trainee-avatar">
+
+                    <i class="fa-solid fa-user"></i>
+
+                  </div>
+
+                  <span>
+                    {{ result.traineeName }}
+                  </span>
+
+                </div>
+
+              </td>
+              <!-- Batch -->
+
+              <td>
+                <span class="batch-name">
+                  {{ result.batchName }}
+                </span>
+              </td>
+
+              <!-- Quiz -->
+
+              <td>
+
+                <span class="quiz-name">
+                  {{ result.quizTitle }}
+                </span>
+
+              </td>
+
+
+              <!-- Attempt -->
+
+              <td>
+
+                <span class="attempt-badge">
+
+                  المحاولة
+
+                  {{ result.attemptNumber }}
+
+                </span>
+
+              </td>
+
+
+              <!-- Score -->
+
+              <td>
+
+                <strong class="score-value">
+                  {{ result.score }}
+                </strong>
+
+              </td>
+
+
+              <!-- Percentage -->
+
+              <td>
+
+                <strong class="percentage-value">
+                  {{ result.percentage }}%
+                </strong>
+
+              </td>
+
+
+              <!-- Status -->
+
+              <td>
+
+                <span class="status-badge" [ngClass]="
+    getResultStatusClass(result)
+  ">
+
+                  <i class="fa-solid" [ngClass]="
+      getResultStatusIcon(result)
+    "></i>
+
+                  {{ getResultStatusLabel(result) }}
+
+                </span>
+
+              </td>
+
+
+              <!-- Submitted -->
+
+              <td>
+
+                <span class="date-value" [class.not-submitted]="
+                    !result.submittedAt
+                  ">
+
+                  <ng-container *ngIf="
+                      result.submittedAt;
+                      else notSubmitted
+                    ">
+
+                    <i class="fa-regular fa-calendar"></i>
+
+                    {{ result.submittedAt | date:'dd/MM/yyyy, h:mm a' }}
+
+                  </ng-container>
+
+                  <ng-template #notSubmitted>
+
+                    <i class="fa-regular fa-clock"></i>
+
+                    لم يُسلّم
+
+                  </ng-template>
+
+                </span>
+
+              </td>
+
+              <!-- Actions -->
+
+              <td>
+
+                <button type="button" class="details-btn" (click)="viewAttemptDetails(result)">
+
+                  <i class="fa-solid fa-eye"></i>
+
+                  عرض التفاصيل
+
+                </button>
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  </ng-container>
+
 </section>
+
+<!-- =========================================
+     ATTEMPT DETAILS MODAL
+========================================= -->
+
+<div class="details-overlay" *ngIf="attemptDetails()" (click)="closeAttemptDetails()">
+
+  <div class="details-modal" dir="rtl" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+
+    <div class="details-modal-header">
+
+      <div>
+
+        <span class="details-eyebrow">
+          <i class="fa-solid fa-file-lines"></i>
+          تفاصيل المحاولة
+        </span>
+
+        <h2>
+          {{ attemptDetails()?.quizTitle }}
+        </h2>
+
+        <p>
+          المتدرب:
+          {{ attemptDetails()?.traineeName }}
+        </p>
+
+      </div>
+
+      <button type="button" class="close-details-btn" (click)="closeAttemptDetails()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+    </div>
+
+
+    <!-- Summary -->
+
+    <div class="details-summary">
+
+      <div class="summary-item">
+
+        <span>المحاولة</span>
+
+        <strong>
+          {{ attemptDetails()?.attemptNumber }}
+        </strong>
+
+      </div>
+
+
+      <div class="summary-item">
+
+        <span>الدرجة</span>
+
+        <strong>
+          {{ attemptDetails()?.score }}
+        </strong>
+
+      </div>
+
+
+      <div class="summary-item">
+
+        <span>النسبة</span>
+
+        <strong>
+          {{ attemptDetails()?.percentage }}%
+        </strong>
+
+      </div>
+
+
+      <div class="summary-item">
+
+        <span>نسبة النجاح</span>
+
+        <strong>
+          {{ attemptDetails()?.passingPercentage }}%
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <!-- Grading Status -->
+
+    <div class="grading-status">
+
+      <span>حالة التصحيح</span>
+
+      <strong *ngIf="attemptDetails()?.isGradingCompleted" class="status-passed">
+        <i class="fa-solid fa-circle-check"></i>
+        تم التصحيح
+      </strong>
+
+      <strong *ngIf="!attemptDetails()?.isGradingCompleted" class="status-pending">
+        <i class="fa-solid fa-hourglass-half"></i>
+        بانتظار التصحيح
+      </strong>
+
+    </div>
+
+
+    <!-- Questions -->
+
+    <div class="details-questions">
+
+      <div class="question-detail" *ngFor="
+          let answer of attemptDetails()?.answers;
+          let i = index
+        ">
+
+        <!-- Question Number -->
+
+        <div class="question-number">
+          {{ i + 1 }}
+        </div>
+
+
+        <div class="question-content">
+
+          <!-- Question -->
+
+          <h3>
+            {{ answer.questionText }}
+          </h3>
+
+
+          <!-- Question Info -->
+
+          <div class="question-meta">
+
+            <span>
+              نوع السؤال:
+              {{ answer.questionType }}
+            </span>
+
+            <span>
+              الدرجة:
+              {{ answer.awardedPoints }}
+              /
+              {{ answer.maxPoints }}
+            </span>
+
+          </div>
+
+
+          <!-- Trainee Answer -->
+
+          <div class="answer-box">
+
+            <span class="answer-label">
+              إجابة المتدرب
+            </span>
+
+            <p *ngIf="answer.selectedOptionText">
+              {{ answer.selectedOptionText }}
+            </p>
+
+            <p *ngIf="answer.textAnswer">
+              {{ answer.textAnswer }}
+            </p>
+
+            <p *ngIf="
+                !answer.selectedOptionText &&
+                !answer.textAnswer
+              " class="no-answer">
+              لم تتم الإجابة
+            </p>
+
+          </div>
+
+
+
+
+
+          <!-- Result -->
+
+          <div class="question-result" *ngIf="answer.isCorrect === true">
+
+            <i class="fa-solid fa-circle-check"></i>
+
+            إجابة صحيحة
+
+          </div>
+
+
+          <div class="question-result incorrect" *ngIf="answer.isCorrect === false">
+
+            <i class="fa-solid fa-circle-xmark"></i>
+
+            إجابة غير صحيحة
+
+          </div>
+
+
+          <!-- Manual Grading -->
+
+          <div class="manual-grading" *ngIf="
+    answer.requiresManualGrading &&
+    !answer.isManuallyGraded
+  ">
+
+            <div class="manual-grading-header">
+
+              <div>
+
+                <i class="fa-solid fa-user-pen"></i>
+
+                <strong>
+                  تحتاج إلى تصحيح يدوي
+                </strong>
+
+              </div>
+
+              <span>
+                الدرجة الكاملة:
+                {{ answer.maxPoints }}
+              </span>
+
+            </div>
+
+
+            <div class="grading-form">
+
+              <label>
+                الدرجة المستحقة
+              </label>
+
+              <div class="grading-input-row">
+
+                <input type="number" min="0" [max]="answer.maxPoints" step="0.5"
+                  [(ngModel)]="gradingPoints[answer.answerId]" placeholder="0" />
+
+                <span>
+                  / {{ answer.maxPoints }}
+                </span>
+
+                <button type="button" class="save-grading-btn" [disabled]="gradingSaving()"
+                  (click)="gradeEssayAnswer(answer)">
+
+                  <i class="fa-solid" [ngClass]="
+        gradingSaving()
+          ? 'fa-spinner fa-spin'
+          : 'fa-check'
+      "></i>
+
+                  {{
+                  gradingSaving()
+                  ? 'جاري الحفظ'
+                  : 'حفظ الدرجة'
+                  }}
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="manual-grading completed" *ngIf="answer.isManuallyGraded">
+
+            <i class="fa-solid fa-user-check"></i>
+
+            تم التصحيح يدويًا
+
+          </div>
+
+
+          <!-- Marked For Review -->
+
+          <div class="review-badge" *ngIf="answer.isMarkedForReview">
+
+            <i class="fa-solid fa-flag"></i>
+
+            معلّمة للمراجعة
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- Close -->
+
+    <div class="details-modal-footer">
+
+      <button type="button" class="close-modal-btn" (click)="closeAttemptDetails()">
+
+        <i class="fa-solid fa-xmark"></i>
+
+        إغلاق
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
