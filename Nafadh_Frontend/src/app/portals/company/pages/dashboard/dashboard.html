@@ -358,7 +358,7 @@
               (change)="setTopLimit($any($event.target).value)"
               aria-label="عدد المتدربين المتميزين المعروضين">
               @for (n of limitOptions; track n) {
-                <option [value]="n" [selected]="n === topLimit()">{{ n === 0 ? 'الكل' : n }}</option>
+                <option [value]="n" [selected]="n === topLimit()">{{ n }}</option>
               }
             </select>
           </label>
@@ -366,7 +366,7 @@
 
         <div class="lower-list">
           @for (
-            trainee of limited(topPerformers(), topLimit());
+            trainee of topPerformers().slice(0, topLimit());
             track trainee.enrollmentId
           ) {
             <div class="top-row">
@@ -429,14 +429,14 @@
               (change)="setRiskLimit($any($event.target).value)"
               aria-label="عدد المتدربين المتعثرين المعروضين">
               @for (n of limitOptions; track n) {
-                <option [value]="n" [selected]="n === riskLimit()">{{ n === 0 ? 'الكل' : n }}</option>
+                <option [value]="n" [selected]="n === riskLimit()">{{ n }}</option>
               }
             </select>
           </label>
         </div>
 
         <div class="trainee-list">
-          @for (trainee of limited(atRisk(), riskLimit()); track trainee.enrollmentId) {
+          @for (trainee of atRisk().slice(0, riskLimit()); track trainee.enrollmentId) {
             <div class="trainee-row" style="display: flex; align-items: center; justify-content: space-between;">
               
               <div style="display: flex; align-items: center; gap: 12px;">
@@ -514,7 +514,7 @@
               (change)="setWarnLimit($any($event.target).value)"
               aria-label="عدد الإنذارات المعروضة">
               @for (n of limitOptions; track n) {
-                <option [value]="n" [selected]="n === warnLimit()">{{ n === 0 ? 'الكل' : n }}</option>
+                <option [value]="n" [selected]="n === warnLimit()">{{ n }}</option>
               }
             </select>
           </label>
@@ -522,7 +522,7 @@
 
         <div class="lower-list">
           @for (
-            warning of limited(warnings(), warnLimit());
+            warning of warnings().slice(0, warnLimit());
             track warning.warningId
           ) {
             <div class="warning-row">
