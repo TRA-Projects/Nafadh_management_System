@@ -55,6 +55,7 @@ export interface TrainerOptionDto {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './achievements.html',
+  styleUrl: './achievements.scss',
 
   styles: [
     `
