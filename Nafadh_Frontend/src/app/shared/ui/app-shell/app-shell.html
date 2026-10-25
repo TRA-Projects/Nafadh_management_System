@@ -1,6 +1,7 @@
 <div
   class="shell"
   [class.dark]="dark()"
+  [class.sidebar-is-open]="sidebarOpen()"
   [class.access-links]="accessibilityOptionActive('links')"
   [class.access-simple-font]="accessibilityOptionActive('simpleFont')"
   [class.access-large-text]="accessibilityOptionActive('largeText')"
@@ -16,9 +17,21 @@
 >
   <header class="topbar">
     <!-- Shared logo area -->
+     <!-- 🆕 Hamburger — أول عنصر، أقصى اليمين -->
+  <button
+    type="button"
+    class="icon-btn menu-toggle"
+    (click)="toggleSidebar()"
+    title="القائمة"
+    aria-label="فتح أو إغلاق القائمة الجانبية"
+    [attr.aria-expanded]="sidebarOpen()"
+  >
+    <nfd-icon name="menu" />
+  </button>
     <div
       class="logo"
-[routerLink]="navItems()[0]?.path || '/company/dashboard'"    >
+      [routerLink]="navItems()[0]?.path || '/company/dashboard'"
+    >
       <img
         src="assets/logo.png"
         alt="نفاذ"
@@ -45,6 +58,9 @@
 
     <!-- Shared actions -->
     <div class="actions">
+
+     
+
       <!-- Accessibility -->
       <button
         class="icon-btn accessibility-trigger"
@@ -199,14 +215,39 @@
     </div>
   </header>
 
+  <!-- 🆕 Overlay — يظهر فقط على الموبايل عند فتح السايدبار -->
+  <div
+    class="sidebar-overlay"
+    [class.is-visible]="sidebarOpen()"
+    (click)="closeSidebar()"
+    aria-hidden="true"
+  ></div>
+
   <!-- Shared sidebar -->
-  <aside class="sidebar">
+  <aside class="sidebar" [class.is-open]="sidebarOpen()">
+
+    <!-- 🆕 زر X للإغلاق (يظهر فقط على الموبايل) -->
+    <button
+      type="button"
+      class="sidebar-close-btn"
+      (click)="closeSidebar()"
+      aria-label="إغلاق القائمة"
+      title="إغلاق"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
     <nav>
       @for (item of navItems(); track item.path) {
         <a
           [routerLink]="item.path"
           routerLinkActive="active"
           class="nav-item"
+          (click)="closeSidebar()"
         >
           <nfd-icon [name]="item.icon" />
           <span>{{ item.label }}</span>

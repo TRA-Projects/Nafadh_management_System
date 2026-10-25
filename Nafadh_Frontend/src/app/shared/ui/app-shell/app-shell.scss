@@ -259,3 +259,115 @@ nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px;
   justify-content: center;
   gap: 8px;
 }
+
+// ============================================================
+// 🆕 MOBILE SIDEBAR — زر X + Hamburger + Overlay
+// ============================================================
+
+/* زر X — مخفي على الديسكتوب */
+.sidebar-close-btn {
+  display: none;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  cursor: pointer;
+  z-index: 5;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 2px;
+  }
+}
+
+/* Hamburger — مخفي على الديسكتوب */
+.menu-toggle {
+  display: none;
+}
+
+/* Overlay — مخفي على الديسكتوب */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 39; /* أقل من السايدبار (40) */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+
+  &.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+// ============================================================
+// 📱 TABLET / MOBILE (≤ 900px)
+// ============================================================
+@media (max-width: 900px) {
+  /* إظهار زر الـ hamburger في الـ topbar */
+  .menu-toggle {
+    display: flex;
+  }
+
+  /* إظهار الـ overlay لما يفتح */
+  .sidebar-overlay {
+    display: block;
+  }
+
+  /* إظهار زر X جوه السايدبار */
+  .sidebar-close-btn {
+    display: flex;
+  }
+
+  /* السايدبار ينزلق من اليمين */
+  .sidebar {
+    transform: translateX(100%);
+    transition: transform 0.28s ease;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.18);
+    padding-top: 56px; /* مساحة لزر X */
+
+    &.is-open {
+      transform: translateX(0);
+    }
+  }
+
+  /* المحتوى ياخد كامل العرض على الموبايل */
+  .content {
+    margin-right: 0;
+    padding: 16px;
+  }
+}
+
+// ============================================================
+// 📱 SMALL MOBILE (≤ 600px)
+// ============================================================
+@media (max-width: 600px) {
+  .topbar {
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  .content {
+    padding: 12px;
+  }
+
+  .sidebar {
+    width: 260px;
+    max-width: 85vw;
+  }
+}
