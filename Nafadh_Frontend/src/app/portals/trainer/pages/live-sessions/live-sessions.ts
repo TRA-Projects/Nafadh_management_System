@@ -1,3 +1,4 @@
+
 import {
   Component,
   computed,
@@ -45,6 +46,7 @@ interface LiveSession {
   durationMinutes: number;
   meetingUrl: string;
   status: SessionStatus;
+  isLive: boolean;
 }
 
 @Component({
@@ -55,7 +57,6 @@ interface LiveSession {
   styleUrl: './live-sessions.scss'
 })
 export class TrainerLiveSessions implements OnInit, OnDestroy {
-
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private api = inject(TrainerApi);
@@ -85,16 +86,18 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
     value: TrainerAttendanceStatus;
     label: string;
   }[] = [
-      { value: 0, label: 'حاضر' },
-      { value: 1, label: 'غائب' },
-      { value: 2, label: 'متأخر' },
-      { value: 3, label: 'بعذر' }
-    ];
+    { value: 0, label: 'حاضر' },
+    { value: 1, label: 'غائب' },
+    { value: 2, label: 'متأخر' },
+    { value: 3, label: 'بعذر' }
+  ];
+
   cancelling = signal(false);
   editingId = signal<number | null>(null);
   errorMessage = signal('');
   successMessage = signal('');
   loading = signal(false);
+  joiningSessionId = signal<number | null>(null);
   saving = signal(false);
 
   form = {
@@ -106,12 +109,21 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
     meetingUrl: ''
   };
 
-  private getSessionTab(session: LiveSession, now = Date.now()): SessionTab {
+  private getSessionTab(
+    session: LiveSession,
+    now = Date.now()
+  ): SessionTab {
     if (
       session.status === 'Completed' ||
-      session.status === 'Cancelled'
+      session.status === 'Cancelled' ||
+      session.status === 'Postponed'
+
     ) {
       return 'past';
+    }
+
+    if (session.isLive) {
+      return 'ongoing';
     }
 
     const start = new Date(session.startTime).getTime();
@@ -120,17 +132,81 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
       return 'upcoming';
     }
 
-    // الجلسة الجارية فعليًا تبقى في تبويب الجارية.
-    if (session.status === 'InProgress') {
-      return 'ongoing';
+    const end =
+      start + session.durationMinutes * 60_000;
+
+    if (now < start) return 'upcoming';
+    if (now >= end) return 'past';
+
+    return 'ongoing';
+  }
+
+  
+  // هل انتهى موعد الجلسة دون تغيير حالتها إلى منتهية؟
+  isMissedSession(session: LiveSession): boolean {
+    const start = new Date(session.startTime).getTime();
+
+    if (!Number.isFinite(start)) return false;
+
+    const end = start + session.durationMinutes * 60_000;
+
+    return (
+      session.status === 'Scheduled' &&
+      !session.isLive &&
+      this.currentTime() >= end
+    );
+  }
+
+  // وصف الحالة الذي يظهر أسفل عنوان الجلسة
+  getSessionDescription(session: LiveSession): string {
+    if (session.status === 'Completed') {
+      return 'تم إنهاء هذه المحاضرة.';
     }
 
-    // الجلسة المجدولة تنتقل للجارية عند حلول موعدها.
-    if (session.status === 'Scheduled' && now >= start) {
-      return 'ongoing';
+    if (session.status === 'Cancelled') {
+      return 'تم إلغاء هذه المحاضرة.';
     }
 
-    return 'upcoming';
+    if (session.status === 'Postponed') {
+      return 'تم تأجيل هذه المحاضرة.';
+    }
+
+    if (this.isMissedSession(session)) {
+      return 'انتهى موعد المحاضرة ولم يتم تسجيل اكتمالها. يمكنك إعادة جدولتها.';
+    }
+
+    if (session.isLive) {
+      return 'المحاضرة المباشرة نشطة الآن.';
+    }
+
+    if (this.getSessionTab(session, this.currentTime()) === 'ongoing') {
+      return 'حان موعد المحاضرة، ويمكنك الدخول إليها.';
+    }
+
+    return 'المحاضرة مجدولة في الموعد الموضح أدناه.';
+  }
+
+  getSessionStatusLabel(session: LiveSession): string {
+    if (session.status === 'Completed') return 'منتهية';
+    if (session.status === 'Cancelled') return 'ملغية';
+    if (session.status === 'Postponed') return 'مؤجلة';
+    if (this.isMissedSession(session)) return 'فات موعدها';
+    if (session.isLive) return 'جارية';
+
+    return this.getSessionTab(session, this.currentTime()) === 'ongoing'
+      ? 'حان موعدها'
+      : 'قادمة';
+  }
+
+  // إعادة استخدام نموذج تعديل الجلسة الحالي
+  rescheduleSession(session: LiveSession): void {
+    if (!this.isMissedSession(session)) return;
+
+    this.editSession(session);
+
+    // نمسح الموعد القديم حتى تختار المدربة موعدًا جديدًا.
+    this.form.date = '';
+    this.form.time = '';
   }
 
   upcomingCount = computed(() => {
@@ -179,6 +255,7 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
     }
 
     this.loadSessions();
+
     this.timeInterval = setInterval(() => {
       this.currentTime.set(Date.now());
     }, 30_000);
@@ -189,9 +266,6 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
       clearInterval(this.timeInterval);
     }
   }
-  // ==========================================
-  // GET SESSIONS
-  // ==========================================
 
   loadSessions(): void {
     this.loading.set(true);
@@ -216,8 +290,10 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
     dto: TrainerLiveSessionDto
   ): LiveSession {
     const date = dto.sessionDate.substring(0, 10);
+
     const start = (dto.startTime ?? '00:00')
       .substring(0, 5);
+
     const end = (dto.endTime ?? '00:00')
       .substring(0, 5);
 
@@ -229,7 +305,8 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
       startTime: `${date}T${start}`,
       durationMinutes: this.getDuration(start, end),
       meetingUrl: dto.meetingLink ?? '',
-      status: this.mapStatus(dto.status)
+      status: this.mapStatus(dto.status),
+      isLive: dto.isLive === true
     };
   }
 
@@ -281,8 +358,11 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
     time: string,
     duration: number
   ): string {
-    const [hours, minutes] = time.split(':').map(Number);
-    const total = hours * 60 + minutes + duration;
+    const [hours, minutes] =
+      time.split(':').map(Number);
+
+    const total =
+      hours * 60 + minutes + duration;
 
     return (
       String(Math.floor(total / 60)).padStart(2, '0') +
@@ -290,10 +370,6 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
       String(total % 60).padStart(2, '0')
     );
   }
-
-  // ==========================================
-  // FORM
-  // ==========================================
 
   setTab(tab: SessionTab): void {
     this.activeTab.set(tab);
@@ -334,10 +410,6 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
     this.errorMessage.set('');
   }
 
-  // ==========================================
-  // CREATE / UPDATE
-  // ==========================================
-
   saveSession(): void {
     if (this.saving()) return;
 
@@ -347,7 +419,6 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
     const title = this.form.title.trim();
     const duration = Number(this.form.durationMinutes);
 
-    // التحقق من الحقول المطلوبة فقط
     if (
       !title ||
       !this.form.date ||
@@ -385,12 +456,7 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
       return;
     }
 
-    // التحقق من الموعد المستقبلي عند إنشاء جلسة فقط
-    // حتى لا نمنع تعديل جلسة موجودة بسبب مرور موعدها
-    if (
-      this.editingId() === null &&
-      start.getTime() <= Date.now()
-    ) {
+    if (start.getTime() <= Date.now()) {
       this.errorMessage.set(
         'اختر موعدًا مستقبليًا للجلسة.'
       );
@@ -410,7 +476,6 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
       return;
     }
 
-    // لا نحتاج رابط Webex لأن الاجتماع داخل نفاذ
     const dto: TrainerLiveSessionFormDto = {
       topic: title,
       learningObjectives: this.form.description.trim(),
@@ -429,13 +494,13 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
 
     const request = editingId === null
       ? this.api.createTrainerLiveSession({
-        batchId: this.batchId,
-        ...dto
-      })
+          batchId: this.batchId,
+          ...dto
+        })
       : this.api.updateTrainerLiveSession(
-        editingId,
-        dto
-      );
+          editingId,
+          dto
+        );
 
     request
       .pipe(
@@ -465,41 +530,37 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
         }
       });
   }
-  // ==========================================
-  // STATUS
-  // ==========================================
 
   startSession(session: LiveSession): void {
-    if (this.loading()) return;
+    if (this.joiningSessionId() !== null) return;
+
+    if (
+      this.getSessionTab(session, Date.now()) !== 'ongoing'
+    ) {
+      return;
+    }
 
     this.errorMessage.set('');
     this.successMessage.set('');
-    this.loading.set(true);
+    this.joiningSessionId.set(session.id);
 
     this.api.getTrainerLiveRoom(session.id)
       .pipe(
-        switchMap(room => {
-          // إذا الغرفة شغالة، ندخل مباشرة بدون تشغيلها مرة ثانية.
-          if (room.isLive) {
-            return of(null);
-          }
-
-          // إذا الغرفة غير شغالة، نشغلها أولًا.
-          return this.api.startTrainerLiveRoom(session.id);
-        }),
-        finalize(() => this.loading.set(false))
+        switchMap(room =>
+          room.isLive
+            ? of(null)
+            : this.api.startTrainerLiveRoom(session.id)
+        ),
+        finalize(() => this.joiningSessionId.set(null))
       )
       .subscribe({
         next: () => {
-          const batchId =
-            session.batchId || Number(
-              this.route.snapshot.queryParamMap.get('batchId')
-            );
-
-          this.router.navigate(
+          void this.router.navigate(
             ['/trainer/live-session-room', session.id],
             {
-              queryParams: { batchId }
+              queryParams: {
+                batchId: session.batchId
+              }
             }
           );
         },
@@ -555,12 +616,17 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
           this.showCancelModal.set(false);
           this.sessionToCancel.set(null);
           this.activeTab.set('past');
-          this.successMessage.set('تم إلغاء الجلسة بنجاح.');
+          this.successMessage.set(
+            'تم إلغاء الجلسة بنجاح.'
+          );
           this.loadSessions();
         },
         error: err => {
           this.errorMessage.set(
-            this.getApiError(err, 'تعذر إلغاء الجلسة.')
+            this.getApiError(
+              err,
+              'تعذر إلغاء الجلسة.'
+            )
           );
         }
       });
@@ -595,15 +661,8 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
     });
   }
 
-  // ==========================================
-  // WEBEX
-  // ==========================================
-
   joinMeeting(session: LiveSession): void {
-    this.router.navigate([
-      '/trainer/live-session-room',
-      session.id
-    ]);
+    this.startSession(session);
   }
 
   private getApiError(
@@ -647,14 +706,19 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
     this.attendanceLoading.set(true);
 
     this.api.getTrainerSessionAttendance(session.id)
-      .pipe(finalize(() => this.attendanceLoading.set(false)))
+      .pipe(
+        finalize(() => this.attendanceLoading.set(false))
+      )
       .subscribe({
         next: rows => {
           this.attendanceRows.set(rows);
         },
         error: err => {
           this.attendanceError.set(
-            this.getApiError(err, 'تعذر تحميل حضور المتدربين.')
+            this.getApiError(
+              err,
+              'تعذر تحميل حضور المتدربين.'
+            )
           );
         }
       });
@@ -672,7 +736,9 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
 
   goBack(): void {
     this.router.navigate(['/trainer/content'], {
-      queryParams: { batchId: this.batchId }
+      queryParams: {
+        batchId: this.batchId
+      }
     });
   }
 
@@ -706,7 +772,9 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
     const session = this.attendanceSession();
 
     if (!session || row.status === null) {
-      this.attendanceError.set('يرجى تحديد حالة الحضور أولًا.');
+      this.attendanceError.set(
+        'يرجى تحديد حالة الحضور أولًا.'
+      );
       return;
     }
 
@@ -724,13 +792,18 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
         note: row.note ?? null
       }
     )
-      .pipe(finalize(() => this.attendanceSavingId.set(null)))
+      .pipe(
+        finalize(() => this.attendanceSavingId.set(null))
+      )
       .subscribe({
         next: saved => {
           this.attendanceRows.update(rows =>
             rows.map(item =>
               item.traineeId === row.traineeId
-                ? { ...item, attendanceId: saved.attendanceId }
+                ? {
+                    ...item,
+                    attendanceId: saved.attendanceId
+                  }
                 : item
             )
           );
@@ -741,10 +814,12 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
         },
         error: err => {
           this.attendanceError.set(
-            this.getApiError(err, 'تعذر حفظ الحضور.')
+            this.getApiError(
+              err,
+              'تعذر حفظ الحضور.'
+            )
           );
         }
       });
   }
-
 }

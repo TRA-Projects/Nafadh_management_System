@@ -1,0 +1,163 @@
+<section class="polls-page" dir="rtl">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">تفاعل الجلسة</p>
+      <h1>استطلاعات الجلسة</h1>
+      <p class="subtitle">أنشئي استطلاعًا وانشريه للمتدربين المسجلين</p>
+    </div>
+
+    <button type="button" class="refresh-button" (click)="loadPolls()">
+      تحديث القائمة
+    </button>
+  </header>
+
+  @if (errorMessage()) {
+    <p class="message error-message" role="alert">{{ errorMessage() }}</p>
+  }
+
+  @if (successMessage()) {
+    <p class="message success-message">{{ successMessage() }}</p>
+  }
+
+  <section class="form-card">
+    <h2>إنشاء استطلاع</h2>
+
+    <label for="poll-question">السؤال</label>
+    <input
+      id="poll-question"
+      type="text"
+      [(ngModel)]="question"
+      maxlength="300"
+      placeholder="اكتبي سؤال الاستطلاع"
+    />
+
+    <div class="options-heading">
+      <label>خيارات الإجابة</label>
+      <button
+        type="button"
+        class="text-button"
+        (click)="addOption()"
+        [disabled]="optionDrafts.length >= 10"
+      >
+        إضافة خيار
+      </button>
+    </div>
+
+    @for (option of optionDrafts; track $index; let i = $index) {
+      <div class="option-row">
+        <input
+          type="text"
+          [(ngModel)]="optionDrafts[i]"
+          [name]="'option-' + i"
+          [placeholder]="'الخيار ' + (i + 1)"
+          maxlength="200"
+        />
+
+        @if (optionDrafts.length > 2) {
+          <button
+            type="button"
+            class="remove-button"
+            (click)="removeOption(i)"
+            aria-label="حذف الخيار"
+          >
+            حذف
+          </button>
+        }
+      </div>
+    }
+
+    <button
+      type="button"
+      class="primary-button"
+      (click)="createPoll()"
+      [disabled]="saving()"
+    >
+      {{ saving() ? 'جارٍ الإنشاء...' : 'إنشاء كمسودة' }}
+    </button>
+  </section>
+
+  <section class="poll-list">
+    <div class="section-heading">
+      <h2>استطلاعات الجلسة</h2>
+      @if (loading()) {
+        <span>جارٍ التحميل...</span>
+      }
+    </div>
+
+    @for (poll of polls(); track poll.pollId) {
+      <article class="poll-card">
+        <div class="poll-details">
+          <h3>{{ poll.question }}</h3>
+
+          <p>
+            الحالة:
+            @if (poll.isOpen) {
+              <span class="state open">التصويت مفتوح</span>
+            } @else if (poll.closedAtUtc) {
+              <span class="state closed">مغلق</span>
+            } @else {
+              <span class="state draft">مسودة</span>
+            }
+          </p>
+
+          <ul>
+            @for (option of poll.options; track option.optionId) {
+              <li>{{ option.optionText }}</li>
+            }
+          </ul>
+
+          <p>عدد الأصوات: {{ poll.totalVotes }}</p>
+        </div>
+
+        <div class="poll-actions">
+          @if (!poll.isOpen && !poll.closedAtUtc) {
+            <button type="button" class="primary-button" (click)="openPoll(poll)">
+              نشر وفتح التصويت
+            </button>
+          }
+
+          @if (poll.isOpen) {
+            <button type="button" class="danger-button" (click)="closePoll(poll)">
+              إغلاق الاستطلاع
+            </button>
+          }
+
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="loadResults(poll.pollId)"
+          >
+            عرض النتائج
+          </button>
+        </div>
+      </article>
+    } @empty {
+      @if (!loading()) {
+        <p class="empty-state">لا توجد استطلاعات لهذه الجلسة.</p>
+      }
+    }
+  </section>
+
+  @if (selectedResults(); as results) {
+    <section class="results-card">
+      <h2>نتائج: {{ results.question }}</h2>
+      <p>إجمالي الأصوات: {{ results.totalVotes }}</p>
+
+      @for (item of results.results; track item.optionId) {
+        <div class="result-row">
+          <div class="result-label">
+            <span>{{ item.optionText }}</span>
+            <span>{{ item.voteCount }} صوت — {{ item.percentage }}%</span>
+          </div>
+
+          <div class="progress-track">
+            <div
+              class="progress-value"
+              [style.width.%]="item.percentage"
+            ></div>
+          </div>
+        </div>
+      }
+    </section>
+  }
+</section>
