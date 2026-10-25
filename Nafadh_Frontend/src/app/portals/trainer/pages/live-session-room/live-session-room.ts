@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import {
   Room,
   RoomEvent,
@@ -23,7 +24,7 @@ import { TrainerApi } from '../../services/trainer-api';
 @Component({
   selector: 'app-live-session-room',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './live-session-room.html',
   styleUrl: './live-session-room.scss'
 })
@@ -52,6 +53,18 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
     name: string;
     micEnabled: boolean;
   }[]>([]);
+
+  showChat = signal(false);
+chatInput = '';
+
+chatMessages = signal<{
+  id: number;
+  sender: string;
+  text: string;
+  mine: boolean;
+}[]>([]);
+
+private chatMessageId = 0;
 
   private room: Room | null = null;
   private destroyed = false;
@@ -95,6 +108,37 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
           });
 
           this.room = room;
+
+          
+room.on(RoomEvent.DataReceived, (payload, participant, _kind, topic) => {
+  if (topic !== 'session-chat') return;
+
+  try {
+    const decoded = new TextDecoder().decode(payload);
+
+    const data = JSON.parse(decoded);
+
+    if (
+      data.type !== 'chat' ||
+      typeof data.text !== 'string' ||
+      !data.text.trim()
+    ) {
+      return;
+    }
+
+    this.chatMessages.update(messages => [
+      ...messages,
+      {
+        id: ++this.chatMessageId,
+        sender: participant?.name || participant?.identity || 'مشارك',
+        text: data.text,
+        mine: false
+      }
+    ]);
+  } catch (error) {
+    console.error('Invalid chat message:', error);
+  }
+});
 
           room.on(RoomEvent.LocalTrackUnpublished, () => {
             const screenTrack = room.localParticipant
@@ -379,6 +423,29 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
     });
   }
 
+  
+openLiveAttendance(): void {
+  if (!this.connected()) return;
+
+  this.router.navigate(['/trainer/attendance/live-attendance'], {
+    queryParams: {
+      sessionId: this.sessionId,
+      batchId: this.batchId
+    }
+  });
+}
+
+openSessionPolls(): void {
+  if (!this.connected()) return;
+
+  this.router.navigate(['/trainer/live-session-polls'], {
+    queryParams: {
+      sessionId: this.sessionId,
+      batchId: this.batchId
+    }
+  });
+}
+
   async leaveSession(): Promise<void> {
     await this.room?.disconnect();
 
@@ -396,4 +463,47 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
     this.destroyed = true;
     void this.room?.disconnect();
   }
+
+  
+toggleChat(): void {
+  this.showChat.update(value => !value);
+}
+
+async sendChatMessage(): Promise<void> {
+  const text = this.chatInput.trim();
+
+  if (!this.room || !this.connected() || !text) return;
+
+  try {
+    const encoder = new TextEncoder();
+
+    const payload = encoder.encode(
+      JSON.stringify({
+        type: 'chat',
+        text
+      })
+    );
+
+    await this.room.localParticipant.publishData(
+      payload,
+      { reliable: true, topic: 'session-chat' }
+    );
+
+    this.chatMessages.update(messages => [
+      ...messages,
+      {
+        id: ++this.chatMessageId,
+        sender: 'أنتِ',
+        text,
+        mine: true
+      }
+    ]);
+
+    this.chatInput = '';
+  } catch (error) {
+    console.error('Chat message failed:', error);
+    this.errorMessage.set('تعذر إرسال الرسالة.');
+  }
+}
+
 }
