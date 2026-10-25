@@ -1,7 +1,9 @@
 <!-- ========================================================== -->
-<!-- 1. صفحة تفاصيل الدفعة الكاملة -->
+<!-- 1. صفحة تفاصيل الدفعة والتقويم الزمني والشهري -->
 <!-- ========================================================== -->
-<div *ngIf="isDetailsPageOpen()" class="details-full-page-container" dir="rtl">
+<div
+  *ngIf="isDetailsPageOpen() && !isQuizAuditFullPageOpen() && !isProjectAuditFullPageOpen() && !isProjectDossierOpen() && !isProjectEvaluationFullPageOpen()"
+  class="details-full-page-container" dir="rtl">
   <button type="button" class="btn-back-nav" (click)="onBackFromDetails()">
     <span class="back-arrow">&#8594;</span>
     <span>العودة إلى قائمة البرامج والدفعات</span>
@@ -17,40 +19,74 @@
           </span>
         </div>
         <p class="details-main-subtext">
-          البرنامج: <strong>{{ getProgramName(selectedBatch) }}</strong> · المدة: <strong>{{ getBatchDuration(selectedBatch?.startDate, selectedBatch?.endDate) }}</strong>
+          البرنامج: <strong>{{ getProgramName(selectedBatch) }}</strong> · المدة: <strong>{{
+            getBatchDuration(selectedBatch?.startDate, selectedBatch?.endDate) }}</strong>
         </p>
       </div>
 
       <div class="details-quick-actions">
-        <button type="button" (click)="onViewPlan(selectedBatch)" class="btn-pro-plan">
-          <i class="fa-solid fa-file-signature"></i>
-          <span>خطة الدورة التدريبية</span>
+        <!-- زر تعديل أصبح Outline ثانوي -->
+        <button type="button" (click)="onEditFromDetails()" class="btn-pro-edit">
+          <i class="fa-regular fa-pen-to-square"></i>
+          <span>تعديل</span>
         </button>
 
+        <!-- أزرار الإجراءات الرئيسية أصبحت البؤرة البصرية Focal Point -->
         <button type="button" (click)="onViewTraineesFromDetails()" class="btn-pro-trainees">
           <i class="fa-solid fa-users"></i>
           <span>متدربو الدفعة ({{ selectedBatch?.totalTraineesCount || 0 }})</span>
         </button>
 
-        <button type="button" (click)="onEditFromDetails()" class="btn-pro-edit">
-          <i class="fa-regular fa-pen-to-square"></i>
-          <span>تعديل</span>
+        <button type="button" (click)="onViewPlan(selectedBatch)" class="btn-pro-plan">
+          <i class="fa-solid fa-file-signature"></i>
+          <span>خطة الدورة التدريبية</span>
         </button>
       </div>
     </div>
   </div>
 
+  <!-- 🔔 1.1 شريط تنبيه الاختبار الجديد -->
+  <div *ngIf="latestBatchQuiz" class="nfd-quiz-alert-card">
+    <div class="quiz-alert-right">
+      <div class="pulsing-radar-box">
+        <span class="pulsing-radar-ring"></span>
+        <span class="pulsing-radar-dot"></span>
+      </div>
+
+      <div class="quiz-alert-texts">
+        <div class="quiz-alert-meta-row">
+          <span class="quiz-alert-tag">تنبيه جدولة اختبار جديد</span>
+          <span class="quiz-alert-subtag">بواسطة المدرب</span>
+        </div>
+        <p class="quiz-alert-desc">
+          قام المدرب بجدولة <strong>{{ latestBatchQuiz.title }}</strong> بتاريخ
+          <span class="quiz-alert-highlight" dir="ltr">{{ latestBatchQuiz.startDateTime | date:'EEEE, dd MMMM yyyy -
+            hh:mm a' }}</span>
+        </p>
+      </div>
+    </div>
+
+    <button type="button" (click)="openQuizTraineesModal(latestBatchQuiz)" class="btn-preview-exam-results">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>عرض المتدربين والنتائج والمحضر</span>
+    </button>
+  </div>
+
+  <!-- مؤشرات الأداء الرئيسية KPIs -->
   <div class="details-kpis-grid-full">
     <div class="kpi-card-full">
       <div class="kpi-card-header">
         <span class="kpi-label">المقاعد والإشغال</span>
         <i class="fa-solid fa-users kpi-icon text-indigo"></i>
       </div>
-      <div class="kpi-val" dir="ltr">{{ selectedBatch?.totalTraineesCount || 0 }} / {{ selectedBatch?.capacity || 0 }}</div>
-      <div class="nfd-progress-bar-bg" style="margin: 10px 0;">
-        <div class="nfd-progress-bar-fill" [style.width.%]="getOccupancyPercentage(selectedBatch?.totalTraineesCount, selectedBatch?.capacity)"></div>
+      <div class="kpi-val" dir="ltr">{{ selectedBatch?.totalTraineesCount || 0 }} / {{ selectedBatch?.capacity || 0 }}
       </div>
-      <div class="kpi-hint">متاح: {{ (selectedBatch?.capacity || 0) - (selectedBatch?.totalTraineesCount || 0) }} مقعد شاغر</div>
+      <div class="nfd-progress-bar-bg" style="margin: 10px 0;">
+        <div class="nfd-progress-bar-fill"
+          [style.width.%]="getOccupancyPercentage(selectedBatch?.totalTraineesCount, selectedBatch?.capacity)"></div>
+      </div>
+      <div class="kpi-hint">متاح: {{ (selectedBatch?.capacity || 0) - (selectedBatch?.totalTraineesCount || 0) }} مقعد
+        شاغر</div>
     </div>
 
     <div class="kpi-card-full">
@@ -90,7 +126,8 @@
     </div>
   </div>
 
-  <div class="details-org-card-full">
+  <!-- البيانات التنظيمية -->
+  <div class="details-org-card-full mb-6">
     <h3 class="org-section-title">📋 البيانات التنظيمية والتشغيلية المعتمدة للدفعة</h3>
     <div class="org-grid-full">
       <div class="org-item-box">
@@ -103,13 +140,218 @@
       </div>
       <div class="org-item-box">
         <span class="org-label"><i class="fa-regular fa-calendar"></i> تاريخ البداية:</span>
-        <span class="org-value" dir="ltr">{{ selectedBatch?.startDate ? (selectedBatch.startDate | date:'dd/MM/yyyy') : '-' }}</span>
+        <span class="org-value" dir="ltr">{{ selectedBatch?.startDate ? (selectedBatch.startDate | date:'dd/MM/yyyy') :
+          '-' }}</span>
       </div>
       <div class="org-item-box">
         <span class="org-label"><i class="fa-regular fa-calendar-check"></i> تاريخ التخرج:</span>
-        <span class="org-value" dir="ltr">{{ selectedBatch?.endDate ? (selectedBatch.endDate | date:'dd/MM/yyyy') : '-' }}</span>
+        <span class="org-value" dir="ltr">{{ selectedBatch?.endDate ? (selectedBatch.endDate | date:'dd/MM/yyyy') : '-'
+          }}</span>
       </div>
     </div>
+  </div>
+
+  <!-- 📅 1.2 سكشن الفعاليات والاختبارات والأجندة -->
+  <div class="nfd-calendar-full-card">
+    <div class="calendar-card-header">
+      <div class="calendar-title-group">
+        <div class="calendar-icon-circle">
+          <i class="fa-regular fa-calendar-days"></i>
+        </div>
+        <div>
+          <h3 class="calendar-main-heading">جدول الفعاليات والتقويم المعتمد للدفعة</h3>
+          <p class="calendar-sub-heading">مرجع موثق للاختبارات المقررة، والواجبات، والمشاريع طوال فترة الدفعة</p>
+        </div>
+      </div>
+
+      <div class="calendar-view-switcher">
+        <button type="button" (click)="scheduleViewMode = 'timeline'" [class.active]="scheduleViewMode === 'timeline'"
+          class="view-toggle-btn">
+          <i class="fa-solid fa-list-check"></i>
+          <span>جدول الاختبارات والتقييمات</span>
+        </button>
+
+        <button type="button" (click)="scheduleViewMode = 'calendar'" [class.active]="scheduleViewMode === 'calendar'"
+          class="view-toggle-btn">
+          <i class="fa-regular fa-calendar-alt"></i>
+          <span>التقويم الشهري للدفعة</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- فلاتر الفئات لوضع الجدول -->
+    <div *ngIf="scheduleViewMode === 'timeline'" class="calendar-filter-bar-sub">
+      <div class="calendar-filter-pills">
+        <button type="button" (click)="calendarFilter.set('all')" [class.active]="calendarFilter() === 'all'"
+          class="cal-pill-btn">
+          الكل ({{ batchEvents().length }})
+        </button>
+
+        <button type="button" (click)="calendarFilter.set('quiz')" [class.active]="calendarFilter() === 'quiz'"
+          class="cal-pill-btn pill-quiz">
+          <span class="pill-dot bg-amber"></span>
+          <span>الاختبارات</span>
+        </button>
+
+        <button type="button" (click)="calendarFilter.set('project')" [class.active]="calendarFilter() === 'project'"
+          class="cal-pill-btn pill-project">
+          <span class="pill-dot bg-emerald"></span>
+          <span>المشاريع</span>
+        </button>
+
+        <button type="button" (click)="calendarFilter.set('task')" [class.active]="calendarFilter() === 'task'"
+          class="cal-pill-btn pill-task">
+          <span class="pill-dot bg-blue"></span>
+          <span>المهام والواجبات</span>
+        </button>
+
+        <button type="button" (click)="calendarFilter.set('interview')"
+          [class.active]="calendarFilter() === 'interview'" class="cal-pill-btn pill-interview">
+          <span class="pill-dot bg-indigo"></span>
+          <span>المقابلات والتقييم النهائي</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- العرض الأول: جدول وبطاقات الفعاليات الزمنية (Timeline) -->
+    <div *ngIf="scheduleViewMode === 'timeline'" class="calendar-events-list">
+      <div *ngFor="let ev of filteredBatchEvents()" class="nfd-event-card" [ngClass]="'event-type-' + ev.type">
+
+        <div class="event-date-box">
+          <span class="event-date-month">{{ ev.date | date:'MMMM' }}</span>
+          <span class="event-date-day">{{ ev.date | date:'dd' }}</span>
+          <span class="event-date-weekday">{{ ev.date | date:'EEEE' }}</span>
+        </div>
+
+        <div class="event-content-box">
+          <div class="event-top-meta">
+            <span class="event-badge" [ngClass]="'badge-' + ev.type">
+              <i *ngIf="ev.type === 'quiz'" class="fa-solid fa-graduation-cap"></i>
+              <i *ngIf="ev.type === 'project'" class="fa-solid fa-diagram-project"></i>
+              <i *ngIf="ev.type === 'task'" class="fa-solid fa-list-check"></i>
+              <i *ngIf="ev.type === 'interview'" class="fa-solid fa-user-tie"></i>
+              <span>{{ ev.typeLabel }}</span>
+            </span>
+
+            <span class="event-time-chip">
+              <i class="fa-regular fa-clock"></i>
+              <span>{{ ev.timeString }}</span>
+            </span>
+          </div>
+
+          <h4 class="event-title">{{ ev.title }}</h4>
+          <p class="event-desc">{{ ev.description || 'حدث معتمد ضمن جدول خطة الدفعة.' }}</p>
+        </div>
+
+        <!-- أزرار الأكشن الموحدة -->
+        <div class="event-actions-box">
+          <button *ngIf="ev.type === 'quiz'" type="button" (click)="openQuizTraineesModal(ev.rawQuiz)"
+            class="btn-timeline-action btn-quiz-action" title="فتح محضر الاختبار ورصد الدرجات">
+            <i class="fa-solid fa-user-graduate action-icon"></i>
+            <span class="action-text">كشف درجات المتدربين والمحضر</span>
+            <span class="action-count-badge">{{ ev.rawQuiz?.submittedCount || selectedBatch?.totalTraineesCount || 11 }}
+              متدرب</span>
+          </button>
+
+          <button *ngIf="ev.type === 'project'" type="button" (click)="openProjectDossier(ev)"
+            class="btn-timeline-action btn-project-action" title="استعراض مستودعات GitHub والتقييم البرمجي">
+            <i class="fa-brands fa-github action-icon"></i>
+            <span class="action-text">تسليمات مشاريع GitHub</span>
+            <span class="action-count-badge">{{ ev.submissionsCount || selectedBatch?.totalTraineesCount || 11 }}
+              تسليم</span>
+          </button>
+
+          <button *ngIf="ev.type === 'task'" type="button" (click)="openProjectDossier(ev)"
+            class="btn-timeline-action btn-task-action" title="مراجعة تسليمات الكود والحلول البرمجية">
+            <i class="fa-solid fa-code action-icon"></i>
+            <span class="action-text">تسليمات الكود والواجب</span>
+            <span class="action-count-badge">{{ ev.submissionsCount || selectedBatch?.totalTraineesCount || 11 }}
+              تسليم</span>
+          </button>
+
+          <span *ngIf="ev.type !== 'quiz' && ev.type !== 'project' && ev.type !== 'task'" class="event-plan-badge">
+            مدرج بالخطة
+          </span>
+        </div>
+      </div>
+
+      <div *ngIf="filteredBatchEvents().length === 0" class="calendar-empty-state">
+        <i class="fa-regular fa-calendar-xmark empty-icon"></i>
+        <p>لا توجد أحداث أو اختبارات مسجلة لهذه الفئة حالياً.</p>
+      </div>
+    </div>
+
+    <!-- العرض الثاني: التقويم الشهري التفاعلي -->
+    <div *ngIf="scheduleViewMode === 'calendar'" class="monthly-calendar-container">
+      <div class="month-nav-toolbar">
+        <div class="month-title-wrap">
+          <h4 class="current-month-label">
+            {{ activeCalendarDate | date:'MMMM yyyy' }}
+          </h4>
+          <span class="month-events-badge">
+            {{ getEventsForCurrentMonthCount() }} استحقاقات وفعاليات هذا الشهر
+          </span>
+        </div>
+
+        <div class="month-controls-group">
+          <button type="button" (click)="onPrevMonth()" class="btn-cal-nav" title="الشهر السابق">
+            <i class="fa-solid fa-chevron-right"></i>
+            <span>السابق</span>
+          </button>
+
+          <button type="button" (click)="onTodayMonth()" class="btn-cal-today">
+            اليوم الحالي
+          </button>
+
+          <button type="button" (click)="onNextMonth()" class="btn-cal-nav" title="الشهر التالي">
+            <span>التالي</span>
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="calendar-legend-bar">
+        <div class="legend-item"><span class="legend-color-dot bg-amber"></span><span>اختبار مجدول</span></div>
+        <div class="legend-item"><span class="legend-color-dot bg-emerald"></span><span>تسليم مشروع</span></div>
+        <div class="legend-item"><span class="legend-color-dot bg-blue"></span><span>واجب / مهمة</span></div>
+        <div class="legend-item"><span class="legend-color-dot bg-indigo"></span><span>مقابلة فنية</span></div>
+      </div>
+
+      <div class="calendar-grid-card">
+        <div class="cal-weekdays-row">
+          <div class="cal-weekday">الأحد</div>
+          <div class="cal-weekday">الإثنين</div>
+          <div class="cal-weekday">الثلاثاء</div>
+          <div class="cal-weekday">الأربعاء</div>
+          <div class="cal-weekday">الخميس</div>
+          <div class="cal-weekday weekend">الجمعة</div>
+          <div class="cal-weekday weekend">السبت</div>
+        </div>
+
+        <div class="cal-days-grid">
+          <div *ngFor="let day of calendarMonthDays" class="cal-day-cell" [class.different-month]="!day.isCurrentMonth"
+            [class.is-today]="day.isToday" [class.has-events]="day.events && day.events.length > 0">
+
+            <div class="cal-day-header">
+              <span class="cal-day-number">{{ day.dayNumber }}</span>
+              <span *ngIf="day.isToday" class="today-tag">اليوم</span>
+            </div>
+
+            <div class="cal-day-events-wrapper">
+              <div *ngFor="let ev of day.events" class="cal-day-event-chip" [ngClass]="'chip-' + ev.type"
+                (click)="onCalendarEventClick(ev)" [title]="ev.title + ' (' + ev.timeString + ')'">
+                <i *ngIf="ev.type === 'quiz'" class="fa-solid fa-graduation-cap"></i>
+                <i *ngIf="ev.type === 'project'" class="fa-solid fa-diagram-project"></i>
+                <i *ngIf="ev.type === 'task'" class="fa-solid fa-list-check"></i>
+                <i *ngIf="ev.type === 'interview'" class="fa-solid fa-user-tie"></i>
+                <span class="event-chip-text">{{ ev.title }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -128,7 +370,8 @@
         <h2 class="trainees-main-title">متدربو {{ selectedBatch?.batchName }}</h2>
         <span class="trainees-count-pill">{{ selectedBatchTrainees().length }} متدرب</span>
       </div>
-      <p class="trainees-subtext">البرنامج: <strong>{{ getProgramName(selectedBatch) }}</strong> · الشركة: <strong>{{ selectedBatch?.companyName || '-' }}</strong></p>
+      <p class="trainees-subtext">البرنامج: <strong>{{ getProgramName(selectedBatch) }}</strong> · الشركة: <strong>{{
+          selectedBatch?.companyName || '-' }}</strong></p>
     </div>
   </div>
 
@@ -147,7 +390,8 @@
         <tr *ngFor="let t of selectedBatchTrainees()">
           <td>
             <div class="trainee-user-cell">
-              <img [src]="t.fileUrl || 'https://api.dicebear.com/7.x/initials/svg?seed=' + (t.fullName || t.name)" class="trainee-avatar" alt="Avatar" />
+              <img [src]="t.fileUrl || 'https://api.dicebear.com/7.x/initials/svg?seed=' + (t.fullName || t.name)"
+                class="trainee-avatar" alt="Avatar" />
               <div>
                 <div class="trainee-name">{{ t.fullName || t.name }}</div>
                 <div class="trainee-email">#{{ t.traineeId || t.id }}</div>
@@ -175,9 +419,10 @@
 <!-- ========================================================== -->
 <!-- 3. جدول البرامج والدفعات الرئيسي -->
 <!-- ========================================================== -->
-<div *ngIf="!isDetailsPageOpen() && !isTraineesPageOpen()" dir="rtl">
+<div
+  *ngIf="!isDetailsPageOpen() && !isTraineesPageOpen() && !isQuizAuditFullPageOpen() && !isProjectAuditFullPageOpen() && !isProjectDossierOpen() && !isProjectEvaluationFullPageOpen()"
+  dir="rtl">
 
-  <!-- عنوان الصفحة -->
   <div class="header-banner-flex">
     <div>
       <h2 class="nfd-page-title">البرامج والدفعات</h2>
@@ -185,12 +430,12 @@
     </div>
   </div>
 
-  <!-- التنبيه الذهبي الذكي للخطط المعلقة -->
   <div *ngIf="pendingPlansCount() > 0" class="amber-plans-alert-banner">
     <div class="alert-content-flex">
       <span class="pulsing-dot"></span>
       <i class="fa-regular fa-clock alert-clock-icon"></i>
-      <span>يوجد <strong>{{ pendingPlansCount() }}</strong> خطط تدريبية مقدمة من الشركات بانتظار قرار واعتماد الآدمن.</span>
+      <span>يوجد <strong>{{ pendingPlansCount() }}</strong> خطط تدريبية مقدمة من الشركات بانتظار قرار واعتماد
+        الآدمن.</span>
     </div>
     <div class="alert-buttons-group">
       <button type="button" (click)="planFilter.set('بانتظار الاعتماد'); currentPage.set(1)" class="btn-amber-filter">
@@ -202,30 +447,34 @@
     </div>
   </div>
 
-  <!-- Action Header Bar -->
   <div class="action-header-bar">
     <div class="filter-buttons-group">
-      <button type="button" (click)="statusFilter.set('الكل'); currentPage.set(1)" [class.active]="statusFilter() === 'الكل'" class="filter-btn">
+      <button type="button" (click)="statusFilter.set('الكل'); currentPage.set(1)"
+        [class.active]="statusFilter() === 'الكل'" class="filter-btn">
         <span class="filter-badge">{{ batches().length }}</span>
         <span>الدفعات</span>
       </button>
-      <button type="button" (click)="statusFilter.set('جارية'); currentPage.set(1)" [class.active]="statusFilter() === 'جارية'" class="filter-btn">
+      <button type="button" (click)="statusFilter.set('جارية'); currentPage.set(1)"
+        [class.active]="statusFilter() === 'جارية'" class="filter-btn">
         <span class="filter-badge">{{ getCountByStatus('جارية') }}</span>
         <span>جارية</span>
       </button>
-      <button type="button" (click)="statusFilter.set('قادمة'); currentPage.set(1)" [class.active]="statusFilter() === 'قادمة'" class="filter-btn">
+      <button type="button" (click)="statusFilter.set('قادمة'); currentPage.set(1)"
+        [class.active]="statusFilter() === 'قادمة'" class="filter-btn">
         <span class="filter-badge">{{ getCountByStatus('قادمة') }}</span>
         <span>قادمة</span>
       </button>
-      <button type="button" (click)="statusFilter.set('مكتملة'); currentPage.set(1)" [class.active]="statusFilter() === 'مكتملة'" class="filter-btn">
+      <button type="button" (click)="statusFilter.set('مكتملة'); currentPage.set(1)"
+        [class.active]="statusFilter() === 'مكتملة'" class="filter-btn">
         <span class="filter-badge">{{ getCountByStatus('مكتملة') }}</span>
         <span>مكتملة</span>
       </button>
     </div>
 
+    <!-- أزرار الإجراءات -->
     <div class="action-buttons-group">
-      <button type="button" (click)="exportToExcel()" class="btn-secondary-custom">
-        <i class="fa-solid fa-file-excel text-emerald-btn"></i>
+      <button type="button" (click)="exportToExcel()" class="btn-secondary-custom btn-excel-custom">
+        <i class="fa-solid fa-file-excel icon-excel-green"></i>
         <span>تصدير Excel</span>
       </button>
       <button type="button" (click)="onCreateBatch()" class="btn-primary-custom">
@@ -239,18 +488,24 @@
     </div>
   </div>
 
-  <!-- شريط البحث والتصفية المتقدم -->
   <div class="nfd-search-filter-card">
     <div class="filter-card-header">
       <div class="filter-card-presets">
         <span class="filter-presets-label">فترات سريعة:</span>
-        <button type="button" class="preset-pill" [class.active]="selectedYear() === 'الكل' && !fromDate()" (click)="setQuickPreset('all')">الكل</button>
-        <button type="button" class="preset-pill" [class.active]="selectedYear() === '2026'" (click)="setQuickPreset('2026')">عام 2026</button>
-        <button type="button" class="preset-pill" [class.active]="selectedYear() === '2027'" (click)="setQuickPreset('2027')">عام 2027</button>
+        <button type="button" class="preset-pill" [class.active]="selectedYear() === 'الكل' && !fromDate()"
+          (click)="setQuickPreset('all')">الكل</button>
+        <button type="button" class="preset-pill" [class.active]="selectedYear() === '2026'"
+          (click)="setQuickPreset('2026')">عام 2026</button>
+        <button type="button" class="preset-pill" [class.active]="selectedYear() === '2027'"
+          (click)="setQuickPreset('2027')">عام 2027</button>
       </div>
 
       <div class="filter-card-stats">
-        <span class="results-badge">النتائج: <strong>{{ totalBatchesCount() }}</strong> من أصل {{ batches().length }}</span>
+        <span class="results-badge">
+          <span>النتائج:</span>
+          <strong class="results-count-bold">{{ totalBatchesCount() }}</strong>
+          <span>من أصل {{ batches().length }}</span>
+        </span>
         <button *ngIf="activeFiltersCount() > 0" type="button" (click)="onResetFilters()" class="btn-reset-filters">
           <span>إعادة ضبط</span>
           <span class="reset-count">({{ activeFiltersCount() }})</span>
@@ -262,7 +517,8 @@
       <div class="filter-col">
         <label class="filter-field-label">بحث عام</label>
         <div class="filter-input-wrapper">
-          <input type="text" [value]="searchTerm()" (input)="onSearchInput($event)" placeholder="ابحث باسم الدفعة، البرنامج، أو الشركة..." class="filter-input-ctrl">
+          <input type="text" [value]="searchTerm()" (input)="onSearchInput($event)"
+            placeholder="ابحث باسم الدفعة، البرنامج، أو الشركة..." class="filter-input-ctrl">
           <i class="fa-solid fa-magnifying-glass filter-icon-left"></i>
         </div>
       </div>
@@ -270,7 +526,8 @@
       <div class="filter-col">
         <label class="filter-field-label">البرنامج التدريبي</label>
         <div class="filter-input-wrapper">
-          <select [value]="selectedProgram()" (change)="selectedProgram.set($any($event.target).value); currentPage.set(1)" class="filter-select-ctrl">
+          <select [value]="selectedProgram()"
+            (change)="selectedProgram.set($any($event.target).value); currentPage.set(1)" class="filter-select-ctrl">
             <option value="الكل">كل البرامج والمسارات</option>
             <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
           </select>
@@ -281,7 +538,8 @@
       <div class="filter-col">
         <label class="filter-field-label">خطة التدريب (الشركة)</label>
         <div class="filter-input-wrapper">
-          <select [value]="planFilter()" (change)="planFilter.set($any($event.target).value); currentPage.set(1)" class="filter-select-ctrl filter-plan-select">
+          <select [value]="planFilter()" (change)="planFilter.set($any($event.target).value); currentPage.set(1)"
+            class="filter-select-ctrl filter-plan-select">
             <option value="الكل">كل الحالات</option>
             <option value="بانتظار الاعتماد">بانتظار الاعتماد ⏳</option>
             <option value="معتمدة">معتمدة رسمياً ✔️</option>
@@ -295,7 +553,8 @@
       <div class="filter-col">
         <label class="filter-field-label">السنة</label>
         <div class="filter-input-wrapper">
-          <select [value]="selectedYear()" (change)="selectedYear.set($any($event.target).value); currentPage.set(1)" class="filter-select-ctrl">
+          <select [value]="selectedYear()" (change)="selectedYear.set($any($event.target).value); currentPage.set(1)"
+            class="filter-select-ctrl">
             <option value="الكل">الكل</option>
             <option *ngFor="let yr of availableYears()" [value]="yr">{{ yr }}</option>
           </select>
@@ -306,14 +565,14 @@
       <div class="filter-col">
         <label class="filter-field-label">من تاريخ</label>
         <div class="filter-input-wrapper">
-          <input type="date" [value]="fromDate()" (change)="fromDate.set($any($event.target).value); currentPage.set(1)" class="filter-date-ctrl">
+          <input type="date" [value]="fromDate()" (change)="fromDate.set($any($event.target).value); currentPage.set(1)"
+            class="filter-date-ctrl">
           <i class="fa-regular fa-calendar filter-icon-left"></i>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- جدول الدفعات والخطط -->
   <div class="nfd-table-container">
     <div class="nfd-table-wrapper">
       <table class="nfd-table">
@@ -359,21 +618,24 @@
               </span>
             </td>
 
-            <td class="text-center">{{ batch.startDate ? (batch.startDate | date:'dd/MM/yyyy') : '-' }}</td>
-            <td class="text-center">{{ batch.endDate ? (batch.endDate | date:'dd/MM/yyyy') : '-' }}</td>
-            <td class="text-center">
-              <span class="nfd-occupancy-text" dir="ltr">{{ batch.totalTraineesCount || 0 }} / {{ batch.capacity }}</span>
+            <td class="text-center" dir="ltr">{{ batch.startDate ? (batch.startDate | date:'dd/MM/yyyy') : '-' }}</td>
+            <td class="text-center" dir="ltr">{{ batch.endDate ? (batch.endDate | date:'dd/MM/yyyy') : '-' }}</td>
+            <td class="text-center" dir="ltr">
+              <span class="nfd-occupancy-text">{{ batch.totalTraineesCount || 0 }} / {{ batch.capacity }}</span>
             </td>
             <td class="text-center">
-              <span class="nfd-status-badge" [ngClass]="getStatusBadgeClass(batch.status)">{{ getStatusLabel(batch.status) }}</span>
+              <span class="nfd-status-badge" [ngClass]="getStatusBadgeClass(batch.status)">{{
+                getStatusLabel(batch.status) }}</span>
             </td>
 
             <td class="text-center">
               <div class="nfd-actions-wrapper">
-                <button type="button" (click)="onViewPlan(batch)" title="مراجعة واعتماد خطة الدورة" class="nfd-action-icon-btn action-plan-btn">
+                <button type="button" (click)="onViewPlan(batch)" title="مراجعة واعتماد خطة الدورة"
+                  class="nfd-action-icon-btn action-plan-btn">
                   <i class="fa-solid fa-file-circle-check"></i>
                 </button>
-                <button type="button" (click)="onViewTrainees(batch)" title="متدربو هذه الدفعة" class="nfd-action-icon-btn action-trainees-btn">
+                <button type="button" (click)="onViewTrainees(batch)" title="متدربو هذه الدفعة"
+                  class="nfd-action-icon-btn action-trainees-btn">
                   <i class="fa-solid fa-users"></i>
                 </button>
                 <button type="button" (click)="onEdit(batch)" title="تعديل الدفعة" class="nfd-action-icon-btn">
@@ -390,51 +652,74 @@
     </div>
   </div>
 
-  <!-- Pagination -->
-  <div *ngIf="totalPages() > 1" class="compact-pagination-wrapper">
-    <div class="pagination-info">عرض الصفحة {{ currentPage() }} من {{ totalPages() }}</div>
-    <div class="pagination-compact-controls">
-      <button class="compact-nav-btn" [disabled]="currentPage() === 1" (click)="onPageChange(currentPage() - 1)">السابق</button>
-      <span class="page-indicator">{{ currentPage() }} / {{ totalPages() }}</span>
-      <button class="compact-nav-btn" [disabled]="currentPage() === totalPages()" (click)="onPageChange(currentPage() + 1)">التالي</button>
+  <div class="compact-pagination-wrapper">
+    <!-- جهة اليمين: إجمالي السجلات + الصفحة الحالية من الإجمالي -->
+    <div class="pagination-right-group" style="display: flex; align-items: center; gap: 20px;">
+      <div class="pagination-info">
+        إجمالي السجلات في النظام: <strong>{{ totalBatchesCount() }}</strong>
+      </div>
+      <div class="pagination-info">
+        الصفحة <strong>{{ currentPage() }}</strong> من <strong>{{ totalPages() }}</strong>
+      </div>
+    </div>
+
+    <!-- جهة اليسار: أزرار الباجينيشن فقط (السابق / التالي) -->
+    <div class="pagination-left-group">
+      <div class="pagination-compact-controls">
+        <button type="button" class="compact-nav-btn" [disabled]="currentPage() === 1"
+          (click)="onPageChange(currentPage() - 1)">
+          السابق
+        </button>
+
+        <button type="button" class="compact-page-number-btn active">
+          {{ currentPage() }}
+        </button>
+
+        <button type="button" class="compact-nav-btn" [disabled]="currentPage() === totalPages()"
+          (click)="onPageChange(currentPage() + 1)">
+          التالي
+        </button>
+      </div>
     </div>
   </div>
+
 </div>
 
 <!-- ========================================================== -->
-<!-- 4. نافذة مراجعة واعتماد خطة الدورة (Review Modal) -->
+<!-- 4. نافذة مراجعة واعتماد خطة الدورة -->
 <!-- ========================================================== -->
 <div *ngIf="isPlanModalOpen()" (click)="closePlanModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container-plan-review">
-    
     <div class="plan-review-header">
       <div>
         <div class="plan-title-row">
           <h3 class="plan-title">مراجعة واعتماد خطة الدورة التدريبية</h3>
           <span class="plan-batch-pill">{{ selectedPlanBatch()?.batchName }}</span>
         </div>
-        <p class="plan-sub">الشركة المستضيفة: <strong>{{ selectedPlanBatch()?.companyName || 'شركة معتمدة' }}</strong> · البرنامج: <strong>{{ getProgramName(selectedPlanBatch()) }}</strong></p>
+        <p class="plan-sub">الشركة المستضيفة: <strong>{{ selectedPlanBatch()?.companyName || 'شركة معتمدة' }}</strong> ·
+          البرنامج: <strong>{{ getProgramName(selectedPlanBatch()) }}</strong></p>
       </div>
       <button type="button" (click)="closePlanModal()" class="modal-close-btn">&times;</button>
     </div>
 
-    <!-- التبويبات -->
     <div class="plan-tabs-bar">
-      <button type="button" (click)="activePlanTab.set('curriculum')" [class.active]="activePlanTab() === 'curriculum'" class="plan-tab-btn">
+      <button type="button" (click)="activePlanTab.set('curriculum')" [class.active]="activePlanTab() === 'curriculum'"
+        class="plan-tab-btn">
         <i class="fa-solid fa-layer-group"></i>
         <span>المنهج والمراحل ({{ selectedPlan()?.stages?.length || selectedPlan()?.stageCount || 0 }})</span>
       </button>
-      <button type="button" (click)="activePlanTab.set('trainers')" [class.active]="activePlanTab() === 'trainers'" class="plan-tab-btn">
+      <button type="button" (click)="activePlanTab.set('trainers')" [class.active]="activePlanTab() === 'trainers'"
+        class="plan-tab-btn">
         <i class="fa-solid fa-chalkboard-user"></i>
         <span>المدربون المسؤولون ({{ selectedPlan()?.trainers?.length || 0 }})</span>
       </button>
-      <button type="button" (click)="activePlanTab.set('decision')" [class.active]="activePlanTab() === 'decision'" class="plan-tab-btn tab-decision">
+      <button type="button" (click)="activePlanTab.set('decision')" [class.active]="activePlanTab() === 'decision'"
+        class="plan-tab-btn tab-decision">
         <i class="fa-solid fa-stamp"></i>
         <span>قرار الاعتماد أو الرفض</span>
       </button>
     </div>
 
-    <!-- Body -->
     <div class="plan-body-scroll">
       <div *ngIf="isLoadingPlan()" class="plan-loading-box">
         <i class="fa-solid fa-circle-notch fa-spin"></i>
@@ -446,7 +731,6 @@
         <span>{{ planErrorMessage() }}</span>
       </div>
 
-      <!-- تبويب 1: المراحل والمنهج -->
       <div *ngIf="!isLoadingPlan() && activePlanTab() === 'curriculum'" class="curriculum-view">
         <div *ngFor="let stage of selectedPlan()?.stages; let sIdx = index" class="stage-block-card">
           <div class="stage-header">
@@ -464,43 +748,20 @@
             </div>
           </div>
         </div>
-
-        <div *ngIf="!selectedPlan()?.stages || selectedPlan()?.stages?.length === 0" class="empty-plan-box">
-          <p>عنوان الخطة المرفوعة من الشركة: <strong>{{ selectedPlan()?.title || 'خطة أولية' }}</strong></p>
-          <p *ngIf="selectedPlan()?.description" class="text-slate-500 mt-2">{{ selectedPlan()?.description }}</p>
-        </div>
       </div>
 
-      <!-- تبويب 2: المدربون -->
       <div *ngIf="!isLoadingPlan() && activePlanTab() === 'trainers'" class="trainers-view">
         <div *ngFor="let tr of selectedPlan()?.trainers" class="trainer-card-pro">
-          <div class="trainer-avatar-box">
-            <i class="fa-solid fa-user-tie"></i>
-          </div>
+          <div class="trainer-avatar-box"><i class="fa-solid fa-user-tie"></i></div>
           <div class="trainer-info">
             <h4 class="trainer-name">{{ tr.trainerName || tr.fullName || 'المدرب المسجل' }}</h4>
             <span class="trainer-role">{{ tr.specialty || tr.role || 'مدرب تقني رئيسي' }}</span>
-            <div class="trainer-contacts">
-              <span *ngIf="tr.email"><i class="fa-regular fa-envelope"></i> {{ tr.email }}</span>
-              <span *ngIf="tr.phone"><i class="fa-solid fa-phone"></i> {{ tr.phone }}</span>
-            </div>
           </div>
-        </div>
-        <div *ngIf="!selectedPlan()?.trainers || selectedPlan()?.trainers?.length === 0" class="empty-plan-box">
-          <p>لم يتم تسجيل مدربين في هذه الخطة حتى الآن.</p>
         </div>
       </div>
 
-      <!-- تبويب 3: القرار -->
       <div *ngIf="!isLoadingPlan() && activePlanTab() === 'decision'" class="decision-view">
-        <!-- تنبيه الخطأ الداخلي الأنيق -->
-        <div *ngIf="decisionErrorMessage()" class="decision-inline-error">
-          <i class="fa-solid fa-circle-exclamation"></i>
-          <span>{{ decisionErrorMessage() }}</span>
-          <button type="button" (click)="decisionErrorMessage.set(null)" class="btn-close-inline">&times;</button>
-        </div>
         <div class="decision-grid">
-          <!-- اعتماد -->
           <div class="decision-card approve-card">
             <div class="decision-card-top">
               <i class="fa-regular fa-circle-check approve-icon"></i>
@@ -516,8 +777,7 @@
               {{ isSubmittingDecision() ? 'جاري الاعتماد...' : 'اعتماد الخطة رسمياً' }}
             </button>
           </div>
-      
-          <!-- رفض / طلب تعديل -->
+
           <div class="decision-card reject-card">
             <div class="decision-card-top">
               <i class="fa-solid fa-triangle-exclamation reject-icon"></i>
@@ -526,19 +786,13 @@
                 <p class="decision-sub">حدد الملاحظات المطلوبة لتعيد الشركة تعديل الخطة.</p>
               </div>
             </div>
-      
             <div class="modifications-checklist">
               <label *ngFor="let mod of defaultModSuggestions" class="mod-checkbox-label">
-                <input type="checkbox" [checked]="selectedModifications.includes(mod)" (change)="toggleModification(mod)">
+                <input type="checkbox" [checked]="selectedModifications.includes(mod)"
+                  (change)="toggleModification(mod)">
                 <span>{{ mod }}</span>
               </label>
             </div>
-      
-            <div class="custom-mod-box">
-              <input type="text" [(ngModel)]="customModText" placeholder="اكتب ملاحظة أخرى..." class="custom-mod-input">
-              <button type="button" (click)="addCustomModification()" class="btn-add-mod">إضافة</button>
-            </div>
-      
             <textarea [(ngModel)]="rejectionNotes" placeholder="شرح تفصيلي إضافي للشركة..." rows="2"
               class="decision-textarea"></textarea>
             <button type="button" (click)="executeRejection()" [disabled]="isSubmittingDecision()"
@@ -548,7 +802,7 @@
           </div>
         </div>
       </div>
-      </div>
+    </div>
 
     <div class="plan-modal-footer">
       <button type="button" (click)="closePlanModal()" class="btn-close-modal">إغلاق</button>
@@ -556,10 +810,1083 @@
   </div>
 </div>
 
+
 <!-- ========================================================== -->
-<!-- 5. Modals (مع كامل رسائل وحدود الفاليديشن) -->
+<!-- كشف درجات المتدربين ومحضر الاختبار الرسمي المعتمد -->
 <!-- ========================================================== -->
-<!-- إنشاء دفعة جديدة -->
+<div *ngIf="isQuizAuditFullPageOpen()" class="quiz-audit-full-page-container" dir="rtl">
+
+  <!-- شريط الإجراءات والرجوع العلوي -->
+  <div class="audit-top-actions-bar">
+    <button type="button" class="btn-back-nav" (click)="closeQuizAuditFullPage()">
+      <span class="back-arrow">&#8594;</span>
+      <span>العودة إلى تفاصيل الدفعة</span>
+    </button>
+
+    <div class="audit-header-buttons">
+      <button type="button" (click)="onPrintAuditReport()" class="btn-print-audit-report">
+        <i class="fa-solid fa-print"></i>
+        <span>طباعة محضر الاختبار الرسمي</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ترويسة المحضر الرسمي المعتمد -->
+  <div class="quiz-audit-header-card">
+    <div class="quiz-audit-title-meta">
+      <div class="quiz-audit-tags-row">
+        <span class="quiz-audit-tag-main">
+          <i class="fa-solid fa-certificate"></i>
+          <span>سجل محضر الاختبار المعتمد</span>
+        </span>
+
+        <span *ngIf="activeQuizForAudit?.cameraRequired" class="quiz-audit-tag-camera">
+          <i class="fa-solid fa-camera"></i>
+          <span>مراقبة ذكية بالكاميرا مفعلة</span>
+        </span>
+
+        <span class="quiz-audit-batch-tag">
+          {{ selectedBatch?.batchName || 'الدفعة المقررة' }}
+        </span>
+      </div>
+
+      <h2 class="quiz-audit-full-title">{{ activeQuizForAudit?.title }}</h2>
+
+      <div class="quiz-audit-meta-chips">
+        <span class="meta-chip">
+          <i class="fa-solid fa-chalkboard-user"></i>
+          <span>المشرف: <strong>{{ activeQuizForAudit?.trainerName || 'المدرب المسؤول' }}</strong></span>
+        </span>
+        <span class="meta-chip">
+          <i class="fa-regular fa-calendar"></i>
+          <span>التاريخ: <strong dir="ltr">{{ activeQuizForAudit?.startDateTime | date:'dd/MM/yyyy - hh:mm a' }}</strong></span>
+        </span>
+        <span class="meta-chip">
+          <i class="fa-regular fa-clock"></i>
+          <span>المدة: <strong>{{ activeQuizForAudit?.durationMinutes || 60 }} دقيقة</strong></span>
+        </span>
+        <span class="meta-chip">
+          <i class="fa-solid fa-trophy"></i>
+          <span>نسبة النجاح المقررة: <strong class="text-emerald">{{ activeQuizForAudit?.passingPercentage || 50 }}%</strong></span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- مؤشرات الأداء الرسمية الموحدة (KPIs) -->
+  <div class="quiz-audit-kpi-grid">
+    <!-- المختبرون الحاضرون -->
+    <div class="quiz-audit-kpi-box">
+      <div class="kpi-box-top">
+        <span class="kpi-box-label">المختبرون الحاضرون</span>
+        <i class="fa-solid fa-user-check text-indigo"></i>
+      </div>
+      <div class="kpi-box-val" dir="ltr">
+        {{ getQuizAttendeesCount() }} / {{ activeQuizAttempts().length }}
+      </div>
+      <span class="kpi-sub-text">تم تسليم إجاباتهم ورصدها</span>
+    </div>
+
+    <!-- نسبة الاجتياز -->
+    <div class="quiz-audit-kpi-box">
+      <div class="kpi-box-top">
+        <span class="kpi-box-label">نسبة الاجتياز</span>
+        <i class="fa-solid fa-award text-emerald"></i>
+      </div>
+      <div class="kpi-box-val text-emerald">
+        {{ getQuizPassingRate() }}%
+      </div>
+      <span class="kpi-sub-text">{{ getQuizPassedCount() }} متدربين اجتازوا بنجاح</span>
+    </div>
+
+    <!-- متوسط الدرجات -->
+    <div class="quiz-audit-kpi-box">
+      <div class="kpi-box-top">
+        <span class="kpi-box-label">متوسط الدرجات</span>
+        <i class="fa-solid fa-chart-simple text-cyan"></i>
+      </div>
+      <div class="kpi-box-val text-cyan">
+        {{ getQuizAverageScore() }}%
+      </div>
+      <span class="kpi-sub-text">المعدل العام للمشاركين</span>
+    </div>
+
+    <!-- المتغيبون والراسبون -->
+    <div class="quiz-audit-kpi-box">
+      <div class="kpi-box-top">
+        <span class="kpi-box-label">المتغيبون والراسبون</span>
+        <i class="fa-solid fa-user-xmark text-rose"></i>
+      </div>
+      <div class="kpi-box-val text-rose">
+        {{ getQuizAbsentCount() }} متغيب · {{ getQuizFailedCount() }} راسب
+      </div>
+      <span class="kpi-sub-text">تشمل أصحاب الأعذار الطبية</span>
+    </div>
+
+    <!-- رصد النزاهة والمخالفات -->
+    <div class="quiz-audit-kpi-box">
+      <div class="kpi-box-top">
+        <span class="kpi-box-label">رصد النزاهة والمخالفات</span>
+        <i class="fa-solid fa-shield-halved text-amber"></i>
+      </div>
+      <div class="kpi-box-val text-amber">
+        {{ getCheatingSuspectsCount() }} حالة اشتباه
+      </div>
+      <span class="kpi-sub-text">مخالفات خروج من نافذة الاختبار</span>
+    </div>
+  </div>
+
+  <!-- شريط تبويبات التصفية التفاعلية -->
+  <div class="audit-filter-tabs-bar">
+    <div class="filter-tabs-list">
+      <button type="button" (click)="auditFilter = 'all'" [class.active]="auditFilter === 'all'" class="audit-filter-box">
+        الكل ({{ activeQuizAttempts().length }})
+      </button>
+
+      <button type="button" (click)="auditFilter = 'passed'" [class.active]="auditFilter === 'passed'" class="audit-filter-box">
+        الناجحون ({{ getQuizPassedCount() }})
+      </button>
+
+      <button type="button" (click)="auditFilter = 'failed'" [class.active]="auditFilter === 'failed'" class="audit-filter-box">
+        الراسبون ({{ getQuizFailedCount() }})
+      </button>
+
+      <button type="button" (click)="auditFilter = 'absent'" [class.active]="auditFilter === 'absent'" class="audit-filter-box">
+        المتغيبون والأعذار ({{ getQuizAbsentCount() }})
+      </button>
+
+      <button type="button" (click)="auditFilter = 'cheating'" [class.active]="auditFilter === 'cheating'" class="audit-filter-box">
+        سجل النزاهة ورصد الغش ({{ getCheatingSuspectsCount() }})
+      </button>
+    </div>
+  </div>
+
+  <!-- جدول كشف درجات ومحضر الاختبار الرسمي -->
+  <div class="quiz-audit-full-table-card">
+    <div class="table-responsive">
+      <table class="quiz-audit-table-expanded">
+        <thead>
+          <tr>
+            <th>المتدرب</th>
+            <th class="text-center">وقت التسليم</th>
+            <th class="text-center">الدرجة والنسبة</th>
+            <th class="text-center">مؤشر النزاهة الأكاديمية</th>
+            <th class="text-center">حالة الحضور والعذر</th>
+            <th>ملاحظة المتدرب</th>
+            <th class="text-center">النتيجة والاعتماد</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of filteredQuizAttempts()"
+            [hidden]="auditFilter === 'passed' ? row.status !== 'Passed' :
+                      auditFilter === 'failed' ? row.status !== 'Failed' :
+                      auditFilter === 'absent' ? ((row.status === 'Passed' || row.status === 'Failed') && !row.excuseStatus && row.submittedAt) :
+                      auditFilter === 'cheating' ? ((row.cheatingRiskPercentage || 0) === 0 && (row.tabSwitchCount || 0) === 0 && (row.cameraDisconnectionsCount || 0) === 0) : false"
+            class="audit-row-hover">
+
+            <!-- المتدرب -->
+            <td>
+              <div class="audit-trainee-cell">
+                <img [src]="row.traineeAvatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + row.traineeName"
+                  class="audit-avatar-fixed" alt="Avatar" />
+                <div>
+                  <div class="audit-trainee-name">{{ row.traineeName }}</div>
+                  <div class="audit-trainee-id">#{{ row.traineeId }}</div>
+                </div>
+              </div>
+            </td>
+
+            <!-- وقت التسليم -->
+            <td class="text-center">
+              <div *ngIf="row.submittedAt" class="score-stat-cell">
+                <span class="font-mono" dir="ltr">{{ row.submittedAt | date:'dd/MM/yyyy' }}</span>
+                <span class="score-stat-sub" dir="ltr">{{ row.submittedAt | date:'hh:mm a' }}</span>
+              </div>
+              <span *ngIf="!row.submittedAt" class="badge-status-neutral">لم يتقدم للاختبار</span>
+            </td>
+
+            <!-- الدرجة والنسبة -->
+            <td class="text-center">
+              <div *ngIf="row.score !== null && row.score !== undefined; else noScoreTpl" class="score-stat-cell">
+                <span class="score-stat-val"
+                  [ngClass]="(row.percentage || 0) >= (activeQuizForAudit?.passingPercentage || 50) ? 'text-indigo' : 'text-rose'">
+                  {{ row.percentage ?? 0 }}%
+                </span>
+                <span class="score-stat-sub" dir="ltr">
+                  ({{ row.score }} / {{ row.totalScore || activeQuizForAudit?.maxScore || 100 }})
+                </span>
+              </div>
+              <ng-template #noScoreTpl>
+                <span class="text-muted-dash">-</span>
+              </ng-template>
+            </td>
+
+            <!-- مؤشر النزاهة الأكاديمية -->
+            <td class="text-center">
+              <span *ngIf="!row.submittedAt" class="text-muted-dash">-</span>
+
+              <span *ngIf="row.submittedAt && (row.cheatingRiskPercentage || 0) === 0" class="integrity-clean-pill">
+                <i class="fa-solid fa-check integrity-clean-icon"></i>
+                <span>نزيه (0%)</span>
+              </span>
+
+              <div *ngIf="row.submittedAt && (row.cheatingRiskPercentage || 0) > 0 && (row.cheatingRiskPercentage || 0) <= 25" class="integrity-warning-box">
+                <span class="integrity-warning-badge">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>اشتباه {{ row.cheatingRiskPercentage }}%</span>
+                </span>
+                <div *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0 || (row.cameraDisconnectionsCount || 0) > 0" class="integrity-sub-violations">
+                  <span *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0" class="integrity-violation-tag">
+                    {{ row.tabSwitchCount || row.tabSwitches }} خروج
+                  </span>
+                  <span *ngIf="(row.cameraDisconnectionsCount || 0) > 0" class="integrity-violation-tag">
+                    {{ row.cameraDisconnectionsCount }} كاميرا
+                  </span>
+                </div>
+              </div>
+
+              <div *ngIf="row.submittedAt && (row.cheatingRiskPercentage || 0) > 25" class="integrity-danger-box">
+                <span class="integrity-danger-badge">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>خطر {{ row.cheatingRiskPercentage }}%</span>
+                </span>
+                <div *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0 || (row.cameraDisconnectionsCount || 0) > 0" class="integrity-sub-violations">
+                  <span *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0" class="integrity-violation-tag">
+                    {{ row.tabSwitchCount || row.tabSwitches }} خروج
+                  </span>
+                  <span *ngIf="(row.cameraDisconnectionsCount || 0) > 0" class="integrity-violation-tag">
+                    {{ row.cameraDisconnectionsCount }} كاميرا
+                  </span>
+                </div>
+              </div>
+            </td>
+
+            <!-- حالة الحضور والعذر -->
+            <td class="text-center">
+              <span *ngIf="row.status === 'Passed' || row.status === 'Failed' || row.submittedAt" class="attendance-present-tag">
+                <i class="fa-solid fa-check attendance-present-icon"></i>
+                <span>حاضر</span>
+              </span>
+
+              <div *ngIf="row.status === 'Absent' || row.status === 'NotAttempted' || !row.submittedAt" class="attendance-absent-box">
+                <span class="attendance-absent-badge">متغيب</span>
+
+                <div *ngIf="row.excuseReason || row.excuseStatus" class="excuse-review-group">
+                  <span class="excuse-chip" [ngClass]="{
+                    'excuse-chip-approved': row.excuseStatus === 'Approved',
+                    'excuse-chip-rejected': row.excuseStatus === 'Rejected',
+                    'excuse-chip-pending': row.excuseStatus === 'PendingReview' || row.excuseStatus === 'Pending' || !row.excuseStatus
+                  }">
+                    {{ row.excuseStatus === 'Approved' ? 'عذر معتمد' : row.excuseStatus === 'Rejected' ? 'عذر مرفوض' : 'عذر قيد المراجعة' }}
+                  </span>
+
+                  <button type="button" (click)="onOpenExcuseModal(row)" class="btn-inspect-excuse">
+                    <i class="fa-solid fa-paperclip"></i>
+                    <span>فحص العذر</span>
+                  </button>
+                </div>
+
+                <span *ngIf="!row.excuseReason && (!row.excuseStatus || row.excuseStatus === 'None')" class="no-excuse-tag">
+                  لم يرفق عذراً
+                </span>
+              </div>
+            </td>
+
+            <!-- ملاحظة المتدرب (كاملة بدون اختصار ...) -->
+            <td>
+              <div *ngIf="row.traineeSubmissionNote || row.notes" class="trainee-note-bubble">
+                <i class="fa-regular fa-comment-dots trainee-note-icon"></i>
+                <span>{{ row.traineeSubmissionNote || row.notes }}</span>
+              </div>
+              <span *ngIf="!row.traineeSubmissionNote && !row.notes" class="text-muted-dash">-</span>
+            </td>
+
+            <!-- النتيجة والاعتماد -->
+            <td class="text-center">
+              <span *ngIf="row.status === 'Passed'" class="badge-result-soft-passed">ناجح</span>
+              <span *ngIf="row.status === 'Failed'" class="badge-result-soft-failed">راسب</span>
+              <span *ngIf="(row.status === 'NotAttempted' || row.status === 'Absent' || !row.status) && !row.submittedAt" class="badge-result-soft-absent">متغيب</span>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredQuizAttempts().length === 0">
+            <td colspan="7" class="empty-audit-msg">
+              لا توجد سجلات تطابق الفلتر المحدد حالياً.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- تذييل المحضر الرسمي المعتمد -->
+  <div class="quiz-audit-footer-bar">
+    <div class="audit-footer-stamp">
+      <i class="fa-solid fa-stamp text-indigo"></i>
+      <span>سجل رسمي معتمد وموثق ببوابة نفاد - معرف الاختبار: #{{ activeQuizForAudit?.quizId }}</span>
+    </div>
+
+    <div class="audit-footer-btns">
+      <button type="button" (click)="onPrintAuditReport()" class="btn-print-mini">
+        <i class="fa-solid fa-print"></i>
+        <span>طباعة التقرير</span>
+      </button>
+      <button type="button" (click)="closeQuizAuditFullPage()" class="btn-close-audit">
+        إغلاق والعودة لتفاصيل الدفعة
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========================================================== -->
+<!-- 5.1 نافذة فحص عذر الغياب للمتدرب -->
+<!-- ========================================================== -->
+<div *ngIf="isExcuseModalOpen" (click)="onCloseExcuseModal()" class="modal-overlay" dir="rtl">
+  <div (click)="$event.stopPropagation()" class="modal-container-excuse">
+    <div class="modal-header">
+      <div class="title-with-badge">
+        <h3 class="modal-title">فحص عذر غياب المتدرب</h3>
+        <span class="excuse-trainee-tag">{{ selectedExcuseRow?.traineeName }}</span>
+      </div>
+      <button type="button" (click)="onCloseExcuseModal()" class="modal-close-btn">&times;</button>
+    </div>
+
+    <div class="excuse-modal-body">
+      <div class="excuse-info-grid">
+        <div class="excuse-info-item">
+          <span class="info-label">المتدرب:</span>
+          <span class="info-val font-bold">{{ selectedExcuseRow?.traineeName }} (#{{ selectedExcuseRow?.traineeId
+            }})</span>
+        </div>
+        <div class="excuse-info-item">
+          <span class="info-label">الاختبار:</span>
+          <span class="info-val">{{ activeQuizForAudit?.title }}</span>
+        </div>
+        <div class="excuse-info-item full-width">
+          <span class="info-label">سبب العذر المقدم من المتدرب:</span>
+          <div class="reason-quote-box">
+            "{{ selectedExcuseRow?.excuseReason || 'عذر طارئ مقدم عبر منصة نفاد التدريبية.' }}"
+          </div>
+        </div>
+        <div class="excuse-info-item full-width"
+          *ngIf="selectedExcuseRow?.excuseAttachmentUrl || selectedExcuseRow?.excuseAttachment">
+          <span class="info-label">المستند والتقرير الطبي المرفق:</span>
+          <a [href]="selectedExcuseRow?.excuseAttachmentUrl || selectedExcuseRow?.excuseAttachment" target="_blank"
+            class="attachment-link-btn">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>فتح ومطالعة التقرير والمستند المرفق</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="excuse-decision-actions">
+        <h4 class="decision-box-heading">حالة العذر لدى المدرب المشرف:</h4>
+
+        <div class="trainer-excuse-status-card">
+          <div class="status-indicator-flex">
+            <span class="status-label">القرار المسجل:</span>
+            <span class="excuse-badge" [ngClass]="{
+              'excuse-approved': selectedExcuseRow?.excuseStatus === 'Approved',
+              'excuse-rejected': selectedExcuseRow?.excuseStatus === 'Rejected',
+              'excuse-pending': selectedExcuseRow?.excuseStatus === 'PendingReview' || selectedExcuseRow?.excuseStatus === 'Pending'
+            }">
+              {{ selectedExcuseRow?.excuseStatus === 'Approved' ? 'معتمد رسمياً من المدرب ✔️' :
+              selectedExcuseRow?.excuseStatus === 'Rejected' ? 'مرفوض من المدرب ❌' : 'قيد المراجعة لدى المدرب ⏳' }}
+            </span>
+          </div>
+          <p class="trainer-excuse-policy-note">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>تنويه إداري: اتخاذ القرار النهائي بشأن قبول الأعذار وجدولة الاختبارات التعويضية مسند حصرياً للمدرب
+              المشرف.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer-buttons">
+      <button type="button" (click)="onCloseExcuseModal()" class="btn-cancel-batch">إغلاق النافذة</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================== -->
+<!-- 5.3 صفحة استعراض مشاريع GitHub وتقييم الكود والواجبات (Full-Screen Dossier) -->
+<!-- ========================================================== -->
+<div *ngIf="(isProjectAuditFullPageOpen() || isProjectDossierOpen()) && !isProjectEvaluationFullPageOpen()"
+  class="quiz-audit-full-page-container" dir="rtl">
+
+  <!-- شريط العودة والأزرار العلوية -->
+  <div class="audit-top-actions-bar">
+    <button type="button" class="btn-back-to-batch" (click)="closeProjectAuditFullPage()">
+      <span class="back-arrow">&#8594;</span>
+      <span>العودة إلى تفاصيل الدفعة</span>
+    </button>
+
+    <div class="audit-full-page-actions">
+      <button type="button"
+        (click)="onCopyText('git clone https://github.com/nafadh/batch-projects-all.git', 'أمر استنساخ Git')"
+        class="btn-audit-action" title="نسخ أمر استنساخ مستودعات الدفعة">
+        <i class="fa-solid fa-terminal"></i>
+        <span>نسخ كود Git Clone</span>
+      </button>
+
+      <button type="button"
+        (click)="showToast('تم تصدير كشف روابط المشاريع والدرجات إلى ملف Excel بنجاح ✔️', 'success')"
+        class="btn-audit-action" title="تصدير كشف الدرجات والمستودعات Excel">
+        <i class="fa-solid fa-file-excel"></i>
+        <span>تصدير Excel</span>
+      </button>
+
+      <button type="button" (click)="printOfficialReport()" class="btn-audit-action btn-print-official"
+        title="طباعة سجل التسليمات الرسمي">
+        <i class="fa-solid fa-print"></i>
+        <span>طباعة سجل التسليمات</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ترويسة الحدث البرمجي -->
+  <div class="quiz-audit-header-card project-header-card">
+    <div class="audit-header-main-info">
+      <div class="audit-badge-row">
+        <span class="badge-audit-official">
+          <i class="fa-brands fa-github"></i>
+          <span>سجل تسليمات المشاريع ومراجعة الكود</span>
+        </span>
+        <span class="badge-batch-pill">{{ selectedBatch?.batchName || 'الدفعة الأولى' }}</span>
+        <span class="project-type-pill">{{ activeProjectEvent?.typeLabel || 'مشروع تطبيقي' }}</span>
+      </div>
+
+      <h1 class="audit-quiz-title">{{ activeProjectEvent?.title || 'تسليمات المشاريع البرمجية' }}</h1>
+
+      <div class="audit-meta-grid">
+        <span class="audit-meta-item">
+          <i class="fa-regular fa-calendar"></i>
+          <span>تاريخ التسليم: <strong>{{ activeProjectEvent?.date || '2026-06-28' }}</strong></span>
+        </span>
+        <span class="audit-meta-item">
+          <i class="fa-solid fa-user-tie"></i>
+          <span>المدرب المشرف والمقيم: <strong>{{ selectedBatch?.supervisorTrainer || 'م. أحمد المعمري'
+              }}</strong></span>
+        </span>
+        <span class="audit-meta-item">
+          <i class="fa-solid fa-trophy"></i>
+          <span>نسبة النجاح المقررة: <strong class="text-emerald">60%</strong></span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- مؤشرات الأداء السريعة KPIs (4 مربعات متساوية متناسقة 100% مع عرض الصفحة) -->
+  <div class="quiz-audit-kpi-grid project-kpi-grid-4">
+    <div class="quiz-audit-kpi-box">
+      <div class="kpi-box-top">
+        <span class="kpi-box-label">إجمالي التسليمات</span>
+        <i class="fa-solid fa-cloud-arrow-up kpi-mini-icon text-indigo"></i>
+      </div>
+      <div class="kpi-box-val" dir="ltr">
+        <span class="kpi-num-accent">{{ getProjectSubmissionsCount() }}</span>
+        <span class="kpi-slash">/</span>
+        <span class="kpi-num-total">{{ selectedBatch?.totalTraineesCount || 11 }}</span>
+      </div>
+      <span class="kpi-sub-text">تم رفع مشاريعهم البرمجية</span>
+    </div>
+
+    <div class="quiz-audit-kpi-box">
+      <div class="kpi-box-top">
+        <span class="kpi-box-label">مستودعات GitHub النشطة</span>
+        <i class="fa-brands fa-github kpi-mini-icon text-dark"></i>
+      </div>
+      <div class="kpi-box-val">
+        {{ getProjectGithubReposCount() }}
+      </div>
+      <span class="kpi-sub-text">مستودعات كود مرتبطة ومفحوصة</span>
+    </div>
+
+    <div class="quiz-audit-kpi-box">
+      <div class="kpi-box-top">
+        <span class="kpi-box-label">متوسط التقييم العام</span>
+        <i class="fa-solid fa-chart-line kpi-mini-icon text-cyan"></i>
+      </div>
+      <div class="kpi-box-val text-cyan">
+        {{ getProjectAverageScore() }}%
+      </div>
+      <span class="kpi-sub-text">معدل درجات المشاريع المقيمة</span>
+    </div>
+
+    <div class="quiz-audit-kpi-box">
+      <div class="kpi-box-top">
+        <span class="kpi-box-label">مشاريع تم تقييمها</span>
+        <i class="fa-solid fa-circle-check kpi-mini-icon text-emerald"></i>
+      </div>
+      <div class="kpi-box-val text-emerald" dir="ltr">
+        <span class="kpi-num-accent">{{ getProjectGradedCount() }}</span>
+        <span class="kpi-slash">/</span>
+        <span class="kpi-num-total">{{ getProjectSubmissionsCount() }}</span>
+      </div>
+      <span class="kpi-sub-text">تم رصد درجاتها وملاحظات المدرب</span>
+    </div>
+  </div>
+
+  <!-- شريط التصفية المستطيل الأنيق -->
+  <div class="audit-filter-tabs-bar">
+    <div class="filter-tabs-list">
+      <button type="button" (click)="projectFilter.set('all')" [class.active]="projectFilter() === 'all'"
+        class="audit-filter-box">
+        الكل ({{ projectSubmissions().length }})
+      </button>
+
+      <button type="button" (click)="projectFilter.set('graded')" [class.active]="projectFilter() === 'graded'"
+        class="audit-filter-box">
+        المكتملة والمعتمدة ({{ getProjectGradedCount() }})
+      </button>
+
+      <button type="button" (click)="projectFilter.set('under_review')"
+        [class.active]="projectFilter() === 'under_review'" class="audit-filter-box">
+        قيد المراجعة والتقييم ({{ getProjectSubmissionsCount() - getProjectGradedCount() }})
+      </button>
+
+      <button type="button" (click)="projectFilter.set('late')" [class.active]="projectFilter() === 'late'"
+        class="audit-filter-box">
+        التسليمات المتأخرة ({{ getLateSubmissionsCount() }})
+      </button>
+    </div>
+  </div>
+
+  <!-- جدول التسليمات البرمجية الكامل -->
+  <div class="quiz-audit-table-card">
+    <table class="quiz-audit-table project-table">
+      <thead>
+        <tr class="audit-table-header-row">
+          <th style="min-width: 200px;">المتدرب</th>
+          <th style="min-width: 250px;">رابط المشروع والكود (GitHub / Swagger)</th>
+          <th style="min-width: 220px;">معايير التقييم البرمجي</th>
+          <th class="text-center" style="min-width: 100px;">الدرجة</th>
+          <th class="text-center" style="min-width: 110px;">الحالة</th>
+          <th style="min-width: 260px;">ملاحظات المقيم</th>
+          <th class="text-center" style="min-width: 110px;">الإجراء</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of filteredProjectSubmissions()" class="audit-row-trainee">
+
+          <!-- 1. المتدرب -->
+          <td>
+            <div class="trainee-cell-flex">
+              <img [src]="item.avatar" class="trainee-audit-avatar" alt="Avatar" />
+              <div class="trainee-meta-wrap">
+                <div class="trainee-audit-name">{{ item.traineeName }}</div>
+                <div class="trainee-meta-ids">
+                  <span class="id-tag-system" title="الرقم التعريفي للمتدرب في النظام">#{{ item.traineeId }}</span>
+                  <span class="id-separator">|</span>
+                  <span class="id-tag-civil" title="الرقم المدني الرسمي للمتدرب">المدني: {{ item.civilId }}</span>
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <!-- 2. رابط المشروع والكود (GitHub / Swagger) بتصميم بطاقة عصرية ومريحة بصرياً ومضبوطة المسافات -->
+          <td style="padding: 12px 18px !important; min-width: 250px; vertical-align: middle;">
+            <div
+              style="display: flex; flex-direction: column; gap: 7px; align-items: flex-start; justify-content: center; direction: ltr;">
+
+              <!-- بطاقة مستودع GitHub المحمية (مطابقة تماماً لبنية بطاقة Swagger الناجحة) -->
+              <a [href]="item.repoUrl" target="_blank" rel="noopener noreferrer"
+                style="display: inline-flex !important; align-items: center !important; gap: 8px !important; background: #f8fafc !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; padding: 6px 12px !important; text-decoration: none !important; box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important; width: fit-content !important; min-width: max-content !important;"
+                title="فتح مستودع GitHub">
+
+                <!-- أيقونة GitHub الرسمية الدقيقة (SVG مدمج لا يسقط أبداً) -->
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#0f172a"
+                  style="flex-shrink: 0 !important; display: block !important;">
+                  <path fill-rule="evenodd" clip-rule="evenodd"
+                    d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                </svg>
+
+                <!-- اسم المستودع كحلي داكن بخط Monospace دون أي اقتطاع أو انكماش -->
+                <span
+                  style="color: #0f172a !important; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; font-size: 12px !important; font-weight: 700 !important; white-space: nowrap !important; text-decoration: none !important;">
+                  {{ item.repoName || item.repoUrl }}
+                </span>
+
+                <!-- أيقونة سهم خارجي SVG واضحة -->
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round"
+                  style="flex-shrink: 0 !important; display: block !important;">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </a>
+
+              <!-- رابط Swagger / المعاينة كبطاقة مصغرة أنيقة تحته تماماً -->
+              <a *ngIf="item.liveDemoUrl" [href]="item.liveDemoUrl" target="_blank" rel="noopener noreferrer"
+                style="display: inline-flex !important; align-items: center !important; gap: 6px !important; background: #eff6ff !important; border: 1px solid #bfdbfe !important; border-radius: 6px !important; padding: 3px 8px !important; text-decoration: none !important; width: fit-content !important;"
+                title="فتح واجهة Swagger / المعاينة الحية">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round"
+                  style="flex-shrink: 0 !important; display: block !important;">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                  </path>
+                </svg>
+                <span
+                  style="color: #1d4ed8 !important; font-size: 11px !important; font-weight: 700 !important; text-decoration: none !important; white-space: nowrap !important;">Swagger
+                  / Live Demo</span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round"
+                  style="flex-shrink: 0 !important; display: block !important;">
+                  <line x1="7" y1="17" x2="17" y2="7"></line>
+                  <polyline points="7 7 17 7 17 17"></polyline>
+                </svg>
+              </a>
+
+            </div>
+          </td>
+
+          <!-- 5. معايير التقييم البرمجي -->
+          <td>
+            <div *ngIf="item.criteria" class="evaluation-rubric-chips">
+              <div class="rubric-chip" *ngIf="item.criteria.architecture" title="Clean Architecture & المعمارية">
+                <span class="rubric-name">المعمارية</span>
+                <strong class="rubric-score" dir="ltr">{{ item.criteria.architecture.score }}/{{
+                  item.criteria.architecture.max }}</strong>
+              </div>
+              <div class="rubric-chip" *ngIf="item.criteria.apiDocs" title="توثيق Swagger & Endpoints">
+                <span class="rubric-name">Swagger</span>
+                <strong class="rubric-score" dir="ltr">{{ item.criteria.apiDocs.score }}/{{ item.criteria.apiDocs.max
+                  }}</strong>
+              </div>
+              <div class="rubric-chip" *ngIf="item.criteria.database" title="قواعد البيانات EF Core">
+                <span class="rubric-name">EF Core</span>
+                <strong class="rubric-score" dir="ltr">{{ item.criteria.database.score }}/{{ item.criteria.database.max
+                  }}</strong>
+              </div>
+              <div class="rubric-chip" *ngIf="item.criteria.codeQuality" title="جودة ونظافة الكود">
+                <span class="rubric-name">جودة الكود</span>
+                <strong class="rubric-score" dir="ltr">{{ item.criteria.codeQuality.score }}/{{
+                  item.criteria.codeQuality.max }}</strong>
+              </div>
+            </div>
+            <span *ngIf="!item.criteria" class="pending-eval-tag">قيد الفحص</span>
+          </td>
+
+          <!-- 6. الدرجة -->
+          <td class="text-center">
+            <div *ngIf="item.score !== null && item.score !== undefined" class="project-score-pill"
+              [ngClass]="item.score >= 60 ? 'score-pass-pill' : 'score-fail-pill'">
+              <div class="score-fraction" dir="ltr">
+                <strong class="score-achieved">{{ item.score }}</strong>
+                <span class="score-divider">/</span>
+                <span class="score-target">{{ item.maxScore || 100 }}</span>
+              </div>
+              <div class="score-mini-progress">
+                <div class="score-mini-progress-bar" [style.width.%]="item.score"></div>
+              </div>
+            </div>
+            <span *ngIf="item.score === null || item.score === undefined" class="pending-eval-tag">قيد التقييم</span>
+          </td>
+
+          <!-- 7. الحالة -->
+          <td class="text-center">
+            <span class="excuse-badge" [ngClass]="{
+              'excuse-approved': item.status === 'مكتمل ومعتمد',
+              'excuse-pending': item.status === 'قيد المراجعة والتقييم',
+              'excuse-rejected': item.status === 'يتطلب تحسينات'
+            }">
+              {{ item.status }}
+            </span>
+          </td>
+
+          <!-- 8. ملاحظات المقيم: تظهر بالكامل من الداتابيس دون أي اقتطاع -->
+          <td style="min-width: 260px; max-width: 340px;">
+            <div *ngIf="item.reviewerFeedback" class="full-feedback-cell">
+              <i class="fa-regular fa-comment-dots feedback-icon"></i>
+              <span class="feedback-text">{{ item.reviewerFeedback }}</span>
+            </div>
+            <span *ngIf="!item.reviewerFeedback" class="text-muted-dash">-</span>
+          </td>
+
+          <!-- 9. الإجراء: استعراض كشف التقييم المعتمد كصفحة كاملة -->
+          <td class="text-center">
+            <button type="button" (click)="onOpenProjectEvaluation(item)" class="btn-view-evaluation-dossier"
+              title="استعراض كشف التقييم البرمجي كصفحة كاملة">
+              <i class="fa-regular fa-clipboard"></i>
+              <span>عرض التقييم</span>
+            </button>
+          </td>
+
+        </tr>
+
+        <tr *ngIf="filteredProjectSubmissions().length === 0">
+          <td colspan="7" class="audit-empty-row">لا توجد تسليمات مسجلة ضمن هذا التصنيف حالياً.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ========================================================== -->
+<!-- 5.4 صفحة استعراض كشف تقييم المشروع كاملة الشاشة (Full-Screen Project Evaluation Dossier) -->
+<!-- ========================================================== -->
+<div *ngIf="isProjectEvaluationFullPageOpen()" class="quiz-audit-full-page-container project-eval-full-page" dir="rtl">
+
+  <!-- شريط الملاحة والإجراءات العلوي -->
+  <div class="audit-top-actions-bar">
+    <button type="button" class="btn-back-nav" (click)="closeProjectEvaluation()">
+      <span class="back-arrow">&#8594;</span>
+      <span>العودة إلى سجل تسليمات المشاريع</span>
+    </button>
+
+    <div class="audit-header-buttons">
+      <button type="button" (click)="copyGitHubUrl((selectedProjectForView || selectedProjectForGrading)?.repoUrl)"
+        class="btn-audit-action" title="نسخ رابط مستودع GitHub">
+        <i class="fa-brands fa-github"></i>
+        <span>نسخ رابط المستودع</span>
+      </button>
+
+      <a *ngIf="(selectedProjectForView || selectedProjectForGrading)?.liveDemoUrl as demo" [href]="demo"
+        target="_blank" rel="noopener noreferrer" class="btn-audit-action live-preview-top-btn"
+        title="فتح المعاينة الحية والتطبيق في تبويب جديد">
+        <i class="fa-solid fa-globe"></i>
+        <span>معاينة حية للتطبيق</span>
+        <i class="fa-solid fa-arrow-up-right-from-square mini-ext"></i>
+      </a>
+
+      <button type="button" (click)="printOfficialReport()" class="btn-print-audit-report"
+        title="طباعة كشف التقييم المعتمد A4">
+        <i class="fa-solid fa-print"></i>
+        <span>طباعة كشف التقييم الرسمي</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- كارت الترويسة الرسمي وهوية المتدرب والدرجة المعتمدة -->
+  <div class="quiz-audit-header-card eval-full-header-card">
+    <div class="eval-header-flex">
+
+      <!-- هوية المتدرب والبيانات الرسمية -->
+      <div class="eval-trainee-identity-box">
+        <img [src]="(selectedProjectForView || selectedProjectForGrading)?.avatar" class="eval-trainee-avatar-lg"
+          alt="Avatar" />
+
+        <div class="eval-trainee-text-wrap">
+          <div class="eval-tag-row">
+            <span class="badge-audit-official">
+              <i class="fa-solid fa-stamp"></i>
+              <span>كشف تقييم معتمد رسمي</span>
+            </span>
+            <span class="eval-pill-readonly">للاطلاع والتدقيق الإداري</span>
+            <span class="badge-batch-pill">{{ selectedBatch?.batchName || 'الدفعة الأولى' }}</span>
+          </div>
+
+          <h2 class="eval-trainee-full-name">{{ (selectedProjectForView || selectedProjectForGrading)?.traineeName }}
+          </h2>
+
+          <div class="eval-trainee-meta-pills">
+            <span class="meta-tag-id">
+              <span class="tag-title">معرف النظام:</span>
+              <strong>#{{ (selectedProjectForView || selectedProjectForGrading)?.traineeId }}</strong>
+            </span>
+            <span class="meta-tag-civil">
+              <span class="tag-title">الرقم المدني:</span>
+              <strong>{{ (selectedProjectForView || selectedProjectForGrading)?.civilId }}</strong>
+            </span>
+            <span class="meta-tag-project">
+              <span class="tag-title">المشروع:</span>
+              <span>{{ (selectedProjectForView || selectedProjectForGrading)?.projectName }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- بطاقة الدرجة الإجمالية والاعتماد -->
+      <div class="eval-score-summary-badge">
+        <div class="score-grand-box"
+          [ngClass]="((selectedProjectForView || selectedProjectForGrading)?.score || 0) >= 60 ? 'score-box-pass' : 'score-box-fail'">
+          <div class="score-grand-fraction" dir="ltr">
+            <span class="score-grand-achieved">{{ (selectedProjectForView || selectedProjectForGrading)?.score ?? '–'
+              }}</span>
+            <span class="score-grand-slash">/</span>
+            <span class="score-grand-max">100</span>
+          </div>
+          <span class="score-grand-label">الدرجة الإجمالية</span>
+        </div>
+
+        <span class="eval-status-badge-lg" [ngClass]="{
+          'status-approved': (selectedProjectForView || selectedProjectForGrading)?.status === 'مكتمل ومعتمد',
+          'status-revision': (selectedProjectForView || selectedProjectForGrading)?.status === 'يتطلب تحسينات',
+          'status-pending': (selectedProjectForView || selectedProjectForGrading)?.status === 'قيد المراجعة والتقييم'
+        }">
+          <i *ngIf="(selectedProjectForView || selectedProjectForGrading)?.status === 'مكتمل ومعتمد'"
+            class="fa-solid fa-circle-check"></i>
+          <i *ngIf="(selectedProjectForView || selectedProjectForGrading)?.status === 'يتطلب تحسينات'"
+            class="fa-solid fa-triangle-exclamation"></i>
+          <i *ngIf="(selectedProjectForView || selectedProjectForGrading)?.status === 'قيد المراجعة والتقييم'"
+            class="fa-solid fa-hourglass-half"></i>
+          <span>{{ (selectedProjectForView || selectedProjectForGrading)?.status }}</span>
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- بطاقات التفاصيل التقنية للمشروع (المستودع والمعاينة الحية) -->
+  <div class="eval-technical-cards-grid">
+    <div class="eval-tech-card-pro">
+      <div class="tech-card-pro-header">
+        <i class="fa-brands fa-github text-dark"></i>
+        <span>مستودع الكود المصدري على GitHub</span>
+      </div>
+      <div class="tech-card-pro-body">
+        <div *ngIf="(selectedProjectForView || selectedProjectForGrading)?.repoUrl as repo">
+          <a [href]="repo" target="_blank" rel="noopener noreferrer" class="tech-repo-link-pro" dir="ltr"
+            style="display: inline-flex !important; align-items: center !important; gap: 8px !important; background-color: #f8fafc !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; padding: 8px 14px !important; text-decoration: none !important; width: fit-content !important;">
+            <!-- أيقونة GitHub الرسمية الدقيقة بتقنية SVG -->
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#0f172a"
+              style="flex-shrink: 0 !important; display: block !important;">
+              <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+            </svg>
+            <span
+              style="color: #0D1C8C !important; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; font-size: 13px !important; font-weight: 700 !important; text-decoration: none !important;">
+              {{ repo }}
+            </span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round"
+              style="flex-shrink: 0 !important; display: block !important;">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+          <div class="tech-meta-row" dir="ltr" style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+            <span class="branch-pill">
+              <i class="fa-solid fa-code-branch"></i>
+              <span>{{ (selectedProjectForView || selectedProjectForGrading)?.branch || 'main' }}</span>
+            </span>
+            <span class="commit-hash-pill"
+              [title]="(selectedProjectForView || selectedProjectForGrading)?.commitMessage">
+              <i class="fa-solid fa-code-commit"></i>
+              <span>{{ (selectedProjectForView || selectedProjectForGrading)?.commitHash }}</span>
+            </span>
+            <span class="commit-msg-preview"
+              [title]="(selectedProjectForView || selectedProjectForGrading)?.commitMessage">
+              {{ (selectedProjectForView || selectedProjectForGrading)?.commitMessage }}
+            </span>
+          </div>
+        </div>
+        <div *ngIf="!(selectedProjectForView || selectedProjectForGrading)?.repoUrl" class="tech-no-demo-text">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>لم يُدرج رابط مستودع برمجي بعد.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="eval-tech-card-pro">
+      <div class="tech-card-pro-header">
+        <i class="fa-solid fa-globe text-indigo"></i>
+        <span>المعاينة الحية والتطبيق المنشور (Live Demo)</span>
+      </div>
+      <div class="tech-card-pro-body">
+        <div *ngIf="(selectedProjectForView || selectedProjectForGrading)?.liveDemoUrl as demo">
+          <a [href]="demo" target="_blank" rel="noopener noreferrer" class="tech-demo-link-pro" dir="ltr">
+            <span>{{ demo }}</span>
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </a>
+          <div class="demo-status-row">
+            <span class="demo-active-pill">
+              <span class="pulsing-mini-dot"></span>
+              <span>واجهة Swagger والـ Endpoints جاهزة ومفحوصة</span>
+            </span>
+          </div>
+        </div>
+        <div *ngIf="!(selectedProjectForView || selectedProjectForGrading)?.liveDemoUrl" class="tech-no-demo-text">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>تم تسليم المشروع ككود مصدري للمراجعة، ولم يُدرج رابط معاينة حية خارجي.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- مصفوفة معايير التقييم البرمجية المعتمدة (Rubric Evaluation Matrix) -->
+  <div class="quiz-audit-full-table-card mb-6" *ngIf="(selectedProjectForView || selectedProjectForGrading)?.criteria">
+    <div class="eval-section-banner">
+      <div class="eval-section-title-wrap">
+        <i class="fa-solid fa-list-check"></i>
+        <div>
+          <h3 class="eval-section-heading">مصفوفة معايير التقييم البرمجية المعتمدة (Rubric Matrix)</h3>
+          <p class="eval-section-sub">توزيع الدرجات الفنية وفق المعايير الأكاديمية ونسب الإتقان المحققة</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="quiz-audit-table-expanded eval-rubric-full-table">
+        <thead>
+          <tr>
+            <th style="width: 38%;">المعيار التقييمي البرمجي</th>
+            <th class="text-center" style="width: 14%;">الدرجة الممنوحة</th>
+            <th class="text-center" style="width: 14%;">الحد الأقصى</th>
+            <th class="text-center" style="width: 14%;">نسبة الإتقان</th>
+            <th style="width: 20%;">مستوى الإنجاز</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="(selectedProjectForView || selectedProjectForGrading)?.criteria?.architecture as c">
+            <td>
+              <div class="rubric-item-col">
+                <span class="rubric-item-title">معمارية الكود ونمط البناء (Clean Architecture & DI)</span>
+                <span class="rubric-item-desc">فصل الطبقات (Core, Application, Infrastructure)، وتطبيق الـ Dependency
+                  Injection</span>
+              </div>
+            </td>
+            <td class="text-center font-bold text-emerald font-mono">{{ c.score }}</td>
+            <td class="text-center text-slate font-mono">{{ c.max }}</td>
+            <td class="text-center font-bold font-mono">{{ getRubricPercentage(c.score, c.max) }}%</td>
+            <td>
+              <div class="rubric-progress-bg-full">
+                <div class="rubric-progress-fill" [style.width.%]="(c.score / c.max) * 100"></div>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="(selectedProjectForView || selectedProjectForGrading)?.criteria?.apiDocs as c">
+            <td>
+              <div class="rubric-item-col">
+                <span class="rubric-item-title">توثيق الـ API وواجهات Swagger (Endpoints Documentation)</span>
+                <span class="rubric-item-desc">تغطية الـ Endpoints، معايير التسمية RESTful، ومعالجة رسائل الخطأ ونماذج
+                  الاستجابة</span>
+              </div>
+            </td>
+            <td class="text-center font-bold text-emerald font-mono">{{ c.score }}</td>
+            <td class="text-center text-slate font-mono">{{ c.max }}</td>
+            <td class="text-center font-bold font-mono">{{ getRubricPercentage(c.score, c.max) }}%</td>
+            <td>
+              <div class="rubric-progress-bg-full">
+                <div class="rubric-progress-fill" [style.width.%]="(c.score / c.max) * 100"></div>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="(selectedProjectForView || selectedProjectForGrading)?.criteria?.database as c">
+            <td>
+              <div class="rubric-item-col">
+                <span class="rubric-item-title">قاعدة البيانات والتهجير (EF Core & Migrations)</span>
+                <span class="rubric-item-desc">تصميم الكيانات والعلاقات، سلامة الـ Migrations، واستخدام استعلامات سريعة
+                  فعالة</span>
+              </div>
+            </td>
+            <td class="text-center font-bold text-emerald font-mono">{{ c.score }}</td>
+            <td class="text-center text-slate font-mono">{{ c.max }}</td>
+            <td class="text-center font-bold font-mono">{{ getRubricPercentage(c.score, c.max) }}%</td>
+            <td>
+              <div class="rubric-progress-bg-full">
+                <div class="rubric-progress-fill" [style.width.%]="(c.score / c.max) * 100"></div>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="(selectedProjectForView || selectedProjectForGrading)?.criteria?.codeQuality as c">
+            <td>
+              <div class="rubric-item-col">
+                <span class="rubric-item-title">جودة ونظافة الكود والتنسيق (Code Quality & Clean Code)</span>
+                <span class="rubric-item-desc">تطبيق مبادئ SOLID، خلو الكود من التحذيرات والتكرار، واستخدام معايير
+                  التسمية الموحدة</span>
+              </div>
+            </td>
+            <td class="text-center font-bold text-emerald font-mono">{{ c.score }}</td>
+            <td class="text-center text-slate font-mono">{{ c.max }}</td>
+            <td class="text-center font-bold font-mono">{{ getRubricPercentage(c.score, c.max) }}%</td>
+            <td>
+              <div class="rubric-progress-bg-full">
+                <div class="rubric-progress-fill" [style.width.%]="(c.score / c.max) * 100"></div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="eval-rubric-total-row">
+            <td><strong>المجموع الكلي النهائي المعتمد:</strong></td>
+            <td class="text-center font-bold text-emerald font-mono" style="font-size: 16px;">
+              {{ (selectedProjectForView || selectedProjectForGrading)?.score }}
+            </td>
+            <td class="text-center text-slate font-mono" style="font-size: 15px;">100</td>
+            <td class="text-center font-bold font-mono" style="font-size: 15px;">
+              {{ (selectedProjectForView || selectedProjectForGrading)?.score }}%
+            </td>
+            <td>
+              <div class="rubric-progress-bg-full">
+                <div class="rubric-progress-fill"
+                  [style.width.%]="(selectedProjectForView || selectedProjectForGrading)?.score"></div>
+              </div>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- ملاحظات وتوصيات المدرب المقيم الفنية -->
+  <div class="eval-feedback-full-card mb-6">
+    <div class="eval-feedback-header-flex">
+      <div class="reviewer-badge-pro">
+        <i class="fa-solid fa-chalkboard-user"></i>
+        <span>المقيم الفني: <strong>{{ (selectedProjectForView || selectedProjectForGrading)?.reviewerName || 'م. أحمد
+            المعمري' }}</strong> (مدرب معتمد)</span>
+      </div>
+      <span class="graded-time-badge" *ngIf="(selectedProjectForView || selectedProjectForGrading)?.gradedAt">
+        <i class="fa-regular fa-clock"></i>
+        <span>تاريخ اعتماد الرصد:</span>
+        <strong dir="ltr">{{ (selectedProjectForView || selectedProjectForGrading)?.gradedAt | date:'dd/MM/yyyy - hh:mm
+          a' }}</strong>
+      </span>
+    </div>
+
+    <div class="reviewer-quote-content-pro">
+      "{{ (selectedProjectForView || selectedProjectForGrading)?.reviewerFeedback || 'المشروع قيد المراجعة الفنية من قبل
+      المدرب المشرف.' }}"
+    </div>
+  </div>
+
+  <!-- تنويه السياسة الإدارية الصارمة -->
+  <div class="admin-readonly-notice-full mb-6">
+    <div class="notice-icon-box">
+      <i class="fa-solid fa-shield-halved"></i>
+    </div>
+    <div class="notice-text-content">
+      <strong>تنويه النزاهة الأكاديمية:</strong>
+      <span>تقييم الكود وتوزيع درجات المعايير مسند حصرياً للمدرب المشرف. يحق للإدارة التدقيق والمطالعة دون صلاحية تعديل
+        النتائج لضمان النزاهة الأكاديمية واستقلالية التقييم الفني.</span>
+    </div>
+  </div>
+
+  <!-- تذييل الصفحة الرسمي لكشف تقييم المشروع -->
+  <div class="quiz-audit-footer-bar">
+    <div class="audit-footer-stamp">
+      <i class="fa-solid fa-stamp"></i>
+      <span>سجل تقييم رسمي معتمد وموثق ببوابة نفاد - معرف التسليم: #{{ (selectedProjectForView ||
+        selectedProjectForGrading)?.id || 1 }}</span>
+    </div>
+
+    <div class="audit-footer-btns">
+      <button type="button" (click)="printOfficialReport()" class="btn-print-mini">
+        <i class="fa-solid fa-print"></i>
+        <span>طباعة التقرير A4</span>
+      </button>
+      <button type="button" (click)="closeProjectEvaluation()" class="btn-close-audit">
+        العودة إلى سجل التسليمات
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========================================================== -->
+<!-- 6. باقي المودالات العادية (إنشاء دفعة، إنشاء برنامج، تعديل) -->
+<!-- ========================================================== -->
 <div *ngIf="isBatchModalOpen" (click)="onCloseBatchModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container">
     <div class="modal-header">
@@ -567,168 +1894,14 @@
       <button type="button" (click)="onCloseBatchModal()" class="modal-close-btn">&times;</button>
     </div>
     <form [formGroup]="batchForm" (ngSubmit)="onSubmit()" class="modal-form">
-      
-      <!-- اسم الدفعة -->
       <div class="form-group">
         <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
-        <input type="text" formControlName="batchName" 
-               [class.input-error]="bf['batchName'].invalid && (bf['batchName'].touched || batchFormSubmitted)"
-               class="form-input text-right">
-        <span *ngIf="bf['batchName'].invalid && (bf['batchName'].touched || batchFormSubmitted)" class="error-msg">
-          اسم الدفعة مطلوب
-        </span>
-      </div>
-
-      <!-- البرنامج -->
-      <div class="form-group">
-        <label class="form-label">البرنامج <span class="required-star">*</span></label>
-        <select formControlName="programId" 
-                [class.input-error]="bf['programId'].invalid && (bf['programId'].touched || batchFormSubmitted)"
-                class="form-select text-right">
-          <option value="" disabled selected>– اختر برنامجاً –</option>
-          <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
-        </select>
-        <span *ngIf="bf['programId'].invalid && (bf['programId'].touched || batchFormSubmitted)" class="error-msg">
-          يرجى اختيار البرنامج
-        </span>
-      </div>
-
-      <!-- الشركة -->
-      <div class="form-group">
-        <label class="form-label">الشركة المستضيفة</label>
-        <select formControlName="companyId" class="form-select text-right">
-          <option value="">– اختر شركة –</option>
-          <option *ngFor="let comp of companies()" [value]="comp.companyId">{{ comp.companyName }}</option>
-        </select>
-      </div>
-
-      <!-- التواريخ -->
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">تاريخ البداية <span class="required-star">*</span></label>
-          <input type="date" formControlName="startDate" 
-                 [class.input-error]="bf['startDate'].invalid && (bf['startDate'].touched || batchFormSubmitted)"
-                 class="form-input">
-          <span *ngIf="bf['startDate'].invalid && (bf['startDate'].touched || batchFormSubmitted)" class="error-msg">
-            تاريخ البداية مطلوب
-          </span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">تاريخ النهاية <span class="required-star">*</span></label>
-          <input type="date" formControlName="endDate" 
-                 [class.input-error]="bf['endDate'].invalid && (bf['endDate'].touched || batchFormSubmitted)"
-                 class="form-input">
-          <span *ngIf="bf['endDate'].errors?.['required'] && (bf['endDate'].touched || batchFormSubmitted)" class="error-msg">
-            تاريخ النهاية مطلوب
-          </span>
-          <span *ngIf="bf['endDate'].errors?.['dateRangeInvalid'] && (bf['endDate'].touched || batchFormSubmitted)" class="error-msg">
-            تاريخ النهاية يجب أن يكون بعد البداية
-          </span>
-        </div>
-      </div>
-
-      <!-- السعة -->
-      <div class="form-group">
-        <label class="form-label">الطاقة الاستيعابية <span class="required-star">*</span></label>
-        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="capacity" 
-               [class.input-error]="bf['capacity'].invalid && (bf['capacity'].touched || batchFormSubmitted)"
-               class="form-input text-right">
-        <span *ngIf="bf['capacity'].invalid && (bf['capacity'].touched || batchFormSubmitted)" class="error-msg">
-          الطاقة الاستيعابية يجب أن تكون 1 على الأقل
-        </span>
-      </div>
-
-      <div *ngIf="batchErrorMessage" class="error-msg" style="margin-top: 4px;">
-        {{ batchErrorMessage }}
-      </div>
-
-      <div class="modal-footer-buttons">
-        <button type="submit" [disabled]="isSubmittingBatch" class="btn-submit-batch">
-          {{ isSubmittingBatch ? 'جاري الحفظ...' : 'إنشاء الدفعة' }}
-        </button>
-        <button type="button" (click)="onCloseBatchModal()" class="btn-cancel-batch">إلغاء</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- إنشاء برنامج جديد -->
-<div *ngIf="isProgramModalOpen" (click)="onCloseProgramModal()" class="modal-overlay" dir="rtl">
-  <div (click)="$event.stopPropagation()" class="modal-container-program">
-    <button type="button" (click)="onCloseProgramModal()" class="modal-close-absolute">&times;</button>
-    <div class="modal-title-wrapper"><h3 class="modal-title">إنشاء برنامج جديد</h3></div>
-    <form [formGroup]="programForm" (ngSubmit)="onSubmitProgram()" class="modal-form-program">
-      
-      <!-- اسم البرنامج -->
-      <div class="form-group">
-        <label class="form-label">اسم البرنامج <span class="required-star">*</span></label>
-        <input type="text" formControlName="title" 
-               [class.input-error]="pf['title'].invalid && (pf['title'].touched || programFormSubmitted)"
-               class="form-input text-right">
-        <span *ngIf="pf['title'].invalid && (pf['title'].touched || programFormSubmitted)" class="error-msg">
-          اسم البرنامج مطلوب (حرفين على الأقل)
-        </span>
-      </div>
-
-      <!-- المسار -->
-      <div class="form-group">
-        <label class="form-label">المسار <span class="required-star">*</span></label>
-        <select formControlName="trackId" 
-                [class.input-error]="pf['trackId'].invalid && (pf['trackId'].touched || programFormSubmitted)"
-                class="form-select text-right">
-          <option [ngValue]="null" disabled selected>– اختر مساراً –</option>
-          <option *ngFor="let track of tracks()" [value]="track.trackId || track.id">{{ track.name || track.title }}</option>
-        </select>
-        <span *ngIf="pf['trackId'].invalid && (pf['trackId'].touched || programFormSubmitted)" class="error-msg">
-          يرجى اختيار المسار
-        </span>
-      </div>
-
-      <!-- المدة -->
-      <div class="form-group">
-        <label class="form-label">مدة البرنامج (بالأسابيع) <span class="required-star">*</span></label>
-        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="durationWeeks" 
-               [class.input-error]="pf['durationWeeks'].invalid && (pf['durationWeeks'].touched || programFormSubmitted)"
-               class="form-input text-right">
-        <span *ngIf="pf['durationWeeks'].invalid && (pf['durationWeeks'].touched || programFormSubmitted)" class="error-msg">
-          مدة البرنامج مطلوبة (أسبوع واحد على الأقل)
-        </span>
-      </div>
-
-      <div *ngIf="programErrorMessage" class="error-msg" style="margin-top: 4px;">
-        {{ programErrorMessage }}
-      </div>
-
-      <div class="modal-footer-buttons-program">
-        <button type="submit" [disabled]="isSubmittingProgram" class="btn-submit-program">
-          {{ isSubmittingProgram ? 'جاري الحفظ...' : 'إنشاء البرنامج' }}
-        </button>
-        <button type="button" (click)="onCloseProgramModal()" class="btn-cancel-program">إلغاء</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- تعديل الدفعة -->
-<div *ngIf="isEditModalOpen" (click)="onCloseEditModal()" class="modal-overlay" dir="rtl">
-  <div (click)="$event.stopPropagation()" class="modal-container">
-    <div class="modal-header">
-      <h3 class="modal-title">تعديل الدفعة</h3>
-      <button type="button" (click)="onCloseEditModal()" class="modal-close-btn">&times;</button>
-    </div>
-    <form [formGroup]="editBatchForm" (ngSubmit)="onSaveBatch()" class="modal-form">
-      <div class="form-group">
-        <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
-        <input type="text" formControlName="batchName" 
-               [class.input-error]="ebf['batchName'].invalid && (ebf['batchName'].touched || editBatchFormSubmitted)"
-               class="form-input text-right">
-        <span *ngIf="ebf['batchName'].invalid && (ebf['batchName'].touched || editBatchFormSubmitted)" class="error-msg">
-          اسم الدفعة مطلوب
-        </span>
+        <input type="text" formControlName="batchName" class="form-input text-right">
       </div>
       <div class="form-group">
         <label class="form-label">البرنامج <span class="required-star">*</span></label>
         <select formControlName="programId" class="form-select text-right">
+          <option value="" disabled selected>– اختر برنامجاً –</option>
           <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
         </select>
       </div>
@@ -740,9 +1913,6 @@
         <div class="form-group">
           <label class="form-label">تاريخ النهاية <span class="required-star">*</span></label>
           <input type="date" formControlName="endDate" class="form-input">
-          <span *ngIf="ebf['endDate'].errors?.['dateRangeInvalid']" class="error-msg">
-            تاريخ النهاية يجب أن يكون بعد البداية
-          </span>
         </div>
       </div>
       <div class="form-group">
@@ -750,21 +1920,62 @@
         <input type="number" min="1" formControlName="capacity" class="form-input text-right">
       </div>
       <div class="modal-footer-buttons">
-        <button type="submit" [disabled]="isSubmittingEditBatch" class="btn-submit-batch">
-          {{ isSubmittingEditBatch ? 'جاري الحفظ...' : 'حفظ التعديلات' }}
-        </button>
+        <button type="submit" [disabled]="isSubmittingBatch" class="btn-submit-batch">إنشاء الدفعة</button>
+        <button type="button" (click)="onCloseBatchModal()" class="btn-cancel-batch">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div *ngIf="isProgramModalOpen" (click)="onCloseProgramModal()" class="modal-overlay" dir="rtl">
+  <div (click)="$event.stopPropagation()" class="modal-container-program">
+    <button type="button" (click)="onCloseProgramModal()" class="modal-close-absolute">&times;</button>
+    <div class="modal-title-wrapper">
+      <h3 class="modal-title">إنشاء برنامج جديد</h3>
+    </div>
+    <form [formGroup]="programForm" (ngSubmit)="onSubmitProgram()" class="modal-form-program">
+      <div class="form-group">
+        <label class="form-label">اسم البرنامج <span class="required-star">*</span></label>
+        <input type="text" formControlName="title" class="form-input text-right">
+      </div>
+      <div class="form-group">
+        <label class="form-label">المسار <span class="required-star">*</span></label>
+        <select formControlName="trackId" class="form-select text-right">
+          <option [ngValue]="null" disabled selected>– اختر مساراً –</option>
+          <option *ngFor="let track of tracks()" [value]="track.trackId || track.id">{{ track.name || track.title }}
+          </option>
+        </select>
+      </div>
+      <div class="modal-footer-buttons-program">
+        <button type="submit" [disabled]="isSubmittingProgram" class="btn-submit-program">إنشاء البرنامج</button>
+        <button type="button" (click)="onCloseProgramModal()" class="btn-cancel-program">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div *ngIf="isEditModalOpen" (click)="onCloseEditModal()" class="modal-overlay" dir="rtl">
+  <div (click)="$event.stopPropagation()" class="modal-container">
+    <div class="modal-header">
+      <h3 class="modal-title">تعديل الدفعة</h3>
+      <button type="button" (click)="onCloseEditModal()" class="modal-close-btn">&times;</button>
+    </div>
+    <form [formGroup]="editBatchForm" (ngSubmit)="onSaveBatch()" class="modal-form">
+      <div class="form-group">
+        <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
+        <input type="text" formControlName="batchName" class="form-input text-right">
+      </div>
+      <div class="modal-footer-buttons">
+        <button type="submit" [disabled]="isSubmittingEditBatch" class="btn-submit-batch">حفظ التعديلات</button>
         <button type="button" (click)="onCloseEditModal()" class="btn-cancel-batch">إلغاء</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- الإشعار العائم الحديث (Toast Notification) -->
+<!-- التنبيهات Toast -->
 <div *ngIf="toast()" class="nfd-toast-container" [ngClass]="'toast-' + toast()?.type" dir="rtl">
   <div class="toast-content">
-    <i *ngIf="toast()?.type === 'success'" class="fa-solid fa-circle-check toast-icon"></i>
-    <i *ngIf="toast()?.type === 'warning'" class="fa-solid fa-triangle-exclamation toast-icon"></i>
-    <i *ngIf="toast()?.type === 'error'" class="fa-solid fa-circle-xmark toast-icon"></i>
     <span class="toast-message">{{ toast()?.message }}</span>
   </div>
   <button type="button" (click)="toast.set(null)" class="toast-close-btn">&times;</button>
