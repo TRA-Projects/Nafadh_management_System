@@ -49,7 +49,7 @@ export interface QuizResultDto {
   attemptId: number;
   quizId: number;
   quizTitle: string;
-   batchId: number;
+  batchId: number;
   batchName: string;
   traineeId: number;
   traineeName: string;
@@ -59,7 +59,7 @@ export interface QuizResultDto {
   score: number;
   percentage: number;
   status: string;
-// نتيجة التقييم
+  // نتيجة التقييم
   passingPercentage: number;
 
   // هل اكتمل تصحيح جميع الأسئلة؟
@@ -212,6 +212,7 @@ export interface UpdateTrainerSessionAttendanceDto {
   status: TrainerAttendanceStatus;
   note: string | null;
 }
+
 export interface TrainerLiveRoomStartResponse {
   success: boolean;
   message: string;
@@ -224,6 +225,7 @@ export interface TrainerLiveRoomJoinResponse {
   participantToken: string;
   tokenExpiresAtUtc: string;
 }
+
 export interface TrainerLiveRoomDetailsResponse {
   sessionId: number;
   roomName: string;
@@ -231,6 +233,81 @@ export interface TrainerLiveRoomDetailsResponse {
   isLive: boolean;
   participantCount: number;
   isRecording: boolean;
+}
+
+export interface LiveAttendanceResponse {
+  sessionId: number;
+  connectedTraineeCount: number;
+  participantIdentities: string[];
+  enrolledConnectedTrainees: Array<{
+    userId: number;
+    traineeId: number;
+  }>;
+}
+export interface TrainerLivePollOption {
+  optionId: number;
+  optionText: string;
+  sortOrder: number;
+}
+
+export interface TrainerLivePoll {
+  pollId: number;
+  sessionId: number;
+  question: string;
+  isOpen: boolean;
+  createdAtUtc: string;
+  closedAtUtc: string | null;
+  totalVotes: number;
+  options: TrainerLivePollOption[];
+}
+
+export interface TrainerLivePollListResponse {
+  sessionId: number;
+  polls: TrainerLivePoll[];
+}
+
+export interface TrainerLivePollResultsResponse {
+  pollId: number;
+  sessionId: number;
+  question: string;
+  isOpen: boolean;
+  closedAtUtc: string | null;
+  totalVotes: number;
+  results: Array<{
+    optionId: number;
+    optionText: string;
+    sortOrder: number;
+    voteCount: number;
+    percentage: number;
+  }>;
+}
+export interface TrainerLiveSessionReport {
+  sessionId: number;
+  topic: string | null;
+  status: number | string;
+  attendance: {
+    totalEnrolled: number;
+    recordedCount: number;
+    presentCount: number;
+    absentCount: number;
+    lateCount: number;
+    excusedCount: number;
+    notRecordedCount: number;
+    presentPercentage: number;
+  };
+  totalPolls: number;
+  polls: Array<{
+    pollId: number;
+    question: string;
+    isOpen: boolean;
+    closedAtUtc: string | null;
+    totalVotes: number;
+    options: Array<{
+      optionId: number;
+      optionText: string;
+      voteCount: number;
+    }>;
+  }>;
 }
 @Injectable({ providedIn: 'root' })
 export class TrainerApi {
@@ -328,7 +405,7 @@ export class TrainerApi {
     );
   }
 
-  
+
   // ============================================
   // LIVE SESSIONS - GET BY BATCH
   // ============================================
@@ -1175,30 +1252,30 @@ export class TrainerApi {
     );
   }
   createConversation(dto: {
-  type: string;
-  category: string;
-  subject: string;
-  startedByUserId: number;
-  firstMessage: string;
-  receiverUserId: number;
-}): Observable<any> {
-  const formData = new FormData();
+    type: string;
+    category: string;
+    subject: string;
+    startedByUserId: number;
+    firstMessage: string;
+    receiverUserId: number;
+  }): Observable<any> {
+    const formData = new FormData();
 
-  formData.append('Type', dto.type);
-  formData.append('Category', dto.category);
-  formData.append('Subject', dto.subject);
-  formData.append(
-    'StartedByUserId',
-    String(dto.startedByUserId)
-  );
-  formData.append('FirstMessage', dto.firstMessage);
-  formData.append('ReceiverUserId', String(dto.receiverUserId));
+    formData.append('Type', dto.type);
+    formData.append('Category', dto.category);
+    formData.append('Subject', dto.subject);
+    formData.append(
+      'StartedByUserId',
+      String(dto.startedByUserId)
+    );
+    formData.append('FirstMessage', dto.firstMessage);
+    formData.append('ReceiverUserId', String(dto.receiverUserId));
 
-  return this.http.post<any>(
-    `${this.base}/Conversation`,
-    formData
-  );
-}
+    return this.http.post<any>(
+      `${this.base}/Conversation`,
+      formData
+    );
+  }
 
   createBatchGroup(dto: {
     batchId: number;
@@ -1482,28 +1559,28 @@ export class TrainerApi {
       `${this.base}/quiz-results/trainer/${trainerId}`,
       { params }
     );
-    
+
   }
 
-  
 
-gradeEssayAnswer(dto: GradeQuizAnswerDto): Observable<{ message: string }> {
 
-  return this.http.post<{ message: string }>(
-    `${this.base}/quiz-attempts/grade-essay`,
-    dto
-  );
-}
+  gradeEssayAnswer(dto: GradeQuizAnswerDto): Observable<{ message: string }> {
 
-getQuizAttemptDetails(
-  trainerId: number,
-  attemptId: number
-): Observable<QuizAttemptDetailsDto> {
+    return this.http.post<{ message: string }>(
+      `${this.base}/quiz-attempts/grade-essay`,
+      dto
+    );
+  }
 
-  return this.http.get<QuizAttemptDetailsDto>(
-    `${this.base}/quiz-results/trainer/${trainerId}/attempts/${attemptId}`
-  );
-}
+  getQuizAttemptDetails(
+    trainerId: number,
+    attemptId: number
+  ): Observable<QuizAttemptDetailsDto> {
+
+    return this.http.get<QuizAttemptDetailsDto>(
+      `${this.base}/quiz-results/trainer/${trainerId}/attempts/${attemptId}`
+    );
+  }
 
   // ==========================================
   // TRAINER LIVE SESSIONS
@@ -1554,45 +1631,108 @@ getQuizAttemptDetails(
     );
   }
 
-getTrainerSessionAttendance(
+  getTrainerSessionAttendance(
+    sessionId: number
+  ): Observable<TrainerSessionAttendanceDto[]> {
+    return this.http.get<TrainerSessionAttendanceDto[]>(
+      `${this.base}/trainer/live-sessions/${sessionId}/attendance`
+    );
+  }
+getLiveAttendance(
   sessionId: number
-): Observable<TrainerSessionAttendanceDto[]> {
-  return this.http.get<TrainerSessionAttendanceDto[]>(
-    `${this.base}/trainer/live-sessions/${sessionId}/attendance`
+): Observable<LiveAttendanceResponse> {
+  return this.http.get<LiveAttendanceResponse>(
+    `${this.base}/trainer/live-sessions/${sessionId}/room/attendance/live`
   );
 }
 
-updateTrainerSessionAttendance(
+  updateTrainerSessionAttendance(
+    sessionId: number,
+    traineeId: number,
+    dto: UpdateTrainerSessionAttendanceDto
+  ): Observable<TrainerSessionAttendanceDto> {
+    return this.http.put<TrainerSessionAttendanceDto>(
+      `${this.base}/trainer/live-sessions/${sessionId}/attendance/${traineeId}`,
+      dto
+    );
+  }
+
+  startTrainerLiveRoom(
+    sessionId: number
+  ): Observable<TrainerLiveRoomStartResponse> {
+    return this.http.post<TrainerLiveRoomStartResponse>(
+      `${this.base}/trainer/live-sessions/${sessionId}/room/start`,
+      {}
+    );
+  }
+
+  joinTrainerLiveRoom(
+    sessionId: number
+  ): Observable<TrainerLiveRoomJoinResponse> {
+    return this.http.post<TrainerLiveRoomJoinResponse>(
+      `${this.base}/trainer/live-sessions/${sessionId}/room/join`,
+      {}
+    );
+  }
+
+  getTrainerLiveRoom(
+    sessionId: number
+  ): Observable<TrainerLiveRoomDetailsResponse> {
+    return this.http.get<TrainerLiveRoomDetailsResponse>(
+      `${this.base}/trainer/live-sessions/${sessionId}/room`
+    );
+  }
+getTrainerLivePolls(
+  sessionId: number
+): Observable<TrainerLivePollListResponse> {
+  return this.http.get<TrainerLivePollListResponse>(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls`
+  );
+}
+
+createTrainerLivePoll(
   sessionId: number,
-  traineeId: number,
-  dto: UpdateTrainerSessionAttendanceDto
-): Observable<TrainerSessionAttendanceDto> {
-  return this.http.put<TrainerSessionAttendanceDto>(
-    `${this.base}/trainer/live-sessions/${sessionId}/attendance/${traineeId}`,
+  dto: { question: string; options: string[] }
+): Observable<TrainerLivePoll> {
+  return this.http.post<TrainerLivePoll>(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls`,
     dto
   );
 }
-startTrainerLiveRoom(
-  sessionId: number
-): Observable<TrainerLiveRoomStartResponse> {
-  return this.http.post<TrainerLiveRoomStartResponse>(
-    `${this.base}/trainer/live-sessions/${sessionId}/room/start`,
+
+openTrainerLivePoll(
+  sessionId: number,
+  pollId: number
+): Observable<unknown> {
+  return this.http.post(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/open`,
     {}
   );
 }
 
-joinTrainerLiveRoom(
-  sessionId: number
-): Observable<TrainerLiveRoomJoinResponse> {
-  return this.http.post<TrainerLiveRoomJoinResponse>(
-    `${this.base}/trainer/live-sessions/${sessionId}/room/join`,
+closeTrainerLivePoll(
+  sessionId: number,
+  pollId: number
+): Observable<unknown> {
+  return this.http.post(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/close`,
     {}
   );
 }
-getTrainerLiveRoom(sessionId: number): Observable<TrainerLiveRoomDetailsResponse> {
-  return this.http.get<TrainerLiveRoomDetailsResponse>(
-    `${this.base}/trainer/live-sessions/${sessionId}/room`
+
+getTrainerLivePollResults(
+  sessionId: number,
+  pollId: number
+): Observable<TrainerLivePollResultsResponse> {
+  return this.http.get<TrainerLivePollResultsResponse>(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/results`
   );
 }
-
+getTrainerLiveSessionReport(
+  sessionId: number
+): Observable<TrainerLiveSessionReport> {
+  return this.http.get<TrainerLiveSessionReport>(
+    `${this.base}/trainer/live-sessions/${sessionId}/report`
+  );
+}
 }
