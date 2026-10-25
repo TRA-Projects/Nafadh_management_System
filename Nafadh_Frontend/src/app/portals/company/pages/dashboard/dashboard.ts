@@ -89,8 +89,9 @@ export class CompanyDashboard implements OnInit {
   topPerformers =
     signal<CompanyDashboardTraineeDto[]>([]);
 
-  // How many rows each bottom card shows (user picks 5 / 10 / 15).
-  readonly limitOptions = [5, 10, 15];
+  // How many rows each bottom card shows (user picks 5 / 10 / 15 / all).
+  // 0 means "all".
+  readonly limitOptions = [5, 10, 15, 0];
   topLimit = signal(5);
   riskLimit = signal(5);
   warnLimit = signal(5);
@@ -105,6 +106,11 @@ export class CompanyDashboard implements OnInit {
 
   setWarnLimit(value: string | number): void {
     this.warnLimit.set(this.toLimit(value));
+  }
+
+  /** Returns the first n items, or every item when n is 0 ("all"). */
+  limited<T>(items: T[], n: number): T[] {
+    return n === 0 ? items : items.slice(0, n);
   }
 
   private toLimit(value: string | number): number {
@@ -221,7 +227,8 @@ export class CompanyDashboard implements OnInit {
   // The KPI cards keep counting the first 5 only, so changing a card's
   // dropdown never changes the KPI numbers or the average.
   kpiTopPerformersCount = computed(() => this.topPerformersCount());
-  kpiAtRisk = computed(() => this.atRisk().slice(0, 5));
+  // Real count of at-risk trainees (the lists are no longer capped).
+  kpiAtRisk = computed(() => this.atRisk());
 
   // Average performance of ALL active trainees with performance >= 80%
   // (calculated by the backend, not from the displayed rows).
