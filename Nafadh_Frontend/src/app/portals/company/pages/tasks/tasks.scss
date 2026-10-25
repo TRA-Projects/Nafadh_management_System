@@ -192,6 +192,38 @@
 }
 
 /* ───────── Plan cards (list) ───────── */
+/* ───────── Pager ───────── */
+.pager {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  margin: 22px 0 6px; font-size: 12.5px; color: #475569;
+
+  .pager-buttons { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+  button {
+    min-width: 36px; height: 36px; padding: 0 12px; border: 1px solid #cbd5e1; background: #fff; color: #475569;
+    border-radius: 10px; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+    &:hover:not(:disabled):not(.active) { border-color: #00338d; color: #00338d; }
+    &.active { background: #00338d; border-color: #00338d; color: #fff; }
+    &:disabled { opacity: 0.45; cursor: default; }
+    &:focus-visible { outline: 2px solid #1ebbf0; outline-offset: 2px; }
+  }
+
+  .pager-gap { padding: 0 4px; color: #94a3b8; }
+
+  .pager-size {
+    display: inline-flex; align-items: center; gap: 8px;
+    select {
+      border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; padding: 6px 10px;
+      font-family: inherit; font-size: 12.5px;
+      &:focus { outline: none; border-color: #00338d; }
+    }
+  }
+
+  @media (max-width: 700px) { justify-content: center; }
+}
+
+.show-more { display: flex; justify-content: center; margin-top: 14px; }
+
 .plan-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 20px; @media (max-width: 520px) { grid-template-columns: 1fr; } }
 
 .plan-card {

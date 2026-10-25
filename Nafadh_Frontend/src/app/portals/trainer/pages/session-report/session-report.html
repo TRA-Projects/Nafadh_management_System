@@ -1,0 +1,105 @@
+<main class="report-page" dir="rtl">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">تقارير المدرب</p>
+      <h1>تقرير الجلسة</h1>
+
+      @if (report(); as data) {
+        <p class="subtitle">
+          {{ data.topic || 'جلسة بدون عنوان' }}
+          — رقم الجلسة {{ data.sessionId }}
+        </p>
+      }
+    </div>
+  </header>
+
+  <div class="export-actions">
+    <button
+      type="button"
+      (click)="exportExcel()"
+      [disabled]="!report()"
+    >
+      تصدير Excel
+    </button>
+
+    <button
+      type="button"
+      (click)="exportPdf()"
+      [disabled]="!report()"
+    >
+      تصدير PDF
+    </button>
+  </div>
+
+  @if (loading()) {
+    <p class="notice">جارٍ تحميل التقرير من النظام...</p>
+  } @else if (errorMessage()) {
+    <p class="notice error" role="alert">{{ errorMessage() }}</p>
+  } @else if (report(); as data) {
+    <div id="session-report-content">
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span>إجمالي المسجلين</span>
+          <strong>{{ data.attendance.totalEnrolled }}</strong>
+        </article>
+
+        <article class="stat-card">
+          <span>الحضور</span>
+          <strong>{{ data.attendance.presentCount }}</strong>
+        </article>
+
+        <article class="stat-card">
+          <span>الغياب</span>
+          <strong>{{ data.attendance.absentCount }}</strong>
+        </article>
+
+        <article class="stat-card">
+          <span>المتأخرون</span>
+          <strong>{{ data.attendance.lateCount }}</strong>
+        </article>
+
+        <article class="stat-card">
+          <span>المعذورون</span>
+          <strong>{{ data.attendance.excusedCount }}</strong>
+        </article>
+
+        <article class="stat-card highlight">
+          <span>نسبة الحضور</span>
+          <strong>{{ data.attendance.presentPercentage }}%</strong>
+        </article>
+
+        <article class="stat-card">
+          <span>غير المسجل حضورهم</span>
+          <strong>{{ data.attendance.notRecordedCount }}</strong>
+        </article>
+
+        <article class="stat-card">
+          <span>عدد الاستطلاعات</span>
+          <strong>{{ data.totalPolls }}</strong>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>استطلاعات الجلسة</h2>
+
+        @for (poll of data.polls; track poll.pollId) {
+          <article class="poll-item">
+            <div class="poll-header">
+              <h3>{{ poll.question }}</h3>
+              <span>إجمالي الأصوات: {{ poll.totalVotes }}</span>
+            </div>
+
+            @for (option of poll.options; track option.optionId) {
+              <div class="option-row">
+                <span>{{ option.optionText }}</span>
+                <strong>{{ option.voteCount }} صوت</strong>
+              </div>
+            }
+          </article>
+        } @empty {
+          <p class="empty">لا توجد استطلاعات مسجلة لهذه الجلسة.</p>
+        }
+      </section>
+    </div>
+  }
+</main>

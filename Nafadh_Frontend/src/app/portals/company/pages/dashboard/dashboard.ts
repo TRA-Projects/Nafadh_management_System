@@ -15,6 +15,11 @@ import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 
 import {
+  CoursePlanSummaryDto,
+  CoursePlansOverviewDto,
+} from '../../models/company-tasks.models';
+
+import {
   AnnouncementDto,
   CompanyDashboardChartPointDto,
   CompanyDashboardDto,
@@ -92,6 +97,30 @@ export class CompanyDashboard implements OnInit {
 
   programDistribution =
     signal<CompanyDashboardChartPointDto[]>([]);
+
+  // ============================================================
+  // Course plans (Tasks & Projects) summary
+  //
+  // Secondary data: read from the existing company course-plans
+  // endpoint. If it fails the dashboard still renders normally.
+  // ============================================================
+
+  plansOverview =
+    signal<CoursePlansOverviewDto | null>(null);
+
+  /** Most delayed approved plans first; at most three are shown. */
+  delayedPlans = computed<CoursePlanSummaryDto[]>(() => {
+    const overview = this.plansOverview();
+
+    if (!overview) {
+      return [];
+    }
+
+    return overview.plans
+      .filter(plan => plan.isDelayed)
+      .sort((a, b) => b.delayedStages - a.delayedStages)
+      .slice(0, 3);
+  });
 
   // ============================================================
   // Platform announcements
@@ -245,15 +274,27 @@ export class CompanyDashboard implements OnInit {
             return of([] as AnnouncementDto[]);
           })
         ),
+
+      // Course plans summary is also secondary content.
+      plans:
+        this.api.getCoursePlans(companyId).pipe(
+          catchError((error) => {
+            console.warn('Course plans summary failed to load:', error);
+            return of(null as CoursePlansOverviewDto | null);
+          })
+        ),
     }).subscribe({
       next: ({
         dashboard,
         announcements,
+        plans,
       }) => {
         this.applyDashboardData(
           dashboard,
           announcements
         );
+
+        this.plansOverview.set(plans);
 
         this.loading.set(false);
 
@@ -417,6 +458,8 @@ export class CompanyDashboard implements OnInit {
     this.programDistribution.set([]);
 
     this.announcements.set([]);
+
+    this.plansOverview.set(null);
   }
 
   // ============================================================
@@ -427,6 +470,21 @@ export class CompanyDashboard implements OnInit {
     this.router.navigate([
       '/company/profile',
     ]);
+  }
+
+  openPlans(): void {
+    this.router.navigate([
+      '/company/tasks',
+    ]);
+  }
+
+  openPlan(planId: number): void {
+    if (planId > 0) {
+      this.router.navigate([
+        '/company/tasks',
+        planId,
+      ]);
+    }
   }
 
   openTrainees(): void {

@@ -1,0 +1,327 @@
+﻿
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Models;
+
+namespace Nafadh_Backend.Services
+{
+    public class TrainerSessionRecordingService
+    {
+        private readonly Nafadhcontext _context;
+        private readonly IConfiguration _configuration;
+
+        private const long MaxFileSize = 500L * 1024 * 1024;
+
+        private static readonly string[] AllowedExtensions =
+        {
+            ".mp4",
+            ".webm"
+        };
+
+        public TrainerSessionRecordingService(
+            Nafadhcontext context,
+            IConfiguration configuration)
+        {
+            _context = context;
+            _configuration = configuration;
+        }
+
+        private string GetStoragePath()
+        {
+            var path = _configuration[
+                "Storage:SessionRecordingsPath"];
+
+            if (string.IsNullOrWhiteSpace(path))
+                throw new InvalidOperationException(
+                    "Recording storage path is not configured.");
+
+            return path;
+        }
+
+        private async Task<NFD_Session> GetOwnedSessionAsync(
+            int trainerId,
+            int sessionId)
+        {
+            var session = await _context.NFD_Sessions
+                .FirstOrDefaultAsync(s =>
+                    s.SessionId == sessionId &&
+                    s.TrainerId == trainerId &&
+                    _context.NFD_BatchTrainers.Any(bt =>
+                        bt.BatchId == s.BatchId &&
+                        bt.TrainerId == trainerId));
+
+            return session ?? throw new KeyNotFoundException(
+                "Session not found.");
+        }
+
+        private static async Task<bool> HasValidVideoHeaderAsync(
+            IFormFile file,
+            string extension)
+        {
+            await using var stream = file.OpenReadStream();
+
+            var header = new byte[16];
+            var bytesRead = await stream.ReadAsync(header);
+
+            if (extension == ".mp4")
+            {
+                // MP4 commonly contains "ftyp" at offset 4.
+                return bytesRead >= 12 &&
+                    header[4] == (byte)'f' &&
+                    header[5] == (byte)'t' &&
+                    header[6] == (byte)'y' &&
+                    header[7] == (byte)'p';
+            }
+
+            if (extension == ".webm")
+            {
+                // EBML header used by WebM.
+                return bytesRead >= 4 &&
+                    header[0] == 0x1A &&
+                    header[1] == 0x45 &&
+                    header[2] == 0xDF &&
+                    header[3] == 0xA3;
+            }
+
+            return false;
+        }
+
+        public async Task<string> UploadAsync(
+            int trainerId,
+            int sessionId,
+            IFormFile file)
+        {
+            var session = await GetOwnedSessionAsync(
+                trainerId, sessionId);
+
+            if (file == null || file.Length == 0)
+                throw new ArgumentException(
+                    "Recording file is required.");
+
+            if (file.Length > MaxFileSize)
+                throw new ArgumentException(
+                    "Recording exceeds the 500 MB limit.");
+
+            var extension = Path.GetExtension(
+                file.FileName).ToLowerInvariant();
+
+            if (!AllowedExtensions.Contains(extension))
+                throw new ArgumentException(
+                    "Only MP4 and WebM recordings are allowed.");
+
+            if (!await HasValidVideoHeaderAsync(
+                    file, extension))
+                throw new ArgumentException(
+                    "Invalid video file header.");
+
+            var storagePath = GetStoragePath();
+
+            Directory.CreateDirectory(storagePath);
+
+            var oldFileName = session.RecordingUrl;
+
+            var newFileName =
+                $"{Guid.NewGuid():N}{extension}";
+
+            var newFilePath = Path.Combine(
+                storagePath, newFileName);
+
+            try
+            {
+                await using (var stream = new FileStream(
+                    newFilePath,
+                    FileMode.CreateNew,
+                    FileAccess.Write))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                session.RecordingUrl = newFileName;
+                session.IsRecordingVisibleToTrainees = false;
+
+                await _context.SaveChangesAsync();
+            }
+            catch
+            {
+                if (File.Exists(newFilePath))
+                    File.Delete(newFilePath);
+
+                throw;
+            }
+
+            // Delete the previous recording only after
+            // the new recording is saved successfully.
+            if (!string.IsNullOrWhiteSpace(oldFileName) &&
+                oldFileName != newFileName &&
+                Path.GetFileName(oldFileName) == oldFileName)
+            {
+                var oldFilePath = Path.Combine(
+                    storagePath, oldFileName);
+
+                try
+                {
+                    if (File.Exists(oldFilePath))
+                        File.Delete(oldFilePath);
+                }
+                catch (IOException)
+                {
+                    // Cleanup failure must not undo
+                    // the successfully saved recording.
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Cleanup can be retried later.
+                }
+            }
+
+            return newFileName;
+        }
+
+        public async Task<(string FilePath, string ContentType)?>
+            GetRecordingAsync(int trainerId, int sessionId)
+        {
+            var session = await GetOwnedSessionAsync(
+                trainerId, sessionId);
+
+            if (string.IsNullOrWhiteSpace(session.RecordingUrl))
+                return null;
+
+            var fileName = session.RecordingUrl;
+
+            // Only filenames generated by our upload service are allowed.
+            if (Path.GetFileName(fileName) != fileName ||
+                !Guid.TryParseExact(
+                    Path.GetFileNameWithoutExtension(fileName),
+                    "N",
+                    out _))
+            {
+                throw new InvalidOperationException(
+                    "Invalid recording reference.");
+            }
+
+            var extension = Path.GetExtension(fileName)
+                .ToLowerInvariant();
+
+            var contentType = extension switch
+            {
+                ".mp4" => "video/mp4",
+                ".webm" => "video/webm",
+                _ => throw new InvalidOperationException(
+                    "Unsupported recording format.")
+            };
+
+            var filePath = Path.Combine(
+                GetStoragePath(), fileName);
+
+            if (!System.IO.File.Exists(filePath))
+                return null;
+
+            return (filePath, contentType);
+        }
+
+        public async Task<bool> DeleteRecordingAsync(
+            int trainerId,
+            int sessionId)
+        {
+            var session = await GetOwnedSessionAsync(
+                trainerId, sessionId);
+
+            if (string.IsNullOrWhiteSpace(session.RecordingUrl))
+                return false;
+
+            var fileName = session.RecordingUrl;
+
+            // Only allow filenames generated by our system.
+            if (Path.GetFileName(fileName) != fileName ||
+                !Guid.TryParseExact(
+                    Path.GetFileNameWithoutExtension(fileName),
+                    "N",
+                    out _) ||
+                !AllowedExtensions.Contains(
+                    Path.GetExtension(fileName).ToLowerInvariant()))
+            {
+                throw new InvalidOperationException(
+                    "Invalid recording reference.");
+            }
+
+            var filePath = Path.Combine(
+                GetStoragePath(), fileName);
+
+            // Remove the database reference first.
+            session.RecordingUrl = null;
+            session.IsRecordingVisibleToTrainees = false;
+
+            await _context.SaveChangesAsync();
+
+            // Delete the physical file afterward.
+            // If deletion fails, the recording is no longer
+            // accessible through the API.
+            try
+            {
+                if (File.Exists(filePath))
+                    File.Delete(filePath);
+            }
+            catch (IOException)
+            {
+                // Physical file cleanup can be retried later.
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Physical file cleanup can be retried later.
+            }
+
+            return true;
+        }
+        // Allow a trainee to access a recording only when
+        // enrolled in the session batch and visibility is enabled.
+        public async Task<(string FilePath, string ContentType)?>
+            GetTraineeRecordingAsync(int userId, int sessionId)
+        {
+            var session = await _context.NFD_Sessions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s =>
+                    s.SessionId == sessionId &&
+                    s.IsRecordingVisibleToTrainees &&
+                    s.RecordingUrl != null &&
+                    _context.NFD_Enrollments.Any(e =>
+                        e.BatchId == s.BatchId &&
+                        e.Trainee.UserId == userId));
+
+            if (session == null)
+                return null;
+
+            var fileName = session.RecordingUrl!;
+
+            // Reject invalid or unexpected file references.
+            if (Path.GetFileName(fileName) != fileName ||
+                !Guid.TryParseExact(
+                    Path.GetFileNameWithoutExtension(fileName),
+                    "N",
+                    out _))
+            {
+                return null;
+            }
+
+            var extension = Path.GetExtension(fileName)
+                .ToLowerInvariant();
+
+            var contentType = extension switch
+            {
+                ".mp4" => "video/mp4",
+                ".webm" => "video/webm",
+                _ => null
+            };
+
+            if (contentType == null)
+                return null;
+
+            var filePath = Path.Combine(GetStoragePath(), fileName);
+
+            if (!File.Exists(filePath))
+                return null;
+
+            return (filePath, contentType);
+        }
+
+    }
+}

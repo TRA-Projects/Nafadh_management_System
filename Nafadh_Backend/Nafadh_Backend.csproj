@@ -15,6 +15,9 @@
   <ItemGroup>
 
 	  
+	  <PackageReference Include="Livekit.Server.Sdk.Dotnet" Version="1.2.3" />
+
+	  <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
 
 	  <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="MailKit" Version="4.17.0" />
@@ -37,11 +40,11 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.0.4" />
 	  <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.3.0" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.3.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Controllers\NewFolder\" />
-    <Folder Include="Enums\" />
     <Folder Include="wwwroot\reports\" />
   </ItemGroup>
 

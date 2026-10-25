@@ -21,6 +21,18 @@ namespace Nafadh_Backend.DTOs
         public int UsedCapacity { get; set; }
         public int RemainingCapacity { get; set; }
         public decimal UtilizationPercentage { get; set; }
+
+        // ── Seats in OPEN batches (not cancelled, not yet ended) ──────────
+        // Batch capacity is shared by every company, so these numbers describe
+        // the real seats of the program: capacity of the open batches versus
+        // ALL InProgress enrollments in them (any company). The older
+        // AllocatedCapacity/UsedCapacity/... fields above are kept unchanged
+        // for backward compatibility.
+        public decimal OpenSeatCapacity { get; set; }
+        public int OpenSeatOccupied { get; set; }
+        public int OpenSeatRemaining { get; set; }
+        public decimal OpenSeatUtilizationPercentage { get; set; }
+
         public List<string> Departments { get; set; } = new();
     }
 
