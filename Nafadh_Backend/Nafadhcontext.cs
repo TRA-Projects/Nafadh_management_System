@@ -505,6 +505,9 @@ namespace Nafadh_Backend
             modelBuilder.Entity<NFD_SessionAttendance>(entity =>
             {
                 entity.ToTable("NFD_SessionAttendances");
+                // Trainer Portal - Prevent duplicate attendance per trainee and session.
+                entity.HasIndex(e => new { e.SessionId, e.TraineeId })
+                    .IsUnique();
                 entity.HasOne(e => e.Session)
                     .WithMany(p => p.SessionAttendances)
                     .HasForeignKey(e => e.SessionId)

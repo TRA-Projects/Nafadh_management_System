@@ -73,10 +73,77 @@ namespace Nafadh_Backend.Services
                 DurationSeconds = 0
             };
 
-            _context.NFD_SessionAttendancePeriods.Add(period);
-            await _context.SaveChangesAsync();
 
-            return true;
+            // Trainer Portal - Store the LiveKit attendance period.
+            _context.NFD_SessionAttendancePeriods.Add(period);
+
+            // Trainer Portal - Find existing attendance for this trainee.
+            var attendance = await _context.NFD_SessionAttendances
+                .FirstOrDefaultAsync(a =>
+                    a.SessionId == sessionId &&
+                    a.TraineeId == traineeId.Value);
+
+            if (attendance == null)
+            {
+                // Trainer Portal - Create attendance only once.
+                attendance = new NFD_SessionAttendance
+                {
+                    SessionId = sessionId,
+                    TraineeId = traineeId.Value,
+                    Status = NFD_AttendanceStatus.Present,
+                    Note = "Automatically recorded by LiveKit"
+                };
+
+                _context.NFD_SessionAttendances.Add(attendance);
+            }
+
+
+            // Trainer Portal - Save attendance and the LiveKit period.
+            try
+            {
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateException)
+            {
+                // Trainer Portal - Clear failed pending inserts.
+                _context.ChangeTracker.Clear();
+
+                // Trainer Portal - Check whether another request
+                // already recorded this LiveKit participant.
+                var periodExists = await _context.NFD_SessionAttendancePeriods
+                    .AsNoTracking()
+                    .AnyAsync(p => p.ParticipantSid == participantSid);
+
+                if (periodExists)
+                    return true;
+
+                // Trainer Portal - A concurrent request may have created
+                // the attendance record, but not this connection period.
+                // Retry that period only.
+                var attendanceExists = await _context.NFD_SessionAttendances
+                    .AsNoTracking()
+                    .AnyAsync(a =>
+                        a.SessionId == sessionId &&
+                        a.TraineeId == traineeId.Value);
+
+                if (!attendanceExists)
+                    throw;
+
+                _context.NFD_SessionAttendancePeriods.Add(
+                    new NFD_SessionAttendancePeriod
+                    {
+                        SessionId = sessionId,
+                        TraineeId = traineeId.Value,
+                        ParticipantSid = participantSid,
+                        JoinedAtUtc = joinedAtUtc,
+                        DurationSeconds = 0
+                    });
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+
         }
 
         // Trainer Portal - Record leaving and calculate duration.
