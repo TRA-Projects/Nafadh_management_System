@@ -53,18 +53,18 @@ namespace Nafadh_Backend.Services
             CertificateInputDTO dto)
         {
             // =========================================================
-            // 1. التحقق من درجة المتدرب قبل إصدار الشهادة
+            // 1. التحقق من شرط استحقاق الشهادة (85% فما فوق)
             // =========================================================
 
             var averageScore =
                 await _evaluationRepository
                     .GetAverageScoreByEnrollmentIdAsync(dto.EnrollmentId);
 
-            // إذا كانت الدرجة أقل من 50% يمنع إصدار الشهادة
-            if (averageScore < 50)
+            // إذا كانت النسبة أقل من 85% يمنع إصدار الشهادة
+            if (averageScore < 85)
             {
                 throw new InvalidOperationException(
-                    $"لا يمكن إصدار الشهادة. درجة المتدرب {averageScore:F2}% وهي أقل من الحد الأدنى المطلوب 50%."
+                    $"لا يمكن إصدار الشهادة. نسبة المتدرب {averageScore:F2}% وهي أقل من الحد الأدنى المطلوب للإصدار (85%)."
                 );
             }
 
