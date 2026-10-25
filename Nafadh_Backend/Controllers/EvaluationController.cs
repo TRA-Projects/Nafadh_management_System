@@ -76,7 +76,7 @@ namespace Nafadh_Backend.Controllers
             }
             catch (Exception ex)
             {
-       
+
                 var innerMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return BadRequest(new { message = innerMessage });
             }
@@ -94,6 +94,11 @@ namespace Nafadh_Backend.Controllers
             catch (InvalidOperationException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid scores (above the criterion maximum, duplicated or foreign criteria).
+                return BadRequest(new { message = ex.Message });
             }
         }
 

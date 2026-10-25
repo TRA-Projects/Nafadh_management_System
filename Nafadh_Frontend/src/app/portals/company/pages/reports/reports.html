@@ -42,15 +42,11 @@
     <button type="button" class="tab" [class.active]="activeTab === 'cap'" (click)="selectTab('cap')">
       الطاقة الاستيعابية
     </button>
-    <button type="button" class="tab" [class.active]="activeTab === 'eval'" (click)="selectTab('eval')">
-      التقييمات
-    </button>
+   
     <button type="button" class="tab" [class.active]="activeTab === 'tasks'" (click)="selectTab('tasks')">
       المهام
     </button>
-    <button type="button" class="tab" [class.active]="activeTab === 'compare'" (click)="selectTab('compare')">
-      مقارنة الأقسام والمشرفين
-    </button>
+   
   </div>
 
   <!-- ================================================= -->
@@ -260,7 +256,7 @@
           <path d="M3 3v18h18" />
           <path d="m19 9-5 5-4-4-3 3" />
         </svg>
-        تقرير حضور الشركة — آخر 6 أسابيع
+        تقرير حضور المتدربين للشركة    
       </div>
       <div class="hbars">
         @for (week of attendanceWeeks; track week.label) {
@@ -489,101 +485,7 @@
   </div>
   }
 
-  <!-- ================================================= -->
-  <!-- 4. التقييمات -->
-  <!-- ================================================= -->
-  @if (activeTab === 'eval') {
-
-  <!-- شريط التنبيه -->
-  <div class="custom-alert">
-    <span class="custom-alert-icon">i</span>
-    <div class="custom-alert-text">
-      توجد <strong>9 تقييمات</strong> مطلوب استكمالها، منها <span class="text-danger">4 تقييمات متأخرة</span> عن الموعد
-      المحدد.
-    </div>
-  </div>
-
-  <!-- شبكة المؤشرات الإحصائية -->
-  <div class="custom-stats-grid">
-    <div class="custom-stat-card">
-      <div>
-        <p>تقييمات مكتملة هذا الشهر</p>
-        <h3 class="success-val">118</h3>
-      </div>
-      <div class="icon-box success-bg"><i class="fas fa-check-circle"></i></div>
-    </div>
-
-    <div class="custom-stat-card">
-      <div>
-        <p>تقييمات قيد الإعداد</p>
-        <h3 class="warning-val">9</h3>
-      </div>
-      <div class="icon-box warning-bg"><i class="fas fa-clock"></i></div>
-    </div>
-
-    <div class="custom-stat-card">
-      <div>
-        <p>تقييمات متأخرة</p>
-        <h3 class="danger-val">4</h3>
-      </div>
-      <div class="icon-box danger-bg"><i class="fas fa-exclamation-triangle"></i></div>
-    </div>
-
-    <div class="custom-stat-card">
-      <div>
-        <p>متوسط التقييم الشهري</p>
-        <h3 class="primary-val">4.2<span>/5</span></h3>
-      </div>
-      <div class="icon-box primary-bg"><i class="fas fa-star"></i></div>
-    </div>
-  </div>
-
-  <!-- جدول البيانات -->
-  <div class="custom-card">
-    <div class="custom-card-header">
-      <h3>التقييمات غير المكتملة حسب المشرف</h3>
-    </div>
-    <div class="custom-tbl-wrap">
-      <table class="custom-tbl">
-        <thead>
-          <tr>
-            <th>المشرف</th>
-            <th>القسم</th>
-            <th>مطلوب</th>
-            <th>متأخر</th>
-            <th>آخر تقييم</th>
-            <th>الحالة</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (evaluation of evaluations; track evaluation.supervisor; let idx = $index) { <tr>
-            <td>
-              <div class="supervisor-info">
-                <span class="avatar-circle">{{ evaluation.supervisor.charAt(0) }}</span>
-                <b>{{ evaluation.supervisor }}</b>
-              </div>
-            </td>
-            <td>{{ evaluation.department }}</td>
-            <td>{{ evaluation.required }}</td>
-            <td>
-              <span [ngClass]="{'badge-danger-num': evaluation.late > 0}">
-                {{ evaluation.late }}
-              </span>
-            </td>
-            <td class="date-text">{{ evaluation.lastEvaluation }}</td>
-            <td>
-              <span class="chip" [ngClass]="evaluation.statusClass">
-                <span class="dot"></span>
-                {{ evaluation.status }}
-              </span>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-  }
+  
   <!-- ================================================= -->
   <!-- 5. المهام -->
   <!-- ================================================= -->
@@ -685,75 +587,5 @@
   </section>
 }
 
-
- <!-- ================================================= -->
-<!-- 6. مقارنة الأقسام والمشرفين (مُحدث بالبيانات الحقيقية) -->
-<!-- ================================================= -->
-@if (activeTab === 'compare') {
-<div class="report-note">
-  <span class="info-icon">i</span>
-  مقارنة أداء المشرفين: معدل الحضور مقابل متوسط الأداء العملي لمتدربيهم.
-</div>
-
-<div class="card card-pad">
-  <div class="card-title">
-    مؤشرات المشرفين
-  </div>
-  <div class="tbl-wrap">
-    <table class="tbl">
-      <thead>
-        <tr>
-          <th>المشرف</th>
-          <th>القسم</th>
-          <th>المتدربون</th>
-          <th>معدل الحضور</th>
-          <th>متوسط الأداء</th>
-          <th>تقييمات معلقة</th>
-          <th>الأداء العام</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- استخدام supervisor.id لضمان عدم تكرار المفاتيح -->
-        @for (supervisor of supervisors; track supervisor.id || supervisor.name) {
-        <tr>
-          <td><b>{{ supervisor.name }}</b></td>
-          <td>{{ supervisor.department }}</td>
-          <td>
-            <b class="primary-text" style="font-size: 15px;">{{ supervisor.trainees }}</b>
-          </td>
-          <td>{{ supervisor.attendance }}%</td>
-          <td>{{ supervisor.performance }}%</td>
-          <td>{{ supervisor.pendingEvaluations }}</td>
-          <td>
-            <span class="chip" [ngClass]="supervisor.statusClass">
-              <span class="dot"></span>
-              {{ supervisor.overall }}
-            </span>
-          </td>
-        </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<div class="card card-pad comparison-card">
-  <div class="card-title">
-    مقارنة الحضور والأداء حسب المشرف / القسم
-  </div>
-  <div class="hbars">
-    <!-- العرض بناءً على قائمة المشرفين مباشرة لعرض كل مشرف مع نسبته الحقيقية -->
-    @for (sup of supervisors; track sup.id || sup.name) {
-    <div class="hbar">
-      <div class="h-lbl">{{ sup.name }} ({{ sup.department }})</div>
-      <div class="h-trk">
-        <div class="h-fill" [style.width.%]="sup.attendance"></div>
-      </div>
-      <div class="h-val">{{ sup.attendance }}%</div>
-    </div>
-    }
-  </div>
-</div>
-}
 
 </div>

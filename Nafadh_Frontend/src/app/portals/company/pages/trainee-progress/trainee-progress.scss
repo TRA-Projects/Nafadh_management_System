@@ -123,6 +123,11 @@
 }
 
 .tp-back__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;

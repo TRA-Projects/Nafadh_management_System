@@ -6,7 +6,8 @@ import {
   inject,
   signal
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
 
@@ -110,13 +111,15 @@ const dateFormatter = new Intl.DateTimeFormat('ar-OM-u-nu-latn', {
 @Component({
   selector: 'app-company-trainee-progress',
   standalone: true,
-  imports: [RouterLink, NfdIcon],
+  imports: [NfdIcon],
   templateUrl: './trainee-progress.html',
   styleUrls: ['./trainee-progress.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CompanyTraineeProgress {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly location = inject(Location);
   private readonly api = inject(CompanyApi);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -386,21 +389,6 @@ export class CompanyTraineeProgress {
     };
   });
 
-  /** Flags records that contradict each other, e.g. evaluations dated before the batch starts. */
-  readonly dateWarning = computed(() => {
-    const e = this.enrollment();
-    const start = e?.batchStartDate ? new Date(e.batchStartDate).getTime() : NaN;
-    if (Number.isNaN(start)) return null;
-
-    const dates = this.relevant()
-      .map((ev) => this.time(ev.evaluationDate))
-      .filter((t) => t > 0);
-
-    return dates.length && Math.min(...dates) < start
-      ? 'تنبيه: توجد تقييمات مسجلة بتاريخ قبل بداية الدفعة. راجع تواريخ الدفعة أو تواريخ التقييمات في النظام.'
-      : null;
-  });
-
   readonly completedModules = computed(() => {
     const s = this.progressSummary();
     return s ? { done: s.completedModules, total: s.totalModules } : null;
@@ -409,6 +397,15 @@ export class CompanyTraineeProgress {
   /* ---------------------------------------------------------------- */
   /*  Interaction                                                       */
   /* ---------------------------------------------------------------- */
+
+  /** Returns to the list exactly as the user left it (filters and page), or to the list if there is no history. */
+  goBack(): void {
+    if (window.history.length > 1) {
+      this.location.back();
+    } else {
+      void this.router.navigate(['/company/trainees']);
+    }
+  }
 
   onAvatarError(): void {
     const raw = this.enrollment()?.profileImageUrl;
