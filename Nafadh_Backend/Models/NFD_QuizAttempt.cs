@@ -26,6 +26,14 @@ namespace Nafadh_Backend.Models
         // هل انتهت المحاولة بسبب المخالفات؟
         public bool IsTerminatedByViolation { get; set; } = false;
 
+
+        // نتيجة التحقق من الهوية قبل الاختبار: Passed / Failed / Skipped
+        [MaxLength(20)]
+        public string? IdentityCheckStatus { get; set; }
+
+        // فشل التحقق أو تعذّر الكاميرا => يراجعها المدرب بشرياً (آلية بديلة، لا اتهام)
+        public bool NeedsManualReview { get; set; } = false;
+
         // Started / InProgress / Submitted / Expired
         [MaxLength(30)]
         public string Status { get; set; } = "Started";

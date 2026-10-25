@@ -17,6 +17,35 @@ namespace Nafadh_Backend.Services
         private static readonly HashSet<string> AllowedExtensions = new() { ".jpg", ".jpeg", ".png", ".webp", ".pdf" };
         private static readonly HashSet<string> AllowedContentTypes = new() { "image/jpeg", "image/png", "image/webp", "application/pdf" };
 
+        // Oman business week: Sunday through Thursday. Edits close Friday 00:00 Oman time.
+        private static readonly TimeZoneInfo OmanTimeZone = ResolveOmanTimeZone();
+
+        private static TimeZoneInfo ResolveOmanTimeZone()
+        {
+            try { return TimeZoneInfo.FindSystemTimeZoneById("Asia/Muscat"); }
+            catch (TimeZoneNotFoundException) { return TimeZoneInfo.FindSystemTimeZoneById("Arabian Standard Time"); }
+        }
+
+        private static DateTime OmanToday() => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, OmanTimeZone).Date;
+
+        private static bool IsWithinExcuseWindow(DateTime attendanceDate)
+        {
+            var today = OmanToday();
+            var date = attendanceDate.Date;
+            if (date > today) return false;
+            // Sunday = 0, Thursday = 4, Friday = 5, Saturday = 6.
+            var sunday = today.AddDays(-(int)today.DayOfWeek);
+            return today.DayOfWeek <= DayOfWeek.Thursday && date >= sunday && date <= today;
+        }
+
+        private static void RequireExcuseWindow(NFD_TrainerAttendance record)
+        {
+            if (record.Status == NFD_TrainerAttendanceStatus.Present)
+                throw new InvalidOperationException("Reasons and proofs are only allowed for Late, Absent, or EarlyLeave.");
+            if (!IsWithinExcuseWindow(record.Date))
+                throw new InvalidOperationException("The excuse submission period for this week has ended.");
+        }
+
         private readonly ITrainerAttendanceRepository _repository;
         private readonly IConfiguration _configuration;
 
@@ -59,7 +88,7 @@ namespace Nafadh_Backend.Services
         {
             var date = dto.Date.Date;
 
-            if (date > DateTime.Today)
+            if (date > OmanToday())
                 throw new ArgumentException("Attendance cannot be recorded for a future date.");
 
             if (!Enum.IsDefined(typeof(NFD_TrainerAttendanceStatus), dto.Status))
@@ -84,12 +113,27 @@ namespace Nafadh_Backend.Services
             else
             {
                 if (record.IsConfirmed)
-                    throw new InvalidOperationException("This day is already confirmed and cannot be edited.");
+                {
+                    // After confirmation, ONLY the reason can change during the current workweek.
+                    // Status and recorded times remain immutable.
+                    RequireExcuseWindow(record);
+                    if (record.Status != dto.Status || record.CheckInTime != dto.CheckInTime || record.CheckOutTime != dto.CheckOutTime)
+                        throw new InvalidOperationException("Confirmed attendance status and times cannot be changed.");
+                    record.Reason = string.IsNullOrWhiteSpace(dto.Reason) ? null : dto.Reason.Trim();
+                    record.UpdatedAt = DateTime.UtcNow;
+                    await _repository.SaveChangesAsync();
+                    return ToDto(record);
+                }
 
                 record.UpdatedAt = DateTime.UtcNow;
             }
 
             record.Status = dto.Status;
+            // Prevent adding new reasons for earlier weeks even when the day is unconfirmed.
+            if (!string.IsNullOrWhiteSpace(dto.Reason) && !IsWithinExcuseWindow(date))
+                throw new InvalidOperationException("The excuse submission period for this week has ended.");
+            if (dto.Status == NFD_TrainerAttendanceStatus.Present && !string.IsNullOrWhiteSpace(dto.Reason))
+                throw new ArgumentException("A Present record cannot have an excuse reason.");
             record.Reason = string.IsNullOrWhiteSpace(dto.Reason) ? null : dto.Reason.Trim();
 
             // An absent trainer has no arrival / departure time.
@@ -109,8 +153,7 @@ namespace Nafadh_Backend.Services
             var record = await _repository.GetByIdAsync(attendanceId);
             if (record == null) return null;
 
-            if (record.IsConfirmed)
-                throw new InvalidOperationException("This day is already confirmed and cannot be edited.");
+            RequireExcuseWindow(record);
 
             if (file == null || file.Length == 0)
                 throw new ArgumentException("Proof file is required.");
@@ -168,8 +211,7 @@ namespace Nafadh_Backend.Services
             var record = await _repository.GetByIdAsync(attendanceId);
             if (record == null) return false;
 
-            if (record.IsConfirmed)
-                throw new InvalidOperationException("This day is already confirmed and cannot be edited.");
+            RequireExcuseWindow(record);
 
             var oldUrl = record.ExcuseProofUrl;
             record.ExcuseProofUrl = null;
@@ -187,7 +229,7 @@ namespace Nafadh_Backend.Services
         {
             var date = dto.Date.Date;
 
-            if (date > DateTime.Today)
+            if (date > OmanToday())
                 throw new ArgumentException("A future day cannot be confirmed.");
 
             var trainers = await _repository.GetCompanyTrainersAsync(dto.CompanyId);

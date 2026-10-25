@@ -443,12 +443,27 @@ export class CompanyProgramDetails implements OnInit {
 
   private applyDetails(details: CompanyProgramDetailsDto): void {
     const durationHours = Number(details.durationHours ?? 0);
-    const capacity = Number(details.allocatedCapacity ?? 0);
-    const occupied = Number(details.usedCapacity ?? 0);
-    const available = Number(details.remainingCapacity ?? 0);
+    // Seats of the open batches (shared capacity vs every company's trainees);
+    // falls back to the older fields when talking to an older backend.
+    const hasOpenSeats =
+      details.openSeatCapacity !== undefined && details.openSeatCapacity !== null;
+
+    const capacity = Number(
+      hasOpenSeats ? details.openSeatCapacity : details.allocatedCapacity ?? 0
+    );
+    const occupied = Number(
+      hasOpenSeats ? details.openSeatOccupied ?? 0 : details.usedCapacity ?? 0
+    );
+    const available = Number(
+      hasOpenSeats ? details.openSeatRemaining ?? 0 : details.remainingCapacity ?? 0
+    );
 
     const utilizationPercentage = this.clamp(
-      Number(details.utilizationPercentage ?? 0)
+      Number(
+        hasOpenSeats
+          ? details.openSeatUtilizationPercentage ?? 0
+          : details.utilizationPercentage ?? 0
+      )
     );
 
     const color = this.colorFor(details.title);

@@ -104,6 +104,10 @@ namespace Nafadh_Backend.Controllers
                 })
                 .ToListAsync();
 
+            var openSeats = await LoadOpenSeatsAsync(programs.Select(p => p.ProgramId).ToList());
+            foreach (var program in programs)
+                ApplyOpenSeats(program, openSeats);
+
             return Ok(programs);
         }
 
@@ -261,6 +265,8 @@ namespace Nafadh_Backend.Controllers
                 Modules = modules
             };
 
+            ApplyOpenSeats(result, await LoadOpenSeatsAsync(new List<int> { programId }));
+
             return Ok(result);
         }
 
@@ -329,6 +335,49 @@ namespace Nafadh_Backend.Controllers
                 return NotFound();
             return NoContent();
         }
+        // Open batch = not cancelled and not yet ended (same date rule as DeriveBatchStatus).
+        // Capacity belongs to the batch and is shared by all companies, so occupancy
+        // counts InProgress enrollments of every company, not only the caller's.
+        private async Task<Dictionary<int, (decimal Capacity, int Occupied)>> LoadOpenSeatsAsync(List<int> programIds)
+        {
+            if (programIds.Count == 0)
+                return new Dictionary<int, (decimal Capacity, int Occupied)>();
+
+            var today = DateTime.Today;
+
+            var rows = await _context.NFD_Batches
+                .AsNoTracking()
+                .Where(b => programIds.Contains(b.ProgramId)
+                            && b.Status != Nafadh_Backend.Enums.NFD_BatchStatus.Cancelled
+                            && b.EndDate >= today)
+                .Select(b => new
+                {
+                    b.ProgramId,
+                    b.Capacity,
+                    Occupied = b.Enrollments.Count(e =>
+                        e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress)
+                })
+                .ToListAsync();
+
+            return rows
+                .GroupBy(r => r.ProgramId)
+                .ToDictionary(g => g.Key, g => (g.Sum(r => r.Capacity), g.Sum(r => r.Occupied)));
+        }
+
+        private static void ApplyOpenSeats(
+            CompanyProgramSummaryDTO dto,
+            Dictionary<int, (decimal Capacity, int Occupied)> openSeats)
+        {
+            openSeats.TryGetValue(dto.ProgramId, out var seats);
+
+            dto.OpenSeatCapacity = seats.Capacity;
+            dto.OpenSeatOccupied = seats.Occupied;
+            dto.OpenSeatRemaining = Math.Max(0, (int)(seats.Capacity - seats.Occupied));
+            dto.OpenSeatUtilizationPercentage = seats.Capacity > 0
+                ? Math.Round(seats.Occupied * 100m / seats.Capacity, 1)
+                : 0m;
+        }
+
         private static string DeriveBatchStatus(string stored, DateTime start, DateTime end, DateTime today)
         {
             if (string.Equals(stored, nameof(Nafadh_Backend.Enums.NFD_BatchStatus.Cancelled), StringComparison.OrdinalIgnoreCase))

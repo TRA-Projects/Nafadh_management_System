@@ -1,28 +1,98 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
+using static Nafadh_Backend.DTOs.QuizAttemptDto;
 
 namespace Nafadh_Backend.Controllers
 {
     [Route("api/quiz-attempts")]
     [ApiController]
+    [Authorize]
     public class QuizAttemptsController : ControllerBase
     {
         private readonly IQuizAttemptService _service;
+        private readonly IQuizAccessService _access;
 
-        public QuizAttemptsController(IQuizAttemptService service)
+        public QuizAttemptsController(
+            IQuizAttemptService service,
+            IQuizAccessService access)
         {
             _service = service;
+            _access = access;
         }
 
-        // بدء محاولة اختبار جديدة
+        // قائمة اختبارات المتدرب + أرقام البطاقات
+        [HttpGet("trainee/{traineeId:int}/quizzes")]
+        [Authorize(Roles = "Trainee")]
+        public async Task<IActionResult> GetTraineeQuizzes(int traineeId)
+        {
+            if (!await _access.TraineeOwnsTraineeIdAsync(User, traineeId))
+            {
+                return Forbid();
+            }
+
+            var overview = await _service.GetTraineeQuizzesAsync(traineeId);
+
+            return Ok(overview);
+        }
+
+        // استئناف محاولة جارية (بعد Refresh)
+        [HttpGet("{attemptId:int}")]
+        [Authorize(Roles = "Trainee")]
+        public async Task<IActionResult> GetAttempt(
+            int attemptId,
+            [FromQuery] int traineeId)
+        {
+            if (!await _access.TraineeOwnsTraineeIdAsync(User, traineeId))
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                var attempt =
+                    await _service.GetAttemptAsync(attemptId, traineeId);
+
+                return Ok(attempt);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+        // بدء محاولة اختبار جديدة (أو استئناف المحاولة الجارية)
         [HttpPost("start")]
+        [Authorize(Roles = "Trainee")]
         public async Task<IActionResult> StartAttempt(
             [FromBody] StartQuizAttemptDto dto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            if (!await _access.TraineeOwnsTraineeIdAsync(User, dto.TraineeId))
+            {
+                return Forbid();
             }
 
             try
@@ -36,6 +106,13 @@ namespace Nafadh_Backend.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new
+                {
+                    message = ex.Message
+                });
+            }
             catch (InvalidOperationException ex)
             {
                 return BadRequest(new { message = ex.Message });
@@ -44,6 +121,7 @@ namespace Nafadh_Backend.Controllers
 
         // حفظ إجابة المتدرب
         [HttpPost("{attemptId:int}/answers")]
+        [Authorize(Roles = "Trainee")]
         public async Task<IActionResult> SaveAnswer(
             int attemptId,
             [FromBody] SubmitQuizAnswerDto dto)
@@ -51,6 +129,11 @@ namespace Nafadh_Backend.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            if (!await _access.TraineeOwnsAttemptAsync(User, attemptId))
+            {
+                return Forbid();
             }
 
             try
@@ -75,12 +158,18 @@ namespace Nafadh_Backend.Controllers
 
         // تسليم الاختبار وحساب الدرجة
         [HttpPost("submit")]
+        [Authorize(Roles = "Trainee")]
         public async Task<IActionResult> SubmitAttempt(
             [FromBody] SubmitQuizDto dto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            if (!await _access.TraineeOwnsAttemptAsync(User, dto.AttemptId))
+            {
+                return Forbid();
             }
 
             try
@@ -104,6 +193,7 @@ namespace Nafadh_Backend.Controllers
 
         // تصحيح الإجابة المقالية من المدرب
         [HttpPost("grade-essay")]
+        [Authorize(Roles = "Trainer")]
         public async Task<IActionResult> GradeEssayAnswer(
             [FromBody] GradeQuizAnswerDto dto)
         {
@@ -141,8 +231,14 @@ namespace Nafadh_Backend.Controllers
 
         // تسجيل مخالفة الخروج من صفحة الاختبار
         [HttpPost("{attemptId:int}/violation")]
+        [Authorize(Roles = "Trainee")]
         public async Task<IActionResult> RegisterViolation(int attemptId)
         {
+            if (!await _access.TraineeOwnsAttemptAsync(User, attemptId))
+            {
+                return Forbid();
+            }
+
             try
             {
                 var violationCount =
@@ -246,6 +342,36 @@ namespace Nafadh_Backend.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+        // عرض تفاصيل محاولة الاختبار
+        [HttpGet("{attemptId:int}/details")]
+        public async Task<IActionResult> GetAttemptDetails(
+            int attemptId)
+        {
+            try
+            {
+                var result =
+                    await _service.GetAttemptDetailsAsync(
+                        attemptId);
+
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
             }
         }
     }

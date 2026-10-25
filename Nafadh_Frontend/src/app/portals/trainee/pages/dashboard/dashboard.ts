@@ -82,13 +82,44 @@ export class TraineeDashboard implements OnInit {
   showAllNotifications = signal(false);
 
   selectedAnnouncement = signal<any | null>(null);
+  readAnnouncementIds = signal<Set<number>>(new Set());
 
   openAnnouncementPopup(ann: any) {
     this.selectedAnnouncement.set(ann);
+
+    // تسجيل الإعلان كمقروء
+    if (
+      ann?.announcementId !== undefined &&
+      ann?.announcementId !== null &&
+      ann?.announcementId !== ''
+    ) {
+      const id = Number(ann.announcementId);
+      this.readAnnouncementIds.update((set) => {
+        const newSet = new Set(set);
+        newSet.add(id);
+        return newSet;
+      });
+
+      try {
+        localStorage.setItem(
+          'readAnnouncementIds',
+          JSON.stringify(Array.from(this.readAnnouncementIds()))
+        );
+      } catch (e) {
+        console.warn('Could not save read announcements', e);
+      }
+    }
   }
 
   closeAnnouncementPopup() {
     this.selectedAnnouncement.set(null);
+  }
+
+  isAnnouncementRead(announcementId: number | string | undefined | null): boolean {
+    if (announcementId === undefined || announcementId === null || announcementId === '') {
+      return false;
+    }
+    return this.readAnnouncementIds().has(Number(announcementId));
   }
 
   calculatedStatus = computed(() => {
@@ -321,6 +352,8 @@ export class TraineeDashboard implements OnInit {
   }
 
   ngOnInit() {
+    this.loadReadAnnouncementsFromStorage();
+
     const session = this.auth.session?.();
     if (session?.userId) {
       this.currentUserId.set(session.userId);
@@ -946,5 +979,17 @@ export class TraineeDashboard implements OnInit {
       return 'تتبقى يوم واحد';
     }
     return `تتبقى ${days} أيام`;
+  }
+
+  private loadReadAnnouncementsFromStorage(): void {
+    try {
+      const saved = localStorage.getItem('readAnnouncementIds');
+      if (saved) {
+        const ids = JSON.parse(saved) as number[];
+        this.readAnnouncementIds.set(new Set(ids));
+      }
+    } catch (e) {
+      console.warn('Could not load read announcements', e);
+    }
   }
 }

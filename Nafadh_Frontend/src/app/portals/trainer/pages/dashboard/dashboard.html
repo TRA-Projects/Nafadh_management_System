@@ -61,6 +61,27 @@
     </div>
 
   </section>
+  
+  @if (sessionsStartingSoon().length > 0) {
+  <section class="session-reminder-banner" role="alert" aria-live="polite">
+    <div class="session-reminder-icon">
+      <i class="fa-solid fa-bell"></i>
+    </div>
+
+    <div class="session-reminder-content">
+      <h3>تنبيه: لديك جلسة تبدأ خلال 10 دقائق</h3>
+
+      @for (session of sessionsStartingSoon(); track session.sessionId) {
+        <p>
+          <strong>{{ session.topic || 'جلسة تدريبية' }}</strong>
+          — {{ session.sessionDate | date: 'shortDate' }}
+          الساعة {{ session.startTime }}
+        </p>
+      }
+    </div>
+  </section>
+}
+
 
 
   <!-- =====================================================

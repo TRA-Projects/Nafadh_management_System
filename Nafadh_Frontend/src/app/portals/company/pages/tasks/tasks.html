@@ -147,7 +147,7 @@
 
         <div class="plan-grid">
           @for (
-            course of filteredApprovedCourses();
+            course of visibleApprovedCourses();
             track trackCourse($index, course)
           ) {
             <article class="plan-card s-approved">
@@ -209,6 +209,26 @@
             </article>
           }
         </div>
+
+        @if (hiddenApprovedCount() > 0) {
+          <div class="show-more">
+            <button
+              type="button"
+              class="btn ghost"
+              (click)="toggleApprovedCourses()">
+              عرض {{ hiddenApprovedCount() }} كورس إضافي
+            </button>
+          </div>
+        } @else if (canCollapseApproved()) {
+          <div class="show-more">
+            <button
+              type="button"
+              class="btn ghost"
+              (click)="toggleApprovedCourses()">
+              عرض أقل
+            </button>
+          </div>
+        }
       </section>
     }
 
@@ -216,7 +236,7 @@
     @if (filtered().length) {
       <div class="plan-grid">
         @for (
-          plan of filtered();
+          plan of pagedPlans();
           track trackPlan($index, plan)
         ) {
           <article
@@ -366,6 +386,57 @@
           </article>
         }
       </div>
+
+      <!-- Pager -->
+      @if (filtered().length > pageSizes[0]) {
+        <nav class="pager" aria-label="التنقل بين صفحات الخطط">
+          <span class="pager-info">
+            {{ pageRange().from }}–{{ pageRange().to }}
+            من {{ pageRange().total }} خطة
+          </span>
+
+          @if (totalPages() > 1) {
+            <div class="pager-buttons">
+              <button
+                type="button"
+                [disabled]="currentPage() === 1"
+                (click)="goToPage(currentPage() - 1)">
+                السابق
+              </button>
+
+              @for (p of pageNumbers(); track $index) {
+                @if (p === null) {
+                  <span class="pager-gap" aria-hidden="true">…</span>
+                } @else {
+                  <button
+                    type="button"
+                    [class.active]="p === currentPage()"
+                    [attr.aria-current]="p === currentPage() ? 'page' : null"
+                    (click)="goToPage(p)">
+                    {{ p }}
+                  </button>
+                }
+              }
+
+              <button
+                type="button"
+                [disabled]="currentPage() === totalPages()"
+                (click)="goToPage(currentPage() + 1)">
+                التالي
+              </button>
+            </div>
+          }
+
+          <label class="pager-size">
+            عدد الخطط في الصفحة
+            <select [value]="pageSize()" (change)="setPageSize($event)">
+              @for (s of pageSizes; track s) {
+                <option [value]="s" [selected]="s === pageSize()">{{ s }}</option>
+              }
+            </select>
+          </label>
+        </nav>
+      }
     }
 
     <!-- Empty state -->

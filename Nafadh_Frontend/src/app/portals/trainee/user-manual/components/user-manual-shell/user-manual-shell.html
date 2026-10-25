@@ -1,0 +1,18 @@
+
+<section class="user-manual-host" aria-label="دليل استخدام بوابة المتدرب">
+  <app-help-button
+    [isOpen]="guideService.isHelpOpen()"
+    (toggle)="toggleHelp()"
+  />
+
+  <app-help-panel
+    [isOpen]="guideService.isHelpOpen()"
+    [pageKey]="guideService.currentPageKey()"
+    [data]="helpPanelData()"
+    (close)="closeHelp()"
+    (startTour)="startGuidedTour()"
+  />
+
+  <!-- Guided Tour - الإضافة الجديدة -->
+  <app-guided-tour></app-guided-tour>
+</section>

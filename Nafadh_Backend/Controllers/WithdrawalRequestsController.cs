@@ -4,6 +4,7 @@ using Nafadh_Backend;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
+using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -12,10 +13,12 @@ namespace Nafadh_Backend.Controllers
     public class WithdrawalRequestsController : ControllerBase
     {
         private readonly Nafadhcontext _context;
+        private readonly IEmailService _emailService;
 
-        public WithdrawalRequestsController(Nafadhcontext context)
+        public WithdrawalRequestsController(Nafadhcontext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         // 1. جلب كل طلبات الانسحاب (للأدمن) مع الفلترة الاختيارية بالحالة
@@ -185,7 +188,7 @@ namespace Nafadh_Backend.Controllers
             request.AdminNotes = dto.AdminNotes;
             request.ReviewedAt = DateTime.UtcNow;
 
-            // في حال الموافقة (Approved) -> تحديث حالة المتدرب والتسجيل
+            // 1- في حال الموافقة (Approved) -> تحديث حالة المتدرب والتسجيل
             if (dto.Status == NFD_WithdrawalRequestStatus.Approved)
             {
                 var trainee = await _context.NFD_Trainees
@@ -194,9 +197,25 @@ namespace Nafadh_Backend.Controllers
                 if (trainee != null)
                 {
                     trainee.Status = NFD_TraineeStatus.NotAssigned;
+                    // 2. إرسال البريد الإلكتروني للمتدرب
+                    if (trainee.User != null && !string.IsNullOrWhiteSpace(trainee.User.Email))
+                    {
+                        try
+                        {
+                            await _emailService.SendWithdrawalApprovedAsync(
+                                trainee.User.Email,
+                                trainee.User.FullName ?? "المتدرب"
+                            );
+                        }
+                        catch (Exception ex)
+                        {
+                            // في حال فشل إرسال الإيميل، نسجل الخطأ ولا نوقف عملية الانسحاب
+                            Console.WriteLine($"Failed to send email: {ex.Message}");
+                        }
+                    }
                 }
 
-                // تحديث حالة التدريب الحالي إلى Dropped
+                //3- تحديث حالة التدريب الحالي إلى Dropped
                 var activeEnrollment = await _context.NFD_Enrollments
                     .Where(e => e.TraineeId == request.TraineeId && e.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress)
                     .FirstOrDefaultAsync();

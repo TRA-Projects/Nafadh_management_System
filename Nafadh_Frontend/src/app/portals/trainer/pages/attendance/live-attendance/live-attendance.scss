@@ -1,0 +1,180 @@
+:host {
+  display: block;
+  color: #172B4D;
+  font-family: inherit;
+}
+
+.live-page {
+  min-height: 100%;
+  padding: 28px;
+  background: #F7F9FC;
+}
+
+.page-header,
+.table-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #16856B;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 8px;
+  font-size: 26px;
+}
+
+.subtitle,
+.table-heading p {
+  margin-bottom: 0;
+  color: #718096;
+  font-size: 14px;
+}
+
+.live-badge,
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.live-badge {
+  padding: 9px 14px;
+  color: #B42318;
+  background: #FFF1F0;
+}
+
+.live-dot,
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.summary-card,
+.table-card {
+  border: 1px solid #E7EDF4;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 14px #172b4d08;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+}
+
+.summary-label {
+  color: #718096;
+  font-size: 14px;
+}
+
+.summary-card strong {
+  font-size: 28px;
+}
+
+.connected-card strong {
+  color: #16856B;
+}
+
+.disconnected-card strong {
+  color: #D97706;
+}
+
+.table-card {
+  overflow: hidden;
+}
+
+.table-heading {
+  padding: 20px 22px;
+}
+
+.table-heading h2 {
+  margin-bottom: 6px;
+  font-size: 18px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+}
+
+th,
+td {
+  padding: 15px 22px;
+  border-top: 1px solid #EDF1F5;
+  white-space: nowrap;
+}
+
+th {
+  color: #718096;
+  background: #FAFBFD;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+td {
+  font-size: 14px;
+}
+
+.trainee-name {
+  font-weight: 700;
+}
+
+.status {
+  padding: 7px 10px;
+}
+
+.status-connected {
+  color: #16856B;
+  background: #EAF7F2;
+}
+
+.status-disconnected {
+  color: #B76E00;
+  background: #FFF6E5;
+}
+
+@media (max-width: 700px) {
+  .live-page {
+    padding: 16px;
+  }
+
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    align-items: flex-start;
+  }
+}

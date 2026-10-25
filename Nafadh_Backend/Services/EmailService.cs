@@ -98,6 +98,160 @@ namespace Nafadh_Backend.Services
             await SendAsync(email, subject, body);
         }
 
+        public async Task SendCompanyApprovedAsync(
+            string email,
+            string companyName,
+            string contactName,
+            string temporaryPassword)
+        {
+            string safeCompany = WebUtility.HtmlEncode(companyName);
+            string safeContact = WebUtility.HtmlEncode(contactName);
+            string safeEmail = WebUtility.HtmlEncode(email);
+            string safePassword = WebUtility.HtmlEncode(temporaryPassword);
+
+            string subject = "تم اعتماد شركتكم - نظام نفاذ";
+
+            string body = $@"
+            <div dir='rtl'
+                 style='font-family: Arial, sans-serif;
+                        line-height: 1.8;
+                        max-width: 650px;
+                        margin: auto;'>
+
+                <h2>تم اعتماد طلب التسجيل</h2>
+
+                <p>
+                    عزيزي/عزيزتي <strong>{safeContact}</strong>،
+                </p>
+
+                <p>
+                    يسعدنا إبلاغكم بأنه تم اعتماد شركة
+                    <strong>{safeCompany}</strong>
+                    في <strong>نظام نفاذ</strong>.
+                    يمكنكم الآن تسجيل الدخول وإضافة المدربين الخاصين بكم.
+                </p>
+
+                <p>بيانات الدخول:</p>
+                <table style='border-collapse: collapse;'>
+                    <tr>
+                        <td style='padding: 4px 12px;'>البريد الإلكتروني</td>
+                        <td style='padding: 4px 12px;' dir='ltr'><strong>{safeEmail}</strong></td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 4px 12px;'>كلمة المرور</td>
+                        <td style='padding: 4px 12px;' dir='ltr'><strong>{safePassword}</strong></td>
+                    </tr>
+                </table>
+
+                <p style='font-weight: bold;'>
+                    يرجى الاحتفاظ بكلمة المرور في مكان آمن وعدم مشاركتها مع أي شخص.
+                </p>
+
+                <p>
+                    مع التحية،<br/>
+                    نظام نفاذ
+                </p>
+
+            </div>";
+
+            await SendAsync(email, subject, body);
+        }
+
+        public async Task SendCompanyRejectedAsync(
+            string email,
+            string companyName,
+            string contactName,
+            string? reason)
+        {
+            string safeCompany = WebUtility.HtmlEncode(companyName);
+            string safeContact = WebUtility.HtmlEncode(contactName);
+            string safeReason = string.IsNullOrWhiteSpace(reason)
+                ? "لم يتم تحديد سبب."
+                : WebUtility.HtmlEncode(reason);
+
+            string subject = "نتيجة طلب تسجيل الشركة - نظام نفاذ";
+
+            string body = $@"
+            <div dir='rtl'
+                 style='font-family: Arial, sans-serif;
+                        line-height: 1.8;
+                        max-width: 650px;
+                        margin: auto;'>
+
+                <h2>نتيجة طلب التسجيل</h2>
+
+                <p>
+                    عزيزي/عزيزتي <strong>{safeContact}</strong>،
+                </p>
+
+                <p>
+                    نأسف لإبلاغكم بأنه تم رفض طلب تسجيل شركة
+                    <strong>{safeCompany}</strong>
+                    في <strong>نظام نفاذ</strong>.
+                </p>
+
+                <p><strong>سبب الرفض:</strong> {safeReason}</p>
+
+                <p>
+                    يمكنكم تعديل البيانات وتقديم طلب تسجيل جديد.
+                </p>
+
+                <p>
+                    مع التحية،<br/>
+                    نظام نفاذ
+                </p>
+
+            </div>";
+
+            await SendAsync(email, subject, body);
+        }
+
+
+        public async Task SendWithdrawalApprovedAsync(string email, string traineeName)
+        {
+            string safeName = WebUtility.HtmlEncode(traineeName);
+
+            string subject = "تم اعتماد طلب الانسحاب - نظام نفاذ";
+
+            string body = $@"
+            <div dir='rtl'
+                 style='font-family: Arial, sans-serif;
+                        line-height: 1.8;
+                        max-width: 650px;
+                        margin: auto;'>
+
+                <h2>تم اعتماد طلب الانسحاب</h2>
+
+                <p>
+                    عزيزي/عزيزتي <strong>{safeName}</strong>،
+                </p>
+
+                <p>
+                    نود إبلاغك بأنه تم الموافقة على طلب الانسحاب الخاص بك من
+                    <strong>نظام نفاذ</strong>.
+                </p>
+
+                <p>
+                    بناءً على ذلك، تم إلغاء ارتباطك بالبرامج التدريبية التابعة للمنصة،
+                    ولن تتمكن من تسجيل الدخول إلى حسابك بعد الآن.
+                </p>
+
+                <p>
+                    نتمنى لك التوفيق في مسيرتك القادمة.
+                </p>
+
+                <p>
+                    مع التحية،<br/>
+                    نظام نفاذ
+                </p>
+
+            </div>";
+
+            await SendAsync(email, subject, body);
+        }
+
+
+
         private async Task SendAsync(
             string toEmail,
             string subject,

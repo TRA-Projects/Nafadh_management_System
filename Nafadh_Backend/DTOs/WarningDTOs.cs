@@ -186,6 +186,8 @@ namespace Nafadh_Backend.DTOs
         // NEW: who raised it, and their resolved display name
         public int RaisedByUserId { get; set; }
         public string? RaisedByName { get; set; }
+        //***////
+        public string? CompanyReply { get; set; }
 
     }
 
