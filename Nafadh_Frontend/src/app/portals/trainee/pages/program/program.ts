@@ -65,7 +65,8 @@ export interface ProgramStatsDto {
   selector: 'app-trainee-program',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './program.html'
+  templateUrl: './program.html',
+  styleUrl: './program.scss',
 })
 export class TraineeProgram implements OnInit {
 
