@@ -309,6 +309,23 @@ export interface TrainerLiveSessionReport {
     }>;
   }>;
 }
+export interface TrainerSessionSurveyReport {
+  surveyId: number;
+  sessionId: number;
+  question: string;
+  isPublished: boolean;
+  enrolledCount: number;
+  responseCount: number;
+  responseRatePercent: number;
+  averageRating: number | null;
+  responses: Array<{
+    traineeId: number;
+    rating: number;
+    comment: string | null;
+    submittedAtUtc: string;
+  }>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TrainerApi {
 
@@ -1735,4 +1752,12 @@ getTrainerLiveSessionReport(
     `${this.base}/trainer/live-sessions/${sessionId}/report`
   );
 }
+getTrainerSessionSurveyResults(
+  sessionId: number
+): Observable<TrainerSessionSurveyReport> {
+  return this.http.get<TrainerSessionSurveyReport>(
+    `${this.base}/trainer/live-sessions/${sessionId}/survey/results`
+  );
+}
+
 }
