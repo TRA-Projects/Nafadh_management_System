@@ -66,12 +66,6 @@ namespace Nafadh_Backend.DTOs
         public List<AttemptQuestionDto> Questions { get; set; } = new();
         public int ViolationCount { get; set; }
         public int RemainingSeconds { get; set; }
-
-
-
-
-        public List<AttemptQuestionDto> Questions { get; set; }
-            = new();
     }
 
     public class AttemptQuestionDto
@@ -89,6 +83,11 @@ namespace Nafadh_Backend.DTOs
         public decimal Points { get; set; }
 
         public List<QuestionOptionDto> Options { get; set; } = new();
+
+        // الخصائص الخاصة بإجابة المتدرب التي تمت إضافتها لحل الخطأ
+        public int? SelectedOptionId { get; set; }
+        public string? TextAnswer { get; set; }
+        public bool IsMarkedForReview { get; set; }
     }
 
     // ==========================================
@@ -121,16 +120,6 @@ namespace Nafadh_Backend.DTOs
         public bool IsCompleted { get; set; }
         public string? TraineeSubmissionNote { get; set; }
     }
-}
-        public List<QuestionOptionDto> Options { get; set; }
-            = new();
-
-
-        public int? SelectedOptionId { get; set; }
-        public string? TextAnswer { get; set; }
-        public bool IsMarkedForReview { get; set; }
-    }
-
 
     public class TraineeQuizListItemDto
     {
@@ -168,4 +157,3 @@ namespace Nafadh_Backend.DTOs
         public List<TraineeQuizListItemDto> Quizzes { get; set; } = new();
     }
 }
-
