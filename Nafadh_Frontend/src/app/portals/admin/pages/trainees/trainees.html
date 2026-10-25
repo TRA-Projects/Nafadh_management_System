@@ -807,7 +807,7 @@
   @if (showBatchAttendanceModal()) {
     <div class="fullscreen-attendance-overlay">
       
-      <!-- الهيدر العلوي الشامل الكحلي الفاخر -->
+      <!-- الهيدر العلوي الشامل الكحلي الفاخر مع زر الرجوع المطلوب -->
       <div class="fullscreen-attendance-header">
         <div class="fullscreen-header-info">
           <div class="fullscreen-icon-badge">
@@ -825,7 +825,11 @@
           </div>
         </div>
 
-        
+        <!-- 🌟 زر الرجوع للصفحة السابقة في أعلى الهيدر -->
+        <button type="button" class="btn-fullscreen-close" (click)="closeBatchAttendanceModal()" title="الرجوع للصفحة السابقة">
+          <i class="fa-solid fa-arrow-right"></i>
+          <span>الرجوع للصفحة السابقة</span>
+        </button>
       </div>
 
       <!-- جسم الصفحة الكاملة القابل للتمرير -->
@@ -976,7 +980,7 @@
         }
 
         <!-- ================================================================= -->
-        <!-- محتوى الخطوة 2: رصد حضور المتدربين + زر المسارات + جدول التحضير     -->
+        <!-- محتوى الخطوة 2: رصد حضور المتدربين + جدول التحضير (بدون منسدلة المسار)  -->
         <!-- ================================================================= -->
         @if (attendanceStep() === 2) {
           
@@ -999,7 +1003,6 @@
               <div class="notice-icon"><i class="fa-solid fa-user-shield"></i></div>
               <div>
                 <strong>لوحة متابعة الإدارة (استعراض واطلاع فقط):</strong>
-                
               </div>
             </div>
 
@@ -1012,9 +1015,8 @@
             </div>
           </div>
 
-          <!-- شريط الفلاتر: يحتوي على قائمة المسارات المطلوبة + البحث + تبويبات الحالة + زر تصدير سريع -->
+          <!-- شريط الفلاتر: البحث + تبويبات الحالة + زر تصدير سريع (بدون منسدلة المسارات) -->
           <div class="attendance-filter-row">
-            
             
             <!-- حقل البحث بالاسم أو الرقم المدني -->
             <div class="trainee-search-group">
@@ -1071,7 +1073,6 @@
                 <tr>
                   <th style="width: 48px;">#</th>
                   <th>المتدرب</th>
-                  
                   <th>المسار التدريبي</th>
                   <th>الشركة المستضيفة</th>
                   <th style="width: 140px; text-align: center;">حالة الحضور (رصد المدرب)</th>
@@ -1099,8 +1100,6 @@
                         </div>
                       </div>
                     </td>
-
-                    
 
                     <!-- المسار التدريبي -->
                     <td>
@@ -1211,7 +1210,7 @@
 
       </div>
 
-      <!-- فوتر الصفحة الكاملة: شريط ملخص إرشادي (تم نقل أزرار التصدير والطباعة للأعلى كما طلبت) -->
+      <!-- فوتر الصفحة الكاملة: شريط ملخص إرشادي -->
       <div class="fullscreen-attendance-footer">
         <div class="footer-actions">
           @if (attendanceStep() === 1) {

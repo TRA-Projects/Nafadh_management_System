@@ -783,24 +783,28 @@
   margin: 4px 0 0 0;
 }
 
+/* زر الرجوع في الهيدر */
 .btn-fullscreen-close {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
   color: #ffffff;
-  padding: 8px 18px;
+  padding: 9px 20px;
   border-radius: 10px;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
+  gap: 10px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .btn-fullscreen-close:hover {
-  background: rgba(239, 68, 68, 0.85);
-  border-color: #ef4444;
+  background: rgba(255, 255, 255, 0.22);
+  border-color: #ffffff;
+  transform: translateX(2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .fullscreen-attendance-body {
@@ -837,7 +841,6 @@
   flex-wrap: wrap;
 }
 
-/* 👈 زر القائمة المنسدلة لاختيار الدفعة مباشرة بجانب البحث كما في صورتك */
 .batch-dropdown-wrap {
   position: relative;
   min-width: 240px;
@@ -1667,7 +1670,6 @@
   gap: 14px;
 }
 
-/* 👈 زر تصدير الملف المطلوب بدلاً من زر حفظ السجل */
 .btn-export-file {
   background: #059669;
   color: #ffffff;
