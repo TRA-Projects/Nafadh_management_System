@@ -126,7 +126,7 @@
           <strong class="kpi-value">
             {{ attendanceAverage() | number:'1.0-0' }}%
           </strong>
-          <small>من الأسابيع المتاحة</small>
+          <small>من سجلات حضور المتدربين النشطين</small>
         </div>
       </article>
 
@@ -138,8 +138,8 @@
         </div>
         <div class="kpi-info">
           <span class="kpi-label">المتدربون المتميزون</span>
-          <strong class="kpi-value">{{ kpiTopPerformers().length }}</strong>
-          <small>هذا الشهر</small>
+          <strong class="kpi-value">{{ kpiTopPerformersCount() }}</strong>
+          <small>النشطون بأداء 80% فأعلى</small>
         </div>
       </article>
 
@@ -154,7 +154,7 @@
           <strong class="kpi-value">
             {{ topPerformersAverage() | number:'1.0-0' }}%
           </strong>
-          <small>محسوب من بيانات الأداء الحقيقية</small>
+          <small>متوسط أداء النشطين بأداء 80% فأعلى</small>
         </div>
       </article>
 
@@ -169,7 +169,7 @@
         <div class="kpi-info">
           <span class="kpi-label">متعثرون بحاجة لمتابعة</span>
           <strong class="kpi-value">{{ kpiAtRisk().length }}</strong>
-          <small>بيانات حقيقية من لوحة الشركة</small>
+          <small>من المتدربين النشطين</small>
         </div>
       </article>
     </div>
@@ -225,19 +225,7 @@
       </div>
     }
 
-    <div class="grid g2 g2-14 quick-stats">
-      <div class="card card-pad quick-stat">
-        <span>إجمالي المتدربين</span>
-        <b>{{ totalTrainees() }}</b>
-        <small>المربوطون بهذه الشركة</small>
-      </div>
-      <div class="card card-pad quick-stat">
-        <span>المتدربون النشطون</span>
-        <b>{{ activeTrainees() }}</b>
-        <small>حالة التدريب الحالية</small>
-      </div>
-    </div>
-
+    
     @if (plansOverview(); as plans) {
       <div class="card card-pad plans-card">
         <div class="card-title">

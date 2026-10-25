@@ -83,6 +83,9 @@ export class CompanyDashboard implements OnInit {
 
   averageAttendancePercent = signal(0);
 
+  topPerformersCount = signal(0);
+  topPerformersAveragePercent = signal(0);
+
   topPerformers =
     signal<CompanyDashboardTraineeDto[]>([]);
 
@@ -217,27 +220,14 @@ export class CompanyDashboard implements OnInit {
    */
   // The KPI cards keep counting the first 5 only, so changing a card's
   // dropdown never changes the KPI numbers or the average.
-  kpiTopPerformers = computed(() => this.topPerformers().slice(0, 5));
+  kpiTopPerformersCount = computed(() => this.topPerformersCount());
   kpiAtRisk = computed(() => this.atRisk().slice(0, 5));
 
-  topPerformersAverage = computed(() => {
-    const trainees = this.kpiTopPerformers();
-
-    if (!trainees.length) {
-      return 0;
-    }
-
-    return Math.round(
-      trainees.reduce(
-        (sum, trainee) =>
-          sum +
-          Number(
-            trainee.performancePercent || 0
-          ),
-        0
-      ) / trainees.length
-    );
-  });
+  // Average performance of ALL active trainees with performance >= 80%
+  // (calculated by the backend, not from the displayed rows).
+  topPerformersAverage = computed(() =>
+    Math.round(Number(this.topPerformersAveragePercent() || 0))
+  );
 
   // ============================================================
   // Lifecycle
@@ -415,6 +405,14 @@ export class CompanyDashboard implements OnInit {
       dashboard.topPerformers ?? []
     );
 
+    this.topPerformersCount.set(
+      Number(dashboard.topPerformersCount || 0)
+    );
+
+    this.topPerformersAveragePercent.set(
+      Number(dashboard.topPerformersAveragePercent || 0)
+    );
+
     // ------------------------------------------------------------
     // At-risk trainees
     //
@@ -470,6 +468,8 @@ export class CompanyDashboard implements OnInit {
     this.capacity.set(null);
 
     this.topPerformers.set([]);
+    this.topPerformersCount.set(0);
+    this.topPerformersAveragePercent.set(0);
 
     this.atRisk.set([]);
 
