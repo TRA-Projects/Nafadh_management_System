@@ -42,15 +42,11 @@
     <button type="button" class="tab" [class.active]="activeTab === 'cap'" (click)="selectTab('cap')">
       الطاقة الاستيعابية
     </button>
-    <button type="button" class="tab" [class.active]="activeTab === 'eval'" (click)="selectTab('eval')">
-      التقييمات
-    </button>
+   
     <button type="button" class="tab" [class.active]="activeTab === 'tasks'" (click)="selectTab('tasks')">
       المهام
     </button>
-    <button type="button" class="tab" [class.active]="activeTab === 'compare'" (click)="selectTab('compare')">
-      مقارنة الأقسام والمشرفين
-    </button>
+   
   </div>
 
   <!-- ================================================= -->
@@ -260,7 +256,7 @@
           <path d="M3 3v18h18" />
           <path d="m19 9-5 5-4-4-3 3" />
         </svg>
-        تقرير حضور الشركة — آخر 6 أسابيع
+        تقرير حضور المتدربين للشركة    
       </div>
       <div class="hbars">
         @for (week of attendanceWeeks; track week.label) {
@@ -489,230 +485,107 @@
   </div>
   }
 
-  <!-- ================================================= -->
-  <!-- 4. التقييمات -->
-  <!-- ================================================= -->
-  @if (activeTab === 'eval') {
-
-  <!-- شريط التنبيه -->
-  <div class="custom-alert">
-    <span class="custom-alert-icon">i</span>
-    <div class="custom-alert-text">
-      توجد <strong>9 تقييمات</strong> مطلوب استكمالها، منها <span class="text-danger">4 تقييمات متأخرة</span> عن الموعد
-      المحدد.
-    </div>
-  </div>
-
-  <!-- شبكة المؤشرات الإحصائية -->
-  <div class="custom-stats-grid">
-    <div class="custom-stat-card">
-      <div>
-        <p>تقييمات مكتملة هذا الشهر</p>
-        <h3 class="success-val">118</h3>
-      </div>
-      <div class="icon-box success-bg"><i class="fas fa-check-circle"></i></div>
-    </div>
-
-    <div class="custom-stat-card">
-      <div>
-        <p>تقييمات قيد الإعداد</p>
-        <h3 class="warning-val">9</h3>
-      </div>
-      <div class="icon-box warning-bg"><i class="fas fa-clock"></i></div>
-    </div>
-
-    <div class="custom-stat-card">
-      <div>
-        <p>تقييمات متأخرة</p>
-        <h3 class="danger-val">4</h3>
-      </div>
-      <div class="icon-box danger-bg"><i class="fas fa-exclamation-triangle"></i></div>
-    </div>
-
-    <div class="custom-stat-card">
-      <div>
-        <p>متوسط التقييم الشهري</p>
-        <h3 class="primary-val">4.2<span>/5</span></h3>
-      </div>
-      <div class="icon-box primary-bg"><i class="fas fa-star"></i></div>
-    </div>
-  </div>
-
-  <!-- جدول البيانات -->
-  <div class="custom-card">
-    <div class="custom-card-header">
-      <h3>التقييمات غير المكتملة حسب المشرف</h3>
-    </div>
-    <div class="custom-tbl-wrap">
-      <table class="custom-tbl">
-        <thead>
-          <tr>
-            <th>المشرف</th>
-            <th>القسم</th>
-            <th>مطلوب</th>
-            <th>متأخر</th>
-            <th>آخر تقييم</th>
-            <th>الحالة</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (evaluation of evaluations; track evaluation.supervisor; let idx = $index) { <tr>
-            <td>
-              <div class="supervisor-info">
-                <span class="avatar-circle">{{ evaluation.supervisor.charAt(0) }}</span>
-                <b>{{ evaluation.supervisor }}</b>
-              </div>
-            </td>
-            <td>{{ evaluation.department }}</td>
-            <td>{{ evaluation.required }}</td>
-            <td>
-              <span [ngClass]="{'badge-danger-num': evaluation.late > 0}">
-                {{ evaluation.late }}
-              </span>
-            </td>
-            <td class="date-text">{{ evaluation.lastEvaluation }}</td>
-            <td>
-              <span class="chip" [ngClass]="evaluation.statusClass">
-                <span class="dot"></span>
-                {{ evaluation.status }}
-              </span>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-  }
+  
   <!-- ================================================= -->
   <!-- 5. المهام -->
   <!-- ================================================= -->
-  @if (activeTab === 'tasks') {
-  <div class="stat-row">
-    <div class="stat-mini">
-      <span>مهام مكتملة</span>
-      <b class="success-text">64</b>
-    </div>
-    <div class="stat-mini">
-      <span>مهام قيد المراجعة</span>
-      <b class="primary-text">2</b>
-    </div>
-    <div class="stat-mini">
-      <span>مهام بانتظار الاستلام</span>
-      <b class="warning-text">3</b>
-    </div>
-    <div class="stat-mini">
-      <span>مهام متأخرة</span>
-      <b class="danger-text">2</b>
-    </div>
-  </div>
+  
+@if (activeTab === 'tasks') {
+  <section class="tasks-dashboard" dir="rtl">
 
-  <div class="card card-pad">
-    <div class="card-title">
-      أحدث المهام والمشروعات
-    </div>
-    <div class="tbl-wrap">
-      <table class="tbl">
-        <thead>
-          <tr>
-            <th>المتدرب</th>
-            <th>المهمة</th>
-            <th>الموعد</th>
-            <th>الحالة</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (task of tasks; track task.trainee) {
-          <tr>
-            <td><b>{{ task.trainee }}</b></td>
-            <td>{{ task.task }}</td>
-            <td>{{ task.due }}</td>
-            <td>
-              <span class="chip" [ngClass]="getTaskStatusClass(task.status)">
-                <span class="dot"></span>
-                {{ getTaskStatusText(task.status) }}
-              </span>
-            </td>
-            <td>
-              <button class="btn btn-soft btn-sm" type="button">مراجعة</button>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-  }
-
- <!-- ================================================= -->
-<!-- 6. مقارنة الأقسام والمشرفين (مُحدث بالبيانات الحقيقية) -->
-<!-- ================================================= -->
-@if (activeTab === 'compare') {
-<div class="report-note">
-  <span class="info-icon">i</span>
-  مقارنة أداء المشرفين: معدل الحضور مقابل متوسط الأداء العملي لمتدربيهم.
-</div>
-
-<div class="card card-pad">
-  <div class="card-title">
-    مؤشرات المشرفين
-  </div>
-  <div class="tbl-wrap">
-    <table class="tbl">
-      <thead>
-        <tr>
-          <th>المشرف</th>
-          <th>القسم</th>
-          <th>المتدربون</th>
-          <th>معدل الحضور</th>
-          <th>متوسط الأداء</th>
-          <th>تقييمات معلقة</th>
-          <th>الأداء العام</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- استخدام supervisor.id لضمان عدم تكرار المفاتيح -->
-        @for (supervisor of supervisors; track supervisor.id || supervisor.name) {
-        <tr>
-          <td><b>{{ supervisor.name }}</b></td>
-          <td>{{ supervisor.department }}</td>
-          <td>
-            <b class="primary-text" style="font-size: 15px;">{{ supervisor.trainees }}</b>
-          </td>
-          <td>{{ supervisor.attendance }}%</td>
-          <td>{{ supervisor.performance }}%</td>
-          <td>{{ supervisor.pendingEvaluations }}</td>
-          <td>
-            <span class="chip" [ngClass]="supervisor.statusClass">
-              <span class="dot"></span>
-              {{ supervisor.overall }}
-            </span>
-          </td>
-        </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<div class="card card-pad comparison-card">
-  <div class="card-title">
-    مقارنة الحضور والأداء حسب المشرف / القسم
-  </div>
-  <div class="hbars">
-    <!-- العرض بناءً على قائمة المشرفين مباشرة لعرض كل مشرف مع نسبته الحقيقية -->
-    @for (sup of supervisors; track sup.id || sup.name) {
-    <div class="hbar">
-      <div class="h-lbl">{{ sup.name }} ({{ sup.department }})</div>
-      <div class="h-trk">
-        <div class="h-fill" [style.width.%]="sup.attendance"></div>
+    <div class="tasks-heading">
+      <div>
+        <h3>تقرير المهام التدريبية</h3>
+        <p>متابعة إنجاز المهام وحالة العمل لدى المتدربين</p>
       </div>
-      <div class="h-val">{{ sup.attendance }}%</div>
+      <div class="tasks-heading-icon">☷</div>
     </div>
-    }
-  </div>
-</div>
+
+    <div class="tasks-summary">
+      <div class="task-stat task-stat-total">
+        <span class="task-stat-icon">▤</span>
+        <span class="task-stat-label">إجمالي المهام</span>
+        <strong>{{ tasks.length }}</strong>
+        <small>جميع المهام المسجلة</small>
+      </div>
+
+      <div class="task-stat task-stat-pending">
+        <span class="task-stat-icon">◷</span>
+        <span class="task-stat-label">قيد التنفيذ</span>
+        <strong>{{ taskPendingCount }}</strong>
+        <small>مهام بانتظار الإنجاز</small>
+      </div>
+
+      <div class="task-stat task-stat-review">
+        <span class="task-stat-icon">✓</span>
+        <span class="task-stat-label">بانتظار المراجعة</span>
+        <strong>{{ taskReviewCount }}</strong>
+        <small>تحتاج إلى مراجعة</small>
+      </div>
+
+      <div class="task-stat task-stat-late">
+        <span class="task-stat-icon">!</span>
+        <span class="task-stat-label">مهام متأخرة</span>
+        <strong>{{ taskLateCount }}</strong>
+        <small>تجاوزت موعد التسليم</small>
+      </div>
+    </div>
+
+    <div class="tasks-table-card">
+      <div class="tasks-table-heading">
+        <div>
+          <h4>أحدث المهام والمشروعات</h4>
+          <p>تفاصيل المهام وحالة التسليم</p>
+        </div>
+        <span class="tasks-count">{{ tasks.length }} مهمة</span>
+      </div>
+
+      <div class="tasks-table-scroll">
+        <table class="tasks-table">
+          <thead>
+            <tr>
+              <th>المتدرب</th>
+              <th>المهمة</th>
+              <th>موعد التسليم</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (task of tasks; track task.trainee) {
+              <tr>
+                <td>
+                  <div class="task-trainee">
+                    <span class="task-avatar">
+                      {{ task.trainee ? task.trainee.charAt(0) : 'م' }}
+                    </span>
+                    <span>{{ task.trainee }}</span>
+                  </div>
+                </td>
+                <td>{{ task.task }}</td>
+                <td>{{ task.due }}</td>
+                <td>
+                  <span
+                    class="task-status"
+                    [ngClass]="getTaskStatusClass(task.status)">
+                    {{ getTaskStatusText(task.status) }}
+                  </span>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="tasks-empty">
+                  لا توجد مهام لعرضها حاليًا
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
 }
+
 
 </div>
