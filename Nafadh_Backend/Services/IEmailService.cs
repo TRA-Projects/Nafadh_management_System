@@ -10,5 +10,8 @@
         Task SendCompanyApprovedAsync(string email, string companyName, string contactName, string temporaryPassword);
 
         Task SendCompanyRejectedAsync(string email, string companyName, string contactName, string? reason);
+
+        //Send Withdrawal Approved for trainee
+        Task SendWithdrawalApprovedAsync(string email, string traineeName);
     }
 }

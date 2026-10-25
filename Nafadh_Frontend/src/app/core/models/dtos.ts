@@ -914,4 +914,124 @@ export interface TraineeSkillDto {
   skillName: string;
   serialNumber?: string | null;
   certificateUrl?: string | null;
+
+  
+}
+// =========================================================
+// Trainee Quizzes (Student Portal)
+// =========================================================
+
+export interface TraineeQuizListItemDto {
+  quizId: number;
+  title: string;
+  description: string | null;
+  batchName: string | null;
+  startDateTime: string;
+  endDateTime: string;
+  durationMinutes: number;
+  questionCount: number;
+  maxAttempts: number;
+  cameraRequired: boolean;
+  passingPercentage: number;
+  attemptsUsed: number;
+  attemptsRemaining: number;
+  inProgressAttemptId: number | null;
+  latestAttemptId: number | null;
+  latestPercentage: number | null;
+  isPassed: boolean | null;
+  state:
+    | 'Available'
+    | 'InProgress'
+    | 'PendingGrading'
+    | 'Completed'
+    | 'Upcoming'
+    | 'Missed';
+}
+
+export interface TraineeQuizzesOverviewDto {
+  available: number;
+  upcoming: number;
+  pendingGrading: number;
+  completed: number;
+  quizzes: TraineeQuizListItemDto[];
+}
+export interface StartQuizAttemptDto {
+  traineeId: number;
+  quizId: number;
+  cameraConsent: boolean;
+  identityCheckStatus?: string;
+}
+
+export interface QuestionOptionDto {
+  optionId: number;
+  optionText: string;
+  optionCode: string;
+  sortOrder: number;
+}
+
+export interface AttemptQuestionDto {
+  attemptQuestionId: number;
+  questionId: number;
+  questionOrder: number;
+  questionText: string;
+  questionType: number; 
+  points: number;
+  options: QuestionOptionDto[];
+  selectedOptionId?: number | null;
+  textAnswer?: string | null;
+  isMarkedForReview: boolean;
+}
+
+export interface QuizAttemptDto {
+  attemptId: number;
+  quizId: number;
+  quizTitle: string;
+  durationMinutes: number;
+  cameraRequired: boolean;
+  startedAt: string;
+  expectedEndAt: string;
+  status: string;
+  violationCount: number;
+  remainingSeconds: number;
+  questions: AttemptQuestionDto[];
+}
+
+
+
+export interface WithdrawalRequestDto {
+  id: number;
+  traineeId: number;
+  traineeName?: string | null;
+  reason: string;
+  status: WithdrawalRequestStatus;
+  createdAt: string;
+  reviewedAt?: string | null;
+  adminNotes?: string | null;
+}
+
+export interface CreateWithdrawalRequestDto {
+  traineeId: number;
+  reason: string;
+}
+
+export enum WithdrawalRequestStatus {
+  Pending = 0,
+  Approved = 1,
+  Rejected = 2
+}
+
+export interface WithdrawalRequestDto {
+  id: number;
+  traineeId: number;
+  traineeName?: string | null;
+  reason: string;
+  status: WithdrawalRequestStatus;
+  createdAt: string;
+  reviewedAt?: string | null;
+  adminNotes?: string | null;
+}
+
+export interface CreateWithdrawalRequestDto {
+  traineeId: number;
+  reason: string;
 }
