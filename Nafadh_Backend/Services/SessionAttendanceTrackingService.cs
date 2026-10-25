@@ -198,5 +198,39 @@ namespace Nafadh_Backend.Services
                     p.LeftAtUtc != null)
                 .SumAsync(p => (int?)p.DurationSeconds) ?? 0;
         }
+        // Close any attendance periods still open when a session ends.
+        public async Task<int> CloseOpenPeriodsAsync(
+            int sessionId,
+            DateTime endedAtUtc)
+        {
+            endedAtUtc = endedAtUtc.ToUniversalTime();
+
+            var openPeriods = await _context.NFD_SessionAttendancePeriods
+                .Where(p =>
+                    p.SessionId == sessionId &&
+                    p.LeftAtUtc == null)
+                .ToListAsync();
+
+            foreach (var period in openPeriods)
+            {
+                var leftAtUtc = endedAtUtc < period.JoinedAtUtc
+                    ? period.JoinedAtUtc
+                    : endedAtUtc;
+
+                period.LeftAtUtc = leftAtUtc;
+
+                var seconds = (leftAtUtc - period.JoinedAtUtc)
+                    .TotalSeconds;
+
+                period.DurationSeconds = (int)Math.Min(
+                    int.MaxValue,
+                    Math.Max(0, seconds));
+            }
+
+            if (openPeriods.Count > 0)
+                await _context.SaveChangesAsync();
+
+            return openPeriods.Count;
+        }
     }
 }
