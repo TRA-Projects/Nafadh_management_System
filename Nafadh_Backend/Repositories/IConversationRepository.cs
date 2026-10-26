@@ -40,7 +40,10 @@ namespace Nafadh_Backend.Repositories
             int conversationId,
             NFD_SupportTicketStatus status
         );
-
+        Task<Dictionary<int, int>> GetGroupUnreadCountsAsync(
+    int userId,
+    List<int> conversationIds
+);
         Task MarkMessagesAsReadAsync(
             int conversationId,
             int readerUserId

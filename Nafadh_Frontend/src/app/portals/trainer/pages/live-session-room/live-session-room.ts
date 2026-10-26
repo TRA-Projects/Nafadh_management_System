@@ -427,7 +427,7 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
   openLiveAttendance(): void {
     if (!this.connected()) return;
 
-    this.router.navigate(['/trainer/attendance/live-attendance'], {
+    this.router.navigate(['/trainer/live-sessions-attendance'], {
       queryParams: {
         sessionId: this.sessionId,
         batchId: this.batchId
