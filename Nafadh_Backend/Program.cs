@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -53,6 +53,11 @@ namespace Nafadh_Backend
                           .AllowAnyHeader();
                 });
             });
+
+            // Management -> original Training reference-catalog API (no Training backend changes).
+            builder.Services.AddHttpClient("TrainingConstants", client =>
+                client.Timeout = TimeSpan.FromSeconds(15));
+            builder.Services.AddScoped<TrainingConstantsService>();
 
             // EF Core - SQL Server
             builder.Services.AddDbContext<Nafadhcontext>(options =>
