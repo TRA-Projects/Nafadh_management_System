@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Services;
+using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Controllers;
 
@@ -16,10 +17,10 @@ namespace Nafadh_Backend.Controllers;
 [Authorize(Roles = "Admin,SuperAdmin")]
 public sealed class ReferenceConstantsController : ControllerBase
 {
-    private readonly TrainingConstantsService _service;
+    private readonly ITrainingConstantsService _service;
     private readonly ILogger<ReferenceConstantsController> _logger;
 
-    public ReferenceConstantsController(TrainingConstantsService service, ILogger<ReferenceConstantsController> logger)
+    public ReferenceConstantsController(ITrainingConstantsService service, ILogger<ReferenceConstantsController> logger)
     {
         _service = service;
         _logger = logger;
@@ -30,19 +31,22 @@ public sealed class ReferenceConstantsController : ControllerBase
     [HttpGet("groups")]
     public IActionResult GetGroups()
     {
-        var groups = TrainingConstantsCatalog.Groups.Select(group => new
-        {
-            code = group.Code,
-            label_en = group.LabelEn,
-            label_ar = group.LabelAr,
-            IsActive = true,
-            IsReadOnly = group.ReadOnly
-        });
-        // Keep original frontend's PascalCase IsActive / IsReadOnly keys.
-        var json = JsonSerializer.Serialize(new { Data = groups }, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = null
-        });
+        var groups = TrainingConstantsCatalog.Groups
+            .Select(group => new ReferenceConstantGroupDto
+            {
+                Code = group.Code,
+                LabelEn = group.LabelEn,
+                LabelAr = group.LabelAr,
+                IsActive = true,
+                IsReadOnly = group.ReadOnly
+            }).ToList();
+
+        var json = JsonSerializer.Serialize(
+            new ReferenceConstantGroupsResponseDto
+            {
+                Data = groups
+            });
+
         return Content(json, "application/json", Encoding.UTF8);
     }
 
