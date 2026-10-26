@@ -144,7 +144,11 @@
             <small>
               محادثة جماعية
             </small>
-
+@if (group.unreadCount > 0) {
+  <span class="unread-count">
+    {{ group.unreadCount }}
+  </span>
+}
           </div>
 
         </button>
@@ -422,7 +426,7 @@
                     <button 
                       type="button" 
                       class="btn-meeting-join"
-                      [disabled]="!message.meeting.joinUrl || message.meeting.status === 'Completed' || message.meeting.status === 'Cancelled'"
+                      [disabled]="!message.meeting.joinUrl || (message.meeting.status !== 'Ongoing' && !message.meeting.isHostStarted)"
                       (click)="joinMeeting(message.meeting)"
                     >
                       <span>🎥</span> Join Meeting
