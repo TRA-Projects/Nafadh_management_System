@@ -11,6 +11,9 @@
   position: relative;
 }
 
+/* =========================================================
+   TOPBAR
+========================================================= */
 .topbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 50;
   height: var(--header-height);
@@ -21,58 +24,89 @@
   padding: 0 24px; gap: 16px;
 }
 
+/* تجميع زر القائمة مع الشعار لضمان ترتيبهم في اليمين */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
 .logo {
   display: flex; align-items: center; gap: 10px; cursor: pointer; flex-shrink: 0;
+  
   .logo-img { height: 30px; width: auto; display: block; }
-  .logo-sub { font-size: 12px; color: var(--color-text-tertiary); }
+  .logo-sub { font-size: 12px; color: var(--color-text-tertiary); font-weight: 700; }
 }
 
 .search-wrap {
   flex: 1; max-width: 380px; position: relative; display: flex; align-items: center;
   color: var(--color-text-tertiary);
+  
   nfd-icon { position: absolute; right: 12px; pointer-events: none; }
 }
+
 .search-input {
   width: 100%; height: 36px; border-radius: var(--radius-lg); border: 1px solid var(--color-border);
   background: #F8FAFF; outline: none; font-size: 13px;
   padding-right: 36px; padding-left: 12px;
+  
   &:focus { border-color: var(--color-brand); box-shadow: 0 0 0 3px rgba(0,102,196,0.1); }
 }
 
 .actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
 .icon-btn {
   width: 36px; height: 36px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center;
-  color: var(--color-text-secondary); position: relative;
+  color: var(--color-text-secondary); position: relative; background: transparent; border: none; cursor: pointer;
+  
   &:hover { background: rgba(0,0,0,0.05); }
 }
+
 .lang-btn {
   height: 32px; padding: 0 12px; border-radius: var(--radius-lg); border: 1px solid var(--color-border);
-  font-size: 12px; font-weight: 500; color: var(--color-text-secondary);
+  font-size: 12px; font-weight: 500; color: var(--color-text-secondary); cursor: pointer;
+  
   &:hover { background: #fff; }
 }
+
+/* =========================================================
+   NOTIFICATIONS
+========================================================= */
 .notif-wrap { position: relative; }
 .notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-cyan); }
+
 .notif-panel {
   position: absolute; top: 48px; left: 0; width: 300px; background: #fff;
   border-radius: 16px; box-shadow: var(--shadow-card-hover); border: 1px solid var(--color-border-light);
   overflow: hidden; z-index: 60;
+  
   .notif-head { padding: 14px 16px; border-bottom: 1px solid var(--color-border-light); font-size: 13px; font-weight: 600; }
   .notif-empty { padding: 24px 16px; text-align: center; font-size: 12px; color: var(--color-text-tertiary); }
 }
 
+/* =========================================================
+   PROFILE
+========================================================= */
 .profile-chip {
   display: flex; align-items: center; gap: 8px; cursor: pointer; border-radius: var(--radius-lg); padding: 4px 8px;
+  
   &:hover { background: rgba(0,0,0,0.04); }
+  
   .avatar {
     width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--color-cyan);
     background: linear-gradient(135deg, var(--color-navy), var(--color-brand));
     color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
   }
+  
   .who { text-align: right; }
   .name { font-size: 12px; font-weight: 600; color: var(--color-text); }
   .role { font-size: 11px; color: var(--color-text-tertiary); }
 }
 
+/* =========================================================
+   SIDEBAR
+========================================================= */
 // Sidebar sits on the physical RIGHT (matching the reference exactly), with
 // the logo directly above it — content flows to its left.
 .sidebar {
@@ -90,10 +124,12 @@ nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px;
   display: flex; align-items: center; gap: 12px; width: 100%;
   padding: 10px 12px; border-radius: var(--radius-lg);
   font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.65);
-  text-align: right;
+  text-align: right; text-decoration: none; background: transparent; border: none; cursor: pointer;
+  
   nfd-icon { color: rgba(255,255,255,0.5); flex-shrink: 0; }
 
   &:hover { background: rgba(255,255,255,0.07); }
+  
   &.active {
     background: rgba(0,196,204,0.15); color: var(--color-cyan);
     border-right: 3px solid var(--color-cyan);
@@ -104,6 +140,9 @@ nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px;
 .sidebar-foot { padding: 16px 12px 0; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
 .logout { color: rgba(255,255,255,0.5); nfd-icon { color: rgba(255,255,255,0.5); } }
 
+/* =========================================================
+   CONTENT
+========================================================= */
 .content {
   margin-top: var(--header-height);
   margin-right: var(--sidebar-width);
@@ -114,6 +153,9 @@ nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px;
 .dark .content { background: #080c24; color: #E8EEFF; }
 .dark { ::ng-deep .nfd-card { background: #111640; border: 1px solid rgba(255,255,255,0.06); } }
 
+/* =========================================================
+   ACCESSIBILITY & BACK-TO-TOP
+========================================================= */
 .accessibility-trigger {
   overflow: hidden;
   img { width: 30px; height: 30px; display: block; object-fit: contain; }
@@ -146,12 +188,9 @@ nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px;
   to { opacity: 1; transform: translateY(0); }
 }
 
-@media (max-width: 900px) {
-  .search-wrap { display: none; }
-  .back-to-top { left: 16px; bottom: 16px; }
-}
-
-// Shared notification summary styling.
+/* =========================================================
+   NOTIFICATION STYLING (DETAILS)
+========================================================= */
 .notif-badge {
   position: absolute;
   top: -2px;
@@ -260,9 +299,9 @@ nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px;
   gap: 8px;
 }
 
-// ============================================================
-// 🆕 MOBILE SIDEBAR — زر X + Hamburger + Overlay
-// ============================================================
+/* ============================================================
+   🆕 MOBILE SIDEBAR — زر X + Hamburger + Overlay
+============================================================ */
 
 /* زر X — مخفي على الديسكتوب */
 .sidebar-close-btn {
@@ -315,10 +354,22 @@ nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px;
   }
 }
 
-// ============================================================
-// 📱 TABLET / MOBILE (≤ 900px)
-// ============================================================
+/* ============================================================
+   📱 RESPONSIVE (TABLET & MOBILE)
+============================================================ */
+
+/* شاشات التابلت (أقل من 900px) */
 @media (max-width: 900px) {
+  /* إخفاء مربع البحث لتوفير مساحة */
+  .search-wrap { 
+    display: none; 
+  }
+  
+  .back-to-top { 
+    left: 16px; 
+    bottom: 16px; 
+  }
+
   /* إظهار زر الـ hamburger في الـ topbar */
   .menu-toggle {
     display: flex;
@@ -353,13 +404,37 @@ nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px;
   }
 }
 
-// ============================================================
-// 📱 SMALL MOBILE (≤ 600px)
-// ============================================================
+/* شاشات الجوال (أقل من 768px) */
+@media (max-width: 768px) {
+  /* إخفاء النص بجانب الشعار */
+  .logo-sub {
+    display: none;
+  }
+
+  /* إخفاء الاسم والمسمى الوظيفي في الملف الشخصي والاكتفاء بالصورة الرمزية */
+  .profile-chip .who {
+    display: none;
+  }
+  
+  .profile-chip {
+    padding: 0;
+    &:hover { background: transparent; }
+  }
+
+  .actions {
+    gap: 4px;
+  }
+}
+
+/* شاشات الجوال الصغيرة جداً (أقل من 600px) */
 @media (max-width: 600px) {
   .topbar {
     padding: 0 14px;
-    gap: 10px;
+    gap: 8px;
+  }
+
+  .logo-img {
+    height: 26px;
   }
 
   .content {
@@ -369,5 +444,10 @@ nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px;
   .sidebar {
     width: 260px;
     max-width: 85vw;
+  }
+  
+  .icon-btn {
+    width: 34px;
+    height: 34px;
   }
 }
