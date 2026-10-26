@@ -8,7 +8,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { forkJoin } from 'rxjs';
 
-import { TrainerApi } from '../../../services/trainer-api';
+import { TrainerApi } from '../../services/trainer-api';
 
 interface LiveAttendanceRow {
   traineeId: number;
