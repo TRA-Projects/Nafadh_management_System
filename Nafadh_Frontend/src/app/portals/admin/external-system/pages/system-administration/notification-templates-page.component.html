@@ -1,81 +1,34 @@
-
 <div class="notification-templates-container" dir="rtl">
 
-  <!-- Page Header -->
-  <header class="page-header">
+  <!-- Header -->
+  <div class="page-header">
     <div class="header-title">
-      <nav class="breadcrumb" aria-label="مسار الصفحة">
-        <span>الرئيسية</span>
-        <span class="breadcrumb-separator">/</span>
-        <span>الإدارة</span>
-        <span class="breadcrumb-separator">/</span>
-        <span class="current-page">قوالب الإشعارات</span>
-      </nav>
-
-      <div class="title-row">
-        <div class="title-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
-              stroke="currentColor" stroke-width="1.7"
-              stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M10 21h4" stroke="currentColor"
-              stroke-width="1.7" stroke-linecap="round"/>
-          </svg>
-        </div>
-
-        <div>
-          <h1>قوالب الإشعارات</h1>
-          <p>عرض وإدارة قوالب الإشعارات وقنوات الإرسال.</p>
-        </div>
+      <div class="breadcrumb">
+        الرئيسية / الإدارة / <span>قوالب الإشعارات</span>
       </div>
+
     </div>
-  </header>
+  </div>
 
   <!-- Search and Filters -->
-  <section class="filter-card" aria-label="البحث والتصفية">
-    <div class="section-heading">
-      <div class="section-heading-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none">
-          <circle cx="10.8" cy="10.8" r="6.8"
-            stroke="currentColor" stroke-width="1.8"/>
-          <path d="m16 16 4.2 4.2"
-            stroke="currentColor" stroke-width="1.8"
-            stroke-linecap="round"/>
-        </svg>
-      </div>
-
-      <div>
-        <h2>البحث والتصفية</h2>
-        <p>ابحثي عن القالب أو حددي قناة الإشعار المطلوبة.</p>
-      </div>
-    </div>
-
+  <div class="filter-card">
     <div class="filter-grid">
+
       <div class="filter-group">
-        <label for="templateSearch">البحث عن قالب</label>
+        <label for="templateSearch">بحث</label>
 
-        <div class="input-with-icon">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="10.8" cy="10.8" r="6.8"
-              stroke="currentColor" stroke-width="1.8"/>
-            <path d="m16 16 4.2 4.2"
-              stroke="currentColor" stroke-width="1.8"
-              stroke-linecap="round"/>
-          </svg>
-
-          <input
-            id="templateSearch"
-            type="text"
-            [ngModel]="searchTerm()"
-            (ngModelChange)="onSearchChange($event)"
-            placeholder="رمز الإجراء أو اسم القالب..."
-            class="form-control"
-          />
-        </div>
+        <input
+          id="templateSearch"
+          type="text"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="ابحث برمز الإجراء أو التسمية..."
+          class="form-control"
+        />
       </div>
 
       <div class="filter-group">
-        <label for="templateType">قناة الإشعار</label>
+        <label for="templateType">نوع الإشعار</label>
 
         <select
           id="templateType"
@@ -83,59 +36,51 @@
           [ngModel]="selectedType()"
           (ngModelChange)="onTypeChange($event)"
         >
-          <option value="">جميع القنوات</option>
+          <option value="">جميع الأنواع</option>
           <option value="Email">البريد الإلكتروني</option>
-          <option value="SMS">الرسائل النصية</option>
-          <option value="Push">الإشعارات الفورية</option>
+          <option value="SMS">رسالة نصية</option>
+          <option value="Push">إشعار فوري</option>
         </select>
       </div>
+
     </div>
-  </section>
+  </div>
 
   <!-- Templates Table -->
-  <section class="table-card">
-    <div class="table-section-header">
-      <div>
-        <h2>قائمة القوالب</h2>
-        <p>تفاصيل القوالب وحالة تفعيل قنوات الإرسال.</p>
-      </div>
-
-      <span class="results-count">
-        إجمالي القوالب
-        <strong>{{ totalCount() }}</strong>
-      </span>
-    </div>
-
+  <div class="table-card">
     <div class="table-responsive">
       <table class="data-table">
         <thead>
           <tr>
-            <th class="index-heading">#</th>
+            <th>#</th>
             <th>رمز الإجراء</th>
-            <th>اسم القالب</th>
-            <th class="text-center">الحالة</th>
-            <th class="text-center">البريد الإلكتروني</th>
-            <th class="text-center">الرسائل النصية</th>
-            <th class="text-center">الإجراءات</th>
+            <th>التسمية</th>
+            <th class="text-center">نشط</th>
+            <th class="text-center">البريد</th>
+            <th class="text-center">رسالة نصية</th>
+            <th class="text-center">إجراءات</th>
           </tr>
         </thead>
 
         <tbody>
           <tr
-            *ngFor="let template of paginatedTemplates(); let i = index"
+            *ngFor="
+              let template of paginatedTemplates();
+              let i = index
+            "
           >
             <td class="col-index">
               {{ safePageIndex() * pageSize() + i + 1 }}
             </td>
 
             <td>
-              <span class="code-badge" dir="ltr">
+              <span class="code-badge">
                 {{ template.code }}
               </span>
             </td>
 
             <td class="col-name">
-              <span class="template-name">{{ template.name }}</span>
+              {{ template.name }}
             </td>
 
             <td class="text-center">
@@ -144,32 +89,19 @@
                 [class.active]="template.isActive"
                 [class.inactive]="!template.isActive"
               >
-                <span class="status-dot" aria-hidden="true"></span>
-                {{ template.isActive ? 'نشط' : 'غير نشط' }}
+                {{ template.isActive ? 'نعم' : 'لا' }}
               </span>
             </td>
 
             <td class="text-center">
-              <span
-                class="channel-indicator"
-                [class.enabled]="template.hasEmail"
-              >
-                <span class="channel-symbol" aria-hidden="true">
-                  {{ template.hasEmail ? '✓' : '—' }}
-                </span>
-                {{ template.hasEmail ? 'مفعّل' : 'غير مفعّل' }}
+              <span class="text-value">
+                {{ template.hasEmail ? 'نعم' : 'لا' }}
               </span>
             </td>
 
             <td class="text-center">
-              <span
-                class="channel-indicator"
-                [class.enabled]="template.hasSms"
-              >
-                <span class="channel-symbol" aria-hidden="true">
-                  {{ template.hasSms ? '✓' : '—' }}
-                </span>
-                {{ template.hasSms ? 'مفعّل' : 'غير مفعّل' }}
+              <span class="text-value">
+                {{ template.hasSms ? 'نعم' : 'لا' }}
               </span>
             </td>
 
@@ -178,17 +110,12 @@
                 <button
                   type="button"
                   class="btn-action"
-                  aria-label="إجراءات القالب"
+                  aria-label="الإجراءات"
                   aria-haspopup="menu"
                   [attr.aria-expanded]="openMenuId === template.id"
                   (click)="toggleMenu(template.id, $event)"
                 >
-                  <svg viewBox="0 0 24 24" fill="currentColor"
-                    aria-hidden="true">
-                    <circle cx="12" cy="5" r="1.7"/>
-                    <circle cx="12" cy="12" r="1.7"/>
-                    <circle cx="12" cy="19" r="1.7"/>
-                  </svg>
+                  ⋮
                 </button>
 
                 <div
@@ -202,8 +129,8 @@
                     class="menu-item"
                     (click)="editTemplate(template)"
                   >
-                    <span>تعديل القالب</span>
-                    <span class="menu-icon" aria-hidden="true">✎</span>
+                    <span>تعديل</span>
+                    <span aria-hidden="true">✎</span>
                   </button>
 
                   <button
@@ -212,8 +139,8 @@
                     class="menu-item text-danger"
                     (click)="deleteTemplate(template.id)"
                   >
-                    <span>حذف القالب</span>
-                    <span class="menu-icon" aria-hidden="true">⌫</span>
+                    <span>حذف</span>
+                    <span aria-hidden="true">🗑</span>
                   </button>
                 </div>
               </div>
@@ -222,27 +149,20 @@
 
           <tr *ngIf="paginatedTemplates().length === 0">
             <td colspan="7" class="no-data">
-              <div class="empty-state">
-                <div class="empty-state-icon" aria-hidden="true">⌕</div>
-                <strong>لا توجد قوالب مطابقة</strong>
-                <span>جرّبي تغيير كلمات البحث أو قناة الإشعار.</span>
-              </div>
+              لا توجد قوالب مطابقة للبحث
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Pagination -->
-    <footer class="pagination-footer">
+    <!-- Pagination Footer -->
+    <div class="pagination-footer">
       <div class="pagination-info">
         عرض
-        <strong>
-          {{ totalCount() === 0 ? 0 : safePageIndex() * pageSize() + 1 }}
-        </strong>
-        –
-        <strong>{{ getEndIndex() }}</strong>
-        من <strong>{{ totalCount() }}</strong> قالب
+        {{ totalCount() === 0 ? 0 : safePageIndex() * pageSize() + 1 }}
+        -{{ getEndIndex() }}
+        من {{ totalCount() }}
       </div>
 
       <div class="pagination-controls">
@@ -251,9 +171,8 @@
           class="page-btn"
           (click)="prevPage()"
           [disabled]="!canPrev()"
-          aria-label="الصفحة السابقة"
         >
-          ‹
+          &lt;
         </button>
 
         <button
@@ -261,8 +180,6 @@
           *ngFor="let page of pageNumbers()"
           class="page-number-btn"
           [class.active]="safePageIndex() === page"
-          [attr.aria-current]="safePageIndex() === page ? 'page' : null"
-          [attr.aria-label]="'الصفحة ' + (page + 1)"
           (click)="setPage(page)"
         >
           {{ page + 1 }}
@@ -273,9 +190,8 @@
           class="page-btn"
           (click)="nextPage()"
           [disabled]="!canNext()"
-          aria-label="الصفحة التالية"
         >
-          ›
+          &gt;
         </button>
 
         <div class="page-size-selector">
@@ -283,16 +199,19 @@
             class="form-control-sm"
             [value]="pageSize()"
             (change)="onPageSizeChange($event)"
-            aria-label="عدد القوالب في الصفحة"
           >
-            <option *ngFor="let size of pageSizeOptions" [value]="size">
+            <option
+              *ngFor="let size of pageSizeOptions"
+              [value]="size"
+            >
               {{ size }}
             </option>
           </select>
-          <span>لكل صفحة</span>
+
+          <span class="page-size-label">في الصفحة</span>
         </div>
       </div>
-    </footer>
-  </section>
+    </div>
+  </div>
 
 </div>
