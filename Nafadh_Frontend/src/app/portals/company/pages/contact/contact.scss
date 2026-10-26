@@ -883,3 +883,149 @@
     padding: 13px 12px;
   }
 }
+
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: .6;
+  transform: none;
+}
+
+button:focus-visible,
+.chat-messages:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+
+.contact-page {
+  overflow-wrap: anywhere;
+}
+
+.contact-sidebar,
+.contact-chat {
+  max-width: 100%;
+}
+
+.chat-head,
+.chat-composer,
+.sidebar-head,
+.contact-filters,
+.sidebar-footer {
+  flex-shrink: 0;
+}
+
+.message-bubble p {
+  unicode-bidi: plaintext;
+}
+
+.contact-list,
+.chat-messages {
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.contact-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  overflow-y: auto;
+  padding: 24px 14px;
+}
+
+.company-contact-new-modal {
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  width: min(580px, 100%);
+}
+
+.nfd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid var(--brand);
+  background: white;
+  color: var(--brand);
+  cursor: pointer;
+}
+
+.nfd-btn.primary {
+  background: var(--brand);
+  color: white;
+}
+
+.nfd-input {
+  color: var(--ink);
+  font-family: inherit;
+}
+
+@media (max-width: 420px) {
+  .contact-hero {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .contact-stats {
+    gap: 6px;
+  }
+
+  .contact-stat {
+    padding: 10px 6px;
+    gap: 5px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .chat-category {
+    white-space: normal;
+    max-width: 100px;
+  }
+
+  .chat-composer textarea {
+    min-width: 0;
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .contact-workspace {
+    height: 70dvh;
+    min-height: 420px;
+  }
+}
+
+.company-contact-new-modal fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.contact-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #101a6359;
+}
+
+.company-contact-new-modal {
+  background: #fff;
+  margin: auto;
+}

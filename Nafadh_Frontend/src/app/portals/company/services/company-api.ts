@@ -149,11 +149,11 @@ export class CompanyApi {
   }
 
 
-    // ============================================================
+  // ============================================================
   // Supervisor
   // ============================================================
 
-assignTrainersToSupervisor(
+  assignTrainersToSupervisor(
     supervisorId: number,
     trainerIds: number[]
   ): Observable<any> {
@@ -319,31 +319,31 @@ assignTrainersToSupervisor(
   }
 
 
-// ============================================================
-// My Account
-// ============================================================
+  // ============================================================
+  // My Account
+  // ============================================================
 
-getCurrentAccount(): Observable<CompanyAccountDto> {
-  return this.http.get<CompanyAccountDto>(
-    `${this.base}/CompanyAccount/me`
-  );
-}
+  getCurrentAccount(): Observable<CompanyAccountDto> {
+    return this.http.get<CompanyAccountDto>(
+      `${this.base}/CompanyAccount/me`
+    );
+  }
 
-updateMyAccount(dto: { phone: string }): Observable<CompanyAccountDto> {
-  return this.http.put<CompanyAccountDto>(
-    `${this.base}/CompanyAccount/me`,
-    dto
-  );
-}
+  updateMyAccount(dto: { phone: string }): Observable<CompanyAccountDto> {
+    return this.http.put<CompanyAccountDto>(
+      `${this.base}/CompanyAccount/me`,
+      dto
+    );
+  }
 
-downloadMyAccountPdf(): Observable<Blob> {
-  return this.http.get(
-    `${this.base}/CompanyAccount/me/pdf`,
-    {
-      responseType: 'blob',
-    }
-  );
-}
+  downloadMyAccountPdf(): Observable<Blob> {
+    return this.http.get(
+      `${this.base}/CompanyAccount/me/pdf`,
+      {
+        responseType: 'blob',
+      }
+    );
+  }
 
   // ============================================================
   // PDF - Backend
@@ -422,17 +422,17 @@ downloadMyAccountPdf(): Observable<Blob> {
       `${this.base}/Evaluation/enrollment/${enrollmentId}`
     );
   }
-getEvaluationBuckets(enrollmentId: number): Observable<Record<string, number | null>> {
-  return this.http.get<Record<string, number | null>>(
-    `${this.base}/Evaluation/enrollment/${enrollmentId}/by-bucket`
-  );
-}
+  getEvaluationBuckets(enrollmentId: number): Observable<Record<string, number | null>> {
+    return this.http.get<Record<string, number | null>>(
+      `${this.base}/Evaluation/enrollment/${enrollmentId}/by-bucket`
+    );
+  }
 
-uploadTraineeImage(traineeId: number, file: File): Observable<unknown> {
-  const form = new FormData();
-  form.append('file', file);
-  return this.http.post(`${this.base}/Enrollment/trainee/${traineeId}/upload-image`, form);
-}
+  uploadTraineeImage(traineeId: number, file: File): Observable<unknown> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post(`${this.base}/Enrollment/trainee/${traineeId}/upload-image`, form);
+  }
   // ============================================================
   // Reports
   // ============================================================
@@ -449,60 +449,39 @@ uploadTraineeImage(traineeId: number, file: File): Observable<unknown> {
   // Contact — Company Conversations
   // ============================================================
 
-  getConversations(
-    userId: number
-  ): Observable<ConversationListItemDto[]> {
-    return this.http.get<ConversationListItemDto[]>(
-      `${this.base}/Conversation`,
-      {
-        params: {
-          type: 'CompanyThread',
-          participantUserId: userId,
-        },
-      }
-    );
+  getConversations(_userId?: number): Observable<ConversationListItemDto[]> {
+    return this.http.get<ConversationListItemDto[]>(`${this.base}/Conversation`, {
+      params: { type: 'CompanyThread' },
+    });
   }
 
-  startConversation(
-    dto: unknown
-  ): Observable<ConversationDetailDto> {
-    return this.http.post<ConversationDetailDto>(
-      `${this.base}/Conversation`,
-      dto
-    );
+  startConversation(dto: {
+    type: string;
+    category: string;
+    subject: string;
+    firstMessage: string;
+    startedByUserId?: number;
+  }): Observable<ConversationDetailDto> {
+    const form = new FormData();
+    form.set('Type', dto.type);
+    form.set('Category', dto.category);
+    form.set('Subject', dto.subject.trim());
+    form.set('FirstMessage', dto.firstMessage.trim());
+    return this.http.post<ConversationDetailDto>(`${this.base}/Conversation`, form);
   }
 
-  getConversation(
-    id: number
-  ): Observable<ConversationDetailDto> {
-    return this.http.get<ConversationDetailDto>(
-      `${this.base}/Conversation/${id}`
-    );
+  getConversation(id: number): Observable<ConversationDetailDto> {
+    return this.http.get<ConversationDetailDto>(`${this.base}/Conversation/${id}`);
   }
 
-  sendMessage(
-    id: number,
-    dto: unknown
-  ): Observable<ConversationMessageDto> {
-    return this.http.post<ConversationMessageDto>(
-      `${this.base}/Conversation/${id}/messages`,
-      dto
-    );
+  sendMessage(id: number, dto: { content: string; senderId?: number }): Observable<ConversationMessageDto> {
+    return this.http.post<ConversationMessageDto>(`${this.base}/Conversation/${id}/messages`, {
+      content: dto.content.trim(),
+    });
   }
 
-  markConversationRead(
-    id: number,
-    userId: number
-  ) {
-    return this.http.put(
-      `${this.base}/Conversation/${id}/read`,
-      {},
-      {
-        params: {
-          userId,
-        },
-      }
-    );
+  markConversationRead(id: number, _userId?: number) {
+    return this.http.put(`${this.base}/Conversation/${id}/read`, {});
   }
 
   // ============================================================
@@ -516,7 +495,7 @@ uploadTraineeImage(traineeId: number, file: File): Observable<unknown> {
     );
   }
 
- 
+
   // ============================================================
   // Warnings
   // ============================================================
@@ -648,7 +627,8 @@ uploadTraineeImage(traineeId: number, file: File): Observable<unknown> {
   }
 
   addCoursePlanNote(companyId: number, planId: number, dto: AddCoursePlanNoteRequest): Observable<CoursePlanDetailDto> {
-    return this.http.post<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/notes`), dto);}
+    return this.http.post<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/notes`), dto);
+  }
   // ============================================================
   // Trainer Attendance
   // ============================================================
