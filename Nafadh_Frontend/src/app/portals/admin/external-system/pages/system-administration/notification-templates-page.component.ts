@@ -10,6 +10,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { AdminSystemApiService } from '../../legacy/core/api/services/admin-system-api.service';
+import type { NotificationTemplateListItemDto } from '../../legacy/core/api/models/admin-system.models';
+
 export interface NotificationTemplate {
   id: number;
   code: string;
@@ -34,90 +37,33 @@ type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 })
 export class NotificationTemplatesPageComponent {
   private readonly router = inject(Router);
+  private readonly api = inject(AdminSystemApiService);
 
-  searchTerm = signal('');
-  selectedType = signal('');
+  readonly searchTerm = signal('');
+  readonly selectedType = signal('');
 
+  readonly templates = signal<NotificationTemplate[]>([]);
+  readonly loading = signal(false);
+  readonly errorMessage = signal('');
+
+  readonly totalCount = signal(0);
   openMenuId: number | null = null;
 
   readonly pageSize = signal<PageSize>(5);
   readonly pageIndex = signal(0);
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
 
-  readonly templates = signal<NotificationTemplate[]>([
-    {
-      id: 1,
-      name: 'دعوة للتقديم',
-      code: 'ASK_TO_APPLY',
-      type: 'Email',
-      subject: 'دعوة للتقديم على البرنامج',
-      body: 'عزيزي المتقدم، نود دعوتك للتقديم.',
-      isActive: true,
-      hasEmail: true,
-      hasSms: true,
-    },
-    {
-      id: 2,
-      name: 'تم تقديم الطلب',
-      code: 'JOB_APPLIED',
-      type: 'SMS',
-      body: 'تم استلام طلبك بنجاح.',
-      isActive: true,
-      hasEmail: true,
-      hasSms: true,
-    },
-    {
-      id: 3,
-      name: 'تحديث حالة الطلب',
-      code: 'APPLICATION_STATUS_UPDATED',
-      type: 'Push',
-      body: 'تم تحديث حالة طلبك.',
-      isActive: true,
-      hasEmail: true,
-      hasSms: true,
-    },
-    {
-      id: 4,
-      name: 'جدولة مقابلة',
-      code: 'INTERVIEW_SCHEDULED',
-      type: 'Email',
-      subject: 'موعد المقابلة الشخصية',
-      body: 'تم تحديد موعد المقابلة.',
-      isActive: true,
-      hasEmail: true,
-      hasSms: true,
-    },
-    {
-      id: 5,
-      name: 'تقديم عرض',
-      code: 'OFFER_SUBMITTED',
-      type: 'Email',
-      subject: 'عرض انضمام',
-      body: 'يسعدنا تقديم عرض للانضمام.',
-      isActive: true,
-      hasEmail: true,
-      hasSms: true,
-    },
-  ]);
-
   readonly filteredTemplates = computed(() => {
-    const search = this.searchTerm().trim().toLowerCase();
     const type = this.selectedType();
 
-    return this.templates().filter((template) => {
-      const matchesSearch =
-        template.name.toLowerCase().includes(search) ||
-        template.code.toLowerCase().includes(search);
+    if (!type) {
+      return this.templates();
+    }
 
-      const matchesType = !type || template.type === type;
-
-      return matchesSearch && matchesType;
-    });
+    return this.templates().filter(
+      (template) => template.type === type,
+    );
   });
-
-  readonly totalCount = computed(
-    () => this.filteredTemplates().length,
-  );
 
   readonly totalPages = computed(() =>
     Math.max(
@@ -145,14 +91,77 @@ export class NotificationTemplatesPageComponent {
     ),
   );
 
-  readonly paginatedTemplates = computed(() => {
-    const start = this.safePageIndex() * this.pageSize();
+  readonly paginatedTemplates = computed(
+    () => this.filteredTemplates(),
+  );
 
-    return this.filteredTemplates().slice(
-      start,
-      start + this.pageSize(),
-    );
-  });
+  constructor() {
+    this.loadTemplates();
+  }
+
+  /**
+   * جلب قوالب الإشعارات من الـ Backend.
+   */
+  loadTemplates(): void {
+    this.loading.set(true);
+    this.errorMessage.set('');
+
+    this.api
+      .getNotificationTemplatesPage({
+        pageIndex: this.pageIndex(),
+        pageSize: this.pageSize(),
+        q: this.searchTerm().trim(),
+      })
+      .subscribe({
+        next: (page) => {
+          const rows = page.rows ?? [];
+
+          this.templates.set(
+            rows.map((dto) => this.mapTemplate(dto)),
+          );
+
+          this.totalCount.set(page.total ?? rows.length);
+
+          this.loading.set(false);
+
+          // إذا تغير العدد وأصبحت الصفحة الحالية خارج النطاق.
+          if (
+            this.pageIndex() >= this.totalPages() &&
+            this.pageIndex() > 0
+          ) {
+            this.pageIndex.set(this.totalPages() - 1);
+            this.loadTemplates();
+          }
+        },
+        error: (error: unknown) => {
+          console.error(
+            'Failed to load notification templates:',
+            error,
+          );
+
+          this.errorMessage.set(
+            'تعذر تحميل قوالب الإشعارات. يرجى المحاولة مرة أخرى.',
+          );
+
+          this.loading.set(false);
+        },
+      });
+  }
+
+  private mapTemplate(
+    dto: NotificationTemplateListItemDto,
+  ): NotificationTemplate {
+    return {
+      id: dto.Id,
+      code: dto.ActionCode,
+      name: dto.LabelAr || dto.LabelEn || dto.ActionCode,
+      type: dto.EmailEnabled ? 'Email' : 'SMS',
+      body: '',
+      isActive: dto.IsActive,
+      hasEmail: dto.EmailEnabled,
+      hasSms: dto.SmsEnabled,
+    };
+  }
 
   getEndIndex(): number {
     return Math.min(
@@ -165,12 +174,16 @@ export class NotificationTemplatesPageComponent {
     this.searchTerm.set(value);
     this.pageIndex.set(0);
     this.closeMenu();
+    this.loadTemplates();
   }
 
   onTypeChange(value: string): void {
     this.selectedType.set(value);
     this.pageIndex.set(0);
     this.closeMenu();
+
+    // نوع القناة ليس ضمن معاملات البحث المتاحة في الخدمة الحالية.
+    // لذلك تتم التصفية محليًا على القوالب المحملة في الصفحة الحالية.
   }
 
   onPageSizeChange(event: Event): void {
@@ -181,6 +194,7 @@ export class NotificationTemplatesPageComponent {
     if (PAGE_SIZE_OPTIONS.includes(value as PageSize)) {
       this.pageSize.set(value as PageSize);
       this.pageIndex.set(0);
+      this.loadTemplates();
     }
   }
 
@@ -188,6 +202,7 @@ export class NotificationTemplatesPageComponent {
     if (page >= 0 && page < this.totalPages()) {
       this.pageIndex.set(page);
       this.closeMenu();
+      this.loadTemplates();
     }
   }
 
@@ -195,6 +210,7 @@ export class NotificationTemplatesPageComponent {
     if (this.canNext()) {
       this.pageIndex.update((page) => page + 1);
       this.closeMenu();
+      this.loadTemplates();
     }
   }
 
@@ -202,13 +218,14 @@ export class NotificationTemplatesPageComponent {
     if (this.canPrev()) {
       this.pageIndex.update((page) => page - 1);
       this.closeMenu();
+      this.loadTemplates();
     }
   }
 
-  /**
-   * الانتقال إلى صفحة إنشاء قالب إشعارات جديد.
-   * يتطلب وجود Route مطابق للمسار /new.
-   */
+  retryLoading(): void {
+    this.loadTemplates();
+  }
+
   openAddModal(): void {
     this.closeMenu();
 
@@ -251,15 +268,12 @@ export class NotificationTemplatesPageComponent {
   }
 
   deleteTemplate(id: number): void {
-    this.templates.update((items) =>
-      items.filter((template) => template.id !== id),
-    );
-
+    // لا توجد دالة حذف لقوالب الإشعارات في AdminSystemApiService.
+    // لا نحذف العنصر محليًا حتى لا تظهر نتيجة غير موجودة في قاعدة البيانات.
     this.closeMenu();
 
-    // منع بقاء مؤشر الصفحة خارج نطاق الصفحات بعد الحذف.
-    if (this.pageIndex() >= this.totalPages()) {
-      this.pageIndex.set(this.totalPages() - 1);
-    }
+    this.errorMessage.set(
+      `حذف القالب رقم ${id} غير متاح حاليًا؛ لا توجد عملية حذف معرفة في خدمة الـ API.`,
+    );
   }
 }
