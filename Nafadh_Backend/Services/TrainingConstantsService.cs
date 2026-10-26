@@ -3,7 +3,7 @@ using System.Text;
 namespace Nafadh_Backend.Services;
 
 /// <summary>Server-to-server calls to unchanged Bidding/Training AdminSystemController endpoints.</summary>
-public sealed class TrainingConstantsService
+public sealed class TrainingConstantsService : ITrainingConstantsService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
