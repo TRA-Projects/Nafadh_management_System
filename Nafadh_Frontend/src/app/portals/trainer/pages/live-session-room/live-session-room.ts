@@ -427,20 +427,17 @@ room.on(RoomEvent.DataReceived, (payload, participant, _kind, topic) => {
 openLiveAttendance(): void {
   if (!this.connected()) return;
 
-  this.router.navigate(['/trainer/attendance/live-attendance'], {
+  this.router.navigate(['/trainer/live-session-attendance', this.sessionId], {
     queryParams: {
-      sessionId: this.sessionId,
       batchId: this.batchId
     }
   });
 }
-
 openSessionPolls(): void {
   if (!this.connected()) return;
 
-  this.router.navigate(['/trainer/live-session-polls'], {
+  this.router.navigate(['/trainer/live-session-polls', this.sessionId], {
     queryParams: {
-      sessionId: this.sessionId,
       batchId: this.batchId
     }
   });
