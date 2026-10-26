@@ -57,7 +57,7 @@ namespace Nafadh_Backend
             // Management -> original Training reference-catalog API (no Training backend changes).
             builder.Services.AddHttpClient("TrainingConstants", client =>
                 client.Timeout = TimeSpan.FromSeconds(15));
-            builder.Services.AddScoped<TrainingConstantsService>();
+            builder.Services.AddScoped<ITrainingConstantsService, TrainingConstantsService>();
 
             // EF Core - SQL Server
             builder.Services.AddDbContext<Nafadhcontext>(options =>
