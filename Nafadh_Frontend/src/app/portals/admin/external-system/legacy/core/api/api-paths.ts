@@ -1,3 +1,8 @@
+import { environment as managementEnvironment } from '../../../../../../../environments/environment';
+
+/** This one API family belongs to Management (NOT the Training runtime-config base). */
+const MANAGEMENT_REFERENCE_CONSTANTS = `${managementEnvironment.apiBaseUrl.replace(/\/api\/?$/, '')}/api/management/reference-constants`;
+
 /**
  * Single place for relative API paths. Use these everywhere so mock + real use identical calls.
  * Host/origin is applied once in `apiBaseUrlInterceptor` via runtime config / `environment.apiBaseUrl`
@@ -191,14 +196,14 @@ export const ApiPaths = {
   /** System administration (admin API; mock-backed in dev). */
   adminSystemVariables: '/api/jobseekers/admin/system-variables',
   adminSystemVariable: (variableKey: string) => `/api/jobseekers/admin/system-variables/${encodeURIComponent(variableKey)}`,
-  adminSystemConfigGroups: '/api/jobseekers/admin/system-config/groups',
-  adminSystemConfigValues: (code: string) => `/api/jobseekers/admin/system-config/values/${encodeURIComponent(code)}`,
+  adminSystemConfigGroups: `${MANAGEMENT_REFERENCE_CONSTANTS}/groups`,
+  adminSystemConfigValues: (code: string) => `${MANAGEMENT_REFERENCE_CONSTANTS}/values/${encodeURIComponent(code)}`,
   adminSystemConfigValuesSearch: (code: string) =>
-    `/api/jobseekers/admin/system-config/values/${encodeURIComponent(code)}/search`,
+    `${MANAGEMENT_REFERENCE_CONSTANTS}/values/${encodeURIComponent(code)}/search`,
   adminSystemConfigValuesEnsure: (code: string) =>
-    `/api/jobseekers/admin/system-config/values/${encodeURIComponent(code)}/ensure`,
+    `${MANAGEMENT_REFERENCE_CONSTANTS}/values/${encodeURIComponent(code)}/ensure`,
   adminSystemConfigValue: (code: string, id: string | number) =>
-    `/api/jobseekers/admin/system-config/values/${encodeURIComponent(code)}/${encodeURIComponent(String(id))}`,
+    `${MANAGEMENT_REFERENCE_CONSTANTS}/values/${encodeURIComponent(code)}/${encodeURIComponent(String(id))}`,
   adminSkillCategories: '/api/jobseekers/admin/skill-categories',
   adminSkills: '/api/jobseekers/admin/skills',
   adminNotificationTemplates: '/api/jobseekers/admin/notification-templates',
