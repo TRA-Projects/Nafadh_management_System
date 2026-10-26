@@ -392,20 +392,69 @@ namespace Nafadh_Backend.Repositories
         // Mark conversation messages as read
         // ============================================================
 
+        public async Task<Dictionary<int, int>> GetGroupUnreadCountsAsync(
+            int userId,
+            List<int> conversationIds
+        )
+        {
+            if (conversationIds.Count == 0)
+                return new Dictionary<int, int>();
+
+            var counts = await (
+                from member in _context.NFD_ConversationGroupMembers
+                where member.UserId == userId
+                      && conversationIds.Contains(member.ConversationId)
+                select new
+                {
+                    member.ConversationId,
+                    UnreadCount = _context.NFD_Messages.Count(m =>
+                        m.TicketId == member.ConversationId &&
+                        m.SenderId != userId &&
+                        (!member.LastReadMessageId.HasValue ||
+                         m.MessageId > member.LastReadMessageId.Value))
+                }
+            ).ToListAsync();
+
+            return counts
+                .GroupBy(x => x.ConversationId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.First().UnreadCount
+                );
+        }
+
+
         public async Task<int> GetUnreadConversationCountAsync(
             int userId,
             bool includeAllConversations
         )
         {
-            // Count distinct threads, not every unread reply, because the bell
-            // represents new conversations in the Communication area.
-            return await _context.NFD_SupportTickets
+            // المحادثات الفردية: نحتفظ بطريقة الحساب السابقة
+            var individualCount = await _context.NFD_SupportTickets
                 .Where(t =>
+                    t.Category != "BatchGroup" &&
                     (includeAllConversations || t.UserId == userId) &&
                     t.Messages.Any(m =>
                         m.SenderId != userId &&
                         m.Status != NFD_MessageStatus.Read))
                 .CountAsync();
+
+            // جروبات الدفعات: كل عضو له حالة قراءة مستقلة
+            var groupCount = await _context.NFD_ConversationGroupMembers
+                .Where(gm => gm.UserId == userId)
+                .Where(gm => _context.NFD_SupportTickets.Any(t =>
+                    t.TicketId == gm.ConversationId &&
+                    t.Category == "BatchGroup"))
+                .Where(gm => _context.NFD_Messages.Any(m =>
+                    m.TicketId == gm.ConversationId &&
+                    m.SenderId != userId &&
+                    (!gm.LastReadMessageId.HasValue ||
+                     m.MessageId > gm.LastReadMessageId.Value)))
+                .Select(gm => gm.ConversationId)
+                .Distinct()
+                .CountAsync();
+
+            return individualCount + groupCount;
         }
 
 
@@ -414,35 +463,71 @@ namespace Nafadh_Backend.Repositories
             int readerUserId
         )
         {
-            var messages =
-                await _context.NFD_Messages
+            // تحديد نوع المحادثة
+            var conversation = await _context.NFD_SupportTickets
+                .FirstOrDefaultAsync(t => t.TicketId == conversationId);
 
-                    .Where(
-                        m =>
-                            m.TicketId == conversationId
-                            &&
-                            m.SenderId != readerUserId
-                            &&
-                            m.Status != NFD_MessageStatus.Read
-                    )
+            if (conversation == null)
+            {
+                throw new InvalidOperationException(
+                    "Conversation not found."
+                );
+            }
 
-                    .ToListAsync();
+            // جروبات الدفعات: قراءة مستقلة لكل عضو
+            if (conversation.Category == "BatchGroup")
+            {
+                var member = await _context.NFD_ConversationGroupMembers
+                    .FirstOrDefaultAsync(gm =>
+                        gm.ConversationId == conversationId &&
+                        gm.UserId == readerUserId
+                    );
 
+                if (member == null)
+                {
+                    throw new InvalidOperationException(
+                        "User is not a member of this batch group."
+                    );
+                }
+
+                // آخر رسالة موجودة في الجروب
+                var lastMessageId = await _context.NFD_Messages
+                    .Where(m => m.TicketId == conversationId)
+                    .MaxAsync(m => (int?)m.MessageId);
+
+                if (lastMessageId.HasValue &&
+                    (!member.LastReadMessageId.HasValue ||
+                     lastMessageId.Value > member.LastReadMessageId.Value))
+                {
+                    member.LastReadMessageId = lastMessageId.Value;
+                    await _context.SaveChangesAsync();
+                }
+
+                return;
+            }
+
+            // المحادثات الفردية: الاحتفاظ بالنظام الحالي
+            var messages = await _context.NFD_Messages
+                .Where(m =>
+                    m.TicketId == conversationId &&
+                    m.SenderId != readerUserId &&
+                    m.Status != NFD_MessageStatus.Read
+                )
+                .ToListAsync();
 
             if (messages.Count == 0)
             {
                 return;
             }
 
-
             foreach (var message in messages)
             {
-                message.Status =
-                    NFD_MessageStatus.Read;
+                message.Status = NFD_MessageStatus.Read;
             }
-
 
             await _context.SaveChangesAsync();
         }
+
+       
     }
 }

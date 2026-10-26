@@ -40,6 +40,15 @@ namespace Nafadh_Backend.Services
 
 
             var result = new List<ConversationListItemDTO>();
+            var groupUnreadCounts = participantUserId.HasValue
+    ? await _repository.GetGroupUnreadCountsAsync(
+        participantUserId.Value,
+        conversations
+            .Where(c => c.Category == "BatchGroup")
+            .Select(c => c.TicketId)
+            .ToList()
+      )
+    : new Dictionary<int, int>();
 
             foreach (var conversation in conversations)
             {
@@ -61,7 +70,12 @@ namespace Nafadh_Backend.Services
                     )
                 );
             }
-
+            foreach (var item in result.Where(
+      x => x.Category == "BatchGroup"))
+            {
+                item.UnreadCount =
+                    groupUnreadCounts.GetValueOrDefault(item.ConversationId);
+            }
             return result;
         }
 
