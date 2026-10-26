@@ -524,4 +524,45 @@
 
   </section>
 
+  <!-- نافذة تفاصيل الاجتماع -->
+  @if (selectedMeeting) {
+    <div class="meeting-modal-overlay"
+         (click)="closeMeetingDetails()">
+
+      <div class="meeting-modal"
+           role="dialog"
+           aria-modal="true"
+           aria-label="تفاصيل الاجتماع"
+           (click)="$event.stopPropagation()">
+
+        <div class="meeting-modal-header">
+          <h2>تفاصيل الاجتماع</h2>
+
+          <button type="button"
+                  class="meeting-modal-close"
+                  (click)="closeMeetingDetails()">
+            ✕
+          </button>
+        </div>
+
+        <div class="meeting-modal-body">
+          <h3>{{ selectedMeeting.title }}</h3>
+
+          <p><strong>التاريخ:</strong> {{ selectedMeeting.startDate }}</p>
+          <p><strong>الوقت:</strong> {{ selectedMeeting.time }}</p>
+          <p><strong>المدة:</strong> {{ selectedMeeting.durationMinutes }} دقيقة</p>
+          <p><strong>الحالة:</strong> {{ getMeetingStatusLabel(selectedMeeting.status) }}</p>
+        </div>
+
+        <div class="meeting-modal-footer">
+          <button type="button"
+                  (click)="closeMeetingDetails()">
+            إغلاق
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
 </div>

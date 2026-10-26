@@ -74,9 +74,15 @@ export class TrainerMessages implements OnInit {
     }
   }
 
-  showMeetingDetails(meeting: MeetingNotification): void {
-    alert(`تفاصيل الاجتماع:\nالعنوان: ${meeting.title}\nالتاريخ: ${meeting.startDate}\nالوقت: ${meeting.time}\nالمدة: ${meeting.durationMinutes} دقيقة\nالحالة: ${this.getMeetingStatusLabel(meeting.status)}`);
-  }
+ selectedMeeting: MeetingNotification | null = null;
+
+showMeetingDetails(meeting: MeetingNotification): void {
+  this.selectedMeeting = meeting;
+}
+
+closeMeetingDetails(): void {
+  this.selectedMeeting = null;
+}
 
   openRecording(recordingUrl?: string): void {
     if (recordingUrl) {
