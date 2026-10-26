@@ -20,7 +20,8 @@
         <button class="tab-btn" [class.active]="currentSubSection === 'trainee'" (click)="setSubSection('trainee')">
           تقارير المتدربين
         </button>
-        <button class="tab-btn" [class.active]="currentSubSection === 'supervisor'" (click)="setSubSection('supervisor')">
+        <button class="tab-btn" [class.active]="currentSubSection === 'supervisor'"
+          (click)="setSubSection('supervisor')">
           تقارير المشرفين
         </button>
       </div>
@@ -65,6 +66,7 @@
       </div>
 
       <!-- شريط البحث والفلترة الذكي (نفس شريط المدربين) -->
+
       <div class="filter-toolbar-card">
         <div class="search-input-wrap">
           <input type="text" placeholder="ابحث باسم الشركة أو التخصص أو رقم المعرف..." [(ngModel)]="companySearchTerm"
@@ -465,349 +467,303 @@
     </div>
   </ng-container>
 
-  
- <!-- =========================================================
+
+  <!-- =========================================================
      القسم الرابع: تقارير المشرفين
   ========================================================= -->
   <ng-container *ngIf="currentSubSection === 'supervisor'">
 
-  <!-- عنوان القسم -->
-  <div class="header-section">
-    <div>
-      <h2>تقارير وتحليلات المشرفين</h2>
-      <p>
-        متابعة المشرفين في الشركات، والمتدربين المسندين إليهم،
-        والحضور والتقييمات الشهرية من قاعدة البيانات
-      </p>
+    <!-- عنوان القسم -->
+    <div class="header-section">
+      <div>
+        <h2>تقارير وتحليلات المشرفين</h2>
+        <p>
+          متابعة المشرفين في الشركات، والمتدربين المسندين إليهم،
+          والحضور والتقييمات الشهرية من قاعدة البيانات
+        </p>
+      </div>
+
+      <div class="actions-left" style="display: flex; gap: 8px;">
+        <button class="btn-pdf" (click)="exportToPDF()">
+          طباعة PDF
+        </button>
+      </div>
     </div>
 
-    <div class="actions-left" style="display: flex; gap: 8px;">
-      <button class="btn-pdf" (click)="exportToPDF()">
-        طباعة PDF
-      </button>
-    </div>
-  </div>
+    <!-- بطاقات الإحصائيات -->
+    <div class="summary-metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
 
-  <!-- بطاقات الإحصائيات -->
-  <div class="summary-metrics-grid"
-       style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+      <div class="metric-card">
+        <span class="metric-value">
+          {{ supervisorTotalCount }}
+        </span>
+        <span class="metric-label">إجمالي المشرفين</span>
+      </div>
 
-    <div class="metric-card">
-      <span class="metric-value">
-        {{ supervisorTotalCount }}
-      </span>
-      <span class="metric-label">إجمالي المشرفين</span>
-    </div>
+      <div class="metric-card">
+        <span class="metric-value green">
+          {{ supervisorAssignedTrainees }}
+        </span>
+        <span class="metric-label">المتدربون المسندون</span>
+      </div>
 
-    <div class="metric-card">
-      <span class="metric-value green">
-        {{ supervisorAssignedTrainees }}
-      </span>
-      <span class="metric-label">المتدربون المسندون</span>
-    </div>
+      <div class="metric-card">
+        <span class="metric-value" style="color: #f59e0b;">
+          {{ supervisorAverageAttendance !== null
+          ? (supervisorAverageAttendance + '%')
+          : '—' }}
+        </span>
+        <span class="metric-label">متوسط حضور المتدربين تحت الإشراف</span>
+      </div>
 
-    <div class="metric-card">
-      <span class="metric-value" style="color: #f59e0b;">
-        {{ supervisorAverageAttendance !== null
-            ? (supervisorAverageAttendance + '%')
-            : '—' }}
-      </span>
-      <span class="metric-label">متوسط حضور المتدربين تحت الإشراف</span>
-    </div>
+      <div class="metric-card">
+        <span class="metric-value blue">
+          {{ supervisorTrainerEvaluations }}
+        </span>
+        <span class="metric-label">تقييمات المدربين خلال الشهر</span>
+      </div>
 
-    <div class="metric-card">
-      <span class="metric-value blue">
-        {{ supervisorTrainerEvaluations }}
-      </span>
-      <span class="metric-label">تقييمات المدربين خلال الشهر</span>
-    </div>
+      <div class="metric-card">
+        <span class="metric-value blue">
+          {{ supervisorActiveCount }}
+        </span>
+        <span class="metric-label">المشرفون النشطون</span>
+      </div>
 
-    <div class="metric-card">
-      <span class="metric-value blue">
-        {{ supervisorActiveCount }}
-      </span>
-      <span class="metric-label">المشرفون النشطون</span>
     </div>
 
-  </div>
+    <!-- البحث والفلترة -->
+    <div class="filter-toolbar-card">
 
-  <!-- البحث والفلترة -->
-  <div class="filter-toolbar-card">
+      <div class="search-input-wrap">
+        <input type="text" placeholder="ابحث باسم المشرف أو القسم أو الشركة أو رقم المعرف..."
+          [(ngModel)]="supervisorSearchTerm" (input)="applySupervisorFilters()" />
 
-    <div class="search-input-wrap">
-      <input
-        type="text"
-        placeholder="ابحث باسم المشرف أو القسم أو الشركة أو رقم المعرف..."
-        [(ngModel)]="supervisorSearchTerm"
-        (input)="applySupervisorFilters()"
-      />
+        <button class="clear-search-btn" *ngIf="supervisorSearchTerm"
+          (click)="supervisorSearchTerm = ''; applySupervisorFilters()">
+          ✕
+        </button>
+      </div>
 
-      <button
-        class="clear-search-btn"
-        *ngIf="supervisorSearchTerm"
-        (click)="supervisorSearchTerm = ''; applySupervisorFilters()">
-        ✕
-      </button>
-    </div>
+      <div class="filters-actions-wrap">
 
-    <div class="filters-actions-wrap">
+        <select class="custom-select-filter" [(ngModel)]="supervisorCompanyFilter" (change)="applySupervisorFilters()">
 
-      <select
-        class="custom-select-filter"
-        [(ngModel)]="supervisorCompanyFilter"
-        (change)="applySupervisorFilters()">
+          <option value="ALL">جميع الشركات</option>
+          <option *ngFor="let company of supervisorCompanies" [value]="company">
+            {{ company }}
+          </option>
+        </select>
 
-        <option value="ALL">جميع الشركات</option>
-        <option
-          *ngFor="let company of supervisorCompanies"
-          [value]="company">
-          {{ company }}
-        </option>
-      </select>
+        <select class="custom-select-filter" [(ngModel)]="supervisorStatusFilter" (change)="applySupervisorFilters()">
 
-      <select
-        class="custom-select-filter"
-        [(ngModel)]="supervisorStatusFilter"
-        (change)="applySupervisorFilters()">
+          <option value="ALL">جميع الحالات</option>
+          <option value="Active">نشط</option>
+          <option value="Inactive">غير نشط</option>
+          <option value="Suspended">موقوف</option>
+        </select>
 
-        <option value="ALL">جميع الحالات</option>
-        <option value="Active">نشط</option>
-        <option value="Inactive">غير نشط</option>
-        <option value="Suspended">موقوف</option>
-      </select>
-
-      <button
-        class="btn-reset-filters"
-        *ngIf="supervisorSearchTerm ||
+        <button class="btn-reset-filters" *ngIf="supervisorSearchTerm ||
                supervisorCompanyFilter !== 'ALL' ||
-               supervisorStatusFilter !== 'ALL'"
-        (click)="resetSupervisorFilters()">
-        إعادة تعيين ↺
-      </button>
+               supervisorStatusFilter !== 'ALL'" (click)="resetSupervisorFilters()">
+          إعادة تعيين ↺
+        </button>
 
+      </div>
     </div>
-  </div>
 
-  <!-- اختيار فترة التقرير -->
-  <div class="filter-toolbar-card"
-       style="margin-bottom: 20px;">
+    <!-- اختيار فترة التقرير -->
+    <div class="filter-toolbar-card" style="margin-bottom: 20px;">
 
-    <div class="filters-actions-wrap">
+      <div class="filters-actions-wrap">
 
-      <label for="supervisor-report-month">الشهر:</label>
+        <label for="supervisor-report-month">الشهر:</label>
 
-      <select
-        id="supervisor-report-month"
-        class="custom-select-filter"
-        [(ngModel)]="supervisorMonth">
+        <select id="supervisor-report-month" class="custom-select-filter" [(ngModel)]="supervisorMonth">
 
-        <option [ngValue]="1">يناير</option>
-        <option [ngValue]="2">فبراير</option>
-        <option [ngValue]="3">مارس</option>
-        <option [ngValue]="4">أبريل</option>
-        <option [ngValue]="5">مايو</option>
-        <option [ngValue]="6">يونيو</option>
-        <option [ngValue]="7">يوليو</option>
-        <option [ngValue]="8">أغسطس</option>
-        <option [ngValue]="9">سبتمبر</option>
-        <option [ngValue]="10">أكتوبر</option>
-        <option [ngValue]="11">نوفمبر</option>
-        <option [ngValue]="12">ديسمبر</option>
-      </select>
+          <option [ngValue]="1">يناير</option>
+          <option [ngValue]="2">فبراير</option>
+          <option [ngValue]="3">مارس</option>
+          <option [ngValue]="4">أبريل</option>
+          <option [ngValue]="5">مايو</option>
+          <option [ngValue]="6">يونيو</option>
+          <option [ngValue]="7">يوليو</option>
+          <option [ngValue]="8">أغسطس</option>
+          <option [ngValue]="9">سبتمبر</option>
+          <option [ngValue]="10">أكتوبر</option>
+          <option [ngValue]="11">نوفمبر</option>
+          <option [ngValue]="12">ديسمبر</option>
+        </select>
 
-      <label for="supervisor-report-year">السنة:</label>
+        <label for="supervisor-report-year">السنة:</label>
 
-      <input
-        id="supervisor-report-year"
-        type="number"
-        min="2000"
-        max="9998"
-        [(ngModel)]="supervisorYear"
-        class="custom-select-filter"
-        style="width: 110px;"
-      />
+        <input id="supervisor-report-year" type="number" min="2000" max="9998" [(ngModel)]="supervisorYear"
+          class="custom-select-filter" style="width: 110px;" />
 
-      <button
-        class="btn-reset-filters"
-        [disabled]="supervisorLoading"
-        (click)="loadSupervisorsData()">
-        تحديث التقرير ↻
-      </button>
+        <button class="btn-reset-filters" [disabled]="supervisorLoading" (click)="loadSupervisorsData()">
+          تحديث التقرير ↻
+        </button>
 
+      </div>
     </div>
-  </div>
 
-  <!-- التحميل -->
-  <div *ngIf="supervisorLoading" class="loading-state">
-    <div class="custom-spinner"></div>
-    <span>جاري تحميل تقارير المشرفين من قاعدة البيانات...</span>
-  </div>
+    <!-- التحميل -->
+    <div *ngIf="supervisorLoading" class="loading-state">
+      <div class="custom-spinner"></div>
+      <span>جاري تحميل تقارير المشرفين من قاعدة البيانات...</span>
+    </div>
 
-  <!-- الخطأ -->
-  <div *ngIf="!supervisorLoading && supervisorError"
-       class="no-results-box">
+    <!-- الخطأ -->
+    <div *ngIf="!supervisorLoading && supervisorError" class="no-results-box">
 
-    <h4>{{ supervisorError }}</h4>
+      <h4>{{ supervisorError }}</h4>
 
-    <button
-      class="btn-reset-filters"
-      (click)="loadSupervisorsData()">
-      إعادة المحاولة
-    </button>
-  </div>
+      <button class="btn-reset-filters" (click)="loadSupervisorsData()">
+        إعادة المحاولة
+      </button>
+    </div>
 
-  <!-- جدول المشرفين -->
-  <div
-    class="table-card"
-    *ngIf="!supervisorLoading && !supervisorError">
+    <!-- جدول المشرفين -->
+    <div class="table-card" *ngIf="!supervisorLoading && !supervisorError">
 
-    <div class="section-badge-header"
-         style="display: flex; justify-content: space-between;
+      <div class="section-badge-header" style="display: flex; justify-content: space-between;
                 align-items: center; margin-bottom: 20px;">
 
-      <span class="badge-total-results">
-        نتائج البحث: {{ filteredSupervisorsList.length }} مشرف
-      </span>
+        <span class="badge-total-results">
+          نتائج البحث: {{ filteredSupervisorsList.length }} مشرف
+        </span>
 
-      <h3 class="section-card-title">
-        سجل أداء ومتابعة المشرفين
-      </h3>
+        <h3 class="section-card-title">
+          سجل أداء ومتابعة المشرفين
+        </h3>
 
-    </div>
+      </div>
 
-    <div style="overflow-x: auto;">
+      <div style="overflow-x: auto;">
 
-      <table
-        class="custom-table"
-        *ngIf="filteredSupervisorsList.length > 0">
+        <table class="custom-table" *ngIf="filteredSupervisorsList.length > 0">
 
-        <thead>
-          <tr>
-            <th>المشرف</th>
-            <th>الشركة</th>
-            <th>القسم / الوظيفة</th>
-            <th>الحالة</th>
-            <th>المتدربون المسندون</th>
-            <th>متوسط حضور المتدربين</th>
-            <th>تقييمات المدربين المنجزة</th>
-            <th>عدد المدربين الذين تم تقييمهم</th>
-            <th>آخر تقييم للمدربين</th>
-          </tr>
-        </thead>
+          <thead>
+            <tr>
+              <th>المشرف</th>
+              <th>الشركة</th>
+              <th>القسم / الوظيفة</th>
+              <th>الحالة</th>
+              <th>المتدربون المسندون</th>
+              <th>متوسط حضور المتدربين</th>
+              <th>تقييمات المدربين المنجزة</th>
+              <th>عدد المدربين الذين تم تقييمهم</th>
+              <th>آخر تقييم للمدربين</th>
+            </tr>
+          </thead>
 
-        <tbody>
-          <tr *ngFor="let supervisor of filteredSupervisorsList">
+          <tbody>
+            <tr *ngFor="let supervisor of filteredSupervisorsList">
 
-            <td class="bold text-navy-strong">
-              <div>{{ supervisor.fullName || '—' }}</div>
-              <small style="color: #64748b;">
-                #{{ supervisor.supervisorId }}
-              </small>
-            </td>
+              <td class="bold text-navy-strong">
+                <div>{{ supervisor.fullName || '—' }}</div>
+                <small style="color: #64748b;">
+                  #{{ supervisor.supervisorId }}
+                </small>
+              </td>
 
-            <td>
-              {{ supervisor.companyName || '—' }}
-            </td>
+              <td>
+                {{ supervisor.companyName || '—' }}
+              </td>
 
-            <td>
-              <div class="major-title">
-                {{ supervisor.department || '—' }}
-              </div>
-              <small class="company-sub-title">
-                {{ supervisor.position || '—' }}
-              </small>
-            </td>
+              <td>
+                <div class="major-title">
+                  {{ supervisor.department || '—' }}
+                </div>
+                <small class="company-sub-title">
+                  {{ supervisor.position || '—' }}
+                </small>
+              </td>
 
-            <td>
-              <span
-                class="status-pill"
-                [style.color]="
+              <td>
+                <span class="status-pill" [style.color]="
                   supervisor.status === 'Active'
                     ? '#15803d'
                     : supervisor.status === 'Suspended'
                     ? '#dc2626'
                     : '#64748b'">
 
-                {{
+                  {{
                   supervisor.status === 'Active'
-                    ? 'نشط'
-                    : supervisor.status === 'Inactive'
-                    ? 'غير نشط'
-                    : supervisor.status === 'Suspended'
-                    ? 'موقوف'
-                    : (supervisor.status || '—')
-                }}
+                  ? 'نشط'
+                  : supervisor.status === 'Inactive'
+                  ? 'غير نشط'
+                  : supervisor.status === 'Suspended'
+                  ? 'موقوف'
+                  : (supervisor.status || '—')
+                  }}
 
-              </span>
-            </td>
+                </span>
+              </td>
 
-            <td>
-              <strong>
-                {{ supervisor.assignedTraineesCount }}
-              </strong>
-            </td>
+              <td>
+                <strong>
+                  {{ supervisor.assignedTraineesCount }}
+                </strong>
+              </td>
 
-            <td>
-              <strong style="color: #059669;">
-                {{
+              <td>
+                <strong style="color: #059669;">
+                  {{
                   supervisor.averageAttendanceRate !== null
-                    ? (supervisor.averageAttendanceRate + '%')
-                    : '—'
+                  ? (supervisor.averageAttendanceRate + '%')
+                  : '—'
+                  }}
+                </strong>
+              </td>
+
+              <td>
+                <strong style="color: #0D1C8C;">
+                  {{ supervisor.trainerEvaluationsCount }}
+                </strong>
+              </td>
+
+              <td>
+                <strong>
+                  {{ supervisor.evaluatedTrainersCount }}
+                </strong>
+              </td>
+
+              <td>
+                {{
+                supervisor.lastTrainerEvaluationDate
+                ? (supervisor.lastTrainerEvaluationDate | date:'yyyy-MM-dd')
+                : 'لا يوجد'
                 }}
-              </strong>
-            </td>
-
-           <td>
-  <strong style="color: #0D1C8C;">
-    {{ supervisor.trainerEvaluationsCount }}
-  </strong>
-</td>
-
-<td>
-  <strong>
-    {{ supervisor.evaluatedTrainersCount }}
-  </strong>
-</td>
-
-<td>
-  {{
-    supervisor.lastTrainerEvaluationDate
-      ? (supervisor.lastTrainerEvaluationDate | date:'yyyy-MM-dd')
-      : 'لا يوجد'
-  }}
-</td>
+              </td>
 
 
 
-           
-          </tr>
-        </tbody>
 
-      </table>
+            </tr>
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <!-- لا توجد نتائج -->
+      <div class="no-results-box" *ngIf="filteredSupervisorsList.length === 0">
+
+        <h4>لا توجد تقارير مشرفين مطابقة للبحث</h4>
+
+        <button class="btn-reset-filters" (click)="resetSupervisorFilters()">
+          إعادة تعيين الفلاتر
+        </button>
+
+      </div>
 
     </div>
 
-    <!-- لا توجد نتائج -->
-    <div
-      class="no-results-box"
-      *ngIf="filteredSupervisorsList.length === 0">
-
-      <h4>لا توجد تقارير مشرفين مطابقة للبحث</h4>
-
-      <button
-        class="btn-reset-filters"
-        (click)="resetSupervisorFilters()">
-        إعادة تعيين الفلاتر
-      </button>
-
-    </div>
-
-  </div>
-
-  <p style="font-size: 12px; color: #64748b; margin-top: 12px;">
-    ملاحظة: علامة (—) تعني عدم توفر بيانات كافية.
-    حالات المتابعة ستظهر عند اعتماد قاعدة احتسابها في النظام.
-  </p>
+    <p style="font-size: 12px; color: #64748b; margin-top: 12px;">
+      ملاحظة: علامة (—) تعني عدم توفر بيانات كافية.
+      حالات المتابعة ستظهر عند اعتماد قاعدة احتسابها في النظام.
+    </p>
 
   </ng-container>
 
@@ -900,6 +856,11 @@
           <div class="card-footer" (click)="openTrainerModal(tr)">
             عرض تفاصيل المدرب ←
           </div>
+
+          <button type="button" class="btn-attendance" (click)="openTrainerAttendance(tr)">
+            عرض سجل الحضور
+          </button>
+
         </div>
       </div>
 
@@ -1048,6 +1009,416 @@
         </div>
       </div>
     </div>
+
+    <!-- Trainer Attendance - Admin Read Only -->
+    <div *ngIf="trainerView === 'attendance'">
+
+      <div class="top-nav-bar">
+        <button class="back-btn" (click)="backFromTrainerAttendance()">
+          ← العودة إلى قائمة المدربين
+        </button>
+      </div>
+
+      <div class="header-section">
+        <div>
+          <h2>سجل حضور المدرب: {{ selectedTrainer?.name }}</h2>
+          <p>عرض سجلات الحضور المدرب</p>
+        </div>
+      </div>
+
+      <!-- Trainer Attendance Tabs -->
+      <div class="trainer-attendance-tabs">
+
+        <button type="button" [class.active]="trainerAttendanceView === 'day'"
+          (click)="setTrainerAttendanceView('day')">
+          الحضور اليومي
+        </button>
+
+        <button type="button" [class.active]="trainerAttendanceView === 'week'"
+          (click)="setTrainerAttendanceView('week')">
+          الحضور الأسبوعي
+        </button>
+
+        <button type="button" [class.active]="trainerAttendanceView === 'month'"
+          (click)="setTrainerAttendanceView('month')">
+          الحضور الشهري
+        </button>
+
+      </div>
+      <div class="trainer-attendance-navigation" *ngIf="trainerAttendanceView !== 'custom'">
+
+        <button type="button" class="btn-reset-filters" (click)="navigateTrainerAttendance(-1)">
+          السابق
+        </button>
+
+        <span class="trainer-attendance-period">
+          {{ trainerAttendanceFrom }} إلى {{ trainerAttendanceTo }}
+        </span>
+
+        <button type="button" class="btn-reset-filters" (click)="navigateTrainerAttendance(1)">
+          التالي
+        </button>
+
+      </div>
+
+
+
+
+      <div class="filter-toolbar-card">
+        <div class="filters-actions-wrap">
+
+          <label for="trainer-attendance-from">من تاريخ:</label>
+          <input id="trainer-attendance-from" type="date" class="custom-select-filter"
+            [(ngModel)]="trainerAttendanceFrom" />
+
+          <label for="trainer-attendance-to">إلى تاريخ:</label>
+          <input id="trainer-attendance-to" type="date" class="custom-select-filter"
+            [(ngModel)]="trainerAttendanceTo" />
+          <button type="button" class="btn-reset-filters" [disabled]="trainerAttendanceLoading"
+            (click)="onTrainerAttendanceDateChange()">
+            عرض السجل
+          </button>
+
+        </div>
+      </div>
+
+
+      <!-- Trainer Attendance Filters -->
+      <div class="filter-toolbar-card">
+        <div class="filters-actions-wrap">
+
+          <!-- Company Filter -->
+          <label for="attendance-company">الشركة:</label>
+          <select id="attendance-company" class="custom-select-filter" [(ngModel)]="trainerAttendanceCompanyFilter">
+
+            <option value="ALL">جميع الشركات</option>
+
+            <option *ngFor="let company of trainerAttendanceCompanies" [value]="company.id">
+              {{ company.name }}
+            </option>
+          </select>
+
+          <!-- Attendance Status Filter -->
+          <label for="attendance-status">حالة الحضور:</label>
+          <select id="attendance-status" class="custom-select-filter" [(ngModel)]="trainerAttendanceStatusFilter">
+            <option value="ALL">جميع الحالات</option>
+            <option value="Present">حاضر</option>
+            <option value="Late">متأخر</option>
+            <option value="Absent">غائب</option>
+            <option value="EarlyLeave">انصراف مبكر</option>
+          </select>
+
+          <!-- Confirmation Filter -->
+          <label for="attendance-confirmation">حالة التأكيد:</label>
+          <select id="attendance-confirmation" class="custom-select-filter"
+            [(ngModel)]="trainerAttendanceConfirmationFilter">
+
+            <option value="ALL">جميع السجلات</option>
+            <option value="true">مؤكد</option>
+            <option value="false">غير مؤكد</option>
+          </select>
+
+          <!-- Reset Filters -->
+          <button type="button" class="btn-reset-filters" (click)="resetTrainerAttendanceFilters()">
+            مسح الفلاتر
+          </button>
+
+        </div>
+      </div>
+
+
+      <div *ngIf="trainerAttendanceLoading" class="loading-state">
+        <div class="custom-spinner"></div>
+        <span>جاري تحميل سجل الحضور...</span>
+      </div>
+
+      <div *ngIf="!trainerAttendanceLoading && trainerAttendanceError" class="no-results-box">
+        <h4>{{ trainerAttendanceError }}</h4>
+        <button class="btn-reset-filters" (click)="loadTrainerAttendance()">
+          إعادة المحاولة
+        </button>
+      </div>
+
+
+      <!-- Monthly Trainer Attendance - Admin Read Only -->
+      <div class="table-card trainer-monthly-attendance" *ngIf="
+    trainerAttendanceView === 'month' &&
+    !trainerAttendanceLoading &&
+    !trainerAttendanceError
+  ">
+        <h3 class="section-card-title">
+          سجل الحضور الشهري — {{ selectedTrainer?.name }}
+        </h3>
+
+        <div class="trainer-month-week" *ngFor="let week of getTrainerAttendanceMonthWeeks()">
+          <details>
+            <summary class="trainer-month-week-header">
+              <strong>الأسبوع {{ week.index + 1 }}</strong>
+              <span>{{ week.label }}</span>
+              <span class="trainer-month-chevron">⌄</span>
+            </summary>
+            <div style="overflow-x: auto;">
+              <table class="custom-table trainer-week-table">
+                <thead>
+                  <tr>
+                    <th>المدرب</th>
+                    <th *ngFor="let day of week.days">
+                      {{ day.date }}
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="trainer-attendance-person">
+                        <div class="trainer-attendance-avatar">
+                          {{ selectedTrainer?.name?.charAt(0) || 'م' }}
+                        </div>
+
+                        <div class="trainer-attendance-person-info">
+                          <strong>{{ selectedTrainer?.name }}</strong>
+                          <small>
+                            {{ selectedTrainer?.specialization || '—' }}
+                          </small>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td *ngFor="let day of week.days">
+                      <div class="trainer-week-day-records">
+                        <ng-container *ngIf="
+                      getTrainerAttendanceRecordsForDay(day.date).length > 0;
+                      else noMonthlyRecord
+                    ">
+                          <div class="trainer-week-record" *ngFor="
+                        let record of
+                        getTrainerAttendanceRecordsForDay(day.date)
+                      ">
+                            <span class="trainer-week-status" [ngClass]="{
+                          'present': record.status === 'Present',
+                          'late': record.status === 'Late',
+                          'absent': record.status === 'Absent',
+                          'early': record.status === 'EarlyLeave'
+                        }" [title]="record.companyName || ''">
+                              {{ getTrainerAttendanceSymbol(record.status) }}
+                            </span>
+
+                            <small>{{ record.companyName || '—' }}</small>
+                          </div>
+                        </ng-container>
+
+                        <ng-template #noMonthlyRecord>
+                          <span class="trainer-week-empty">—</span>
+                        </ng-template>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+
+        <div class="trainer-week-legend">
+          <span>ح = حاضر</span>
+          <span>ت = متأخر</span>
+          <span>غ = غائب</span>
+          <span>م = انصراف مبكر</span>
+          <span>— = لم يُسجّل</span>
+        </div>
+      </div>
+
+      <!-- Weekly Trainer Attendance - Admin Read Only -->
+      <div class="table-card" *ngIf="
+    trainerAttendanceView === 'week' &&
+    !trainerAttendanceLoading &&
+    !trainerAttendanceError
+  ">
+        <h3 class="section-card-title">
+          سجل الحضور الأسبوعي — {{ selectedTrainer?.name }}
+        </h3>
+
+        <div style="overflow-x: auto;">
+          <table class="custom-table trainer-week-table">
+            <thead>
+              <tr>
+                <th>المدرب</th>
+
+                <th *ngFor="let day of getTrainerAttendanceWeekDays()">
+                  {{ day.label }}
+                  <small>{{ day.date }}</small>
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>
+                  <div class="trainer-attendance-person">
+                    <div class="trainer-attendance-avatar">
+                      {{ selectedTrainer?.name?.charAt(0) || 'م' }}
+                    </div>
+
+                    <div class="trainer-attendance-person-info">
+                      <strong>{{ selectedTrainer?.name }}</strong>
+                      <small>
+                        {{ selectedTrainer?.specialization || '—' }}
+                      </small>
+                    </div>
+                  </div>
+                </td>
+
+                <td *ngFor="let day of getTrainerAttendanceWeekDays()">
+                  <div class="trainer-week-day-records">
+
+                    <ng-container *ngIf="
+                  getTrainerAttendanceRecordsForDay(day.date)
+                    .length > 0;
+                  else noTrainerAttendanceRecord
+                ">
+                      <div class="trainer-week-record" *ngFor="
+                    let record of
+                    getTrainerAttendanceRecordsForDay(day.date)
+                  ">
+                        <span class="trainer-week-status" [ngClass]="{
+                      'present': record.status === 'Present',
+                      'late': record.status === 'Late',
+                      'absent': record.status === 'Absent',
+                      'early': record.status === 'EarlyLeave'
+                    }" [title]="record.companyName || ''">
+                          {{ getTrainerAttendanceSymbol(record.status) }}
+                        </span>
+
+                        <small>{{ record.companyName || '—' }}</small>
+                      </div>
+                    </ng-container>
+
+                    <ng-template #noTrainerAttendanceRecord>
+                      <span class="trainer-week-empty">—</span>
+                    </ng-template>
+
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="trainer-week-legend">
+          <span>ح = حاضر</span>
+          <span>ت = متأخر</span>
+          <span>غ = غائب</span>
+          <span>م = انصراف مبكر</span>
+          <span>— = لم يُسجّل</span>
+        </div>
+      </div>
+
+
+      <!-- Daily Trainer Attendance - Admin Read Only -->
+      <div class="table-card" *ngIf="(trainerAttendanceView === 'day' || trainerAttendanceView === 'custom') &&
+         !trainerAttendanceLoading &&
+         !trainerAttendanceError">
+
+        <div class="section-badge-header" style="display:flex; justify-content:space-between;
+              align-items:center; gap:12px; flex-wrap:wrap;
+              margin-bottom:18px;">
+
+          <div>
+            <h3 class="section-card-title" style="margin:0;">
+              {{ trainerAttendanceView === 'custom'
+              ? 'سجل الحضور للفترة المحددة'
+              : 'سجل الحضور اليومي' }}
+            </h3>
+            <p style="margin:6px 0 0; color:#64748b; font-size:12px;">
+              الفترة المحددة: {{ trainerAttendanceFrom }} إلى {{ trainerAttendanceTo }}
+            </p>
+          </div>
+
+          <span class="badge-total-results">
+            عدد السجلات:
+            {{ filteredTrainerAttendanceRecords.length }}
+          </span>
+        </div>
+
+        <div style="overflow-x:auto;" *ngIf="filteredTrainerAttendanceRecords.length > 0">
+
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>الشركة</th>
+                <th>التاريخ</th>
+                <th>حالة الحضور</th>
+                <th>وقت الدخول</th>
+                <th>وقت الخروج</th>
+                <th>الملاحظات</th>
+                <th>إثبات العذر</th>
+                <th>حالة التأكيد</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let record of filteredTrainerAttendanceRecords">
+
+                <td class="bold text-navy-strong">
+                  {{ record.companyName || '—' }}
+                </td>
+                <td>{{ record.date | date:'yyyy-MM-dd' }}</td>
+
+                <td>
+                  <span class="status-pill" [ngClass]="{
+                'level-excellent': record.status === 'Present'
+              }">
+                    {{
+                    record.status === 'Present' ? 'حاضر' :
+                    record.status === 'Late' ? 'متأخر' :
+                    record.status === 'Absent' ? 'غائب' :
+                    record.status === 'EarlyLeave' ? 'انصراف مبكر' :
+                    (record.status || 'غير محدد')
+                    }}
+                  </span>
+                </td>
+
+                <td>{{ record.checkInTime || '—' }}</td>
+
+                <td>{{ record.checkOutTime || '—' }}</td>
+
+                <td>{{ record.reason || '—' }}</td>
+
+                <td>
+                  <a *ngIf="record.excuseProofUrl" [href]="record.excuseProofUrl" target="_blank"
+                    rel="noopener noreferrer">
+                    عرض الإثبات
+                  </a>
+
+                  <span *ngIf="!record.excuseProofUrl">—</span>
+                </td>
+
+                <td>
+                  <span [style.color]="record.isConfirmed ? '#15803d' : '#b45309'">
+                    {{ record.isConfirmed ? 'مؤكد' : 'غير مؤكد' }}
+                  </span>
+                </td>
+
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="no-results-box" *ngIf="filteredTrainerAttendanceRecords.length === 0">
+          <h4>لا توجد سجلات حضور ضمن الفترة المحددة</h4>
+          <p style="color:#64748b; font-size:12px;">
+            عدم وجود سجل لا يعني أن المدرب غائب.
+          </p>
+        </div>
+
+      </div>
+
+
+
+
+    </div>
+
   </ng-container>
 
   <!-- =========================================================
