@@ -149,6 +149,8 @@ export class TrainerQuizzes implements OnInit {
   questionError = signal('');
 
   questionSuccess = signal('');
+  showPublishConfirm = signal(false);
+quizToPublish = signal<QuizDto | null>(null);
 
   selectedQuestionIds = signal<Set<number>>(new Set());
 
@@ -548,49 +550,44 @@ publishQuiz(quiz: QuizDto): void {
           );
           return;
         }
+this.saving.set(true);
+this.errorMessage.set('');
+this.successMessage.set('');
 
-        const confirmed = window.confirm(
-          'هل أنت متأكد من نشر الاختبار؟ بعد النشر لن تتمكن من تعديل الأسئلة.'
-        );
+this.api.publishQuiz(
+  quiz.quizId,
+  trainerId
+).subscribe({
+  next: () => {
+    this.saving.set(false);
 
-        if (!confirmed) {
-          return;
-        }
+    this.successMessage.set(
+      'تم نشر الاختبار بنجاح.'
+    );
+    this.questionSuccess.set(
+    'تم نشر الاختبار بنجاح.'
+  );
 
-        this.saving.set(true);
-        this.errorMessage.set('');
-        this.successMessage.set('');
+  this.loadQuizQuestions(quiz.quizId);
 
-        this.api
-          .publishQuiz(
-            quiz.quizId,
-            trainerId
-          )
-          .subscribe({
-            next: () => {
-              this.saving.set(false);
+    this.loadQuizzes(trainerId);
+  },
 
-              this.successMessage.set(
-                'تم نشر الاختبار بنجاح.'
-              );
+  error: error => {
+    console.error(
+      'Error publishing quiz:',
+      error
+    );
 
-              this.loadQuizzes(trainerId);
-            },
+    this.saving.set(false);
 
-            error: error => {
-              console.error(
-                'Error publishing quiz:',
-                error
-              );
-
-              this.saving.set(false);
-
-              this.errorMessage.set(
-                error?.error?.message ||
-                'تعذر نشر الاختبار. تأكدي من اكتمال بيانات الاختبار والأسئلة.'
-              );
-            }
-          });
+    this.errorMessage.set(
+      error?.error?.message ||
+      'تعذر نشر الاختبار. تأكدي من اكتمال بيانات الاختبار والأسئلة.'
+    );
+  }
+});
+      
       },
 
       error: error => {
@@ -604,6 +601,57 @@ publishQuiz(quiz: QuizDto): void {
         );
       }
     });
+}
+cancelPublish(): void {
+  this.showPublishConfirm.set(false);
+  this.quizToPublish.set(null);
+}
+
+confirmPublish(): void {
+  const quiz = this.quizToPublish();
+  const trainerId = this.trainer()?.trainerId;
+
+  if (!quiz || trainerId === undefined) {
+    return;
+  }
+
+  this.saving.set(true);
+  this.errorMessage.set('');
+  this.successMessage.set('');
+
+  this.api.publishQuiz(
+    quiz.quizId,
+    trainerId
+  ).subscribe({
+    next: () => {
+      this.saving.set(false);
+      this.showPublishConfirm.set(false);
+      this.quizToPublish.set(null);
+
+      this.successMessage.set(
+        'تم نشر الاختبار بنجاح.'
+      );
+      
+      
+      this.loadQuizzes(trainerId);
+    },
+
+    error: error => {
+      console.error(
+        'Error publishing quiz:',
+        error
+      );
+
+      this.saving.set(false);
+      this.showPublishConfirm.set(false);
+      this.quizToPublish.set(null);
+
+      this.errorMessage.set(
+        error?.error?.message ||
+        'تعذر نشر الاختبار. تأكدي من اكتمال بيانات الاختبار والأسئلة.'
+      );
+    }
+  });
 }
   // =====================================================
   // QUESTION BANK

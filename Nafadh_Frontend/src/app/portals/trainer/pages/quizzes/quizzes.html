@@ -1778,22 +1778,17 @@
 
 
     <!-- نشر الاختبار -->
-    @if (quizQuestions().length > 0) {
-
-      <button
-        type="button"
-        class="publish-btn"
-        (click)="publishQuiz(selectedQuiz()!)"
-        [disabled]="questionSaving()"
-      >
-
-        <i class="fa-solid fa-paper-plane"></i>
-
-        نشر الاختبار
-
-      </button>
-
-    }
+   @if (quizQuestions().length > 0) {
+  <button
+    type="button"
+    class="publish-btn"
+    (click)="publishQuiz(selectedQuiz()!)"
+      [disabled]="questionSaving()"
+  >
+    <i class="fa-solid fa-paper-plane"></i>
+    نشر الاختبار
+  </button>
+}
 
 
     <!-- إغلاق -->
