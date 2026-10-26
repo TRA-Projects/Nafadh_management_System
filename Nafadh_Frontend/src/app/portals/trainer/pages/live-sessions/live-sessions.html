@@ -72,7 +72,7 @@
                 (ngModelChange)="searchTerm.set($event)" />
         </div>
 
-        <div class="session-list"[class.scrollable]="filteredSessions().length > 5">
+        <div class="session-list" [class.scrollable]="filteredSessions().length > 5">
             @for (session of filteredSessions(); track session.id) {
             <article class="session-card">
                 <div class="session-details">
@@ -111,6 +111,7 @@
                         {{ getSessionStatusLabel(session) }}
                     </span>
 
+                    <!-- إعادة جدولة الجلسات التي فات موعدها -->
                     @if (isMissedSession(session)) {
                     <button type="button" class="reschedule-btn" [disabled]="saving()"
                         (click)="rescheduleSession(session)">
@@ -119,17 +120,7 @@
                     </button>
                     }
 
-                    @if (
-                    session.status === 'InProgress' ||
-                    session.status === 'Completed'
-                    ) {
-                    <button type="button" (click)="openAttendance(session)">
-                        <i class="fa-solid fa-clipboard-user"></i>
-                        إدارة الحضور
-                    </button>
-                    }
-
-
+                    <!-- تعديل وإلغاء الجلسات القادمة -->
                     @if (
                     session.status === 'Scheduled' &&
                     activeTab() === 'upcoming'
@@ -143,6 +134,7 @@
                     </button>
                     }
 
+                    <!-- دخول المحاضرة فقط في الجلسات الجارية -->
                     @if (
                     activeTab() === 'ongoing' &&
                     (
@@ -159,12 +151,6 @@
                     </button>
                     }
 
-                    @if (session.status === 'InProgress') {
-                    <button type="button" (click)="completeSession(session)">
-                        إنهاء الجلسة
-                    </button>
-                    }
-                    
                 </div>
             </article>
             } @empty {
