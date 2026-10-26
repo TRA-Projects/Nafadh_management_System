@@ -75,7 +75,8 @@ export class EvaluationTemplatesComponent implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.errorMessage = 'تعذر تحميل قوالب التقييم. تحققي من اتصال الـ API.';
+        this.errorMessage =
+          'تعذر تحميل قوالب التقييم. تحققي من اتصال الـ API.';
         this.loading = false;
       },
     });
@@ -203,8 +204,27 @@ export class EvaluationTemplatesComponent implements OnInit {
 
         this.loadTemplates();
       },
-      error: () => {
-        this.errorMessage = 'تعذر حذف القالب.';
+      error: (error: { status?: number; error?: unknown }) => {
+        if (error.status === 500) {
+          this.errorMessage =
+            'لا يمكن حذف هذا القالب حاليًا؛ قد تكون هناك درجات أو سجلات تقييم مرتبطة به. تم الاحتفاظ بالقالب لتجنب فقدان السجلات.';
+          return;
+        }
+
+        if (error.status === 409) {
+          this.errorMessage =
+            'لا يمكن حذف القالب لوجود سجلات تقييم مرتبطة به.';
+          return;
+        }
+
+        if (error.status === 404) {
+          this.errorMessage =
+            'القالب غير موجود أو تم حذفه مسبقًا. حدّثي القائمة.';
+          return;
+        }
+
+        this.errorMessage =
+          'تعذر حذف القالب. تحققي من اتصال الـ API وحاولي مرة أخرى.';
       },
     });
   }

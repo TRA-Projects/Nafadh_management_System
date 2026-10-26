@@ -8,7 +8,10 @@ import { map, tap } from 'rxjs/operators';
 import { ApiPaths } from '../api-paths';
 import { unwrapData, type ApiData } from '../../profile/jobseeker-profile-api';
 import { adminSystemActions } from '../../store/admin-system/admin-system.actions';
-import type { PagedListResponse, PagedQueryParams } from '../models/paged-list.models';
+import type {
+  PagedListResponse,
+  PagedQueryParams,
+} from '../models/paged-list.models';
 import type {
   CreateSystemConfigValueDto,
   NotificationPlaceholderDto,
@@ -55,7 +58,10 @@ export type {
 } from '../models/admin-system.models';
 
 export { SkillKind } from '../models/admin-system.models';
-export type { PagedListResponse, PagedQueryParams } from '../models/paged-list.models';
+export type {
+  PagedListResponse,
+  PagedQueryParams,
+} from '../models/paged-list.models';
 
 // ── Evaluation Templates DTOs ───────────────────────────────────────────────
 
@@ -91,6 +97,8 @@ export interface EvaluationTemplateInputDto {
 export class AdminSystemApiService {
   private readonly http = inject(HttpClient);
   private readonly store = inject(Store);
+
+  // ── System Variables ──────────────────────────────────────────────────────
 
   getSystemVariablesPage(params: PagedQueryParams & { q?: string }) {
     let hp = this.pageParams(params);
@@ -146,6 +154,8 @@ export class AdminSystemApiService {
         )
       );
   }
+
+  // ── System Config Values ──────────────────────────────────────────────────
 
   /** DB-backed list of available groups, including whether each is read-only. */
   getConfigGroups(): Observable<SystemConfigGroupDto[]> {
@@ -294,6 +304,8 @@ export class AdminSystemApiService {
         )
       );
   }
+
+  // ── Skills ────────────────────────────────────────────────────────────────
 
   getSkillCategoriesPage(
     params: PagedQueryParams & { q?: string }
@@ -462,6 +474,8 @@ export class AdminSystemApiService {
     );
   }
 
+  // ── Notification Templates ────────────────────────────────────────────────
+
   getNotificationTemplatesPage(
     params: PagedQueryParams & { q?: string }
   ) {
@@ -539,6 +553,8 @@ export class AdminSystemApiService {
       .pipe(map(unwrapData));
   }
 
+  // ── Audit Trail ───────────────────────────────────────────────────────────
+
   getAuditTrailPage(params: SystemAuditTrailQuery) {
     let hp = this.pageParams(params);
 
@@ -594,6 +610,8 @@ export class AdminSystemApiService {
       .pipe(map(unwrapData));
   }
 
+  // ── Notification Transactions ──────────────────────────────────────────────
+
   getNotificationTransactionsPage(
     params: NotificationTransactionLogQuery
   ) {
@@ -637,7 +655,6 @@ export class AdminSystemApiService {
 
   // ── Evaluation Templates API ──────────────────────────────────────────────
 
- 
   getEvaluationTemplates(params?: {
     type?: EvaluationTemplateType;
     moduleId?: number;
@@ -650,7 +667,10 @@ export class AdminSystemApiService {
     }
 
     if (params?.moduleId != null) {
-      httpParams = httpParams.set('moduleId', String(params.moduleId));
+      httpParams = httpParams.set(
+        'moduleId',
+        String(params.moduleId)
+      );
     }
 
     if (params?.stage != null) {
@@ -698,35 +718,39 @@ export class AdminSystemApiService {
       );
   }
 
-
-createEvaluationTemplate(
-  payload: EvaluationTemplateInputDto
-): Observable<string> {
-  return this.http.post(
-    ApiPaths.createEvaluationTemplate,
-    payload,
-    { responseType: 'text' }
-  );
-}
-
-updateEvaluationTemplate(
-  templateId: number,
-  payload: EvaluationTemplateInputDto
-): Observable<string> {
-  return this.http.put(
-    ApiPaths.updateEvaluationTemplate(templateId),
-    payload,
-    { responseType: 'text' }
-  );
-}
-
-  deleteEvaluationTemplate(
-    templateId: number
-  ): Observable<unknown> {
-    return this.http.delete(
-      ApiPaths.deleteEvaluationTemplate(templateId)
+  createEvaluationTemplate(
+    payload: EvaluationTemplateInputDto
+  ): Observable<string> {
+    return this.http.post(
+      ApiPaths.createEvaluationTemplate,
+      payload,
+      { responseType: 'text' }
     );
   }
+
+  updateEvaluationTemplate(
+    templateId: number,
+    payload: EvaluationTemplateInputDto
+  ): Observable<string> {
+    return this.http.put(
+      ApiPaths.updateEvaluationTemplate(templateId),
+      payload,
+      { responseType: 'text' }
+    );
+  }
+
+
+deleteEvaluationTemplate(
+  templateId: number
+): Observable<string> {
+  return this.http.delete(
+    ApiPaths.deleteEvaluationTemplate(templateId),
+    { responseType: 'text' }
+  );
+}
+
+
+  // ── Shared Helpers ────────────────────────────────────────────────────────
 
   private pageParams(
     params: Partial<PagedQueryParams> & { q?: string },
