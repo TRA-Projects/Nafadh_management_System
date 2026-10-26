@@ -112,7 +112,7 @@ export class AdminLayout {
         },
         {
           path: 'external-system/notification-templates',
-          label: 'قوالب الإشعارات',
+           label: 'القوالب',
           icon: 'bell',
         },
       ],

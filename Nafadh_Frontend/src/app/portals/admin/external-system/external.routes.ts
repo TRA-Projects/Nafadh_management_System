@@ -45,10 +45,12 @@ const groupPagesPage = () =>
   import('./pages/identity-access/admin-identity-group-pages-page.component')
     .then((m) => m.AdminIdentityGroupPagesPageComponent);
 
-const notificationTemplatesPage = () =>
-  import('./pages/system-administration/notification-templates-page.component')
-    .then((m) => m.NotificationTemplatesPageComponent);
+// Unified templates page: notification templates + evaluation templates
+const templatesPage = () =>
+  import('./pages/system-administration/templates-page.component')
+    .then((m) => m.TemplatesPageComponent);
 
+// Notification template edit page
 const notificationTemplateEditPage = () =>
   import('./pages/system-administration/notification-template-edit-page.component')
     .then((m) => m.NotificationTemplateEditPageComponent);
@@ -89,11 +91,13 @@ export const EXTERNAL_ROUTES: Routes = [
             .then((m) => m.SystemConfigurationPageComponent),
       },
 
-      // Notification templates
+      // Unified templates page
       {
         path: 'notification-templates',
-        loadComponent: notificationTemplatesPage,
+        loadComponent: templatesPage,
       },
+
+      // Notification template edit page
       {
         path: 'notification-templates/:id',
         loadComponent: notificationTemplateEditPage,
