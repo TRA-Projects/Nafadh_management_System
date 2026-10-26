@@ -25,7 +25,7 @@
   <!-- Main Content -->
   @if (!loading() && !error() && p) {
     <!-- Top Page Bar (Breadcrumb + Actions matching Nafath Portal) -->
-    <div class="page-top-bar">
+    <div class="page-top-bar" data-guide="company-program-detail-actions">
       <div class="page-top-right">
         <button class="back-btn" type="button" (click)="goBack()">
           <svg
@@ -91,7 +91,7 @@
     </div>
 
     <!-- Program Header (Hero Card) -->
-    <div class="card card-pad hero">
+    <div class="card card-pad hero" data-guide="company-program-detail-hero">
       <div class="program-icon">
         <svg
           viewBox="0 0 24 24"
@@ -140,7 +140,7 @@
     </div>
 
     <!-- Main Statistics (5 KPI Cards matching Nafath Report KPIs) -->
-    <div class="stats-grid">
+    <div class="stats-grid" data-guide="company-program-detail-stats">
       <div class="stat-card">
         <div class="stat-head">
           <small>المتدربون الحاليون</small>
@@ -303,7 +303,7 @@
     </div>
 
     <!-- Training Plan (Modules) -->
-    <div class="card card-pad section-card">
+    <div class="card card-pad section-card" data-guide="company-program-detail-stages">
       <div class="card-title">
         <span class="title-main">مراحل الخطة التدريبية</span>
         <span>{{ modules().length }} مرحلة</span>

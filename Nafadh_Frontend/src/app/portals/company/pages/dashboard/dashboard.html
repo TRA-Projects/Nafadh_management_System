@@ -1,7 +1,7 @@
 <div class="dashboard-page" dir="rtl">
   <section class="dashboard">
 
-    <header class="company-dashboard-header">
+    <header class="company-dashboard-header" data-guide="company-dashboard-header">
       <div class="company-brand">
         <div class="company-brand-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24">
@@ -32,7 +32,7 @@
     </header>
 
     @if (!announcementsDismissed()) {
-      <div class="card announcements-card">
+      <div class="card announcements-card" data-guide="company-dashboard-announcements">
         <div class="announcements-header">
           <div class="header-right">
             <span class="icon-doc">
@@ -114,7 +114,7 @@
       </div>
     }
 
-    <div class="kpi-grid">
+    <div class="kpi-grid" data-guide="company-dashboard-kpis">
       <article class="kpi-card">
         <div class="kpi-icon blue">
           <svg viewBox="0 0 24 24">
@@ -182,7 +182,7 @@
     </div>
 
     @if (capacity(); as cap) {
-      <div class="card card-pad capacity-card">
+      <div class="card card-pad capacity-card" data-guide="company-dashboard-capacity">
         <div class="card-title">
           الطاقة الاستيعابية
           <span class="hint">
@@ -227,7 +227,7 @@
 
     
     @if (plansOverview(); as plans) {
-      <div class="card card-pad plans-card">
+      <div class="card card-pad plans-card" data-guide="company-dashboard-plans">
         <div class="card-title">
           <span>خطط الكورسات (المهام والمشروعات)</span>
           <button
