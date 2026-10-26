@@ -55,14 +55,27 @@ export class NotificationTemplatesPageComponent {
 
   readonly filteredTemplates = computed(() => {
     const type = this.selectedType();
+    const templates = this.templates();
 
     if (!type) {
-      return this.templates();
+      return templates;
     }
 
-    return this.templates().filter(
-      (template) => template.type === type,
-    );
+    return templates.filter((template) => {
+      if (type === 'Email') {
+        return template.hasEmail;
+      }
+
+      if (type === 'SMS') {
+        return template.hasSms;
+      }
+
+      if (type === 'Push') {
+        return template.type === 'Push';
+      }
+
+      return true;
+    });
   });
 
   readonly totalPages = computed(() =>
@@ -121,10 +134,9 @@ export class NotificationTemplatesPageComponent {
           );
 
           this.totalCount.set(page.total ?? rows.length);
-
           this.loading.set(false);
 
-          // إذا تغير العدد وأصبحت الصفحة الحالية خارج النطاق.
+          // الانتقال إلى آخر صفحة متاحة إذا تغير عدد النتائج.
           if (
             this.pageIndex() >= this.totalPages() &&
             this.pageIndex() > 0
@@ -182,8 +194,8 @@ export class NotificationTemplatesPageComponent {
     this.pageIndex.set(0);
     this.closeMenu();
 
-    // نوع القناة ليس ضمن معاملات البحث المتاحة في الخدمة الحالية.
-    // لذلك تتم التصفية محليًا على القوالب المحملة في الصفحة الحالية.
+    // نوع القناة غير مدعوم كمعامل في خدمة البحث الحالية.
+    // التصفية هنا محلية على القوالب المحملة في الصفحة الحالية.
   }
 
   onPageSizeChange(event: Event): void {
@@ -244,13 +256,16 @@ export class NotificationTemplatesPageComponent {
     this.openMenuId = null;
   }
 
+  /**
+   * فتح صفحة التعديل باستخدام ActionCode الذي يتوقعه الـ Backend.
+   */
   editTemplate(template: NotificationTemplate): void {
     this.closeMenu();
 
     this.router.navigate(
       [
         '/admin/external-system/notification-templates',
-        template.id,
+        template.code,
       ],
       {
         state: {
@@ -268,8 +283,8 @@ export class NotificationTemplatesPageComponent {
   }
 
   deleteTemplate(id: number): void {
-    // لا توجد دالة حذف لقوالب الإشعارات في AdminSystemApiService.
-    // لا نحذف العنصر محليًا حتى لا تظهر نتيجة غير موجودة في قاعدة البيانات.
+    // لا توجد عملية حذف معرفة حاليًا في AdminSystemApiService.
+    // لذلك لا نحذف العنصر محليًا دون تحديث قاعدة البيانات.
     this.closeMenu();
 
     this.errorMessage.set(
