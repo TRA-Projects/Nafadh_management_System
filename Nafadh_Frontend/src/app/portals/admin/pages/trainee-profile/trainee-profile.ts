@@ -102,7 +102,78 @@ export class AdminTraineeProfile implements OnInit {
 
       return matchesSearch && matchesFilter;
     });
+});
+    
+  // ==========================================
+  // إحصائيات سجل ونتائج الاختبارات
+  // ==========================================
+
+  // عدد الاختبارات المكتملة
+  completedExamsCount = computed(() => {
+    return this.traineeExams().filter(
+      (exam) =>
+        exam.status === 'مكتمل' ||
+        exam.status === 'Completed'
+    ).length;
   });
+  
+  // عدد الاختبارات قيد التصحيح
+  pendingExamsCount = computed(() => {
+    return this.traineeExams().filter(
+      (exam) =>
+        exam.status === 'قيد التصحيح' ||
+        exam.status === 'Pending'
+    ).length;
+  });
+
+  // عدد الاختبارات التي لم يجتزها المتدرب
+  failedExamsCount = computed(() => {
+    return this.traineeExams().filter(
+      (exam) =>
+        exam.status === 'لم يجتز' ||
+        exam.status === 'Failed'
+    ).length;
+  });
+
+  // متوسط درجات الاختبارات المصححة
+  examAverageScore = computed<number | null>(() => {
+    const gradedExams = this.traineeExams().filter(
+      (exam) =>
+        exam.score !== null &&
+        exam.score !== undefined &&
+        Number(exam.maxScore) > 0 &&
+        Number.isFinite(Number(exam.score))
+    );
+
+    if (gradedExams.length === 0) {
+      return null;
+    }
+
+    const totalPercentage = gradedExams.reduce(
+      (total, exam) =>
+        total +
+        (Number(exam.score) / Number(exam.maxScore)) * 100,
+      0
+    );
+
+    return Math.round(totalPercentage / gradedExams.length);
+  });
+
+  // تحويل حالة الاختبار للعربية
+  examStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      Completed: 'مكتمل',
+      Pending: 'قيد التصحيح',
+      Failed: 'لم يجتز',
+      'مكتمل': 'مكتمل',
+      'قيد التصحيح': 'قيد التصحيح',
+      'لم يجتز': 'لم يجتز'
+    };
+
+    return labels[status] || status || 'غير محدد';
+  }
+
+  
 
   // أسباب مقنعة جاهزة لرفض طلب الانسحاب
   presetRejectionReasons: string[] = [
