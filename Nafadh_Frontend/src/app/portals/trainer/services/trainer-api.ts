@@ -1453,6 +1453,20 @@ export class TrainerApi {
       { params }
     );
   }
+
+  publishQuiz(
+  quizId: number,
+  trainerId: number
+) {
+  const params = new HttpParams()
+    .set('trainerId', trainerId.toString());
+
+  return this.http.post(
+    `${this.base}/Quizzes/${quizId}/publish`,
+    {},
+    { params }
+  );
+}
   // =====================================
   // QUESTION BANK - بنك الأسئلة
   // =====================================
