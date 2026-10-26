@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, computed, ViewEncapsulation } from '@angular/core';
 import { CommonModule, NgClass, NgStyle } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router } from '@angular/router'; // 👈 تم استيراد الراوتر للتنقل للبروفايل
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { forkJoin, of } from 'rxjs';
@@ -175,18 +175,16 @@ export class AdminTrainees implements OnInit {
   };
 
   // =========================================================================
-  // 🌟 نظام حضور وغياب المتدربين الشامل على الشاشة الكاملة
+  // 🌟 نظام حضور وغياب المتدربين الشامل (Full Screen)
   // =========================================================================
   showBatchAttendanceModal = signal<boolean>(false);
-  attendanceStep = signal<1 | 2>(1); // 1 = اختيار الدفعة، 2 = رصد الحضور
+  attendanceStep = signal<1 | 2>(1); 
   selectedAttendanceBatch = signal<any | null>(null);
   attendanceDate = signal<string>(new Date().toISOString().substring(0, 10));
   
-  // 👈 فلاتر الخطوة 1: اختيار الدفعة من القائمة المنسدلة العلوية + البحث
   attendanceBatchDropdownFilter = signal<string>('');
   attendanceBatchSearch = signal<string>('');
   
-  // 👈 فلاتر الخطوة 2: البحث النصي + تبويبات الحالة
   attendanceSearchQuery = signal<string>('');
   attendanceTrackFilter = signal<string>('');
   attendanceStatusFilter = signal<'ALL' | 'Present' | 'Late' | 'Absent' | 'Excused'>('ALL');
@@ -194,20 +192,17 @@ export class AdminTrainees implements OnInit {
   attendanceRecords = signal<TraineeAttendanceRecord[]>([]);
   isSavingAttendance = signal<boolean>(false);
 
-  // ===== المدرب الراصد لكل دفعة (تلقائي من الباك اند) =====
   isLoadingTrainers = signal<boolean>(false);
   trainerByBatch = signal<Record<string, string>>({});
   readonly NO_TRAINER = 'لم يُعيَّن مدرب بعد';
   currentBatchTrainer = computed(() => this.trainerFor(this.selectedAttendanceBatch()));
 
-  // 👈 نظام الترقيم (Pagination)
   batchCurrentPage = signal<number>(1);
   batchPageSize = signal<number>(9);
 
   attendanceCurrentPage = signal<number>(1);
   attendancePageSize = signal<number>(10);
 
-  // قوائم منسدلة عامة
   availableUniversities = computed(() => {
     const set = new Set<string>();
     const source = this.allDbTrainees().length > 0 ? this.allDbTrainees() : this.trainees();
@@ -421,7 +416,7 @@ export class AdminTrainees implements OnInit {
 
   constructor(
     private api: AdminApi,
-    private router: Router,
+    private router: Router, // 👈 الراوتر متاح الآن
     private sanitizer: DomSanitizer
   ) {}
 
@@ -491,7 +486,23 @@ export class AdminTrainees implements OnInit {
   }
 
   // =========================================================================
-  // دوال إدارة شاشة حضور المتدربين والصفحات
+  // 🌟 دالة التنقل لصفحة البروفايل (المعاينة)
+  // =========================================================================
+  viewTraineeDetails(traineeId: number) {
+    if (traineeId) {
+      this.router.navigate(['/admin/trainees', traineeId]);
+    } else {
+      this.showToast('تعذر العثور على بطاقة المتدرب المحددة.', 'info');
+    }
+  }
+
+  getTraineeById(traineeId: number): any {
+    const all = this.allDbTrainees().length > 0 ? this.allDbTrainees() : this.trainees();
+    return all.find(t => t.traineeId === traineeId) || null;
+  }
+
+  // =========================================================================
+  // دوال الحضور والغياب (التي كان يشتكي منها المترجم)
   // =========================================================================
   openBatchAttendanceModal() {
     this.attendanceStep.set(1);
@@ -889,21 +900,9 @@ export class AdminTrainees implements OnInit {
     }
   }
 
-  viewTraineeDetails(traineeId: number) {
-    const all = this.allDbTrainees().length > 0 ? this.allDbTrainees() : this.trainees();
-    const found = all.find(t => t.traineeId === traineeId);
-    if (found) {
-      this.openCvModal(found);
-    } else {
-      this.showToast('تعذر العثور على بطاقة المتدرب المحددة.', 'info');
-    }
-  }
-
-  getTraineeById(traineeId: number): any {
-    const all = this.allDbTrainees().length > 0 ? this.allDbTrainees() : this.trainees();
-    return all.find(t => t.traineeId === traineeId) || null;
-  }
-
+  // =========================================================================
+  // دوال إدارة المتدربين (إحصائيات، جدول، فلاتر)
+  // =========================================================================
   loadDatabaseStats() {
     forkJoin({
       allRes: this.api.getTrainees({ pageNumber: 1, pageSize: 2000 }).pipe(catchError(() => of(null))),
@@ -1463,12 +1462,6 @@ export class AdminTrainees implements OnInit {
 
   get totalPages(): number {
     return Math.ceil(this.totalCount() / this.pageSize()) || 1;
-  }
-
-  viewtraineeDetails(traineeId: number) {
-    if (traineeId) {
-      this.router.navigate(['/admin/trainees', traineeId]);
-    }
   }
 
   loadDropdownData() {
