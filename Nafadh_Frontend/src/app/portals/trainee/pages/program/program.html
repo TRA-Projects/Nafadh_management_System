@@ -1,9 +1,7 @@
 <div class="program-container" dir="rtl">
-
   <!-- =====================================================
        TOAST NOTIFICATION
        ===================================================== -->
-
   <div
     class="lesson-notification"
     [class.show]="notificationVisible()"
@@ -17,42 +15,31 @@
       [class.fa-circle-check]="notificationType() === 'success'"
       [class.fa-circle-exclamation]="notificationType() === 'error'"
     ></i>
-
     <span>
       {{ notificationMessage() }}
     </span>
   </div>
 
-
   <!-- =====================================================
        PROGRAM HEADER
        ===================================================== -->
-
   <section class="program-header">
-
     <div class="program-info">
-
       <div class="program-title-row">
-
         <h1 class="program-title">
           {{ program()?.title || program()?.name || 'برنامج تدريبي' }}
         </h1>
-
         <span class="status-badge status-active">
           مستمر
         </span>
-
       </div>
-
       <p class="program-description">
         {{
           program()?.description ||
           'برنامج متكامل لتطوير المهارات واستخدام أحدث الأدوات والتقنيات العالمية.'
         }}
       </p>
-
       <div class="program-meta">
-
         <span>
           <i class="fa-regular fa-calendar-days"></i>
           المدة:
@@ -60,218 +47,155 @@
             {{ stats().totalDays || 0 }} يوم
           </strong>
         </span>
-
         <span>
           <i class="fa-solid fa-layer-group"></i>
           {{ stats().totalModules || 0 }}
           وحدات تدريبية
         </span>
-
         <span>
           <i class="fa-solid fa-book-open"></i>
           {{ stats().totalLessons || 0 }}
           درس
         </span>
-
         <span *ngIf="enrollment()?.batchName">
           <i class="fa-solid fa-graduation-cap"></i>
           {{ enrollment()?.batchName }}
         </span>
-
       </div>
-
     </div>
 
-
     <!-- Progress -->
-
     <div class="progress-wrapper">
-
       <div
         class="progress-circle"
         [style.--progress]="(stats().overallProgress || 0) + '%'"
       >
-
         <div class="progress-circle-inner">
-
           <span>
             {{ stats().overallProgress || 0 }}%
           </span>
-
         </div>
-
       </div>
-
       <span class="progress-label">
         نسبة الإنجاز
       </span>
-
     </div>
-
   </section>
-
 
   <!-- =====================================================
        ENROLLMENT INFORMATION
        ===================================================== -->
-
   <section
     class="enrollment-info"
     *ngIf="enrollment()"
   >
-
     <div class="enrollment-item">
-
       <span class="info-icon">
         <i class="fa-solid fa-graduation-cap"></i>
       </span>
-
       <div>
         <small>الدفعة</small>
-
         <strong>
           {{ enrollment()?.batchName || '-' }}
         </strong>
       </div>
-
     </div>
 
-
     <div class="enrollment-item">
-
       <span class="info-icon">
         <i class="fa-solid fa-building"></i>
       </span>
-
       <div>
         <small>الشركة</small>
-
         <strong>
           {{ enrollment()?.companyName || '-' }}
         </strong>
       </div>
-
     </div>
 
-
     <div class="enrollment-item">
-
       <span class="info-icon">
         <i class="fa-solid fa-user-tie"></i>
       </span>
-
       <div>
         <small>المشرف</small>
-
         <strong>
           {{ enrollment()?.supervisorName || 'غير محدد' }}
         </strong>
       </div>
-
     </div>
 
-
     <div class="enrollment-item">
-
       <span class="info-icon">
         <i class="fa-solid fa-chart-pie"></i>
       </span>
-
       <div>
         <small>حالة التسجيل</small>
-
         <strong>
           {{ enrollment()?.completionStatus || '-' }}
         </strong>
       </div>
-
     </div>
-
   </section>
-
 
   <!-- =====================================================
        MODULES SECTION
        ===================================================== -->
-
   <section class="modules-container">
-
     <div class="section-header">
-
       <div>
-
         <h2 class="modules-title">
           وحدات البرنامج التدريبي
         </h2>
-
         <p class="modules-subtitle">
           تابع تقدمك وأكمل الوحدات بالترتيب
         </p>
-
       </div>
-
-
       <div class="modules-counter">
-
         <strong>
           {{ completedModules() }}
         </strong>
-
         /
         {{ totalModules() }}
-
         <span>
           مكتملة
         </span>
-
       </div>
-
     </div>
-
 
     <!-- =====================================================
          STEPPER
          ===================================================== -->
-
     <div
       class="module-stepper"
       *ngIf="modules().length > 0"
     >
-
       <div
         *ngFor="
           let module of modules();
           let i = index;
         "
         class="step-wrapper"
-
         [class.step-completed]="
           module.progressPercentage === 100
         "
-
         [class.step-current]="
           !module.isLocked &&
           module.progressPercentage !== 100 &&
           (module.progressPercentage || 0) > 0
         "
-
         [class.step-locked]="
           module.isLocked
         "
       >
-
         <div
           *ngIf="i < modules().length - 1"
           class="step-line"
-
           [class.completed-line]="
             module.progressPercentage === 100
           "
         ></div>
-
-
         <div class="step-circle">
-
           <ng-container
             *ngIf="
               module.progressPercentage === 100
@@ -279,8 +203,6 @@
           >
             <i class="fa-solid fa-check"></i>
           </ng-container>
-
-
           <ng-container
             *ngIf="
               !module.isLocked &&
@@ -289,65 +211,47 @@
           >
             {{ i + 1 }}
           </ng-container>
-
-
           <ng-container
             *ngIf="module.isLocked"
           >
             <i class="fa-solid fa-lock"></i>
           </ng-container>
-
         </div>
-
-
         <span class="step-label">
           وحدة {{ i + 1 }}
         </span>
-
       </div>
-
     </div>
-
 
     <!-- =====================================================
          LOADING
          ===================================================== -->
-
     <div
       *ngIf="loading()"
       class="loading-state"
     >
-
       <div class="loader"></div>
-
       <p>
         جاري تحميل البرنامج التدريبي...
       </p>
-
     </div>
-
 
     <!-- =====================================================
          ERROR
          ===================================================== -->
-
     <div
       *ngIf="error() && !loading()"
       class="error-state"
     >
-
       <div class="error-icon">
         <i class="fa-solid fa-exclamation"></i>
       </div>
-
       <h3>
         تعذر تحميل البرنامج
       </h3>
-
       <p>
         {{ error() }}
       </p>
-
       <button
         type="button"
         class="retry-button"
@@ -355,14 +259,11 @@
       >
         إعادة المحاولة
       </button>
-
     </div>
-
 
     <!-- =====================================================
          MODULE LIST
          ===================================================== -->
-
     <div
       *ngIf="
         !loading() &&
@@ -371,51 +272,40 @@
       "
       class="modules-list"
     >
-
-      <details
+          <details
         *ngFor="
           let module of modules();
           let i = index;
         "
         class="module-card"
-
         [class.locked-card]="module.isLocked"
-
         [open]="
           i === 0 &&
           !module.isLocked
         "
       >
-
         <!-- =================================================
              MODULE HEADER
              ================================================= -->
-
         <summary
           class="module-summary"
           (click)="openModule(module)"
         >
-
           <div class="module-main-info">
-
             <div
               class="module-status-icon"
-
               [class.completed-icon]="
                 module.progressPercentage === 100
               "
-
               [class.active-icon]="
                 !module.isLocked &&
                 module.progressPercentage !== 100 &&
                 (module.progressPercentage || 0) > 0
               "
-
               [class.locked-icon]="
                 module.isLocked
               "
             >
-
               <ng-container
                 *ngIf="
                   module.progressPercentage === 100
@@ -423,8 +313,6 @@
               >
                 <i class="fa-solid fa-check"></i>
               </ng-container>
-
-
               <ng-container
                 *ngIf="
                   !module.isLocked &&
@@ -433,30 +321,20 @@
               >
                 {{ i + 1 }}
               </ng-container>
-
-
               <ng-container
                 *ngIf="module.isLocked"
               >
                 <i class="fa-solid fa-lock"></i>
               </ng-container>
-
             </div>
-
-
             <div class="module-details">
-
               <div class="module-title-row">
-
                 <span class="module-number">
                   الوحدة {{ i + 1 }}
                 </span>
-
                 <h3 class="module-title">
                   {{ module.title }}
                 </h3>
-
-
                 <span
                   *ngIf="
                     module.progressPercentage === 100
@@ -465,8 +343,6 @@
                 >
                   مكتمل
                 </span>
-
-
                 <span
                   *ngIf="
                     !module.isLocked &&
@@ -477,16 +353,12 @@
                 >
                   مستمر
                 </span>
-
-
                 <span
                   *ngIf="module.isLocked"
                   class="module-badge locked"
                 >
                   مقفل
                 </span>
-
-
                 <span
                   *ngIf="
                     !module.isLocked &&
@@ -496,85 +368,59 @@
                 >
                   جديد
                 </span>
-
               </div>
-
-
               <div class="progress-row">
-
                 <span class="progress-number">
                   {{ module.progressPercentage || 0 }}%
                 </span>
-
                 <div class="module-progress">
-
                   <div
                     class="module-progress-fill"
-
                     [style.width]="
                       (module.progressPercentage || 0) + '%'
                     "
                   ></div>
-
                 </div>
-
               </div>
-
             </div>
-
           </div>
-
-
           <span
             *ngIf="!module.isLocked"
             class="accordion-arrow"
           >
             <i class="fa-solid fa-chevron-down"></i>
           </span>
-
-
           <span
             *ngIf="module.isLocked"
             class="locked-arrow"
           >
             <i class="fa-solid fa-lock"></i>
           </span>
-
         </summary>
-
 
         <!-- =================================================
              LOCKED MESSAGE
              ================================================= -->
-
         <div
           *ngIf="module.isLocked"
           class="prerequisite-message"
         >
-
           <div class="prerequisite-icon">
             <i class="fa-solid fa-lock"></i>
           </div>
-
           <div class="prerequisite-content">
-
             <strong>
               هذه الوحدة مقفلة
             </strong>
-
             <p>
               يجب إكمال الوحدة السابقة قبل الوصول إلى هذه الوحدة.
             </p>
-
           </div>
-
         </div>
-
 
         <!-- =================================================
              LESSONS
              ================================================= -->
-
         <div
           *ngIf="
             !module.isLocked &&
@@ -583,20 +429,14 @@
           "
           class="module-lessons"
         >
-
           <div class="lessons-header">
-
             <span>
               دروس الوحدة
             </span>
-
             <span>
               {{ module.lessons.length }} درس
             </span>
-
           </div>
-
-
           <div
             *ngFor="
               let lesson of module.lessons;
@@ -604,11 +444,8 @@
             "
             class="lesson-item"
           >
-
             <div class="lesson-info">
-
               <div class="lesson-status">
-
                 <span
                   *ngIf="
                     lesson.progressPercentage === 100
@@ -617,8 +454,6 @@
                 >
                   <i class="fa-solid fa-check"></i>
                 </span>
-
-
                 <span
                   *ngIf="
                     lesson.progressPercentage !== 100
@@ -627,132 +462,111 @@
                 >
                   {{ lessonIndex + 1 }}
                 </span>
-
               </div>
-
-
               <div class="lesson-text">
-
                 <h4 class="lesson-title">
                   {{ lesson.title || 'درس بدون عنوان' }}
                 </h4>
-
                 <p
                   *ngIf="lesson.contentBody"
                   class="lesson-description"
                 >
                   {{ lesson.contentBody }}
                 </p>
-
               </div>
-
             </div>
-
 
             <!-- =================================================
                  LESSON ACTIONS
                  ================================================= -->
-
             <div class="lesson-actions">
 
               <!-- مشاهدة الدرس -->
-
               <button
                 type="button"
                 class="lesson-action-button view-button"
-
                 (click)="
                   viewLesson(lesson, module);
                   $event.preventDefault();
                   $event.stopPropagation()
                 "
               >
-
                 <span>
                   <i class="fa-solid fa-play"></i>
                 </span>
-
                 مشاهدة الدرس
-
               </button>
 
-
               <!-- تحميل الدرس -->
-
               <button
                 type="button"
                 class="lesson-action-button download-button"
-
                 (click)="
                   downloadLessonMaterials(lesson, module);
                   $event.preventDefault();
                   $event.stopPropagation()
                 "
               >
-
                 <span>
                   <i class="fa-solid fa-download"></i>
                 </span>
-
                 تحميل الدرس
-
               </button>
 
-
               <!-- ملاحظاتي -->
-
               <button
                 type="button"
                 class="lesson-action-button notes-button"
-
                 (click)="
                   openLessonNotes(lesson, module);
                   $event.preventDefault();
                   $event.stopPropagation()
                 "
               >
-
                 <span>
                   <i class="fa-regular fa-note-sticky"></i>
                 </span>
-
                 ملاحظاتي
-
               </button>
-
 
               <!-- تقييم الدرس -->
+              <div class="lesson-rating-wrapper">
+                <div
+                  *ngIf="ratingTooltipLessonId() === lesson.lessonId"
+                  class="lesson-rating-tooltip"
+                  role="alert"
+                  dir="rtl"
+                >
+                  <div class="lesson-rating-tooltip-title">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <strong>أكمِل مشاهدة الدرس أولًا</strong>
+                  </div>
+                  <span>يمكنك تقييم الدرس بعد الانتهاء من مشاهدته.</span>
+                </div>
 
-              <button
-                type="button"
-                class="lesson-action-button rating-button"
-
-                (click)="
-                  openLessonRating(lesson, module);
-                  $event.preventDefault();
-                  $event.stopPropagation()
-                "
-              >
-
-                <span>
-                  <i class="fa-regular fa-star"></i>
-                </span>
-
-                تقييم الدرس
-
-              </button>
+                <button
+                  type="button"
+                  class="lesson-action-button rating-button"
+                  (click)="
+                    openLessonRating(lesson, module);
+                    $event.preventDefault();
+                    $event.stopPropagation()
+                  "
+                >
+                  <span>
+                    <i class="fa-regular fa-star"></i>
+                  </span>
+                  تقييم الدرس
+                </button>
+              </div>
 
             </div>
-
           </div>
-
         </div>
-
 
         <!-- =================================================
              NO LESSONS
              ================================================= -->
-
         <div
           *ngIf="
             !module.isLocked &&
@@ -761,24 +575,17 @@
           "
           class="no-lessons"
         >
-
           <span>
             <i class="fa-solid fa-book"></i>
           </span>
-
           لا توجد دروس لهذه الوحدة حاليًا
-
         </div>
-
       </details>
-
     </div>
-
 
     <!-- =====================================================
          EMPTY
          ===================================================== -->
-
     <div
       *ngIf="
         !loading() &&
@@ -787,97 +594,69 @@
       "
       class="empty-state"
     >
-
       <div class="empty-icon">
         <i class="fa-solid fa-folder-open"></i>
       </div>
-
       <h3>
         لا توجد وحدات تدريبية
       </h3>
-
       <p>
         لم تتم إضافة وحدات لهذا البرنامج حتى الآن.
       </p>
-
     </div>
-
   </section>
-
-
-  <!-- =====================================================
+    <!-- =====================================================
        LESSON DETAILS
        ===================================================== -->
-
   <div
     *ngIf="showLessonSidebar()"
     class="lesson-sidebar-overlay"
     (click)="closeLessonSidebar()"
   >
-
     <aside
       class="lesson-sidebar"
       dir="rtl"
       (click)="$event.stopPropagation()"
     >
-
       <!-- =================================================
            SIDEBAR HEADER
            ================================================= -->
-
       <div class="lesson-sidebar-header">
-
         <div class="lesson-sidebar-title">
-
           <span class="sidebar-title-icon">
             <i class="fa-solid fa-book-open"></i>
           </span>
-
           <div>
-
             <h3>
               {{ lessonViewerVisible() ? 'مشاهدة الدرس' : 'تفاصيل الدرس' }}
             </h3>
-
             <p>
               {{ selectedLesson()?.title || 'الدرس' }}
             </p>
-
           </div>
-
         </div>
-
-
         <button
           type="button"
           class="lesson-sidebar-close"
           (click)="closeLessonSidebar()"
         >
-
           <i class="fa-solid fa-xmark"></i>
-
         </button>
-
       </div>
-
 
       <!-- =================================================
            MAIN LESSON WORKSPACE
            ================================================= -->
-
       <div class="lesson-workspace">
-
 
         <!-- =================================================
              MAIN LESSON AREA
              ================================================= -->
-
         <main class="lesson-main-area">
 
           <!-- =================================================
                LESSON VIEWER
                ================================================= -->
-
           <div
             *ngIf="
               lessonViewerVisible() &&
@@ -885,316 +664,214 @@
             "
             class="lesson-viewer-section"
           >
-
             <div class="lesson-viewer-header">
-
               <div>
-
                 <span class="lesson-viewer-label">
                   الدرس الحالي
                 </span>
-
                 <h4>
                   {{ lessonViewerTitle() }}
                 </h4>
-
               </div>
-
               <span class="lesson-viewed-badge">
-
                 <i class="fa-solid fa-circle-check"></i>
-
                 تمت المشاهدة
-
               </span>
-
             </div>
-
 
             <!-- =================================================
                  HTML5 VIDEO PLAYER
                  ================================================= -->
-
             <div class="lesson-video-container">
-
-
-
-
               <video
                 [src]="lessonViewerUrl()"
                 controls
                 playsinline
                 preload="metadata"
-                 (ended)="onLessonVideoEnded()"
+                (ended)="onLessonVideoEnded()"
               >
                 المتصفح الخاص بك لا يدعم تشغيل الفيديو.
               </video>
-
             </div>
 
-
             <div class="lesson-viewer-info">
-
               <i class="fa-solid fa-circle-info"></i>
-
               <span>
                 يمكنك مشاهدة الدرس مباشرة من هذه الصفحة، وبعد فتح الدرس
                 تصبح الملاحظات والتقييم متاحة.
               </span>
-
             </div>
-
           </div>
-
 
           <!-- =================================================
                LESSON INFORMATION
                ================================================= -->
-
           <div class="lesson-sidebar-info">
-
             <div class="sidebar-info-item">
-
               <i class="fa-solid fa-layer-group"></i>
-
               <span>
                 {{ selectedModule()?.title || 'الوحدة' }}
               </span>
-
             </div>
-
-
             <div class="sidebar-info-item">
-
               <i class="fa-solid fa-book-open"></i>
-
               <span>
                 {{ selectedLesson()?.title || 'الدرس' }}
               </span>
-
             </div>
-
           </div>
-
         </main>
-
 
         <!-- =================================================
              RIGHT NOTES PANEL
              ================================================= -->
-
         <aside class="lesson-notes-panel">
-
 
           <!-- =================================================
                TABS
                ================================================= -->
-
           <div class="lesson-sidebar-tabs">
-
             <button
               type="button"
               class="lesson-sidebar-tab"
-
               [class.active]="
                 lessonSidebarTab() === 'notes'
               "
-
               (click)="
                 switchLessonSidebarTab('notes')
               "
             >
-
               <i class="fa-regular fa-note-sticky"></i>
-
               <span>
                 ملاحظاتي
               </span>
-
             </button>
-
-
             <button
               type="button"
               class="lesson-sidebar-tab"
-
               [class.active]="
                 lessonSidebarTab() === 'rating'
               "
-
               (click)="
                 switchLessonSidebarTab('rating')
               "
             >
-
               <i class="fa-regular fa-star"></i>
-
               <span>
                 تقييم الدرس
               </span>
-
             </button>
-
           </div>
-
 
           <!-- =================================================
                SIDEBAR CONTENT
                ================================================= -->
-
           <div class="lesson-sidebar-content">
 
             <!-- =================================================
                  NOTES
                  ================================================= -->
-
             <div
               *ngIf="
                 lessonSidebarTab() === 'notes'
               "
               class="sidebar-tab-content"
             >
-
               <div class="sidebar-section-title">
-
                 <div class="sidebar-section-icon notes-icon">
-
                   <i class="fa-regular fa-note-sticky"></i>
-
                 </div>
-
                 <div>
-
                   <h4>
                     ملاحظاتي
                   </h4>
-
                   <p>
                     أضف ملاحظاتك الخاصة حول هذا الدرس
                   </p>
-
                 </div>
-
               </div>
-
 
               <label class="sidebar-field-label">
                 ملاحظتك
               </label>
 
-
               <textarea
                 class="lesson-notes-textarea"
-
                 [value]="lessonNote()"
-
                 (input)="updateLessonNote($event)"
-
                 placeholder="اكتب ملاحظاتك حول هذا الدرس..."
-
                 rows="10"
               ></textarea>
 
-
               <div class="sidebar-character-hint">
-
                 <i class="fa-solid fa-circle-info"></i>
-
                 <span>
                   اكتب أي ملاحظات أو نقاط مهمة تريد الاحتفاظ بها لهذا الدرس.
                 </span>
-
               </div>
-
 
               <button
                 type="button"
                 class="sidebar-save-button notes-save-button"
                 (click)="saveLessonNote()"
               >
-
                 <i class="fa-solid fa-check"></i>
-
                 حفظ الملاحظة
-
               </button>
-
             </div>
-
 
             <!-- =================================================
                  RATING
                  ================================================= -->
-
             <div
               *ngIf="
                 lessonSidebarTab() === 'rating'
               "
               class="sidebar-tab-content rating-tab-content"
             >
-
               <div class="sidebar-section-title">
-
                 <div class="sidebar-section-icon rating-icon">
-
                   <i class="fa-regular fa-star"></i>
-
                 </div>
-
                 <div>
-
                   <h4>
                     تقييم الدرس
                   </h4>
-
                   <p>
                     ساعدنا بتقييم مدى استفادتك من هذا الدرس
                   </p>
-
                 </div>
-
               </div>
-
 
               <div class="rating-question">
                 كيف تقيّم هذا الدرس؟
               </div>
 
-
               <div class="rating-stars">
-
                 <button
                   *ngFor="
                     let star of [1, 2, 3, 4, 5]
                   "
                   type="button"
                   class="rating-star-button"
-
                   [class.selected]="
                     star <= lessonRating()
                   "
-
                   (click)="
                     selectLessonRating(star)
                   "
                 >
-
                   <i
                     class="fa-star"
-
                     [class.fa-solid]="
                       star <= lessonRating()
                     "
-
                     [class.fa-regular]="
                       star > lessonRating()
                     "
                   ></i>
-
                 </button>
-
               </div>
-
 
               <div
                 *ngIf="
@@ -1202,38 +879,28 @@
                 "
                 class="rating-text"
               >
-
                 <ng-container
                   [ngSwitch]="lessonRating()"
                 >
-
                   <span *ngSwitchCase="1">
                     غير مفيد
                   </span>
-
                   <span *ngSwitchCase="2">
                     يحتاج إلى تحسين
                   </span>
-
                   <span *ngSwitchCase="3">
                     جيد
                   </span>
-
                   <span *ngSwitchCase="4">
                     جيد جدًا
                   </span>
-
                   <span *ngSwitchCase="5">
                     ممتاز
                   </span>
-
                 </ng-container>
-
               </div>
 
-
               <div class="rating-selected-value">
-
                 <span
                   *ngIf="
                     lessonRating() === 0
@@ -1241,7 +908,6 @@
                 >
                   اختر عدد النجوم
                 </span>
-
                 <span
                   *ngIf="
                     lessonRating() > 0
@@ -1249,35 +915,21 @@
                 >
                   تقييمك: {{ lessonRating() }} من 5
                 </span>
-
               </div>
-
 
               <button
                 type="button"
                 class="sidebar-save-button rating-save-button"
-
                 (click)="saveLessonRating()"
               >
-
                 <i class="fa-solid fa-paper-plane"></i>
-
                 إرسال التقييم
-
               </button>
-
             </div>
 
           </div>
-
         </aside>
-
       </div>
-
     </aside>
-
   </div>
-
 </div>
-
-
