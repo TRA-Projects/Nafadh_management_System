@@ -149,6 +149,8 @@ export class TrainerQuizzes implements OnInit {
   questionError = signal('');
 
   questionSuccess = signal('');
+  showPublishConfirm = signal(false);
+quizToPublish = signal<QuizDto | null>(null);
 
   selectedQuestionIds = signal<Set<number>>(new Set());
 
@@ -518,6 +520,139 @@ const matchesStatus =
     });
   }
 
+  // =====================================================
+// PUBLISH QUIZ
+// =====================================================
+
+publishQuiz(quiz: QuizDto): void {
+  const trainerId = this.trainer()?.trainerId;
+
+  if (!trainerId) {
+    this.errorMessage.set(
+      'تعذر تحديد المدرب الحالي.'
+    );
+    return;
+  }
+
+  if (this.getStatusNumber(quiz.status) !== 0) {
+    return;
+  }
+
+  // التأكد من وجود أسئلة قبل النشر
+  this.api
+    .getQuizQuestions(quiz.quizId, trainerId)
+    .subscribe({
+      next: questions => {
+
+        if (!questions || questions.length === 0) {
+          this.errorMessage.set(
+            'لا يمكن نشر الاختبار قبل إضافة سؤال واحد على الأقل.'
+          );
+          return;
+        }
+this.saving.set(true);
+this.errorMessage.set('');
+this.successMessage.set('');
+
+this.api.publishQuiz(
+  quiz.quizId,
+  trainerId
+).subscribe({
+  next: () => {
+    this.saving.set(false);
+
+    this.successMessage.set(
+      'تم نشر الاختبار بنجاح.'
+    );
+    this.questionSuccess.set(
+    'تم نشر الاختبار بنجاح.'
+  );
+
+  this.loadQuizQuestions(quiz.quizId);
+
+    this.loadQuizzes(trainerId);
+  },
+
+  error: error => {
+    console.error(
+      'Error publishing quiz:',
+      error
+    );
+
+    this.saving.set(false);
+
+    this.errorMessage.set(
+      error?.error?.message ||
+      'تعذر نشر الاختبار. تأكدي من اكتمال بيانات الاختبار والأسئلة.'
+    );
+  }
+});
+      
+      },
+
+      error: error => {
+        console.error(
+          'Error checking quiz questions:',
+          error
+        );
+
+        this.errorMessage.set(
+          'تعذر التحقق من أسئلة الاختبار.'
+        );
+      }
+    });
+}
+cancelPublish(): void {
+  this.showPublishConfirm.set(false);
+  this.quizToPublish.set(null);
+}
+
+confirmPublish(): void {
+  const quiz = this.quizToPublish();
+  const trainerId = this.trainer()?.trainerId;
+
+  if (!quiz || trainerId === undefined) {
+    return;
+  }
+
+  this.saving.set(true);
+  this.errorMessage.set('');
+  this.successMessage.set('');
+
+  this.api.publishQuiz(
+    quiz.quizId,
+    trainerId
+  ).subscribe({
+    next: () => {
+      this.saving.set(false);
+      this.showPublishConfirm.set(false);
+      this.quizToPublish.set(null);
+
+      this.successMessage.set(
+        'تم نشر الاختبار بنجاح.'
+      );
+      
+      
+      this.loadQuizzes(trainerId);
+    },
+
+    error: error => {
+      console.error(
+        'Error publishing quiz:',
+        error
+      );
+
+      this.saving.set(false);
+      this.showPublishConfirm.set(false);
+      this.quizToPublish.set(null);
+
+      this.errorMessage.set(
+        error?.error?.message ||
+        'تعذر نشر الاختبار. تأكدي من اكتمال بيانات الاختبار والأسئلة.'
+      );
+    }
+  });
+}
   // =====================================================
   // QUESTION BANK
   // =====================================================
@@ -1119,76 +1254,97 @@ loadQuizQuestions(quizId: number): void {
       });
   }
 
+
   // =====================================================
-  // ADD QUESTIONS TO QUIZ
-  // =====================================================
+// ADD QUESTIONS TO QUIZ
+// =====================================================
 
-  addSelectedQuestionsToQuiz(): void {
-    const quiz =
-      this.selectedQuiz();
+addSelectedQuestionsToQuiz(): void {
 
-    if (!quiz) {
-      return;
-    }
+  const quiz = this.selectedQuiz();
 
-    const questionIds =
-      Array.from(
-        this.selectedQuestionIds()
-      );
-
-    if (!questionIds.length) {
-      this.questionError.set(
-        'اختاري سؤالًا واحدًا على الأقل.'
-      );
-      return;
-    }
-
-    const trainerId =
-      this.trainer()?.trainerId;
-
-    if (!trainerId) {
-      this.questionError.set(
-        'تعذر تحديد المدرب الحالي.'
-      );
-      return;
-    }
-
-    this.questionSaving.set(true);
-
-    this.questionError.set('');
-
-    this.api
-      .addQuestionsToQuiz(
-        quiz.quizId,
-        trainerId,
-        questionIds
-      )
-      .subscribe({
-        next: () => {
-          this.questionSaving.set(false);
-
-          this.questionSuccess.set(
-            'تمت إضافة الأسئلة إلى الاختبار بنجاح.'
-          );
-
-          this.clearQuestionSelection();
-        },
-
-        error: error => {
-          console.error(
-            'Error adding questions to quiz:',
-            error
-          );
-
-          this.questionSaving.set(false);
-
-          this.questionError.set(
-            error?.error?.message ||
-            'تعذر إضافة الأسئلة إلى الاختبار.'
-          );
-        }
-      });
+  if (!quiz) {
+    return;
   }
+
+  const questionIds =
+    Array.from(
+      this.selectedQuestionIds()
+    );
+
+  if (!questionIds.length) {
+
+    this.questionError.set(
+      'اختاري سؤالًا واحدًا على الأقل.'
+    );
+
+    return;
+  }
+
+  const trainerId =
+    this.trainer()?.trainerId;
+
+  if (!trainerId) {
+
+    this.questionError.set(
+      'تعذر تحديد المدرب الحالي.'
+    );
+
+    return;
+  }
+
+  this.questionSaving.set(true);
+
+  this.questionError.set('');
+  this.questionSuccess.set('');
+
+  this.api
+    .addQuestionsToQuiz(
+      quiz.quizId,
+      trainerId,
+      questionIds
+    )
+    .subscribe({
+
+      next: () => {
+
+        this.questionSaving.set(false);
+
+        this.questionSuccess.set(
+          'تمت إضافة الأسئلة إلى الاختبار بنجاح. يمكنك الآن نشر الاختبار.'
+        );
+
+        // إلغاء التحديد
+        this.clearQuestionSelection();
+
+        // تحديث أسئلة الاختبار مباشرة
+        // بدون إغلاق بنك الأسئلة
+        this.loadQuizQuestions(
+          quiz.quizId
+        );
+
+        // تحديث قائمة الاختبارات في الخلفية
+        this.loadQuizzes(trainerId);
+
+      },
+
+      error: error => {
+
+        console.error(
+          'Error adding questions to quiz:',
+          error
+        );
+
+        this.questionSaving.set(false);
+
+        this.questionError.set(
+          error?.error?.message ||
+          'تعذر إضافة الأسئلة إلى الاختبار.'
+        );
+      }
+
+    });
+}
   // =====================================================
   // EMPTY QUESTION FORM
   // =====================================================
