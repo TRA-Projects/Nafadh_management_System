@@ -186,27 +186,50 @@ namespace Nafadh_Backend.Repositories
 
             if (existingGroupId != 0)
             {
-                var isMember = await _context.NFD_ConversationGroupMembers
-                    .AnyAsync(gm =>
-                        gm.ConversationId == existingGroupId &&
-                        gm.UserId == dto.TrainerUserId);
+                // جلب المتدربين المسجلين حاليًا في الدفعة
+                var existingGroupTraineeUserIds = await _context.NFD_Enrollments
+                     .Where(e => e.BatchId == dto.BatchId)
+                    .Select(e => e.Trainee.User.UserId)
+                    .ToListAsync();
 
-                if (!isMember)
+                // إضافة المدرب إلى قائمة الأعضاء المطلوبين
+                var requiredUserIds = existingGroupTraineeUserIds
+                     .Append(dto.TrainerUserId)
+                    .Distinct()
+                    .ToList();
+
+                // جلب الأعضاء الموجودين بالفعل في الجروب
+                var existingMemberIds = await _context.NFD_ConversationGroupMembers
+                    .Where(gm => gm.ConversationId == existingGroupId)
+                    .Select(gm => gm.UserId)
+                    .ToListAsync();
+
+                // تحديد الأعضاء الجدد فقط
+                var newMemberIds = requiredUserIds
+                    .Except(existingMemberIds)
+                    .ToList();
+
+                if (newMemberIds.Any())
                 {
-                    _context.NFD_ConversationGroupMembers.Add(
+                    var newMembers = newMemberIds.Select(userId =>
                         new NFD_ConversationGroupMember
                         {
                             ConversationId = existingGroupId,
-                            UserId = dto.TrainerUserId,
+                            UserId = userId,
                             BatchId = dto.BatchId
                         }
                     );
 
+                    await _context.NFD_ConversationGroupMembers
+                        .AddRangeAsync(newMembers);
+
                     await _context.SaveChangesAsync();
                 }
 
+                // إرجاع نفس الجروب دون إنشاء جروب جديد
                 return existingGroupId;
             }
+
 
             var conversation =
                 new NFD_SupportTicket
