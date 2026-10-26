@@ -292,8 +292,50 @@
               <div><dt>آخر تقييم</dt><dd>{{ lastEvaluationDate() ?? 'لا يوجد' }}</dd></div>
             </dl>
           </section>
-        </aside>
+        <section class="tp-card tp-quizzes" aria-labelledby="quiz-results-title">
+          <div class="tp-quizzes__head">
+            <h2 id="quiz-results-title" class="tp-h2">نتائج الاختبارات</h2>
+            @if (!quizResultsError() && quizResults().length > 0) {
+              <span class="tp-quizzes__count">{{ quizResults().length }} محاولة</span>
+            }
+          </div>
+          @if (quizResultsError()) {
+            <div class="tp-empty tp-empty--inline" role="alert">
+              <p class="tp-empty__text">تعذر تحميل نتائج الاختبارات.</p>
+              <button type="button" class="tp-btn" (click)="retry()">إعادة المحاولة</button>
+            </div>
+          } @else {
+            @for (result of quizResults(); track result.attemptId) {
+              <article class="tp-eval tp-quizzes__result">
+                <header class="tp-eval__head">
+                  <div class="tp-eval__score" [attr.data-tone]="tone(result.percentage)">
+                    <b>{{ formatScore(result.percentage) }}</b>
+                    <small>%</small>
+                  </div>
+                  <div class="tp-eval__meta">
+                    <strong>{{ result.quizTitle }}</strong>
+                    <span class="tp-muted">المحاولة {{ result.attemptNumber }} — {{ formatDate(result.submittedAt) }}</span>
+                    <span class="tp-muted">الدرجة المسجلة {{ formatScore(result.score) }}</span>
+                  </div>
+                  <span [class]="'tp-chip tp-chip--' + quizTone(result)">{{ quizLabel(result) }}</span>
+                </header>
+              </article>
+            } @empty {
+              <div class="tp-quizzes__empty" role="status">
+                <span class="tp-quizzes__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="5" y="4" width="14" height="17" rx="2" />
+                    <path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3" />
+                  </svg>
+                </span>
+                <p>لم تُسجّل نتائج اختبارات لهذا المتدرب بعد.</p>
+              </div>
+            }
+          }
+        </section>        </aside>
       </div>
+
+
     }
   }
 }

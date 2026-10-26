@@ -11,7 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
 
-import { CompanyApi } from '../../services/company-api';
+import { CompanyApi, CompanyQuizResult } from '../../services/company-api';
 import { EnrollmentDto, ProgressSummaryDto } from '../../../../core/models/dtos';
 import { NfdIcon } from '../../../../shared/ui/icon/icon';
 
@@ -128,6 +128,8 @@ export class CompanyTraineeProgress {
 
   // ---- raw state, all of it loaded from the backend ----
   readonly state = signal<LoadState>('loading');
+  readonly quizResults = signal<CompanyQuizResult[]>([]);
+  readonly quizResultsError = signal(false);
   readonly enrollment = signal<EnrollmentDto | null>(null);
   readonly evaluations = signal<EvaluationView[]>([]);
   readonly modules = signal<ModuleLite[]>([]);
@@ -152,6 +154,8 @@ export class CompanyTraineeProgress {
         tap((id) => {
           this.currentEnrollmentId = id;
           this.state.set('loading');
+          this.quizResults.set([]);
+          this.quizResultsError.set(false);
         }),
         switchMap((id) => this.fetchAll(id)),
         takeUntilDestroyed(this.destroyRef)
@@ -183,10 +187,16 @@ export class CompanyTraineeProgress {
           evaluations: this.api.getEvaluationsForEnrollment(enrollmentId),
           progress: this.api.getProgressSummary(enrollmentId).pipe(catchError(() => of(null))),
           buckets: this.api.getEvaluationBuckets(enrollmentId).pipe(catchError(() => of(null))),
-          modules: this.loadModules(enrollment)
+          modules: this.loadModules(enrollment),
+          quizResults: this.api.getQuizResultsForEnrollment(enrollmentId).pipe(
+            map((results) => ({ results, failed: false })),
+            catchError(() => of({ results: [] as CompanyQuizResult[], failed: true }))
+          )
         })
       ),
-      tap(({ enrollment, evaluations, progress, buckets, modules }) => {
+      tap(({ enrollment, evaluations, progress, buckets, modules, quizResults }) => {
+        this.quizResults.set(quizResults.results);
+        this.quizResultsError.set(quizResults.failed);
         this.enrollment.set(enrollment);
         this.evaluations.set((evaluations ?? []) as unknown as EvaluationView[]);
         this.progressSummary.set(progress);
@@ -482,6 +492,19 @@ export class CompanyTraineeProgress {
   /* ---------------------------------------------------------------- */
   /*  Template helpers                                                  */
   /* ---------------------------------------------------------------- */
+
+  quizLabel(result: CompanyQuizResult): string {
+    const labels: Record<string, string> = {
+      Submitted: 'مسلّم',
+      Expired: 'انتهى الوقت',
+      Terminated: 'أُنهي بسبب المخالفات'
+    };
+    return labels[result.status] ?? result.status;
+  }
+
+  quizTone(result: CompanyQuizResult): string {
+    return result.status === 'Terminated' ? 'bad' : 'gray';
+  }
 
   statusLabel(status?: string): string {
     return status ? STATUS_LABELS[status] ?? status : '—';

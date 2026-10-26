@@ -46,6 +46,18 @@ import {
   TrainerAttendanceUpsertDto,
 } from '../../../core/models/trainer-attendance.models';
 
+export interface CompanyQuizResult {
+  attemptId: number;
+  quizId: number;
+  quizTitle: string;
+  traineeId: number;
+  attemptNumber: number;
+  submittedAt: string | null;
+  score: number;
+  percentage: number;
+  status: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CompanyApi {
   private readonly http = inject(HttpClient);
@@ -367,6 +379,12 @@ downloadMyAccountPdf(): Observable<Blob> {
   // ============================================================
   // Trainee Progress
   // ============================================================
+
+  getQuizResultsForEnrollment(enrollmentId: number): Observable<CompanyQuizResult[]> {
+    return this.http.get<CompanyQuizResult[]>(
+      `${this.base}/quiz-results/company/enrollment/${enrollmentId}`
+    );
+  }
 
   getEnrollment(
     enrollmentId: number
