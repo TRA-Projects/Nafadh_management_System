@@ -1,7 +1,12 @@
+
 import { environment as managementEnvironment } from '../../../../../../../environments/environment';
 
 /** This one API family belongs to Management (NOT the Training runtime-config base). */
 const MANAGEMENT_REFERENCE_CONSTANTS = `${managementEnvironment.apiBaseUrl.replace(/\/api\/?$/, '')}/api/management/reference-constants`;
+
+/** Evaluation Templates belong to Nafadh_Backend, not Bidding_API. */
+const NAFADH_EVALUATION_TEMPLATE =
+  'https://localhost:7082/api/EvaluationTemplate';
 
 /**
  * Single place for relative API paths. Use these everywhere so mock + real use identical calls.
@@ -216,22 +221,23 @@ export const ApiPaths = {
 
   // ── Evaluation Templates ────────────────────────────────────────────────────
   /** GET: Retrieve evaluation templates with optional type, moduleId, and stage filters. */
-  evaluationTemplates: '/api/EvaluationTemplate/GetTemplates',
+  evaluationTemplates: `${NAFADH_EVALUATION_TEMPLATE}/GetTemplates`,
 
   /** GET: Retrieve one evaluation template and its criteria. */
   evaluationTemplateById: (templateId: number) =>
-    `/api/EvaluationTemplate/GetTemplateById/${templateId}`,
+    `${NAFADH_EVALUATION_TEMPLATE}/GetTemplateById/${templateId}`,
 
   /** POST: Create an evaluation template. */
-  createEvaluationTemplate: '/api/EvaluationTemplate/CreateTemplate',
+  createEvaluationTemplate: `${NAFADH_EVALUATION_TEMPLATE}/CreateTemplate`,
 
   /** PUT: Update an existing evaluation template. */
   updateEvaluationTemplate: (templateId: number) =>
-    `/api/EvaluationTemplate/UpdateTemplate/${templateId}`,
+    `${NAFADH_EVALUATION_TEMPLATE}/UpdateTemplate/${templateId}`,
 
   /** DELETE: Delete an evaluation template. */
   deleteEvaluationTemplate: (templateId: number) =>
-    `/api/EvaluationTemplate/DeleteTemplate/${templateId}`,
+    `${NAFADH_EVALUATION_TEMPLATE}/DeleteTemplate/${templateId}`,
+
   adminAuditTrail: '/api/jobseekers/admin/audit-trail',
   adminAuditValueHistory: '/api/jobseekers/admin/audit-trail/value-history',
   adminCustomNotifications: '/api/jobseekers/admin/custom-notifications',
