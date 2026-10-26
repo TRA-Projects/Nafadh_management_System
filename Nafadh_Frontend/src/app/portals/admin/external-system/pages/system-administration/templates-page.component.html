@@ -1,0 +1,42 @@
+
+<div class="templates-page" dir="rtl">
+  <div class="page-header">
+    <div>
+      <div class="breadcrumb">
+        الرئيسية / الإدارة / <span>القوالب</span>
+      </div>
+      <h1>إدارة القوالب</h1>
+      <p>إدارة قوالب الإشعارات وقوالب التقييم من مكان واحد.</p>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="أنواع القوالب">
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'notifications'"
+      [class.active]="activeTab() === 'notifications'"
+      (click)="selectTab('notifications')"
+    >
+      قوالب الإشعارات
+    </button>
+
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'evaluations'"
+      [class.active]="activeTab() === 'evaluations'"
+      (click)="selectTab('evaluations')"
+    >
+      قوالب التقييم
+    </button>
+  </div>
+
+  <section *ngIf="activeTab() === 'notifications'" role="tabpanel">
+    <app-notification-templates-page />
+  </section>
+
+  <section *ngIf="activeTab() === 'evaluations'" role="tabpanel">
+    <app-evaluation-templates />
+  </section>
+</div>

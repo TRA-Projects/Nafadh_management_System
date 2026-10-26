@@ -213,6 +213,25 @@ export const ApiPaths = {
     `/api/jobseekers/admin/notification-templates/${encodeURIComponent(actionCode)}/placeholders`,
   adminNotificationTemplatePreview: (actionCode: string) =>
     `/api/jobseekers/admin/notification-templates/${encodeURIComponent(actionCode)}/preview`,
+
+  // ── Evaluation Templates ────────────────────────────────────────────────────
+  /** GET: Retrieve evaluation templates with optional type, moduleId, and stage filters. */
+  evaluationTemplates: '/api/EvaluationTemplate/GetTemplates',
+
+  /** GET: Retrieve one evaluation template and its criteria. */
+  evaluationTemplateById: (templateId: number) =>
+    `/api/EvaluationTemplate/GetTemplateById/${templateId}`,
+
+  /** POST: Create an evaluation template. */
+  createEvaluationTemplate: '/api/EvaluationTemplate/CreateTemplate',
+
+  /** PUT: Update an existing evaluation template. */
+  updateEvaluationTemplate: (templateId: number) =>
+    `/api/EvaluationTemplate/UpdateTemplate/${templateId}`,
+
+  /** DELETE: Delete an evaluation template. */
+  deleteEvaluationTemplate: (templateId: number) =>
+    `/api/EvaluationTemplate/DeleteTemplate/${templateId}`,
   adminAuditTrail: '/api/jobseekers/admin/audit-trail',
   adminAuditValueHistory: '/api/jobseekers/admin/audit-trail/value-history',
   adminCustomNotifications: '/api/jobseekers/admin/custom-notifications',

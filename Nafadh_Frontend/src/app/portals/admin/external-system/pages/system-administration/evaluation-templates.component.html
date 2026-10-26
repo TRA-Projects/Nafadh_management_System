@@ -1,0 +1,208 @@
+
+<div class="evaluation-page" dir="rtl">
+  <div class="toolbar">
+    <div>
+      <h2>قوالب التقييم</h2>
+      <p>إدارة قوالب التقييم ومراحلها.</p>
+    </div>
+
+    <button
+      type="button"
+      class="primary-button"
+      (click)="openCreateForm()"
+    >
+      + إضافة قالب
+    </button>
+  </div>
+
+  <div class="filters">
+    <label>
+      نوع التقييم
+      <select [(ngModel)]="filterType">
+        <option value="">جميع الأنواع</option>
+        <option *ngFor="let item of types" [value]="item.value">
+          {{ item.label }}
+        </option>
+      </select>
+    </label>
+
+    <label>
+      رقم الوحدة
+      <input type="number" min="1" [(ngModel)]="filterModuleId" />
+    </label>
+
+    <label>
+      المرحلة
+      <input type="number" min="1" [(ngModel)]="filterStage" />
+    </label>
+
+    <div class="filter-actions">
+      <button type="button" class="primary-button" (click)="loadTemplates()">
+        بحث
+      </button>
+      <button type="button" class="secondary-button" (click)="resetFilters()">
+        إعادة ضبط
+      </button>
+    </div>
+  </div>
+
+  <p *ngIf="errorMessage" class="message error" role="alert">
+    {{ errorMessage }}
+  </p>
+
+  <p *ngIf="successMessage" class="message success" role="status">
+    {{ successMessage }}
+  </p>
+
+  <div *ngIf="loading" class="empty-state">
+    جارٍ تحميل قوالب التقييم...
+  </div>
+
+  <div *ngIf="!loading && templates.length === 0" class="empty-state">
+    لا توجد قوالب تقييم مطابقة للبحث.
+  </div>
+
+  <div class="table-wrapper" *ngIf="!loading && templates.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>رقم القالب</th>
+          <th>نوع التقييم</th>
+          <th>رقم الوحدة</th>
+          <th>المرحلة</th>
+          <th>رقم المنشئ</th>
+          <th>الإجراءات</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let template of templates">
+          <td>{{ template.templateId }}</td>
+          <td>{{ typeLabel(template.type) }}</td>
+          <td>{{ template.moduleId ?? '—' }}</td>
+          <td>{{ template.stage ?? '—' }}</td>
+          <td>{{ template.createdByUserId }}</td>
+          <td class="actions">
+            <button
+              type="button"
+              class="text-button"
+              (click)="viewDetails(template)"
+            >
+              التفاصيل
+            </button>
+
+            <button
+              type="button"
+              class="text-button"
+              (click)="openEditForm(template)"
+            >
+              تعديل
+            </button>
+
+            <button
+              type="button"
+              class="text-button danger"
+              (click)="deleteTemplate(template)"
+            >
+              حذف
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <section *ngIf="formVisible" class="form-panel">
+    <h3>
+      {{ editingId == null ? 'إضافة قالب تقييم' : 'تعديل قالب تقييم' }}
+    </h3>
+
+    <form (ngSubmit)="saveTemplate()">
+      <label>
+        نوع التقييم
+        <select name="type" [(ngModel)]="form.type" required>
+          <option *ngFor="let item of types" [value]="item.value">
+            {{ item.label }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        رقم الوحدة (اختياري)
+        <input
+          type="number"
+          name="moduleId"
+          min="1"
+          [(ngModel)]="form.moduleId"
+        />
+      </label>
+
+      <label>
+        المرحلة (اختياري)
+        <input
+          type="number"
+          name="stage"
+          min="1"
+          [(ngModel)]="form.stage"
+        />
+      </label>
+
+      <label>
+        رقم المستخدم المنشئ
+        <input
+          type="number"
+          name="createdByUserId"
+          min="1"
+          [(ngModel)]="form.createdByUserId"
+          required
+        />
+      </label>
+
+      <div class="form-actions">
+        <button
+          type="submit"
+          class="primary-button"
+          [disabled]="saving"
+        >
+          {{ saving ? 'جارٍ الحفظ...' : 'حفظ' }}
+        </button>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="cancelForm()"
+          [disabled]="saving"
+        >
+          إلغاء
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section *ngIf="details" class="details-panel">
+    <div class="details-header">
+      <h3>تفاصيل القالب #{{ details.templateId }}</h3>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="details = null"
+      >
+        إغلاق
+      </button>
+    </div>
+
+    <p><strong>نوع التقييم:</strong> {{ typeLabel(details.type) }}</p>
+    <p><strong>رقم الوحدة:</strong> {{ details.moduleId ?? '—' }}</p>
+    <p><strong>المرحلة:</strong> {{ details.stage ?? '—' }}</p>
+    <p><strong>رقم المنشئ:</strong> {{ details.createdByUserId }}</p>
+
+    <h4>معايير التقييم</h4>
+
+    <p *ngIf="!details.criteria?.length" class="empty-state">
+      لا توجد معايير تقييم في الاستجابة.
+    </p>
+
+    <pre *ngIf="details.criteria?.length">{{ details.criteria | json }}</pre>
+  </section>
+</div>
