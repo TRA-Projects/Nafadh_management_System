@@ -468,37 +468,56 @@
 
       <div class="quiz-actions">
 
-        @if (canManageQuestions(quiz.status)) {
+  <!-- إدارة الأسئلة -->
+  @if (canManageQuestions(quiz.status)) {
 
-        <button type="button" class="questions-btn" (click)="openQuestionBank(quiz)">
+  <button
+    type="button"
+    class="questions-btn"
+    (click)="openQuestionBank(quiz)"
+  >
 
-          <i class="fa-solid fa-list-check"></i>
-          إدارة الأسئلة
+    <i class="fa-solid fa-list-check"></i>
 
-        </button>
+    إدارة الأسئلة
 
-        }
+  </button>
 
-        <button type="button" class="btn-results" (click)="openQuizResults(quiz.quizId)">
+  }
 
-          <i class="fa-solid fa-chart-column"></i>
-          عرض النتائج
+ 
 
-        </button>
+  <!-- النتائج -->
+  <button
+    type="button"
+    class="btn-results"
+    (click)="openQuizResults(quiz.quizId)"
+  >
 
-        @if (canEditQuiz(quiz.status)) {
+    <i class="fa-solid fa-chart-column"></i>
 
-        <button type="button" class="edit-btn" (click)="openEditForm(quiz)">
+    عرض النتائج
 
-          <i class="fa-regular fa-pen-to-square"></i>
-          تعديل الاختبار
+  </button>
 
-        </button>
+  <!-- تعديل -->
+  @if (canEditQuiz(quiz.status)) {
 
-        }
+  <button
+    type="button"
+    class="edit-btn"
+    (click)="openEditForm(quiz)"
+  >
 
-      </div>
+    <i class="fa-regular fa-pen-to-square"></i>
 
+    تعديل الاختبار
+
+  </button>
+
+  }
+
+</div>
 
 
     </article>
@@ -1697,65 +1716,101 @@
       <!-- QUESTION BANK FOOTER -->
       <!-- ================================================= -->
 
-      <footer class="question-bank-footer">
+      <!-- ================================================= -->
+<!-- QUESTION BANK FOOTER -->
+<!-- ================================================= -->
 
-        <div class="selected-question-info">
+<footer class="question-bank-footer">
 
-          <i class="fa-solid fa-list-check"></i>
+  <div class="selected-question-info">
 
-          <span>
-            تم اختيار
-          </span>
+    <i class="fa-solid fa-list-check"></i>
 
-          <strong>
-            {{ selectedQuestionIds().size }}
-          </strong>
+    <span>
+      تم اختيار
+    </span>
 
-          <span>
-            سؤال
-          </span>
+    <strong>
+      {{ selectedQuestionIds().size }}
+    </strong>
 
-        </div>
+    <span>
+      سؤال
+    </span>
 
-        <div class="modal-actions">
-
-          <button type="button" class="primary-btn" (click)="
-      addSelectedQuestionsToQuiz()
-    " [disabled]="
-      selectedQuestionIds().size === 0 ||
-      questionSaving()
-    ">
-
-            @if (questionSaving()) {
-
-            <i class="fa-solid fa-spinner fa-spin"></i>
-
-            جاري الإضافة...
-
-            }
-
-            @else {
-
-            <i class="fa-solid fa-link"></i>
-
-            إضافة المحدد للاختبار
-
-            <span>
-              ({{ getSelectedQuestionsCount() }})
-            </span>
-
-            }
-
-          </button>
+  </div>
 
 
-          <button type="button" class="secondary-btn" (click)="closeQuestionBank()" [disabled]="questionSaving()">
-            إغلاق
-          </button>
+  <div class="modal-actions">
 
-        </div>
+    <!-- إضافة الأسئلة المحددة -->
+    <button
+      type="button"
+      class="primary-btn"
+      (click)="addSelectedQuestionsToQuiz()"
+      [disabled]="
+        selectedQuestionIds().size === 0 ||
+        questionSaving()
+      "
+    >
 
-      </footer>
+      @if (questionSaving()) {
+
+        <i class="fa-solid fa-spinner fa-spin"></i>
+
+        جاري الإضافة...
+
+      }
+
+      @else {
+
+        <i class="fa-solid fa-link"></i>
+
+        إضافة المحدد للاختبار
+
+        <span>
+          ({{ getSelectedQuestionsCount() }})
+        </span>
+
+      }
+
+    </button>
+
+
+    <!-- نشر الاختبار -->
+    @if (quizQuestions().length > 0) {
+
+      <button
+        type="button"
+        class="publish-btn"
+        (click)="publishQuiz(selectedQuiz()!)"
+        [disabled]="questionSaving()"
+      >
+
+        <i class="fa-solid fa-paper-plane"></i>
+
+        نشر الاختبار
+
+      </button>
+
+    }
+
+
+    <!-- إغلاق -->
+    <button
+      type="button"
+      class="secondary-btn"
+      (click)="closeQuestionBank()"
+      [disabled]="questionSaving()"
+    >
+
+      إغلاق
+
+    </button>
+
+  </div>
+
+</footer>
 
       }
 
