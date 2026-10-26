@@ -937,7 +937,7 @@ export class TraineeAchievements implements OnInit {
     );
 
   canDownloadCertificate = computed(() => {
-    return this.progressPercentage() >= 50;
+    return this.progressPercentage() >= 85;
   });
 
   traineeName = computed(() => {
