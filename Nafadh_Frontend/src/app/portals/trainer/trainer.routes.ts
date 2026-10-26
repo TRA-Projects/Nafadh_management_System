@@ -13,6 +13,7 @@ export const TRAINER_ROUTES: Routes = [
       { path: 'content', loadComponent: () => import('./pages/content/content').then((m) => m.TrainerContent) },   
       {path: 'live-sessions',loadComponent: () =>import('./pages/live-sessions/live-sessions').then(m => m.TrainerLiveSessions)},
       {path: 'live-session-room/:sessionId',loadComponent: () =>import('./pages/live-session-room/live-session-room').then(m => m.LiveSessionRoom)},
+      {path: 'live-session-attendance/:sessionId',loadComponent: () =>import('./pages/live-attendance/live-attendance').then((m) => m.LiveAttendanceComponent),},
       { path: 'attendance', loadComponent: () => import('./pages/attendance/attendance').then((m) => m.TrainerAttendance) },
       { path: 'tasks', loadComponent: () => import('./pages/tasks/tasks').then((m) => m.TrainerTasks) },
       { path: 'trainees', loadComponent: () => import('./pages/trainees/trainees').then((m) => m.TrainerTrainees) },
