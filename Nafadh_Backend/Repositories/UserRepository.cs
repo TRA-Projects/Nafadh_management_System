@@ -1,4 +1,3 @@
-
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
@@ -105,5 +104,19 @@ namespace Nafadh_Backend.Repositories
                 .Distinct()
                 .ToListAsync();
         }
+
+        public Task<bool> IsTraineeWithdrawnAsync(int userId)
+        {
+            // نتحقق مما إذا كان المستخدم مرتبطاً بمتدرب حالته NotAssigned 
+            // أو لديه تسجيل مسبق حالته Dropped
+            return _context.NFD_Trainees
+                .Where(t => t.UserId == userId)
+                .AnyAsync(t =>
+                    t.Status == NFD_TraineeStatus.NotAssigned ||
+                    t.Enrollments.Any(e => e.CompletionStatus == NFD_EnrollmentCompletionStatus.Dropped)
+                );
+        }
+
+
     }
 }
