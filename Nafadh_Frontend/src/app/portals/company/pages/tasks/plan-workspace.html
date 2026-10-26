@@ -15,7 +15,7 @@
 
   @if (plan(); as p) {
     <!-- ───────── رأس الخطة والإجراءات ───────── -->
-    <header class="page-head">
+    <header class="page-head" data-guide="company-workspace-header">
       <div>
         <div class="ws-title">
           <h2>{{ p.title }}</h2>
@@ -77,7 +77,7 @@
     </header>
 
     <!-- ───────── حالة الاعتماد ───────── -->
-    <div class="panel">
+    <div class="panel" data-guide="company-workspace-approval">
       <ol class="stepper">
         @for (s of steps(); track s.label) {
           <li [class.done]="s.state === 'done'" [class.current]="s.state === 'current'" [class.bad]="s.rejected">
@@ -140,7 +140,7 @@
     <div class="ws-grid" style="margin-top: 16px">
       <!-- ───────── العمود الرئيسي: المراحل ───────── -->
       <div>
-        <div class="panel">
+        <div class="panel" data-guide="company-workspace-timeline">
           <h3>
             الجدول الزمني للمراحل
             <span class="chip">{{ p.stageCount }} مراحل</span>
@@ -173,7 +173,7 @@
           }
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin: 18px 0 12px">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 18px 0 12px" data-guide="company-workspace-stages">
           <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #0a1172">مراحل الكورس ومهامه ومشروعاته</h3>
           @if (p.canEditStructure) {
             <button type="button" class="btn primary sm" (click)="openStageForm()" [disabled]="busy()">
@@ -244,7 +244,7 @@
             }
 
             @if (stage.items.length) {
-              <table class="items">
+              <table class="items" data-guide="company-workspace-items">
                 <thead>
                   <tr>
                     <th>النوع</th>
@@ -317,7 +317,7 @@
                 <button type="button" class="btn ghost sm" (click)="openItemForm(stage, undefined, 'Task')" [disabled]="busy()">
                   <i class="fa-solid fa-plus"></i> مهمة
                 </button>
-                <button type="button" class="btn ghost sm" (click)="openItemForm(stage, undefined, 'Project')" [disabled]="busy()">
+                <button type="button" class="btn ghost sm" data-guide="company-workspace-new-project" (click)="openItemForm(stage, undefined, 'Project')" [disabled]="busy()">
                   <i class="fa-solid fa-plus"></i> مشروع
                 </button>
               </div>
@@ -370,7 +370,7 @@
         }
 
         <div class="panel" id="notes-panel">
-          <h3>الملاحظات <span class="chip">{{ p.notes.length }}</span></h3>
+          <h3 data-guide="company-workspace-notes">الملاحظات <span class="chip">{{ p.notes.length }}</span></h3>
 
           <form class="note-form" (ngSubmit)="addNote()">
             <select name="noteTarget" [(ngModel)]="noteTarget" aria-label="موضع الملاحظة">
