@@ -699,24 +699,26 @@ export class AdminSystemApiService {
   }
 
 
-  createEvaluationTemplate(
-    payload: EvaluationTemplateInputDto
-  ): Observable<unknown> {
-    return this.http.post(
-      ApiPaths.createEvaluationTemplate,
-      payload
-    );
-  }
+createEvaluationTemplate(
+  payload: EvaluationTemplateInputDto
+): Observable<string> {
+  return this.http.post(
+    ApiPaths.createEvaluationTemplate,
+    payload,
+    { responseType: 'text' }
+  );
+}
 
-  updateEvaluationTemplate(
-    templateId: number,
-    payload: EvaluationTemplateInputDto
-  ): Observable<unknown> {
-    return this.http.put(
-      ApiPaths.updateEvaluationTemplate(templateId),
-      payload
-    );
-  }
+updateEvaluationTemplate(
+  templateId: number,
+  payload: EvaluationTemplateInputDto
+): Observable<string> {
+  return this.http.put(
+    ApiPaths.updateEvaluationTemplate(templateId),
+    payload,
+    { responseType: 'text' }
+  );
+}
 
   deleteEvaluationTemplate(
     templateId: number
