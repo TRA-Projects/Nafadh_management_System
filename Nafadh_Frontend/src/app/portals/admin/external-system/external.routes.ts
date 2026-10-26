@@ -50,7 +50,7 @@ const templatesPage = () =>
   import('./pages/system-administration/templates-page.component')
     .then((m) => m.TemplatesPageComponent);
 
-// Notification template edit page
+// Notification template create/edit page
 const notificationTemplateEditPage = () =>
   import('./pages/system-administration/notification-template-edit-page.component')
     .then((m) => m.NotificationTemplateEditPageComponent);
@@ -97,10 +97,27 @@ export const EXTERNAL_ROUTES: Routes = [
         loadComponent: templatesPage,
       },
 
-      // Notification template edit page
+      // Create notification template
+      // Keep this route before ':id' so "new" is not treated as an ID.
+      {
+        path: 'notification-templates/new',
+        loadComponent: notificationTemplateEditPage,
+        data: {
+          title: 'Create notification template',
+          titleAr: 'إضافة قالب إشعارات',
+          mode: 'create',
+        },
+      },
+
+      // Edit notification template
       {
         path: 'notification-templates/:id',
         loadComponent: notificationTemplateEditPage,
+        data: {
+          title: 'Edit notification template',
+          titleAr: 'تعديل قالب إشعارات',
+          mode: 'edit',
+        },
       },
 
       // Identity and access

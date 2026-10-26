@@ -178,9 +178,7 @@ export class NotificationTemplatesPageComponent {
       (event.target as HTMLSelectElement).value,
     );
 
-    if (
-      PAGE_SIZE_OPTIONS.includes(value as PageSize)
-    ) {
+    if (PAGE_SIZE_OPTIONS.includes(value as PageSize)) {
       this.pageSize.set(value as PageSize);
       this.pageIndex.set(0);
     }
@@ -207,8 +205,16 @@ export class NotificationTemplatesPageComponent {
     }
   }
 
+  /**
+   * الانتقال إلى صفحة إنشاء قالب إشعارات جديد.
+   * يتطلب وجود Route مطابق للمسار /new.
+   */
   openAddModal(): void {
-    // يُضاف منطق إنشاء القالب عند تجهيز نموذج الإضافة.
+    this.closeMenu();
+
+    this.router.navigate([
+      '/admin/external-system/notification-templates/new',
+    ]);
   }
 
   toggleMenu(id: number, event: Event): void {
