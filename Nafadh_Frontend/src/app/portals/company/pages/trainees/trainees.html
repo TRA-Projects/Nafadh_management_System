@@ -1,19 +1,19 @@
 <section class="trainees-page" dir="rtl">
 
-  <header class="page-head">
+  <header class="page-head" data-guide="company-trainees-header">
     <div>
       <h2>قائمة المتدربين</h2>
       <p>إدارة المتدربين والبحث والتصفية حسب الدفعة والبرنامج والحالة والمشرف وتواريخ المباشرة والانتهاء</p>
     </div>
 
     <div class="actions">
-      <button type="button" class="btn export-btn" (click)="exportExcel()" [disabled]="loading || !filteredTrainees.length">
+      <button type="button" data-guide="company-trainees-export" class="btn export-btn" (click)="exportExcel()" [disabled]="loading || !filteredTrainees.length">
         تصدير Excel
       </button>
     </div>
   </header>
 
-  <div class="trainee-overview" role="group" aria-label="ملخص المتدربين">
+  <div data-guide="company-trainees-overview" class="trainee-overview" role="group" aria-label="ملخص المتدربين">
     <div class="overview-card"><span class="overview-icon">◉</span><span class="overview-label">إجمالي المتدربين</span><strong>{{ loading ? "—" : trainees.length }}</strong><small>جميع المتدربين المسجلين</small></div>
     <div class="overview-card"><span class="overview-icon">✓</span><span class="overview-label">المتدربون النشطون</span><strong>{{ loading ? "—" : activeCount }}</strong><small>قيد التدريب</small></div>
     <div class="overview-card"><span class="overview-icon">!</span><span class="overview-label">يحتاجون متابعة</span><strong>{{ loading ? "—" : riskCount }}</strong><small>حالات التعثر</small></div>
@@ -21,7 +21,7 @@
   </div>
 
   <!-- البحث والتصفية -->
-  <div class="filters" role="search" aria-label="البحث وتصفية المتدربين">
+  <div data-guide="company-trainees-filters" class="filters" role="search" aria-label="البحث وتصفية المتدربين">
 
     <div class="filter-field search-field">
       <label for="traineeSearch">بحث عن متدرب</label>
@@ -93,7 +93,7 @@
   @if (error) { <div class="load-message error-message" role="alert">{{ error }} <button type="button" class="btn outline" (click)="load()">إعادة المحاولة</button></div> }
 
   <!-- جدول المتدربين -->
-  <div class="table-wrap" aria-label="جدول بيانات المتدربين">
+  <div data-guide="company-trainees-table" class="table-wrap" aria-label="جدول بيانات المتدربين">
     <table>
       <caption class="sr-only">قائمة المتدربين وبيانات الدفعات والبرامج والحضور والحالات والتواريخ</caption>
       <thead>
@@ -146,7 +146,7 @@
           <td data-label="تاريخ المباشرة" class="date-cell">{{ formatDate(t.start) }}</td>
           <td data-label="تاريخ الانتهاء" class="date-cell">{{ formatDate(t.end) }}</td>
 
-          <td data-label="إجراءات" class="action-cell">
+          <td data-label="إجراءات" class="action-cell" [attr.data-guide]="$first ? 'company-trainees-actions' : null">
             <div class="actions table-actions">
 
               <!-- GitHub -->
@@ -194,7 +194,7 @@
     </table>
   </div>
 
-  <nav class="trainees-pagination" aria-label="التنقل بين صفحات المتدربين">
+  <nav data-guide="company-trainees-pagination" class="trainees-pagination" aria-label="التنقل بين صفحات المتدربين">
     <div class="pagination-size">
       <label for="traineesPageSize">عدد المتدربين في الصفحة</label>
       <select id="traineesPageSize" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">

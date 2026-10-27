@@ -1,4 +1,4 @@
-<div class="page-header-wrap">
+<div class="page-header-wrap" data-guide="company-profile-header">
   <div class="page-header-icon">
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M3 21h18"/>
@@ -22,7 +22,7 @@
 @if (company(); as c) {
   <div class="company-profile-page">
     <div class="company-profile-glow"></div>
-    <div class="nfd-card company-profile-hero-card" style="padding:0;overflow:hidden;margin-top:16px;border-radius:22px">
+    <div data-guide="company-profile-hero" class="nfd-card company-profile-hero-card" style="padding:0;overflow:hidden;margin-top:16px;border-radius:22px">
       <div class="company-profile-cover">
         @if (c.coverImageUrl) {
           <img [src]="c.coverImageUrl" alt="غلاف {{ c.companyName }}" class="company-profile-cover-img" />
@@ -59,7 +59,7 @@
       </div>
     </div>
 
-    <div class="company-profile-kpis">
+    <div class="company-profile-kpis" data-guide="company-profile-kpis">
       <div class="nfd-card kpi-card kpi-blue">
         <span class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
         <span class="nfd-muted kpi-label">المتدربين</span>
@@ -104,7 +104,7 @@
     </div>
 
     <div class="company-profile-info-wrap">
-      <div class="nfd-card company-profile-info-card company-details-card">
+      <div class="nfd-card company-profile-info-card company-details-card" data-guide="company-profile-details">
         <div class="company-details-heading">
           <div>
             <h3 class="section-title">معلومات الشركة</h3>
@@ -154,7 +154,7 @@
     </div>
 
     <div class="company-profile-sections">
-      <div class="nfd-card">
+      <div class="nfd-card" data-guide="company-profile-workfields">
         <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
           <span class="section-title">مجالات العمل</span>
           <span style="display:flex;align-items:center;gap:6px;">
@@ -174,7 +174,7 @@
         </div>
       </div>
 
-      <div class="nfd-card">
+      <div class="nfd-card" data-guide="company-profile-branches">
         <h3 style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <span class="section-title">الفروع</span>
           <button class="nfd-btn ghost" type="button" (click)="addBranch()">+ إضافة فرع</button>
@@ -216,7 +216,7 @@
     </div>
 
     <div class="company-profile-sections">
-      <div class="nfd-card">
+      <div class="nfd-card" data-guide="company-profile-specialties">
         <h3 class="section-title">التخصصات المعتمدة</h3>
         @if (specialtiesLoadError()) {
           <p class="nfd-muted" style="color:var(--status-cancelled-fg);">تعذر تحميل التخصصات من الخادم — راجع الـ console.</p>
@@ -238,7 +238,7 @@
         </div>
       </div>
 
-      <div class="nfd-card">
+      <div class="nfd-card" data-guide="company-profile-capacity">
         <h3 style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <span class="section-title">الطاقة الاستيعابية</span>
           <a class="nfd-btn ghost" routerLink="/company/trainees" style="text-decoration:none;">المتدربون: {{ usedCapacityValue() }} متدرب</a>
@@ -282,7 +282,7 @@
       </div>
     </div>
 
-    <div class="nfd-card" style="margin-top:16px;">
+    <div class="nfd-card" style="margin-top:16px;" data-guide="company-profile-supervisors">
       <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <span class="section-title">المشرفون المعتمدون</span>
         <span class="nfd-muted">{{ approvedSupervisors().length }}</span>
@@ -310,7 +310,7 @@
       </div>
     </div>
 
-    <div class="nfd-card" style="margin-top:16px;">
+    <div class="nfd-card" style="margin-top:16px;" data-guide="company-profile-contacts">
       <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <span class="section-title">نقاط الاتصال</span>
       </h3>

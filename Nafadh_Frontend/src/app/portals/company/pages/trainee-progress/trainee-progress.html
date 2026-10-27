@@ -1,4 +1,4 @@
-<nav class="tp-back" aria-label="التنقل">
+<nav data-guide="company-trainee-view-back" class="tp-back" aria-label="التنقل">
   <button type="button" class="tp-back__link" (click)="goBack()">
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M5 12h14M12 5l7 7-7 7" />
@@ -33,7 +33,7 @@
   @default {
     @if (enrollment(); as e) {
       <!-- ============ Profile ============ -->
-      <header class="tp-card tp-profile">
+      <header class="tp-card tp-profile" data-guide="company-trainee-view-profile">
         <input #fileInput type="file" hidden accept="image/png,image/jpeg,image/webp"
                (change)="onFileSelected($event, e.traineeId)" />
 
@@ -82,7 +82,7 @@
           </div>
         </div>
 
-        <div class="tp-groups">
+        <div class="tp-groups" data-guide="company-trainee-view-groups">
           <section class="tp-group" aria-labelledby="grp-program">
             <h2 id="grp-program" class="tp-group__title">البرنامج</h2>
             <div class="tp-field">
@@ -149,7 +149,7 @@
 
       <div class="tp-layout">
         <!-- ============ Modules + evaluation detail ============ -->
-        <section class="tp-card tp-modules" aria-labelledby="modules-title">
+        <section data-guide="company-trainee-view-modules" class="tp-card tp-modules" aria-labelledby="modules-title">
           <div class="tp-modules__head">
             <h2 id="modules-title" class="tp-h2">الوحدات والتقييمات</h2>
             @if (totalModules() > 0) {
@@ -250,7 +250,7 @@
 
         <!-- ============ Summary ============ -->
         <aside class="tp-aside" aria-label="ملخص الأداء">
-          <section class="tp-card tp-summary">
+          <section class="tp-card tp-summary" data-guide="company-trainee-view-summary">
             <h2 class="tp-h2">متوسط التقييم</h2>
             <div class="tp-ring">
               <svg viewBox="0 0 120 120" width="132" height="132" aria-hidden="true">
@@ -277,7 +277,7 @@
             }
           </section>
 
-          <section class="tp-card tp-numbers">
+          <section class="tp-card tp-numbers" data-guide="company-trainee-view-status">
             <h2 class="tp-h2">حالة المتدرب</h2>
             <dl class="tp-stats">
               <div>
@@ -292,7 +292,7 @@
               <div><dt>آخر تقييم</dt><dd>{{ lastEvaluationDate() ?? 'لا يوجد' }}</dd></div>
             </dl>
           </section>
-        <section class="tp-card tp-quizzes" aria-labelledby="quiz-results-title">
+        <section data-guide="company-trainee-view-quizzes" class="tp-card tp-quizzes" aria-labelledby="quiz-results-title">
           <div class="tp-quizzes__head">
             <h2 id="quiz-results-title" class="tp-h2">نتائج الاختبارات</h2>
             @if (!quizResultsError() && quizResults().length > 0) {

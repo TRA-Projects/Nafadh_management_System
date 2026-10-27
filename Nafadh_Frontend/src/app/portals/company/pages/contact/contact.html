@@ -1,10 +1,10 @@
 <section class="contact-page" dir="rtl">
-  <header class="contact-hero">
+  <header class="contact-hero" data-guide="company-contact-header">
     <div><span class="contact-eyebrow">مركز التواصل</span><h2 class="nfd-page-title">التواصل مع الهيئة</h2><p class="nfd-page-sub">مساحة موحدة لمتابعة استفساراتك ومراسلاتك مع الهيئة بكل سهولة.</p></div>
-    <button type="button" class="nfd-btn primary contact-new" (click)="openNew()"><span aria-hidden="true">＋</span> محادثة جديدة</button>
+    <button type="button" data-guide="company-contact-new" class="nfd-btn primary contact-new" (click)="openNew()"><span aria-hidden="true">＋</span> محادثة جديدة</button>
   </header>
 
-  <div class="contact-stats" aria-label="إحصائيات المحادثات">
+  <div data-guide="company-contact-stats" class="contact-stats" aria-label="إحصائيات المحادثات">
     <div class="contact-stat"><span class="stat-icon">▤</span><div><span class="stat-label">إجمالي المحادثات</span><strong>{{ totalConversations() }}</strong></div></div>
     <div class="contact-stat"><span class="stat-icon unread-icon">●</span><div><span class="stat-label">الرسائل غير المقروءة</span><strong>{{ totalUnread() }}</strong></div></div>
     <div class="contact-stat"><span class="stat-icon">✓</span><div><span class="stat-label">المحادثات المقروءة بالكامل</span><strong>{{ readConversations() }}</strong></div></div>
@@ -16,10 +16,10 @@
   @if (successMessage()) { <div class="contact-success" role="status">{{ successMessage() }}</div> }
 
   <div class="contact-workspace" [class.contact-mobile-open]="!!active() || opening()">
-    <aside class="contact-sidebar" aria-label="قائمة المحادثات">
+    <aside data-guide="company-contact-sidebar" class="contact-sidebar" aria-label="قائمة المحادثات">
       <div class="sidebar-head"><div><h3>المحادثات</h3><p>جميع مراسلاتك في مكان واحد</p></div><button class="contact-refresh" type="button" (click)="loadConversations()" [disabled]="loading() || sending() || creating()" title="تحديث المحادثات" aria-label="تحديث المحادثات">↻</button></div>
-      <div class="contact-filters"><label class="contact-search"><span aria-hidden="true">⌕</span><input class="nfd-input" [ngModel]="searchText" (ngModelChange)="searchText = $event" placeholder="ابحث عن محادثة..." aria-label="البحث في المحادثات" /></label><div class="contact-tabs" aria-label="تصفية المحادثات"><button type="button" [attr.aria-pressed]="filter() === 'all'" [class.selected]="filter() === 'all'" (click)="filter.set('all')">الكل</button><button type="button" [attr.aria-pressed]="filter() === 'unread'" [class.selected]="filter() === 'unread'" (click)="filter.set('unread')">غير المقروءة <span *ngIf="totalUnread() > 0">{{ unreadConversations() }}</span></button></div></div>
-      <div class="contact-list">
+      <div class="contact-filters" data-guide="company-contact-filters"><label class="contact-search"><span aria-hidden="true">⌕</span><input class="nfd-input" [ngModel]="searchText" (ngModelChange)="searchText = $event" placeholder="ابحث عن محادثة..." aria-label="البحث في المحادثات" /></label><div class="contact-tabs" aria-label="تصفية المحادثات"><button type="button" [attr.aria-pressed]="filter() === 'all'" [class.selected]="filter() === 'all'" (click)="filter.set('all')">الكل</button><button type="button" [attr.aria-pressed]="filter() === 'unread'" [class.selected]="filter() === 'unread'" (click)="filter.set('unread')">غير المقروءة <span *ngIf="totalUnread() > 0">{{ unreadConversations() }}</span></button></div></div>
+      <div class="contact-list" data-guide="company-contact-list">
         @if (loading()) { <div class="contact-placeholder" role="status"><span class="contact-spinner"></span><p>جاري تحميل المحادثات...</p></div> }
         @else {
           @for (c of filteredConversations(); track c.conversationId) {
@@ -33,7 +33,7 @@
       <div class="sidebar-footer">{{ filteredConversations().length }} من أصل {{ totalConversations() }} محادثة</div>
     </aside>
 
-    <main class="contact-chat" aria-label="تفاصيل المحادثة">
+    <main data-guide="company-contact-chat" class="contact-chat" aria-label="تفاصيل المحادثة">
       @if (opening()) { <div class="contact-placeholder" role="status"><span class="contact-spinner"></span><p>جاري فتح المحادثة...</p><button type="button" class="contact-text-button" (click)="clearActive()">العودة للقائمة</button></div> }
       @else if (active(); as conv) {
         <div class="chat-head"><button type="button" class="contact-back" (click)="clearActive()" aria-label="العودة إلى المحادثات">→</button><span class="chat-avatar" aria-hidden="true">هـ</span><div class="chat-heading"><h3>{{ conv.subject }}</h3><p>{{ conv.startedByName || 'محادثة مع الهيئة' }}</p></div><span class="chat-category">{{ conv.category || 'استفسار عام' }}</span></div>
@@ -43,7 +43,7 @@
             <div class="message-line" [class.mine]="m.senderId === (auth.userId ?? -1)"><div class="message-bubble"><strong>{{ m.senderName || (m.senderId === auth.userId ? 'أنت' : 'الهيئة') }}</strong><p dir="auto">{{ m.content }}</p><time>{{ m.sentDate | date:'dd/MM/yyyy • HH:mm' }}</time></div></div>
           } @empty { <div class="contact-placeholder"><span class="placeholder-icon">✉</span><h4>لا توجد رسائل بعد</h4><p>اكتب أول رسالة لبدء التواصل.</p></div> }
         </div>
-        <form class="chat-composer" (ngSubmit)="send()"><label for="contact-reply" class="sr-only">نص الرسالة</label><textarea id="contact-reply" class="nfd-input" name="reply" [(ngModel)]="replyText" rows="2" maxlength="5000" placeholder="اكتب رسالتك هنا..." (keydown.control.enter)="$event.preventDefault(); send()" [disabled]="sending()"></textarea><button class="nfd-btn primary" type="submit" [disabled]="!replyText.trim() || replyText.trim().length > 5000 || sending()">{{ sending() ? 'جاري الإرسال...' : 'إرسال الرسالة' }} <span aria-hidden="true">↗</span></button><small>Ctrl + Enter للإرسال</small></form>
+        <form data-guide="company-contact-composer" class="chat-composer" (ngSubmit)="send()"><label for="contact-reply" class="sr-only">نص الرسالة</label><textarea id="contact-reply" class="nfd-input" name="reply" [(ngModel)]="replyText" rows="2" maxlength="5000" placeholder="اكتب رسالتك هنا..." (keydown.control.enter)="$event.preventDefault(); send()" [disabled]="sending()"></textarea><button class="nfd-btn primary" type="submit" [disabled]="!replyText.trim() || replyText.trim().length > 5000 || sending()">{{ sending() ? 'جاري الإرسال...' : 'إرسال الرسالة' }} <span aria-hidden="true">↗</span></button><small>Ctrl + Enter للإرسال</small></form>
       } @else {
         <div class="contact-welcome"><div class="welcome-symbol" aria-hidden="true">✉</div><span class="contact-eyebrow">تواصل مباشر وآمن</span><h3>كل محادثاتك في مكان واحد</h3><p>اختر محادثة من القائمة لعرض الرسائل والرد عليها، أو ابدأ محادثة جديدة مع الهيئة.</p><button type="button" class="nfd-btn primary" (click)="openNew()">＋ بدء محادثة جديدة</button></div>
       }

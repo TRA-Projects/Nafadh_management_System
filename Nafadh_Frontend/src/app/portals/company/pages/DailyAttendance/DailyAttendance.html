@@ -2,7 +2,7 @@
 
     <!-- Header -->
 
-    <header class="head">
+    <header class="head" data-guide="company-attendance-header">
 
         <div class="head-text">
 
@@ -14,7 +14,7 @@
 
         <div class="head-actions">
 
-            <div class="export-actions">
+            <div class="export-actions" data-guide="company-attendance-export">
                 <div class="export-group">
                     <button type="button" class="btn ghost" (click)="toggleExportMenu('week')"
                         [attr.aria-expanded]="exportMenu() === 'week'">تصدير السجل الأسبوعي ▾</button>
@@ -59,7 +59,7 @@
 
         <div class="top">
 
-            <div class="tabs">
+            <div class="tabs" data-guide="company-attendance-tabs">
 
                 <button type="button" [class.active]="view() === 'day'" (click)="setView('day')">سجل اليوم</button>
 
@@ -73,7 +73,7 @@
 
             @if (view() === 'day') {
 
-            <div class="stats">
+            <div class="stats" data-guide="company-attendance-day-stats">
 
                 <span class="stat"><i class="dot blue"></i>حاضر <strong>{{ counts().Present }}</strong></span>
 
@@ -103,7 +103,7 @@
 
             <h3>سجل حضور اليوم — {{ todayLabel }}</h3>
 
-            <div class="daily-confirm-actions">
+            <div class="daily-confirm-actions" data-guide="company-attendance-confirm">
                 @if (isConfirmed()) {
                 <span class="hint">تم تأكيد السجل ولا يمكن تعديله</span>
                 }
@@ -171,7 +171,7 @@
 
         <!-- Daily table -->
 
-        <div class="table-wrap">
+        <div class="table-wrap" data-guide="company-attendance-day-table">
 
             <table>
 
@@ -179,7 +179,7 @@
 
                     <tr>
 
-                        <th class="trainer-filter-heading">
+                        <th class="trainer-filter-heading" data-guide="company-attendance-trainer-filter">
                             <div class="trainer-filter-header">
                                 <span>المدرب</span>
                                 <details class="trainer-filter-menu" #trainerFilterMenu>
@@ -264,7 +264,7 @@
 
                             <div class="status-cell">
 
-                                <div class="segments">
+                                <div class="segments" [attr.data-guide]="$first ? 'company-attendance-status' : null">
 
                                     @for (state of states; track state.key) {
 
@@ -311,7 +311,7 @@
 
                         </td>
 
-                        <td>
+                        <td [attr.data-guide]="$first ? 'company-attendance-note' : null">
 
                             @if (canManageAttendance() && noteEditingId() === row.trainer.trainerId) {
 
@@ -346,7 +346,7 @@
 
                         </td>
 
-                        <td>
+                        <td [attr.data-guide]="$first ? 'company-attendance-proof' : null">
 
                             @if (row.record?.excuseProofUrl) {
 
@@ -404,18 +404,18 @@
 
         } @else {
 
-        <div class="monthly-summary" aria-live="polite">
+        <div class="monthly-summary" aria-live="polite" data-guide="company-attendance-month-summary">
             <span>معدل الالتزام الشهري للشركة</span>
             <strong>{{ monthlyAttendanceRate() === null ? '—' : monthlyAttendanceRate() + '%' }}</strong>
         </div>
 
-        <div class="month-weeks">
+        <div class="month-weeks" data-guide="company-attendance-month-weeks">
 
             @for (week of monthWeeks(); track week.index) {
 
             <section class="week-section">
 
-                <button type="button" class="week-toggle" [attr.aria-expanded]="selectedWeek() === week.index"
+                <button type="button" class="week-toggle" [attr.data-guide]="$first ? 'company-attendance-month-toggle' : null" [attr.aria-expanded]="selectedWeek() === week.index"
                     (click)="toggleWeek(week.index)">
 
                     <span>الأسبوع {{ ['الأول','الثاني','الثالث','الرابع','الخامس','السادس'][week.index] }}</span>
@@ -444,7 +444,7 @@
 
         <ng-template #weekTable let-week>
 
-            <div class="week-summary">
+            <div class="week-summary" [attr.data-guide]="view() === 'week' ? 'company-attendance-week-summary' : null">
 
                 <div class="stats">
 
@@ -464,7 +464,7 @@
 
                 </div>
 
-                <div class="attendance-legend">
+                <div class="attendance-legend" [attr.data-guide]="view() === 'week' ? 'company-attendance-week-legend' : null">
                     <span class="legend-item legend-present">ح = حاضر</span>
                     <span class="legend-item legend-late">ت = متأخر</span>
                     <span class="legend-item legend-absent">غ = غائب</span>
@@ -474,7 +474,7 @@
 
             </div>
 
-            <div class="table-wrap">
+            <div class="table-wrap" [attr.data-guide]="view() === 'week' ? 'company-attendance-week-table' : 'company-attendance-month-table'">
 
                 <table class="week-table">
 
