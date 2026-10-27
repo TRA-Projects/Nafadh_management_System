@@ -1723,6 +1723,15 @@ getLiveAttendance(
     );
   }
 
+  endTrainerLiveRoom(
+  sessionId: number
+): Observable<unknown> {
+  return this.http.post(
+    `${this.base}/trainer/live-sessions/${sessionId}/room/end`,
+    {}
+  );
+}
+
   getTrainerLiveRoom(
     sessionId: number
   ): Observable<TrainerLiveRoomDetailsResponse> {

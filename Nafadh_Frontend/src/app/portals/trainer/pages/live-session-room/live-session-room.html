@@ -297,6 +297,16 @@
       مغادرة المحاضرة
     </button>
 
+    <button
+  type="button"
+  class="end-session-btn"
+  [disabled]="!connected() || endingSession()"
+  (click)="endSession()"
+>
+  <i class="fa-solid fa-circle-stop"></i>
+  {{ endingSession() ? 'جاري إنهاء المحاضرة...' : 'إنهاء المحاضرة' }}
+</button>
+
   </section>
 
   <div #audioContainer class="audio-container"></div>
