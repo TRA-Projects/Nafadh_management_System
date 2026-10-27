@@ -1,12 +1,4 @@
-
-import {
-  Component,
-  ElementRef,
-  OnDestroy,
-  effect,
-  inject,
-  signal
-} from '@angular/core';
+import { Component, OnDestroy, effect, inject, signal } from '@angular/core';
 
 import { TrainerGuideService } from '../services/trainer-guide.service';
 @Component({
@@ -23,18 +15,26 @@ export class TrainerGuideTour implements OnDestroy {
   private readonly highlightedClass = 'trainer-guide-highlight';
   private highlightedElement: HTMLElement | null = null;
 
-  constructor() {
-    effect(() => {
-      const active = this.guideService.isTourActive();
-      const guide = this.guideService.currentGuide();
+constructor() {
+  effect(() => {
+    const active = this.guideService.isTourActive();
+    const guide = this.guideService.currentGuide();
 
-      if (!active || !guide) {
-        this.clearHighlight();
-        this.currentStepIndex.set(0);
+    if (!active || !guide) {
+      this.clearHighlight();
+      this.currentStepIndex.set(0);
+      return;
+    }
+
+    this.currentStepIndex.set(0);
+
+    requestAnimationFrame(() => {
+      if (this.guideService.isTourActive()) {
+        this.highlightCurrentStep();
       }
     });
-  }
-
+  });
+}
   get steps() {
     return this.guideService.currentGuide()?.steps ?? [];
   }
