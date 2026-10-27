@@ -12,6 +12,15 @@ import { QuillModule } from 'ngx-quill';
 import { AdminSystemApiService } from '../../legacy/core/api/services/admin-system-api.service';
 import type { UpdateNotificationTemplateDto } from '../../legacy/core/api/models/admin-system.models';
 
+interface NotificationTemplateNavigationState {
+  id?: number;
+  code?: string;
+  name?: string;
+  active?: boolean;
+  email?: boolean;
+  sms?: boolean;
+}
+
 @Component({
   selector: 'app-notification-template-edit-page',
   standalone: true,
@@ -58,9 +67,13 @@ export class NotificationTemplateEditPageComponent implements OnInit {
   };
 
   quills: Record<string, any> = {};
+
   private focusedKey: string | null = null;
-  private focusedEl: HTMLInputElement | HTMLTextAreaElement | null =
-    null;
+
+  private focusedEl:
+    | HTMLInputElement
+    | HTMLTextAreaElement
+    | null = null;
 
   editForm = this.fb.nonNullable.group({
     code: [''],
@@ -87,13 +100,19 @@ export class NotificationTemplateEditPageComponent implements OnInit {
       return;
     }
 
-    const stateData =
-      history.state?.['template'];
+    const navigationState = history.state as {
+      template?: NotificationTemplateNavigationState;
+    };
 
-    // نفضّل ActionCode المرسل من القائمة،
-    // ثم نستخدم قيمة المسار إذا كانت تمثل ActionCode.
-    const actionCode =
-      stateData?.code || this.templateId;
+    const stateData = navigationState?.template;
+
+    // الأولوية لرمز القالب المرسل من صفحة القائمة.
+    // إذا لم يتوفر، نستخدم القيمة الموجودة في المسار.
+    const actionCode = (
+      stateData?.code ||
+      this.templateId ||
+      ''
+    ).trim();
 
     if (!actionCode) {
       this.errorMessage = 'لم يتم تحديد رمز القالب المطلوب.';
@@ -106,13 +125,14 @@ export class NotificationTemplateEditPageComponent implements OnInit {
   private loadTemplate(actionCode: string): void {
     this.isLoading = true;
     this.errorMessage = '';
+    this.successMessage = '';
 
     this.api.getNotificationTemplate(actionCode).subscribe({
       next: (template) => {
         this.editForm.patchValue({
-          code: template.ActionCode,
-          nameAr: template.LabelAr,
-          nameEn: template.LabelEn,
+          code: template.ActionCode ?? '',
+          nameAr: template.LabelAr ?? '',
+          nameEn: template.LabelEn ?? '',
           isActive: template.IsActive,
           hasEmail: template.EmailEnabled,
           hasSms: template.SmsEnabled,
@@ -127,13 +147,19 @@ export class NotificationTemplateEditPageComponent implements OnInit {
         });
 
         this.templateName =
-          template.LabelAr || template.LabelEn || template.ActionCode;
+          template.LabelAr ||
+          template.LabelEn ||
+          template.ActionCode;
 
+        // الاحتفاظ برمز ActionCode لاستخدامه عند الحفظ.
         this.templateId = template.ActionCode;
         this.isLoading = false;
       },
       error: (error: unknown) => {
-        console.error('Failed to load notification template:', error);
+        console.error(
+          'Failed to load notification template:',
+          error,
+        );
 
         this.errorMessage =
           'تعذر تحميل بيانات القالب. تحققي من رمز القالب واتصال الـ Backend.';
@@ -163,7 +189,10 @@ export class NotificationTemplateEditPageComponent implements OnInit {
     this.focusedEl = null;
   }
 
-  insertVariable(v: string, language: 'Ar' | 'En'): void {
+  insertVariable(
+    variable: string,
+    language: 'Ar' | 'En',
+  ): void {
     const key = this.focusedKey?.endsWith(language)
       ? this.focusedKey
       : 'body' + language;
@@ -172,10 +201,11 @@ export class NotificationTemplateEditPageComponent implements OnInit {
 
     if (quill) {
       const index =
-        quill.getSelection(true)?.index ?? quill.getLength() - 1;
+        quill.getSelection(true)?.index ??
+        quill.getLength() - 1;
 
-      quill.insertText(index, v, 'user');
-      quill.setSelection(index + v.length, 0);
+      quill.insertText(index, variable, 'user');
+      quill.setSelection(index + variable.length, 0);
       return;
     }
 
@@ -186,20 +216,22 @@ export class NotificationTemplateEditPageComponent implements OnInit {
       return;
     }
 
-    const start = element.selectionStart ?? element.value.length;
+    const start =
+      element.selectionStart ?? element.value.length;
+
     const end = element.selectionEnd ?? start;
 
     control.setValue(
       element.value.slice(0, start) +
-        v +
+        variable +
         element.value.slice(end),
     );
 
     queueMicrotask(() => {
       element.focus();
       element.setSelectionRange(
-        start + v.length,
-        start + v.length,
+        start + variable.length,
+        start + variable.length,
       );
     });
   }
@@ -224,13 +256,20 @@ export class NotificationTemplateEditPageComponent implements OnInit {
       .previewNotificationTemplate(actionCode, locale)
       .subscribe({
         next: (result) => {
-          // يمكن عرض النتيجة داخل نافذة معاينة مخصصة.
-          console.log('Notification template preview:', result);
+          console.log(
+            'Notification template preview:',
+            result,
+          );
+
           this.successMessage = 'تم إنشاء المعاينة بنجاح.';
           this.errorMessage = '';
         },
         error: (error: unknown) => {
-          console.error('Template preview failed:', error);
+          console.error(
+            'Template preview failed:',
+            error,
+          );
+
           this.errorMessage = 'تعذرت معاينة القالب.';
           this.successMessage = '';
         },
@@ -249,13 +288,15 @@ export class NotificationTemplateEditPageComponent implements OnInit {
 
     if (this.editForm.invalid) {
       this.editForm.markAllAsTouched();
+
       this.errorMessage =
         'يرجى تعبئة الحقول المطلوبة والتحقق من طول الرسائل النصية.';
+
       return;
     }
 
     const form = this.editForm.getRawValue();
-    const actionCode = form.code;
+    const actionCode = form.code.trim();
 
     if (!actionCode) {
       this.errorMessage = 'رمز القالب غير متوفر.';
@@ -283,16 +324,21 @@ export class NotificationTemplateEditPageComponent implements OnInit {
       .subscribe({
         next: () => {
           this.isSaving = false;
-          this.successMessage = 'تم حفظ تعديلات القالب بنجاح.';
+          this.successMessage =
+            'تم حفظ تعديلات القالب بنجاح.';
 
           this.router.navigate([
             '/admin/external-system/notification-templates',
           ]);
         },
         error: (error: unknown) => {
-          console.error('Failed to update notification template:', error);
+          console.error(
+            'Failed to update notification template:',
+            error,
+          );
 
           this.isSaving = false;
+
           this.errorMessage =
             'تعذر حفظ التعديلات. تحققي من بيانات الطلب واستجابة الـ Backend.';
         },

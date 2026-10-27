@@ -1,3 +1,4 @@
+
 import {
   Component,
   HostListener,
@@ -7,6 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { AdminSystemApiService } from '../../legacy/core/api/services/admin-system-api.service';
 import type { NotificationTemplateListItemDto } from '../../legacy/core/api/models/admin-system.models';
@@ -35,6 +37,7 @@ type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 })
 export class NotificationTemplatesPageComponent {
   private readonly api = inject(AdminSystemApiService);
+  private readonly router = inject(Router);
 
   readonly searchTerm = signal('');
   readonly selectedType = signal('');
@@ -76,21 +79,34 @@ export class NotificationTemplatesPageComponent {
   });
 
   readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.totalCount() / this.pageSize())),
+    Math.max(
+      1,
+      Math.ceil(this.totalCount() / this.pageSize()),
+    ),
   );
 
   readonly safePageIndex = computed(() =>
     Math.min(this.pageIndex(), this.totalPages() - 1),
   );
 
-  readonly canPrev = computed(() => this.safePageIndex() > 0);
-  readonly canNext = computed(() => this.safePageIndex() < this.totalPages() - 1);
-
-  readonly pageNumbers = computed(() =>
-    Array.from({ length: this.totalPages() }, (_, index) => index),
+  readonly canPrev = computed(
+    () => this.safePageIndex() > 0,
   );
 
-  readonly paginatedTemplates = computed(() => this.filteredTemplates());
+  readonly canNext = computed(
+    () => this.safePageIndex() < this.totalPages() - 1,
+  );
+
+  readonly pageNumbers = computed(() =>
+    Array.from(
+      { length: this.totalPages() },
+      (_, index) => index,
+    ),
+  );
+
+  readonly paginatedTemplates = computed(
+    () => this.filteredTemplates(),
+  );
 
   constructor() {
     this.loadTemplates();
@@ -110,17 +126,26 @@ export class NotificationTemplatesPageComponent {
         next: (page) => {
           const rows = page.rows ?? [];
 
-          this.templates.set(rows.map((dto) => this.mapTemplate(dto)));
+          this.templates.set(
+            rows.map((dto) => this.mapTemplate(dto)),
+          );
+
           this.totalCount.set(page.total ?? rows.length);
           this.loading.set(false);
 
-          if (this.pageIndex() >= this.totalPages() && this.pageIndex() > 0) {
+          if (
+            this.pageIndex() >= this.totalPages() &&
+            this.pageIndex() > 0
+          ) {
             this.pageIndex.set(this.totalPages() - 1);
             this.loadTemplates();
           }
         },
         error: (error: unknown) => {
-          console.error('Failed to load notification templates:', error);
+          console.error(
+            'Failed to load notification templates:',
+            error,
+          );
 
           this.errorMessage.set(
             'تعذر تحميل قوالب الإشعارات. يرجى المحاولة مرة أخرى.',
@@ -131,7 +156,9 @@ export class NotificationTemplatesPageComponent {
       });
   }
 
-  private mapTemplate(dto: NotificationTemplateListItemDto): NotificationTemplate {
+  private mapTemplate(
+    dto: NotificationTemplateListItemDto,
+  ): NotificationTemplate {
     return {
       id: dto.Id,
       code: dto.ActionCode,
@@ -165,7 +192,9 @@ export class NotificationTemplatesPageComponent {
   }
 
   onPageSizeChange(event: Event): void {
-    const value = Number((event.target as HTMLSelectElement).value);
+    const value = Number(
+      (event.target as HTMLSelectElement).value,
+    );
 
     if (PAGE_SIZE_OPTIONS.includes(value as PageSize)) {
       this.pageSize.set(value as PageSize);
@@ -214,6 +243,25 @@ export class NotificationTemplatesPageComponent {
 
   editTemplate(template: NotificationTemplate): void {
     this.closeMenu();
+
+    this.router.navigate(
+      [
+        '/admin/external-system/notification-templates',
+        template.code,
+      ],
+      {
+        state: {
+          template: {
+            id: template.id,
+            code: template.code,
+            name: template.name,
+            active: template.isActive,
+            email: template.hasEmail,
+            sms: template.hasSms,
+          },
+        },
+      },
+    );
   }
 
   deleteTemplate(id: number): void {
