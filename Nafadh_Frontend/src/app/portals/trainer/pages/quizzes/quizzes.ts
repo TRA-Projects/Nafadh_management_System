@@ -1540,6 +1540,14 @@ canManageQuestions(status: number | string): boolean {
     );
   }
 
+  openQuestionBankPage(quizId: number): void {
+  this.router.navigate([
+    '/trainer/quizzes',
+    quizId,
+    'questions'
+  ]);
+}
+
   // =====================================
   // QUESTION TYPE LABEL
   // =====================================
