@@ -111,6 +111,13 @@
                         {{ getSessionStatusLabel(session) }}
                     </span>
 
+                    @if (session.status === 'Completed') {
+                    <button type="button" class="session-report-btn" (click)="openSessionReport(session)">
+                        <i class="fa-solid fa-chart-column"></i>
+                        تقرير الجلسة
+                    </button>
+                    }
+
                     <!-- إعادة جدولة الجلسات التي فات موعدها -->
                     @if (isMissedSession(session)) {
                     <button type="button" class="reschedule-btn" [disabled]="saving()"

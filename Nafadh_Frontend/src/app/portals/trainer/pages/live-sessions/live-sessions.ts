@@ -945,4 +945,18 @@ next: () => {
         }
       });
   }
+
+ openSessionReport(session: LiveSession): void {
+  if (session.status !== 'Completed') return;
+
+  void this.router.navigate(
+    ['/trainer/session-survey-results', session.id],
+    {
+      queryParams: {
+        batchId: session.batchId
+      }
+    }
+  );
+}
+
 }
