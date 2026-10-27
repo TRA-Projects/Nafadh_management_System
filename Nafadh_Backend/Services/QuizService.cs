@@ -300,13 +300,15 @@ namespace Nafadh_Backend.Services
                 throw new InvalidOperationException(
                     "لا يمكن نشر اختبار يحتوي على أسئلة مكررة.");
 
-            if (!await _quizQuestionRepository.AreQuizQuestionsValidAsync(
-                id, trainerId))
-            {
-                throw new InvalidOperationException(
-                    "لا يمكن نشر الاختبار؛ يوجد سؤال غير فعال أو تابع لمدرب آخر أو خياراته غير صحيحة.");
-            }
+            var validationError =
+                await _quizQuestionRepository.AreQuizQuestionsValidAsync(
+                    id,
+                    trainerId);
 
+            if (validationError != null)
+            {
+                throw new InvalidOperationException(validationError);
+            }
             var now = DateTime.UtcNow;
 
             if (quiz.EndDateTime <= now)
