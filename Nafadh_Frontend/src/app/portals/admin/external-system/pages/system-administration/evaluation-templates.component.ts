@@ -52,6 +52,13 @@ export class EvaluationTemplatesComponent implements OnInit {
   filterModuleId: number | null = null;
   filterStage: number | null = null;
 
+  // Pagination
+  pageIndex = 0;
+  pageSize = 5;
+
+  readonly pageSizeOptions = [5, 10, 15, 20, 25, 30];
+  readonly maxVisiblePages = 5;
+
   formVisible = false;
   editingId: number | null = null;
 
@@ -61,7 +68,100 @@ export class EvaluationTemplatesComponent implements OnInit {
     this.loadTemplates();
   }
 
+  get totalTemplates(): number {
+    return this.templates.length;
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.totalTemplates / this.pageSize);
+  }
+
+  get safePageIndex(): number {
+    if (this.totalPages === 0) {
+      return 0;
+    }
+
+    return Math.min(
+      Math.max(this.pageIndex, 0),
+      this.totalPages - 1,
+    );
+  }
+
+  get paginatedTemplates(): EvaluationTemplateDto[] {
+    const start = this.safePageIndex * this.pageSize;
+
+    return this.templates.slice(start, start + this.pageSize);
+  }
+
+  // Show at most five page numbers at a time.
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+
+    if (total <= this.maxVisiblePages) {
+      return Array.from({ length: total }, (_, index) => index);
+    }
+
+    let start = Math.max(
+      0,
+      this.safePageIndex - Math.floor(this.maxVisiblePages / 2),
+    );
+
+    start = Math.min(
+      start,
+      total - this.maxVisiblePages,
+    );
+
+    return Array.from(
+      { length: this.maxVisiblePages },
+      (_, index) => start + index,
+    );
+  }
+
+  getEndIndex(): number {
+    return Math.min(
+      (this.safePageIndex + 1) * this.pageSize,
+      this.totalTemplates,
+    );
+  }
+
+  canPrev(): boolean {
+    return this.safePageIndex > 0;
+  }
+
+  canNext(): boolean {
+    return this.safePageIndex < this.totalPages - 1;
+  }
+
+  prevPage(): void {
+    if (this.canPrev()) {
+      this.pageIndex = this.safePageIndex - 1;
+    }
+  }
+
+  nextPage(): void {
+    if (this.canNext()) {
+      this.pageIndex = this.safePageIndex + 1;
+    }
+  }
+
+  setPage(page: number): void {
+    if (page >= 0 && page < this.totalPages) {
+      this.pageIndex = page;
+    }
+  }
+
+  onPageSizeChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const size = Number(select.value);
+
+    if (this.pageSizeOptions.includes(size)) {
+      this.pageSize = size;
+      this.pageIndex = 0;
+    }
+  }
+
   loadTemplates(): void {
+    this.pageIndex = 0;
     this.loading = true;
     this.errorMessage = '';
 
@@ -154,6 +254,7 @@ export class EvaluationTemplatesComponent implements OnInit {
         this.saving = false;
         this.formVisible = false;
         this.editingId = null;
+
         this.successMessage = editingId == null
           ? 'تم إنشاء القالب بنجاح.'
           : 'تم تحديث القالب بنجاح.';
@@ -178,53 +279,6 @@ export class EvaluationTemplatesComponent implements OnInit {
       },
       error: () => {
         this.errorMessage = 'تعذر تحميل تفاصيل القالب.';
-      },
-    });
-  }
-
-  deleteTemplate(template: EvaluationTemplateDto): void {
-    const confirmed = window.confirm(
-      `هل أنت متأكدة من حذف قالب التقييم رقم ${template.templateId}؟`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    this.api.deleteEvaluationTemplate(template.templateId).subscribe({
-      next: () => {
-        this.successMessage = 'تم حذف القالب بنجاح.';
-
-        if (this.details?.templateId === template.templateId) {
-          this.details = null;
-        }
-
-        this.loadTemplates();
-      },
-      error: (error: { status?: number; error?: unknown }) => {
-        if (error.status === 500) {
-          this.errorMessage =
-            'لا يمكن حذف هذا القالب حاليًا؛ قد تكون هناك درجات أو سجلات تقييم مرتبطة به. تم الاحتفاظ بالقالب لتجنب فقدان السجلات.';
-          return;
-        }
-
-        if (error.status === 409) {
-          this.errorMessage =
-            'لا يمكن حذف القالب لوجود سجلات تقييم مرتبطة به.';
-          return;
-        }
-
-        if (error.status === 404) {
-          this.errorMessage =
-            'القالب غير موجود أو تم حذفه مسبقًا. حدّثي القائمة.';
-          return;
-        }
-
-        this.errorMessage =
-          'تعذر حذف القالب. تحققي من اتصال الـ API وحاولي مرة أخرى.';
       },
     });
   }

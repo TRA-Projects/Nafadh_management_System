@@ -1,7 +1,8 @@
 
 <div class="evaluation-page" dir="rtl">
-  <div class="toolbar">
-    <div>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-title">
       <h2>قوالب التقييم</h2>
       <p>إدارة قوالب التقييم ومراحلها.</p>
     </div>
@@ -11,41 +12,71 @@
       class="primary-button"
       (click)="openCreateForm()"
     >
-      + إضافة قالب
+      <span class="button-icon">+</span>
+      إضافة قالب
     </button>
   </div>
 
-  <div class="filters">
-    <label>
-      نوع التقييم
-      <select [(ngModel)]="filterType">
-        <option value="">جميع الأنواع</option>
-        <option *ngFor="let item of types" [value]="item.value">
-          {{ item.label }}
-        </option>
-      </select>
-    </label>
+  <!-- Filters -->
+  <section class="filter-card">
+    <div class="filter-grid">
+      <div class="filter-group">
+        <label for="filterType">نوع التقييم</label>
+        <select
+          id="filterType"
+          class="form-control"
+          [(ngModel)]="filterType"
+        >
+          <option value="">جميع الأنواع</option>
+          <option *ngFor="let item of types" [value]="item.value">
+            {{ item.label }}
+          </option>
+        </select>
+      </div>
 
-    <label>
-      رقم الوحدة
-      <input type="number" min="1" [(ngModel)]="filterModuleId" />
-    </label>
+      <div class="filter-group">
+        <label for="filterModuleId">رقم الوحدة</label>
+        <input
+          id="filterModuleId"
+          type="number"
+          min="1"
+          class="form-control"
+          [(ngModel)]="filterModuleId"
+        />
+      </div>
 
-    <label>
-      المرحلة
-      <input type="number" min="1" [(ngModel)]="filterStage" />
-    </label>
+      <div class="filter-group">
+        <label for="filterStage">المرحلة</label>
+        <input
+          id="filterStage"
+          type="number"
+          min="1"
+          class="form-control"
+          [(ngModel)]="filterStage"
+        />
+      </div>
 
-    <div class="filter-actions">
-      <button type="button" class="primary-button" (click)="loadTemplates()">
-        بحث
-      </button>
-      <button type="button" class="secondary-button" (click)="resetFilters()">
-        إعادة ضبط
-      </button>
+      <div class="filter-actions">
+        <button
+          type="button"
+          class="primary-button"
+          (click)="loadTemplates()"
+        >
+          بحث
+        </button>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="resetFilters()"
+        >
+          إعادة ضبط
+        </button>
+      </div>
     </div>
-  </div>
+  </section>
 
+  <!-- Messages -->
   <p *ngIf="errorMessage" class="message error" role="alert">
     {{ errorMessage }}
   </p>
@@ -54,109 +85,200 @@
     {{ successMessage }}
   </p>
 
+  <!-- Loading -->
   <div *ngIf="loading" class="empty-state">
     جارٍ تحميل قوالب التقييم...
   </div>
 
-  <div *ngIf="!loading && templates.length === 0" class="empty-state">
+  <!-- Empty State -->
+  <div
+    *ngIf="!loading && templates.length === 0"
+    class="empty-state"
+  >
     لا توجد قوالب تقييم مطابقة للبحث.
   </div>
 
-  <div class="table-wrapper" *ngIf="!loading && templates.length > 0">
-    <table>
-      <thead>
-        <tr>
-          <th>رقم القالب</th>
-          <th>نوع التقييم</th>
-          <th>رقم الوحدة</th>
-          <th>المرحلة</th>
-          <th>رقم المنشئ</th>
-          <th>الإجراءات</th>
-        </tr>
-      </thead>
+  <!-- Templates Table -->
+  <section
+    class="table-card"
+    *ngIf="!loading && templates.length > 0"
+  >
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>رقم القالب</th>
+            <th>نوع التقييم</th>
+            <th>رقم الوحدة</th>
+            <th>المرحلة</th>
+            <th>رقم المنشئ</th>
+            <th class="actions-heading">الإجراءات</th>
+          </tr>
+        </thead>
 
-      <tbody>
-        <tr *ngFor="let template of templates">
-          <td>{{ template.templateId }}</td>
-          <td>{{ typeLabel(template.type) }}</td>
-          <td>{{ template.moduleId ?? '—' }}</td>
-          <td>{{ template.stage ?? '—' }}</td>
-          <td>{{ template.createdByUserId }}</td>
-          <td class="actions">
-            <button
-              type="button"
-              class="text-button"
-              (click)="viewDetails(template)"
-            >
-              التفاصيل
-            </button>
+        <tbody>
+          <tr *ngFor="let template of paginatedTemplates; let i = index">
+            <td class="col-index">
+              {{ safePageIndex * pageSize + i + 1 }}
+            </td>
 
-            <button
-              type="button"
-              class="text-button"
-              (click)="openEditForm(template)"
-            >
-              تعديل
-            </button>
+            <td>
+              <span class="code-badge">
+                #{{ template.templateId }}
+              </span>
+            </td>
 
-            <button
-              type="button"
-              class="text-button danger"
-              (click)="deleteTemplate(template)"
-            >
-              حذف
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+            <td>{{ typeLabel(template.type) }}</td>
+            <td>{{ template.moduleId ?? '—' }}</td>
+            <td>{{ template.stage ?? '—' }}</td>
+            <td>{{ template.createdByUserId }}</td>
 
+            <td>
+              <div class="actions">
+                <button
+                  type="button"
+                  class="text-button"
+                  (click)="viewDetails(template)"
+                >
+                  التفاصيل
+                </button>
+
+                <button
+                  type="button"
+                  class="text-button"
+                  (click)="openEditForm(template)"
+                >
+                  تعديل
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="pagination-footer">
+      <div class="pagination-info">
+        عرض
+        {{ totalTemplates === 0 ? 0 : safePageIndex * pageSize + 1 }}
+        -{{ getEndIndex() }}
+        من {{ totalTemplates }}
+      </div>
+
+      <div class="pagination-controls">
+        <button
+          type="button"
+          class="page-btn"
+          (click)="prevPage()"
+          [disabled]="!canPrev()"
+          aria-label="الصفحة السابقة"
+        >
+          &lt;
+        </button>
+
+        <button
+          type="button"
+          *ngFor="let page of pageNumbers"
+          class="page-number-btn"
+          [class.active]="safePageIndex === page"
+          [attr.aria-current]="safePageIndex === page ? 'page' : null"
+          (click)="setPage(page)"
+        >
+          {{ page + 1 }}
+        </button>
+
+        <button
+          type="button"
+          class="page-btn"
+          (click)="nextPage()"
+          [disabled]="!canNext()"
+          aria-label="الصفحة التالية"
+        >
+          &gt;
+        </button>
+
+        <div class="page-size-selector">
+          <select
+            id="pageSize"
+            class="form-control-sm"
+            [value]="pageSize"
+            (change)="onPageSizeChange($event)"
+          >
+            <option *ngFor="let size of pageSizeOptions" [value]="size">
+              {{ size }}
+            </option>
+          </select>
+
+          <span class="page-size-label">في الصفحة</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Create / Edit Form -->
   <section *ngIf="formVisible" class="form-panel">
-    <h3>
-      {{ editingId == null ? 'إضافة قالب تقييم' : 'تعديل قالب تقييم' }}
-    </h3>
+    <div class="panel-header">
+      <h3>
+        {{ editingId == null ? 'إضافة قالب تقييم' : 'تعديل قالب تقييم' }}
+      </h3>
+    </div>
 
     <form (ngSubmit)="saveTemplate()">
-      <label>
-        نوع التقييم
-        <select name="type" [(ngModel)]="form.type" required>
-          <option *ngFor="let item of types" [value]="item.value">
-            {{ item.label }}
-          </option>
-        </select>
-      </label>
+      <div class="form-grid">
+        <div class="filter-group">
+          <label for="formType">نوع التقييم</label>
+          <select
+            id="formType"
+            name="type"
+            class="form-control"
+            [(ngModel)]="form.type"
+            required
+          >
+            <option *ngFor="let item of types" [value]="item.value">
+              {{ item.label }}
+            </option>
+          </select>
+        </div>
 
-      <label>
-        رقم الوحدة (اختياري)
-        <input
-          type="number"
-          name="moduleId"
-          min="1"
-          [(ngModel)]="form.moduleId"
-        />
-      </label>
+        <div class="filter-group">
+          <label for="formModuleId">رقم الوحدة (اختياري)</label>
+          <input
+            id="formModuleId"
+            type="number"
+            name="moduleId"
+            min="1"
+            class="form-control"
+            [(ngModel)]="form.moduleId"
+          />
+        </div>
 
-      <label>
-        المرحلة (اختياري)
-        <input
-          type="number"
-          name="stage"
-          min="1"
-          [(ngModel)]="form.stage"
-        />
-      </label>
+        <div class="filter-group">
+          <label for="formStage">المرحلة (اختياري)</label>
+          <input
+            id="formStage"
+            type="number"
+            name="stage"
+            min="1"
+            class="form-control"
+            [(ngModel)]="form.stage"
+          />
+        </div>
 
-      <label>
-        رقم المستخدم المنشئ
-        <input
-          type="number"
-          name="createdByUserId"
-          min="1"
-          [(ngModel)]="form.createdByUserId"
-          required
-        />
-      </label>
+        <div class="filter-group">
+          <label for="createdByUserId">رقم المستخدم المنشئ</label>
+          <input
+            id="createdByUserId"
+            type="number"
+            name="createdByUserId"
+            min="1"
+            class="form-control"
+            [(ngModel)]="form.createdByUserId"
+            required
+          />
+        </div>
+      </div>
 
       <div class="form-actions">
         <button
@@ -179,8 +301,9 @@
     </form>
   </section>
 
+  <!-- Template Details -->
   <section *ngIf="details" class="details-panel">
-    <div class="details-header">
+    <div class="panel-header details-header">
       <h3>تفاصيل القالب #{{ details.templateId }}</h3>
 
       <button
@@ -192,10 +315,27 @@
       </button>
     </div>
 
-    <p><strong>نوع التقييم:</strong> {{ typeLabel(details.type) }}</p>
-    <p><strong>رقم الوحدة:</strong> {{ details.moduleId ?? '—' }}</p>
-    <p><strong>المرحلة:</strong> {{ details.stage ?? '—' }}</p>
-    <p><strong>رقم المنشئ:</strong> {{ details.createdByUserId }}</p>
+    <div class="details-grid">
+      <p>
+        <strong>نوع التقييم:</strong>
+        {{ typeLabel(details.type) }}
+      </p>
+
+      <p>
+        <strong>رقم الوحدة:</strong>
+        {{ details.moduleId ?? '—' }}
+      </p>
+
+      <p>
+        <strong>المرحلة:</strong>
+        {{ details.stage ?? '—' }}
+      </p>
+
+      <p>
+        <strong>رقم المنشئ:</strong>
+        {{ details.createdByUserId }}
+      </p>
+    </div>
 
     <h4>معايير التقييم</h4>
 

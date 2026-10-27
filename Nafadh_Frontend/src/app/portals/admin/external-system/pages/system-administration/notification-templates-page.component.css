@@ -598,27 +598,117 @@
   }
 }
 
-/* Responsive layout */
+
+/* Compact layout - Desktop */
+.notification-templates-container {
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.filter-card {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.65rem;
+}
+
+.filter-grid {
+  gap: 0.65rem;
+}
+
+.filter-group {
+  gap: 0.2rem;
+}
+
+.filter-group label {
+  font-size: 0.75rem;
+}
+
+.form-control {
+  min-height: 2rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.table-card {
+  border-radius: 0.65rem;
+}
+
+.data-table {
+  font-size: 0.8rem;
+}
+
+.data-table th {
+  padding: 0.4rem 0.65rem;
+  font-size: 0.75rem;
+}
+
+.data-table td {
+  padding: 0.35rem 0.65rem;
+  line-height: 1.25;
+}
+
+.code-badge {
+  padding: 0.15rem 0.35rem;
+  font-size: 0.7rem;
+}
+
+.status-badge {
+  padding: 0.15rem 0.45rem;
+  font-size: 0.7rem;
+}
+
+.btn-action {
+  width: 1.65rem;
+  height: 1.65rem;
+}
+
+.no-data {
+  padding: 0.75rem !important;
+}
+
+.pagination-footer {
+  gap: 0.5rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.75rem;
+}
+
+.pagination-controls {
+  gap: 0.3rem;
+}
+
+.page-btn {
+  padding: 0.25rem 0.5rem;
+}
+
+.page-number-btn {
+  width: 1.7rem;
+  height: 1.7rem;
+}
+
+.page-size-selector {
+  gap: 0.3rem;
+  margin-inline-start: 0.35rem;
+}
+
+.form-control-sm {
+  min-width: 3rem;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.75rem;
+}
+
+.page-size-label {
+  font-size: 0.7rem;
+}
+
+/* Tablet and mobile */
 @media (max-width: 768px) {
   .notification-templates-container {
-    gap: 1rem;
-    padding: 1rem;
-  }
-
-  .page-header {
-    align-items: stretch;
-  }
-
-  .header-title h1 {
-    font-size: 1.25rem;
-  }
-
-  .btn-primary {
-    align-self: flex-start;
+    gap: 0.65rem;
+    padding: 0.5rem;
   }
 
   .filter-grid {
     grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
   }
 
   .data-table {
@@ -629,6 +719,10 @@
     align-items: flex-start;
   }
 
+  .pagination-controls {
+    flex-wrap: wrap;
+  }
+
   .page-size-selector {
     margin-inline-start: 0;
   }
@@ -636,11 +730,11 @@
 
 @media (max-width: 480px) {
   .notification-templates-container {
-    padding: 0.75rem;
+    padding: 0.35rem;
   }
 
   .filter-card {
-    padding: 0.75rem;
+    padding: 0.5rem;
   }
 
   .pagination-footer {
@@ -651,6 +745,7 @@
   .pagination-controls {
     justify-content: flex-start;
   }
+}
 
   
-}
+
