@@ -789,7 +789,12 @@ export class AdminTraineeProfile implements OnInit {
         ? this.api.getEvaluationsForEnrollment(enrollmentId).pipe(catchError(() => of([])))
         : of([]),
       // 🟢 استدعاء نتائج الاختبارات ديناميكياً من قاعدة البيانات
-      exams: this.api.getTraineeExams(traineeId).pipe(catchError(() => of([])))
+      exams: this.api.getTraineeExams(traineeId).pipe(
+        catchError((error) => {
+          console.error('Failed to load trainee quiz results:', error);
+          return of([]);
+        })
+      )
     }).subscribe({
       next: ({ attendance, progress, warnings, modules, moduleProgress, evaluations, exams }: any) => {
         this.processAttendance(attendance as RawAttendanceRow[]);
@@ -802,7 +807,7 @@ export class AdminTraineeProfile implements OnInit {
         );
 
         // تعبئة نتائج الاختبارات القادمة من الباك إند
-        this.traineeExams.set(exams ?? []);
+        this.traineeExams.set(Array.isArray(exams) ? exams : []);
 
         this.isLoading.set(false);
       },
