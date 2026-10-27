@@ -4,11 +4,7 @@
 
         <div class="header-content">
 
-            <button
-                type="button"
-                class="back-btn"
-                (click)="goBack()"
-            >
+            <button type="button" class="back-btn" (click)="goBack()">
                 <i class="fa-solid fa-arrow-right"></i>
                 العودة إلى الاختبارات
             </button>
@@ -32,20 +28,20 @@
 
     @if (successMessage()) {
 
-        <div class="alert success-alert">
-            <i class="fa-solid fa-circle-check"></i>
-            {{ successMessage() }}
-        </div>
+    <div class="alert success-alert">
+        <i class="fa-solid fa-circle-check"></i>
+        {{ successMessage() }}
+    </div>
 
     }
 
 
     @if (errorMessage()) {
 
-        <div class="alert error-alert">
-            <i class="fa-solid fa-circle-exclamation"></i>
-            {{ errorMessage() }}
-        </div>
+    <div class="alert error-alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        {{ errorMessage() }}
+    </div>
 
     }
 
@@ -125,20 +121,13 @@
 
                 <i class="fa-solid fa-magnifying-glass"></i>
 
-                <input
-                    type="text"
-                    placeholder="ابحث في بنك الأسئلة..."
-                    [ngModel]="searchTerm()"
-                    (ngModelChange)="searchTerm.set($event)"
-                />
+                <input type="text" placeholder="ابحث في بنك الأسئلة..." [ngModel]="searchTerm()"
+                    (ngModelChange)="searchTerm.set($event)" />
 
             </div>
 
 
-            <select
-                [ngModel]="typeFilter()"
-                (ngModelChange)="typeFilter.set($event)"
-            >
+            <select [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)">
 
                 <option value="all">
                     كل الأنواع
@@ -159,10 +148,7 @@
             </select>
 
 
-            <select
-                [ngModel]="difficultyFilter()"
-                (ngModelChange)="difficultyFilter.set($event)"
-            >
+            <select [ngModel]="difficultyFilter()" (ngModelChange)="difficultyFilter.set($event)">
 
                 <option value="all">
                     كل المستويات
@@ -183,10 +169,7 @@
             </select>
 
 
-            <select
-                [ngModel]="statusFilter()"
-                (ngModelChange)="statusFilter.set($event)"
-            >
+            <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
 
                 <option value="active">
                     الأسئلة النشطة
@@ -209,11 +192,7 @@
 
         <div class="question-bank-create-action">
 
-            <button
-                type="button"
-                class="primary-btn"
-                (click)="openCreateQuestion()"
-            >
+            <button type="button" class="primary-btn" (click)="openCreateQuestion()">
                 <i class="fa-solid fa-plus"></i>
                 إضافة سؤال
             </button>
@@ -238,21 +217,13 @@
 
             <div class="selection-actions">
 
-                <button
-                    type="button"
-                    class="secondary-btn"
-                    (click)="selectAll()"
-                >
+                <button type="button" class="secondary-btn" (click)="selectAll()">
                     <i class="fa-solid fa-check-double"></i>
                     تحديد الكل
                 </button>
 
 
-                <button
-                    type="button"
-                    class="secondary-btn"
-                    (click)="clearSelection()"
-                >
+                <button type="button" class="secondary-btn" (click)="clearSelection()">
                     إلغاء التحديد
                 </button>
 
@@ -263,224 +234,199 @@
 
         @if (loading()) {
 
-            <div class="loading-state">
+        <div class="loading-state">
 
-                <i class="fa-solid fa-spinner fa-spin"></i>
+            <i class="fa-solid fa-spinner fa-spin"></i>
 
-                <span>
-                    جاري تحميل بنك الأسئلة...
-                </span>
+            <span>
+                جاري تحميل بنك الأسئلة...
+            </span>
 
-            </div>
+        </div>
 
         }
 
         @else {
 
-            <div class="questions-list">
+        <div class="questions-list">
 
-                @for (
-                    question of filteredQuestions();
-                    track question.questionId
-                ) {
+            @for (
+            question of filteredQuestions();
+            track question.questionId
+            ) {
 
-                    <article
-                        class="question-card"
-                        [class.selected]="
+            <article class="question-card" [class.selected]="
                             isQuestionSelected(question.questionId)
-                        "
-                        [class.already-added]="
+                        " [class.already-added]="
                             isAlreadyAdded(question.questionId)
-                        "
-                    >
+                        ">
 
-                        <div class="question-top">
+                <div class="question-top">
 
-                            <label
-                                class="question-checkbox"
-                                [class.disabled]="
+                    <label class="question-checkbox" [class.disabled]="
                                     isAlreadyAdded(question.questionId)
-                                "
-                            >
+                                ">
 
-                                <input
-                                    type="checkbox"
-                                    [checked]="
+                        <input type="checkbox" [checked]="
                                         isQuestionSelected(
                                             question.questionId
                                         )
-                                    "
-                                    [disabled]="
+                                    " [disabled]="
                                         isAlreadyAdded(
                                             question.questionId
                                         )
-                                    "
-                                    (change)="
+                                    " (change)="
                                         toggleQuestionSelection(
                                             question.questionId
                                         )
-                                    "
-                                />
+                                    " />
 
-                                <span></span>
+                        <span></span>
 
-                            </label>
-
-
-                            <div class="question-tags">
-
-                                <span class="type-tag">
-                                    {{
-                                        getQuestionTypeLabel(
-                                            question.questionType
-                                        )
-                                    }}
-                                </span>
-
-                                <span class="difficulty-tag">
-                                    {{
-                                        getDifficultyLabel(
-                                            question.difficulty
-                                        )
-                                    }}
-                                </span>
-
-                                <span class="points-tag">
-                                    {{ question.points }} درجة
-                                </span>
-
-                            </div>
-
-                        </div>
+                    </label>
 
 
-                        <h2>
-                            {{ question.questionText }}
-                        </h2>
+                    <div class="question-tags">
 
+                        <span class="type-tag">
+                            {{
+                            getQuestionTypeLabel(
+                            question.questionType
+                            )
+                            }}
+                        </span>
 
-                        @if (question.options?.length) {
+                        <span class="difficulty-tag">
+                            {{
+                            getDifficultyLabel(
+                            question.difficulty
+                            )
+                            }}
+                        </span>
 
-                            <div class="options-list">
-
-                                @for (
-                                    option of question.options;
-                                    track option.optionId
-                                ) {
-
-                                    <div
-                                        class="option-row"
-                                        [class.correct]="option.isCorrect"
-                                    >
-
-                                        <span class="option-code">
-                                            {{ option.optionCode }}
-                                        </span>
-
-                                        <span>
-                                            {{ option.optionText }}
-                                        </span>
-
-                                        @if (option.isCorrect) {
-
-                                            <i class="fa-solid fa-check"></i>
-
-                                        }
-
-                                    </div>
-
-                                }
-
-                            </div>
-
-                        }
-
-
-                        <div class="question-footer">
-
-                            @if (isAlreadyAdded(question.questionId)) {
-
-                                <span class="added-badge">
-
-                                    <i class="fa-solid fa-check"></i>
-
-                                    مضاف للاختبار
-
-                                </span>
-
-                            }
-
-                            @else if (!question.isActive) {
-
-                                <span class="inactive-badge">
-                                    غير نشط
-                                </span>
-
-                            }
-
-                            @else {
-
-                                <span class="available-badge">
-                                    متاح للإضافة
-                                </span>
-
-                            }
-
-
-                            <div class="question-management-actions">
-
-                                <button
-                                    type="button"
-                                    class="edit-question-btn"
-                                    (click)="openEditQuestion(question)"
-                                >
-                                    <i
-                                        class="fa-regular fa-pen-to-square"
-                                    ></i>
-                                    تعديل
-                                </button>
-
-
-                                @if (question.isActive) {
-
-                                    <button
-                                        type="button"
-                                        class="danger-btn"
-                                        (click)="deactivateQuestion(question)"
-                                    >
-                                        <i class="fa-solid fa-ban"></i>
-                                        تعطيل
-                                    </button>
-
-                                }
-
-                            </div>
-
-                        </div>
-
-                    </article>
-
-                }
-
-                @empty {
-
-                    <div class="empty-state">
-
-                        <i class="fa-regular fa-folder-open"></i>
-
-                        <h3>
-                            لا توجد أسئلة مطابقة
-                        </h3>
-
-                        <p>
-                            جربي تغيير البحث أو الفلاتر.
-                        </p>
+                        <span class="points-tag">
+                            {{ question.points }} درجة
+                        </span>
 
                     </div>
 
+                </div>
+
+
+                <h2>
+                    {{ question.questionText }}
+                </h2>
+
+
+                @if (question.options?.length) {
+
+                <div class="options-list">
+
+                    @for (
+                    option of question.options;
+                    track option.optionId
+                    ) {
+
+                    <div class="option-row" [class.correct]="option.isCorrect">
+
+                        <span class="option-code">
+                            {{ option.optionCode }}
+                        </span>
+
+                        <span>
+                            {{ option.optionText }}
+                        </span>
+
+                        @if (option.isCorrect) {
+
+                        <i class="fa-solid fa-check"></i>
+
+                        }
+
+                    </div>
+
+                    }
+
+                </div>
+
                 }
 
+
+                <div class="question-footer">
+
+                    @if (isAlreadyAdded(question.questionId)) {
+
+                    <span class="added-badge">
+
+                        <i class="fa-solid fa-check"></i>
+
+                        مضاف للاختبار
+
+                    </span>
+
+                    }
+
+                    @else if (!question.isActive) {
+
+                    <span class="inactive-badge">
+                        غير نشط
+                    </span>
+
+                    }
+
+                    @else {
+
+                    <span class="available-badge">
+                        متاح للإضافة
+                    </span>
+
+                    }
+
+
+                    <div class="question-management-actions">
+
+                        <button type="button" class="edit-question-btn" (click)="openEditQuestion(question)">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                            تعديل
+                        </button>
+
+
+                        @if (question.isActive) {
+
+                        <button type="button" class="danger-btn" (click)="deactivateQuestion(question)">
+                            <i class="fa-solid fa-ban"></i>
+                            تعطيل
+                        </button>
+
+                        }
+
+                    </div>
+
+                </div>
+
+            </article>
+
+            }
+
+            @empty {
+
+            <div class="empty-state">
+
+                <i class="fa-regular fa-folder-open"></i>
+
+                <h3>
+                    لا توجد أسئلة مطابقة
+                </h3>
+
+                <p>
+                    جربي تغيير البحث أو الفلاتر.
+                </p>
+
             </div>
+
+            }
+
+        </div>
 
         }
 
@@ -491,417 +437,378 @@
 
         @if (questionFormOpen()) {
 
-            <div class="question-form-backdrop">
+        <div class="question-form-backdrop">
 
-                <section
-                    class="question-form-modal"
-                    role="dialog"
-                    aria-modal="true"
-                >
+            <section class="question-form-modal" role="dialog" aria-modal="true">
 
-                    <header class="question-form-header">
+                <header class="question-form-header">
 
-                        <div>
+                    <div>
 
-                            <span class="page-kicker">
-                                بنك الأسئلة
-                            </span>
+                        <span class="page-kicker">
+                            بنك الأسئلة
+                        </span>
 
-                            <h2>
-                                {{
-                                    editingQuestionId() === null
-                                        ? 'إضافة سؤال جديد'
-                                        : 'تعديل السؤال'
-                                }}
-                            </h2>
+                        <h2>
+                            {{
+                            editingQuestionId() === null
+                            ? 'إضافة سؤال جديد'
+                            : 'تعديل السؤال'
+                            }}
+                        </h2>
 
-                            <p>
-                                أضيفي بيانات السؤال وحددي الإجابة الصحيحة
-                            </p>
+                        <p>
+                            أضيفي بيانات السؤال وحددي الإجابة الصحيحة
+                        </p>
 
-                        </div>
+                    </div>
 
 
-                        <button
-                            type="button"
-                            class="close-btn"
-                            (click)="closeQuestionForm()"
-                            [disabled]="questionSaving()"
-                        >
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
+                    <button type="button" class="close-btn" (click)="closeQuestionForm()" [disabled]="questionSaving()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
 
-                    </header>
+                </header>
 
 
-                    <form
-                        class="question-form"
-                        (ngSubmit)="saveQuestion()"
-                    >
+                <form class="question-form" (ngSubmit)="saveQuestion()">
 
-                        <!-- نص السؤال -->
+                    <!-- نص السؤال -->
 
-                        <div class="field full-width">
+                    <div class="field full-width">
 
-                            <label for="questionText">
+                        <label for="questionText">
 
-                                نص السؤال
+                            نص السؤال
 
-                                <span>*</span>
+                            <span>*</span>
 
+                        </label>
+
+                        <textarea id="questionText" name="questionText" [(ngModel)]="questionForm.questionText" rows="4"
+                            maxlength="1000" placeholder="اكتب نص السؤال هنا..." required></textarea>
+
+                    </div>
+
+
+                    <!-- معلومات السؤال -->
+
+                    <div class="form-grid">
+
+                        <div class="field">
+
+                            <label for="questionType">
+                                نوع السؤال
                             </label>
 
-                            <textarea
-                                id="questionText"
-                                name="questionText"
-                                [(ngModel)]="questionForm.questionText"
-                                rows="4"
-                                maxlength="1000"
-                                placeholder="اكتب نص السؤال هنا..."
-                                required
-                            ></textarea>
+                            <select id="questionType" name="questionType" [(ngModel)]="questionForm.questionType"
+                                (ngModelChange)="questionTypeChanged()">
+
+                                <option [ngValue]="0">
+                                    اختيار من متعدد
+                                </option>
+
+                                <option [ngValue]="1">
+                                    صح أو خطأ
+                                </option>
+
+                                <option [ngValue]="2">
+                                    مقالي
+                                </option>
+
+                            </select>
 
                         </div>
 
 
-                        <!-- معلومات السؤال -->
+                        <div class="field">
 
-                        <div class="form-grid">
+                            <label for="difficulty">
+                                مستوى الصعوبة
+                            </label>
 
-                            <div class="field">
+                            <select id="difficulty" name="difficulty" [(ngModel)]="questionForm.difficulty">
 
-                                <label for="questionType">
-                                    نوع السؤال
-                                </label>
+                                <option [ngValue]="0">
+                                    سهل
+                                </option>
 
-                                <select
-                                    id="questionType"
-                                    name="questionType"
-                                    [(ngModel)]="questionForm.questionType"
-                                    (ngModelChange)="questionTypeChanged()"
-                                >
+                                <option [ngValue]="1">
+                                    متوسط
+                                </option>
 
-                                    <option [ngValue]="0">
-                                        اختيار من متعدد
-                                    </option>
+                                <option [ngValue]="2">
+                                    صعب
+                                </option>
 
-                                    <option [ngValue]="1">
-                                        صح أو خطأ
-                                    </option>
-
-                                    <option [ngValue]="2">
-                                        مقالي
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-
-                            <div class="field">
-
-                                <label for="difficulty">
-                                    مستوى الصعوبة
-                                </label>
-
-                                <select
-                                    id="difficulty"
-                                    name="difficulty"
-                                    [(ngModel)]="questionForm.difficulty"
-                                >
-
-                                    <option [ngValue]="0">
-                                        سهل
-                                    </option>
-
-                                    <option [ngValue]="1">
-                                        متوسط
-                                    </option>
-
-                                    <option [ngValue]="2">
-                                        صعب
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-
-                            <div class="field">
-
-                                <label for="points">
-                                    الدرجة
-                                </label>
-
-                                <input
-                                    id="points"
-                                    type="number"
-                                    name="points"
-                                    [(ngModel)]="questionForm.points"
-                                    min="0.1"
-                                    max="100"
-                                    step="0.1"
-                                    required
-                                />
-
-                            </div>
+                            </select>
 
                         </div>
 
 
-                        <!-- الخيارات -->
+                        <div class="field">
 
-                        @if (
-                            questionForm.questionType === 0 ||
-                            questionForm.questionType === 1
-                        ) {
+                            <label for="points">
+                                الدرجة
+                            </label>
 
-                            <section class="options-section">
+                            <input id="points" type="number" name="points" [(ngModel)]="questionForm.points" min="0.1"
+                                max="100" step="0.1" required />
 
-                                <div class="options-header">
+                        </div>
 
-                                    <div>
-
-                                        <h3>
-                                            خيارات الإجابة
-                                        </h3>
-
-                                        <p>
-                                            اضغط على الدائرة لتحديد الإجابة الصحيحة
-                                        </p>
-
-                                    </div>
+                    </div>
 
 
-                                    @if (
-                                        questionForm.questionType === 0
-                                    ) {
+                    <!-- الخيارات -->
 
-                                        <button
-                                            type="button"
-                                            class="secondary-btn"
-                                            (click)="addQuestionOption()"
-                                            [disabled]="
+                    @if (
+                    questionForm.questionType === 0 ||
+                    questionForm.questionType === 1
+                    ) {
+
+                    <section class="options-section">
+
+                        <div class="options-header">
+
+                            <div>
+
+                                <h3>
+                                    خيارات الإجابة
+                                </h3>
+
+                                <p>
+                                    اضغط على الدائرة لتحديد الإجابة الصحيحة
+                                </p>
+
+                            </div>
+
+
+                            @if (
+                            questionForm.questionType === 0
+                            ) {
+
+                            <button type="button" class="secondary-btn" (click)="addQuestionOption()" [disabled]="
                                                 questionForm.options.length >= 6
-                                            "
-                                        >
-                                            <i class="fa-solid fa-plus"></i>
-                                            إضافة خيار
-                                        </button>
+                                            ">
+                                <i class="fa-solid fa-plus"></i>
+                                إضافة خيار
+                            </button>
 
-                                    }
+                            }
 
-                                </div>
+                        </div>
 
 
-                                <div class="form-options-list">
+                        <div class="form-options-list">
 
-                                    @for (
-                                        option of questionForm.options;
-                                        track $index;
-                                        let i = $index
-                                    ) {
+                            @for (
+                            option of questionForm.options;
+                            track $index;
+                            let i = $index
+                            ) {
 
-                                        <div
-                                            class="form-option-row"
-                                            [class.correct]="option.isCorrect"
-                                        >
+                            <div class="form-option-row" [class.correct]="option.isCorrect">
 
-                                            <button
-                                                type="button"
-                                                class="correct-option-btn"
-                                                [class.selected]="
+                                <button type="button" class="correct-option-btn" [class.selected]="
                                                     option.isCorrect
-                                                "
-                                                (click)="setCorrectOption(i)"
-                                                [attr.aria-label]="
+                                                " (click)="setCorrectOption(i)" [attr.aria-label]="
                                                     option.isCorrect
                                                         ? 'الإجابة الصحيحة'
                                                         : 'تحديد كإجابة صحيحة'
-                                                "
-                                            >
+                                                ">
 
-                                                @if (option.isCorrect) {
+                                    @if (option.isCorrect) {
 
-                                                    <i
-                                                        class="fa-solid fa-circle-check"
-                                                    ></i>
-
-                                                }
-
-                                                @else {
-
-                                                    <i
-                                                        class="fa-regular fa-circle"
-                                                    ></i>
-
-                                                }
-
-                                            </button>
-
-
-                                            <span class="form-option-code">
-                                                {{ option.optionCode }}
-                                            </span>
-
-
-                                            <input
-                                                type="text"
-                                                [name]="
-                                                    'question_option_' + i
-                                                "
-                                                [(ngModel)]="
-                                                    option.optionText
-                                                "
-                                                placeholder="اكتب الخيار..."
-                                                [readonly]="
-                                                    questionForm.questionType === 1
-                                                "
-                                            />
-
-
-                                            @if (
-                                                questionForm.questionType === 0 &&
-                                                questionForm.options.length > 2
-                                            ) {
-
-                                                <button
-                                                    type="button"
-                                                    class="danger-icon-btn"
-                                                    (click)="
-                                                        removeQuestionOption(i)
-                                                    "
-                                                    title="حذف الخيار"
-                                                >
-                                                    <i
-                                                        class="fa-solid fa-trash"
-                                                    ></i>
-                                                </button>
-
-                                            }
-
-                                        </div>
+                                    <i class="fa-solid fa-circle-check"></i>
 
                                     }
 
-                                </div>
+                                    @else {
 
-                            </section>
+                                    <i class="fa-regular fa-circle"></i>
 
-                        }
+                                    }
+
+                                </button>
 
 
-                        <!-- شرح الإجابة -->
+                                <span class="form-option-code">
+                                    {{ option.optionCode }}
+                                </span>
 
-                        <div class="field full-width">
 
-                            <label for="explanation">
+                                <input type="text" [name]="
+                                                    'question_option_' + i
+                                                " [(ngModel)]="
+                                                    option.optionText
+                                                " placeholder="اكتب الخيار..." [readonly]="
+                                                    questionForm.questionType === 1
+                                                " />
 
-                                شرح الإجابة
 
-                                <small>
-                                    (اختياري)
-                                </small>
+                                @if (
+                                questionForm.questionType === 0 &&
+                                questionForm.options.length > 2
+                                ) {
 
-                            </label>
+                                <button type="button" class="danger-icon-btn" (click)="
+                                                        removeQuestionOption(i)
+                                                    " title="حذف الخيار">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
 
-                            <textarea
-                                id="explanation"
-                                name="explanation"
-                                [(ngModel)]="questionForm.explanation"
-                                rows="3"
-                                maxlength="1000"
-                                placeholder="أضف شرحًا يساعد المتدرب على فهم الإجابة..."
-                            ></textarea>
+                                }
+
+                            </div>
+
+                            }
 
                         </div>
 
+                    </section>
 
-                        @if (questionError()) {
-
-                            <div class="form-message error-message">
-
-                                <i
-                                    class="fa-solid fa-circle-exclamation"
-                                ></i>
-
-                                <span>
-                                    {{ questionError() }}
-                                </span>
-
-                            </div>
-
-                        }
+                    }
 
 
-                        @if (questionSuccess()) {
+                    <!-- شرح الإجابة -->
 
-                            <div class="form-message success-message">
+                    <div class="field full-width">
 
-                                <i
-                                    class="fa-solid fa-circle-check"
-                                ></i>
+                        <label for="explanation">
 
-                                <span>
-                                    {{ questionSuccess() }}
-                                </span>
+                            شرح الإجابة
 
-                            </div>
+                            <small>
+                                (اختياري)
+                            </small>
 
-                        }
+                        </label>
 
+                        <textarea id="explanation" name="explanation" [(ngModel)]="questionForm.explanation" rows="3"
+                            maxlength="1000" placeholder="أضف شرحًا يساعد المتدرب على فهم الإجابة..."></textarea>
 
-                        <footer class="question-form-actions">
-
-                            <button
-                                type="button"
-                                class="secondary-btn"
-                                (click)="closeQuestionForm()"
-                                [disabled]="questionSaving()"
-                            >
-                                إلغاء
-                            </button>
+                    </div>
 
 
-                            <button
-                                type="submit"
-                                class="primary-btn"
-                                [disabled]="questionSaving()"
-                            >
+                    @if (questionError()) {
 
-                                @if (questionSaving()) {
+                    <div class="form-message error-message">
 
-                                    <i
-                                        class="fa-solid fa-spinner fa-spin"
-                                    ></i>
+                        <i class="fa-solid fa-circle-exclamation"></i>
 
-                                    جاري الحفظ...
+                        <span>
+                            {{ questionError() }}
+                        </span>
 
-                                }
+                    </div>
 
-                                @else {
+                    }
 
-                                    <i
-                                        class="fa-solid fa-floppy-disk"
-                                    ></i>
 
-                                    {{
-                                        editingQuestionId() === null
-                                            ? 'إضافة السؤال'
-                                            : 'حفظ التعديل'
-                                    }}
+                    @if (questionSuccess()) {
 
-                                }
+                    <div class="form-message success-message">
 
-                            </button>
+                        <i class="fa-solid fa-circle-check"></i>
 
-                        </footer>
+                        <span>
+                            {{ questionSuccess() }}
+                        </span>
 
-                    </form>
+                    </div>
 
-                </section>
+                    }
+
+
+                    <footer class="question-form-actions">
+
+                        <button type="button" class="secondary-btn" (click)="closeQuestionForm()"
+                            [disabled]="questionSaving()">
+                            إلغاء
+                        </button>
+
+
+                        <button type="submit" class="primary-btn" [disabled]="questionSaving()">
+
+                            @if (questionSaving()) {
+
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+
+                            جاري الحفظ...
+
+                            }
+
+                            @else {
+
+                            <i class="fa-solid fa-floppy-disk"></i>
+
+                            {{
+                            editingQuestionId() === null
+                            ? 'إضافة السؤال'
+                            : 'حفظ التعديل'
+                            }}
+
+                            }
+
+                        </button>
+
+                    </footer>
+
+                </form>
+
+            </section>
+
+        </div>
+
+        }
+
+        <!-- ============================= -->
+        <!-- Deactivate Question Modal -->
+        <!-- ============================= -->
+
+        @if (showDeactivateConfirm()) {
+
+        <div class="confirm-overlay">
+
+            <div class="confirm-modal" role="dialog" aria-modal="true">
+
+                <div class="confirm-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+
+                <h3>
+                    تعطيل السؤال
+                </h3>
+
+                <p>
+                    هل أنت متأكد من تعطيل هذا السؤال؟
+                </p>
+
+                @if (questionToDeactivate()) {
+
+                <div class="confirm-question">
+                    {{ questionToDeactivate()?.questionText }}
+                </div>
+
+                }
+
+                <div class="confirm-actions">
+
+                    <button type="button" class="secondary-btn" (click)="cancelDeactivate()">
+                        إلغاء
+                    </button>
+
+                    <button type="button" class="danger-btn" (click)="confirmDeactivate()">
+                        <i class="fa-solid fa-ban"></i>
+                        تعطيل السؤال
+                    </button>
+
+                </div>
 
             </div>
+
+        </div>
 
         }
 
@@ -912,89 +819,41 @@
 
         <footer class="page-actions">
 
-            <button
-                type="button"
-                class="secondary-btn back-to-quizzes-btn"
-                (click)="goBack()"
-            >
+            <button type="button" class="secondary-btn back-to-quizzes-btn" (click)="goBack()">
                 <i class="fa-solid fa-arrow-right"></i>
                 العودة إلى الاختبارات
             </button>
 
-
             <div class="page-actions-right">
 
                 <span class="selected-summary">
-
                     تم اختيار
-
-                    <strong>
-                        {{ selectedCount() }}
-                    </strong>
-
+                    <strong>{{ selectedCount() }}</strong>
                     سؤال
-
                 </span>
 
-
-                <button
-                    type="button"
-                    class="primary-btn"
-                    [disabled]="
-                        selectedCount() === 0 ||
-                        saving()
-                    "
-                    (click)="addSelectedQuestions()"
-                >
-
+                <button type="button" class="primary-btn" [disabled]="selectedCount() === 0 || saving()"
+                    (click)="addSelectedQuestions()">
                     @if (saving()) {
-
-                        <i class="fa-solid fa-spinner fa-spin"></i>
-
-                        جاري الإضافة...
-
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    جاري الإضافة...
+                    } @else {
+                    <i class="fa-solid fa-link"></i>
+                    إضافة المحدد للاختبار
                     }
-
-                    @else {
-
-                        <i class="fa-solid fa-link"></i>
-
-                        إضافة المحدد للاختبار
-
-                    }
-
                 </button>
-
 
                 @if (quizQuestions().length > 0) {
 
-                    <button
-                        type="button"
-                        class="publish-btn"
-                        [disabled]="
-                            quizQuestions().length === 0 ||
-                            saving()
-                        "
-                        (click)="publishQuiz()"
-                    >
-
-                        @if (saving()) {
-
-                            <i class="fa-solid fa-spinner fa-spin"></i>
-
-                            جاري النشر...
-
-                        }
-
-                        @else {
-
-                            <i class="fa-solid fa-paper-plane"></i>
-
-                            نشر الاختبار
-
-                        }
-
-                    </button>
+                <button type="button" class="publish-btn" [disabled]="saving()" (click)="publishQuiz()">
+                    @if (saving()) {
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    جاري النشر...
+                    } @else {
+                    <i class="fa-solid fa-paper-plane"></i>
+                    نشر الاختبار
+                    }
+                </button>
 
                 }
 

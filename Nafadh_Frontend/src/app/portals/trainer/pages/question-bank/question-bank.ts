@@ -67,6 +67,7 @@ export class QuestionBank implements OnInit {
 
     quizTitle = signal('إدارة أسئلة الاختبار');
 
+    quizStatus = signal<number | string | null>(null);
     questions = signal<QuestionBankDto[]>([]);
 
     quizQuestions = signal<QuizQuestionDto[]>([]);
@@ -98,13 +99,12 @@ export class QuestionBank implements OnInit {
     difficultyFilter = signal('all');
 
     statusFilter = signal('active');
+    showDeactivateConfirm = signal(false);
+
+    questionToDeactivate = signal<QuestionBankDto | null>(null);
 
     filteredQuestions = computed(() => {
-
-        const search = this.searchTerm()
-            .trim()
-            .toLowerCase();
-
+        const search = this.searchTerm().trim().toLowerCase();
         const type = this.typeFilter();
         const difficulty = this.difficultyFilter();
         const status = this.statusFilter();
@@ -117,13 +117,27 @@ export class QuestionBank implements OnInit {
                     .toLowerCase()
                     .includes(search);
 
+            const normalizedType =
+                typeof question.questionType === 'string'
+                    ? question.questionType
+                    : String(question.questionType);
+
+            const normalizedDifficulty =
+                typeof question.difficulty === 'string'
+                    ? question.difficulty
+                    : String(question.difficulty);
+
             const matchesType =
                 type === 'all' ||
-                String(question.questionType) === type;
+                (type === '0' && ['0', 'MultipleChoice'].includes(normalizedType)) ||
+                (type === '1' && ['1', 'TrueFalse'].includes(normalizedType)) ||
+                (type === '2' && ['2', 'Essay'].includes(normalizedType));
 
             const matchesDifficulty =
                 difficulty === 'all' ||
-                String(question.difficulty) === difficulty;
+                (difficulty === '0' && ['0', 'Easy'].includes(normalizedDifficulty)) ||
+                (difficulty === '1' && ['1', 'Medium'].includes(normalizedDifficulty)) ||
+                (difficulty === '2' && ['2', 'Hard'].includes(normalizedDifficulty));
 
             const matchesStatus =
                 status === 'all' ||
@@ -787,15 +801,23 @@ export class QuestionBank implements OnInit {
             return;
         }
 
+        this.questionToDeactivate.set(question);
+        this.showDeactivateConfirm.set(true);
+    }
+    cancelDeactivate(): void {
+        this.showDeactivateConfirm.set(false);
+        this.questionToDeactivate.set(null);
+    }
+
+    confirmDeactivate(): void {
+        const question = this.questionToDeactivate();
         const trainerId = this.trainer()?.trainerId;
 
-        if (!trainerId) {
+        if (!question || !trainerId) {
             return;
         }
 
-        if (!confirm('هل أنت متأكد من تعطيل هذا السؤال؟')) {
-            return;
-        }
+        this.showDeactivateConfirm.set(false);
 
         this.api
             .deactivateQuestion(
