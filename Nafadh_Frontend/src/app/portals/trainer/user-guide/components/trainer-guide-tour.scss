@@ -133,9 +133,20 @@
 }
 
 .tour-previous {
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #334155;
+  border: 1px solid #93c5fd;
+  background: #eff6ff;
+  color: #0056b8;
+  transition: all 0.2s ease;
+}
+
+.tour-previous:hover:not(:disabled) {
+  background: #dbeafe;
+  border-color: #2563eb;
+}
+
+.tour-previous:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .tour-previous:disabled {
@@ -172,4 +183,13 @@
   .tour-description {
     font-size: 13px;
   }
+}
+.tour-highlight-frame {
+  position: fixed;
+  z-index: 5;
+  border: 2px solid #38bdf8;
+  border-radius: 12px;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.12);
+  pointer-events: none;
+  box-sizing: border-box;
 }

@@ -2,12 +2,40 @@
 @if (guideService.isTourActive() && currentStep; as step) {
   <div class="trainer-tour" dir="rtl">
 
-    <div class="tour-backdrop"></div>
+    <!-- خلفية التعتيم مع فتحة شفافة حول العنصر -->
+    <div
+      class="tour-backdrop"
+      [style.clip-path]="
+        highlightRect()
+          ? 'polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ' +
+            highlightRect()!.left + 'px ' + highlightRect()!.top + 'px, ' +
+            (highlightRect()!.left + highlightRect()!.width) + 'px ' + highlightRect()!.top + 'px, ' +
+            (highlightRect()!.left + highlightRect()!.width) + 'px ' +
+            (highlightRect()!.top + highlightRect()!.height) + 'px, ' +
+            highlightRect()!.left + 'px ' +
+            (highlightRect()!.top + highlightRect()!.height) + 'px, ' +
+            highlightRect()!.left + 'px ' + highlightRect()!.top + 'px)'
+          : 'none'
+      "
+    ></div>
 
+    <!-- إطار العنصر المستهدف -->
+    @if (highlightRect(); as rect) {
+      <div
+        class="tour-highlight-frame"
+        [style.top.px]="rect.top"
+        [style.left.px]="rect.left"
+        [style.width.px]="rect.width"
+        [style.height.px]="rect.height"
+      ></div>
+    }
+
+    <!-- بطاقة شرح الجولة -->
     <section
       class="tour-card"
       role="dialog"
       aria-label="الجولة الإرشادية"
+      aria-modal="true"
     >
       <div class="tour-header">
         <span class="tour-label">دليل المدرب</span>
