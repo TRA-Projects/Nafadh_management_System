@@ -99,6 +99,7 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
 
   cancelling = signal(false);
   editingId = signal<number | null>(null);
+  readonly reschedulingId = signal<number | null>(null);
   errorMessage = signal('');
   successMessage = signal('');
   loading = signal(false);
@@ -301,14 +302,14 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
   rescheduleSession(session: LiveSession): void {
   if (!this.isMissedSession(session)) return;
 
-  // نستخدم نموذج التعديل الموجود دون تكرار الوظائف.
   this.editSession(session);
 
-  // نطلب من المدربة تحديد موعد جديد.
+  this.reschedulingId.set(session.id);
+
+  // نطلب تحديد موعد جديد بدل الموعد الفائت.
   this.form.date = '';
   this.form.time = '';
 
-  // توضيح المطلوب داخل النموذج.
   this.errorMessage.set('');
   this.successMessage.set('');
 }
@@ -488,6 +489,7 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
   }
 
   editSession(session: LiveSession): void {
+    this.reschedulingId.set(null);
     this.editingId.set(session.id);
 
     const [date, time = ''] =
@@ -593,37 +595,54 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
     };
 
     const editingId = this.editingId();
+const reschedulingId = this.reschedulingId();
 
-    this.saving.set(true);
+this.saving.set(true);
 
-    const request = editingId === null
-      ? this.api.createTrainerLiveSession({
-          batchId: this.batchId,
-          ...dto
-        })
-      : this.api.updateTrainerLiveSession(
-          editingId,
-          dto
-        );
+const request = reschedulingId !== null
+  ? this.api.postponeTrainerLiveSession(
+      reschedulingId,
+      {
+        newSessionDate: `${this.form.date}T00:00:00`,
+        newStartTime: this.form.time,
+        newEndTime: this.getEndTime(
+          this.form.time,
+          duration
+        ),
+        reason: 'إعادة جدولة جلسة فائتة'
+      }
+    )
+  : editingId === null
+    ? this.api.createTrainerLiveSession({
+        batchId: this.batchId,
+        ...dto
+      })
+    : this.api.updateTrainerLiveSession(
+        editingId,
+        dto
+      );
 
     request
       .pipe(
         finalize(() => this.saving.set(false))
       )
       .subscribe({
-        next: () => {
-          this.showForm.set(false);
-          this.editingId.set(null);
-          this.activeTab.set('upcoming');
+next: () => {
+  this.showForm.set(false);
+  this.editingId.set(null);
+  this.reschedulingId.set(null);
+  this.activeTab.set('upcoming');
 
-          this.successMessage.set(
-            editingId === null
-              ? 'تم إنشاء الجلسة وحفظها بنجاح.'
-              : 'تم تعديل الجلسة وحفظها بنجاح.'
-          );
+  this.successMessage.set(
+    reschedulingId !== null
+      ? 'تمت إعادة جدولة الجلسة بنجاح.'
+      : editingId === null
+        ? 'تم إنشاء الجلسة وحفظها بنجاح.'
+        : 'تم تعديل الجلسة وحفظها بنجاح.'
+  );
 
-          this.loadSessions();
-        },
+  this.loadSessions();
+},
         error: err => {
           this.errorMessage.set(
             this.getApiError(

@@ -61,7 +61,8 @@ namespace Nafadh_Backend.Controllers
         private static bool CanGoLive(NFD_Session session)
         {
             return session.Status == NFD_SessionStatus.Scheduled
-                || session.Status == NFD_SessionStatus.InProgress;
+       || session.Status == NFD_SessionStatus.Postponed
+       || session.Status == NFD_SessionStatus.InProgress;
         }
 
         // POST: api/trainer/live-sessions/5/room/start
@@ -88,12 +89,14 @@ namespace Nafadh_Backend.Controllers
 
             if (!result.Success)
                 return BadRequest(result);
-      
+
 
             // Update session status only after LiveKit starts successfully.
-            if (session.Status == NFD_SessionStatus.Scheduled)
+            if (session.Status == NFD_SessionStatus.Scheduled ||
+    session.Status == NFD_SessionStatus.Postponed)
             {
                 session.Status = NFD_SessionStatus.InProgress;
+
                 await _context.SaveChangesAsync(
                     HttpContext.RequestAborted);
             }

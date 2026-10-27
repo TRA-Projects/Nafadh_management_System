@@ -213,6 +213,13 @@ export interface UpdateTrainerSessionAttendanceDto {
   note: string | null;
 }
 
+export interface PostponeTrainerLiveSessionDto {
+  newSessionDate: string;
+  newStartTime: string;
+  newEndTime: string;
+  reason?: string | null;
+}
+
 export interface TrainerLiveRoomStartResponse {
   success: boolean;
   message: string;
@@ -1651,6 +1658,16 @@ export class TrainerApi {
       dto
     );
   }
+
+  postponeTrainerLiveSession(
+  sessionId: number,
+  dto: PostponeTrainerLiveSessionDto
+): Observable<TrainerLiveSessionDto> {
+  return this.http.put<TrainerLiveSessionDto>(
+    `${this.base}/trainer/live-sessions/${sessionId}/postpone`,
+    dto
+  );
+}
 
   changeTrainerLiveSessionStatus(
     sessionId: number,
