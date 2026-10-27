@@ -9,11 +9,11 @@ import {
 } from '@angular/core';
 
 import { TrainerGuideService } from '../services/trainer-guide.service';
-
 @Component({
   selector: 'app-trainer-guide-tour',
   standalone: true,
-  template: '',
+  templateUrl: './trainer-guide-tour.html',
+  styleUrl: './trainer-guide-tour.scss',
 })
 export class TrainerGuideTour implements OnDestroy {
 
