@@ -338,7 +338,7 @@ export class CompanyApi {
 
   downloadMyAccountPdf(): Observable<Blob> {
     return this.http.get(
-      `${this.base}/CompanyAccount/me/pdf`,
+      `${this.base}/CompanyAccount/me/export-pdf`,
       {
         responseType: 'blob',
       }

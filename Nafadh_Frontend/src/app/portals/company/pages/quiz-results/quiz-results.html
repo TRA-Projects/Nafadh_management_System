@@ -37,7 +37,10 @@
 
   <!-- حالة الخطأ -->
   @else if (error()) {
-    <section class="state-card error-state" role="alert">
+    <section
+      class="state-card error-state"
+      role="alert"
+    >
       <div class="state-icon">!</div>
       <h2>تعذر تحميل النتائج</h2>
       <p>{{ error() }}</p>
@@ -55,32 +58,43 @@
   @else {
 
     <!-- الإحصائيات -->
-    <section class="stats-grid" aria-label="ملخص النتائج">
+    <section
+      class="stats-grid"
+      aria-label="ملخص النتائج"
+    >
 
       <article class="stat-card stat-blue">
         <div class="stat-top">
           <span class="stat-icon">▤</span>
-          <span class="stat-caption">عدد النتائج</span>
+          <span class="stat-caption">
+            عدد النتائج
+          </span>
         </div>
 
         <strong>{{ filteredCount() }}</strong>
-        <p>التقييمات المطابقة للفلاتر</p>
+        <p>نتائج الاختبارات المطابقة للفلاتر</p>
       </article>
 
       <article class="stat-card stat-purple">
         <div class="stat-top">
           <span class="stat-icon">♙</span>
-          <span class="stat-caption">المتدربون أصحاب النتائج</span>
+          <span class="stat-caption">
+            المتدربون أصحاب النتائج
+          </span>
         </div>
 
         <strong>{{ traineeCount() }}</strong>
-        <p>عدد المتدربين الذين لديهم نتائج مطابقة</p>
+        <p>
+          عدد المتدربين الذين لديهم نتائج مطابقة
+        </p>
       </article>
 
       <article class="stat-card stat-teal">
         <div class="stat-top">
           <span class="stat-icon">◷</span>
-          <span class="stat-caption">متوسط الدرجات</span>
+          <span class="stat-caption">
+            متوسط الدرجات
+          </span>
         </div>
 
         <strong>
@@ -92,7 +106,9 @@
           }
         </strong>
 
-        <p>متوسط درجات التقييمات المطابقة</p>
+        <p>
+          متوسط نسب نتائج الاختبارات المطابقة
+        </p>
       </article>
 
     </section>
@@ -102,21 +118,34 @@
 
       <!-- أفضل المتدربين -->
       <article class="performance-card top-card">
+
         <div class="performance-heading">
           <div>
-            <span class="performance-icon trophy-icon">🏆</span>
+            <span class="performance-icon trophy-icon">
+              🏆
+            </span>
+
             <h2>أفضل المتدربين</h2>
-            <p>مرتّبون حسب متوسط درجات جميع تقييماتهم.</p>
+
+            <p>
+              مرتّبون حسب متوسط نتائج محاولات اختباراتهم.
+            </p>
           </div>
 
           <label class="count-selector">
             <span>عدد المتدربين</span>
+
             <select
               [ngModel]="topCount()"
               (ngModelChange)="topCount.set(+$event)"
             >
-              @for (count of traineeCountOptions; track count) {
-                <option [ngValue]="count">{{ count }}</option>
+              @for (
+                count of traineeCountOptions;
+                track count
+              ) {
+                <option [ngValue]="count">
+                  {{ count }}
+                </option>
               }
             </select>
           </label>
@@ -127,6 +156,7 @@
         </span>
 
         @if (topPerformers().length > 0) {
+
           <div class="performance-list">
             @for (
               trainee of topPerformers();
@@ -134,12 +164,19 @@
               let i = $index
             ) {
               <div class="performance-row">
-                <span class="rank-number">{{ i + 1 }}</span>
+
+                <span class="rank-number">
+                  {{ i + 1 }}
+                </span>
 
                 <div class="performance-person">
-                  <strong>{{ trainee.traineeName }}</strong>
+                  <strong>
+                    {{ trainee.traineeName }}
+                  </strong>
+
                   <span>
-                    عدد التقييمات: {{ trainee.evaluationCount }}
+                    عدد المحاولات:
+                    {{ trainee.attemptCount }}
                   </span>
                 </div>
 
@@ -149,33 +186,51 @@
                 >
                   {{ formatScore(trainee.averageScore) }}%
                 </span>
+
               </div>
             }
           </div>
+
         } @else {
+
           <p class="performance-empty">
-            لا توجد تقييمات لعرض أفضل المتدربين.
+            لا توجد نتائج اختبارات لعرض أفضل المتدربين.
           </p>
+
         }
+
       </article>
 
       <!-- المتدربون المتعثرون -->
       <article class="performance-card risk-card">
+
         <div class="performance-heading">
           <div>
-            <span class="performance-icon risk-icon">⚠️</span>
+            <span class="performance-icon risk-icon">
+              ⚠️
+            </span>
+
             <h2>المتدربون المتعثرون</h2>
-            <p>المتدربون الذين يقل متوسط درجاتهم عن 60%.</p>
+
+            <p>
+              المتدربون الذين يقل متوسط درجاتهم عن 60%.
+            </p>
           </div>
 
           <label class="count-selector">
             <span>عدد المتعثرين</span>
+
             <select
               [ngModel]="riskCount()"
               (ngModelChange)="riskCount.set(+$event)"
             >
-              @for (count of traineeCountOptions; track count) {
-                <option [ngValue]="count">{{ count }}</option>
+              @for (
+                count of traineeCountOptions;
+                track count
+              ) {
+                <option [ngValue]="count">
+                  {{ count }}
+                </option>
               }
             </select>
           </label>
@@ -186,18 +241,26 @@
         </span>
 
         @if (atRiskTrainees().length > 0) {
+
           <div class="performance-list">
             @for (
               trainee of atRiskTrainees();
               track trainee.enrollmentId
             ) {
               <div class="performance-row">
-                <span class="risk-indicator">!</span>
+
+                <span class="risk-indicator">
+                  !
+                </span>
 
                 <div class="performance-person">
-                  <strong>{{ trainee.traineeName }}</strong>
+                  <strong>
+                    {{ trainee.traineeName }}
+                  </strong>
+
                   <span>
-                    عدد التقييمات: {{ trainee.evaluationCount }}
+                    عدد المحاولات:
+                    {{ trainee.attemptCount }}
                   </span>
                 </div>
 
@@ -207,25 +270,32 @@
                 >
                   {{ formatScore(trainee.averageScore) }}%
                 </span>
+
               </div>
             }
           </div>
+
         } @else {
+
           <p class="performance-empty">
             لا يوجد متدربون بمتوسط أقل من 60% حاليًا.
           </p>
+
         }
+
       </article>
 
     </section>
 
     <!-- البحث والفلاتر -->
     <section class="filters-card">
+
       <div class="section-heading">
         <div>
           <h2>البحث وتصفية النتائج</h2>
           <p>
-            ابحثي باسم المتدرب أو الاختبار، وحددي الفترة الزمنية المطلوبة.
+            ابحثي باسم المتدرب أو الاختبار،
+            وحددي الفترة الزمنية المطلوبة.
           </p>
         </div>
 
@@ -259,7 +329,9 @@
         </div>
 
         <div class="filter-field">
-          <label for="fromDate">من تاريخ التقييم</label>
+          <label for="fromDate">
+            من تاريخ تسليم الاختبار
+          </label>
 
           <input
             id="fromDate"
@@ -270,7 +342,9 @@
         </div>
 
         <div class="filter-field">
-          <label for="toDate">إلى تاريخ التقييم</label>
+          <label for="toDate">
+            إلى تاريخ تسليم الاختبار
+          </label>
 
           <input
             id="toDate"
@@ -282,16 +356,26 @@
         </div>
 
         <div class="filter-field">
-          <label for="pageSize">عدد النتائج في الصفحة</label>
+          <label for="pageSize">
+            عدد النتائج في الصفحة
+          </label>
 
           <select
             id="pageSize"
             [ngModel]="pageSize()"
             (ngModelChange)="setPageSize($event)"
           >
-            <option [ngValue]="5">5 نتائج</option>
-            <option [ngValue]="10">10 نتائج</option>
-            <option [ngValue]="20">20 نتيجة</option>
+            <option [ngValue]="5">
+              5 نتائج
+            </option>
+
+            <option [ngValue]="10">
+              10 نتائج
+            </option>
+
+            <option [ngValue]="20">
+              20 نتيجة
+            </option>
           </select>
         </div>
 
@@ -309,14 +393,20 @@
           الأحدث أولًا
         </span>
       </div>
+
     </section>
 
     <!-- جدول النتائج -->
     <section class="results-card">
+
       <div class="card-heading">
         <div>
           <h2>سجل نتائج الاختبارات</h2>
-          <p>تفاصيل الدرجات والتقييمات المسجلة للمتدربين.</p>
+
+          <p>
+            تفاصيل نتائج محاولات الاختبارات
+            المسجلة للمتدربين.
+          </p>
         </div>
 
         <span class="total-badge">
@@ -328,30 +418,36 @@
 
         <div class="table-wrapper">
           <table>
+
             <thead>
               <tr>
                 <th scope="col">#</th>
                 <th scope="col">المتدرب</th>
-                <th scope="col">الاختبار / التقييم</th>
+                <th scope="col">اسم الاختبار</th>
                 <th scope="col">الدرجة</th>
-                <th scope="col">تاريخ التقييم</th>
-                <th scope="col">المقيّم</th>
+                <th scope="col">تاريخ التسليم</th>
+                <th scope="col">حالة المحاولة</th>
               </tr>
             </thead>
 
             <tbody>
               @for (
                 result of paginatedResults();
-                track result.evaluationId;
+                track result.attemptId;
                 let i = $index
               ) {
                 <tr>
+
                   <td class="row-number">
-                    {{ (currentPage() - 1) * pageSize() + i + 1 }}
+                    {{
+                      (currentPage() - 1) *
+                      pageSize() + i + 1
+                    }}
                   </td>
 
                   <td>
                     <div class="trainee-cell">
+
                       <span class="avatar">
                         {{ result.traineeName.charAt(0) }}
                       </span>
@@ -359,6 +455,7 @@
                       <span class="trainee-name">
                         {{ result.traineeName }}
                       </span>
+
                     </div>
                   </td>
 
@@ -374,42 +471,60 @@
                       [ngClass]="getScoreClass(result.score)"
                     >
                       {{ formatScore(result.score) }}
-                      <span class="score-max">/ 100</span>
+
+                      <span class="score-max">
+                        / 100
+                      </span>
                     </span>
                   </td>
 
                   <td class="date-cell">
-                    {{ formatDate(result.evaluationDate) }}
+                    {{ formatDate(result.submittedAt) }}
                   </td>
 
                   <td class="muted">
-                    {{ result.evaluatorName }}
+                    {{ formatAttemptStatus(result.status) }}
                   </td>
+
                 </tr>
               }
             </tbody>
+
           </table>
         </div>
 
         <!-- التنقل بين الصفحات -->
         @if (totalPages() > 1) {
+
           <div class="pagination">
+
             <p>
               عرض
+
               <strong>
-                {{ (currentPage() - 1) * pageSize() + 1 }}
+                {{
+                  (currentPage() - 1) *
+                  pageSize() + 1
+                }}
                 -
                 {{
-                  (currentPage() - 1) * pageSize()
-                  + paginatedResults().length
+                  (currentPage() - 1) *
+                  pageSize() +
+                  paginatedResults().length
                 }}
               </strong>
+
               من
-              <strong>{{ filteredCount() }}</strong>
+
+              <strong>
+                {{ filteredCount() }}
+              </strong>
+
               نتيجة
             </p>
 
             <div class="pagination-actions">
+
               <button
                 type="button"
                 class="page-btn"
@@ -431,14 +546,22 @@
               >
                 التالي
               </button>
+
             </div>
           </div>
+
         }
 
       } @else {
+
         <div class="empty-state">
-          <div class="empty-icon">⌕</div>
+
+          <div class="empty-icon">
+            ⌕
+          </div>
+
           <h3>لا توجد نتائج مطابقة</h3>
+
           <p>
             لم نعثر على نتائج تطابق معايير البحث الحالية.
             جرّبي تغيير الاسم أو الفترة الزمنية.
@@ -451,16 +574,24 @@
           >
             عرض جميع النتائج
           </button>
+
         </div>
+
       }
+
     </section>
 
     <!-- ملاحظة -->
     <p class="page-note">
       <span aria-hidden="true">ⓘ</span>
-      الدرجات المعروضة هي الدرجات المحسوبة في النظام.
-      المتدرب الذي لا يملك تقييمات لا يُعامل على أنه حاصل على صفر.
+
+      الدرجات المعروضة هي النسب المئوية المحسوبة
+      لنتائج محاولات الاختبارات في النظام.
+
+      المتدرب الذي لا يملك نتائج اختبارات
+      لا يُعامل على أنه حاصل على صفر.
     </p>
 
   }
+
 </div>

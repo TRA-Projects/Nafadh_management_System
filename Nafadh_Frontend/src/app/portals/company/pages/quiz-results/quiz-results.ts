@@ -3,21 +3,20 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { EvaluationDto } from '../../../../core/models/dtos';
 
 interface QuizResultRow {
-  evaluationId: number;
+  attemptId: number;
   traineeName: string;
   enrollmentId: number;
   testName: string;
   score: number;
-  evaluationDate: string;
-  evaluatorName: string;
+  submittedAt: string;
+  status: string;
 }
 
 interface ProgramTrainee {
@@ -29,8 +28,8 @@ interface TraineePerformance {
   enrollmentId: number;
   traineeName: string;
   averageScore: number | null;
-  evaluationCount: number;
-  hasEvaluations: boolean;
+  attemptCount: number;
+  hasResults: boolean;
 }
 
 interface EvaluatedTraineePerformance extends TraineePerformance {
@@ -55,25 +54,25 @@ export class CompanyQuizResults implements OnInit {
   readonly results = signal<QuizResultRow[]>([]);
   readonly programTitle = signal('نتائج الاختبارات');
 
-  // جميع المتدربين المسجلين في البرنامج، بمن فيهم من لا يملكون تقييمات
+  // جميع المتدربين المسجلين في البرنامج
   readonly programTrainees = signal<ProgramTrainee[]>([]);
 
-  // فلاتر البحث والتاريخ
+  // البحث والتصفية
   readonly searchTerm = signal('');
   readonly fromDate = signal('');
   readonly toDate = signal('');
 
-  // إعدادات الصفحات
+  // الصفحات
   readonly pageSize = signal(5);
   readonly currentPage = signal(1);
 
-  // عدد المتدربين في كل قائمة
+  // إعدادات قوائم الأداء
   readonly topCount = signal(5);
   readonly riskCount = signal(5);
 
   readonly traineeCountOptions = [3, 4, 5, 6, 7, 8, 9, 10];
 
-  // النتائج بعد تطبيق البحث والتاريخ
+  // نتائج الاختبارات بعد البحث والتصفية
   readonly filteredResults = computed(() => {
     const search = this.searchTerm().trim().toLocaleLowerCase();
     const from = this.fromDate();
@@ -81,15 +80,15 @@ export class CompanyQuizResults implements OnInit {
 
     return this.results()
       .filter((result) => {
-        const trainee = (result.traineeName || '').toLocaleLowerCase();
-        const testName = (result.testName || '').toLocaleLowerCase();
+        const trainee = result.traineeName.toLocaleLowerCase();
+        const testName = result.testName.toLocaleLowerCase();
 
         const matchesSearch =
           !search ||
           trainee.includes(search) ||
           testName.includes(search);
 
-        const date = this.getDateKey(result.evaluationDate);
+        const date = this.getDateKey(result.submittedAt);
 
         const matchesFrom = !from || (!!date && date >= from);
         const matchesTo = !to || (!!date && date <= to);
@@ -98,12 +97,13 @@ export class CompanyQuizResults implements OnInit {
       })
       .sort(
         (a, b) =>
-          this.getTimestamp(b.evaluationDate) -
-          this.getTimestamp(a.evaluationDate)
+          this.getTimestamp(b.submittedAt) -
+            this.getTimestamp(a.submittedAt) ||
+          b.attemptId - a.attemptId
       );
   });
 
-  // تجميع التقييمات حسب رقم التسجيل، مع الاحتفاظ بجميع المتدربين
+  // حساب أداء كل متدرب من نتائج محاولاته
   readonly traineePerformance = computed<TraineePerformance[]>(() => {
     const grouped = new Map<number, QuizResultRow[]>();
 
@@ -115,17 +115,17 @@ export class CompanyQuizResults implements OnInit {
         continue;
       }
 
-      const evaluations = grouped.get(result.enrollmentId) ?? [];
-      evaluations.push(result);
-      grouped.set(result.enrollmentId, evaluations);
+      const attempts = grouped.get(result.enrollmentId) ?? [];
+      attempts.push(result);
+      grouped.set(result.enrollmentId, attempts);
     }
 
     return this.programTrainees().map((trainee) => {
-      const evaluations = grouped.get(trainee.enrollmentId) ?? [];
-      const evaluationCount = evaluations.length;
+      const attempts = grouped.get(trainee.enrollmentId) ?? [];
+      const attemptCount = attempts.length;
 
-      const totalScore = evaluations.reduce(
-        (sum, evaluation) => sum + evaluation.score,
+      const totalScore = attempts.reduce(
+        (sum, attempt) => sum + attempt.score,
         0
       );
 
@@ -133,45 +133,44 @@ export class CompanyQuizResults implements OnInit {
         enrollmentId: trainee.enrollmentId,
         traineeName: trainee.traineeName,
         averageScore:
-          evaluationCount > 0 ? totalScore / evaluationCount : null,
-        evaluationCount,
-        hasEvaluations: evaluationCount > 0,
+          attemptCount > 0 ? totalScore / attemptCount : null,
+        attemptCount,
+        hasResults: attemptCount > 0,
       };
     });
   });
 
-  // المتدربون الذين لم يحصلوا على أي تقييم
+  // المتدربون الذين لا يملكون نتائج
   readonly traineesWithoutResults = computed(() =>
     this.traineePerformance().filter(
-      (trainee) => !trainee.hasEvaluations
+      (trainee) => !trainee.hasResults
     )
   );
 
-  // أفضل المتدربين: أصحاب التقييمات فقط، مرتبين حسب أعلى متوسط
+  // أفضل المتدربين
   readonly topPerformers = computed<EvaluatedTraineePerformance[]>(() =>
     this.traineePerformance()
       .filter(
         (trainee): trainee is EvaluatedTraineePerformance =>
-          trainee.averageScore !== null && trainee.hasEvaluations
+          trainee.averageScore !== null && trainee.hasResults
       )
       .sort((a, b) => b.averageScore - a.averageScore)
       .slice(0, this.topCount())
   );
 
-  // المتعثرون: أصحاب التقييمات الذين يقل متوسطهم عن 60
+  // المتدربون الذين يقل متوسط نتائجهم عن 60%
   readonly atRiskTrainees = computed<EvaluatedTraineePerformance[]>(() =>
     this.traineePerformance()
       .filter(
         (trainee): trainee is EvaluatedTraineePerformance =>
           trainee.averageScore !== null &&
-          trainee.hasEvaluations &&
+          trainee.hasResults &&
           trainee.averageScore < 60
       )
       .sort((a, b) => a.averageScore - b.averageScore)
       .slice(0, this.riskCount())
   );
 
-  // عدد الصفحات
   readonly totalPages = computed(() =>
     Math.max(
       1,
@@ -179,7 +178,6 @@ export class CompanyQuizResults implements OnInit {
     )
   );
 
-  // النتائج المعروضة في الصفحة الحالية
   readonly paginatedResults = computed(() => {
     const rows = this.filteredResults();
     const start = (this.currentPage() - 1) * this.pageSize();
@@ -187,9 +185,10 @@ export class CompanyQuizResults implements OnInit {
     return rows.slice(start, start + this.pageSize());
   });
 
-  readonly filteredCount = computed(() => this.filteredResults().length);
+  readonly filteredCount = computed(
+    () => this.filteredResults().length
+  );
 
-  // عدد المتدربين أصحاب النتائج المطابقة للفلاتر
   readonly traineeCount = computed(
     () =>
       new Set(
@@ -197,7 +196,7 @@ export class CompanyQuizResults implements OnInit {
       ).size
   );
 
-  // متوسط درجات التقييمات المطابقة للفلاتر
+  // متوسط النسب المئوية لنتائج الاختبارات
   readonly averageScore = computed(() => {
     const rows = this.filteredResults();
 
@@ -206,7 +205,8 @@ export class CompanyQuizResults implements OnInit {
     }
 
     return (
-      rows.reduce((sum, result) => sum + result.score, 0) / rows.length
+      rows.reduce((sum, result) => sum + result.score, 0) /
+      rows.length
     );
   });
 
@@ -228,11 +228,12 @@ export class CompanyQuizResults implements OnInit {
       .getCompanyProgramDetails(companyId, programId)
       .pipe(
         switchMap((details) => {
-          this.programTitle.set(details.title || 'نتائج الاختبارات');
+          this.programTitle.set(
+            details.title || 'نتائج الاختبارات'
+          );
 
           const trainees = details.enrollments ?? [];
 
-          // حفظ جميع التسجيلات حتى لو لم يكن لدى بعضها تقييمات
           this.programTrainees.set(
             trainees.map((trainee) => ({
               enrollmentId: Number(trainee.enrollmentId),
@@ -241,68 +242,51 @@ export class CompanyQuizResults implements OnInit {
             }))
           );
 
-          console.log(
-            'عدد تسجيلات المتدربين في البرنامج:',
-            trainees.length
-          );
-
           if (trainees.length === 0) {
             return of([] as QuizResultRow[]);
           }
 
           const requests = trainees.map((trainee) =>
             this.api
-              .getEvaluationsForEnrollment(trainee.enrollmentId)
+              .getQuizResultsForEnrollment(trainee.enrollmentId)
               .pipe(
-                map((evaluations: EvaluationDto[]) => {
-                  const safeEvaluations = evaluations ?? [];
-
-                  console.log(
-                    `التسجيل ${trainee.enrollmentId}: عدد التقييمات`,
-                    safeEvaluations.length
-                  );
-
-                  return safeEvaluations
-                    .map((evaluation): QuizResultRow | null => {
-                      const score = Number(evaluation.score);
-                      const evaluationId = Number(
-                        evaluation.evaluationId
-                      );
-
-                      if (
-                        !Number.isFinite(score) ||
-                        !Number.isFinite(evaluationId)
-                      ) {
-                        return null;
-                      }
-
-                      return {
-                        evaluationId,
+                map((quizResults) =>
+                  (quizResults ?? [])
+                    .filter(
+                      (result) =>
+                        result.percentage !== null &&
+                        result.percentage !== undefined &&
+                        Number.isFinite(
+                          Number(result.percentage)
+                        ) &&
+                        Number.isFinite(
+                          Number(result.attemptId)
+                        )
+                    )
+                    .map(
+                      (result): QuizResultRow => ({
+                        attemptId: Number(result.attemptId),
                         traineeName:
                           trainee.traineeName?.trim() ||
                           'متدرب بدون اسم',
-                        enrollmentId: Number(trainee.enrollmentId),
+                        enrollmentId: Number(
+                          trainee.enrollmentId
+                        ),
                         testName:
-                          evaluation.moduleTitle ||
-                          evaluation.templateType ||
-                          'تقييم',
-                        score,
-                        evaluationDate: evaluation.evaluationDate || '',
-                        evaluatorName:
-                          evaluation.evaluatorName || 'غير محدد',
-                      };
-                    })
-                    .filter(
-                      (row): row is QuizResultRow => row !== null
-                    );
-                }),
+                          result.quizTitle || 'اختبار بدون اسم',
+                        score: Number(result.percentage),
+                        submittedAt: result.submittedAt || '',
+                        status: result.status || '',
+                      })
+                    )
+                ),
                 catchError((err) => {
                   console.error(
-                    `تعذر تحميل تقييمات التسجيل ${trainee.enrollmentId}:`,
+                    `تعذر تحميل نتائج اختبارات التسجيل ${trainee.enrollmentId}:`,
                     err
                   );
 
-                  return of([] as QuizResultRow[]);
+                  return throwError(() => err);
                 })
               )
           );
@@ -316,25 +300,14 @@ export class CompanyQuizResults implements OnInit {
         next: (rows) => {
           const sortedRows = [...rows].sort(
             (a, b) =>
-              this.getTimestamp(b.evaluationDate) -
-              this.getTimestamp(a.evaluationDate)
+              this.getTimestamp(b.submittedAt) -
+                this.getTimestamp(a.submittedAt) ||
+              b.attemptId - a.attemptId
           );
 
           this.results.set(sortedRows);
           this.currentPage.set(1);
           this.loading.set(false);
-
-          console.log('إجمالي نتائج الاختبارات:', sortedRows.length);
-          console.log(
-            'ملخص أداء المتدربين:',
-            this.traineePerformance()
-          );
-          console.log('أفضل المتدربين:', this.topPerformers());
-          console.log('المتعثرون:', this.atRiskTrainees());
-          console.log(
-            'المتدربون بلا نتائج:',
-            this.traineesWithoutResults()
-          );
         },
 
         error: (err) => {
@@ -426,6 +399,19 @@ export class CompanyQuizResults implements OnInit {
     return 'score-low';
   }
 
+  formatAttemptStatus(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'submitted':
+        return 'تم التسليم';
+      case 'expired':
+        return 'انتهى الوقت';
+      case 'terminated':
+        return 'تم إنهاء المحاولة';
+      default:
+        return status || 'غير محدد';
+    }
+  }
+
   private getTimestamp(value: string): number {
     if (!value) {
       return 0;
@@ -464,7 +450,10 @@ export class CompanyQuizResults implements OnInit {
     const programId = this.route.snapshot.paramMap.get('id');
 
     if (programId) {
-      this.router.navigate(['/company/specialties', programId]);
+      this.router.navigate([
+        '/company/specialties',
+        programId,
+      ]);
     } else {
       this.router.navigate(['/company/specialties']);
     }
