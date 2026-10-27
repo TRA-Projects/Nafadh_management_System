@@ -278,7 +278,7 @@ export interface TrainerLivePollResultsResponse {
     optionText: string;
     sortOrder: number;
     voteCount: number;
-    percentage: number;
+    votePercentage: number;
   }>;
 }
 export interface TrainerLiveSessionReport {

@@ -47,7 +47,7 @@ namespace Nafadh_Backend.Services
                 StartDateTime = q.StartDateTime,
                 EndDateTime = q.EndDateTime,
                 DurationMinutes = q.DurationMinutes,
-                Status = q.Status,
+                Status = GetEffectiveStatus(q),
                 RandomizeQuestions = q.RandomizeQuestions,
                 MaxAttempts = q.MaxAttempts,
                 CameraRequired = q.CameraRequired,
@@ -64,7 +64,31 @@ namespace Nafadh_Backend.Services
                 CreatedAt = q.CreatedAt
             };
         }
+        private static NFD_QuizStatus GetEffectiveStatus(NFD_Quiz quiz)
+        {
+            
+            if (quiz.Status == NFD_QuizStatus.Draft ||
+                quiz.Status == NFD_QuizStatus.Archived)
+            {
+                return quiz.Status;
+            }
 
+            var now = DateTime.UtcNow;
+
+            
+            if (now < quiz.StartDateTime)
+            {
+                return NFD_QuizStatus.Scheduled;
+            }
+
+            if (now >= quiz.EndDateTime)
+            {
+                return NFD_QuizStatus.Closed;
+            }
+
+          
+            return NFD_QuizStatus.Open;
+        }
         private static void ValidateQuiz(
             string title,
             int batchId,
