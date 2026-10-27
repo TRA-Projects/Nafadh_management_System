@@ -13,23 +13,27 @@ import { CompanyGuidedTour } from '../company-guided-tour/company-guided-tour';
   standalone: true,
   imports: [CompanyHelpButtonComponent, CompanyHelpPanelComponent, CompanyGuidedTour],
   template: `
-    @if (helpPanelData()) {
-      <section class="company-user-manual" aria-label="دليل استخدام بوابة الشركة">
-        <app-company-help-button
-          [isOpen]="guideService.isHelpOpen()"
-          (toggle)="toggleHelp()"
-        />
-        <app-company-help-panel
-          [isOpen]="guideService.isHelpOpen()"
-          [pageKey]="guideService.currentGuide()?.title ?? ''"
-          [data]="helpPanelData()"
-          (close)="guideService.closeHelp()"
-          (startTour)="startTour()"
-        />
-        <app-company-guided-tour />
-      </section>
-    }
+    <section class="company-user-manual" aria-label="دليل استخدام بوابة الشركة">
+      <app-company-help-button
+        [isOpen]="guideService.isHelpOpen()"
+        (toggle)="toggleHelp()"
+      />
+      <app-company-help-panel
+        [isOpen]="guideService.isHelpOpen()"
+        [pageKey]="guideService.currentGuide()?.title ?? ''"
+        [data]="helpPanelData()"
+        (close)="guideService.closeHelp()"
+        (startTour)="startTour()"
+      />
+      <app-company-guided-tour />
+    </section>
   `,
+  styles: [`
+    :host {
+      position: relative;
+      z-index: 1000;
+    }
+  `],
 })
 export class CompanyManualShell implements OnDestroy {
   readonly guideService = inject(CompanyGuideService);
@@ -79,6 +83,12 @@ export class CompanyManualShell implements OnDestroy {
     else if (section === 'specialties' && parts.length === 3) key = 'program-details';
     else if (section === 'tasks' && parts.length === 2) key = 'tasks';
     else if (section === 'tasks' && parts.length === 3) key = 'workspace';
+    else if (section === 'profile' && parts.length === 2) key = 'profile';
+    else if (section === 'trainees' && parts.length === 2) key = 'trainees';
+    else if (section === 'trainees' && parts.length === 4 && parts[3] === 'progress') key = 'trainee-progress';
+    else if (section === 'contact' && parts.length === 2) key = 'contact';
+    else if (section === 'notifications' && parts.length === 2) key = 'notifications';
+    else if (section === 'daily-attendance' && parts.length === 2) key = 'daily-attendance';
     this.guideService.setPage(key);
   }
 
