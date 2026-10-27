@@ -5,22 +5,13 @@ export type PersistedLocale = 'en' | 'ar';
 
 export function readPersistedLocale(): PersistedLocale {
   try {
-    // Prefer localStorage so language persists across tabs/sessions.
-    if (typeof localStorage !== 'undefined') {
-      return localStorage.getItem(JOBSEEKER_LOCALE_STORAGE_KEY) === 'ar' ? 'ar' : 'en';
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(JOBSEEKER_LOCALE_STORAGE_KEY) !== 'ar') {
+      localStorage.setItem(JOBSEEKER_LOCALE_STORAGE_KEY, 'ar');
     }
   } catch {
     // ignore
   }
-  try {
-    // Fallback for environments where localStorage is blocked.
-    if (typeof sessionStorage !== 'undefined') {
-      return sessionStorage.getItem(JOBSEEKER_LOCALE_STORAGE_KEY) === 'ar' ? 'ar' : 'en';
-    }
-  } catch {
-    // ignore
-  }
-  return 'en';
+  return 'ar';
 }
 
 export function persistLocale(locale: PersistedLocale): void {
