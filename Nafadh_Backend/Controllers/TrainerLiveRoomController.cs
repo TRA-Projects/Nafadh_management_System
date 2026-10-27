@@ -93,7 +93,7 @@ namespace Nafadh_Backend.Controllers
 
             // Update session status only after LiveKit starts successfully.
             if (session.Status == NFD_SessionStatus.Scheduled ||
-    session.Status == NFD_SessionStatus.Postponed)
+                session.Status == NFD_SessionStatus.Postponed)
             {
                 session.Status = NFD_SessionStatus.InProgress;
 
