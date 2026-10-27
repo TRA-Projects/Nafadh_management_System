@@ -463,6 +463,21 @@ namespace Nafadh_Backend.Services
                 throw new ArgumentException(
                     "A valid new date and time are required.");
 
+            var newDate = dto.NewSessionDate!.Value.Date;
+
+            if (!TimeOnly.TryParse(dto.NewStartTime, out var newStart))
+            {
+                throw new ArgumentException(
+                    "Invalid new session start time.");
+            }
+
+            var newStartDateTime = newDate.Add(newStart.ToTimeSpan());
+
+            if (newStartDateTime <= DateTime.Now)
+            {
+                throw new ArgumentException(
+                    "The new session date and time must be in the future.");
+            }
 
             if (await HasSessionConflictAsync(
                 trainerId,
