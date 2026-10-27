@@ -23,6 +23,10 @@ export const ApiPaths = {
   /** Mock-only: list of personas (see `assets/mocks/mock-users.json`). */
   mockUsers: '/api/jobseekers/mock/users',
 
+announcement: '/api/Announcement',
+announcementById: (id: number) => `/api/Announcement/${id}`,
+
+
   /** Normal jobseeker self-registration when `PKI_ENABLED` = N. */
   authRegisterJobseeker: '/api/v2/registration/register-jobseeker',
   authRegisterJobseekerValidate: '/api/v2/registration/register-jobseeker-validate',
