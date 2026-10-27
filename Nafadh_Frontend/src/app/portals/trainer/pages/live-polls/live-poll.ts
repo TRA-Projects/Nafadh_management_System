@@ -1,19 +1,20 @@
 import {
-  Component,
+ 
   Input,
   OnChanges,
   SimpleChanges,
-  signal,
+ 
 } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 import {
   TrainerApi,
   TrainerLivePoll,
   TrainerLivePollResultsResponse,
 } from '../../services/trainer-api';
-
 @Component({
   selector: 'app-trainer-live-polls',
   standalone: true,
@@ -21,9 +22,8 @@ import {
   templateUrl: './live-poll.html',
   styleUrl: './live-poll.scss',
 })
-export class TrainerLivePollsComponent implements OnChanges {
-  // سيُمرر معرّف الجلسة لاحقًا من الصفحة التي تختار الجلسة.
-  @Input({ required: true }) sessionId!: number;
+export class TrainerLivePollsComponent implements OnInit {
+  sessionId!: number; // معرف الجلسة الذي سنقرأه من الرابط
 
   polls = signal<TrainerLivePoll[]>([]);
   selectedResults = signal<TrainerLivePollResultsResponse | null>(null);
@@ -37,12 +37,23 @@ export class TrainerLivePollsComponent implements OnChanges {
   errorMessage = signal('');
   successMessage = signal('');
 
-  constructor(private trainerApi: TrainerApi) {}
+  constructor(
+    private trainerApi: TrainerApi,
+    private route: ActivatedRoute // لجلب الـ ID من الرابط مباشرة
+  ) {}
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['sessionId'] && this.sessionId > 0) {
-      this.loadPolls();
-    }
+  ngOnInit(): void {
+    // قراءة الرقم مباشرة من الـ URL (مثل /429/)
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('sessionId') || params.get('id') || this.route.snapshot.paramMap.get('sessionId');
+      
+      // أو إذا كان مخزناً في الـ URL كـ path param أو query param
+      this.sessionId = Number(id) || Number(this.route.snapshot.queryParams['batchId']) || 429; // مؤقتاً للتجربة
+      
+      if (this.sessionId) {
+        this.loadPolls();
+      }
+    });
   }
 
   addOption(): void {
@@ -160,14 +171,24 @@ export class TrainerLivePollsComponent implements OnChanges {
       });
   }
 
-  loadResults(pollId: number): void {
+loadResults(pollId: number): void {
     this.selectedPollId.set(pollId);
     this.selectedResults.set(null);
 
     this.trainerApi
       .getTrainerLivePollResults(this.sessionId, pollId)
       .subscribe({
-        next: (results) => this.selectedResults.set(results),
+        next: (results) => {
+          // تحويل القيمة القادمة من الباكند وإسنادها لـ votePercentage
+          const mappedResults = {
+            ...results,
+            results: results.results.map((item: any) => ({
+              ...item,
+              votePercentage: item.votePercentage ?? item.percentage ?? 0
+            }))
+          };
+          this.selectedResults.set(mappedResults);
+        },
         error: (error: HttpErrorResponse) => {
           console.error('Load poll results failed:', error);
           this.errorMessage.set(
@@ -176,7 +197,6 @@ export class TrainerLivePollsComponent implements OnChanges {
         },
       });
   }
-
   private clearMessages(): void {
     this.errorMessage.set('');
     this.successMessage.set('');
