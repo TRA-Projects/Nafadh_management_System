@@ -3,6 +3,10 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+
+import { environment } from '../../../../../environments/environment';
+
+
 import {
   TrainerGuideProgress,
   TrainerGuideProgressStatus
@@ -15,7 +19,7 @@ export class TrainerGuideProgressService {
   private readonly http = inject(HttpClient);
 
   private readonly apiUrl =
-    '/api/trainer/user-guide-progress';
+    `${environment.apiBaseUrl}/trainer/user-guide-progress`;
 
   getAll(): Observable<TrainerGuideProgress[]> {
     return this.http.get<TrainerGuideProgress[]>(
