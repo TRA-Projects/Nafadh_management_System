@@ -55,16 +55,16 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
   }[]>([]);
 
   showChat = signal(false);
-chatInput = '';
+  chatInput = '';
 
-chatMessages = signal<{
-  id: number;
-  sender: string;
-  text: string;
-  mine: boolean;
-}[]>([]);
+  chatMessages = signal<{
+    id: number;
+    sender: string;
+    text: string;
+    mine: boolean;
+  }[]>([]);
 
-private chatMessageId = 0;
+  private chatMessageId = 0;
 
   private room: Room | null = null;
   private destroyed = false;
@@ -109,36 +109,36 @@ private chatMessageId = 0;
 
           this.room = room;
 
-          
-room.on(RoomEvent.DataReceived, (payload, participant, _kind, topic) => {
-  if (topic !== 'session-chat') return;
 
-  try {
-    const decoded = new TextDecoder().decode(payload);
+          room.on(RoomEvent.DataReceived, (payload, participant, _kind, topic) => {
+            if (topic !== 'session-chat') return;
 
-    const data = JSON.parse(decoded);
+            try {
+              const decoded = new TextDecoder().decode(payload);
 
-    if (
-      data.type !== 'chat' ||
-      typeof data.text !== 'string' ||
-      !data.text.trim()
-    ) {
-      return;
-    }
+              const data = JSON.parse(decoded);
 
-    this.chatMessages.update(messages => [
-      ...messages,
-      {
-        id: ++this.chatMessageId,
-        sender: participant?.name || participant?.identity || 'مشارك',
-        text: data.text,
-        mine: false
-      }
-    ]);
-  } catch (error) {
-    console.error('Invalid chat message:', error);
-  }
-});
+              if (
+                data.type !== 'chat' ||
+                typeof data.text !== 'string' ||
+                !data.text.trim()
+              ) {
+                return;
+              }
+
+              this.chatMessages.update(messages => [
+                ...messages,
+                {
+                  id: ++this.chatMessageId,
+                  sender: participant?.name || participant?.identity || 'مشارك',
+                  text: data.text,
+                  mine: false
+                }
+              ]);
+            } catch (error) {
+              console.error('Invalid chat message:', error);
+            }
+          });
 
           room.on(RoomEvent.LocalTrackUnpublished, () => {
             const screenTrack = room.localParticipant
@@ -423,37 +423,41 @@ room.on(RoomEvent.DataReceived, (payload, participant, _kind, topic) => {
     });
   }
 
-  
-openLiveAttendance(): void {
-  if (!this.connected()) return;
 
-  this.router.navigate(['/trainer/live-session-attendance', this.sessionId], {
-    queryParams: {
-      batchId: this.batchId
-    }
-  });
-}
-openSessionPolls(): void {
-  if (!this.connected()) return;
+  openLiveAttendance(): void {
+    if (!this.connected()) return;
 
-  this.router.navigate(['/trainer/live-session-polls', this.sessionId], {
-    queryParams: {
-      batchId: this.batchId
-    }
-  });
-}
+    this.router.navigate(['/trainer/live-sessions-attendance'], {
+      queryParams: {
+        sessionId: this.sessionId,
+        batchId: this.batchId
+      }
+    });
+  }
+
+  openSessionPolls(): void {
+    if (!this.connected()) return;
+
+    this.router.navigate(['/trainer/live-session-polls'], {
+      queryParams: {
+        sessionId: this.sessionId,
+        batchId: this.batchId
+      }
+    });
+  }
 
   async leaveSession(): Promise<void> {
     await this.room?.disconnect();
 
     this.connected.set(false);
 
-    this.router.navigate(['/trainer/live-sessions'], {
-      queryParams:
-        this.batchId > 0
-          ? { batchId: this.batchId }
-          : {}
+    void this.router.navigate(['/trainer/live-sessions'], {
+      queryParams: {
+        batchId: this.batchId,
+        tab: 'ongoing'
+      }
     });
+
   }
 
   ngOnDestroy(): void {
@@ -461,46 +465,46 @@ openSessionPolls(): void {
     void this.room?.disconnect();
   }
 
-  
-toggleChat(): void {
-  this.showChat.update(value => !value);
-}
 
-async sendChatMessage(): Promise<void> {
-  const text = this.chatInput.trim();
-
-  if (!this.room || !this.connected() || !text) return;
-
-  try {
-    const encoder = new TextEncoder();
-
-    const payload = encoder.encode(
-      JSON.stringify({
-        type: 'chat',
-        text
-      })
-    );
-
-    await this.room.localParticipant.publishData(
-      payload,
-      { reliable: true, topic: 'session-chat' }
-    );
-
-    this.chatMessages.update(messages => [
-      ...messages,
-      {
-        id: ++this.chatMessageId,
-        sender: 'أنتِ',
-        text,
-        mine: true
-      }
-    ]);
-
-    this.chatInput = '';
-  } catch (error) {
-    console.error('Chat message failed:', error);
-    this.errorMessage.set('تعذر إرسال الرسالة.');
+  toggleChat(): void {
+    this.showChat.update(value => !value);
   }
-}
+
+  async sendChatMessage(): Promise<void> {
+    const text = this.chatInput.trim();
+
+    if (!this.room || !this.connected() || !text) return;
+
+    try {
+      const encoder = new TextEncoder();
+
+      const payload = encoder.encode(
+        JSON.stringify({
+          type: 'chat',
+          text
+        })
+      );
+
+      await this.room.localParticipant.publishData(
+        payload,
+        { reliable: true, topic: 'session-chat' }
+      );
+
+      this.chatMessages.update(messages => [
+        ...messages,
+        {
+          id: ++this.chatMessageId,
+          sender: 'أنتِ',
+          text,
+          mine: true
+        }
+      ]);
+
+      this.chatInput = '';
+    } catch (error) {
+      console.error('Chat message failed:', error);
+      this.errorMessage.set('تعذر إرسال الرسالة.');
+    }
+  }
 
 }
