@@ -13,12 +13,14 @@ import { TrainerGuideHelp } from '../user-guide/components/trainer-guide-help';
 import { TrainerGuideService } from '../user-guide/services/trainer-guide.service';
 
 import { TRAINER_GUIDE_CONTENT } from '../user-guide/data/trainer-guide-content';
+import { TrainerGuideTour } from '../user-guide/components/trainer-guide-tour';
 
 @Component({
   selector: 'app-trainer-layout',
-  imports: [AppShell, TrainerGuideHelp],
+ imports: [AppShell, TrainerGuideHelp, TrainerGuideTour],
   template: ` <app-shell   portalTitle="بوابة المدرب"   accountLabel="مدرب"   [navItems]="navItems" />
     <app-trainer-guide-help />
+    <app-trainer-guide-tour />
   `,
 })
 export class TrainerLayout implements OnInit, OnDestroy {
