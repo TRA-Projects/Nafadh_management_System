@@ -1,0 +1,70 @@
+
+@if (guideService.isTourActive() && currentStep; as step) {
+  <div class="trainer-tour" dir="rtl">
+
+    <div class="tour-backdrop"></div>
+
+    <section
+      class="tour-card"
+      role="dialog"
+      aria-label="الجولة الإرشادية"
+    >
+      <div class="tour-header">
+        <span class="tour-label">دليل المدرب</span>
+
+        <button
+          type="button"
+          class="tour-skip"
+          (click)="skipTour()"
+        >
+          تخطي الجولة
+        </button>
+      </div>
+
+      <div class="tour-progress">
+        الخطوة {{ currentStepIndex() + 1 }}
+        من {{ steps.length }}
+      </div>
+
+      <h2 class="tour-title">
+        {{ step.title }}
+      </h2>
+
+      <p class="tour-description">
+        {{ step.description }}
+      </p>
+
+      @if (step.steps?.length) {
+        <ol class="tour-instructions">
+          @for (instruction of step.steps; track $index) {
+            <li>{{ instruction }}</li>
+          }
+        </ol>
+      }
+
+      <div class="tour-actions">
+        <button
+          type="button"
+          class="tour-previous"
+          (click)="previousStep()"
+          [disabled]="currentStepIndex() === 0"
+        >
+          السابق
+        </button>
+
+        <button
+          type="button"
+          class="tour-next"
+          (click)="nextStep()"
+        >
+          @if (currentStepIndex() === steps.length - 1) {
+            إنهاء الجولة
+          } @else {
+            التالي
+          }
+        </button>
+      </div>
+    </section>
+
+  </div>
+}
