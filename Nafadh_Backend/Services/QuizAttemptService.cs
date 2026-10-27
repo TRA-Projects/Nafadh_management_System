@@ -133,10 +133,18 @@ namespace Nafadh_Backend.Services
                     "الاختبار غير موجود.");
             }
 
-            if (quiz.Status != Nafadh_Backend.Enums.NFD_QuizStatus.Open)
+            var now = DateTime.UtcNow;
+
+            if (now < quiz.StartDateTime)
             {
                 throw new InvalidOperationException(
-                    "الاختبار غير متاح حالياً.");
+                    "الاختبار لم يبدأ بعد.");
+            }
+
+            if (now >= quiz.EndDateTime)
+            {
+                throw new InvalidOperationException(
+                    "انتهى وقت الاختبار.");
             }
 
             var isEnrolled =
@@ -150,19 +158,7 @@ namespace Nafadh_Backend.Services
                     "المتدرب غير مسجل في دفعة هذا الاختبار.");
             }
 
-            var now = DateTime.UtcNow;
-
-            if (now < quiz.StartDateTime)
-            {
-                throw new InvalidOperationException(
-                    "الاختبار لم يبدأ بعد.");
-            }
-
-            if (now > quiz.EndDateTime)
-            {
-                throw new InvalidOperationException(
-                    "انتهى وقت دخول الاختبار.");
-            }
+            
 
             // الكاميرا إلزامية => لازم موافقة المتدرب
             if (quiz.CameraRequired && !dto.CameraConsent)

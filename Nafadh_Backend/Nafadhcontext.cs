@@ -48,6 +48,8 @@ namespace Nafadh_Backend
         public DbSet<NFD_TraineeModuleProgress> NFD_TraineeModuleProgresses { get; set; }
         public DbSet<NFD_Session> NFD_Sessions { get; set; }
         public DbSet<NFD_SessionAttendance> NFD_SessionAttendances { get; set; }
+        // Trainer Portal - LiveKit automatic attendance periods.
+        public DbSet<NFD_SessionAttendancePeriod> NFD_SessionAttendancePeriods { get; set; }
 
         // Trainer Portal - Post-session surveys and trainee responses.
         public DbSet<NFD_SessionSurvey> NFD_SessionSurveys { get; set; }
@@ -285,7 +287,6 @@ namespace Nafadh_Backend
             });
 
             // ---- NFD_UserGuideProgress ----
-            // NEW: Configuration for the approved User Guide Progress table.
             modelBuilder.Entity<NFD_UserGuideProgress>(entity =>
             {
                 entity.ToTable("NFD_UserGuideProgress");
@@ -303,13 +304,32 @@ namespace Nafadh_Backend
                 entity.Property(e => e.UpdatedAt)
                     .IsRequired();
 
+                // Trainee progress
                 entity.HasIndex(e => new { e.TraineeId, e.GuideKey })
-                    .IsUnique();
+                    .IsUnique()
+                    .HasFilter("[TraineeId] IS NOT NULL");
 
                 entity.HasOne<NFD_Trainee>()
                     .WithMany()
                     .HasForeignKey(e => e.TraineeId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                // Trainer progress
+                entity.HasIndex(e => new { e.TrainerId, e.GuideKey })
+                    .IsUnique()
+                    .HasFilter("[TrainerId] IS NOT NULL");
+
+                entity.HasOne<NFD_Trainer>()
+                    .WithMany()
+                    .HasForeignKey(e => e.TrainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Each record belongs to either a trainee or a trainer
+                entity.ToTable(t => t.HasCheckConstraint(
+                    "CK_UserGuideProgress_Owner",
+                    "([TraineeId] IS NOT NULL AND [TrainerId] IS NULL) OR " +
+                    "([TraineeId] IS NULL AND [TrainerId] IS NOT NULL)"
+                ));
             });
 
             // ---- NFD_Track ----
@@ -503,12 +523,37 @@ namespace Nafadh_Backend
             modelBuilder.Entity<NFD_SessionAttendance>(entity =>
             {
                 entity.ToTable("NFD_SessionAttendances");
+                // Trainer Portal - Prevent duplicate attendance per trainee and session.
+                entity.HasIndex(e => new { e.SessionId, e.TraineeId })
+                    .IsUnique();
                 entity.HasOne(e => e.Session)
                     .WithMany(p => p.SessionAttendances)
                     .HasForeignKey(e => e.SessionId)
                     .OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(e => e.Trainee)
                     .WithMany(p => p.SessionAttendances)
+                    .HasForeignKey(e => e.TraineeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Trainer Portal - LiveKit attendance periods.
+            // Each LiveKit participant connection is stored once.
+            modelBuilder.Entity<NFD_SessionAttendancePeriod>(entity =>
+            {
+                entity.ToTable("NFD_SessionAttendancePeriods");
+
+                entity.HasIndex(e => e.ParticipantSid)
+                    .IsUnique();
+
+                entity.HasIndex(e => new { e.SessionId, e.TraineeId });
+
+                entity.HasOne(e => e.Session)
+                    .WithMany()
+                    .HasForeignKey(e => e.SessionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Trainee)
+                    .WithMany()
                     .HasForeignKey(e => e.TraineeId)
                     .OnDelete(DeleteBehavior.Restrict);
             });

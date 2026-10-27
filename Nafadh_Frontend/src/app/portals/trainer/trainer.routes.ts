@@ -13,7 +13,9 @@ export const TRAINER_ROUTES: Routes = [
       { path: 'content', loadComponent: () => import('./pages/content/content').then((m) => m.TrainerContent) },   
       {path: 'live-sessions',loadComponent: () =>import('./pages/live-sessions/live-sessions').then(m => m.TrainerLiveSessions)},
       {path: 'live-session-room/:sessionId',loadComponent: () =>import('./pages/live-session-room/live-session-room').then(m => m.LiveSessionRoom)},
-      //{ path: 'attendance', loadComponent: () => import('./pages/attendance/attendance').then((m) => m.TrainerAttendance) },
+      {path: 'live-session-attendance/:sessionId',loadComponent: () =>import('./pages/live-attendance/live-attendance').then((m) => m.LiveAttendanceComponent),},
+      {path: 'attendance', loadComponent: () => import('./pages/attendance/attendance').then((m) => m.TrainerAttendance) },
+      {path: 'live-session-polls/:sessionId',loadComponent: () => import('./pages/live-polls/live-poll').then(m => m.TrainerLivePollsComponent) },
       { path: 'tasks', loadComponent: () => import('./pages/tasks/tasks').then((m) => m.TrainerTasks) },
       { path: 'trainees', loadComponent: () => import('./pages/trainees/trainees').then((m) => m.TrainerTrainees) },
       { path: 'reports', loadComponent: () => import('./pages/reports/reports').then((m) => m.TrainerReports) },
@@ -23,6 +25,7 @@ export const TRAINER_ROUTES: Routes = [
       { path: 'notifications', loadComponent: () => import('./pages/notifications/notifications').then((m) => m.TrainerNotifications) },
       {path: 'quizzes',loadComponent: () =>import('./pages/quizzes/quizzes').then(m => m.TrainerQuizzes)},
       {path: 'quiz-results',loadComponent: () =>import('./pages/quiz-results/quiz-results').then(m => m.QuizResults)},
+      {path: 'session-survey-results/:sessionId',loadComponent: () => import('./pages/session-survey-results/session-survey-results').then((m) => m.SessionSurveyResultsComponent),},
 
     ],
   },
