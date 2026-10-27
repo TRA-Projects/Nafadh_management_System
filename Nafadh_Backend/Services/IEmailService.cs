@@ -39,5 +39,7 @@
             string recipientName,
             string title,
             string content);
+
+        Task SendCompanyWarningAsync(string email, string companyName, string reason, string? warningLevel = null);
     }
 }

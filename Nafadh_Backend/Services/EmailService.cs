@@ -559,5 +559,37 @@ namespace Nafadh_Backend.Services
 
             await SendAsync(email, subject, body);
         }
+
+        public async Task SendCompanyWarningAsync(string email, string companyName, string reason, string? warningLevel = null)
+        {
+            var levelBadge = string.IsNullOrWhiteSpace(warningLevel)
+                ? "إنذار إداري"
+                : $"المستوى: {warningLevel}";
+
+            var subject = "إنذار رسمي من إدارة منصة نفاذ";
+
+            var body = $@"
+    <div dir='rtl' style='font-family: Arial, Tahoma, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #fecaca; border-radius: 10px; overflow: hidden; background-color: #ffffff;'>
+        <div style='background-color: #dc2626; color: #ffffff; padding: 18px 24px;'>
+            <h2 style='margin: 0; font-size: 20px;'>⚠️ إشعار إنذار رسمي</h2>
+        </div>
+        <div style='padding: 24px; color: #1f2937; line-height: 1.8;'>
+            <p style='margin-top: 0;'>السادة شركة <strong>{companyName}</strong> المحترمين،</p>
+            <p>نود إشعاركم بأنه قد تم تسجيل إنذار رسمي بحق منشأتكم عبر منصة <strong>نفاذ</strong>.</p>
+            
+            <div style='background-color: #fef2f2; border-right: 4px solid #dc2626; padding: 14px 16px; margin: 18px 0; border-radius: 6px;'>
+                <p style='margin: 0 0 8px 0; color: #991b1b; font-weight: bold;'>{levelBadge}</p>
+                <p style='margin: 0; color: #374151;'><strong>التفاصيل / السبب:</strong> {reason}</p>
+            </div>
+
+            <p>يرجى الدخول إلى حساب الشركة في منصة نفاذ للاطلاع على تفاصيل الإنذار وتقديم الرد أو المعالجة اللازمة.</p>
+            <hr style='border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;' />
+            <p style='font-size: 12px; color: #6b7280; margin-bottom: 0;'>مع تحيات،<br/>إدارة منصة نفاذ</p>
+        </div>
+    </div>";
+
+            await SendAsync(email, subject, body);
+
+        }
     }
 }
