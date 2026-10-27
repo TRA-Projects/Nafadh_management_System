@@ -515,5 +515,49 @@ namespace Nafadh_Backend.Services
                 }
             }
         }
+
+        public async Task SendAnnouncementAsync(
+            string email,
+            string recipientName,
+            string title,
+            string content)
+        {
+            string safeName = WebUtility.HtmlEncode(recipientName);
+            string safeTitle = WebUtility.HtmlEncode(title);
+            string safeContent = WebUtility.HtmlEncode(content)
+                .Replace("\r\n", "<br/>")
+                .Replace("\n", "<br/>");
+
+            string subject = $"إعلان جديد: {title} - نظام نفاذ";
+
+            string body = $@"
+            <div dir='rtl'
+                 style='font-family: Arial, sans-serif;
+                        line-height: 1.8;
+                        max-width: 650px;
+                        margin: auto;'>
+
+                <h2>{safeTitle}</h2>
+
+                <p>
+                    عزيزي/عزيزتي <strong>{safeName}</strong>،
+                </p>
+
+                <div style='background-color: #f8fafc;
+                            border-right: 4px solid #1e3a8a;
+                            padding: 12px 16px;
+                            margin: 16px 0;'>
+                    {safeContent}
+                </div>
+
+                <p>
+                    مع التحية،<br/>
+                    إدارة نظام نفاذ
+                </p>
+
+            </div>";
+
+            await SendAsync(email, subject, body);
+        }
     }
 }

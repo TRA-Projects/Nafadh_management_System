@@ -33,5 +33,11 @@
           string? certificateUrl = null);
 
 
+        // إرسال إعلان إداري للمستخدمين (متدرب / مدرب / شركة)
+        Task SendAnnouncementAsync(
+            string email,
+            string recipientName,
+            string title,
+            string content);
     }
 }
