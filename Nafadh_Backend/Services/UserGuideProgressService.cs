@@ -1,5 +1,4 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +16,10 @@ namespace Nafadh_Backend.Services
             _repository = repository;
             _context = context;
         }
+
+        // =========================
+        // Trainee - 
+        // =========================
 
         // Find the trainee linked to the authenticated user.
         private async Task<int> GetTraineeIdAsync(int userId)
@@ -44,7 +47,7 @@ namespace Nafadh_Backend.Services
             return await _repository.GetByTraineeIdAsync(traineeId);
         }
 
-        // Get progress for one guide.
+        // Get progress for one trainee guide.
         public async Task<NFD_UserGuideProgress?> GetByGuideAsync(
             int userId,
             string guideKey)
@@ -60,7 +63,7 @@ namespace Nafadh_Backend.Services
                 traineeId, guideKey.Trim());
         }
 
-        // Create or update progress for one guide.
+        // Create or update trainee progress.
         public async Task<NFD_UserGuideProgress> SaveAsync(
             int userId,
             string guideKey,
@@ -90,6 +93,100 @@ namespace Nafadh_Backend.Services
                 progress = new NFD_UserGuideProgress
                 {
                     TraineeId = traineeId,
+                    GuideKey = guideKey,
+                    Status = status,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                return await _repository.CreateAsync(progress);
+            }
+
+            progress.Status = status;
+            progress.UpdatedAt = DateTime.UtcNow;
+
+            await _repository.UpdateAsync(progress);
+            return progress;
+        }
+
+        // =========================
+        // Trainer -
+        // =========================
+
+        // Find the trainer linked to the authenticated user.
+        private async Task<int> GetTrainerIdAsync(int userId)
+        {
+            var trainerId = await _context.NFD_Trainers
+                .Where(t => t.UserId == userId)
+                .Select(t => (int?)t.TrainerId)
+                .FirstOrDefaultAsync();
+
+            if (trainerId == null)
+            {
+                throw new KeyNotFoundException(
+                    "Trainer profile was not found.");
+            }
+
+            return trainerId.Value;
+        }
+
+        // Get all guide progress records for the current trainer.
+        public async Task<IEnumerable<NFD_UserGuideProgress>> GetTrainerAllAsync(
+            int userId)
+        {
+            var trainerId = await GetTrainerIdAsync(userId);
+
+            return await _repository.GetByTrainerIdAsync(trainerId);
+        }
+
+        // Get progress for one trainer guide.
+        public async Task<NFD_UserGuideProgress?> GetTrainerByGuideAsync(
+            int userId,
+            string guideKey)
+        {
+            if (string.IsNullOrWhiteSpace(guideKey) ||
+                guideKey.Trim().Length > 100)
+            {
+                throw new ArgumentException(
+                    "Guide key must be between 1 and 100 characters.");
+            }
+
+            var trainerId = await GetTrainerIdAsync(userId);
+
+            return await _repository.GetByTrainerAndGuideAsync(
+                trainerId, guideKey.Trim());
+        }
+
+        // Create or update trainer progress.
+        public async Task<NFD_UserGuideProgress> SaveTrainerAsync(
+            int userId,
+            string guideKey,
+            string status)
+        {
+            if (string.IsNullOrWhiteSpace(guideKey) ||
+                guideKey.Trim().Length > 100)
+            {
+                throw new ArgumentException(
+                    "Guide key must be between 1 and 100 characters.");
+            }
+
+            if (status != "Completed" && status != "Skipped")
+            {
+                throw new ArgumentException(
+                    "Status must be Completed or Skipped.");
+            }
+
+            var trainerId = await GetTrainerIdAsync(userId);
+            guideKey = guideKey.Trim();
+
+            var progress = await _repository.GetByTrainerAndGuideAsync(
+                trainerId, guideKey);
+
+            if (progress == null)
+            {
+                progress = new NFD_UserGuideProgress
+                {
+                    TrainerId = trainerId,
+                    TraineeId = null,
                     GuideKey = guideKey,
                     Status = status,
                     UpdatedAt = DateTime.UtcNow
