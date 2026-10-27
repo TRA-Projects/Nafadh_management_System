@@ -2782,7 +2782,10 @@ namespace Nafadh_Backend.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TraineeId")
+                    b.Property<int?>("TraineeId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TrainerId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -2791,9 +2794,17 @@ namespace Nafadh_Backend.Migrations
                     b.HasKey("ProgressId");
 
                     b.HasIndex("TraineeId", "GuideKey")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[TraineeId] IS NOT NULL");
 
-                    b.ToTable("NFD_UserGuideProgress", (string)null);
+                    b.HasIndex("TrainerId", "GuideKey")
+                        .IsUnique()
+                        .HasFilter("[TrainerId] IS NOT NULL");
+
+                    b.ToTable("NFD_UserGuideProgress", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UserGuideProgress_Owner", "([TraineeId] IS NOT NULL AND [TrainerId] IS NULL) OR ([TraineeId] IS NULL AND [TrainerId] IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Warning", b =>
@@ -4087,8 +4098,12 @@ namespace Nafadh_Backend.Migrations
                     b.HasOne("Nafadh_Backend.Models.NFD_Trainee", null)
                         .WithMany()
                         .HasForeignKey("TraineeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainer", null)
+                        .WithMany()
+                        .HasForeignKey("TrainerId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Warning", b =>
