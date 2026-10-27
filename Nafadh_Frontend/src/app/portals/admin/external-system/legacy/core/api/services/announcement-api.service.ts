@@ -30,28 +30,49 @@ export type UpdateAnnouncementDto = Omit<
 @Injectable({ providedIn: 'root' })
 export class AnnouncementApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiBaseUrl}/Announcement`;
+
+  private readonly baseUrl = this.buildBaseUrl(
+    environment.apiBaseUrl,
+  );
+
+  private buildBaseUrl(apiBaseUrl: string): string {
+    const normalizedUrl = apiBaseUrl.replace(/\/+$/, '');
+
+    const urlWithApi = /\/api$/i.test(normalizedUrl)
+      ? normalizedUrl
+      : `${normalizedUrl}/api`;
+
+    return `${urlWithApi}/Announcement`;
+  }
 
   getAll(): Observable<AnnouncementDto[]> {
     return this.http.get<AnnouncementDto[]>(this.baseUrl);
   }
 
   getById(id: number): Observable<AnnouncementDto> {
-    return this.http.get<AnnouncementDto>(`${this.baseUrl}/${id}`);
+    return this.http.get<AnnouncementDto>(
+      `${this.baseUrl}/${id}`,
+    );
   }
 
-  create(dto: CreateAnnouncementDto): Observable<unknown> {
-    return this.http.post(this.baseUrl, dto);
+  create(dto: CreateAnnouncementDto): Observable<string> {
+    return this.http.post(this.baseUrl, dto, {
+      responseType: 'text',
+    });
   }
 
   update(
     id: number,
     dto: UpdateAnnouncementDto,
-  ): Observable<unknown> {
-    return this.http.put(`${this.baseUrl}/${id}`, dto);
+  ): Observable<string> {
+    return this.http.put(`${this.baseUrl}/${id}`, dto, {
+      responseType: 'text',
+    });
   }
 
-  delete(id: number): Observable<unknown> {
-    return this.http.delete(`${this.baseUrl}/${id}`);
+  delete(id: number): Observable<string> {
+    return this.http.delete(`${this.baseUrl}/${id}`, {
+      responseType: 'text',
+    });
   }
 }

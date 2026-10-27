@@ -1,5 +1,6 @@
 
 <div class="notification-templates-container" dir="rtl">
+  <!-- Tabs -->
   <div
     class="content-tabs"
     role="tablist"
@@ -32,12 +33,13 @@
     </button>
   </div>
 
-  <!-- Templates -->
+  <!-- Notification Templates -->
   @if (activeTab() === 'templates') {
     <section class="tab-content" role="tabpanel">
       <div class="filters-card">
         <div class="filter-field search-field">
           <label for="templateSearch">البحث</label>
+
           <div class="search-input-wrapper">
             <span class="search-icon" aria-hidden="true">⌕</span>
             <input
@@ -84,6 +86,7 @@
       @if (!loading() && errorMessage()) {
         <div class="state-container error-state" role="alert">
           <p>{{ errorMessage() }}</p>
+
           <button
             type="button"
             class="secondary-button"
@@ -114,14 +117,20 @@
               <tbody>
                 @for (template of paginatedTemplates(); track template.id) {
                   <tr>
-                    <td>{{ safePageIndex() * pageSize() + $index + 1 }}</td>
-
                     <td>
-                      <span class="template-code">{{ template.code }}</span>
+                      {{ safePageIndex() * pageSize() + $index + 1 }}
                     </td>
 
                     <td>
-                      <span class="template-name">{{ template.name }}</span>
+                      <span class="template-code">
+                        {{ template.code }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span class="template-name">
+                        {{ template.name }}
+                      </span>
                     </td>
 
                     <td>
@@ -224,11 +233,16 @@
             </table>
           </div>
 
+          <!-- Templates Pagination -->
           <div class="pagination-footer">
             <div class="pagination-info">
               عرض
               <strong>
-                {{ totalCount() === 0 ? 0 : safePageIndex() * pageSize() + 1 }}
+                {{
+                  totalCount() === 0
+                    ? 0
+                    : safePageIndex() * pageSize() + 1
+                }}
               </strong>
               إلى <strong>{{ getEndIndex() }}</strong>
               من <strong>{{ totalCount() }}</strong> قالب
@@ -236,6 +250,7 @@
 
             <div class="pagination-controls">
               <label for="templatePageSize">عدد العناصر:</label>
+
               <select
                 id="templatePageSize"
                 [ngModel]="pageSize()"
@@ -287,6 +302,26 @@
   <!-- Announcements -->
   @if (activeTab() === 'announcements') {
     <section class="tab-content announcements-content" role="tabpanel">
+
+      <!-- Page Header: Same style as Evaluation Templates -->
+      <div class="page-header">
+        <div class="page-title">
+          <h2>الإعلانات</h2>
+          <p>إدارة الإعلانات المنشورة ونطاق ظهورها.</p>
+        </div>
+
+        <button
+          type="button"
+          class="primary-button"
+          (click)="resetAnnouncementForm()"
+          [disabled]="savingAnnouncement()"
+        >
+          <span class="button-icon">+</span>
+          إضافة إعلان
+        </button>
+      </div>
+
+      <!-- Announcement Filters -->
       <div class="filters-card announcement-filters">
         <div class="filter-field search-field">
           <label for="announcementSearch">البحث في الإعلانات</label>
@@ -322,6 +357,7 @@
         </button>
       </div>
 
+      <!-- Loading -->
       @if (announcementsLoading()) {
         <div class="state-container" role="status">
           <span class="loading-spinner" aria-hidden="true"></span>
@@ -329,6 +365,7 @@
         </div>
       }
 
+      <!-- Error -->
       @if (!announcementsLoading() && announcementsError()) {
         <div class="state-container error-state" role="alert">
           <p>{{ announcementsError() }}</p>
@@ -343,31 +380,26 @@
         </div>
       }
 
-      @if (!announcementsLoading() && !announcementsError()) {
-        <div class="announcements-workspace">
-          <!-- List panel -->
-          <section
-            class="announcements-list-panel"
-            aria-label="قائمة الإعلانات"
-          >
-            <div class="panel-heading">
-              <div>
-                <h2>قائمة الإعلانات</h2>
-                <p>{{ announcementTotalCount() }} إعلان</p>
-              </div>
+      <!-- Announcements Workspace -->
+      <div class="announcements-workspace">
 
-              <!-- Add announcement button -->
-              <button
-                type="button"
-                class="primary-button add-announcement-button"
-                (click)="resetAnnouncementForm()"
-                [disabled]="savingAnnouncement()"
-              >
-                <span aria-hidden="true">＋</span>
-                إضافة إعلان
-              </button>
+        <!-- Announcements List -->
+        <section
+          class="announcements-list-panel"
+          aria-label="قائمة الإعلانات"
+        >
+          <div class="panel-heading">
+            <div>
+              <h2>قائمة الإعلانات</h2>
+              <p>{{ announcementTotalCount() }} إعلان</p>
             </div>
+          </div>
 
+          @if (announcementsLoading()) {
+            <div class="empty-state">
+              <p>جارٍ تحميل قائمة الإعلانات...</p>
+            </div>
+          } @else if (!announcementsError()) {
             <div class="table-card announcements-table-card">
               <div class="table-responsive announcements-table-scroll">
                 <table class="data-table announcements-table">
@@ -481,6 +513,7 @@
                 </table>
               </div>
 
+              <!-- Announcements Pagination -->
               <div class="pagination-footer announcements-pagination">
                 <div class="pagination-info">
                   عرض
@@ -499,6 +532,7 @@
 
                 <div class="pagination-controls">
                   <label for="announcementPageSize">عدد العناصر:</label>
+
                   <select
                     id="announcementPageSize"
                     [ngModel]="announcementPageSize()"
@@ -543,140 +577,142 @@
                 </div>
               </div>
             </div>
-          </section>
+          }
+        </section>
 
-          <!-- Form panel -->
-          <section
-            class="announcement-form-card"
-            id="announcementFormCard"
-            aria-label="نموذج الإعلان"
-          >
-            <div class="section-heading">
-              <div>
-                <h2>
-                  {{
-                    editingAnnouncementId() !== null
-                      ? 'تعديل الإعلان'
-                      : 'إضافة إعلان جديد'
-                  }}
-                </h2>
-                <p>أدخل نص الإعلان وحدد نطاق ظهوره للمستفيدين.</p>
-              </div>
-
-              @if (editingAnnouncementId() !== null) {
-                <button
-                  type="button"
-                  class="secondary-button"
-                  (click)="resetAnnouncementForm()"
-                >
-                  إلغاء التعديل
-                </button>
-              }
+        <!-- Announcement Form -->
+        <section
+          class="announcement-form-card"
+          id="announcementFormCard"
+          aria-label="نموذج الإعلان"
+        >
+          <div class="section-heading">
+            <div>
+              <h2>
+                {{
+                  editingAnnouncementId() !== null
+                    ? 'تعديل الإعلان'
+                    : 'إضافة إعلان جديد'
+                }}
+              </h2>
+              <p>أدخل نص الإعلان وحدد نطاق ظهوره للمستفيدين.</p>
             </div>
 
-            <form class="announcement-form" (ngSubmit)="saveAnnouncement()">
-              <div class="form-field">
-                <label for="announcementMessage">نص الإعلان</label>
+            @if (editingAnnouncementId() !== null) {
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="resetAnnouncementForm()"
+              >
+                إلغاء التعديل
+              </button>
+            }
+          </div>
 
-                <textarea
-                  id="announcementMessage"
-                  name="announcementMessage"
-                  rows="5"
-                  maxlength="4000"
-                  required
-                  [ngModel]="announcementMessage()"
-                  (ngModelChange)="announcementMessage.set($event)"
-                  placeholder="اكتب نص الإعلان هنا..."
-                ></textarea>
+          <form class="announcement-form" (ngSubmit)="saveAnnouncement()">
+            <div class="form-field">
+              <label for="announcementMessage">نص الإعلان</label>
 
-                <div class="field-hint">
-                  {{ announcementMessage().length }} حرف
-                </div>
+              <textarea
+                id="announcementMessage"
+                name="announcementMessage"
+                rows="5"
+                maxlength="4000"
+                required
+                [ngModel]="announcementMessage()"
+                (ngModelChange)="announcementMessage.set($event)"
+                placeholder="اكتب نص الإعلان هنا..."
+              ></textarea>
+
+              <div class="field-hint">
+                {{ announcementMessage().length }} حرف
               </div>
+            </div>
 
+            <div class="form-field">
+              <label for="announcementScope">نطاق الإعلان</label>
+
+              <select
+                id="announcementScope"
+                name="announcementScope"
+                required
+                [ngModel]="announcementScopeType()"
+                (ngModelChange)="onAnnouncementScopeChange($event)"
+              >
+                @for (
+                  option of announcementScopeOptions;
+                  track option.value
+                ) {
+                  <option [ngValue]="option.value">
+                    {{ option.label }}
+                  </option>
+                }
+              </select>
+            </div>
+
+            @if (
+              announcementScopeType() !== announcementScopeOptions[0].value
+            ) {
               <div class="form-field">
-                <label for="announcementScope">نطاق الإعلان</label>
-
-                <select
-                  id="announcementScope"
-                  name="announcementScope"
-                  required
-                  [ngModel]="announcementScopeType()"
-                  (ngModelChange)="onAnnouncementScopeChange($event)"
-                >
-                  @for (
-                    option of announcementScopeOptions;
-                    track option.value
-                  ) {
-                    <option [ngValue]="option.value">
-                      {{ option.label }}
-                    </option>
-                  }
-                </select>
-              </div>
-
-              @if (announcementScopeType() !== announcementScopeOptions[0].value) {
-                <div class="form-field">
-                  <label for="announcementScopeId">
-                    {{
-                      announcementScopeType() === announcementScopeOptions[1].value
-                        ? 'رقم الشركة'
-                        : 'رقم الدفعة'
-                    }}
-                  </label>
-
-                  <input
-                    id="announcementScopeId"
-                    name="announcementScopeId"
-                    type="number"
-                    min="1"
-                    required
-                    [ngModel]="announcementScopeId()"
-                    (ngModelChange)="onAnnouncementScopeIdChange($event)"
-                    placeholder="أدخل الرقم"
-                  />
-                </div>
-              }
-
-              @if (announcementFormError()) {
-                <div class="form-message error-message" role="alert">
-                  {{ announcementFormError() }}
-                </div>
-              }
-
-              @if (announcementSuccessMessage()) {
-                <div class="form-message success-message" role="status">
-                  {{ announcementSuccessMessage() }}
-                </div>
-              }
-
-              <div class="form-actions">
-                <button
-                  type="submit"
-                  class="primary-button"
-                  [disabled]="savingAnnouncement()"
-                >
+                <label for="announcementScopeId">
                   {{
-                    savingAnnouncement()
-                      ? 'جارٍ الحفظ...'
-                      : editingAnnouncementId() !== null
-                        ? 'حفظ التعديلات'
-                        : 'إضافة الإعلان'
+                    announcementScopeType() === announcementScopeOptions[1].value
+                      ? 'رقم الشركة'
+                      : 'رقم الدفعة'
                   }}
-                </button>
+                </label>
 
-                <button
-                  type="button"
-                  class="secondary-button"
-                  (click)="resetAnnouncementForm()"
-                >
-                  مسح الحقول
-                </button>
+                <input
+                  id="announcementScopeId"
+                  name="announcementScopeId"
+                  type="number"
+                  min="1"
+                  required
+                  [ngModel]="announcementScopeId()"
+                  (ngModelChange)="onAnnouncementScopeIdChange($event)"
+                  placeholder="أدخل الرقم"
+                />
               </div>
-            </form>
-          </section>
-        </div>
-      }
+            }
+
+            @if (announcementFormError()) {
+              <div class="form-message error-message" role="alert">
+                {{ announcementFormError() }}
+              </div>
+            }
+
+            @if (announcementSuccessMessage()) {
+              <div class="form-message success-message" role="status">
+                {{ announcementSuccessMessage() }}
+              </div>
+            }
+
+            <div class="form-actions">
+              <button
+                type="submit"
+                class="primary-button"
+                [disabled]="savingAnnouncement()"
+              >
+                {{
+                  savingAnnouncement()
+                    ? 'جارٍ الحفظ...'
+                    : editingAnnouncementId() !== null
+                      ? 'حفظ التعديلات'
+                      : 'إضافة الإعلان'
+                }}
+              </button>
+
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="resetAnnouncementForm()"
+              >
+                مسح الحقول
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
     </section>
   }
 </div>

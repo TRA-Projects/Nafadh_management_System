@@ -597,97 +597,96 @@ export class NotificationTemplatesPageComponent {
     return SCOPE_NUMBER[scope] as unknown as AnnouncementScopeType;
   }
 
-  saveAnnouncement(): void {
-    const message = this.announcementMessage().trim();
-    const scopeType = this.announcementScopeType();
-    const scopeId = this.announcementScopeId();
+  
+saveAnnouncement(): void {
+  const message = this.announcementMessage().trim();
+  const scopeType = this.announcementScopeType();
+  const scopeId = this.announcementScopeId();
+  const editingId = this.editingAnnouncementId();
 
-    this.announcementFormError.set('');
-    this.announcementSuccessMessage.set('');
+  this.announcementFormError.set('');
+  this.announcementSuccessMessage.set('');
 
-    if (this.savingAnnouncement()) return;
+  if (this.savingAnnouncement()) return;
 
-    if (!message) {
-      this.announcementFormError.set('يرجى إدخال نص الإعلان.');
-      return;
-    }
+  if (!message) {
+    this.announcementFormError.set('يرجى إدخال نص الإعلان.');
+    return;
+  }
 
-    if (
-      scopeType !== ANNOUNCEMENT_SCOPE.Platform &&
-      (!scopeId || scopeId <= 0)
-    ) {
-      this.announcementFormError.set('يرجى إدخال رقم الشركة أو الدفعة.');
-      return;
-    }
+  if (
+    scopeType !== ANNOUNCEMENT_SCOPE.Platform &&
+    (!scopeId || !Number.isInteger(scopeId) || scopeId <= 0)
+  ) {
+    this.announcementFormError.set(
+      'يرجى إدخال رقم صحيح للشركة أو الدفعة.',
+    );
+    return;
+  }
 
-    const userId = this.authService.userId;
+  const userId = this.authService.userId;
 
-    if (this.editingAnnouncementId() === null && !userId) {
-      this.announcementFormError.set(
-        'تعذر تحديد المستخدم الحالي. يرجى تسجيل الدخول مرة أخرى.',
-      );
-      return;
-    }
+  if (editingId === null && !userId) {
+    this.announcementFormError.set(
+      'تعذر تحديد المستخدم الحالي. يرجى تسجيل الدخول مرة أخرى.',
+    );
+    return;
+  }
 
-    const normalizedScopeId =
-      scopeType === ANNOUNCEMENT_SCOPE.Platform ? null : scopeId;
+  const dto = {
+    scopeType: this.toApiScope(scopeType),
+    scopeId:
+      scopeType === ANNOUNCEMENT_SCOPE.Platform ? null : scopeId,
+    message,
+  };
 
-    this.savingAnnouncement.set(true);
+  this.savingAnnouncement.set(true);
 
-    if (this.editingAnnouncementId() !== null) {
-      const id = this.editingAnnouncementId()!;
-
-      this.announcementApi
-        .update(id, {
-          scopeType: this.toApiScope(scopeType),
-          scopeId: normalizedScopeId,
-          message,
-        })
-        .subscribe({
-          next: () => {
-            this.savingAnnouncement.set(false);
-            this.announcementSuccessMessage.set(
-              'تم تحديث الإعلان بنجاح.',
-            );
-            this.resetAnnouncementAfterSave();
-            this.loadAnnouncements();
-          },
-          error: (error: unknown) => {
-            console.error('Failed to update announcement:', error);
-            this.savingAnnouncement.set(false);
-            this.announcementFormError.set(
-              'تعذر تحديث الإعلان. يرجى التحقق من البيانات والمحاولة مرة أخرى.',
-            );
-          },
+  const request$ =
+    editingId !== null
+      ? this.announcementApi.update(editingId, dto)
+      : this.announcementApi.create({
+          ...dto,
+          createdByUserId: userId!,
         });
 
-      return;
-    }
+  request$.subscribe({
+    next: () => {
+      this.savingAnnouncement.set(false);
 
-    this.announcementApi
-      .create({
-        scopeType: this.toApiScope(scopeType),
-        scopeId: normalizedScopeId,
-        message,
-        createdByUserId: userId!,
-      })
-      .subscribe({
-        next: () => {
-          this.savingAnnouncement.set(false);
-          this.announcementSuccessMessage.set('تمت إضافة الإعلان بنجاح.');
-          this.resetAnnouncementAfterSave();
-          this.announcementPageIndex.set(0);
-          this.loadAnnouncements();
-        },
-        error: (error: unknown) => {
-          console.error('Failed to create announcement:', error);
-          this.savingAnnouncement.set(false);
-          this.announcementFormError.set(
-            'تعذر إضافة الإعلان. يرجى التحقق من البيانات والمحاولة مرة أخرى.',
-          );
-        },
-      });
-  }
+      this.announcementSuccessMessage.set(
+        editingId !== null
+          ? 'تم تحديث الإعلان بنجاح.'
+          : 'تمت إضافة الإعلان بنجاح.',
+      );
+
+      this.resetAnnouncementAfterSave();
+
+      if (editingId === null) {
+        this.announcementPageIndex.set(0);
+      }
+
+      this.loadAnnouncements();
+    },
+    error: (error: unknown) => {
+      console.error(
+        editingId !== null
+          ? 'Failed to update announcement:'
+          : 'Failed to create announcement:',
+        error,
+      );
+
+      this.savingAnnouncement.set(false);
+
+      this.announcementFormError.set(
+        editingId !== null
+          ? 'تعذر تحديث الإعلان. تحققي من البيانات وصلاحيات المستخدم.'
+          : 'تعذرت إضافة الإعلان. تحققي من البيانات وصلاحيات المستخدم.',
+      );
+    },
+  });
+}
+
 
   private resetAnnouncementAfterSave(): void {
     this.editingAnnouncementId.set(null);
