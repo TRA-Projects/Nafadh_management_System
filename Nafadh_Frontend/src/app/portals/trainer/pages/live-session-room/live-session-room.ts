@@ -424,12 +424,11 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
   }
 
 
-  openLiveAttendance(): void {
+openLiveAttendance(): void {
     if (!this.connected()) return;
 
-    this.router.navigate(['/trainer/live-sessions-attendance'], {
+    this.router.navigate(['/trainer/live-session-attendance', this.sessionId], {
       queryParams: {
-        sessionId: this.sessionId,
         batchId: this.batchId
       }
     });
@@ -438,9 +437,8 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
   openSessionPolls(): void {
     if (!this.connected()) return;
 
-    this.router.navigate(['/trainer/live-session-polls'], {
+    this.router.navigate(['/trainer/live-session-polls', this.sessionId], {
       queryParams: {
-        sessionId: this.sessionId,
         batchId: this.batchId
       }
     });

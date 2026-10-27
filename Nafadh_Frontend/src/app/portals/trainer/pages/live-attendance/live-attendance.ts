@@ -1,11 +1,10 @@
 import {
   Component,
-  Input,
-  OnChanges,
-  SimpleChanges,
+  OnInit,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { TrainerApi } from '../../services/trainer-api';
@@ -23,25 +22,32 @@ interface LiveAttendanceRow {
   templateUrl: './live-attendance.html',
   styleUrl: './live-attendance.scss',
 })
-export class LiveAttendanceComponent implements OnChanges {
-  // يمررهما المكوّن الأب عند ربط صفحة الحضور لاحقًا.
-  @Input({ required: true }) sessionId!: number;
-  @Input({ required: true }) batchId!: number;
+export class LiveAttendanceComponent implements OnInit {
+  sessionId!: number;
+  batchId!: number;
 
   rows = signal<LiveAttendanceRow[]>([]);
   loading = signal(false);
   errorMessage = signal('');
 
-  constructor(private trainerApi: TrainerApi) {}
+  constructor(
+    private trainerApi: TrainerApi,
+    private route: ActivatedRoute
+  ) {}
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (
-      (changes['sessionId'] || changes['batchId']) &&
-      this.sessionId > 0 &&
-      this.batchId > 0
-    ) {
-      this.loadAttendance();
-    }
+  ngOnInit(): void {
+    // التقاط sessionId من الـ URL (سواء كان Param أساسي أو QueryParam)
+    this.route.paramMap.subscribe(params => {
+      const sId = params.get('sessionId') || params.get('id') || this.route.snapshot.paramMap.get('sessionId');
+      const bId = this.route.snapshot.queryParams['batchId'] || 1; // قيمة افتراضية للدفعة إن لم توجد
+
+      this.sessionId = Number(sId) || 429; // رقم الجلسة الحالي الذي نعمل عليه
+      this.batchId = Number(bId);
+
+      if (this.sessionId && this.batchId) {
+        this.loadAttendance();
+      }
+    });
   }
 
   private loadAttendance(): void {
