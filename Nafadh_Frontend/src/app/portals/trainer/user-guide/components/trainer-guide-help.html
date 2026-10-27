@@ -1,0 +1,91 @@
+
+<div class="trainer-guide-help" dir="rtl">
+
+  <!-- زر المساعدة -->
+  <button
+    type="button"
+    class="guide-help-button"
+    (click)="toggleHelp()"
+    [attr.aria-expanded]="guideService.isHelpOpen()"
+    aria-label="دليل المستخدم"
+    title="دليل المستخدم"
+  >
+    ؟
+  </button>
+
+  <!-- لوحة المساعدة -->
+  @if (guideService.isHelpOpen()) {
+    <div
+      class="guide-help-panel"
+      role="dialog"
+      aria-label="دليل المستخدم"
+    >
+
+      <div class="guide-panel-header">
+        <div>
+          <span class="guide-eyebrow">
+            دليل المدرب
+          </span>
+
+          <h2>
+            {{ guideService.currentGuide()?.title || 'دليل المستخدم' }}
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          class="guide-close-button"
+          (click)="guideService.closeHelp()"
+          aria-label="إغلاق دليل المستخدم"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="guide-panel-content">
+
+        @if (guideService.currentGuide(); as guide) {
+
+          <p class="guide-description">
+            {{ guide.description }}
+          </p>
+
+          <button
+            type="button"
+            class="guide-start-button"
+            (click)="startTour()"
+            [disabled]="!guide.steps.length"
+          >
+            ▶ بدء الجولة الإرشادية
+          </button>
+
+          <section class="guide-faq-section">
+            <h3>الأسئلة الشائعة</h3>
+
+            @for (faq of guide.faqs; track $index) {
+              <details class="guide-faq-item">
+                <summary>
+                  {{ faq.question }}
+                </summary>
+
+                <p>
+                  {{ faq.answer }}
+                </p>
+              </details>
+            } @empty {
+              <p>لا توجد أسئلة شائعة لهذه الصفحة.</p>
+            }
+          </section>
+
+        } @else {
+          <p class="guide-description">
+            لا يتوفر دليل لهذه الصفحة حاليًا.
+          </p>
+        }
+
+      </div>
+
+    </div>
+  }
+
+</div>
