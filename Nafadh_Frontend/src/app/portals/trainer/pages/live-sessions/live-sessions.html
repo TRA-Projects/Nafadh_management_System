@@ -122,7 +122,7 @@
 
                     <!-- تعديل وإلغاء الجلسات القادمة -->
                     @if (
-                    session.status === 'Scheduled' &&
+                    (session.status === 'Scheduled' || session.status === 'Postponed') &&
                     activeTab() === 'upcoming'
                     ) {
                     <button type="button" (click)="editSession(session)">
@@ -139,6 +139,7 @@
                     activeTab() === 'ongoing' &&
                     (
                     session.status === 'Scheduled' ||
+                    session.status === 'Postponed' ||
                     session.status === 'InProgress'
                     )
                     ) {
@@ -171,7 +172,9 @@
             <div class="modal-header">
                 <h2 id="session-form-title">
                     {{
-                    editingId() === null
+                    reschedulingId() !== null
+                    ? 'إعادة جدولة الجلسة'
+                    : editingId() === null
                     ? 'إنشاء جلسة جديدة'
                     : 'تعديل الجلسة'
                     }}
@@ -223,7 +226,13 @@
                     </button>
 
                     <button type="submit" class="primary-btn" [disabled]="saving()">
-                        حفظ الجلسة
+                        {{
+                        saving()
+                        ? 'جاري الحفظ...'
+                        : reschedulingId() !== null
+                        ? 'حفظ الموعد الجديد'
+                        : 'حفظ الجلسة'
+                        }}
                     </button>
                 </div>
             </form>
