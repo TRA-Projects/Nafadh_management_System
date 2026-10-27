@@ -287,7 +287,6 @@ namespace Nafadh_Backend
             });
 
             // ---- NFD_UserGuideProgress ----
-            // NEW: Configuration for the approved User Guide Progress table.
             modelBuilder.Entity<NFD_UserGuideProgress>(entity =>
             {
                 entity.ToTable("NFD_UserGuideProgress");
@@ -305,13 +304,32 @@ namespace Nafadh_Backend
                 entity.Property(e => e.UpdatedAt)
                     .IsRequired();
 
+                // Trainee progress
                 entity.HasIndex(e => new { e.TraineeId, e.GuideKey })
-                    .IsUnique();
+                    .IsUnique()
+                    .HasFilter("[TraineeId] IS NOT NULL");
 
                 entity.HasOne<NFD_Trainee>()
                     .WithMany()
                     .HasForeignKey(e => e.TraineeId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                // Trainer progress
+                entity.HasIndex(e => new { e.TrainerId, e.GuideKey })
+                    .IsUnique()
+                    .HasFilter("[TrainerId] IS NOT NULL");
+
+                entity.HasOne<NFD_Trainer>()
+                    .WithMany()
+                    .HasForeignKey(e => e.TrainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Each record belongs to either a trainee or a trainer
+                entity.ToTable(t => t.HasCheckConstraint(
+                    "CK_UserGuideProgress_Owner",
+                    "([TraineeId] IS NOT NULL AND [TrainerId] IS NULL) OR " +
+                    "([TraineeId] IS NULL AND [TrainerId] IS NOT NULL)"
+                ));
             });
 
             // ---- NFD_Track ----
