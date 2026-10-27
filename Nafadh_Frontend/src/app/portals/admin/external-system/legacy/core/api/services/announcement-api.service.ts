@@ -45,8 +45,22 @@ export class AnnouncementApiService {
     return `${urlWithApi}/Announcement`;
   }
 
+  // جلب إعلانات النطاق الافتراضي من الـ Backend
   getAll(): Observable<AnnouncementDto[]> {
     return this.http.get<AnnouncementDto[]>(this.baseUrl);
+  }
+
+  // جلب الإعلانات حسب النطاق
+  // 0 = Platform, 1 = Company, 2 = Batch
+  getByScope(
+    scopeType: AnnouncementScopeType,
+    scopeId?: number | null,
+  ): Observable<AnnouncementDto[]> {
+    const scopeUrl =
+      `${this.baseUrl}/scope/${scopeType}` +
+      (scopeId != null ? `/${scopeId}` : '');
+
+    return this.http.get<AnnouncementDto[]>(scopeUrl);
   }
 
   getById(id: number): Observable<AnnouncementDto> {
