@@ -446,10 +446,15 @@ namespace Nafadh_Backend.Services
             if (session == null)
                 return null;
 
-            if (session.Status != NFD_SessionStatus.Scheduled &&
-                session.Status != NFD_SessionStatus.Postponed)
+            var canPostpone =
+            session.Status == NFD_SessionStatus.Scheduled ||
+            session.Status == NFD_SessionStatus.Postponed;
+
+            if (!canPostpone)
+            {
                 throw new InvalidOperationException(
-                    "This session cannot be postponed.");
+                    "Only scheduled or postponed sessions can be rescheduled.");
+            }
 
             if (!dto.NewSessionDate.HasValue ||
                 dto.NewSessionDate.Value == default ||
