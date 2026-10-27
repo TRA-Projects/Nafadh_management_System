@@ -7,24 +7,33 @@ import { localeActions } from '../store/locale/locale.actions';
 import { localeFeature } from '../store/locale/locale.reducer';
 import type { AppLocale } from '../store/locale/locale.state';
 
-/** Re-export for callers that import `AppLocale` from here. */
 export type { AppLocale } from '../store/locale/locale.state';
 
-/**
- * Facade over the NgRx `locale` slice: single global locale, DevTools-visible, same API for templates.
- * `document.documentElement` `dir` / `lang` stay in sync via `effect`.
- */
 @Injectable({ providedIn: 'root' })
 export class LocaleService {
   private readonly store = inject(Store);
 
   readonly locale = toSignal(this.store.select(localeFeature.selectLocale), {
-    initialValue: readPersistedLocale() as AppLocale,
+    initialValue: 'ar' as AppLocale,
   });
 
   readonly isRtl = computed(() => this.locale() === 'ar');
 
   constructor() {
+    if (readPersistedLocale() !== 'ar') {
+      persistLocale('ar');
+      this.store.dispatch(localeActions.setLocale({ locale: 'ar' }));
+      if (typeof window !== 'undefined' && !sessionStorage.getItem('__nafadh_ar_boot')) {
+        sessionStorage.setItem('__nafadh_ar_boot', '1');
+        void import('../../locale/messages.ar.json')
+          .catch(() => {})
+          .finally(() => {
+            location.reload();
+          });
+        return;
+      }
+    }
+
     effect(() => {
       const l = this.locale();
       const doc = document.documentElement;
@@ -33,21 +42,14 @@ export class LocaleService {
     });
   }
 
-  /**
-   * Sets UI language and reloads the page so Angular `$localize` / `loadTranslations()` apply.
-   * (Runtime language switch without reload is not supported by `@angular/localize`.)
-   */
   setLocale(locale: AppLocale): void {
-    persistLocale(locale);
-    this.store.dispatch(localeActions.setLocale({ locale }));
+    const targetLocale: AppLocale = locale || 'ar';
+    persistLocale(targetLocale);
+    this.store.dispatch(localeActions.setLocale({ locale: targetLocale }));
     if (typeof location !== 'undefined') {
-      // Speed up switching to Arabic: preload the translation chunk before reload so the next boot
-      // doesn't wait for network/disk (dev server can be noticeably slow on first load).
-      if (locale === 'ar') {
+      if (targetLocale === 'ar') {
         void import('../../locale/messages.ar.json')
-          .catch(() => {
-            // ignore; fallback is normal reload which will try to fetch it on startup
-          })
+          .catch(() => {})
           .finally(() => {
             location.reload();
           });
@@ -58,7 +60,6 @@ export class LocaleService {
   }
 
   toggle(): void {
-    const next: AppLocale = this.locale() === 'en' ? 'ar' : 'en';
-    this.setLocale(next);
+    this.setLocale('ar');
   }
 }

@@ -4,7 +4,6 @@ import { switchMap } from 'rxjs/operators';
 
 import { getAccessToken } from '../auth/auth-token.storage';
 import { hasActiveMockUserSession, isFullMockBackend } from '../environment/environment-flags';
-import { handleNafadhIdentityMerge } from './nafadh-identity-bridge';
 
 const BIDDING_SSO_URL = 'https://localhost:7082/api/BiddingSso/token';
 
@@ -90,7 +89,7 @@ function getBiddingSsoToken(nafadhToken: string): Promise<string | null> {
   return inflightSsoExchange;
 }
 
-/** Attaches `Authorization: Bearer` for real API calls and bridges Nafadh + Bidding Identity data */
+/** Attaches `Authorization: Bearer` for real API calls */
 export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
   if (isFullMockBackend()) {
     return next(req);
@@ -101,7 +100,6 @@ export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
 
   const nafadhToken = readNafadhToken();
 
-  // طلبات النظام الخارجي (58888): تبديل التوكن عبر الجسر + دمج بيانات الهوية والصلاحيات من الداتابيس الاثنين
   if (isBiddingApiRequest(req.url) && nafadhToken) {
     return from(getBiddingSsoToken(nafadhToken)).pipe(
       switchMap((biddingToken) => {
@@ -109,7 +107,7 @@ export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
         const authedReq = req.clone({
           setHeaders: { Authorization: `Bearer ${finalToken}` },
         });
-        return handleNafadhIdentityMerge(authedReq, next, nafadhToken);
+        return next(authedReq);
       }),
     );
   }
@@ -120,12 +118,8 @@ export const authBearerInterceptor: HttpInterceptorFn = (req, next) => {
 
   if (hasActiveMockUserSession()) {
     const mockReq = req.clone({ setHeaders: { Authorization: 'Bearer mock-dev-session' } });
-    return isBiddingApiRequest(req.url)
-      ? handleNafadhIdentityMerge(mockReq, next, null)
-      : next(mockReq);
+    return next(mockReq);
   }
 
-  return isBiddingApiRequest(req.url)
-    ? handleNafadhIdentityMerge(req, next, null)
-    : next(req);
+  return next(req);
 };
