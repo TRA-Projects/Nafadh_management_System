@@ -1,10 +1,13 @@
 import { Component } from '@angular/core';
 import { AppShell, ShellNavItem } from '../../../shared/ui/app-shell/app-shell';
-
+import { TrainerGuideHelp } from '../user-guide/components/trainer-guide-help';
 @Component({
   selector: 'app-trainer-layout',
-  imports: [AppShell],
-  template: `<app-shell portalTitle="بوابة المدرب" accountLabel="مدرب" [navItems]="navItems" />`,
+ imports: [AppShell, TrainerGuideHelp],
+ template: `
+  <app-shell  portalTitle="بوابة المدرب" accountLabel="مدرب"  [navItems]="navItems" />
+  <app-trainer-guide-help />
+`,
 })
 export class TrainerLayout {
   navItems: ShellNavItem[] = [
