@@ -1,0 +1,132 @@
+
+:host {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 2000;
+}
+
+.trainer-guide-help {
+  font-family: inherit;
+  direction: rtl;
+}
+
+.guide-help-button {
+  width: 54px;
+  height: 54px;
+  border: none;
+  border-radius: 50%;
+  background: #003b82;
+  color: white;
+  font-size: 28px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 59, 130, 0.25);
+}
+
+.guide-help-button:hover {
+  background: #0056b8;
+}
+
+.guide-help-panel {
+  position: absolute;
+  bottom: 68px;
+  left: 0;
+  width: min(390px, calc(100vw - 32px));
+  max-height: min(620px, calc(100vh - 110px));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #dce6f1;
+  border-radius: 16px;
+  box-shadow: 0 16px 45px rgba(15, 35, 70, 0.18);
+}
+
+.guide-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px;
+  background: #003b82;
+  color: #ffffff;
+}
+
+.guide-eyebrow {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.guide-panel-header h2 {
+  margin: 6px 0 0;
+  font-size: 18px;
+}
+
+.guide-close-button {
+  border: none;
+  background: transparent;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.guide-panel-content {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.guide-description {
+  margin: 0 0 18px;
+  font-size: 13px;
+  line-height: 1.9;
+  color: #475569;
+}
+
+.guide-start-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 9px;
+  background: #0056b8;
+  color: #ffffff;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.guide-start-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.guide-faq-section {
+  margin-top: 24px;
+}
+
+.guide-faq-section h3 {
+  margin: 0 0 14px;
+  color: #0f2745;
+  font-size: 15px;
+}
+
+.guide-faq-item {
+  margin-bottom: 10px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+}
+
+.guide-faq-item summary {
+  color: #1e3a5f;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.guide-faq-item p {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.9;
+}
