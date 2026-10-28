@@ -591,5 +591,62 @@ namespace Nafadh_Backend.Services
             await SendAsync(email, subject, body);
 
         }
+
+        public async Task SendCoursePlanDecisionAsync(
+            string email,
+            string companyName,
+            string planTitle,
+            bool approved,
+            string? note = null)
+        {
+            string safeCompany = WebUtility.HtmlEncode(companyName);
+            string safePlan = WebUtility.HtmlEncode(planTitle);
+            string? safeNote = string.IsNullOrWhiteSpace(note)
+                ? null
+                : WebUtility.HtmlEncode(note).Replace("\r\n", "<br/>").Replace("\n", "<br/>");
+
+            string headerColor = approved ? "#16a34a" : "#dc2626";
+            string headerTitle = approved
+                ? "✅ إشعار اعتماد الخطة التدريبية / الدراسية"
+                : "❌ إشعار رفض الخطة التدريبية / الدراسية";
+
+            string subject = approved
+                ? $"تم اعتماد الخطة التدريبية ({planTitle}) - منصة نفاذ"
+                : $"قرار مراجعة الخطة التدريبية ({planTitle}) - منصة نفاذ";
+
+            string decisionParagraph = approved
+                ? $"يسعدنا إبلاغكم بأنه تمت مراجعة واعتماد الخطة التدريبية <strong>«{safePlan}»</strong> المقدمة من شركتكم لدى الهيئة، ويمكن للمدرب المكلّف البدء في تنفيذها."
+                : $"نود إبلاغكم بأنه تمت مراجعة الخطة التدريبية <strong>«{safePlan}»</strong> المقدمة من شركتكم، وتقرر <strong>عدم اعتمادها (مرفوضة)</strong> في الوقت الحالي. يرجى مراجعة ملاحظات الهيئة وتعديل الخطة ثم إعادة إرسالها.";
+
+            string noteSection = string.IsNullOrWhiteSpace(safeNote)
+                ? ""
+                : $@"
+                <div style='background-color: {(approved ? "#f0fdf4" : "#fef2f2")};
+                            border-right: 4px solid {headerColor};
+                            padding: 14px 16px;
+                            margin: 18px 0;
+                            border-radius: 6px;'>
+                    <p style='margin: 0; color: #1f2937;'>
+                        <strong>{(approved ? "ملاحظات الهيئة:" : "سبب الرفض / ملاحظات الهيئة:")}</strong><br/>
+                        {safeNote}
+                    </p>
+                </div>";
+
+            string body = $@"
+            <div dir='rtl' style='font-family: Arial, Tahoma, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background-color: #ffffff;'>
+                <div style='background-color: {headerColor}; color: #ffffff; padding: 18px 24px;'>
+                    <h2 style='margin: 0; font-size: 20px;'>{headerTitle}</h2>
+                </div>
+                <div style='padding: 24px; color: #1f2937; line-height: 1.8;'>
+                    <p style='margin-top: 0;'>السادة شركة <strong>{safeCompany}</strong> المحترمين،</p>
+                    <p>{decisionParagraph}</p>
+                    {noteSection}
+                    <hr style='border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;' />
+                    <p style='font-size: 12px; color: #6b7280; margin-bottom: 0;'>مع التحية،<br/>إدارة الهيئة - منصة نفاذ</p>
+                </div>
+            </div>";
+
+            await SendAsync(email, subject, body);
+        }
     }
 }
