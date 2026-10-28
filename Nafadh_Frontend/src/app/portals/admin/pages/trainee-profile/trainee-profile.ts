@@ -84,96 +84,76 @@ export class AdminTraineeProfile implements OnInit {
   // 🔴 تبدأ بمصفوفة فارغة ويتم تعبئتها ديناميكياً من الباك إند
   traineeExams = signal<any[]>([]);
 
-  // الفلترة الديناميكية بناءً على البيانات القادمة من قاعدة البيانات
+  // تصنيف نتيجة الاختبار وفق حالات الـ API الفعلية
+  private isExamCompleted(exam: any): boolean {
+    return ['Graded', 'Completed', 'مكتمل'].includes(String(exam.status ?? ''));
+  }
+
+  private isExamPending(exam: any): boolean {
+    return ['Pending', 'Submitted', 'Expired', 'قيد التصحيح'].includes(String(exam.status ?? ''));
+  }
+
+  private isExamFailed(exam: any): boolean {
+    // لا نستنتج الرسوب من الدرجة إن لم يكن اعتماد النتيجة مؤكداً
+    return exam.isPassed === false || ['Failed', 'لم يجتز'].includes(String(exam.status ?? ''));
+  }
+
+  // البحث والفلترة باستخدام حقول QuizResultDto
   filteredExams = computed(() => {
     const query = this.examSearchQuery().toLowerCase().trim();
     const filter = this.examFilter();
     return this.traineeExams().filter((exam) => {
-      const title = (exam.examTitle || exam.title || '').toLowerCase();
-      const module = (exam.moduleName || exam.moduleTitle || '').toLowerCase();
-      const matchesSearch = !query || title.includes(query) || module.includes(query);
-
-      const status = exam.status || '';
+      const title = String(exam.quizTitle || exam.examTitle || exam.title || '').toLowerCase();
+      const batch = String(exam.moduleName || exam.moduleTitle || exam.batchName || '').toLowerCase();
+      const matchesSearch = !query || title.includes(query) || batch.includes(query);
       const matchesFilter =
-        filter === 'ALL' ? true :
-        filter === 'COMPLETED' ? status === 'مكتمل' || status === 'Completed' :
-        filter === 'PENDING' ? status === 'قيد التصحيح' || status === 'Pending' :
-        filter === 'FAILED' ? status === 'لم يجتز' || status === 'Failed' : true;
-
+        filter === 'ALL' ||
+        (filter === 'COMPLETED' && this.isExamCompleted(exam)) ||
+        (filter === 'PENDING' && this.isExamPending(exam)) ||
+        (filter === 'FAILED' && this.isExamFailed(exam));
       return matchesSearch && matchesFilter;
     });
-});
-    
-  // ==========================================
-  // إحصائيات سجل ونتائج الاختبارات
-  // ==========================================
-
-  // عدد الاختبارات المكتملة
-  completedExamsCount = computed(() => {
-    return this.traineeExams().filter(
-      (exam) =>
-        exam.status === 'مكتمل' ||
-        exam.status === 'Completed'
-    ).length;
-  });
-  
-  // عدد الاختبارات قيد التصحيح
-  pendingExamsCount = computed(() => {
-    return this.traineeExams().filter(
-      (exam) =>
-        exam.status === 'قيد التصحيح' ||
-        exam.status === 'Pending'
-    ).length;
   });
 
-  // عدد الاختبارات التي لم يجتزها المتدرب
-  failedExamsCount = computed(() => {
-    return this.traineeExams().filter(
-      (exam) =>
-        exam.status === 'لم يجتز' ||
-        exam.status === 'Failed'
-    ).length;
-  });
+  completedExamsCount = computed(() =>
+    this.traineeExams().filter((exam) => this.isExamCompleted(exam)).length
+  );
 
-  // متوسط درجات الاختبارات المصححة
+  pendingExamsCount = computed(() =>
+    this.traineeExams().filter((exam) => this.isExamPending(exam)).length
+  );
+
+  failedExamsCount = computed(() =>
+    this.traineeExams().filter((exam) => this.isExamFailed(exam)).length
+  );
+
+  // متوسط النسب للاختبارات المصححة فقط؛ Pending لا تدخل في المتوسط
   examAverageScore = computed<number | null>(() => {
-    const gradedExams = this.traineeExams().filter(
-      (exam) =>
-        exam.score !== null &&
-        exam.score !== undefined &&
-        Number(exam.maxScore) > 0 &&
-        Number.isFinite(Number(exam.score))
+    const graded = this.traineeExams().filter((exam) =>
+      this.isExamCompleted(exam) &&
+      exam.percentage !== null && exam.percentage !== undefined &&
+      Number.isFinite(Number(exam.percentage))
     );
-
-    if (gradedExams.length === 0) {
-      return null;
-    }
-
-    const totalPercentage = gradedExams.reduce(
-      (total, exam) =>
-        total +
-        (Number(exam.score) / Number(exam.maxScore)) * 100,
-      0
-    );
-
-    return Math.round(totalPercentage / gradedExams.length);
+    if (!graded.length) return null;
+    const sum = graded.reduce((total, exam) => total + Number(exam.percentage), 0);
+    return Math.round(sum / graded.length);
   });
 
-  // تحويل حالة الاختبار للعربية
   examStatusLabel(status: string): string {
     const labels: Record<string, string> = {
+      Graded: 'تم التصحيح',
       Completed: 'مكتمل',
       Pending: 'قيد التصحيح',
+      Submitted: 'تم التسليم',
+      Expired: 'انتهى الوقت',
+      Terminated: 'تم إنهاؤه',
       Failed: 'لم يجتز',
       'مكتمل': 'مكتمل',
       'قيد التصحيح': 'قيد التصحيح',
       'لم يجتز': 'لم يجتز'
     };
-
     return labels[status] || status || 'غير محدد';
   }
-
-  
 
   // أسباب مقنعة جاهزة لرفض طلب الانسحاب
   presetRejectionReasons: string[] = [
@@ -789,12 +769,7 @@ export class AdminTraineeProfile implements OnInit {
         ? this.api.getEvaluationsForEnrollment(enrollmentId).pipe(catchError(() => of([])))
         : of([]),
       // 🟢 استدعاء نتائج الاختبارات ديناميكياً من قاعدة البيانات
-      exams: this.api.getTraineeExams(traineeId).pipe(
-        catchError((error) => {
-          console.error('Failed to load trainee quiz results:', error);
-          return of([]);
-        })
-      )
+      exams: this.api.getTraineeExams(traineeId).pipe(catchError(() => of([])))
     }).subscribe({
       next: ({ attendance, progress, warnings, modules, moduleProgress, evaluations, exams }: any) => {
         this.processAttendance(attendance as RawAttendanceRow[]);
@@ -807,7 +782,7 @@ export class AdminTraineeProfile implements OnInit {
         );
 
         // تعبئة نتائج الاختبارات القادمة من الباك إند
-        this.traineeExams.set(Array.isArray(exams) ? exams : []);
+        this.traineeExams.set(exams ?? []);
 
         this.isLoading.set(false);
       },
