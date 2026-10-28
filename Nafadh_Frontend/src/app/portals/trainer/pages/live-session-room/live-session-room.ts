@@ -48,6 +48,7 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
   showParticipants = signal(false);
   speakerMuted = signal(false);
   endingSession = signal(false);
+  showEndConfirmation = signal(false);
 
   participants = signal<{
     identity: string;
@@ -448,12 +449,6 @@ openLiveAttendance(): void {
   endSession(): void {
   if (!this.connected() || this.endingSession()) return;
 
-  const confirmed = window.confirm(
-    'هل أنتِ متأكدة من إنهاء المحاضرة؟ لن يتمكن المشاركون من الدخول إليها مرة أخرى.'
-  );
-
-  if (!confirmed) return;
-
   this.endingSession.set(true);
   this.errorMessage.set('');
 
@@ -467,6 +462,7 @@ openLiveAttendance(): void {
 
       this.connected.set(false);
       this.endingSession.set(false);
+      this.showEndConfirmation.set(false);      
 
       void this.router.navigate(['/trainer/live-sessions'], {
         queryParams: {
@@ -545,5 +541,17 @@ openLiveAttendance(): void {
       this.errorMessage.set('تعذر إرسال الرسالة.');
     }
   }
+
+  openEndConfirmation(): void {
+  if (!this.connected() || this.endingSession()) return;
+
+  this.showEndConfirmation.set(true);
+}
+
+closeEndConfirmation(): void {
+  if (this.endingSession()) return;
+
+  this.showEndConfirmation.set(false);
+}
 
 }

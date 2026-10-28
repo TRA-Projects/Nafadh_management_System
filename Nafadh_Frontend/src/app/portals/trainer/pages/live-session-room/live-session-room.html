@@ -45,7 +45,7 @@
           <div class="participant-item">
             <span>
               <i class="fa-solid fa-user-tie"></i>
-              أنتِ (المدرب)
+              أنت (المدرب)
             </span>
 
             <i
@@ -108,7 +108,7 @@
             </div>
           } @empty {
             <p class="chat-empty">
-              لا توجد رسائل بعد. ابدئي المحادثة!
+              لا توجد رسائل بعد. ابدأ المحادثة!
             </p>
           }
         </div>
@@ -120,7 +120,7 @@
           <input
             type="text"
             name="chatMessage"
-            placeholder="اكتبي رسالة..."
+            placeholder="اكتب رسالة..."
             [(ngModel)]="chatInput"
             maxlength="1000"
             required />
@@ -288,27 +288,88 @@
     </div>
 
     <!-- مغادرة المحاضرة -->
-    <button
-      type="button"
-      class="end-meeting-btn"
-      (click)="leaveSession()">
-
-      <i class="fa-solid fa-right-from-bracket"></i>
-      مغادرة المحاضرة
-    </button>
-
-    <button
+    <div class="room-exit-actions">
+  <button
   type="button"
-  class="end-session-btn"
-  [disabled]="!connected() || endingSession()"
-  (click)="endSession()"
+  class="leave-session-btn"
+  [disabled]="endingSession()"
+  (click)="leaveSession()"
 >
-  <i class="fa-solid fa-circle-stop"></i>
-  {{ endingSession() ? 'جاري إنهاء المحاضرة...' : 'إنهاء المحاضرة' }}
-</button>
+    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+    مغادرة المحاضرة
+  </button>
+
+  <button
+    type="button"
+    class="end-session-btn"
+    [disabled]="!connected() || endingSession()"
+    (click)="openEndConfirmation()"
+  >
+    <i class="fa-solid fa-circle-stop"></i>
+    {{
+      endingSession()
+        ? 'جاري إنهاء المحاضرة...'
+        : 'إنهاء المحاضرة للجميع'
+    }}
+  </button>
+</div>
 
   </section>
 
   <div #audioContainer class="audio-container"></div>
 
+  @if (showEndConfirmation()) {
+  <div
+    class="end-confirm-overlay"
+    role="presentation"
+    (click)="closeEndConfirmation()"
+  >
+    <div
+      class="end-confirm-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="end-confirm-title"
+      aria-describedby="end-confirm-description"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="end-confirm-icon">
+        <i class="fa-solid fa-circle-exclamation"></i>
+      </div>
+
+      <h2 id="end-confirm-title">
+        إنهاء المحاضرة؟
+      </h2>
+
+      <p id="end-confirm-description">
+        هل أنت متأكد من إنهاء المحاضرة للجميع؟
+        لن يتمكن المشاركون من الدخول إليها مرة أخرى.
+      </p>
+
+      <div class="end-confirm-actions">
+        <button
+          type="button"
+          class="end-confirm-cancel"
+          [disabled]="endingSession()"
+          (click)="closeEndConfirmation()"
+        >
+          إلغاء
+        </button>
+
+        <button
+          type="button"
+          class="end-confirm-submit"
+          [disabled]="endingSession()"
+          (click)="endSession()"
+        >
+          <i class="fa-solid fa-circle-stop"></i>
+          {{
+            endingSession()
+              ? 'جاري إنهاء المحاضرة...'
+              : 'نعم، إنهاء المحاضرة'
+          }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
 </section>
