@@ -439,6 +439,58 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_CompanySupervisors", (string)null);
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_CompanySupervisorTrainer", b =>
+                {
+                    b.Property<int>("SupervisorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TrainerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SupervisorId", "TrainerId");
+
+                    b.HasIndex("TrainerId");
+
+                    b.ToTable("NFD_CompanySupervisorTrainers", (string)null);
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_CompanyTrainerEvaluation", b =>
+                {
+                    b.Property<int>("EvaluationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EvaluationId"));
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SupervisorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TrainerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("EvaluationId");
+
+                    b.HasIndex("TrainerId");
+
+                    b.HasIndex("SupervisorId", "TrainerId")
+                        .IsUnique();
+
+                    b.ToTable("NFD_CompanyTrainerEvaluations", (string)null);
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_ConversationGroupMember", b =>
                 {
                     b.Property<int>("Id")
@@ -3149,6 +3201,44 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Company");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_CompanySupervisorTrainer", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_CompanySupervisor", "Supervisor")
+                        .WithMany()
+                        .HasForeignKey("SupervisorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
+                        .WithMany()
+                        .HasForeignKey("TrainerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Supervisor");
+
+                    b.Navigation("Trainer");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_CompanyTrainerEvaluation", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_CompanySupervisor", "Supervisor")
+                        .WithMany()
+                        .HasForeignKey("SupervisorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
+                        .WithMany()
+                        .HasForeignKey("TrainerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Supervisor");
+
+                    b.Navigation("Trainer");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlan", b =>

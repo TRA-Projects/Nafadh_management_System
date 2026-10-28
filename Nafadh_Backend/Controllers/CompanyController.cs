@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 using System.Security.Claims;
@@ -7,7 +7,6 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
@@ -19,11 +18,19 @@ namespace Nafadh_Backend.Controllers
     public class CompanyController : ControllerBase
     {
         private readonly ICompanyService _service;
+        private readonly IEmailService _emailService;
+        private readonly INotificationService _notificationService;
         private readonly Nafadhcontext _context;
 
-        public CompanyController(ICompanyService service, Nafadhcontext context)
+        public CompanyController(
+            ICompanyService service,
+            IEmailService emailService,
+            INotificationService notificationService,
+            Nafadhcontext context)
         {
             _service = service;
+            _emailService = emailService;
+            _notificationService = notificationService;
             _context = context;
         }
 
@@ -54,20 +61,6 @@ namespace Nafadh_Backend.Controllers
                 .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.Phone, phone).SetProperty(c => c.Email, email));
             if (changed == 0) return NotFound(new { message = "الشركة غير موجودة." });
             return Ok(new { phone, email });
-        private readonly IEmailService _emailService;
-        private readonly INotificationService _notificationService;
-        private readonly Nafadhcontext _context;
-
-        public CompanyController(
-            ICompanyService service,
-            IEmailService emailService,
-            INotificationService notificationService,
-            Nafadhcontext context)
-        {
-            _service = service;
-            _emailService = emailService;
-            _notificationService = notificationService;
-            _context = context;
         }
 
         // =========================================================================

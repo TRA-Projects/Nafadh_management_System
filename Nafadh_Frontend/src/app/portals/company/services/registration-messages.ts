@@ -16,13 +16,14 @@ export interface LoginNotice {
 const GENERIC_LOGIN_ERROR = 'تعذّر تسجيل الدخول، تأكد من البريد الإلكتروني وكلمة المرور.';
 
 export function describeLoginError(err: unknown): LoginNotice {
-  const body = ((err as { error?: BackendErrorBody } | null)?.error ?? {}) as BackendErrorBody;
+  const errorObj = err as { error?: BackendErrorBody | string } | null;
+  const rawError = errorObj?.error;
+  // الاستجابة قد تكون كائن خطأ من API أو نصًا مباشرًا.
+  const body: BackendErrorBody = rawError && typeof rawError === 'object' ? rawError : {};
   const rejectionReason = body.rejectionReason ?? body.reason;
-  const errorObj = err as any;
-  // الباك اند يرسل الخطأ داخل حقل detail (لأنه يستخدم ProblemDetails)
-  const body = (errorObj?.error ?? {}) as ApiErrorBody & { detail?: string };
 
-  let errorMessage = body.message || body.detail || (typeof errorObj?.error === 'string' ? errorObj.error : '');
+  // ASP.NET ProblemDetails يرسل بعض رسائل الخطأ داخل detail.
+  let errorMessage = body.message || body.detail || (typeof rawError === 'string' ? rawError : '');
 
   // ترجمة رسالة الباك اند الإنجليزية إلى العربية (عند إدخال كلمة مرور خاطئة)
   if (errorMessage && (errorMessage.includes('Invalid email or password') || errorMessage.includes('Authentication failed'))) {

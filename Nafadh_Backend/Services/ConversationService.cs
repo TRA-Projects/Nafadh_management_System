@@ -361,151 +361,90 @@ namespace Nafadh_Backend.Services
             AddConversationMessageDTO dto
         )
         {
+            // Load the conversation once; the repository includes its messages.
             var conversation = await _repository.GetByIdAsync(conversationId);
             if (conversation == null)
                 throw new KeyNotFoundException("المحادثة غير موجودة.");
+
             var content = dto.Content?.Trim() ?? string.Empty;
             if (dto.SenderId <= 0 || content.Length == 0 || content.Length > 1000)
                 throw new ArgumentException("معرف المرسل ونص رسالة من 1 إلى 1000 حرف مطلوبة.");
 
             int? receiverId = dto.ReceiverUserId;
-            if (!receiverId.HasValue && conversation.Type == NFD_ConversationType.Other &&
-                conversation.Category == "TrainerTrainee")
-            {
-                // Resolve the other participant even when the sender has sent several consecutive messages.
-                var ordered = conversation.Messages?.OrderByDescending(m => m.SentDate).ThenByDescending(m => m.MessageId);
-                receiverId = ordered?.Where(m => m.SenderId != dto.SenderId)
-                    .Select(m => (int?)m.SenderId).FirstOrDefault();
-                receiverId ??= ordered?.Where(m => m.ReceiverId.HasValue && m.ReceiverId != dto.SenderId)
-                    .Select(m => m.ReceiverId).FirstOrDefault();
-                if (!receiverId.HasValue && conversation.UserId != dto.SenderId)
-                    receiverId = conversation.UserId;
-                if (!receiverId.HasValue)
-                    throw new ArgumentException("تعذر تحديد الطرف الآخر في المحادثة.");
 
-            var conversation = await _repository.GetByIdAsync(conversationId);
-
-            if (conversation == null)
-            {
-                throw new Exception("Conversation not found.");
-            }
-
-            int? receiverId = dto.ReceiverUserId;
-
-            // رسائل جروب الدفعة ليس لها مستلم فردي
             if (conversation.Category == "BatchGroup")
             {
+                // Group messages have no single recipient.
                 receiverId = null;
             }
-            else if (
-                conversation.Type == NFD_ConversationType.Other &&
-                conversation.Category == "TrainerTrainee"
-            )
+            else if (conversation.Type == NFD_ConversationType.Other &&
+                     conversation.Category == "TrainerTrainee")
             {
-                // أول رسالة تحدد الطرفين الأصليين للمحادثة
-                var firstMessage = conversation.Messages?
+                // Resolve the two original participants, not the most recent sender.
+                // This keeps replies correct even after consecutive messages.
+                var messages = conversation.Messages?
                     .OrderBy(m => m.SentDate)
                     .ThenBy(m => m.MessageId)
-                    .FirstOrDefault();
+                    .ToList() ?? new List<NFD_Message>();
 
-                int creatorUserId = conversation.UserId;
+                var creatorUserId = conversation.UserId;
+                var firstMessage = messages.FirstOrDefault();
+                int? otherUserId = firstMessage?.SenderId == creatorUserId
+                    ? firstMessage.ReceiverId
+                    : firstMessage?.SenderId;
 
-                int? otherUserId =
-                    firstMessage?.SenderId == creatorUserId
-                        ? firstMessage.ReceiverId
-                        : firstMessage?.SenderId;
-
+                // Older threads may not store a receiver in their first message.
+                // Recover it from the existing participants in those threads.
                 if (!otherUserId.HasValue)
                 {
-                    throw new InvalidOperationException(
-                        "Conversation participant could not be determined."
-                    );
+                    otherUserId = messages
+                        .Where(m => m.SenderId > 0 && m.SenderId != creatorUserId)
+                        .Select(m => (int?)m.SenderId)
+                        .FirstOrDefault();
+                    otherUserId ??= messages
+                        .Where(m => m.ReceiverId.HasValue && m.ReceiverId != creatorUserId)
+                        .Select(m => m.ReceiverId)
+                        .FirstOrDefault();
                 }
+
+                if (!otherUserId.HasValue || otherUserId.Value <= 0 ||
+                    otherUserId.Value == creatorUserId)
+                    throw new ArgumentException("تعذر تحديد الطرف الآخر في المحادثة.");
 
                 if (dto.SenderId == creatorUserId)
-                {
                     receiverId = otherUserId.Value;
-                }
                 else if (dto.SenderId == otherUserId.Value)
-                {
                     receiverId = creatorUserId;
-                }
                 else
-                {
-                    throw new InvalidOperationException(
-                        "Sender is not a conversation participant."
-                    );
-                }
+                    throw new ArgumentException("المرسل ليس طرفًا في المحادثة.");
             }
 
-        
+            var message = new NFD_Message
+            {
+                Content = content,
+                SentDate = DateTime.UtcNow,
+                Status = NFD_MessageStatus.Sent,
+                SenderId = dto.SenderId,
+                ReceiverId = receiverId,
+                TicketId = conversationId
+            };
 
-        var message =
-                new NFD_Message
-                {
-                    Content = content,
+            var created = await _repository.AddMessageAsync(message);
 
-                    SentDate =
-                        DateTime.UtcNow,
-
-                    Status =
-                        NFD_MessageStatus.Sent,
-
-                    SenderId =
-                        dto.SenderId,
-
-                    ReceiverId =
-                        receiverId,
-
-                    TicketId =
-                        conversationId
-                };
-
-
-            var created =
-                await _repository.AddMessageAsync(
-                    message
-                );
-
-
-            // لا نعيد تحميل المحادثة مرة ثانية
             return new ConversationMessageDTO
             {
-                MessageId =
-                    created.MessageId,
-
-                Content =
-                    created.Content,
-
-                SentDate =
-                    created.SentDate,
-
-                Status =
-                    created.Status,
-
-                SenderId =
-                    created.SenderId,
-
-                SenderName =
-                    null,
-
-                ReceiverId =
-                    created.ReceiverId,
-
-                TicketId =
-                    created.TicketId,
-
-                AttachmentUrl =
-                    created.AttachmentUrl,
-
-                AttachmentFileName =
-                    created.AttachmentFileName,
-
-                AttachmentContentType =
-                    created.AttachmentContentType,
-
-                AttachmentFileSize =
-                    created.AttachmentFileSize
+                MessageId = created.MessageId,
+                Content = created.Content,
+                SentDate = created.SentDate,
+                Status = created.Status,
+                SenderId = created.SenderId,
+                SenderName = null,
+                ReceiverId = created.ReceiverId,
+                TicketId = created.TicketId,
+                AttachmentUrl = created.AttachmentUrl,
+                AttachmentFileName = created.AttachmentFileName,
+                AttachmentContentType = created.AttachmentContentType,
+                AttachmentFileSize = created.AttachmentFileSize
             };
         }
         //----------------------------------
