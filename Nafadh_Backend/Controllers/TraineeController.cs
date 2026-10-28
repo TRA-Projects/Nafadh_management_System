@@ -18,17 +18,19 @@ namespace Nafadh_Backend.Controllers
         private readonly ITraineeService _service;
         private readonly IBadgeEvaluationService _badgeEvaluationService;
         private readonly Nafadhcontext _context;
+        private readonly IEmailService _emailService;
 
         public TraineeController(
-            ITraineeService service,
-            IBadgeEvaluationService badgeEvaluationService,
-            Nafadhcontext context)
+             ITraineeService service,
+             IBadgeEvaluationService badgeEvaluationService,
+             Nafadhcontext context,
+             IEmailService emailService)
         {
             _service = service;
             _badgeEvaluationService = badgeEvaluationService;
             _context = context;
+            _emailService = emailService;
         }
-
 
         // =====================================================
         // GET ALL TRAINEES
@@ -1536,39 +1538,19 @@ namespace Nafadh_Backend.Controllers
 
             try
             {
-                string subject = approved
-                    ? "منصة نَفَذ | إشعار رسمي باعتماد طلب الانسحاب وإيقاف الحساب"
-                    : "منصة نَفَذ | إشعار بشأن نتيجة دراسة طلب الانسحاب";
-
-                string body = approved
-                    ? $@"<div dir='rtl' style='font-family:Tahoma,Arial,sans-serif;line-height:1.8;color:#1e293b;'>
-                          <h2 style='color:#991b1b;'>إشعار اعتماد طلب الانسحاب النهائي</h2>
-                          <p>عزيزنا المتدرب <strong>{traineeName}</strong>،</p>
-                          <p>نفيدكم بأنه قد تمت دراسة طلب الانسحاب المقدم من قبلكم، وصدرت الموافقة على <strong>اعتماد انسحابكم النهائي</strong> من البرنامج التدريبي في منصة نَفَذ.</p>
-                          {(string.IsNullOrWhiteSpace(adminReason) ? "" : $"<p><strong>ملاحظات الإدارة:</strong> {adminReason}</p>")}
-                          <p style='color:#dc2626;font-weight:bold;'>تنبيه هام: بناءً على اعتماد الانسحاب، تم طي قيدكم التدريبي وإيقاف صلاحية دخولكم إلى بوابة المتدربين نهائياً اعتباراً من تاريخه.</p>
-                          <hr style='border:none;border-top:1px solid #e2e8f0;margin:20px 0;'/>
-                          <p style='font-size:12px;color:#64748b;'>إدارة برامج التدريب - منصة نَفَذ</p>
-                        </div>"
-                    : $@"<div dir='rtl' style='font-family:Tahoma,Arial,sans-serif;line-height:1.8;color:#1e293b;'>
-                          <h2 style='color:#1e3a8a;'>إشعار بشأن طلب الانسحاب من البرنامج التدريبي</h2>
-                          <p>عزيزنا المتدرب <strong>{traineeName}</strong>،</p>
-                          <p>نفيدكم بأنه قد تمت مراجعة طلب الانسحاب المقدم من قبلكم من قِبل اللجنة المختصة في منصة نَفَذ، وتقرر <strong>عدم الموافقة على طلب الانسحاب (مرفوض)</strong> للأسباب التالية:</p>
-                          <div style='background:#f8fafc;border-right:4px solid #0066c4;padding:12px 16px;margin:14px 0;'>
-                            <strong>سبب القرار:</strong><br/>{adminReason}
-                          </div>
-                          <p>وعليه، فإن قيدكم التدريبي لا يزال <strong>نشطاً ومستمراً</strong>، ونأمل منكم مواصلة الالتزام بالخطة التدريبية المعتمدة.</p>
-                          <hr style='border:none;border-top:1px solid #e2e8f0;margin:20px 0;'/>
-                          <p style='font-size:12px;color:#64748b;'>إدارة برامج التدريب - منصة نَفَذ</p>
-                        </div>";
-
-                // في حال ضبط إعدادات SMTP في appsettings.json يتم الإرسال الفعلي
-                // وإذا لم تكن مضبوطة بعد لا يتوقف النظام ويعيد نجاح العملية
-                await Task.CompletedTask;
+                if (approved)
+                {
+                    await _emailService.SendWithdrawalApprovedAsync(toEmail, traineeName);
+                }
+                else
+                {
+                    await _emailService.SendWithdrawalRejectedAsync(toEmail, traineeName, adminReason);
+                }
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Failed to send withdrawal email: {ex.Message}");
                 return false;
             }
         }

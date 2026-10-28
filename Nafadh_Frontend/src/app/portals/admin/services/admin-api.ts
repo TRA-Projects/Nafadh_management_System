@@ -111,10 +111,14 @@ export class AdminApi {
     return this.http.get<{ items: TraineeListItemDto[]; totalCount: number }>(`${this.base}/Trainee`, { params: httpParams });
   }
 
-  // 🟢 دالة جلب سجل نتائج الاختبارات الخاصة بالمتدرب
+
+  // جلب نتائج اختبارات المتدرب للأدمن
   getTraineeExams(traineeId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(traineeId);
-    return this.http.get<any[]>(`${this.base}/QuizResult/trainee/${cleanId}`);
+
+    return this.http.get<any[]>(
+      `${this.base}/quiz-results/admin/trainee/${cleanId}`
+    );
   }
 
   getTrainee(id: number): Observable<TraineeProfileDto> {
@@ -398,6 +402,34 @@ createEnrollment(dto: {
   // ==========================================================
   // 12. Reports & Audit
   // ==========================================================
+
+
+ // Get trainer attendance records for Admin - Read Only
+ getAdminTrainerAttendance(
+  from: string,
+  to: string,
+  trainerId?: number,
+  companyId?: number
+ ): Observable<any[]> {
+
+  let params = new HttpParams()
+    .set('from', from)
+    .set('to', to);
+
+  if (trainerId !== undefined) {
+    params = params.set('trainerId', String(this.sanitizeId(trainerId)));
+  }
+
+  if (companyId !== undefined) {
+    params = params.set('companyId', String(this.sanitizeId(companyId)));
+  }
+
+  return this.http.get<any[]>(
+    `${this.base}/admin/reports/trainer-attendance`,
+    { params }
+  );
+ }
+
 
   // Get supervisor reports for Admin
   getAdminSupervisorReports(

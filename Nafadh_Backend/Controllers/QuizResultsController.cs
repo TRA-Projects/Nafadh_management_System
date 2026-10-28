@@ -72,6 +72,24 @@ namespace Nafadh_Backend.Controllers
             }
         }
 
+        // عرض نتائج اختبارات متدرب محدد للأدمن فقط
+        [HttpGet("admin/trainee/{traineeId:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAdminTraineeResults(
+            int traineeId)
+        {
+            if (traineeId <= 0)
+                return BadRequest(new
+                {
+                    message = "رقم المتدرب غير صالح."
+                });
+
+            var results = await _service.GetTraineeResultsAsync(
+                traineeId);
+
+            return Ok(results);
+        }
+
         // عرض نتائج المتدرب نفسه فقط
         [HttpGet("trainee/{traineeId:int}")]
         [Authorize(Roles = "Trainee")]
