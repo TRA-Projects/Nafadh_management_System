@@ -41,5 +41,8 @@
             string content);
 
         Task SendCompanyWarningAsync(string email, string companyName, string reason, string? warningLevel = null);
+
+
+        Task SendCoursePlanDecisionAsync(string email, string companyName, string planTitle, bool approved, string? note = null);
     }
 }

@@ -6,6 +6,7 @@ using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Services;
+using System.Globalization;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -24,11 +25,13 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly Nafadhcontext _context;
         private readonly CoursePlanReader _reader;
+        private readonly IEmailService _emailService;
 
-        public CoursePlanApprovalController(Nafadhcontext context)
+        public CoursePlanApprovalController(Nafadhcontext context, IEmailService emailService)
         {
             _context = context;
             _reader = new CoursePlanReader(context);
+            _emailService = emailService;
         }
 
         // GET: api/CoursePlanApproval?status=PendingApproval&companyId=1
@@ -165,10 +168,76 @@ namespace Nafadh_Backend.Controllers
 
             await _context.SaveChangesAsync();
 
+            await SendPlanDecisionEmailAsync(plan.CompanyId, plan.CreatedByUserId, plan.Title, approved, note);
+
             var fresh = await _reader.DetailQuery(tracking: false)
                 .FirstAsync(p => p.PlanId == planId);
 
             return Ok(CoursePlanReader.ToDetail(fresh, DateTime.Today));
         }
+
+        private async Task SendPlanDecisionEmailAsync(
+            int companyId,
+            int createdByUserId,
+            string planTitle,
+            bool approved,
+            string? note)
+        {
+            var company = await _context.NFD_Companies
+                .Include(c => c.User)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.CompanyId == companyId);
+
+            if (company is null)
+                return;
+
+            var creatorEmail = await _context.NFD_Users
+                .AsNoTracking()
+                .Where(u => u.UserId == createdByUserId)
+                .Select(u => u.Email)
+                .FirstOrDefaultAsync();
+
+            string? validEmail = PickValidEmail(company.Email, creatorEmail, company.User?.Email);
+            if (string.IsNullOrWhiteSpace(validEmail))
+                return;
+
+            try
+            {
+                await _emailService.SendCoursePlanDecisionAsync(
+                    validEmail,
+                    company.CompanyName,
+                    planTitle,
+                    approved,
+                    note);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to send course plan decision email: {ex.Message}");
+            }
+        }
+
+        private static string? PickValidEmail(params string?[] candidates)
+        {
+            foreach (var raw in candidates)
+            {
+                if (string.IsNullOrWhiteSpace(raw))
+                    continue;
+
+                var cleaned = new string(raw
+                    .Where(c => !char.IsWhiteSpace(c) &&
+                                char.GetUnicodeCategory(c) != UnicodeCategory.Format)
+                    .ToArray());
+
+                if (!string.IsNullOrWhiteSpace(cleaned) &&
+                    cleaned.Contains('@') &&
+                    !cleaned.EndsWith(".test", StringComparison.OrdinalIgnoreCase))
+                {
+                    return cleaned;
+                }
+            }
+
+            return null;
+        }
     }
 }
+    
