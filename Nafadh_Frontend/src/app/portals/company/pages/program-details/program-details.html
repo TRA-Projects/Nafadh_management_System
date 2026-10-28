@@ -25,7 +25,7 @@
   <!-- Main Content -->
   @if (!loading() && !error() && p) {
     <!-- Top Page Bar (Breadcrumb + Actions matching Nafath Portal) -->
-    <div class="page-top-bar">
+    <div class="page-top-bar" data-guide="company-program-detail-actions">
       <div class="page-top-right">
         <button class="back-btn" type="button" (click)="goBack()">
           <svg
@@ -49,6 +49,7 @@
       </div>
 
       <div class="page-top-actions">
+ 
         <button type="button" class="action-btn outline-btn" (click)="exportExcel()" [disabled]="exporting() !== ''">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -67,11 +68,30 @@
           </svg>
           <span>{{ exporting() === 'pdf' ? 'جارٍ إنشاء الملف…' : 'تصدير PDF' }}</span>
         </button>
+        
+<button
+  type="button"
+  class="action-btn outline-btn quiz-results-btn"
+  (click)="openQuizResults()"
+>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    aria-hidden="true"
+  >
+    <path d="M8 6h13M8 12h13M8 18h13"></path>
+    <path d="M3 6h.01M3 12h.01M3 18h.01"></path>
+  </svg>
+  <span>نتائج الاختبارات</span>
+</button>
+
       </div>
     </div>
 
     <!-- Program Header (Hero Card) -->
-    <div class="card card-pad hero">
+    <div class="card card-pad hero" data-guide="company-program-detail-hero">
       <div class="program-icon">
         <svg
           viewBox="0 0 24 24"
@@ -120,7 +140,7 @@
     </div>
 
     <!-- Main Statistics (5 KPI Cards matching Nafath Report KPIs) -->
-    <div class="stats-grid">
+    <div class="stats-grid" data-guide="company-program-detail-stats">
       <div class="stat-card">
         <div class="stat-head">
           <small>المتدربون الحاليون</small>
@@ -283,7 +303,7 @@
     </div>
 
     <!-- Training Plan (Modules) -->
-    <div class="card card-pad section-card">
+    <div class="card card-pad section-card" data-guide="company-program-detail-stages">
       <div class="card-title">
         <span class="title-main">مراحل الخطة التدريبية</span>
         <span>{{ modules().length }} مرحلة</span>
@@ -584,7 +604,13 @@
         <div class="empty-state">
           لا يوجد متدربون مسجلون في هذا البرنامج.
         </div>
+        
       }
     </div>
-  }
+    
+
+  
+    }
 </div>
+
+

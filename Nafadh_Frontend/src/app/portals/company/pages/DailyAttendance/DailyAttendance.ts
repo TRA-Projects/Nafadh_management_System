@@ -213,6 +213,18 @@ export class CompanyDailyAttendance implements OnInit {
 
   trainers = signal<CompanyTrainerDto[]>([]);
 
+  failedTrainerImages = signal<number[]>([]);
+
+  trainerImageUrl(trainer: CompanyTrainerDto): string {
+    const path = trainer.profileImageUrl?.trim();
+    return path ? this.api.resolveFileUrl(path) : '';
+  }
+
+  markTrainerImageFailed(trainerId: number): void {
+    this.failedTrainerImages.update(ids => ids.includes(trainerId) ? ids : [...ids, trainerId]);
+  }
+
+
   records = signal<TrainerAttendanceDto[]>([]);
 
   loading = signal(true);
@@ -829,7 +841,12 @@ ngOnInit(): void {
 
       next: ({ trainers, records }) => {
 
-        this.trainers.set(trainers ?? []);
+        this.failedTrainerImages.set([]);
+        this.trainers.set((trainers ?? []).map(trainer => ({
+          ...trainer,
+          profileImageUrl: trainer.profileImageUrl ??
+            (trainer as CompanyTrainerDto & { ProfileImageUrl?: string | null }).ProfileImageUrl ?? null,
+        })));
 
         this.records.set(records ?? []);
 

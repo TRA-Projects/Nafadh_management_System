@@ -1,3 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Models;
+using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +19,41 @@ namespace Nafadh_Backend.Controllers
     public class CompanyController : ControllerBase
     {
         private readonly ICompanyService _service;
+        private readonly Nafadhcontext _context;
+
+        public CompanyController(ICompanyService service, Nafadhcontext context)
+        {
+            _service = service;
+            _context = context;
+        }
+
+        private async Task<bool> CanEditContact(int companyId, int userId) =>
+            User.IsInRole("Admin") ||
+            (User.IsInRole("CompanySupervisor") &&
+             (await _context.NFD_Companies.AnyAsync(c => c.CompanyId == companyId && c.UserId == userId) ||
+              await _context.NFD_CompanySupervisors.AnyAsync(s => s.CompanyId == companyId &&
+                  s.UserId == userId && s.Status == NFD_SupervisorStatus.Active)));
+
+        [Authorize(Roles = "Admin,CompanySupervisor")]
+        [HttpPatch("{companyId:int}/contact")]
+        public async Task<IActionResult> UpdateContact(int companyId, [FromBody] CompanyContactUpdateDTO dto)
+        {
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) || userId <= 0)
+                return Unauthorized();
+            if (!await CanEditContact(companyId, userId)) return Forbid();
+            if (dto.ExtraFields?.Count > 0)
+                return BadRequest(new { message = "يسمح بتعديل الهاتف والبريد الإلكتروني فقط." });
+            var phone = (dto.Phone ?? "").Trim();
+            var email = (dto.Email ?? "").Trim();
+            if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^\+?[0-9]{8,15}$") ||
+                email.Length > 150 || !System.Text.RegularExpressions.Regex.IsMatch(email, @"^[^\s@]+@[^\s@]+\.[^\s@]+$") ||
+                !new EmailAddressAttribute().IsValid(email))
+                return BadRequest(new { message = "أدخل رقم هاتف وبريدًا إلكترونيًا صحيحين." });
+            // Update only these columns. Avoid the repository's full-entity Update.
+            var changed = await _context.NFD_Companies.Where(c => c.CompanyId == companyId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.Phone, phone).SetProperty(c => c.Email, email));
+            if (changed == 0) return NotFound(new { message = "الشركة غير موجودة." });
+            return Ok(new { phone, email });
         private readonly IEmailService _emailService;
         private readonly INotificationService _notificationService;
         private readonly Nafadhcontext _context;
@@ -66,7 +108,7 @@ namespace Nafadh_Backend.Controllers
         }
 
         // =========================================================================
-        // 3. GET: api/Company/{companyId}/details (ملء الشاشة مع الإنذارات والمشرف والملاحظات)
+        // 3. GET: api/Company/{companyId}/details 
         // =========================================================================
         [HttpGet("{companyId}/details")]
         public async Task<ActionResult<object>> GetCompanyFullDetails(int companyId)
@@ -102,6 +144,7 @@ namespace Nafadh_Backend.Controllers
         // =========================================================================
         // 5. PUT: api/Company/{companyId} (تحديث بيانات الشركة)
         // =========================================================================
+        [Authorize(Roles = "Admin")]
         [HttpPut("{companyId}")]
         public async Task<ActionResult<NFD_CompanyOutputDTO>> UpdateCompany(
             int companyId,
@@ -120,6 +163,7 @@ namespace Nafadh_Backend.Controllers
         // =========================================================================
         // 6. PUT: api/Company/{companyId}/approve (اعتماد الشركة)
         // =========================================================================
+        [Authorize(Roles = "Admin")]
         [HttpPut("{companyId}/approve")]
         public async Task<ActionResult<NFD_CompanyOutputDTO>> ApproveCompany(int companyId)
         {
@@ -138,8 +182,9 @@ namespace Nafadh_Backend.Controllers
         }
 
         // =========================================================================
-        // 7. PUT: api/Company/{companyId}/suspend (إيقاف / تعليق الشركة)
+        // 7. PUT: api/Company/{companyId}/suspend
         // =========================================================================
+        [Authorize(Roles = "Admin")]
         [HttpPut("{companyId}/suspend")]
         public async Task<ActionResult<NFD_CompanyOutputDTO>> SuspendCompany(int companyId)
         {
@@ -154,8 +199,9 @@ namespace Nafadh_Backend.Controllers
         }
 
         // =========================================================================
-        // 8. PUT: api/Company/{companyId}/reject (جديدة: رفض الشركة مع حفظ سبب الرفض)
+        // 8. PUT: api/Company/{companyId}/reject 
         // =========================================================================
+        [Authorize(Roles = "Admin")]
         [HttpPut("{companyId}/reject")]
         public async Task<ActionResult<NFD_CompanyOutputDTO>> RejectCompany(
             int companyId,
@@ -176,7 +222,7 @@ namespace Nafadh_Backend.Controllers
         }
 
         // =========================================================================
-        // 9. GET: api/Company/{companyId}/warnings (جديدة: جلب إنذارات الشركة)
+        // 9. GET: api/Company/{companyId}/warnings 
         // =========================================================================
         [HttpGet("{companyId}/warnings")]
         public async Task<ActionResult<IEnumerable<object>>> GetCompanyWarnings(int companyId)
@@ -186,8 +232,9 @@ namespace Nafadh_Backend.Controllers
         }
 
         // =========================================================================
-        // 10. POST: api/Company/{companyId}/warnings (جديدة: إصدار إنذار جديد للشركة)
+        // 10. POST: api/Company/{companyId}/warnings 
         // =========================================================================
+        [Authorize(Roles = "Admin")]
         [HttpPost("{companyId}/warnings")]
         public async Task<ActionResult<object>> AddCompanyWarning(
             int companyId,
@@ -216,6 +263,7 @@ namespace Nafadh_Backend.Controllers
         // =========================================================================
         // 12. DELETE: api/Company/{companyId}
         // =========================================================================
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{companyId}")]
         public async Task<IActionResult> DeleteCompany(int companyId)
         {
@@ -327,7 +375,19 @@ namespace Nafadh_Backend.Controllers
         }
     }
 
-    // DTOs السريعة للرفض والإنذار (يمكنك وضعها هنا أو داخل مجلد DTOs):
+    public class CompanyContactUpdateDTO
+    {
+        [Required(ErrorMessage = "رقم الهاتف مطلوب.")]
+        [RegularExpression(@"^\+?[0-9]{8,15}$", ErrorMessage = "رقم الهاتف غير صالح.")]
+        public string Phone { get; set; } = string.Empty;
+        [Required(ErrorMessage = "البريد الإلكتروني مطلوب.")]
+        [MaxLength(150, ErrorMessage = "البريد الإلكتروني لا يتجاوز 150 حرفًا.")]
+        [EmailAddress(ErrorMessage = "البريد الإلكتروني غير صالح.")]
+        public string Email { get; set; } = string.Empty;
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement>? ExtraFields { get; set; }
+    }
+
     public class RejectCompanyDTO
     {
         public string RejectionReason { get; set; } = string.Empty;

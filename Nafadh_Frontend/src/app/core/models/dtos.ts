@@ -516,6 +516,12 @@ export interface CompanyDashboardDto {
    */
   averageAttendancePercent: number;
 
+  /** Number of all active trainees with performance >= 80%. */
+  topPerformersCount?: number;
+
+  /** Average performance of all active trainees with performance >= 80%. */
+  topPerformersAveragePercent?: number;
+
   /**
    * Latest six attendance weeks.
    */
@@ -732,6 +738,7 @@ export interface WarningDto {
   evidence?: string;
   status: WarningStatus;
   resolution?: string;
+  companyReply?: string | null;
   issuedDate: string;
   raisedByUserId: number;
   raisedByName?: string;
