@@ -2,7 +2,7 @@
 <div class="warnings-page" dir="rtl">
 
   <!-- رأس الصفحة -->
-  <header class="page-header">
+  <header class="page-header" data-guide="company-warnings-header">
     <div class="header-content">
       <div class="header-icon" aria-hidden="true">
         <svg
@@ -55,6 +55,7 @@
       class="refresh-button"
       (click)="loadCompanyWarnings()"
       [disabled]="loading"
+      data-guide="company-warnings-refresh"
     >
       <i class="bi bi-arrow-clockwise"></i>
       {{ loading ? 'جارٍ التحديث...' : 'تحديث البيانات' }}
@@ -76,8 +77,11 @@
   </div>
 
   <!-- بطاقات الإحصائيات -->
-  <section class="stats-grid" aria-label="إحصائيات الإنذارات">
-
+  <section
+    class="stats-grid"
+    aria-label="إحصائيات الإنذارات"
+    data-guide="company-warnings-stats"
+  >
     <article class="stat-card total-card">
       <div class="stat-icon">
         <i class="bi bi-collection"></i>
@@ -121,7 +125,6 @@
         <small>تحتاج إلى اهتمام خاص</small>
       </div>
     </article>
-
   </section>
 
   <!-- محتوى الإنذارات -->
@@ -138,7 +141,7 @@
     </div>
 
     <!-- البحث والفلاتر -->
-    <div class="filters-area">
+    <div class="filters-area" data-guide="company-warnings-filters">
 
       <div class="search-field">
         <i class="bi bi-search"></i>
@@ -201,8 +204,11 @@
     </div>
 
     <!-- جدول الإنذارات -->
-    <div class="table-wrapper" *ngIf="!loading && !errorMessage">
-
+    <div
+      class="table-wrapper"
+      *ngIf="!loading && !errorMessage"
+      data-guide="company-warnings-list"
+    >
       <table *ngIf="filteredWarnings.length > 0; else emptyState">
         <thead>
           <tr>
@@ -259,6 +265,7 @@
                 type="button"
                 class="details-button"
                 (click)="selectWarning(warning)"
+                data-guide="company-warnings-details-button"
               >
                 <i class="bi bi-eye"></i>
                 التفاصيل
@@ -301,7 +308,6 @@
           </button>
         </div>
       </ng-template>
-
     </div>
   </section>
 
@@ -317,8 +323,8 @@
       aria-modal="true"
       aria-labelledby="detailsTitle"
       (click)="$event.stopPropagation()"
+      data-guide="company-warnings-details"
     >
-
       <header class="details-header">
         <div>
           <span class="details-eyebrow">تفاصيل الإنذار</span>
@@ -338,7 +344,6 @@
       </header>
 
       <div class="details-body">
-
         <div class="details-status-row">
           <span
             class="level-badge"
@@ -408,7 +413,10 @@
         </div>
 
         <!-- الرد على الأدمن -->
-        <div class="detail-section company-reply-section">
+        <div
+          class="detail-section company-reply-section"
+          data-guide="company-warnings-reply"
+        >
           <h3>
             <i class="bi bi-chat-left-text"></i>
             الرد على الأدمن
@@ -423,7 +431,6 @@
               <i class="bi bi-check-circle-fill"></i>
               <strong>الرد السابق للشركة</strong>
             </div>
-
             <p>{{ selectedWarning.companyReply }}</p>
           </div>
 
@@ -480,7 +487,6 @@
             {{ replyError }}
           </div>
         </div>
-
       </div>
 
       <!-- أسفل نافذة التفاصيل -->
@@ -493,8 +499,6 @@
           إغلاق
         </button>
       </footer>
-
     </section>
   </div>
-
 </div>
