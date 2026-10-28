@@ -12,13 +12,16 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly IQuizAttemptService _service;
         private readonly IQuizAccessService _access;
+        private readonly IQuizProctoringService _proctoring;
 
         public QuizAttemptsController(
             IQuizAttemptService service,
-            IQuizAccessService access)
+            IQuizAccessService access,
+            IQuizProctoringService proctoring)
         {
             _service = service;
             _access = access;
+            _proctoring = proctoring;
         }
 
         // قائمة اختبارات المتدرب + أرقام البطاقات
@@ -336,6 +339,98 @@ namespace Nafadh_Backend.Controllers
                 {
                     message = ex.Message
                 });
+            }
+        }
+
+        // Trainee Portal: إرسال حدث مراقبة (أو لقطة Snapshot)
+        [HttpPost("{attemptId:int}/proctoring")]
+        [Authorize(Roles = "Trainee")]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(512 * 1024)]
+        public async Task<IActionResult> AddProctoringEvent(
+            int attemptId,
+            [FromForm] CreateProctoringEventDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!await _access.TraineeOwnsAttemptAsync(User, attemptId))
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                var result = await _proctoring.AddEventAsync(attemptId, dto);
+
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // Trainer Portal: تقرير المراقبة للمحاولة
+        [HttpGet("{attemptId:int}/proctoring")]
+        [Authorize(Roles = "Trainer,Admin")]
+        public async Task<IActionResult> GetProctoringReport(int attemptId)
+        {
+            if (!await _access.CanReviewAttemptAsync(User, attemptId))
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                var report = await _proctoring.GetAttemptReportAsync(attemptId);
+
+                return Ok(report);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // Trainer Portal: صورة اللقطة (تُقرأ من Proctoring Storage)
+        [HttpGet("proctoring/events/{eventId:int}/snapshot")]
+        [Authorize(Roles = "Trainer,Admin")]
+        public async Task<IActionResult> GetProctoringSnapshot(int eventId)
+        {
+            var quizId = await _proctoring.GetQuizIdOfEventAsync(eventId);
+
+            if (quizId == null)
+            {
+                return NotFound(new { message = "اللقطة غير موجودة." });
+            }
+
+            if (!await _access.CanReviewQuizAsync(User, quizId.Value))
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                var (path, contentType) = await _proctoring.GetSnapshotAsync(eventId);
+
+                Response.Headers["Cache-Control"] = "private, no-store";
+
+                return PhysicalFile(path, contentType);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
             }
         }
     }
