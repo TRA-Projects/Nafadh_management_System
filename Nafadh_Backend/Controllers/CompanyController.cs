@@ -1,4 +1,6 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
@@ -10,10 +12,20 @@ namespace Nafadh_Backend.Controllers
     public class CompanyController : ControllerBase
     {
         private readonly ICompanyService _service;
+        private readonly IEmailService _emailService;
+        private readonly INotificationService _notificationService;
+        private readonly Nafadhcontext _context;
 
-        public CompanyController(ICompanyService service)
+        public CompanyController(
+            ICompanyService service,
+            IEmailService emailService,
+            INotificationService notificationService,
+            Nafadhcontext context)
         {
             _service = service;
+            _emailService = emailService;
+            _notificationService = notificationService;
+            _context = context;
         }
 
         // =========================================================================
@@ -111,12 +123,16 @@ namespace Nafadh_Backend.Controllers
         [HttpPut("{companyId}/approve")]
         public async Task<ActionResult<NFD_CompanyOutputDTO>> ApproveCompany(int companyId)
         {
+            bool hasPendingSelfReg = await HasPendingSelfRegistrationAsync(companyId);
+
             var company = await _service.ApproveCompanyAsync(companyId);
 
             if (company == null)
             {
                 return NotFound(new { message = "Company not found." });
             }
+
+            await NotifyCompanyDecisionAsync(companyId, isApproved: true, sendEmail: !hasPendingSelfReg, reason: null);
 
             return Ok(company);
         }
@@ -145,12 +161,16 @@ namespace Nafadh_Backend.Controllers
             int companyId,
             [FromBody] RejectCompanyDTO dto)
         {
+            bool hasPendingSelfReg = await HasPendingSelfRegistrationAsync(companyId);
+
             var company = await _service.RejectCompanyAsync(companyId, dto.RejectionReason);
 
             if (company == null)
             {
                 return NotFound(new { message = "Company not found." });
             }
+
+            await NotifyCompanyDecisionAsync(companyId, isApproved: false, sendEmail: !hasPendingSelfReg, reason: dto.RejectionReason);
 
             return Ok(company);
         }
@@ -207,6 +227,103 @@ namespace Nafadh_Backend.Controllers
             }
 
             return NoContent();
+        }
+
+        private Task<bool> HasPendingSelfRegistrationAsync(int companyId)
+        {
+            return _context.NFD_CompanySupervisors.AnyAsync(s =>
+                s.CompanyId == companyId &&
+                s.User.Status == NFD_UserStatus.PendingVerification &&
+                s.Company.Status != NFD_CompanyStatus.Approved);
+        }
+
+        private async Task NotifyCompanyDecisionAsync(int companyId, bool isApproved, bool sendEmail, string? reason)
+        {
+            var dbCompany = await _context.NFD_Companies
+                .Include(c => c.User)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.CompanyId == companyId);
+
+            if (dbCompany == null)
+                return;
+
+            if (dbCompany.UserId.HasValue)
+            {
+                try
+                {
+                    await _notificationService.CreateAsync(new CreateNotificationDTO
+                    {
+                        UserId = dbCompany.UserId.Value,
+                        Title = isApproved ? "تم اعتماد شركتكم في منصة نفاذ" : "نتيجة مراجعة طلب تسجيل الشركة",
+                        Message = isApproved
+                            ? $"يسعدنا إبلاغكم باعتماد شركة «{dbCompany.CompanyName}» رسمياً لدى الهيئة."
+                            : $"نأسف لإبلاغكم بعدم اعتماد طلب شركة «{dbCompany.CompanyName}». السبب: {reason}",
+                        RelatedEntity = "Company"
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to create company decision notification: {ex.Message}");
+                }
+            }
+
+            if (!sendEmail)
+                return;
+
+            string? validEmail = PickValidEmail(dbCompany.Email, dbCompany.User?.Email);
+            if (string.IsNullOrWhiteSpace(validEmail))
+                return;
+
+            string contactName = !string.IsNullOrWhiteSpace(dbCompany.User?.FullName)
+                ? dbCompany.User.FullName
+                : dbCompany.CompanyName;
+
+            try
+            {
+                if (isApproved)
+                {
+                    await _emailService.SendCompanyApprovedAsync(
+                        validEmail,
+                        dbCompany.CompanyName,
+                        contactName,
+                        "نفس كلمة المرور المسجلة لحسابكم في المنصة");
+                }
+                else
+                {
+                    await _emailService.SendCompanyRejectedAsync(
+                        validEmail,
+                        dbCompany.CompanyName,
+                        contactName,
+                        reason);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to send company decision email: {ex.Message}");
+            }
+        }
+
+        private static string? PickValidEmail(params string?[] candidates)
+        {
+            foreach (var raw in candidates)
+            {
+                if (string.IsNullOrWhiteSpace(raw))
+                    continue;
+
+                var cleaned = new string(raw
+                    .Where(c => !char.IsWhiteSpace(c) &&
+                                char.GetUnicodeCategory(c) != UnicodeCategory.Format)
+                    .ToArray());
+
+                if (!string.IsNullOrWhiteSpace(cleaned) &&
+                    cleaned.Contains('@') &&
+                    !cleaned.EndsWith(".test", StringComparison.OrdinalIgnoreCase))
+                {
+                    return cleaned;
+                }
+            }
+
+            return null;
         }
     }
 
