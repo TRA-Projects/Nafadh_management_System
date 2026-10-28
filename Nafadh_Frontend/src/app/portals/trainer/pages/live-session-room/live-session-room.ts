@@ -47,6 +47,8 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
   screenSharing = signal(false);
   showParticipants = signal(false);
   speakerMuted = signal(false);
+  endingSession = signal(false);
+  showEndConfirmation = signal(false);
 
   participants = signal<{
     identity: string;
@@ -444,6 +446,41 @@ openLiveAttendance(): void {
     });
   }
 
+  endSession(): void {
+  if (!this.connected() || this.endingSession()) return;
+
+  this.endingSession.set(true);
+  this.errorMessage.set('');
+
+  this.api.endTrainerLiveRoom(this.sessionId).subscribe({
+    next: async () => {
+      try {
+        await this.room?.disconnect();
+      } catch (error) {
+        console.error('LiveKit disconnect failed:', error);
+      }
+
+      this.connected.set(false);
+      this.endingSession.set(false);
+      this.showEndConfirmation.set(false);      
+
+      void this.router.navigate(['/trainer/live-sessions'], {
+        queryParams: {
+          batchId: this.batchId,
+          tab: 'past'
+        }
+      });
+    },
+    error: error => {
+      console.error('Failed to end session:', error);
+      this.errorMessage.set(
+        'تعذر إنهاء المحاضرة. حاولي مرة أخرى.'
+      );
+      this.endingSession.set(false);
+    }
+  });
+}
+
   async leaveSession(): Promise<void> {
     await this.room?.disconnect();
 
@@ -504,5 +541,17 @@ openLiveAttendance(): void {
       this.errorMessage.set('تعذر إرسال الرسالة.');
     }
   }
+
+  openEndConfirmation(): void {
+  if (!this.connected() || this.endingSession()) return;
+
+  this.showEndConfirmation.set(true);
+}
+
+closeEndConfirmation(): void {
+  if (this.endingSession()) return;
+
+  this.showEndConfirmation.set(false);
+}
 
 }

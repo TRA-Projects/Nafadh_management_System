@@ -34,7 +34,7 @@
       </article>
     </section>
 
-    <section class="table-card">
+<section class="table-card">
       <div class="table-heading">
         <div>
           <h2>قائمة المتدربين</h2>
@@ -46,13 +46,38 @@
         <table>
           <thead>
             <tr>
-              <th>المتدرب</th>
+              <th class="search-th">
+                <div class="th-search-horizontal">
+                  <!-- عنوان العمود وزر العدسة التفاعلي -->
+                  <div class="th-title-group">
+                    <span>المتدرب</span>
+                    <button type="button" class="search-toggle-btn" (click)="toggleSearch()" title="بحث بالاسم">
+                      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- حقل البحث الذي يظهر فقط عند الضغط على العدسة -->
+                   @if (isSearchOpen()) {
+                    <input 
+                      type="text" 
+                      class="inline-search-input animate-fade-in" 
+                      placeholder="ابحث باسم المتدرب..." 
+                      [ngModel]="searchQuery()" 
+                      (ngModelChange)="searchQuery.set($event)" 
+                      autofocus
+                    />
+                  }
+                </div>
+              </th>
               <th>حالة الاتصال</th>
             </tr>
           </thead>
 
           <tbody>
-            @for (row of rows(); track row.traineeId) {
+            @for (row of filteredRows(); track row.traineeId) {
               <tr>
                 <td class="trainee-name">{{ row.traineeName }}</td>
                 <td>
@@ -67,7 +92,13 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="2">لا توجد تسجيلات لهذه الدفعة.</td>
+                <td colspan="2">
+                  @if (searchQuery()) {
+                    لا يوجد متدرب بهذا الاسم "{{ searchQuery() }}".
+                  } @else {
+                    لا توجد تسجيلات لهذه الدفعة.
+                  }
+                </td>
               </tr>
             }
           </tbody>
