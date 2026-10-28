@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-admin-programs',
@@ -16,6 +17,8 @@ export class AdminPrograms implements OnInit {
   private adminApi = inject(AdminApi);
   private router = inject(Router);
 
+  traineeAddMode: 'existing' | 'manual' | 'excel' = 'existing';
+
   // ==========================================================
   // 1. Data Signals
   // ==========================================================
@@ -24,6 +27,43 @@ export class AdminPrograms implements OnInit {
   companies = signal<any[]>([]);
   tracks = signal<any[]>([]);
   selectedBatchTrainees = signal<any[]>([]);
+
+  availableBatchTrainees = signal<any[]>([]);
+  selectedTraineeIds = signal<number[]>([]);
+  isLoadingAvailableTrainees = signal(false);
+  traineePickerError = signal<string | null>(null);
+  traineeImportError = signal<string | null>(null);
+  isCreatingManualTrainee = signal(false);
+  isImportingTrainees = signal(false);
+  manualTrainee = { fullName: '', email: '', nationalId: '', phone: '', university: '', major: '', academicLevel: '' };
+  manualTraineeErrors = signal<Record<string, string>>({});
+  traineeSearchTerm = '';
+  traineePage = 1;
+  traineePageSize = 10;
+
+  get paginatedBatchTrainees(): any[] {
+    const list = this.filteredBatchTrainees;
+    const start = (this.traineePage - 1) * this.traineePageSize;
+    return list.slice(start, start + this.traineePageSize);
+  }
+
+  get traineeTotalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredBatchTrainees.length / this.traineePageSize));
+  }
+
+  changeTraineePage(page: number): void {
+    this.traineePage = Math.min(Math.max(1, page), this.traineeTotalPages);
+  }
+
+  onTraineeSearchChange(): void {
+    this.traineePage = 1;
+  }
+
+  // معاينة ملف Excel قبل الحفظ
+  traineeImportPreview = signal<any[]>([]);
+  traineeImportPreviewSkipped = signal<string[]>([]);
+
+  existingBatchTraineeIds = signal<number[]>([]);
 
   statusFilter = signal<string>('الكل');
   planFilter = signal<string>('الكل');
@@ -46,6 +86,7 @@ export class AdminPrograms implements OnInit {
   isDetailsPageOpen = signal<boolean>(false);
 
   isBatchModalOpen = false;
+  isCreateBatchPageOpen = signal<boolean>(false);
   isProgramModalOpen = false;
   isEditModalOpen = false;
   selectedBatch: any = null;
@@ -248,125 +289,42 @@ export class AdminPrograms implements OnInit {
   private loadBatchAcademicEvents(batch: any): void {
     const batchId = Number(batch?.batchId || batch?.id);
 
-    if ((this.adminApi as any).getBatchQuizzes) {
-      (this.adminApi as any).getBatchQuizzes(batchId).subscribe({
-        next: (quizzes: any[]) => {
-          this.buildBatchCalendar(batch, quizzes || []);
-        },
-        error: () => {
-          this.buildBatchCalendar(batch, []);
-        }
-      });
-    } else {
-      this.buildBatchCalendar(batch, []);
-    }
+    this.adminApi.getBatchQuizzes(batchId).subscribe({
+      next: (quizzes: any[]) => {
+        this.buildBatchCalendar(batch, quizzes || []);
+      },
+      error: (err) => {
+        console.error('فشل جلب اختبارات الدفعة:', err);
+        this.buildBatchCalendar(batch, []);
+      }
+    });
   }
 
   private buildBatchCalendar(batch: any, remoteQuizzes: any[]): void {
-    const startDate = batch?.startDate ? new Date(batch.startDate) : new Date();
-
-    const quiz1Date = new Date(startDate);
-    quiz1Date.setDate(quiz1Date.getDate() + 14);
-    quiz1Date.setHours(10, 0, 0);
-
-    const quiz2Date = new Date(startDate);
-    quiz2Date.setDate(quiz2Date.getDate() + 45);
-    quiz2Date.setHours(11, 30, 0);
-
-    const defaultQuizzes = [
-      {
-        quizId: 101,
-        title: 'اختبار المفاهيم الأساسية والمعمارية (Midterm Quiz)',
-        description: 'اختبار تقييمي إجباري يغطي المفاهيم النظرية والتطبيق العملي للمرحلة الأولى.',
-        batchId: batch?.batchId,
-        trainerName: 'م. أحمد المعمري',
-        startDateTime: quiz1Date.toISOString(),
-        durationMinutes: 60,
-        passingPercentage: 60,
-        cameraRequired: true,
-        status: 'Active',
-        maxScore: 100
-      },
-      {
-        quizId: 102,
-        title: 'اختبار الكفاءة والجاهزية لسوق العمل (Final Assessment)',
-        description: 'تقييم شامل يقيس مدى استيعاب المتدرب للمشاريع المنجزة وجودة الكود.',
-        batchId: batch?.batchId,
-        trainerName: 'د. سارة الكندية',
-        startDateTime: quiz2Date.toISOString(),
-        durationMinutes: 90,
-        passingPercentage: 70,
-        cameraRequired: true,
-        status: 'Scheduled',
-        maxScore: 100
-      }
-    ];
-
-    const activeQuizzes = remoteQuizzes.length > 0 ? remoteQuizzes : defaultQuizzes;
-    this.latestBatchQuiz = activeQuizzes[0] || null;
-
     const events: any[] = [];
 
-    // 1. إضافة الاختبارات
-    activeQuizzes.forEach(q => {
-      const qDate = new Date(q.startDateTime);
-      events.push({
-        id: `quiz-${q.quizId}`,
-        title: q.title,
-        description: q.description,
-        type: 'quiz',
-        typeLabel: 'اختبار معتمد',
-        date: qDate,
-        timeString: qDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
-        rawQuiz: q
+    // إضافة الاختبارات الحقيقية القادمة من الداتابيس
+    if (remoteQuizzes && remoteQuizzes.length > 0) {
+      this.latestBatchQuiz = remoteQuizzes[0];
+      remoteQuizzes.forEach(q => {
+        const qDate = new Date(q.startDateTime);
+        events.push({
+          id: `quiz-${q.quizId}`,
+          title: q.title,
+          description: q.description,
+          type: 'quiz',
+          typeLabel: 'اختبار مجدول',
+          date: qDate,
+          timeString: qDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
+          rawQuiz: q
+        });
       });
-    });
-
-    // 2. إضافة المشاريع
-    const projDate = new Date(startDate);
-    projDate.setDate(projDate.getDate() + 28);
-    events.push({
-      id: 'proj-1',
-      title: 'تسليم النموذج الأولي لمشروع التخرج (Milestone 1)',
-      description: 'رفع مخطط قاعدة البيانات وواجهات المستخدم على مستودع GitHub مع تقرير التوثيق.',
-      type: 'project',
-      typeLabel: 'تسليم مشروع',
-      date: projDate,
-      timeString: '11:59 م',
-      rawQuiz: null
-    });
-
-    // 3. إضافة المهام والواجبات
-    const taskDate = new Date(startDate);
-    taskDate.setDate(taskDate.getDate() + 7);
-    events.push({
-      id: 'task-1',
-      title: 'مهمة بناء واجهات API وتوثيق الـ Endpoints عبر Swagger',
-      description: 'تطبيق عملي معتمد يسلّم ككود برمجي للمدرب لمراجعته ورصد الدرجات.',
-      type: 'task',
-      typeLabel: 'واجب عملي',
-      date: taskDate,
-      timeString: '05:00 م',
-      rawQuiz: null
-    });
-
-    // 4. المقابلات والتقييم النهائي
-    const interviewDate = new Date(startDate);
-    interviewDate.setDate(interviewDate.getDate() + 55);
-    events.push({
-      id: 'interview-1',
-      title: 'المقابلة الفنية ومناقشة مشروع التخرج مع لجنة التقييم',
-      description: 'جلسة تقييمية شفوية لعرض مخرجات المشروع ومناقشة التحديات التقنية.',
-      type: 'interview',
-      typeLabel: 'مقابلة فنية',
-      date: interviewDate,
-      timeString: '09:00 ص',
-      rawQuiz: null
-    });
+    } else {
+      this.latestBatchQuiz = null;
+    }
 
     events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     this.batchEvents.set(events);
-
     this.buildMonthlyCalendarGrid();
   }
 
@@ -490,19 +448,19 @@ export class AdminPrograms implements OnInit {
     this.auditFilter = 'all';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    const quizId = quiz.quizId || 101;
-    if ((this.adminApi as any)?.getQuizAttempts) {
-      (this.adminApi as any).getQuizAttempts(quizId).subscribe({
-        next: (attempts: any[]) => {
-          this.activeQuizAttempts.set(attempts && attempts.length > 0 ? attempts : this.generateRichFallbackAttempts(quiz));
-        },
-        error: () => {
-          this.activeQuizAttempts.set(this.generateRichFallbackAttempts(quiz));
-        }
-      });
-    } else {
-      this.activeQuizAttempts.set(this.generateRichFallbackAttempts(quiz));
-    }
+    const quizId = quiz.quizId;
+    // 🟢 استدعاء الـ Endpoint الحقيقي الذي يدمج الحضور والدرجات والأعذار من الداتابيس مباشرة
+    this.adminApi.getQuizAttendanceDetails(quizId).subscribe({
+      next: (res: any) => {
+        const trainees = res?.trainees || [];
+        this.activeQuizAttempts.set(trainees);
+      },
+      error: (err) => {
+        console.error('خطأ في جلب محضر درجات الاختبار الحقيقي:', err);
+        this.showToast('تعذر تحميل بيانات المحضر من قاعدة البيانات', 'error');
+        this.activeQuizAttempts.set([]);
+      }
+    });
   }
 
   openQuizTraineesModal(quiz: any): void {
@@ -1345,20 +1303,18 @@ export class AdminPrograms implements OnInit {
     this.rejectionNotes = '';
     this.selectedModifications = [];
 
-    let companyId = Number(batch.companyId ?? batch.CompanyId);
-    if (!companyId && batch.companyName) {
-      const comp = this.companies().find(c => c.companyName?.trim() === batch.companyName?.trim());
-      if (comp) companyId = comp.companyId;
-    }
+    const companyId = Number(batch.companyId ?? batch.CompanyId);
     const programId = Number(batch.programId ?? batch.ProgramId);
 
     this.adminApi.getPendingCoursePlans().subscribe({
       next: (pendingList: any[]) => {
         const rawList = Array.isArray(pendingList) ? pendingList : [];
-        let matched = rawList.find(p =>
+
+        // 🟢 بحث حصري ودقيق دون أي Fallback عشوائي!
+        const matched = rawList.find(p =>
           (companyId && Number(p.companyId ?? p.CompanyId) === companyId) ||
           (programId && Number(p.programId ?? p.ProgramId) === programId)
-        ) || rawList[0];
+        );
 
         if (matched) {
           const planId = Number(matched.planId ?? matched.PlanId ?? matched.id);
@@ -1373,6 +1329,7 @@ export class AdminPrograms implements OnInit {
             }
           });
         } else {
+          // إذا لم تكن في قائمة المعلقة، ابحث في خطط الشركة المعتمدة
           this.fallbackToCompany(companyId, programId);
         }
       },
@@ -1524,20 +1481,27 @@ export class AdminPrograms implements OnInit {
       companyId: ['', []],
       startDate: ['', [Validators.required]],
       endDate: ['', [Validators.required]],
-      capacity: [15, [Validators.required, Validators.min(1)]]
+      capacity: [null, [
+        Validators.required,
+        Validators.min(1),
+        Validators.pattern(/^[1-9]\d*$/)
+      ]]
     }, { validators: this.dateRangeValidator });
   }
+
 
   private initEditBatchForm(): void {
     this.editBatchForm = this.fb.group({
       batchName: ['', [Validators.required]],
-      programId: ['', [Validators.required]],
-      companyId: ['', []],
+      programId: [null, [Validators.required]],
+      companyId: [null],
       startDate: ['', [Validators.required]],
       endDate: ['', [Validators.required]],
-      capacity: [15, [Validators.required, Validators.min(1)]]
+      capacity: [15, [Validators.required, Validators.min(1)]],
+      status: [null, [Validators.required]]
     }, { validators: this.dateRangeValidator });
   }
+
 
   private initProgramForm(): void {
     this.programForm = this.fb.group({
@@ -1552,17 +1516,426 @@ export class AdminPrograms implements OnInit {
     if (['-', 'e', 'E', '+'].includes(event.key)) event.preventDefault();
   }
 
+
   onCreateBatch(): void {
-    this.batchForm.reset({ capacity: 15 });
+    this.batchForm.reset({
+      batchName: '',
+      programId: '',
+      companyId: '',
+      startDate: '',
+      endDate: '',
+      capacity: null
+    });
+
     this.batchFormSubmitted = false;
     this.batchErrorMessage = null;
-    this.isBatchModalOpen = true;
+
+    this.selectedTraineeIds.set([]);
+    this.traineePickerError.set(null);
+    this.traineeImportError.set(null);
+    this.loadAvailableBatchTrainees();
+    this.isBatchModalOpen = false;
+    this.isCreateBatchPageOpen.set(true);
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+
+  loadAvailableBatchTrainees(): void {
+    this.isLoadingAvailableTrainees.set(true);
+    this.traineePickerError.set(null);
+
+    this.adminApi.getTrainees({
+      pageNumber: 1,
+      pageSize: 200
+    }).subscribe({
+      next: (response: any) => {
+        const trainees = Array.isArray(response)
+          ? response
+          : (response?.items ?? response?.Items ?? []);
+
+        if (trainees.length === 0) {
+          this.availableBatchTrainees.set([]);
+          this.isLoadingAvailableTrainees.set(false);
+          return;
+        }
+
+        let completed = 0;
+        const available: any[] = [];
+
+        trainees.forEach((trainee: any) => {
+          const id = Number(
+            trainee.traineeId ?? trainee.TraineeId
+          );
+
+          if (!id) {
+            completed++;
+            if (completed === trainees.length) {
+              this.availableBatchTrainees.set(available);
+              this.isLoadingAvailableTrainees.set(false);
+            }
+            return;
+          }
+
+          this.adminApi.getEnrollmentsByTrainee(id).subscribe({
+            next: (enrollments: any[]) => {
+              const hasActiveEnrollment =
+                (enrollments ?? []).some((e: any) => {
+                  const status = String(
+                    e.completionStatus ?? e.CompletionStatus ?? ''
+                  ).toLowerCase();
+
+                  return status === 'inprogress' ||
+                    status === 'in progress';
+                });
+
+              if (!hasActiveEnrollment) {
+                available.push(trainee);
+              }
+
+              completed++;
+
+              if (completed === trainees.length) {
+                this.availableBatchTrainees.set(available);
+                this.isLoadingAvailableTrainees.set(false);
+              }
+            },
+            error: () => {
+              // لا نعرض متدربًا لم نتمكن من التحقق من تسجيلاته.
+              completed++;
+
+              if (completed === trainees.length) {
+                this.availableBatchTrainees.set(available);
+                this.isLoadingAvailableTrainees.set(false);
+              }
+            }
+          });
+        });
+      },
+      error: () => {
+        this.availableBatchTrainees.set([]);
+        this.isLoadingAvailableTrainees.set(false);
+        this.traineePickerError.set(
+          'تعذر تحميل المتدربين من قاعدة البيانات.'
+        );
+      }
+    });
+  }
+
+
+  get filteredBatchTrainees(): any[] {
+    const search = this.traineeSearchTerm.trim().toLowerCase();
+
+    return this.availableBatchTrainees().filter((trainee: any) => {
+      const name = String(
+        trainee.fullName ?? trainee.FullName ?? ''
+      ).toLowerCase();
+
+      const email = String(
+        trainee.email ?? trainee.Email ?? ''
+      ).toLowerCase();
+
+      return name.includes(search) || email.includes(search);
+    });
+  }
+
+
+  isTraineeSelected(traineeId: number): boolean {
+    return this.selectedTraineeIds().includes(Number(traineeId));
+  }
+
+  toggleBatchTrainee(trainee: any, checked: boolean): void {
+    const id = Number(
+      trainee.traineeId ?? trainee.TraineeId
+    );
+
+    if (!id) return;
+
+    this.selectedTraineeIds.update(ids =>
+      checked
+        ? (ids.includes(id) ? ids : [...ids, id])
+        : ids.filter(x => x !== id)
+    );
+  }
+
+
+  private getApiErrorMessage(err: any, fallback: string): string {
+    const body = err?.error;
+    if (typeof body === 'string' && body.trim()) return body;
+    if (body && typeof body === 'object') {
+      return body.message || body.title || body.detail || body.errors && Object.values(body.errors).flat().join(' ') || fallback;
+    }
+    return err?.message || fallback;
+  }
+
+
+
+  
+addManualTrainee(): void {
+  this.traineeImportError.set(null);
+
+  const fullName = String(this.manualTrainee.fullName ?? '')
+    .trim()
+    .replace(/\s+/g, ' ');
+
+  const email = String(this.manualTrainee.email ?? '')
+    .trim()
+    .toLowerCase();
+
+  const nationalIdText = String(
+    this.manualTrainee.nationalId ?? ''
+  ).trim();
+
+  const phone = String(this.manualTrainee.phone ?? '').trim();
+
+  const errors: Record<string, string> = {};
+
+  // التحقق من الاسم الثلاثي
+  if (fullName.split(' ').filter(Boolean).length < 3) {
+    errors['fullName'] = 'يرجى إدخال الاسم الثلاثي.';
+  }
+
+  // التحقق من البريد الإلكتروني
+  if (!email) {
+    errors['email'] = 'البريد الإلكتروني مطلوب.';
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors['email'] = 'يرجى إدخال بريد إلكتروني صحيح.';
+  }
+
+  // التحقق من الرقم المدني: 8 إلى 10 أرقام، ضمن نطاق int
+  if (!/^\d{8,10}$/.test(nationalIdText)) {
+    errors['nationalId'] =
+      'يجب أن يتكون الرقم المدني من 8 إلى 10 أرقام.';
+  } else if (Number(nationalIdText) > 2147483647) {
+    errors['nationalId'] = 'الرقم المدني يتجاوز الحد المسموح به.';
+  }
+
+  // الهاتف اختياري
+  if (phone && !/^\d{8,15}$/.test(phone)) {
+    errors['phone'] =
+      'رقم الهاتف يجب أن يتكون من 8 إلى 15 رقمًا.';
+  }
+
+  this.manualTraineeErrors.set(errors);
+
+  if (Object.keys(errors).length > 0) {
+    return;
+  }
+
+  const nationalId = Number(nationalIdText);
+
+  if (!Number.isSafeInteger(nationalId)) {
+    this.manualTraineeErrors.set({
+      nationalId: 'الرقم المدني غير صالح.'
+    });
+    return;
+  }
+
+  const data: any = {
+    FullName: fullName,
+    Email: email,
+    NationalId: nationalId,
+    University: String(this.manualTrainee.university ?? '').trim() || null,
+    Major: String(this.manualTrainee.major ?? '').trim() || null,
+    AcademicLevel:
+      String(this.manualTrainee.academicLevel ?? '').trim() || null
+  };
+
+  if (phone) {
+    data.PhoneNumber = phone;
+  }
+
+  // منع التكرار ضمن القائمة المتاحة حاليًا
+  const duplicate = this.availableBatchTrainees().some(
+    t =>
+      String(t.email ?? t.Email ?? '')
+        .trim()
+        .toLowerCase() === email
+  );
+
+  if (duplicate) {
+    this.manualTraineeErrors.set({
+      email:
+        'هذا البريد موجود ضمن القائمة؛ اختاري المتدرب بدل إنشاء سجل مكرر.'
+    });
+    return;
+  }
+
+  this.isCreatingManualTrainee.set(true);
+
+  this.adminApi.createTrainee(data).subscribe({
+    next: (created: any) => {
+      const createdId = Number(
+        created?.traineeId ?? created?.TraineeId ?? created?.id ?? created?.Id ??
+        created?.data?.traineeId ?? created?.data?.TraineeId
+      );
+      if (Number.isInteger(createdId) && createdId > 0) {
+        this.selectedTraineeIds.update(old => [...new Set([...old, createdId])]);
+      }
+      this.findAndSelectTraineesByEmail([email], () => {
+        this.isCreatingManualTrainee.set(false);
+
+        this.manualTrainee = {
+          fullName: '',
+          email: '',
+          nationalId: '',
+          phone: '',
+          university: '',
+          major: '',
+          academicLevel: ''
+        };
+
+        this.manualTraineeErrors.set({});
+
+        this.showToast(
+          'تم حفظ بيانات المتدرب. اضغطي «حفظ التعديلات/إنشاء الدفعة» لإتمام إسناده إلى الدفعة.',
+          'success'
+        );
+      });
+    },
+    error: (err: any) => {
+      this.isCreatingManualTrainee.set(false);
+
+      this.traineeImportError.set(
+        this.getApiErrorMessage(
+          err,
+          'تعذر حفظ المتدرب. تحققي من البيانات أو من اتصال الخادم.'
+        )
+      );
+    }
+  });
+}
+
+
+
+
+  async importTraineesSpreadsheet(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.traineeImportError.set(null);
+    this.traineeImportPreview.set([]);
+    this.traineeImportPreviewSkipped.set([]);
+    try {
+      const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+      if (!wb.SheetNames.length) throw new Error('ملف Excel لا يحتوي على ورقة عمل.');
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rawRows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: '' });
+      if (!rawRows.length) throw new Error('الملف فارغ أو لا يحتوي على صفوف بيانات.');
+
+      const normalize = (s: string) => s.trim().toLowerCase().replace(/[ _-]/g, '');
+      const headers = Object.keys(rawRows[0]).map(normalize);
+      const headerGroups = [
+        { label: 'الاسم الكامل (FullName)', aliases: ['fullname', 'name', 'الاسم', 'اسم المتدرب'] },
+        { label: 'البريد الإلكتروني (Email)', aliases: ['email', 'البريدالإلكتروني', 'البريدالالكتروني'] },
+        { label: 'الرقم المدني (NationalId)', aliases: ['nationalid', 'civilid', 'الرقمالمدني', 'رقمالبطاقة'] }
+      ];
+      const missing = headerGroups.filter(g => !headers.some(h => g.aliases.map(normalize).includes(h)));
+      if (missing.length) {
+        throw new Error('تعذر استيراد الملف. أضيفي الأعمدة المطلوبة التالية ثم أعيدي رفعه: ' + missing.map(x => x.label).join('، ') + '.');
+      }
+
+      const get = (r: Record<string, any>, names: string[]) => {
+        const key = Object.keys(r).find(x => names.map(normalize).includes(normalize(x)));
+        return key ? String(r[key] ?? '').trim() : '';
+      };
+      const existing = new Set(this.availableBatchTrainees().map(t => String(t.email ?? t.Email ?? '').trim().toLowerCase()));
+      const seen = new Set<string>();
+      const payload: any[] = [];
+      const skipped: string[] = [];
+      rawRows.forEach((r, i) => {
+        const rowNumber = i + 2;
+        const fullName = get(r, ['fullname', 'full name', 'name', 'الاسم', 'اسم المتدرب']).replace(/\s+/g, ' ').trim();
+        const email = get(r, ['email', 'البريد الإلكتروني', 'البريد الالكتروني']).toLowerCase();
+        const nationalIdText = get(r, ['nationalid', 'national id', 'civil id', 'الرقم المدني', 'رقم البطاقة']).replace(/[\s-]/g, '');
+        const nationalId = Number(nationalIdText);
+        const reasons: string[] = [];
+        if (fullName.split(/\s+/).filter(Boolean).length < 3) reasons.push('الاسم يجب أن يكون ثلاثيًا على الأقل');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) reasons.push('البريد الإلكتروني غير صحيح');
+        if (!/^\d{8,10}$/.test(nationalIdText) || !Number.isSafeInteger(nationalId) || nationalId > 2147483647) reasons.push('الرقم المدني يجب أن يكون من 8 إلى 10 أرقام وألا يتجاوز حد int');
+        if (existing.has(email)) reasons.push('البريد مسجل مسبقًا');
+        if (seen.has(email)) reasons.push('البريد مكرر داخل الملف');
+        if (reasons.length) {
+          skipped.push(`الصف ${rowNumber}: ${reasons.join('؛ ')}`);
+          return;
+        }
+        seen.add(email);
+        payload.push({
+          FullName: fullName, Email: email, NationalId: nationalId,
+          University: get(r, ['university', 'الجامعة']) || null,
+          Major: get(r, ['major', 'specialization', 'التخصص']) || null,
+          PhoneNumber: get(r, ['phone', 'phonenumber', 'mobile', 'رقم الهاتف', 'الهاتف']) || null,
+          AcademicLevel: get(r, ['academiclevel', 'academic level', 'المستوى الأكاديمي']) || null
+        });
+      });
+      this.traineeImportPreviewSkipped.set(skipped);
+      if (!payload.length) {
+        this.traineeImportError.set('لم نجد صفوفًا صالحة للاستيراد. أسباب رفض كل صف موضحة أدناه. تأكدي من أن الاسم ثلاثي، والبريد صحيح وغير مسجل مسبقًا، والرقم المدني من 8 إلى 10 أرقام.');
+        return;
+      }
+      this.traineeImportPreview.set(payload);
+    } catch (e: any) {
+      this.traineeImportError.set(e?.message || 'تعذر قراءة ملف Excel.');
+      input.value = '';
+    }
+  }
+
+  confirmImportTrainees(event?: Event): void {
+    const payload = this.traineeImportPreview();
+    if (!payload.length || this.isImportingTrainees()) return;
+    this.traineeImportError.set(null);
+    this.isImportingTrainees.set(true);
+    this.adminApi.importTrainees(payload).subscribe({
+      next: () => this.findAndSelectTraineesByEmail(payload.map(x => x.Email), () => {
+        this.isImportingTrainees.set(false);
+        this.traineeImportPreview.set([]);
+        const input = document.querySelector<HTMLInputElement>('.edit-batch-trainees input[type="file"], .batch-trainee-picker input[type="file"]');
+        if (input) input.value = '';
+        const skipped = this.traineeImportPreviewSkipped().length;
+        this.traineeImportPreviewSkipped.set([]);
+        this.showToast(`تم استيراد ${payload.length} متدرب${skipped ? `، وتجاهل ${skipped} صف غير صالح أو مكرر` : ''}. احفظي الدفعة لإتمام الإسناد.`, skipped ? 'warning' : 'success');
+      }),
+      error: (err: any) => {
+        this.isImportingTrainees.set(false);
+        this.traineeImportError.set(this.getApiErrorMessage(err, 'فشل استيراد الملف. تأكدي من أن خدمة الاستيراد مفعلة في الخادم.'));
+      }
+    });
+  }
+
+  private findAndSelectTraineesByEmail(emails: string[], done: () => void): void {
+    const wanted = new Set(emails.map(x => x.trim().toLowerCase()));
+    this.adminApi.getTrainees({ pageNumber: 1, pageSize: 1000 }).subscribe({
+      next: (r: any) => {
+        const list = Array.isArray(r) ? r : (r?.items ?? r?.Items ?? r?.data ?? r?.Data ?? []);
+        const ids = list
+          .filter((t: any) => wanted.has(String(t.email ?? t.Email ?? '').trim().toLowerCase()))
+          .map((t: any) => Number(t.traineeId ?? t.TraineeId ?? t.id ?? t.Id))
+          .filter((id: number) => Number.isInteger(id) && id > 0);
+        this.selectedTraineeIds.update(old => [...new Set([...old, ...ids])]);
+        this.loadAvailableBatchTrainees();
+        const foundEmails = new Set(list.filter((t: any) => wanted.has(String(t.email ?? t.Email ?? '').trim().toLowerCase())).map((t: any) => String(t.email ?? t.Email ?? '').trim().toLowerCase()));
+        const missing = [...wanted].filter(email => !foundEmails.has(email));
+        if (missing.length) {
+          this.traineeImportError.set('تم إرسال طلب الحفظ، لكن لم يمكن العثور على بعض المتدربين في قائمة الخادم لتحديدهم للدفعة. تحققي من قائمة المتدربين أو من استجابة خدمة Trainee.');
+        }
+        done();
+      },
+      error: () => {
+        this.traineeImportError.set('تم إرسال طلب الحفظ، لكن تعذر تحديث قائمة المتدربين من الخادم.');
+        done();
+      }
+    });
   }
 
   onCloseBatchModal(): void {
+    this.isCreateBatchPageOpen.set(false);
     this.isBatchModalOpen = false;
     this.batchFormSubmitted = false;
+    this.batchErrorMessage = null;
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
 
   onCreateProgram(): void {
     this.programForm.reset({ durationWeeks: 10, trackId: null });
@@ -1576,91 +1949,411 @@ export class AdminPrograms implements OnInit {
     this.programFormSubmitted = false;
   }
 
+
+
+
   onEdit(batch: any): void {
     this.selectedBatch = batch;
+
     this.editBatchForm.patchValue({
-      batchName: batch.batchName,
-      programId: batch.programId,
-      companyId: batch.companyId || '',
+      batchName: batch.batchName ?? '',
+      programId: batch.programId ?? null,
+      companyId: batch.companyId ?? null,
       startDate: batch.startDate ? batch.startDate.split('T')[0] : '',
       endDate: batch.endDate ? batch.endDate.split('T')[0] : '',
-      capacity: batch.capacity
+      capacity: batch.capacity ?? 15,
+      status: this.getBatchStatusValue(batch.status)
     });
+
     this.editBatchFormSubmitted = false;
     this.editBatchErrorMessage = null;
+    this.selectedTraineeIds.set([]);
+    this.existingBatchTraineeIds.set([]);
+    this.traineePickerError.set(null);
+
+    this.loadAvailableBatchTrainees();
+
+    const batchId = Number(batch.batchId ?? batch.id);
+
+    if (batchId > 0) {
+      this.adminApi.getBatchTrainees(batchId).subscribe({
+        next: (trainees: any[]) => {
+          const ids = (trainees ?? [])
+            .map(t => Number(t.traineeId ?? t.TraineeId))
+            .filter(id => Number.isInteger(id) && id > 0);
+
+          this.existingBatchTraineeIds.set([...new Set(ids)]);
+        },
+        error: () => {
+          this.traineePickerError.set(
+            'تعذر تحميل المتدربين المسجلين في الدفعة.'
+          );
+        }
+      });
+    }
+
     this.isEditModalOpen = true;
   }
+
+  private getBatchStatusValue(status: any): number {
+    if (typeof status === 'number' && status >= 0 && status <= 3) {
+      return status;
+    }
+
+    if (typeof status === 'string') {
+      const value = status.trim().toLowerCase();
+
+      const statusMap: Record<string, number> = {
+        upcoming: 0,
+        ongoing: 1,
+        completed: 2,
+        cancelled: 3
+      };
+
+      if (value in statusMap) {
+        return statusMap[value];
+      }
+
+      const numericValue = Number(value);
+
+      if (
+        value !== '' &&
+        Number.isInteger(numericValue) &&
+        numericValue >= 0 &&
+        numericValue <= 3
+      ) {
+        return numericValue;
+      }
+    }
+
+    return 0;
+  }
+
 
   onCloseEditModal(): void {
     this.isEditModalOpen = false;
     this.editBatchFormSubmitted = false;
-    this.selectedBatch = null;
+    if (!this.isDetailsPageOpen()) {
+      this.selectedBatch = null;
+    }
   }
+
+
 
   onSubmit(): void {
     this.batchFormSubmitted = true;
+    this.batchErrorMessage = null;
+
     if (this.batchForm.invalid) {
       this.batchForm.markAllAsTouched();
       return;
     }
+
+    const formValue = this.batchForm.getRawValue();
+
+    if (this.selectedTraineeIds().length > 0 && (!formValue.companyId || Number(formValue.companyId) <= 0)) {
+      this.batchErrorMessage = 'يلزم تحديد الشركة عند إسناد المتدربين إلى الدفعة.';
+      return;
+    }
+
+    const payload = {
+      batchName: String(formValue.batchName || '').trim(),
+      programId: Number(formValue.programId),
+      companyId:
+        formValue.companyId === '' || formValue.companyId == null
+          ? null
+          : Number(formValue.companyId),
+      startDate: formValue.startDate,
+      endDate: formValue.endDate,
+      capacity: Number(formValue.capacity)
+    };
+
     this.isSubmittingBatch = true;
-    this.adminApi.createBatch(this.batchForm.value).subscribe({
-      next: () => {
-        this.isSubmittingBatch = false;
-        this.loadInitialData();
-        this.onCloseBatchModal();
+
+    this.adminApi.createBatch(payload).subscribe({
+      next: (created: any) => {
+        const batchId = Number(
+          created?.batchId ?? created?.BatchId
+        );
+
+        const traineeIds = this.selectedTraineeIds();
+
+        if (traineeIds.length === 0) {
+          this.isSubmittingBatch = false;
+          this.showToast('تم إنشاء الدفعة بنجاح.', 'success');
+          this.loadInitialData();
+          this.onCloseBatchModal();
+          return;
+        }
+
+        if (!Number.isInteger(batchId) || batchId <= 0) {
+          this.isSubmittingBatch = false;
+          this.batchErrorMessage =
+            'تم إرسال طلب إنشاء الدفعة، لكن لم يُرجع الخادم معرّفها. تحققي من الدفعة قبل إعادة المحاولة.';
+          this.loadInitialData();
+          return;
+        }
+
+        const companyId = payload.companyId;
+
+        if (companyId == null) {
+          this.isSubmittingBatch = false;
+          this.batchErrorMessage =
+            'تم إنشاء الدفعة، لكن يجب تحديد الشركة لإسناد المتدربين.';
+          this.loadInitialData();
+          return;
+        }
+
+        this.assignTraineesToBatch(
+          batchId,
+          traineeIds,
+          companyId
+        );
       },
-      error: () => {
+
+      error: (err: any) => {
         this.isSubmittingBatch = false;
-        this.batchErrorMessage = 'فشل إنشاء الدفعة في قاعدة البيانات.';
+
+        console.error('خطأ إنشاء الدفعة:', {
+          status: err?.status,
+          response: err?.error,
+          payload
+        });
+
+        this.batchErrorMessage =
+          err?.error?.message ||
+          err?.error?.title ||
+          'تعذر إنشاء الدفعة. يرجى التحقق من البيانات والمحاولة مرة أخرى.';
       }
     });
   }
 
+
+  private assignTraineesToBatch(
+    batchId: number,
+    traineeIds: number[],
+    companyId: number
+  ): void {
+    let index = 0;
+    let successCount = 0;
+    const errors: string[] = [];
+
+    const assignNext = (): void => {
+      if (index >= traineeIds.length) {
+        this.isSubmittingBatch = false;
+        this.loadInitialData();
+
+        if (errors.length === 0) {
+          this.showToast(
+            `تم إنشاء الدفعة وإضافة ${successCount} متدرب بنجاح.`,
+            'success'
+          );
+          this.onCloseBatchModal();
+        } else {
+          this.showToast(
+            `تم إسناد ${successCount} من ${traineeIds.length} متدرب. تعذر إسناد ${errors.length} متدرب.`,
+            'error'
+          );
+          console.error('أخطاء إسناد المتدربين:', errors);
+        }
+
+        return;
+      }
+
+      const traineeId = traineeIds[index++];
+
+      this.adminApi.createEnrollment({
+        batchId,
+        traineeId,
+        companyId,
+        departmentId: null,
+        supervisorId: null
+      }).subscribe({
+        next: () => {
+          successCount++;
+          assignNext();
+        },
+        error: (err: any) => {
+          errors.push(
+            err?.error?.message ||
+            err?.error?.title ||
+            `تعذر إسناد المتدرب رقم ${traineeId}`
+          );
+          assignNext();
+        }
+      });
+    };
+
+    assignNext();
+  }
+
+
   onSubmitProgram(): void {
     this.programFormSubmitted = true;
+
     if (this.programForm.invalid) {
       this.programForm.markAllAsTouched();
       return;
     }
+
+    const val = this.programForm.value;
+
+    // كل أسبوع يعادل 40 ساعة تدريبية
+    const payload = {
+      title: val.title,
+      trackId: Number(val.trackId),
+      durationHours: Number(val.durationWeeks || 10) * 40,
+      description: val.description || '',
+      category: 'تقنية المعلومات'
+    };
+
     this.isSubmittingProgram = true;
-    this.adminApi.createProgram(this.programForm.value).subscribe({
+
+    this.adminApi.createProgram(payload).subscribe({
       next: () => {
         this.isSubmittingProgram = false;
+        this.showToast(
+          'تم إنشاء البرنامج التدريبي بنجاح ✔️',
+          'success'
+        );
         this.loadInitialData();
         this.onCloseProgramModal();
       },
+
       error: () => {
         this.isSubmittingProgram = false;
-        this.programErrorMessage = 'فشل حفظ البرنامج في قاعدة البيانات';
+        this.programErrorMessage =
+          'فشل حفظ البرنامج في قاعدة البيانات';
       }
     });
   }
 
+
+
+
   onSaveBatch(): void {
     this.editBatchFormSubmitted = true;
+
     if (this.editBatchForm.invalid) {
       this.editBatchForm.markAllAsTouched();
       return;
     }
-    const batchId = Number(this.selectedBatch?.batchId || this.selectedBatch?.id);
+
+    const batchId = Number(
+      this.selectedBatch?.batchId || this.selectedBatch?.id
+    );
+
+    if (!batchId) {
+      this.editBatchErrorMessage = 'تعذر تحديد الدفعة المطلوب تعديلها.';
+      return;
+    }
+
+    const selectedIds = Array.from(
+      new Set(
+        this.selectedTraineeIds()
+          .map((id: number) => Number(id))
+          .filter((id: number) => Number.isInteger(id) && id > 0)
+      )
+    );
+
+    const formValue = this.editBatchForm.getRawValue();
+
+    const companyId =
+      formValue.companyId === '' || formValue.companyId == null
+        ? null
+        : Number(formValue.companyId);
+
+    if (
+      selectedIds.length > 0 &&
+      (companyId === null || !Number.isFinite(companyId) || companyId <= 0)
+    ) {
+      this.editBatchErrorMessage =
+        'يرجى تحديد الشركة قبل إضافة المتدربين إلى الدفعة.';
+      return;
+    }
+
+    const currentTraineeCount = this.existingBatchTraineeIds().length;
+    const capacity = Number(formValue.capacity);
+
+    if (
+      !Number.isFinite(capacity) ||
+      capacity < 1 ||
+      currentTraineeCount + selectedIds.length > capacity
+    ) {
+      this.editBatchErrorMessage =
+        `لا يمكن حفظ الدفعة. السعة المحددة ${capacity}، وعدد المتدربين الحاليين والجدد ${currentTraineeCount + selectedIds.length}. زيدي السعة أو قللي عدد المتدربين.`;
+      return;
+    }
+
     this.isSubmittingEditBatch = true;
+    this.editBatchErrorMessage = null;
 
     const payload = {
-      ...this.editBatchForm.value,
-      batchId,
-      status: this.selectedBatch?.status || 'Ongoing'
+      batchName: formValue.batchName,
+      programId: Number(formValue.programId),
+      companyId: companyId,
+      startDate: formValue.startDate,
+      endDate: formValue.endDate,
+      capacity: capacity,
+      status: Number(formValue.status)
     };
 
     this.adminApi.updateBatch(batchId, payload).subscribe({
       next: () => {
-        this.isSubmittingEditBatch = false;
-        this.loadInitialData();
-        this.onCloseEditModal();
+        if (selectedIds.length === 0) {
+          this.isSubmittingEditBatch = false;
+          this.loadInitialData();
+          this.onCloseEditModal();
+          return;
+        }
+
+        let index = 0;
+        let successCount = 0;
+        const failedIds: number[] = [];
+
+        const addNextTrainee = (): void => {
+          if (index >= selectedIds.length) {
+            this.isSubmittingEditBatch = false;
+            this.loadInitialData();
+
+            if (failedIds.length === 0) {
+              this.onCloseEditModal();
+              return;
+            }
+
+            this.editBatchErrorMessage =
+              `تمت إضافة ${successCount} من ${selectedIds.length} متدربين. تعذرت إضافة المتدربين ذوي الأرقام: ${failedIds.join('، ')}.`;
+
+            return;
+          }
+
+          const traineeId = selectedIds[index];
+          index++;
+
+          this.adminApi.createEnrollment({
+            batchId: batchId,
+            traineeId: traineeId,
+            companyId: companyId as number,
+            departmentId: null,
+            supervisorId: null
+          }).subscribe({
+            next: () => {
+              successCount++;
+              addNextTrainee();
+            },
+            error: () => {
+              failedIds.push(traineeId);
+              addNextTrainee();
+            }
+          });
+        };
+
+        addNextTrainee();
       },
       error: (err: any) => {
         this.isSubmittingEditBatch = false;
-        this.editBatchErrorMessage = err?.error?.message || 'فشل تحديث بيانات الدفعة.';
+        this.editBatchErrorMessage =
+          err?.error?.message || 'فشل تحديث بيانات الدفعة.';
       }
     });
   }

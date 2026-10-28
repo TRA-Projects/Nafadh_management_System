@@ -1278,7 +1278,14 @@
             <div class="members-panel-header">
 
               <h4>أعضاء الجروب</h4>
-
+<!-- 🆕 Members Overlay (mobile only) -->
+@if (showMembersPanel) {
+  <div
+    class="chat-members-overlay"
+    (click)="toggleMembersPanel()"
+    aria-hidden="true"
+  ></div>
+}
               <button
                 type="button"
                 class="members-close-btn"

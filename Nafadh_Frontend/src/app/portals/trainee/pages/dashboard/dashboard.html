@@ -1,67 +1,27 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-<div
-  class="dashboard-viewport-container"
-  style="
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px;
-    font-family: 'Cairo', system-ui, -apple-system, sans-serif;
-    background: #f8fafc;
-    height: calc(100vh - 70px);
-    overflow-y: auto;
-  "
->
+<div class="dashboard-viewport-container">
+
   @if (loading()) {
-    <div
-      style="
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 40px;
-        color: #64748b;
-        font-family: 'Cairo', sans-serif;
-      "
-    >
-      <i class="fas fa-spinner fa-spin" style="margin-left: 10px;"></i>
+    <div class="state-box">
+      <i class="fas fa-spinner fa-spin"></i>
       جاري تحميل البيانات...
     </div>
   } @else if (errorMessage()) {
-    <div
-      style="
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 40px;
-        color: #dc2626;
-        background: #fef2f2;
-        border-radius: 12px;
-        font-family: 'Cairo', sans-serif;
-      "
-    >
-      <i class="fas fa-exclamation-circle" style="margin-left: 10px;"></i>
+    <div class="state-box error">
+      <i class="fas fa-exclamation-circle"></i>
       {{ errorMessage() }}
     </div>
   } @else {
-    <!-- 1. الهيدر الرئيسي (Hero Banner) -->
-    <div
-      style="
-        background: linear-gradient(135deg, #091242 0%, #0d1e78 100%);
-        border-radius: 20px;
-        padding: 24px 32px;
-        color: #ffffff;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 10px 25px rgba(13, 30, 120, 0.15);
-        font-family: 'Cairo', sans-serif;
-      "
-    >
-      <div style="display: flex; flex-direction: column; gap: 6px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <h2 style="margin: 0; font-size: 1.6rem; font-weight: 800;">
-            <i class="fas fa-hand-wave" style="margin-left: 10px;"></i>
+
+    <!-- ============================================================
+         1. HERO BANNER
+    ============================================================ -->
+    <div class="hero-banner">
+      <div class="hero-info">
+        <div class="hero-name-row">
+          <h2 class="hero-title">
+            <i class="fas fa-hand-wave"></i>
             مرحباً،
             {{
               auth.session()?.fullName ||
@@ -71,314 +31,135 @@
             }}
           </h2>
         </div>
-        <p style="margin: 0; font-size: 0.9rem; color: rgba(255, 255, 255, 0.8);">
-          <i class="fas fa-graduation-cap" style="margin-left: 6px;"></i>
+        <p class="hero-program">
+          <i class="fas fa-graduation-cap"></i>
           {{ programName() || 'برنامج تدريبي' }} — {{ batchName() || 'دفعة تدريبية' }}
         </p>
-        <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
-          <span
-            style="
-              background: rgba(16, 185, 129, 0.2);
-              color: #34d399;
-              border: 1px solid rgba(52, 211, 153, 0.4);
-              padding: 3px 14px;
-              border-radius: 20px;
-              font-size: 0.78rem;
-              font-weight: 700;
-            "
-          >
-            <i class="fas fa-check-circle" style="margin-left: 4px;"></i>
+        <div class="hero-meta">
+          <span class="hero-status-badge">
+            <i class="fas fa-check-circle"></i>
             {{ calculatedStatus() }}
           </span>
-          <span style="color: rgba(255, 255, 255, 0.6); font-size: 0.8rem;">
-            <i class="far fa-calendar-alt" style="margin-left: 4px;"></i>
+          <span class="hero-end-date">
+            <i class="far fa-calendar-alt"></i>
             تاريخ الانتهاء: {{ (programEndDate() | date: 'MMM yyyy') || 'غير محدد' }}
           </span>
         </div>
       </div>
 
-      <div
-        style="
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          backdrop-filter: blur(12px);
-          border-radius: 16px;
-          padding: 16px 24px;
-          display: flex;
-          align-items: center;
-          gap: 20px;
-        "
-      >
-        <div style="display: flex; flex-direction: column; gap: 6px; text-align: right;">
-          <span style="font-size: 0.78rem; color: rgba(255, 255, 255, 0.75);">
-            <i class="fas fa-chart-line" style="margin-left: 4px;"></i>
+      <div class="hero-progress-box">
+        <div class="hero-progress-text">
+          <span class="hero-progress-label">
+            <i class="fas fa-chart-line"></i>
             نسبة الإنجاز الإجمالية
           </span>
-          <button
-            routerLink="/trainee/program"
-            style="
-              background: #2563eb;
-              color: #ffffff;
-              border: none;
-              border-radius: 8px;
-              padding: 6px 16px;
-              font-size: 0.8rem;
-              font-weight: 600;
-              cursor: pointer;
-              width: fit-content;
-            "
-          >
-            <i class="fas fa-arrow-left" style="margin-left: 6px;"></i>
+          <button routerLink="/trainee/program" class="hero-details-btn">
+            <i class="fas fa-arrow-left"></i>
             عرض التفاصيل
           </button>
         </div>
         <div
+          class="hero-progress-circle"
           [ngStyle]="{
-            width: '65px',
-            height: '65px',
-            'border-radius': '50%',
-            display: 'flex',
-            'align-items': 'center',
-            'justify-content': 'center',
-            position: 'relative',
             background:
-              'conic-gradient(#3b82f6 ' + progressPercentage() + '%, rgba(255, 255, 255, 0.15) 0)',
+              'conic-gradient(#3b82f6 ' + progressPercentage() + '%, rgba(255, 255, 255, 0.15) 0)'
           }"
         >
-          <div
-            style="
-              position: absolute;
-              width: 51px;
-              height: 51px;
-              border-radius: 50%;
-              background: #0c1753;
-            "
-          ></div>
-          <span
-            style="
-              position: relative;
-              z-index: 1;
-              font-size: 0.85rem;
-              font-weight: 800;
-              color: #ffffff;
-            "
-          >
+          <div class="hero-progress-circle-inner"></div>
+          <span class="hero-progress-value">
             {{ progressPercentage() | number: '1.0-0' }}%
           </span>
         </div>
       </div>
     </div>
 
-    <!-- 2. صف مؤشرات الإحصائيات -->
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+    <!-- ============================================================
+         2. STATS GRID
+    ============================================================ -->
+    <div class="stats-grid">
+
       <!-- الوحدات المكتملة -->
-      <div
-        style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 14px;
-          padding: 16px 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-        "
-      >
-        <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">
-          <i class="fas fa-book" style="margin-left: 6px; color: #2563eb;"></i>
+      <div class="stat-card">
+        <span class="stat-label">
+          <i class="fas fa-book"></i>
           الوحدات المكتملة
         </span>
-        <span
-          style="
-            background: #eff6ff;
-            color: #2563eb;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 700;
-          "
-        >
+        <span class="stat-value blue">
           {{ summary()?.completedModulesCount ?? 0 }}/{{ summary()?.totalModulesCount ?? 0 }}
         </span>
       </div>
 
       <!-- المهام المسلمة -->
-      <div
-        style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 14px;
-          padding: 16px 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-        "
-      >
-        <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">
-          <i class="fas fa-tasks" style="margin-left: 6px; color: #2563eb;"></i>
+      <div class="stat-card">
+        <span class="stat-label">
+          <i class="fas fa-tasks"></i>
           المهام المسلّمة
         </span>
-        <span
-          style="
-            background: #f0fdf4;
-            color: #16a34a;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 700;
-          "
-        >
-          {{ summary()?.submissionsCount ?? 0 }}/{{
-            (summary()?.submissionsCount ?? 0) + (summary()?.pendingSubmissionsCount ?? 0)
-          }}
+        <span class="stat-value green">
+          {{ summary()?.submissionsCount ?? 0 }}/{{ (summary()?.submissionsCount ?? 0) + (summary()?.pendingSubmissionsCount ?? 0) }}
         </span>
       </div>
 
       <!-- نسبة الحضور -->
-      <div
-        style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 14px;
-          padding: 16px 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-        "
-      >
-        <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">
-          <i class="fas fa-user-check" style="margin-left: 6px; color: #2563eb;"></i>
+      <div class="stat-card">
+        <span class="stat-label">
+          <i class="fas fa-user-check"></i>
           نسبة الحضور
         </span>
-        <span
-          style="
-            background: #fdf4ff;
-            color: #9333ea;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 700;
-          "
-        >
+        <span class="stat-value purple">
           {{ attendanceRate() | number: '1.0-0' }}%
         </span>
       </div>
 
       <!-- التواصل والدعم -->
-      <div
-        routerLink="/trainee/support"
-        style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 14px;
-          padding: 16px 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-          cursor: pointer;
-          transition: all 0.2s ease;
-        "
-      >
-        <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">
-          <i class="fas fa-headset" style="margin-left: 6px; color: #2563eb;"></i>
+      <div class="stat-card clickable" routerLink="/trainee/support">
+        <span class="stat-label">
+          <i class="fas fa-headset"></i>
           التواصل والدعم
         </span>
-        <span
-          style="
-            background: #eff6ff;
-            color: #2563eb;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-          "
-        >
-          <i class="fas fa-arrow-left" style="margin-left: 4px;"></i>
+        <span class="stat-value cta">
+          <i class="fas fa-arrow-left"></i>
           تواصل معنا
         </span>
       </div>
     </div>
 
-    <!-- 3. الشبكة الرئيسية (الصف الأوسط: فريق الإشراف + تقويم المهام) -->
-    <div style="display: grid; grid-template-columns: 320px 1fr; gap: 16px;">
+    <!-- ============================================================
+         3. MIDDLE GRID (Supervision + Calendar)
+    ============================================================ -->
+    <div class="middle-grid">
+
       <!-- فريق الإشراف -->
-      <div
-        style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 16px;
-          padding: 20px;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-        "
-      >
-        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">
-          <i class="fas fa-users" style="margin-left: 8px;"></i>
+      <div class="supervision-card">
+        <h3 class="card-title">
+          <i class="fas fa-users"></i>
           فريق الإشراف
         </h3>
 
-        <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="supervision-list">
+
           <!-- المدرب -->
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              gap: 12px;
-              padding: 12px;
-              background: #f8fafc;
-              border-radius: 12px;
-              border: 1px solid #f1f5f9;
-            "
-          >
+          <div class="supervision-item">
             @if (loadingTrainer()) {
-              <div
-                style="
-                  width: 40px;
-                  height: 40px;
-                  border-radius: 50%;
-                  background: #e2e8f0;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  color: #94a3b8;
-                "
-              >
+              <div class="avatar loading">
                 <i class="fas fa-spinner fa-pulse"></i>
               </div>
-              <div style="display: flex; flex-direction: column; gap: 4px;">
-                <span style="font-size: 0.75rem; color: #64748b;">المدرب</span>
-                <span style="font-size: 0.85rem; color: #94a3b8;">جاري التحميل...</span>
+              <div class="loading-text">
+                <span>المدرب</span>
+                <span>جاري التحميل...</span>
               </div>
             } @else {
-              <div
-                style="
-                  width: 40px;
-                  height: 40px;
-                  border-radius: 50%;
-                  background: #0c1753;
-                  color: #fff;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-weight: bold;
-                  font-size: 0.95rem;
-                "
-              >
+              <div class="avatar navy">
                 {{ getInitial(trainerData()?.fullName || summary()?.trainerName || '') }}
               </div>
-              <div style="display: flex; flex-direction: column; flex: 1;">
-                <span style="font-size: 0.75rem; color: #64748b;">
-                  <i class="fas fa-chalkboard-teacher" style="margin-left: 4px;"></i>المدرب
+              <div class="supervision-text">
+                <span class="supervision-role">
+                  <i class="fas fa-chalkboard-teacher"></i>المدرب
                 </span>
-                <strong style="font-size: 0.9rem; color: #1e293b;">
+                <strong class="supervision-name">
                   {{ trainerData()?.fullName || summary()?.trainerName || 'لم يتم التعيين' }}
                 </strong>
-                <span style="font-size: 0.72rem; color: #94a3b8;">
+                <span class="supervision-sub">
                   {{ getTrainerSpecialty() }}
                 </span>
               </div>
@@ -386,58 +167,24 @@
           </div>
 
           <!-- المشرف -->
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              gap: 12px;
-              padding: 12px;
-              background: #f8fafc;
-              border-radius: 12px;
-              border: 1px solid #f1f5f9;
-            "
-          >
+          <div class="supervision-item">
             @if (loadingSupervisor()) {
-              <div
-                style="
-                  width: 40px;
-                  height: 40px;
-                  border-radius: 50%;
-                  background: #e2e8f0;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  color: #94a3b8;
-                "
-              >
+              <div class="avatar loading">
                 <i class="fas fa-spinner fa-pulse"></i>
               </div>
-              <div style="display: flex; flex-direction: column; gap: 4px;">
-                <span style="font-size: 0.75rem; color: #64748b;">المشرف</span>
-                <span style="font-size: 0.85rem; color: #94a3b8;">جاري التحميل...</span>
+              <div class="loading-text">
+                <span>المشرف</span>
+                <span>جاري التحميل...</span>
               </div>
             } @else {
-              <div
-                style="
-                  width: 40px;
-                  height: 40px;
-                  border-radius: 50%;
-                  background: #0284c7;
-                  color: #fff;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-weight: bold;
-                  font-size: 0.95rem;
-                "
-              >
+              <div class="avatar blue">
                 {{ getInitial(supervisorData()?.fullName || summary()?.supervisorName || '') }}
               </div>
-              <div style="display: flex; flex-direction: column; flex: 1;">
-                <span style="font-size: 0.75rem; color: #64748b;">
-                  <i class="fas fa-user-tie" style="margin-left: 4px;"></i>المشرف
+              <div class="supervision-text">
+                <span class="supervision-role">
+                  <i class="fas fa-user-tie"></i>المشرف
                 </span>
-                <strong style="font-size: 0.9rem; color: #1e293b;">
+                <strong class="supervision-name">
                   {{
                     supervisorData()?.fullName ||
                       summary()?.supervisorName ||
@@ -445,7 +192,7 @@
                       'لم يتم التعيين'
                   }}
                 </strong>
-                <span style="font-size: 0.72rem; color: #94a3b8;">
+                <span class="supervision-sub">
                   {{ getSupervisorRole() }}
                 </span>
               </div>
@@ -454,152 +201,57 @@
         </div>
       </div>
 
-      <!-- تقويم المهام الشهري (مُصغَّر) -->
-      <div
-        style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 16px;
-          padding: 14px 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-        "
-      >
-        <!-- رأس التقويم -->
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <h3 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: #1e293b;">
-            <i class="fas fa-calendar-alt" style="margin-left: 6px; color: #2563eb;"></i>
+      <!-- تقويم المهام -->
+      <div class="calendar-card">
+        <div class="calendar-header">
+          <h3 class="calendar-title">
+            <i class="fas fa-calendar-alt"></i>
             تقويم المهام
           </h3>
 
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <button
-              (click)="prevMonth()"
-              style="
-                background: #eff6ff;
-                color: #2563eb;
-                border: 1px solid #dbeafe;
-                width: 24px;
-                height: 24px;
-                border-radius: 6px;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 0.65rem;
-              "
-              title="الشهر السابق"
-            >
+          <div class="calendar-controls">
+            <button class="calendar-nav-btn" (click)="prevMonth()" title="الشهر السابق">
               <i class="fas fa-chevron-right"></i>
             </button>
-            <span
-              style="
-                font-size: 0.78rem;
-                font-weight: 700;
-                color: #1e293b;
-                min-width: 110px;
-                text-align: center;
-              "
-            >
+            <span class="calendar-month-label">
               {{ calendarMonthName() }} {{ calendarYear() }}
             </span>
-            <button
-              (click)="nextMonth()"
-              style="
-                background: #eff6ff;
-                color: #2563eb;
-                border: 1px solid #dbeafe;
-                width: 24px;
-                height: 24px;
-                border-radius: 6px;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 0.65rem;
-              "
-              title="الشهر التالي"
-            >
+            <button class="calendar-nav-btn" (click)="nextMonth()" title="الشهر التالي">
               <i class="fas fa-chevron-left"></i>
             </button>
           </div>
         </div>
 
         @if (loadingTasks()) {
-          <div
-            style="
-              display: flex;
-              justify-content: center;
-              padding: 16px;
-              color: #94a3b8;
-              font-size: 0.75rem;
-            "
-          >
-            <i class="fas fa-spinner fa-spin" style="margin-left: 6px;"></i>
+          <div class="calendar-loading">
+            <i class="fas fa-spinner fa-spin"></i>
             جاري تحميل المهام...
           </div>
         } @else {
           <!-- أسماء أيام الأسبوع -->
-          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;">
+          <div class="calendar-weekdays">
             @for (d of weekDays; track d) {
-              <div
-                style="
-                  text-align: center;
-                  font-size: 0.6rem;
-                  color: #64748b;
-                  font-weight: 700;
-                  padding: 1px 0;
-                "
-              >
-                {{ d }}
-              </div>
+              <div class="calendar-weekday">{{ d }}</div>
             }
           </div>
 
           <!-- شبكة الأيام -->
-          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;">
+          <div class="calendar-days">
             @for (d of calendarDays(); track $index) {
               @if (d.day === null) {
-                <div style="height: 26px;"></div>
+                <div class="calendar-empty-cell"></div>
               } @else {
                 <div
+                  class="calendar-day"
                   (click)="openCalendarDay(d)"
                   [style.background]="d.hasTask ? '#2563eb' : (d.isToday ? '#eff6ff' : '#f8fafc')"
                   [style.color]="d.hasTask ? '#ffffff' : (d.isToday ? '#2563eb' : '#334155')"
                   [style.borderColor]="d.hasTask ? '#2563eb' : (d.isToday ? '#2563eb' : '#f1f5f9')"
                   [style.cursor]="d.hasTask ? 'pointer' : 'default'"
-                  style="
-                    height: 26px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 6px;
-                    border: 1px solid #f1f5f9;
-                    font-size: 0.68rem;
-                    font-weight: 600;
-                    position: relative;
-                  "
                 >
                   <span>{{ d.day }}</span>
                   @if (d.hasTask) {
-                    <span
-                      style="
-                        position: absolute;
-                        top: 1px;
-                        left: 2px;
-                        background: rgba(255, 255, 255, 0.35);
-                        color: #ffffff;
-                        font-size: 0.5rem;
-                        padding: 0 3px;
-                        border-radius: 4px;
-                        font-weight: 700;
-                        line-height: 1.2;
-                      "
-                    >
-                      {{ d.tasks.length }}
-                    </span>
+                    <span class="calendar-task-count">{{ d.tasks.length }}</span>
                   }
                 </div>
               }
@@ -607,31 +259,13 @@
           </div>
 
           <!-- مفتاح الألوان -->
-          <div
-            style="
-              display: flex;
-              gap: 12px;
-              justify-content: flex-end;
-              font-size: 0.62rem;
-              color: #64748b;
-              padding-top: 4px;
-              border-top: 1px solid #f1f5f9;
-            "
-          >
-            <span style="display: flex; align-items: center; gap: 4px;">
-              <span style="width: 9px; height: 9px; background: #2563eb; border-radius: 2px;"></span>
+          <div class="calendar-legend">
+            <span class="legend-item">
+              <span class="legend-swatch task"></span>
               يوم به مهام
             </span>
-            <span style="display: flex; align-items: center; gap: 4px;">
-              <span
-                style="
-                  width: 9px;
-                  height: 9px;
-                  background: #eff6ff;
-                  border: 1px solid #2563eb;
-                  border-radius: 2px;
-                "
-              ></span>
+            <span class="legend-item">
+              <span class="legend-swatch today"></span>
               اليوم
             </span>
           </div>
@@ -639,157 +273,66 @@
       </div>
     </div>
 
-    <!-- 4. الشبكة السفليّة (الإعلانات + التنبيهات الأخيرة) -->
-    <div
-      style="
-        display: grid;
-        grid-template-columns: 1fr 420px;
-        gap: 20px;
-        direction: rtl;
-        align-items: start;
-      "
-    >
+    <!-- ============================================================
+         4. BOTTOM GRID (Announcements + Notifications)
+    ============================================================ -->
+    <div class="bottom-grid">
+
       <!-- الإعلانات -->
-      <div
-        style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 16px;
-          padding: 24px;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
-        "
-      >
-        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">
-          <i class="fas fa-bullhorn" style="margin-left: 8px;"></i>
+      <div class="section-card">
+        <h3 class="section-title">
+          <i class="fas fa-bullhorn"></i>
           الإعلانات
         </h3>
 
-        <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="section-stack">
           @if (loadingAnnouncements()) {
-            <div
-              style="
-                display: flex;
-                justify-content: center;
-                padding: 30px;
-                color: #94a3b8;
-              "
-            >
-              <i class="fas fa-spinner fa-spin" style="margin-left: 8px;"></i>
+            <div class="loading-row">
+              <i class="fas fa-spinner fa-spin"></i>
               جاري تحميل الإعلانات...
             </div>
           } @else {
             @for (ann of displayAnnouncements(); track ann.announcementId) {
               <div
+                class="announcement-item"
+                [class.read]="isAnnouncementRead(ann.announcementId)"
+                [class.unread]="!isAnnouncementRead(ann.announcementId)"
                 (click)="openAnnouncementPopup(ann)"
-                [style.opacity]="isAnnouncementRead(ann.announcementId) ? 0.6 : 1"
-                [style.background-color]="isAnnouncementRead(ann.announcementId) ? '#f1f5f9' : '#f8fafc'"
-                [style.border-right-color]="isAnnouncementRead(ann.announcementId) ? '#cbd5e1' : '#3b82f6'"
-                style="
-                  position: relative;
-                  padding: 12px 14px;
-                  border-radius: 10px;
-                  border: 1px solid #e2e8f0;
-                  border-right: 4px solid #3b82f6;
-                  display: flex;
-                  align-items: center;
-                  justify-content: space-between;
-                  gap: 12px;
-                  text-align: right;
-                  transition: all 0.2s ease;
-                  cursor: pointer;
-                "
               >
                 @if (!isAnnouncementRead(ann.announcementId)) {
-                  <span
-                    style="
-                      position: absolute;
-                      top: 8px;
-                      left: 8px;
-                      width: 10px;
-                      height: 10px;
-                      background: #ef4444;
-                      border-radius: 50%;
-                      box-shadow: 0 0 0 2px #ffffff;
-                    "
-                  ></span>
+                  <span class="announcement-dot"></span>
                 }
-                <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
-                  <span style="font-size: 20px; flex-shrink: 0;"><i class="fas fa-bell"></i></span>
-                  <div style="min-width: 0; flex: 1;">
-                    <div
-                      style="
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        margin-bottom: 4px;
-                      "
-                    >
-                      <span style="color: #1d4ed8; font-weight: 700; font-size: 0.75rem;">
-                        <i class="fas fa-flag" style="margin-left: 4px;"></i>
+                <div class="announcement-main">
+                  <span class="announcement-icon"><i class="fas fa-bell"></i></span>
+                  <div class="announcement-body">
+                    <div class="announcement-header">
+                      <span class="announcement-source">
+                        <i class="fas fa-flag"></i>
                         إعلان رسمي - ({{ ann.source }})
                       </span>
                       <button
+                        class="announcement-details-btn"
                         (click)="$event.stopPropagation(); openAnnouncementPopup(ann)"
-                        style="
-                          background: #eff6ff;
-                          color: #2563eb;
-                          border: 1px solid #dbeafe;
-                          padding: 3px 10px;
-                          border-radius: 6px;
-                          font-size: 0.75rem;
-                          font-weight: 600;
-                          cursor: pointer;
-                        "
                       >
-                        <i class="fas fa-info-circle" style="margin-left: 4px;"></i>
+                        <i class="fas fa-info-circle"></i>
                         التفاصيل
                       </button>
                     </div>
-                    <div style="font-size: 0.85rem; color: #1e293b; font-weight: 600; line-height: 1.4;">
+                    <div class="announcement-message">
                       {{ ann.message }}
                     </div>
                   </div>
                 </div>
               </div>
             } @empty {
-              <div
-                style="
-                  display: flex;
-                  justify-content: center;
-                  align-items: center;
-                  padding: 40px;
-                  color: #94a3b8;
-                  font-size: 0.9rem;
-                "
-              >
-                <i class="fas fa-inbox" style="margin-left: 8px;"></i>
+              <div class="empty-row">
+                <i class="fas fa-inbox"></i>
                 لا توجد إعلانات حالياً
               </div>
             }
 
             @if (announcements().length > 3) {
-              <button
-                (click)="toggleShowAllAnnouncements()"
-                style="
-                  background: none;
-                  border: none;
-                  color: #2563eb;
-                  font-size: 0.85rem;
-                  font-weight: 600;
-                  cursor: pointer;
-                  display: flex;
-                  align-items: center;
-                  gap: 6px;
-                  justify-content: center;
-                  padding: 8px;
-                  width: 100%;
-                  border-top: 1px solid #f1f5f9;
-                  margin-top: 4px;
-                "
-              >
+              <button class="expand-btn" (click)="toggleShowAllAnnouncements()">
                 <i
                   class="fas"
                   [class.fa-chevron-up]="showAllAnnouncements()"
@@ -803,221 +346,103 @@
       </div>
 
       <!-- التنبيهات الأخيرة -->
-      <div
-        style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 16px;
-          padding: 24px;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
-        "
-      >
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #f8fafc;
-            padding-bottom: 12px;
-          "
-        >
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">
-              <i class="fas fa-bell" style="margin-left: 6px;"></i>
+      <div class="section-card">
+        <div class="notif-header">
+          <div class="notif-header-left">
+            <h3 class="section-title">
+              <i class="fas fa-bell"></i>
               التنبيهات الأخيرة
             </h3>
             @if (getUnreadNotificationsCount() > 0) {
-              <span
-                style="
-                  background: #ef4444;
-                  color: white;
-                  font-size: 0.65rem;
-                  padding: 1px 8px;
-                  border-radius: 12px;
-                  font-weight: 500;
-                "
-              >
+              <span class="notif-badge">
                 {{ getUnreadNotificationsCount() }} جديد
               </span>
             }
           </div>
-          <div style="display: flex; gap: 6px; align-items: center;">
+          <div class="notif-header-actions">
             @if (getUnreadNotificationsCount() > 0) {
               <button
                 type="button"
+                class="notif-mark-all"
                 (click)="markAllNotificationsAsRead($event)"
-                style="
-                  background: none;
-                  border: none;
-                  color: #64748b;
-                  font-size: 0.55rem;
-                  cursor: pointer;
-                  text-decoration: underline;
-                "
               >
-                <i class="fas fa-check-double" style="margin-left: 3px; color: #000000;"></i>
+                <i class="fas fa-check-double"></i>
                 تحديد الكل كمقروء
               </button>
             }
-            <button
-              routerLink="/trainee/notifications"
-              style="
-                background: none;
-                border: none;
-                color: #2563eb;
-                font-size: 0.75rem;
-                font-weight: 600;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                gap: 3px;
-              "
-            >
-              عرض الكل <i class="fas fa-arrow-left" style="color: #2563eb;"></i>
+            <button routerLink="/trainee/notifications" class="notif-view-all">
+              عرض الكل <i class="fas fa-arrow-left"></i>
             </button>
           </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="section-stack tight">
           @if (loadingNotifications()) {
-            <div
-              style="
-                display: flex;
-                justify-content: center;
-                padding: 20px;
-                color: #94a3b8;
-                font-size: 0.8rem;
-              "
-            >
-              <i class="fas fa-spinner fa-spin" style="margin-left: 6px; color: #2563eb;"></i>
+            <div class="loading-row small">
+              <i class="fas fa-spinner fa-spin blue"></i>
               جاري تحميل التنبيهات...
             </div>
           } @else {
             @if (displayNotifications().length > 0) {
               @for (notif of displayNotifications(); track notif.notificationId) {
                 <div
+                  class="notif-item"
+                  [class.read]="notif.isRead"
+                  [class.unread]="!notif.isRead"
                   (click)="markNotificationAsRead(notif.notificationId, $event)"
-                  [style.background]="notif.isRead ? 'transparent' : '#f8faff'"
-                  style="
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 6px 10px;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    transition: background 0.15s;
-                  "
                 >
-                  <span style="font-size: 16px; flex-shrink: 0; width: 20px; text-align: center;">
+                  <span class="notif-icon">
                     @if ($index === 0) {
-                      <i class="fas fa-clipboard-list" style="color: #2563eb;"></i>
+                      <i class="fas fa-clipboard-list"></i>
                     } @else if ($index === 1) {
-                      <i class="fas fa-clock" style="color: #2563eb;"></i>
+                      <i class="fas fa-clock"></i>
                     } @else if ($index === 2) {
-                      <i class="fas fa-bullhorn" style="color: #2563eb;"></i>
+                      <i class="fas fa-bullhorn"></i>
                     } @else if ($index === 3) {
-                      <i class="fas fa-star" style="color: #2563eb;"></i>
+                      <i class="fas fa-star"></i>
                     } @else {
-                      <i class="fas fa-bell" style="color: #2563eb;"></i>
+                      <i class="fas fa-bell"></i>
                     }
                   </span>
 
-                  <div
-                    style="
-                      min-width: 0;
-                      flex: 1;
-                      display: flex;
-                      align-items: center;
-                      gap: 6px;
-                      flex-wrap: nowrap;
-                      overflow: hidden;
-                    "
-                  >
+                  <div class="notif-content">
                     <span
-                      [style.color]="notif.isRead ? '#94a3b8' : '#1d4ed8'"
-                      style="font-weight: 600; font-size: 0.7rem; white-space: nowrap; flex-shrink: 0;"
+                      class="notif-status"
+                      [class.read]="notif.isRead"
+                      [class.unread]="!notif.isRead"
                     >
                       <i
                         class="fas"
                         [class.fa-check-circle]="notif.isRead"
                         [class.fa-circle]="!notif.isRead"
-                        style="margin-left: 3px; font-size: 0.55rem; color: #000000;"
                       ></i>
                       {{ notif.isRead ? 'مقروء' : 'جديد' }}
                     </span>
 
-                    <span
-                      style="
-                        font-size: 0.75rem;
-                        color: #1e293b;
-                        font-weight: 500;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                      "
-                    >
+                    <span class="notif-message">
                       {{ notif.message }}
                     </span>
 
-                    <span
-                      style="
-                        font-size: 0.6rem;
-                        color: #94a3b8;
-                        white-space: nowrap;
-                        flex-shrink: 0;
-                        margin-right: auto;
-                      "
-                    >
-                      <i class="far fa-calendar-alt" style="margin-left: 3px; color: #2563eb;"></i>
+                    <span class="notif-date">
+                      <i class="far fa-calendar-alt"></i>
                       {{ notif.date | date: 'dd/MM' }}
                     </span>
                   </div>
                 </div>
               }
             } @else {
-              <div
-                style="
-                  display: flex;
-                  justify-content: center;
-                  align-items: center;
-                  padding: 24px;
-                  color: #94a3b8;
-                  font-size: 0.8rem;
-                "
-              >
-                <i class="fas fa-inbox" style="margin-left: 6px; color: #2563eb;"></i>
+              <div class="loading-row small">
+                <i class="fas fa-inbox blue"></i>
                 لا توجد تنبيهات
               </div>
             }
 
             @if (latestNotifications().length > 3) {
-              <button
-                (click)="toggleShowAllNotifications()"
-                style="
-                  background: none;
-                  border: none;
-                  color: #2563eb;
-                  font-size: 0.75rem;
-                  font-weight: 600;
-                  cursor: pointer;
-                  display: flex;
-                  align-items: center;
-                  gap: 4px;
-                  justify-content: center;
-                  padding: 6px;
-                  width: 100%;
-                  border-top: 1px solid #f1f5f9;
-                  margin-top: 4px;
-                "
-              >
+              <button class="expand-btn" (click)="toggleShowAllNotifications()">
                 <i
                   class="fas"
                   [class.fa-chevron-up]="showAllNotifications()"
                   [class.fa-chevron-down]="!showAllNotifications()"
-                  style="font-size: 0.7rem; color: #2563eb;"
                 ></i>
                 {{ showAllNotifications() ? 'عرض أقل' : 'عرض المزيد' }}
               </button>
@@ -1027,102 +452,49 @@
       </div>
     </div>
 
-    <!-- نافذة تفاصيل الإعلان -->
+    <!-- ============================================================
+         Announcement Modal
+    ============================================================ -->
     @if (selectedAnnouncement()) {
-      <div
-        style="
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-color: rgba(0, 0, 0, 0.5);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 1000;
-        "
-      >
-        <div
-          style="
-            background: #ffffff;
-            padding: 24px;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 450px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            text-align: right;
-            direction: rtl;
-          "
-        >
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 16px;
-            "
-          >
-            <h4 style="margin: 0; font-size: 1.1rem; color: #1e293b; font-weight: 700;">
-              <i class="fas fa-info-circle" style="margin-left: 8px;"></i>
+      <div class="modal-overlay" (click)="closeAnnouncementPopup()">
+        <div class="modal-box announcement" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h4 class="modal-title">
+              <i class="fas fa-info-circle"></i>
               تفاصيل الإعلان
             </h4>
-            <button
-              (click)="closeAnnouncementPopup()"
-              style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b;"
-            >
+            <button class="modal-close" (click)="closeAnnouncementPopup()">
               <i class="fas fa-times"></i>
             </button>
           </div>
 
-          <div style="text-align: center; margin-bottom: 16px;">
+          <div class="modal-image-wrap">
             <img
               src="https://shabiba.eu-central-1.linodeobjects.com/2024/10/1727788395-1727788395-evkcgopxuicb.png"
               alt="صورة الإعلان"
-              style="max-height: 140px; border-radius: 8px; object-fit: cover;"
+              class="modal-image"
             />
           </div>
 
           <div style="margin-bottom: 12px;">
-            <span style="color: #1d4ed8; font-weight: 700; font-size: 0.8rem;">
-              <i class="fas fa-flag" style="margin-left: 4px;"></i>
+            <span class="modal-source">
+              <i class="fas fa-flag"></i>
               إعلان رسمي - ({{ selectedAnnouncement()?.source }})
             </span>
-            <p style="color: #94a3b8; font-size: 0.75rem; margin: 4px 0 12px 0;">
-              <i class="far fa-calendar-alt" style="margin-left: 4px;"></i>
+            <p class="modal-date">
+              <i class="far fa-calendar-alt"></i>
               {{ selectedAnnouncement()?.date | date: 'mediumDate' }}
             </p>
           </div>
 
-          <p
-            style="
-              font-size: 0.9rem;
-              color: #334155;
-              line-height: 1.5;
-              background: #f8fafc;
-              padding: 12px;
-              border-radius: 8px;
-              border: 1px solid #e2e8f0;
-            "
-          >
-            <i class="fas fa-quote-right" style="margin-left: 6px; color: #94a3b8;"></i>
+          <p class="modal-message">
+            <i class="fas fa-quote-right"></i>
             {{ selectedAnnouncement()?.message }}
           </p>
 
-          <div style="text-align: left; margin-top: 20px;">
-            <button
-              (click)="closeAnnouncementPopup()"
-              style="
-                background: #2563eb;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 0.85rem;
-              "
-            >
-              <i class="fas fa-check" style="margin-left: 6px;"></i>
+          <div class="modal-footer">
+            <button class="modal-close-btn" (click)="closeAnnouncementPopup()">
+              <i class="fas fa-check"></i>
               إغلاق
             </button>
           </div>
@@ -1130,109 +502,50 @@
       </div>
     }
 
-    <!-- نافذة تفاصيل مهام اليوم المحدد -->
+    <!-- ============================================================
+         Calendar Day Modal
+    ============================================================ -->
     @if (selectedCalendarDay()) {
-      <div
-        style="
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 1000;
-        "
-      >
-        <div
-          style="
-            background: #ffffff;
-            padding: 24px;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 480px;
-            max-height: 80vh;
-            overflow-y: auto;
-            text-align: right;
-            direction: rtl;
-          "
-        >
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 16px;
-            "
-          >
-            <h4 style="margin: 0; font-size: 1rem; color: #1e293b; font-weight: 700;">
-              <i class="fas fa-calendar-day" style="margin-left: 8px; color: #2563eb;"></i>
-              مهام يوم {{ selectedCalendarDay()?.day }} {{ calendarMonthName() }}
-              {{ calendarYear() }}
+      <div class="modal-overlay" (click)="closeCalendarDay()">
+        <div class="modal-box calendar" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h4 class="modal-title calendar">
+              <i class="fas fa-calendar-day"></i>
+              مهام يوم {{ selectedCalendarDay()?.day }} {{ calendarMonthName() }} {{ calendarYear() }}
             </h4>
-            <button
-              (click)="closeCalendarDay()"
-              style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b;"
-            >
+            <button class="modal-close" (click)="closeCalendarDay()">
               <i class="fas fa-times"></i>
             </button>
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="task-modal-list">
             @for (t of selectedCalendarDay()!.tasks; track t.taskId) {
-              <div
-                style="
-                  padding: 12px 14px;
-                  background: #f8fafc;
-                  border: 1px solid #e2e8f0;
-                  border-right: 4px solid #2563eb;
-                  border-radius: 10px;
-                "
-              >
-                <div style="font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 8px;">
+              <div class="task-modal-item">
+                <div class="task-modal-title">
                   {{ t.title || 'مهمة غير مسماة' }}
                 </div>
-                <div
-                  style="
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 8px;
-                    align-items: center;
-                    font-size: 0.72rem;
-                    color: #64748b;
-                  "
-                >
+                <div class="task-modal-meta">
                   @if (t.submissionStatus) {
                     <span
+                      class="task-status-pill"
                       [style.background]="getTaskStatusStyle(t.submissionStatus).background"
                       [style.color]="getTaskStatusStyle(t.submissionStatus).color"
-                      style="padding: 3px 10px; border-radius: 6px; font-weight: 600;"
                     >
                       {{ getTaskStatusDisplay(t.submissionStatus) }}
                     </span>
                   } @else {
                     <span
+                      class="task-status-pill"
                       [style.background]="getTaskStatusStyle(t.status).background"
                       [style.color]="getTaskStatusStyle(t.status).color"
-                      style="padding: 3px 10px; border-radius: 6px; font-weight: 600;"
                     >
                       {{ getTaskStatusDisplay(t.status) }}
                     </span>
                   }
 
                   @if (t.grade !== undefined && t.grade !== null && t.grade !== '') {
-                    <span
-                      style="
-                        color: #2563eb;
-                        font-weight: 700;
-                        background: #eff6ff;
-                        padding: 2px 8px;
-                        border-radius: 4px;
-                      "
-                    >
-                      <i class="fas fa-star" style="margin-left: 3px;"></i>
+                    <span class="task-grade-pill">
+                      <i class="fas fa-star"></i>
                       {{ t.grade }}%
                     </span>
                   }

@@ -237,7 +237,8 @@ namespace Nafadh_Backend.Controllers
         {
             var quizzes = await context.NFD_Quizzes
                 .Where(q => q.BatchId == batchId)
-                .Select(q => new {
+                .Select(q => new
+                {
                     q.QuizId,
                     q.Title,
                     q.Description,
@@ -272,54 +273,63 @@ namespace Nafadh_Backend.Controllers
             if (quiz == null)
                 return NotFound(new { message = "الاختبار غير موجود" });
 
-            // 1. جلب متدربي الدفعة من جدول التسجيل
+            // 1. جلب متدربي الدفعة
             var enrollments = await context.NFD_Enrollments
                 .Where(e => e.BatchId == quiz.BatchId)
                 .Include(e => e.Trainee)
                     .ThenInclude(t => t.User)
                 .ToListAsync();
 
+            var enrollmentIds = enrollments.Select(e => e.EnrollmentId).ToList();
+            var examDate = quiz.StartDateTime.Date;
+
+            // 2. تحسين الأداء: جلب الحضور اليومي والأعذار دفعة واحدة في استعلام واحد بدلاً من تكراره باللوب
+            var dailyAttendances = await context.NFD_DailyAttendances
+                .Where(da => enrollmentIds.Contains(da.EnrollmentId) && da.Date.Date == examDate)
+                .ToListAsync();
+
+            var attendanceIds = dailyAttendances.Select(da => da.DailyAttendanceId).ToList();
+            var excuses = await context.NFD_Excuses
+                .Where(ex => attendanceIds.Contains(ex.DailyAttendanceId))
+                .ToListAsync();
+
             string trainerName = quiz.Trainer?.User?.FullName ?? "المدرب المسؤول";
             var attendeesList = new List<object>();
-            var examDate = quiz.StartDateTime.Date;
 
             foreach (var enrollment in enrollments)
             {
                 var trainee = enrollment.Trainee;
 
-                // هل المتدرب دخل الاختبار وحل؟
+                // المحاولة: هل دخل الاختبار؟
                 var attempt = quiz.Attempts
                     .Where(a => a.TraineeId == trainee.TraineeId)
                     .OrderByDescending(a => a.Score)
                     .FirstOrDefault();
 
-                bool hasAttempt = attempt != null && (attempt.Status == "Submitted" || attempt.Status == "Started");
+                // 🟢 فحص سليم يشمل InProgress و Submitted معاً
+                bool hasAttempt = attempt != null && (
+                    attempt.Status == "Submitted" ||
+                    attempt.Status == "InProgress" ||
+                    attempt.Status == "Started" ||
+                    attempt.SubmittedAt != null
+                );
 
-                // البحث عن حضور وغياب ذلك اليوم والعذر المرفوع من بورتل المتدرب
-                var dailyAttendance = await context.NFD_DailyAttendances
-                    .Where(da => da.EnrollmentId == enrollment.EnrollmentId && da.Date.Date == examDate)
-                    .FirstOrDefaultAsync();
+                var dailyAttendance = dailyAttendances.FirstOrDefault(da => da.EnrollmentId == enrollment.EnrollmentId);
+                var excuse = dailyAttendance != null
+                    ? excuses.FirstOrDefault(ex => ex.DailyAttendanceId == dailyAttendance.DailyAttendanceId)
+                    : null;
 
-                NFD_Excuse? excuse = null;
-                if (dailyAttendance != null)
-                {
-                    excuse = await context.NFD_Excuses
-                        .Where(ex => ex.DailyAttendanceId == dailyAttendance.DailyAttendanceId)
-                        .FirstOrDefaultAsync();
-                }
-
-                // تحديد الحالة بدقة متطابقة مع شاشتي المدرب والمتدرب
+                // تحديد الحالة الأكاديمية بدقة
                 string attendanceStatus = "حاضر";
-                string excuseStatusLabel = "-";
+                string excuseStatusEnum = "None";
 
                 if (!hasAttempt)
                 {
                     if (dailyAttendance != null && dailyAttendance.Status == NFD_AttendanceStatus.Excused && excuse != null)
                     {
                         attendanceStatus = "غائب بعذر";
-                        excuseStatusLabel = excuse.Status == NFD_ExcuseStatus.Approved
-                            ? "معتمد من المدرب ✔️"
-                            : (excuse.Status == NFD_ExcuseStatus.Rejected ? "مرفوض ❌" : "قيد مراجعة المدرب ⏳");
+                        excuseStatusEnum = excuse.Status == NFD_ExcuseStatus.Approved ? "Approved" :
+                                          (excuse.Status == NFD_ExcuseStatus.Rejected ? "Rejected" : "PendingReview");
                     }
                     else
                     {
@@ -327,18 +337,38 @@ namespace Nafadh_Backend.Controllers
                     }
                 }
 
+                // تحديد حالة النتيجة (Passed / Failed / Absent)
+                string resultStatus = "Absent";
+                if (hasAttempt && attempt != null)
+                {
+                    resultStatus = attempt.Percentage >= quiz.PassingPercentage ? "Passed" : "Failed";
+                }
+
                 attendeesList.Add(new
                 {
+                    attemptId = attempt?.AttemptId ?? 0,
                     traineeId = trainee.TraineeId,
-                    fullName = trainee.User?.FullName ?? "متدرب",
+                    traineeName = trainee.User?.FullName ?? "متدرب",
+                    traineeAvatar = (string?)null,
                     attendanceStatus = attendanceStatus,
+                    status = resultStatus,
+                    submittedAt = attempt?.SubmittedAt,
+                    score = attempt != null ? (decimal?)attempt.Score : null,
+                    totalScore = 100,
+                    percentage = attempt != null ? (decimal?)attempt.Percentage : null,
+
+                    // رصد النزاهة من ViolationCount الحقيقي في قاعدة البيانات
+                    cheatingRiskPercentage = attempt != null ? Math.Min(attempt.ViolationCount * 25, 100) : 0,
+                    tabSwitchCount = attempt?.ViolationCount ?? 0,
+                    cameraDisconnectionsCount = 0,
+
+                    // العذر
                     hasExcuse = excuse != null,
                     excuseReason = excuse?.Reason,
-                    excuseProofUrl = excuse?.ProofUrl,
-                    excuseReviewStatus = excuseStatusLabel,
-                    score = attempt != null ? (decimal?)attempt.Score : null,
-                    percentage = attempt != null ? (decimal?)attempt.Percentage : null,
-                    isPassed = attempt != null && attempt.Percentage >= quiz.PassingPercentage,
+                    excuseAttachmentUrl = excuse?.ProofUrl,
+                    excuseStatus = excuseStatusEnum,
+
+                    notes = attempt != null ? (attempt.IsTerminatedByViolation ? "تم إنهاء المحاولة لتكرار المخالفات." : null) : null,
                     gradedBy = hasAttempt ? trainerName : "-"
                 });
             }
@@ -360,4 +390,4 @@ namespace Nafadh_Backend.Controllers
             });
         }
     }
-}
+    }

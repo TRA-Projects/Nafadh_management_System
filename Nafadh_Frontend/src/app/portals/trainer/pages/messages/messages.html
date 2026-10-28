@@ -144,7 +144,11 @@
             <small>
               محادثة جماعية
             </small>
-
+@if (group.unreadCount > 0) {
+  <span class="unread-count">
+    {{ group.unreadCount }}
+  </span>
+}
           </div>
 
         </button>
@@ -422,7 +426,7 @@
                     <button 
                       type="button" 
                       class="btn-meeting-join"
-                      [disabled]="!message.meeting.joinUrl || message.meeting.status === 'Completed' || message.meeting.status === 'Cancelled'"
+                      [disabled]="!message.meeting.joinUrl || (message.meeting.status !== 'Ongoing' && !message.meeting.isHostStarted)"
                       (click)="joinMeeting(message.meeting)"
                     >
                       <span>🎥</span> Join Meeting
@@ -519,5 +523,46 @@
     </main>
 
   </section>
+
+  <!-- نافذة تفاصيل الاجتماع -->
+  @if (selectedMeeting) {
+    <div class="meeting-modal-overlay"
+         (click)="closeMeetingDetails()">
+
+      <div class="meeting-modal"
+           role="dialog"
+           aria-modal="true"
+           aria-label="تفاصيل الاجتماع"
+           (click)="$event.stopPropagation()">
+
+        <div class="meeting-modal-header">
+          <h2>تفاصيل الاجتماع</h2>
+
+          <button type="button"
+                  class="meeting-modal-close"
+                  (click)="closeMeetingDetails()">
+            ✕
+          </button>
+        </div>
+
+        <div class="meeting-modal-body">
+          <h3>{{ selectedMeeting.title }}</h3>
+
+          <p><strong>التاريخ:</strong> {{ selectedMeeting.startDate }}</p>
+          <p><strong>الوقت:</strong> {{ selectedMeeting.time }}</p>
+          <p><strong>المدة:</strong> {{ selectedMeeting.durationMinutes }} دقيقة</p>
+          <p><strong>الحالة:</strong> {{ getMeetingStatusLabel(selectedMeeting.status) }}</p>
+        </div>
+
+        <div class="meeting-modal-footer">
+          <button type="button"
+                  (click)="closeMeetingDetails()">
+            إغلاق
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
 
 </div>

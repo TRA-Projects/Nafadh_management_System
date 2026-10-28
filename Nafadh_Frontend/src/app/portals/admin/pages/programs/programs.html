@@ -420,7 +420,7 @@
 <!-- 3. جدول البرامج والدفعات الرئيسي -->
 <!-- ========================================================== -->
 <div
-  *ngIf="!isDetailsPageOpen() && !isTraineesPageOpen() && !isQuizAuditFullPageOpen() && !isProjectAuditFullPageOpen() && !isProjectDossierOpen() && !isProjectEvaluationFullPageOpen()"
+  *ngIf="!isDetailsPageOpen() && !isTraineesPageOpen() && !isQuizAuditFullPageOpen() && !isProjectAuditFullPageOpen() && !isProjectDossierOpen() && !isProjectEvaluationFullPageOpen() && !isCreateBatchPageOpen()"
   dir="rtl">
 
   <div class="header-banner-flex">
@@ -859,7 +859,8 @@
         </span>
         <span class="meta-chip">
           <i class="fa-regular fa-calendar"></i>
-          <span>التاريخ: <strong dir="ltr">{{ activeQuizForAudit?.startDateTime | date:'dd/MM/yyyy - hh:mm a' }}</strong></span>
+          <span>التاريخ: <strong dir="ltr">{{ activeQuizForAudit?.startDateTime | date:'dd/MM/yyyy - hh:mm a'
+              }}</strong></span>
         </span>
         <span class="meta-chip">
           <i class="fa-regular fa-clock"></i>
@@ -867,7 +868,8 @@
         </span>
         <span class="meta-chip">
           <i class="fa-solid fa-trophy"></i>
-          <span>نسبة النجاح المقررة: <strong class="text-emerald">{{ activeQuizForAudit?.passingPercentage || 50 }}%</strong></span>
+          <span>نسبة النجاح المقررة: <strong class="text-emerald">{{ activeQuizForAudit?.passingPercentage || 50
+              }}%</strong></span>
         </span>
       </div>
     </div>
@@ -939,23 +941,28 @@
   <!-- شريط تبويبات التصفية التفاعلية -->
   <div class="audit-filter-tabs-bar">
     <div class="filter-tabs-list">
-      <button type="button" (click)="auditFilter = 'all'" [class.active]="auditFilter === 'all'" class="audit-filter-box">
+      <button type="button" (click)="auditFilter = 'all'" [class.active]="auditFilter === 'all'"
+        class="audit-filter-box">
         الكل ({{ activeQuizAttempts().length }})
       </button>
 
-      <button type="button" (click)="auditFilter = 'passed'" [class.active]="auditFilter === 'passed'" class="audit-filter-box">
+      <button type="button" (click)="auditFilter = 'passed'" [class.active]="auditFilter === 'passed'"
+        class="audit-filter-box">
         الناجحون ({{ getQuizPassedCount() }})
       </button>
 
-      <button type="button" (click)="auditFilter = 'failed'" [class.active]="auditFilter === 'failed'" class="audit-filter-box">
+      <button type="button" (click)="auditFilter = 'failed'" [class.active]="auditFilter === 'failed'"
+        class="audit-filter-box">
         الراسبون ({{ getQuizFailedCount() }})
       </button>
 
-      <button type="button" (click)="auditFilter = 'absent'" [class.active]="auditFilter === 'absent'" class="audit-filter-box">
+      <button type="button" (click)="auditFilter = 'absent'" [class.active]="auditFilter === 'absent'"
+        class="audit-filter-box">
         المتغيبون والأعذار ({{ getQuizAbsentCount() }})
       </button>
 
-      <button type="button" (click)="auditFilter = 'cheating'" [class.active]="auditFilter === 'cheating'" class="audit-filter-box">
+      <button type="button" (click)="auditFilter = 'cheating'" [class.active]="auditFilter === 'cheating'"
+        class="audit-filter-box">
         سجل النزاهة ورصد الغش ({{ getCheatingSuspectsCount() }})
       </button>
     </div>
@@ -1030,12 +1037,16 @@
                 <span>نزيه (0%)</span>
               </span>
 
-              <div *ngIf="row.submittedAt && (row.cheatingRiskPercentage || 0) > 0 && (row.cheatingRiskPercentage || 0) <= 25" class="integrity-warning-box">
+              <div
+                *ngIf="row.submittedAt && (row.cheatingRiskPercentage || 0) > 0 && (row.cheatingRiskPercentage || 0) <= 25"
+                class="integrity-warning-box">
                 <span class="integrity-warning-badge">
                   <i class="fa-solid fa-triangle-exclamation"></i>
                   <span>اشتباه {{ row.cheatingRiskPercentage }}%</span>
                 </span>
-                <div *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0 || (row.cameraDisconnectionsCount || 0) > 0" class="integrity-sub-violations">
+                <div
+                  *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0 || (row.cameraDisconnectionsCount || 0) > 0"
+                  class="integrity-sub-violations">
                   <span *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0" class="integrity-violation-tag">
                     {{ row.tabSwitchCount || row.tabSwitches }} خروج
                   </span>
@@ -1050,7 +1061,9 @@
                   <i class="fa-solid fa-triangle-exclamation"></i>
                   <span>خطر {{ row.cheatingRiskPercentage }}%</span>
                 </span>
-                <div *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0 || (row.cameraDisconnectionsCount || 0) > 0" class="integrity-sub-violations">
+                <div
+                  *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0 || (row.cameraDisconnectionsCount || 0) > 0"
+                  class="integrity-sub-violations">
                   <span *ngIf="(row.tabSwitchCount || row.tabSwitches || 0) > 0" class="integrity-violation-tag">
                     {{ row.tabSwitchCount || row.tabSwitches }} خروج
                   </span>
@@ -1063,12 +1076,14 @@
 
             <!-- حالة الحضور والعذر -->
             <td class="text-center">
-              <span *ngIf="row.status === 'Passed' || row.status === 'Failed' || row.submittedAt" class="attendance-present-tag">
+              <span *ngIf="row.status === 'Passed' || row.status === 'Failed' || row.submittedAt"
+                class="attendance-present-tag">
                 <i class="fa-solid fa-check attendance-present-icon"></i>
                 <span>حاضر</span>
               </span>
 
-              <div *ngIf="row.status === 'Absent' || row.status === 'NotAttempted' || !row.submittedAt" class="attendance-absent-box">
+              <div *ngIf="row.status === 'Absent' || row.status === 'NotAttempted' || !row.submittedAt"
+                class="attendance-absent-box">
                 <span class="attendance-absent-badge">متغيب</span>
 
                 <div *ngIf="row.excuseReason || row.excuseStatus" class="excuse-review-group">
@@ -1077,7 +1092,8 @@
                     'excuse-chip-rejected': row.excuseStatus === 'Rejected',
                     'excuse-chip-pending': row.excuseStatus === 'PendingReview' || row.excuseStatus === 'Pending' || !row.excuseStatus
                   }">
-                    {{ row.excuseStatus === 'Approved' ? 'عذر معتمد' : row.excuseStatus === 'Rejected' ? 'عذر مرفوض' : 'عذر قيد المراجعة' }}
+                    {{ row.excuseStatus === 'Approved' ? 'عذر معتمد' : row.excuseStatus === 'Rejected' ? 'عذر مرفوض' :
+                    'عذر قيد المراجعة' }}
                   </span>
 
                   <button type="button" (click)="onOpenExcuseModal(row)" class="btn-inspect-excuse">
@@ -1086,7 +1102,8 @@
                   </button>
                 </div>
 
-                <span *ngIf="!row.excuseReason && (!row.excuseStatus || row.excuseStatus === 'None')" class="no-excuse-tag">
+                <span *ngIf="!row.excuseReason && (!row.excuseStatus || row.excuseStatus === 'None')"
+                  class="no-excuse-tag">
                   لم يرفق عذراً
                 </span>
               </div>
@@ -1105,7 +1122,9 @@
             <td class="text-center">
               <span *ngIf="row.status === 'Passed'" class="badge-result-soft-passed">ناجح</span>
               <span *ngIf="row.status === 'Failed'" class="badge-result-soft-failed">راسب</span>
-              <span *ngIf="(row.status === 'NotAttempted' || row.status === 'Absent' || !row.status) && !row.submittedAt" class="badge-result-soft-absent">متغيب</span>
+              <span
+                *ngIf="(row.status === 'NotAttempted' || row.status === 'Absent' || !row.status) && !row.submittedAt"
+                class="badge-result-soft-absent">متغيب</span>
             </td>
           </tr>
 
@@ -1887,45 +1906,352 @@
 <!-- ========================================================== -->
 <!-- 6. باقي المودالات العادية (إنشاء دفعة، إنشاء برنامج، تعديل) -->
 <!-- ========================================================== -->
-<div *ngIf="isBatchModalOpen" (click)="onCloseBatchModal()" class="modal-overlay" dir="rtl">
-  <div (click)="$event.stopPropagation()" class="modal-container">
-    <div class="modal-header">
-      <h3 class="modal-title">إنشاء دفعة جديدة</h3>
-      <button type="button" (click)="onCloseBatchModal()" class="modal-close-btn">&times;</button>
+
+<!-- صفحة إنشاء دفعة جديدة كاملة الشاشة -->
+<div *ngIf="isCreateBatchPageOpen()" class="create-batch-page" dir="rtl">
+
+  <!-- الشريط العلوي -->
+  <div class="create-batch-topbar">
+    <button type="button" class="create-batch-back-btn" (click)="onCloseBatchModal()">
+      <span aria-hidden="true">→</span>
+      العودة إلى البرامج والدفعات
+    </button>
+
+    <div class="create-batch-top-actions">
+      <button type="button" class="create-batch-cancel-btn" (click)="onCloseBatchModal()">
+        إلغاء
+      </button>
+
+      <button type="submit" form="createBatchFullForm" class="create-batch-save-btn" [disabled]="isSubmittingBatch">
+        {{ isSubmittingBatch ? 'جارٍ الإنشاء...' : 'إنشاء الدفعة' }}
+      </button>
     </div>
-    <form [formGroup]="batchForm" (ngSubmit)="onSubmit()" class="modal-form">
-      <div class="form-group">
-        <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
-        <input type="text" formControlName="batchName" class="form-input text-right">
-      </div>
-      <div class="form-group">
-        <label class="form-label">البرنامج <span class="required-star">*</span></label>
-        <select formControlName="programId" class="form-select text-right">
-          <option value="" disabled selected>– اختر برنامجاً –</option>
-          <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">تاريخ البداية <span class="required-star">*</span></label>
-          <input type="date" formControlName="startDate" class="form-input">
-        </div>
-        <div class="form-group">
-          <label class="form-label">تاريخ النهاية <span class="required-star">*</span></label>
-          <input type="date" formControlName="endDate" class="form-input">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">الطاقة الاستيعابية <span class="required-star">*</span></label>
-        <input type="number" min="1" formControlName="capacity" class="form-input text-right">
-      </div>
-      <div class="modal-footer-buttons">
-        <button type="submit" [disabled]="isSubmittingBatch" class="btn-submit-batch">إنشاء الدفعة</button>
-        <button type="button" (click)="onCloseBatchModal()" class="btn-cancel-batch">إلغاء</button>
-      </div>
-    </form>
   </div>
+
+  <!-- عنوان الصفحة -->
+  <div class="create-batch-heading">
+    <div class="create-batch-heading-icon">
+      <i class="fa-solid fa-layer-group"></i>
+    </div>
+    <div>
+      <h2>إنشاء دفعة جديدة</h2>
+      <p>أدخلي بيانات الدفعة التدريبية، ويمكن إضافة المتدربين لاحقًا.</p>
+    </div>
+  </div>
+
+  <!-- ملخص الطاقة الاستيعابية -->
+  <div class="create-batch-capacity-card">
+    <div class="create-batch-capacity-icon">
+      <i class="fa-solid fa-users"></i>
+    </div>
+    <div class="create-batch-capacity-info">
+      <span>الطاقة الاستيعابية للدفعة</span>
+      <strong>{{ batchForm.get('capacity')?.value || 0 }} متدرب</strong>
+      <small>يمكن إنشاء الدفعة دون إضافة متدربين الآن.</small>
+    </div>
+  </div>
+
+  <!-- نموذج بيانات الدفعة -->
+  <form id="createBatchFullForm" [formGroup]="batchForm" (ngSubmit)="onSubmit()" class="create-batch-form">
+
+    <section class="create-batch-section">
+      <div class="create-batch-section-heading">
+        <span class="create-batch-section-number">01</span>
+        <div>
+          <h3>معلومات الدفعة</h3>
+          <p>البيانات الأساسية للبرنامج التدريبي.</p>
+        </div>
+      </div>
+
+      <div class="create-batch-fields">
+
+        <div class="create-batch-field create-batch-field-full">
+          <label for="newBatchName">
+            اسم الدفعة <span>*</span>
+          </label>
+          <input id="newBatchName" type="text" formControlName="batchName"
+            placeholder="مثال: دفعة تطوير الويب - أكتوبر 2026">
+
+          <small class="create-batch-field-error" *ngIf="batchForm.get('batchName')?.invalid &&
+                   (batchForm.get('batchName')?.touched || batchFormSubmitted)">
+            يرجى إدخال اسم الدفعة.
+          </small>
+        </div>
+
+        <div class="create-batch-field create-batch-field-full">
+          <label for="newBatchProgram">
+            البرنامج التدريبي <span>*</span>
+          </label>
+          <select id="newBatchProgram" formControlName="programId">
+            <option value="" disabled>اختاري البرنامج التدريبي</option>
+            <option *ngFor="let prog of programs()" [value]="prog.programId">
+              {{ prog.title || prog.name }}
+            </option>
+          </select>
+
+          <small class="create-batch-field-error" *ngIf="batchForm.get('programId')?.invalid &&
+                   (batchForm.get('programId')?.touched || batchFormSubmitted)">
+            يرجى اختيار البرنامج.
+          </small>
+        </div>
+
+
+        <!-- اختيار الشركة -->
+        <div class="form-group">
+          <label for="batchCompanyId">الشركة</label>
+
+          <select id="batchCompanyId" formControlName="companyId" class="form-control">
+            <option [ngValue]="null">اختاري الشركة</option>
+
+            <option *ngFor="let company of companies()"
+              [ngValue]="company.companyId ?? company.CompanyId ?? company.id">
+              {{ company.companyName ?? company.CompanyName ?? company.name }}
+            </option>
+          </select>
+
+          <small class="form-hint company-assignment-warning" role="alert"
+            *ngIf="batchFormSubmitted && selectedTraineeIds().length > 0 && !batchForm.get('companyId')?.value">
+            يلزم تحديد الشركة عند إسناد المتدربين إلى الدفعة.
+          </small>
+        </div>
+
+
+        <div class="create-batch-field">
+          <label for="newBatchStartDate">
+            تاريخ البداية <span>*</span>
+          </label>
+          <input id="newBatchStartDate" type="date" formControlName="startDate">
+        </div>
+
+        <div class="create-batch-field">
+          <label for="newBatchEndDate">
+            تاريخ النهاية <span>*</span>
+          </label>
+          <input id="newBatchEndDate" type="date" formControlName="endDate">
+        </div>
+
+
+        <div class="create-batch-field">
+          <label for="newBatchCapacity">
+            الطاقة الاستيعابية <span>*</span>
+          </label>
+
+          <input id="newBatchCapacity" type="number" min="1" step="1" formControlName="capacity"
+            placeholder="أدخلي العدد المطلوب، مثل 5 أو 10">
+
+          <small>حددي العدد الأقصى للمتدربين في هذه الدفعة.</small>
+
+          <small class="create-batch-field-error" *ngIf="batchForm.get('capacity')?.invalid &&
+           (batchForm.get('capacity')?.touched || batchFormSubmitted)">
+            يرجى إدخال طاقة استيعابية صحيحة لا تقل عن 1.
+          </small>
+        </div>
+
+
+      </div>
+    </section>
+
+    <!-- قسم المتدربين سيُضاف في الخطوة التالية -->
+
+    
+<section class="batch-trainee-picker">
+  <h3>إضافة المتدربين (اختياري)</h3>
+  <p>يمكنك إنشاء الدفعة دون متدربين وإضافتهم لاحقًا.</p>
+
+  <div class="trainee-methods">
+    <button type="button"
+      [class.active]="traineeAddMode === 'existing'"
+      (click)="traineeAddMode = 'existing'">
+      <span>👥</span>
+      اختيار متدربين
+    </button>
+
+    <button type="button"
+      [class.active]="traineeAddMode === 'manual'"
+      (click)="traineeAddMode = 'manual'">
+      <span>➕</span>
+      إضافة يدوية
+    </button>
+
+    <button type="button"
+      [class.active]="traineeAddMode === 'excel'"
+      (click)="traineeAddMode = 'excel'">
+      <span>📊</span>
+      رفع Excel
+    </button>
+  </div>
+
+  <!-- اختيار المتدربين الموجودين -->
+  <div *ngIf="traineeAddMode === 'existing'">
+    <p *ngIf="isLoadingAvailableTrainees()">
+      جارٍ تحميل المتدربين...
+    </p>
+
+    <p *ngIf="traineePickerError()">
+      {{ traineePickerError() }}
+    </p>
+
+    <label>
+      البحث عن متدرب
+      <input type="search"
+        [(ngModel)]="traineeSearchTerm"
+        (ngModelChange)="onTraineeSearchChange()"
+        [ngModelOptions]="{standalone:true}"
+        placeholder="الاسم أو البريد الإلكتروني">
+    </label>
+
+    <div *ngFor="let trainee of paginatedBatchTrainees"
+      class="batch-trainee-row">
+      <label>
+        <input type="checkbox"
+          [checked]="isTraineeSelected(
+            trainee.traineeId ?? trainee.TraineeId
+          )"
+          (change)="toggleBatchTrainee(
+            trainee,
+            $any($event.target).checked
+          )">
+
+        {{ trainee.fullName ?? trainee.FullName }}
+
+        <small>{{ trainee.email ?? trainee.Email }}</small>
+      </label>
+    </div>
+
+    <p>عدد المتدربين المحددين: {{ selectedTraineeIds().length }}</p>
+    <div class="trainee-pagination" *ngIf="traineeTotalPages > 1">
+      <button type="button" (click)="changeTraineePage(traineePage - 1)" [disabled]="traineePage <= 1">السابق</button>
+      <span>صفحة {{ traineePage }} من {{ traineeTotalPages }}</span>
+      <button type="button" (click)="changeTraineePage(traineePage + 1)" [disabled]="traineePage >= traineeTotalPages">التالي</button>
+    </div>
+  </div>
+
+  <!-- إضافة متدرب يدويًا -->
+  <div *ngIf="traineeAddMode === 'manual'">
+    <h4>بيانات المتدرب</h4>
+
+    <label>الاسم الكامل
+      <input [(ngModel)]="manualTrainee.fullName"
+        [ngModelOptions]="{standalone:true}"
+        placeholder="أدخلي الاسم الثلاثي">
+    </label>
+    <small class="create-batch-field-error" *ngIf="manualTraineeErrors()['fullName']">{{ manualTraineeErrors()['fullName'] }}</small>
+
+    <label>البريد الإلكتروني
+      <input type="email" [(ngModel)]="manualTrainee.email"
+        [ngModelOptions]="{standalone:true}"
+        placeholder="name@example.com">
+    </label>
+    <small class="create-batch-field-error" *ngIf="manualTraineeErrors()['email']">{{ manualTraineeErrors()['email'] }}</small>
+
+    <label>الرقم المدني
+      <input type="text" inputmode="numeric" [(ngModel)]="manualTrainee.nationalId"
+        [ngModelOptions]="{standalone:true}"
+        placeholder="8 أرقام على الأقل">
+    </label>
+    <small class="create-batch-field-error" *ngIf="manualTraineeErrors()['nationalId']">{{ manualTraineeErrors()['nationalId'] }}</small>
+
+    <label>رقم الهاتف (اختياري)
+      <input type="tel" inputmode="numeric" [(ngModel)]="manualTrainee.phone"
+        [ngModelOptions]="{standalone:true}" placeholder="رقم الهاتف">
+    </label>
+    <small class="create-batch-field-error" *ngIf="manualTraineeErrors()['phone']">{{ manualTraineeErrors()['phone'] }}</small>
+
+    <label>الجامعة (اختياري)
+      <input [(ngModel)]="manualTrainee.university"
+        [ngModelOptions]="{standalone:true}">
+    </label>
+
+    <label>التخصص (اختياري)
+      <input [(ngModel)]="manualTrainee.major"
+        [ngModelOptions]="{standalone:true}">
+    </label>
+
+    <label>المستوى الأكاديمي (اختياري)
+      <input [(ngModel)]="manualTrainee.academicLevel"
+        [ngModelOptions]="{standalone:true}">
+    </label>
+
+    <button type="button" class="create-batch-save-btn"
+      [disabled]="isCreatingManualTrainee()"
+      (click)="addManualTrainee()">
+      {{ isCreatingManualTrainee()
+        ? 'جارٍ الإضافة...'
+        : 'إنشاء المتدرب وإضافته' }}
+    </button>
+  </div>
+
+  <!-- رفع ملف Excel -->
+  <div *ngIf="traineeAddMode === 'excel'">
+    <h4>استيراد المتدربين من Excel</h4>
+
+    <p>
+      الأعمدة المطلوبة: FullName وEmail وNationalId.
+      ويمكن إضافة University وMajor وAcademicLevel.
+    </p>
+
+    <input type="file"
+      accept=".xlsx,.xls"
+      (change)="importTraineesSpreadsheet($event)"
+      [disabled]="isImportingTrainees()">
+
+    <p *ngIf="isImportingTrainees()">جارٍ معالجة الملف...</p>
+
+    <p *ngIf="traineeImportError()" class="create-batch-field-error">
+      {{ traineeImportError() }}
+    </p>
+    <div *ngIf="traineeImportPreviewSkipped().length && !traineeImportPreview().length" class="create-batch-field-error">
+      <p *ngFor="let reason of traineeImportPreviewSkipped()">{{ reason }}</p>
+    </div>
+    <div class="trainee-import-preview" *ngIf="traineeImportPreview().length">
+      <h4>معاينة البيانات قبل الاستيراد</h4>
+      <p>عدد الصفوف الجاهزة: {{ traineeImportPreview().length }}</p>
+      <p *ngIf="traineeImportPreviewSkipped().length" class="create-batch-field-error">
+        سيتم تجاهل {{ traineeImportPreviewSkipped().length }} صف بسبب بيانات ناقصة أو غير صحيحة أو مكررة.
+        <span *ngFor="let reason of traineeImportPreviewSkipped(); let last = last">{{ reason }}<br *ngIf="!last"></span>
+      </p>
+      <div class="trainee-preview-table-wrap">
+        <table class="trainee-preview-table">
+          <thead><tr><th>الاسم الكامل</th><th>البريد الإلكتروني</th><th>الرقم المدني</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let item of traineeImportPreview()">
+              <td>{{ item.FullName }}</td><td>{{ item.Email }}</td><td>{{ item.NationalId }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button type="button" class="create-batch-save-btn"
+        [disabled]="isImportingTrainees()" (click)="confirmImportTrainees()">
+        {{ isImportingTrainees() ? 'جارٍ الاستيراد...' : 'تأكيد الاستيراد' }}
+      </button>
+      <button type="button" (click)="traineeImportPreview.set([]); traineeImportPreviewSkipped.set([])">
+        إلغاء المعاينة
+      </button>
+    </div>
+  </div>
+</section>
+
+
+
+    <!-- رسالة الخطأ -->
+    <div *ngIf="batchErrorMessage" class="create-batch-error-banner">
+      {{ batchErrorMessage }}
+    </div>
+
+    <!-- أزرار أسفل الصفحة -->
+    <div class="create-batch-bottom-actions">
+      <button type="button" class="create-batch-cancel-btn" (click)="onCloseBatchModal()">
+        إلغاء
+      </button>
+
+      <button type="submit" class="create-batch-save-btn" [disabled]="isSubmittingBatch">
+        {{ isSubmittingBatch ? 'جارٍ إنشاء الدفعة...' : 'إنشاء الدفعة' }}
+      </button>
+    </div>
+
+  </form>
 </div>
+
 
 <div *ngIf="isProgramModalOpen" (click)="onCloseProgramModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container-program">
@@ -1954,24 +2280,300 @@
   </div>
 </div>
 
+
 <div *ngIf="isEditModalOpen" (click)="onCloseEditModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container">
     <div class="modal-header">
       <h3 class="modal-title">تعديل الدفعة</h3>
       <button type="button" (click)="onCloseEditModal()" class="modal-close-btn">&times;</button>
     </div>
+
     <form [formGroup]="editBatchForm" (ngSubmit)="onSaveBatch()" class="modal-form">
+      <div
+  *ngIf="editBatchErrorMessage"
+  class="batch-form-error"
+  role="alert">
+  {{ editBatchErrorMessage }}
+</div>
+
       <div class="form-group">
         <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
         <input type="text" formControlName="batchName" class="form-input text-right">
       </div>
-      <div class="modal-footer-buttons">
-        <button type="submit" [disabled]="isSubmittingEditBatch" class="btn-submit-batch">حفظ التعديلات</button>
-        <button type="button" (click)="onCloseEditModal()" class="btn-cancel-batch">إلغاء</button>
+
+      <div class="form-group">
+        <label class="form-label">البرنامج <span class="required-star">*</span></label>
+        <select formControlName="programId" class="form-select text-right">
+          <option [ngValue]="null" disabled>– اختر برنامجاً –</option>
+          <option *ngFor="let prog of programs()" [ngValue]="prog.programId">
+            {{ prog.title || prog.name }}
+          </option>
+        </select>
       </div>
+
+
+      <div class="create-batch-field create-batch-field-full">
+        <label for="batchCompanyId">الشركة المستضيفة</label>
+
+        <select id="batchCompanyId" formControlName="companyId">
+          <option [ngValue]="null">– بدون شركة حالياً –</option>
+
+          <option *ngFor="let company of companies()" [ngValue]="company.companyId ?? company.CompanyId ?? company.id">
+            {{ company.companyName ?? company.CompanyName ?? company.name }}
+          </option>
+        </select>
+
+        <small class="form-hint company-assignment-warning" role="alert"
+          *ngIf="editBatchFormSubmitted && selectedTraineeIds().length > 0 && !editBatchForm.get('companyId')?.value">
+          يلزم تحديد الشركة عند إسناد المتدربين إلى الدفعة.
+        </small>
+      </div>
+
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">تاريخ البداية <span class="required-star">*</span></label>
+          <input type="date" formControlName="startDate" class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">تاريخ النهاية <span class="required-star">*</span></label>
+          <input type="date" formControlName="endDate" class="form-input">
+        </div>
+      </div>
+
+      <div class="form-group">
+  <label class="form-label">
+    الطاقة الاستيعابية <span class="required-star">*</span>
+  </label>
+
+  <input
+    type="number"
+    min="1"
+    formControlName="capacity"
+    class="form-input text-right">
+
+  <div
+    *ngIf="
+      editBatchForm.get('capacity')?.value != null &&
+      +editBatchForm.get('capacity')?.value > 0 &&
+      existingBatchTraineeIds().length + selectedTraineeIds().length >
+      +editBatchForm.get('capacity')?.value
+    "
+    class="batch-form-error"
+    role="alert">
+
+    لا يمكن حفظ الدفعة: عدد المتدربين الحاليين والجدد
+    ({{ existingBatchTraineeIds().length + selectedTraineeIds().length }})
+    أكبر من الطاقة الاستيعابية المحددة
+    ({{ editBatchForm.get('capacity')?.value }}).
+    يرجى زيادة السعة أو تقليل عدد المتدربين.
+  </div>
+</div>
+
+      <div class="form-group">
+        <label class="form-label">حالة الدفعة <span class="required-star">*</span></label>
+        <select formControlName="status" class="form-select text-right">
+          <option [ngValue]="0">قادمة</option>
+          <option [ngValue]="1">جارية</option>
+          <option [ngValue]="2">مكتملة</option>
+          <option [ngValue]="3">ملغاة</option>
+        </select>
+      </div>
+
+      
+
+<section class="batch-trainee-picker edit-batch-trainees">
+  <h3>إضافة متدربين إلى الدفعة</h3>
+
+  <div class="trainee-methods">
+    <button type="button"
+      [class.active]="traineeAddMode === 'existing'"
+      (click)="traineeAddMode = 'existing'">
+      👥 اختيار متدربين
+    </button>
+
+    <button type="button"
+      [class.active]="traineeAddMode === 'manual'"
+      (click)="traineeAddMode = 'manual'">
+      ➕ إضافة يدوية
+    </button>
+
+    <button type="button"
+      [class.active]="traineeAddMode === 'excel'"
+      (click)="traineeAddMode = 'excel'">
+      📊 رفع Excel
+    </button>
+  </div>
+
+  <!-- اختيار متدربين موجودين -->
+  <div *ngIf="traineeAddMode === 'existing'" class="trainee-mode-content">
+    <p *ngIf="isLoadingAvailableTrainees()">
+      جارٍ تحميل المتدربين...
+    </p>
+
+    <p *ngIf="traineePickerError()">
+      {{ traineePickerError() }}
+    </p>
+
+    <label class="trainee-search-label">
+      البحث عن متدرب
+      <input type="search"
+        [(ngModel)]="traineeSearchTerm"
+        (ngModelChange)="onTraineeSearchChange()"
+        [ngModelOptions]="{standalone:true}"
+        placeholder="الاسم أو البريد الإلكتروني">
+    </label>
+
+    <div *ngFor="let trainee of paginatedBatchTrainees"
+      class="batch-trainee-row">
+
+      <ng-container
+        *ngIf="!existingBatchTraineeIds().includes(+(trainee.traineeId ?? trainee.TraineeId))">
+
+        <label>
+          <input type="checkbox"
+            [checked]="isTraineeSelected(+(trainee.traineeId ?? trainee.TraineeId))"
+            (change)="toggleBatchTrainee(trainee, $any($event.target).checked)">
+
+          {{ trainee.fullName ?? trainee.FullName }}
+          <small>{{ trainee.email ?? trainee.Email }}</small>
+        </label>
+      </ng-container>
+    </div>
+
+    <p>المتدربون الجدد المحددون: {{ selectedTraineeIds().length }}</p>
+    <div class="trainee-pagination" *ngIf="traineeTotalPages > 1">
+      <button type="button" (click)="changeTraineePage(traineePage - 1)" [disabled]="traineePage <= 1">السابق</button>
+      <span>صفحة {{ traineePage }} من {{ traineeTotalPages }}</span>
+      <button type="button" (click)="changeTraineePage(traineePage + 1)" [disabled]="traineePage >= traineeTotalPages">التالي</button>
+    </div>
+  </div>
+
+  <!-- إضافة يدوية -->
+  <div *ngIf="traineeAddMode === 'manual'" class="trainee-mode-content manual-trainee-form">
+    <h4>بيانات المتدرب</h4>
+
+    <label>الاسم الكامل
+      <input [(ngModel)]="manualTrainee.fullName"
+        [ngModelOptions]="{standalone:true}"
+        placeholder="أدخلي الاسم الثلاثي">
+    </label>
+    <small class="create-batch-field-error" *ngIf="manualTraineeErrors()['fullName']">{{ manualTraineeErrors()['fullName'] }}</small>
+
+    <label>البريد الإلكتروني
+      <input type="email"
+        [(ngModel)]="manualTrainee.email"
+        [ngModelOptions]="{standalone:true}"
+        placeholder="name@example.com">
+    </label>
+    <small class="create-batch-field-error" *ngIf="manualTraineeErrors()['email']">{{ manualTraineeErrors()['email'] }}</small>
+
+    <label>الرقم المدني
+      <input type="text" inputmode="numeric"
+        [(ngModel)]="manualTrainee.nationalId"
+        [ngModelOptions]="{standalone:true}"
+        placeholder="8 أرقام على الأقل">
+    </label>
+    <small class="create-batch-field-error" *ngIf="manualTraineeErrors()['nationalId']">{{ manualTraineeErrors()['nationalId'] }}</small>
+
+    <label>رقم الهاتف (اختياري)
+      <input type="tel" inputmode="numeric"
+        [(ngModel)]="manualTrainee.phone"
+        [ngModelOptions]="{standalone:true}"
+        placeholder="رقم الهاتف">
+    </label>
+    <small class="create-batch-field-error" *ngIf="manualTraineeErrors()['phone']">{{ manualTraineeErrors()['phone'] }}</small>
+
+    <label>الجامعة (اختياري)
+      <input [(ngModel)]="manualTrainee.university"
+        [ngModelOptions]="{standalone:true}">
+    </label>
+
+    <label>التخصص (اختياري)
+      <input [(ngModel)]="manualTrainee.major"
+        [ngModelOptions]="{standalone:true}">
+    </label>
+
+    <label>المستوى الأكاديمي (اختياري)
+      <input [(ngModel)]="manualTrainee.academicLevel"
+        [ngModelOptions]="{standalone:true}">
+    </label>
+
+    <button type="button"
+      class="create-batch-save-btn"
+      [disabled]="isCreatingManualTrainee()"
+      (click)="addManualTrainee()">
+      {{ isCreatingManualTrainee() ? 'جارٍ الإضافة...' : 'إنشاء المتدرب وإضافته' }}
+    </button>
+  </div>
+
+  <!-- استيراد Excel -->
+  <div *ngIf="traineeAddMode === 'excel'" class="trainee-mode-content">
+    <h4>استيراد متدربين من Excel</h4>
+
+    <p>
+      الأعمدة المطلوبة: FullName وEmail وNationalId.
+      ويمكن إضافة University وMajor وAcademicLevel.
+    </p>
+
+    <input type="file"
+      accept=".xlsx,.xls"
+      (change)="importTraineesSpreadsheet($event)"
+      [disabled]="isImportingTrainees()">
+
+    <p *ngIf="isImportingTrainees()">جارٍ معالجة الملف...</p>
+
+    <p *ngIf="traineeImportError()" class="create-batch-field-error">
+      {{ traineeImportError() }}
+    </p>
+    <div *ngIf="traineeImportPreviewSkipped().length && !traineeImportPreview().length" class="create-batch-field-error">
+      <p *ngFor="let reason of traineeImportPreviewSkipped()">{{ reason }}</p>
+    </div>
+    <div class="trainee-import-preview" *ngIf="traineeImportPreview().length">
+      <h4>معاينة البيانات قبل الاستيراد</h4>
+      <p>عدد الصفوف الجاهزة: {{ traineeImportPreview().length }}</p>
+      <p *ngIf="traineeImportPreviewSkipped().length" class="create-batch-field-error">
+        سيتم تجاهل {{ traineeImportPreviewSkipped().length }} صف بسبب بيانات ناقصة أو غير صحيحة أو مكررة.
+        <span *ngFor="let reason of traineeImportPreviewSkipped(); let last = last">{{ reason }}<br *ngIf="!last"></span>
+      </p>
+      <div class="trainee-preview-table-wrap">
+        <table class="trainee-preview-table">
+          <thead><tr><th>الاسم الكامل</th><th>البريد الإلكتروني</th><th>الرقم المدني</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let item of traineeImportPreview()">
+              <td>{{ item.FullName }}</td><td>{{ item.Email }}</td><td>{{ item.NationalId }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button type="button" class="create-batch-save-btn"
+        [disabled]="isImportingTrainees()" (click)="confirmImportTrainees()">
+        {{ isImportingTrainees() ? 'جارٍ الاستيراد...' : 'تأكيد الاستيراد' }}
+      </button>
+      <button type="button" (click)="traineeImportPreview.set([]); traineeImportPreviewSkipped.set([])">
+        إلغاء المعاينة
+      </button>
+    </div>
+  </div>
+</section>
+
+
+      <div class="modal-footer-buttons">
+        <button type="submit" [disabled]="isSubmittingEditBatch" class="btn-submit-batch">
+          حفظ التعديلات
+        </button>
+        <button type="button" (click)="onCloseEditModal()" class="btn-cancel-batch">
+          إلغاء
+        </button>
+      </div>
+
+
+
     </form>
   </div>
 </div>
+
 
 <!-- التنبيهات Toast -->
 <div *ngIf="toast()" class="nfd-toast-container" [ngClass]="'toast-' + toast()?.type" dir="rtl">

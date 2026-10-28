@@ -33,5 +33,25 @@
           string? certificateUrl = null);
 
 
+        // إرسال إعلان إداري للمستخدمين (متدرب / مدرب / شركة)
+        Task SendAnnouncementAsync(
+            string email,
+            string recipientName,
+            string title,
+            string content);
+
+        Task SendCompanyWarningAsync(string email, string companyName, string reason, string? warningLevel = null);
+
+
+        Task SendCoursePlanDecisionAsync(string email, string companyName, string planTitle, bool approved, string? note = null);
+
+        Task SendBatchAssignedToCompanyAsync(
+        string email,
+        string companyName,
+        string batchName,
+        string programName,
+        DateTime startDate,
+        DateTime endDate,
+        decimal capacity);
     }
 }

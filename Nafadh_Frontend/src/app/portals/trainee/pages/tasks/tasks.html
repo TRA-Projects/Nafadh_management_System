@@ -1,189 +1,67 @@
-<div
-  dir="rtl"
-  style="
-    width:100%;
-    box-sizing:border-box;
-  "
->
+<div class="tasks-page">
 
   <!-- PAGE TITLE -->
-  <h2
-    class="nfd-page-title"
-    style="
-      font-size:22px;
-      line-height:1.5;
-      margin-bottom:18px;
-    "
-  >
+  <h2 class="nfd-page-title tasks-title">
     المهام والمشاريع
   </h2>
 
 
   <!-- TABS -->
   @if (!selected() && !selectedProject()) {
-
-    <div
-      style="
-        display:flex;
-        gap:4px;
-        background:var(--color-tint-indigo);
-        padding:4px;
-        border-radius:var(--radius-lg);
-        width:fit-content;
-        max-width:100%;
-        margin-bottom:18px;
-      "
-    >
-
+    <div class="tasks-tabs">
       <button
-        class="nfd-btn"
+        class="nfd-btn tasks-tab-btn"
         [class.primary]="tab() === 'assignments'"
         [class.ghost]="tab() !== 'assignments'"
         (click)="tab.set('assignments')"
-        style="
-          font-size:14px;
-          padding:9px 18px;
-        "
       >
         المهام
       </button>
 
       <button
-        class="nfd-btn"
+        class="nfd-btn tasks-tab-btn"
         [class.primary]="tab() === 'projects'"
         [class.ghost]="tab() !== 'projects'"
         (click)="tab.set('projects')"
-        style="
-          font-size:14px;
-          padding:9px 18px;
-        "
       >
         المشاريع
       </button>
-
     </div>
-
   }
 
 
   <!-- ERROR -->
   @if (errorMessage()) {
-
-    <div
-      class="nfd-card"
-      style="
-        margin-bottom:14px;
-        background:var(--status-new-bg);
-        color:var(--status-new-fg);
-        overflow-wrap:anywhere;
-        font-size:14px;
-        line-height:1.7;
-        display:flex;
-        align-items:center;
-        gap:9px;
-        padding:13px 16px;
-        border-radius:10px;
-      "
-    >
-
-      <span
-        style="
-          width:24px;
-          height:24px;
-          min-width:24px;
-          border-radius:50%;
-          background:var(--status-new-fg);
-          color:var(--status-new-bg);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          font-size:14px;
-          font-weight:700;
-        "
-      >
-        !
-      </span>
-
+    <div class="nfd-card alert-box error">
+      <span class="alert-icon">!</span>
       <span>{{ errorMessage() }}</span>
-
     </div>
-
   }
 
 
   <!-- SUCCESS MESSAGE -->
   @if (successMessage()) {
-
-    <div
-      class="nfd-card"
-      style="
-        margin-bottom:14px;
-        background:var(--status-completed-bg);
-        color:var(--status-completed-fg);
-        overflow-wrap:anywhere;
-        font-size:14px;
-        line-height:1.7;
-        display:flex;
-        align-items:center;
-        gap:9px;
-        padding:13px 16px;
-        border-radius:10px;
-        font-weight:600;
-      "
-    >
-
-      <span
-        style="
-          width:24px;
-          height:24px;
-          min-width:24px;
-          border-radius:50%;
-          background:var(--status-completed-fg);
-          color:var(--status-completed-bg);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          font-size:14px;
-          font-weight:700;
-        "
-      >
-        ✓
-      </span>
-
+    <div class="nfd-card alert-box success">
+      <span class="alert-icon">✓</span>
       <span>{{ successMessage() }}</span>
-
     </div>
-
   }
 
 
-  <!-- TASKS -->
+  <!-- =========================================================
+       TASKS LIST
+  ========================================================= -->
   @if (tab() === 'assignments' && !selected()) {
 
     @if (loadingProfile() || loadingTasks()) {
-
-      <p
-        class="nfd-muted"
-        style="
-          font-size:14px;
-          line-height:1.7;
-        "
-      >
+      <p class="nfd-muted loading-text">
         جاري تحميل المهام...
       </p>
-
     } @else {
 
       @if (tasks().length > 0) {
 
-        <div
-          style="
-            display:grid;
-            grid-template-columns:repeat(3,minmax(0,1fr));
-            gap:16px;
-            width:100%;
-          "
-        >
+        <div class="tasks-grid">
 
           @for (t of tasks(); track t.taskId) {
 
@@ -192,48 +70,11 @@
             @let deadlinePassed = isDeadlinePassed(t);
             @let daysLate = getDaysLate(t);
 
-            <div
-              class="nfd-card"
-              style="
-                display:flex;
-                flex-direction:column;
-                min-width:0;
-                min-height:300px;
-                padding:18px;
-                border-radius:14px;
-                cursor:pointer;
-                overflow:hidden;
-                transition:
-                  transform .2s ease,
-                  box-shadow .2s ease;
-              "
-              (click)="selectTask(t)"
-            >
+            <div class="nfd-card task-card" (click)="selectTask(t)">
 
-              <div
-                style="
-                  display:flex;
-                  justify-content:space-between;
-                  align-items:flex-start;
-                  gap:10px;
-                  direction:rtl;
-                  margin-bottom:12px;
-                "
-              >
+              <div class="task-card-header">
 
-                <div
-                  style="
-                    width:44px;
-                    height:44px;
-                    min-width:44px;
-                    border-radius:12px;
-                    background:var(--color-tint-indigo);
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                  "
-                >
-
+                <div class="task-icon">
                   <svg
                     width="22"
                     height="22"
@@ -247,388 +88,136 @@
                     <rect x="3" y="3" width="18" height="18" rx="3"></rect>
                     <path d="M8 12l2.5 2.5L16 9"></path>
                   </svg>
-
                 </div>
 
                 <span
-                  class="nfd-badge"
-                  style="
-                    flex-shrink:0;
-                    white-space:nowrap;
-                    font-size:12px;
-                    padding:5px 9px;
-                  "
-                  [style.background]="
-                    statusBackground(
-                      taskStatus === 'مكتمل'
-                        ? 'completed'
-                        : taskStatus === 'قيد المراجعة'
-                          ? 'submitted'
-                          : taskStatus === 'متأخر'
-                            ? 'overdue'
-                            : 'new'
-                    )
-                  "
-                  [style.color]="
-                    statusForeground(
-                      taskStatus === 'مكتمل'
-                        ? 'completed'
-                        : taskStatus === 'قيد المراجعة'
-                          ? 'submitted'
-                          : taskStatus === 'متأخر'
-                            ? 'overdue'
-                            : 'new'
-                    )
-                  "
+                  class="nfd-badge task-status-badge"
+                  [style.background]="statusBackground(
+                    taskStatus === 'مكتمل' ? 'completed' :
+                    taskStatus === 'قيد المراجعة' ? 'submitted' :
+                    taskStatus === 'متأخر' ? 'overdue' : 'new'
+                  )"
+                  [style.color]="statusForeground(
+                    taskStatus === 'مكتمل' ? 'completed' :
+                    taskStatus === 'قيد المراجعة' ? 'submitted' :
+                    taskStatus === 'متأخر' ? 'overdue' : 'new'
+                  )"
                 >
                   {{ taskStatus }}
                 </span>
 
               </div>
 
+              <h3 class="task-title">{{ t.title }}</h3>
 
-              <h3
-                style="
-                  margin:0 0 8px;
-                  color:var(--color-navy);
-                  font-size:17px;
-                  line-height:1.6;
-                  font-weight:700;
-                  overflow-wrap:anywhere;
-                "
-              >
-                {{ t.title }}
-              </h3>
+              <p class="task-description">{{ t.description }}</p>
 
+              <div class="task-divider"></div>
 
-              <p
-                style="
-                  margin:0;
-                  font-size:14px;
-                  line-height:1.8;
-                  color:var(--color-text-secondary);
-                  overflow-wrap:anywhere;
-                  min-height:50px;
-                "
-              >
-                {{ t.description }}
-              </p>
-
-
-              <div
-                style="
-                  height:1px;
-                  background:var(--color-tint-indigo);
-                  margin:14px 0;
-                "
-              ></div>
-
-
-              <div
-                style="
-                  display:flex;
-                  justify-content:space-between;
-                  align-items:center;
-                  gap:8px;
-                  direction:rtl;
-                  margin-bottom:10px;
-                "
-              >
-
-                <span
-                  style="
-                    font-size:13px;
-                    color:var(--color-text-secondary);
-                  "
-                >
-                  الموعد النهائي
-                </span>
-
-                <strong
-                  style="
-                    font-size:13px;
-                    color:var(--color-navy);
-                    direction:ltr;
-                  "
-                >
+              <div class="task-due-row">
+                <span class="task-due-label">الموعد النهائي</span>
+                <strong class="task-due-value">
                   {{ t.dueDate | date:'yyyy-MM-dd' }}
                 </strong>
-
               </div>
 
-
               @if (deadlinePassed && taskStatus !== 'مكتمل') {
-
-                <div
-                  style="
-                    display:flex;
-                    align-items:flex-start;
-                    gap:7px;
-                    direction:rtl;
-                    background:var(--status-new-bg);
-                    color:var(--status-new-fg);
-                    border-radius:9px;
-                    padding:9px 10px;
-                    margin-bottom:10px;
-                    font-size:12px;
-                    line-height:1.6;
-                  "
-                >
-
+                <div class="late-warning">
                   <span>⚠</span>
-
                   <span>
                     انتهى موعد التسليم — يمكنك التسليم الآن مع احتساب
                     <strong> {{ getDaysLateText(t) }} </strong>
                   </span>
-
                 </div>
-
               }
-
 
               @if (submission) {
-
-                @if (
-                  submission.grade !== null &&
-                  submission.grade !== undefined
-                ) {
-
-                  <div
-                    style="
-                      display:flex;
-                      justify-content:space-between;
-                      align-items:center;
-                      direction:rtl;
-                      background:var(--status-active-bg);
-                      border-radius:9px;
-                      padding:10px 12px;
-                      margin-bottom:10px;
-                    "
-                  >
-
-                    <span
-                      style="
-                        font-size:13px;
-                        color:var(--status-active-fg);
-                      "
-                    >
-                      تقييم المدرب
-                    </span>
-
-                    <strong
-                      style="
-                        font-size:15px;
-                        color:var(--status-active-fg);
-                      "
-                    >
-                      {{ submission.grade }}/100
-                    </strong>
-
+                @if (submission.grade !== null && submission.grade !== undefined) {
+                  <div class="grade-box">
+                    <span class="grade-label">تقييم المدرب</span>
+                    <strong class="grade-value">{{ submission.grade }}/100</strong>
                   </div>
-
                 }
-
               }
 
-
-              <div
-                style="
-                  margin-top:auto;
-                  padding-top:8px;
-                "
-              >
-
+              <div class="task-footer">
                 @if (taskStatus === 'مكتمل') {
-
-                  <div
-                    style="
-                      width:100%;
-                      box-sizing:border-box;
-                      text-align:center;
-                      background:var(--status-completed-bg);
-                      color:var(--status-completed-fg);
-                      border-radius:9px;
-                      padding:10px;
-                      font-size:13px;
-                      font-weight:600;
-                    "
-                  >
+                  <div class="task-completed-banner">
                     ✓ تم إكمال المهمة
                   </div>
-
                 } @else {
-
                   <button
-                    class="nfd-btn"
+                    class="nfd-btn task-action-btn"
                     [class.primary]="!deadlinePassed"
                     [class.ghost]="deadlinePassed"
-                    style="
-                      width:100%;
-                      font-size:13px;
-                      padding:9px;
-                    "
-                    (click)="
-                      $event.stopPropagation();
-                      selectTask(t)
-                    "
+                    (click)="$event.stopPropagation(); selectTask(t)"
                   >
-
                     @if (deadlinePassed) {
-
                       <span>
                         ⚠ تسليم متأخر
                         @if (daysLate > 0) {
                           ({{ daysLate }} يوم)
                         }
                       </span>
-
                     } @else {
-
                       {{ submission ? 'إعادة التسليم' : 'تسليم المهمة' }}
-
                     }
-
                   </button>
-
                 }
-
               </div>
 
             </div>
-
           }
-
         </div>
 
       } @else {
 
-        <div
-          class="nfd-card"
-          style="
-            text-align:center;
-            padding:28px;
-            font-size:14px;
-          "
-        >
-
+        <div class="nfd-card empty-card">
           <p class="nfd-muted">
             لا توجد مهام لهذا الباتش حاليًا.
           </p>
-
         </div>
 
       }
-
     }
-
   }
 
 
-  <!-- TASK DETAILS -->
+  <!-- =========================================================
+       TASK DETAILS
+  ========================================================= -->
   @if (tab() === 'assignments' && selected(); as t) {
 
-    <button
-      class="nfd-muted"
-      style="
-        display:inline-block;
-        margin-bottom:14px;
-        border:0;
-        background:none;
-        cursor:pointer;
-        font-size:14px;
-      "
-      (click)="backToTasks()"
-    >
+    <button class="nfd-muted back-btn" (click)="backToTasks()">
       ← العودة إلى المهام
     </button>
-
 
     @let submission = submissionFor(t.taskId);
     @let deadlinePassed = isDeadlinePassed(t);
     @let taskStatus = displayTaskStatus(t);
     @let daysLate = getDaysLate(t);
 
+    <div class="nfd-card task-detail-card">
 
-    <div
-      class="nfd-card"
-      style="
-        overflow:hidden;
-        padding:20px;
-      "
-    >
+      <div class="task-detail-header">
 
-      <div
-        style="
-          display:flex;
-          justify-content:space-between;
-          align-items:flex-start;
-          gap:15px;
-          direction:rtl;
-          margin-bottom:16px;
-        "
-      >
-
-        <div
-          style="
-            min-width:0;
-            flex:1;
-          "
-        >
-
-          <h3
-            style="
-              margin:0 0 8px;
-              color:var(--color-navy);
-              font-size:20px;
-              line-height:1.6;
-            "
-          >
-            {{ t.title }}
-          </h3>
-
-          <p
-            style="
-              font-size:14px;
-              line-height:1.8;
-              margin:0;
-              color:var(--color-text-secondary);
-            "
-          >
-            {{ t.description }}
-          </p>
-
+        <div class="task-detail-main">
+          <h3 class="task-detail-title">{{ t.title }}</h3>
+          <p class="task-detail-description">{{ t.description }}</p>
         </div>
 
-
         <span
-          class="nfd-badge"
-          style="
-            font-size:12px;
-            padding:6px 10px;
-          "
-          [style.background]="
-            statusBackground(
-              taskStatus === 'مكتمل'
-                ? 'completed'
-                : taskStatus === 'قيد المراجعة'
-                  ? 'submitted'
-                  : taskStatus === 'متأخر'
-                    ? 'overdue'
-                    : 'new'
-            )
-          "
-          [style.color]="
-            statusForeground(
-              taskStatus === 'مكتمل'
-                ? 'completed'
-                : taskStatus === 'قيد المراجعة'
-                  ? 'submitted'
-                  : taskStatus === 'متأخر'
-                    ? 'overdue'
-                    : 'new'
-            )
-          "
+          class="nfd-badge task-detail-status"
+          [style.background]="statusBackground(
+            taskStatus === 'مكتمل' ? 'completed' :
+            taskStatus === 'قيد المراجعة' ? 'submitted' :
+            taskStatus === 'متأخر' ? 'overdue' : 'new'
+          )"
+          [style.color]="statusForeground(
+            taskStatus === 'مكتمل' ? 'completed' :
+            taskStatus === 'قيد المراجعة' ? 'submitted' :
+            taskStatus === 'متأخر' ? 'overdue' : 'new'
+          )"
         >
           {{ taskStatus }}
         </span>
@@ -637,378 +226,132 @@
 
 
       <!-- DEADLINE -->
-      <div
-        style="
-          background:var(--color-tint-indigo);
-          border-radius:11px;
-          padding:13px;
-          margin-bottom:14px;
-        "
-      >
-
-        <span
-          style="
-            display:block;
-            font-size:12px;
-            color:var(--color-text-secondary);
-            margin-bottom:5px;
-          "
-        >
-          الموعد النهائي
-        </span>
-
-        <strong
-          style="
-            font-size:14px;
-            color:var(--color-navy);
-          "
-        >
+      <div class="task-deadline-box">
+        <span class="task-deadline-label">الموعد النهائي</span>
+        <strong class="task-deadline-value">
           {{ t.dueDate | date:'yyyy-MM-dd' }}
         </strong>
-
       </div>
 
 
       <!-- LATE WARNING -->
       @if (deadlinePassed && taskStatus !== 'مكتمل') {
-
-        <div
-          style="
-            background:var(--status-new-bg);
-            color:var(--status-new-fg);
-            border-radius:11px;
-            padding:12px 14px;
-            margin-bottom:14px;
-            font-size:13px;
-            line-height:1.7;
-            display:flex;
-            align-items:flex-start;
-            gap:8px;
-          "
-        >
-
+        <div class="late-warning detail">
           <span>⚠</span>
-
           <span>
             انتهى موعد التسليم — يمكنك التسليم الآن، وسيتم احتساب
             <strong> {{ getDaysLateText(t) }} </strong>
             على التسليم.
           </span>
-
         </div>
-
       }
 
 
       <!-- GRADE -->
       @if (submission) {
-
-        @if (
-          submission.grade !== null &&
-          submission.grade !== undefined
-        ) {
-
-          <div
-            style="
-              background:var(--status-active-bg);
-              border-radius:11px;
-              padding:14px;
-              margin-bottom:16px;
-            "
-          >
-
-            <div
-              style="
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
-              "
-            >
-
-              <span
-                style="
-                  font-size:14px;
-                  color:var(--status-active-fg);
-                  font-weight:600;
-                "
-              >
-                تقييم المدرب
-              </span>
-
-              <strong
-                style="
-                  font-size:20px;
-                  color:var(--status-active-fg);
-                "
-              >
-                {{ submission.grade }}/100
-              </strong>
-
+        @if (submission.grade !== null && submission.grade !== undefined) {
+          <div class="grade-box detail">
+            <div class="grade-box-inner">
+              <span class="grade-label">تقييم المدرب</span>
+              <strong class="grade-value">{{ submission.grade }}/100</strong>
             </div>
-
             @if (submission.feedback) {
-
-              <p
-                style="
-                  margin:8px 0 0;
-                  font-size:13px;
-                  line-height:1.8;
-                "
-              >
-                {{ submission.feedback }}
-              </p>
-
+              <p class="grade-feedback">{{ submission.feedback }}</p>
             }
-
           </div>
-
         }
-
       }
 
 
       <!-- SUBMISSION -->
       @if (taskStatus !== 'مكتمل') {
 
-        <div>
+        <h3 class="submit-section-title">تسليم المهمة</h3>
 
-          <h3
-            style="
-              margin:0 0 7px;
-              color:var(--color-navy);
-              font-size:17px;
-            "
-          >
-            تسليم المهمة
-          </h3>
+        <p class="submit-section-hint">
+          الصق رابط التسليم GitHub أو Google Drive أو أي رابط خارجي.
+        </p>
 
-          <p
-            style="
-              margin:0 0 14px;
-              font-size:13px;
-              line-height:1.7;
-              color:var(--color-text-secondary);
-            "
-          >
-            الصق رابط التسليم GitHub أو Google Drive أو أي رابط خارجي.
-          </p>
+        <input
+          class="nfd-input submission-input"
+          dir="ltr"
+          [(ngModel)]="submissionLink"
+          placeholder="https://github.com/..."
+          autocomplete="url"
+          [disabled]="submitting()"
+        />
 
-
-          <!-- SUBMISSION URL INPUT -->
-          <input
-            class="nfd-input"
-            dir="ltr"
-            [(ngModel)]="submissionLink"
-            placeholder="https://github.com/..."
-            autocomplete="url"
-            [disabled]="submitting()"
-            style="
-              width:100%;
-              box-sizing:border-box;
-              font-size:14px;
-              padding:11px;
-            "
-          />
-
-
-          <!-- URL ERROR -->
-          @if (
-            submissionLink.trim() &&
-            !isValidSubmissionUrl(submissionLink)
-          ) {
-
-            <div
-              style="
-                display:flex;
-                align-items:flex-start;
-                gap:8px;
-                margin-top:9px;
-                padding:10px 12px;
-                border-radius:9px;
-                background:var(--status-new-bg);
-                color:var(--status-new-fg);
-                font-size:12px;
-                line-height:1.7;
-              "
-            >
-
-              <span>⚠</span>
-
-              <span>{{ getSubmissionUrlError() }}</span>
-
-            </div>
-
-          }
-
-
-          <!-- URL VALID -->
-          @if (
-            submissionLink.trim() &&
-            isValidSubmissionUrl(submissionLink)
-          ) {
-
-            <div
-              style="
-                display:flex;
-                align-items:center;
-                gap:7px;
-                margin-top:9px;
-                padding:9px 12px;
-                border-radius:9px;
-                background:var(--status-completed-bg);
-                color:var(--status-completed-fg);
-                font-size:12px;
-              "
-            >
-
-              <span>✓</span>
-
-              <span>الرابط صالح ويمكن إرساله.</span>
-
-            </div>
-
-          }
-
-
-          <!-- SUBMIT BUTTON -->
-          <div
-            style="
-              display:flex;
-              justify-content:center;
-              margin-top:14px;
-            "
-          >
-
-            <button
-              class="nfd-btn primary"
-              style="
-                min-width:160px;
-                font-size:13px;
-                padding:10px 22px;
-              "
-              (click)="submit()"
-              [disabled]="
-                !submissionLink.trim() ||
-                !isValidSubmissionUrl(submissionLink) ||
-                submitting()
-              "
-            >
-
-              @if (submitting()) {
-
-                جاري التسليم...
-
-              } @else {
-
-                @if (deadlinePassed) {
-
-                  <span>
-                    ⚠ تسليم متأخر
-                    @if (daysLate > 0) {
-                      ({{ daysLate }} يوم)
-                    }
-                  </span>
-
-                } @else {
-
-                  {{ submission ? 'إعادة التسليم' : 'تسليم المهمة' }}
-
-                }
-
-              }
-
-            </button>
-
+        @if (submissionLink.trim() && !isValidSubmissionUrl(submissionLink)) {
+          <div class="url-feedback error">
+            <span>⚠</span>
+            <span>{{ getSubmissionUrlError() }}</span>
           </div>
+        }
 
+        @if (submissionLink.trim() && isValidSubmissionUrl(submissionLink)) {
+          <div class="url-feedback valid">
+            <span>✓</span>
+            <span>الرابط صالح ويمكن إرساله.</span>
+          </div>
+        }
+
+        <div class="submit-button-row">
+          <button
+            class="nfd-btn primary submit-btn"
+            (click)="submit()"
+            [disabled]="
+              !submissionLink.trim() ||
+              !isValidSubmissionUrl(submissionLink) ||
+              submitting()
+            "
+          >
+            @if (submitting()) {
+              جاري التسليم...
+            } @else {
+              @if (deadlinePassed) {
+                <span>
+                  ⚠ تسليم متأخر
+                  @if (daysLate > 0) {
+                    ({{ daysLate }} يوم)
+                  }
+                </span>
+              } @else {
+                {{ submission ? 'إعادة التسليم' : 'تسليم المهمة' }}
+              }
+            }
+          </button>
         </div>
 
       }
 
     </div>
-
   }
 
 
-  <!-- PROJECTS LIST -->
+  <!-- =========================================================
+       PROJECTS LIST
+  ========================================================= -->
   @if (tab() === 'projects' && !selectedProject()) {
 
     @if (loadingProfile() || loadingProjects()) {
 
-      <div
-        style="
-          width:100%;
-          padding:30px 0;
-          text-align:center;
-        "
-      >
-
-        <p
-          class="nfd-muted"
-          style="
-            margin:0;
-            font-size:14px;
-          "
-        >
-          جاري تحميل المشاريع...
-        </p>
-
+      <div class="projects-loading">
+        <p class="nfd-muted">جاري تحميل المشاريع...</p>
       </div>
 
     } @else {
 
       @if (projects().length > 0) {
 
-        <div
-          style="
-            display:flex;
-            flex-direction:column;
-            gap:16px;
-            width:100%;
-          "
-        >
+        <div class="projects-stack">
 
           @for (project of projects(); track project.projectId) {
 
-            <div
-              class="nfd-card"
-              style="
-                width:100%;
-                box-sizing:border-box;
-                padding:20px 22px;
-                border-radius:14px;
-                cursor:pointer;
-                overflow:hidden;
-                transition:
-                  transform .2s ease,
-                  box-shadow .2s ease;
-              "
-              (click)="selectProject(project)"
-            >
+            <div class="nfd-card project-card" (click)="selectProject(project)">
 
-              <div
-                style="
-                  display:flex;
-                  align-items:flex-start;
-                  gap:18px;
-                  width:100%;
-                  direction:rtl;
-                "
-              >
+              <div class="project-card-top">
 
-                <div
-                  style="
-                    width:56px;
-                    height:56px;
-                    min-width:56px;
-                    border-radius:14px;
-                    background:var(--color-tint-indigo);
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                  "
-                >
-
+                <div class="project-icon">
                   <svg
                     width="27"
                     height="27"
@@ -1026,106 +369,39 @@
                     <path d="M8 13h3"></path>
                     <path d="M8 16h5"></path>
                   </svg>
-
                 </div>
 
+                <div class="project-main">
 
-                <div
-                  style="
-                    flex:1;
-                    min-width:0;
-                  "
-                >
-
-                  <div
-                    style="
-                      display:flex;
-                      align-items:center;
-                      justify-content:flex-start;
-                      gap:9px;
-                      flex-wrap:wrap;
-                      margin-bottom:5px;
-                    "
-                  >
-
-                    <h3
-                      style="
-                        margin:0;
-                        color:var(--color-navy);
-                        font-size:17px;
-                        line-height:1.6;
-                        font-weight:700;
-                        overflow-wrap:anywhere;
-                      "
-                    >
-                      {{ project.title }}
-                    </h3>
-
+                  <div class="project-title-row">
+                    <h3 class="project-title">{{ project.title }}</h3>
                     <span
-                      class="nfd-badge"
-                      style="
-                        font-size:11px;
-                        padding:4px 9px;
-                        white-space:nowrap;
-                      "
+                      class="nfd-badge project-status-badge"
                       [style.background]="projectStatusBackground(project)"
                       [style.color]="projectStatusForeground(project)"
                     >
                       {{ displayProjectStatus(project) }}
                     </span>
-
                   </div>
 
+                  <p class="project-description">{{ project.description }}</p>
 
-                  <p
-                    style="
-                      margin:0;
-                      color:var(--color-text-secondary);
-                      font-size:13px;
-                      line-height:1.7;
-                      overflow-wrap:anywhere;
-                    "
-                  >
-                    {{ project.description }}
-                  </p>
-
-
-                  <div
-                    style="
-                      display:flex;
-                      align-items:center;
-                      gap:14px;
-                      flex-wrap:wrap;
-                      margin-top:8px;
-                      color:var(--color-text-secondary);
-                      font-size:11px;
-                    "
-                  >
-
+                  <div class="project-dates-row">
                     <span>
                       البداية:
-                      <strong style="color:var(--color-text-secondary); font-weight:500;">
+                      <strong style="color: var(--color-text-secondary); font-weight: 500;">
                         {{ projectStartDate(project) | date:'dd-MM-yyyy' }}
                       </strong>
                     </span>
 
-                    <span
-                      style="
-                        width:4px;
-                        height:4px;
-                        border-radius:50%;
-                        background:var(--color-text-secondary);
-                        opacity:.45;
-                      "
-                    ></span>
+                    <span class="project-date-dot"></span>
 
                     <span>
                       النهاية:
-                      <strong style="color:var(--color-text-secondary); font-weight:500;">
+                      <strong style="color: var(--color-text-secondary); font-weight: 500;">
                         {{ projectEndDate(project) | date:'dd-MM-yyyy' }}
                       </strong>
                     </span>
-
                   </div>
 
                 </div>
@@ -1134,21 +410,8 @@
 
 
               <!-- PROJECT STAGES -->
-              <div
-                style="
-                  width:100%;
-                  margin-top:20px;
-                  direction:rtl;
-                "
-              >
-
-                <div
-                  style="
-                    display:flex;
-                    align-items:flex-start;
-                    width:100%;
-                  "
-                >
+              <div class="project-stages">
+                <div class="project-stages-row">
 
                   @for (
                     stage of ['التخطيط','التطوير','الاختبار','التسليم'];
@@ -1156,89 +419,33 @@
                     let i = $index
                   ) {
 
-                    <div
-                      style="
-                        flex:1;
-                        min-width:0;
-                        display:flex;
-                        align-items:flex-start;
-                      "
-                    >
+                    <div class="stage-wrapper">
 
-                      <div
-                        style="
-                          display:flex;
-                          flex-direction:column;
-                          align-items:center;
-                          min-width:48px;
-                        "
-                      >
+                      <div class="stage-column">
 
                         <div
-                          style="
-                            width:24px;
-                            height:24px;
-                            border-radius:50%;
-                            display:flex;
-                            align-items:center;
-                            justify-content:center;
-                            font-size:9px;
-                            box-sizing:border-box;
-                          "
-                          [style.background]="
-                            projectStagesCompleted(project)
-                              ? 'var(--color-navy)'
-                              : '#e2e8f0'
-                          "
-                          [style.color]="
-                            projectStagesCompleted(project)
-                              ? '#ffffff'
-                              : '#64748b'
-                          "
+                          class="stage-circle"
+                          [style.background]="projectStagesCompleted(project) ? 'var(--color-navy)' : '#e2e8f0'"
+                          [style.color]="projectStagesCompleted(project) ? '#ffffff' : '#64748b'"
                         >
                           {{ i + 1 }}
                         </div>
 
                         <span
-                          style="
-                            margin-top:5px;
-                            font-size:10px;
-                            white-space:nowrap;
-                            text-align:center;
-                          "
-                          [style.color]="
-                            projectStagesCompleted(project)
-                              ? 'var(--color-navy)'
-                              : 'var(--color-text-secondary)'
-                          "
-                          [style.font-weight]="
-                            projectStagesCompleted(project)
-                              ? '700'
-                              : '400'
-                          "
+                          class="stage-label"
+                          [style.color]="projectStagesCompleted(project) ? 'var(--color-navy)' : 'var(--color-text-secondary)'"
+                          [style.font-weight]="projectStagesCompleted(project) ? '700' : '400'"
                         >
                           {{ stage }}
                         </span>
 
                       </div>
 
-
                       @if (i < 3) {
-
                         <div
-                          style="
-                            flex:1;
-                            height:2px;
-                            margin-top:11px;
-                            min-width:10px;
-                          "
-                          [style.background]="
-                            projectStagesCompleted(project)
-                              ? 'var(--color-navy)'
-                              : '#dfe4ec'
-                          "
+                          class="stage-line"
+                          [style.background]="projectStagesCompleted(project) ? 'var(--color-navy)' : '#dfe4ec'"
                         ></div>
-
                       }
 
                     </div>
@@ -1246,7 +453,6 @@
                   }
 
                 </div>
-
               </div>
 
             </div>
@@ -1257,84 +463,29 @@
 
       } @else {
 
-        <div
-          class="nfd-card"
-          style="
-            width:100%;
-            box-sizing:border-box;
-            text-align:center;
-            padding:35px 20px;
-            font-size:14px;
-          "
-        >
-
-          <p
-            class="nfd-muted"
-            style="margin:0;"
-          >
-            لا توجد مشاريع لهذا البرنامج حاليًا.
-          </p>
-
+        <div class="nfd-card empty-projects">
+          <p class="nfd-muted">لا توجد مشاريع لهذا البرنامج حاليًا.</p>
         </div>
 
       }
-
     }
-
   }
 
 
-  <!-- PROJECT DETAILS -->
+  <!-- =========================================================
+       PROJECT DETAILS
+  ========================================================= -->
   @if (tab() === 'projects' && selectedProject(); as project) {
 
-    <button
-      class="nfd-muted"
-      style="
-        display:inline-block;
-        margin-bottom:14px;
-        border:0;
-        background:none;
-        cursor:pointer;
-        font-size:14px;
-      "
-      (click)="backToProjects()"
-    >
+    <button class="nfd-muted back-btn" (click)="backToProjects()">
       ← العودة إلى المشاريع
     </button>
 
+    <div class="nfd-card project-detail-card">
 
-    <div
-      class="nfd-card"
-      style="
-        width:100%;
-        box-sizing:border-box;
-        overflow:hidden;
-        padding:22px;
-      "
-    >
+      <div class="project-detail-header">
 
-      <div
-        style="
-          display:flex;
-          align-items:flex-start;
-          gap:18px;
-          direction:rtl;
-        "
-      >
-
-        <div
-          style="
-            width:64px;
-            height:64px;
-            min-width:64px;
-            border-radius:14px;
-            background:var(--color-tint-indigo);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-          "
-        >
-
+        <div class="project-detail-icon">
           <svg
             width="30"
             height="30"
@@ -1352,63 +503,22 @@
             <path d="M8 13h3"></path>
             <path d="M8 16h5"></path>
           </svg>
-
         </div>
 
+        <div class="project-detail-main">
 
-        <div
-          style="
-            flex:1;
-            min-width:0;
-          "
-        >
-
-          <div
-            style="
-              display:flex;
-              align-items:center;
-              gap:9px;
-              flex-wrap:wrap;
-              margin-bottom:6px;
-            "
-          >
-
-            <h3
-              style="
-                margin:0;
-                color:var(--color-navy);
-                font-size:21px;
-                line-height:1.6;
-              "
-            >
-              {{ project.title }}
-            </h3>
-
+          <div class="project-detail-title-row">
+            <h3 class="project-detail-title">{{ project.title }}</h3>
             <span
-              class="nfd-badge"
-              style="
-                font-size:11px;
-                padding:4px 9px;
-              "
+              class="nfd-badge project-detail-status-badge"
               [style.background]="projectStatusBackground(project)"
               [style.color]="projectStatusForeground(project)"
             >
               {{ displayProjectStatus(project) }}
             </span>
-
           </div>
 
-
-          <p
-            style="
-              margin:0;
-              font-size:14px;
-              line-height:1.8;
-              color:var(--color-text-secondary);
-            "
-          >
-            {{ project.description }}
-          </p>
+          <p class="project-detail-description">{{ project.description }}</p>
 
         </div>
 
@@ -1416,106 +526,31 @@
 
 
       <!-- DATES -->
-      <div
-        style="
-          display:grid;
-          grid-template-columns:repeat(2,minmax(0,1fr));
-          gap:12px;
-          margin-top:20px;
-        "
-      >
+      <div class="project-dates-grid">
 
-        <div
-          style="
-            background:var(--color-tint-indigo);
-            border-radius:10px;
-            padding:13px;
-          "
-        >
-
-          <span
-            style="
-              display:block;
-              font-size:12px;
-              color:var(--color-text-secondary);
-              margin-bottom:5px;
-            "
-          >
-            تاريخ البداية
-          </span>
-
-          <strong
-            style="
-              font-size:13px;
-              color:var(--color-navy);
-            "
-          >
+        <div class="project-date-box">
+          <span class="project-date-label">تاريخ البداية</span>
+          <strong class="project-date-value">
             {{ projectStartDate(project) | date:'yyyy-MM-dd' }}
           </strong>
-
         </div>
 
-
-        <div
-          style="
-            background:var(--color-tint-indigo);
-            border-radius:10px;
-            padding:13px;
-          "
-        >
-
-          <span
-            style="
-              display:block;
-              font-size:12px;
-              color:var(--color-text-secondary);
-              margin-bottom:5px;
-            "
-          >
-            تاريخ النهاية
-          </span>
-
-          <strong
-            style="
-              font-size:13px;
-              color:var(--color-navy);
-            "
-          >
+        <div class="project-date-box">
+          <span class="project-date-label">تاريخ النهاية</span>
+          <strong class="project-date-value">
             {{ projectEndDate(project) | date:'yyyy-MM-dd' }}
           </strong>
-
         </div>
 
       </div>
 
 
       <!-- PROJECT STAGES -->
-      <div
-        style="
-          margin-top:28px;
-        "
-      >
+      <div class="project-detail-stages">
 
-        <strong
-          style="
-            display:block;
-            font-size:15px;
-            color:var(--color-navy);
-            margin-bottom:16px;
-          "
-        >
-          مراحل المشروع
-        </strong>
+        <strong class="project-detail-stages-title">مراحل المشروع</strong>
 
-
-        <div
-          style="
-            display:flex;
-            align-items:flex-start;
-            width:100%;
-            direction:rtl;
-          "
-        >
+        <div class="project-detail-stages-row">
 
           @for (
             stage of ['التخطيط','التطوير','الاختبار','التسليم'];
@@ -1523,89 +558,33 @@
             let i = $index
           ) {
 
-            <div
-              style="
-                flex:1;
-                display:flex;
-                align-items:flex-start;
-                min-width:0;
-              "
-            >
+            <div class="detail-stage-wrapper">
 
-              <div
-                style="
-                  display:flex;
-                  flex-direction:column;
-                  align-items:center;
-                  min-width:55px;
-                "
-              >
+              <div class="detail-stage-column">
 
                 <div
-                  style="
-                    width:30px;
-                    height:30px;
-                    border-radius:50%;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    font-size:11px;
-                  "
-                  [style.background]="
-                    projectStagesCompleted(project)
-                      ? 'var(--color-navy)'
-                      : '#e2e8f0'
-                  "
-                  [style.color]="
-                    projectStagesCompleted(project)
-                      ? '#ffffff'
-                      : '#64748b'
-                  "
+                  class="detail-stage-circle"
+                  [style.background]="projectStagesCompleted(project) ? 'var(--color-navy)' : '#e2e8f0'"
+                  [style.color]="projectStagesCompleted(project) ? '#ffffff' : '#64748b'"
                 >
                   {{ i + 1 }}
                 </div>
 
-
                 <span
-                  style="
-                    font-size:11px;
-                    margin-top:6px;
-                    text-align:center;
-                    white-space:nowrap;
-                  "
-                  [style.color]="
-                    projectStagesCompleted(project)
-                      ? 'var(--color-navy)'
-                      : 'var(--color-text-secondary)'
-                  "
-                  [style.font-weight]="
-                    projectStagesCompleted(project)
-                      ? '700'
-                      : '400'
-                  "
+                  class="detail-stage-label"
+                  [style.color]="projectStagesCompleted(project) ? 'var(--color-navy)' : 'var(--color-text-secondary)'"
+                  [style.font-weight]="projectStagesCompleted(project) ? '700' : '400'"
                 >
                   {{ stage }}
                 </span>
 
               </div>
 
-
               @if (i < 3) {
-
                 <div
-                  style="
-                    flex:1;
-                    height:2px;
-                    margin-top:14px;
-                    min-width:10px;
-                  "
-                  [style.background]="
-                    projectStagesCompleted(project)
-                      ? 'var(--color-navy)'
-                      : '#e2e8f0'
-                  "
+                  class="detail-stage-line"
+                  [style.background]="projectStagesCompleted(project) ? 'var(--color-navy)' : '#e2e8f0'"
                 ></div>
-
               }
 
             </div>
@@ -1617,7 +596,6 @@
       </div>
 
     </div>
-
   }
 
 </div>
