@@ -1,4 +1,3 @@
-
 :host {
   display: block;
   min-width: 0;
@@ -650,120 +649,15 @@
   opacity: 0.7;
 }
 
-/* Announcement workspace */
+/* Announcements workspace: table on top, form below */
 .announcements-workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(290px, 0.85fr);
-  align-items: start;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
   min-width: 0;
 }
 
-.announcements-list-panel,
-.announcement-form-card {
-  min-width: 0;
-  border: 1px solid var(--nt-border);
-  border-radius: var(--nt-radius);
-  background: var(--nt-surface);
-}
-
-.announcements-list-panel {
-  display: flex;
-  flex-direction: column;
-  overflow: visible;
-}
-
-/* List title and Add Announcement button */
-.panel-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 15px 16px;
-  border-bottom: 1px solid var(--nt-border);
-}
-
-.panel-heading > div {
-  min-width: 0;
-}
-
-.panel-heading h2 {
-  margin: 0 0 4px;
-  color: var(--nt-text);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.panel-heading p {
-  margin: 0;
-  color: var(--nt-muted);
-  font-size: 12px;
-}
-
-/* Add announcement button */
-.add-announcement-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 9px 15px;
-  flex: 0 0 auto;
-  white-space: nowrap;
-  box-shadow: 0 2px 5px rgb(37 99 235 / 12%);
-}
-
-.add-announcement-button span {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.add-announcement-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgb(37 99 235 / 18%);
-}
-
-.add-announcement-button:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.add-announcement-button:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.announcements-table-card {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  border: none;
-  border-radius: 0 0 var(--nt-radius) var(--nt-radius);
-}
-
-.announcements-table-scroll {
-  max-height: clamp(260px, 48vh, 520px);
-  overflow: auto;
-  border-radius: 0;
-}
-
-.announcements-content .data-table {
-  min-width: 760px;
-}
-
-.announcements-content .data-table th,
-.announcements-content .data-table td {
-  vertical-align: middle;
-}
-
-.announcements-content .data-table th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: var(--nt-hover);
-}
-
+/* Announcement-specific cell styling */
 .announcement-message {
   min-width: 150px;
   max-width: 350px;
@@ -773,27 +667,19 @@
   white-space: pre-wrap;
 }
 
-.announcements-content .data-table td:nth-child(4),
-.announcements-content .data-table td:nth-child(5),
-.announcements-content .data-table td:nth-child(6) {
+.announcements-table td:nth-child(4),
+.announcements-table td:nth-child(5),
+.announcements-table td:nth-child(6) {
   white-space: nowrap;
-}
-
-.announcements-pagination {
-  align-items: flex-start;
-  flex-direction: column;
-  gap: 9px;
-  padding: 12px;
-}
-
-.announcements-pagination .pagination-controls {
-  justify-content: flex-start;
-  width: 100%;
 }
 
 /* Announcement form */
 .announcement-form-card {
+  min-width: 0;
   padding: 18px;
+  border: 1px solid var(--nt-border);
+  border-radius: var(--nt-radius);
+  background: var(--nt-surface);
 }
 
 .section-heading {
@@ -966,31 +852,8 @@
     padding: 16px;
   }
 
-  .announcements-workspace {
-    grid-template-columns: minmax(0, 1.4fr) minmax(270px, 0.9fr);
-    gap: 12px;
-  }
-
   .announcement-form-card {
     padding: 15px;
-  }
-
-  .announcements-content .data-table {
-    min-width: 730px;
-  }
-}
-
-@media (max-width: 950px) {
-  .announcements-workspace {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .announcements-table-scroll {
-    max-height: 420px;
-  }
-
-  .announcement-form-card {
-    padding: 18px;
   }
 }
 
@@ -1054,21 +917,6 @@
   .form-actions {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .announcements-content .data-table {
-    min-width: 730px;
-  }
-}
-
-@media (max-width: 576px) {
-  .panel-heading {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .add-announcement-button {
-    width: 100%;
   }
 }
 

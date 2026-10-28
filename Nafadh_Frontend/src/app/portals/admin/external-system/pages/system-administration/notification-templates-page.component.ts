@@ -145,6 +145,9 @@ export class NotificationTemplatesPageComponent {
   readonly announcementFormError = signal('');
   readonly announcementSuccessMessage = signal('');
 
+  // Controls the visibility of the announcement form.
+  readonly announcementFormVisible = signal(false);
+
   readonly announcementScopeOptions: {
     value: ScopeName;
     label: string;
@@ -440,60 +443,58 @@ export class NotificationTemplatesPageComponent {
   }
 
   // Announcements
+  loadAnnouncements(): void {
+    this.announcementsLoading.set(true);
+    this.announcementsError.set('');
 
-loadAnnouncements(): void {
-  this.announcementsLoading.set(true);
-  this.announcementsError.set('');
+    forkJoin({
+      platform: this.announcementApi.getByScope(0),
+      companies: this.announcementApi.getByScope(1),
+      batches: this.announcementApi.getByScope(2),
+    }).subscribe({
+      next: ({ platform, companies, batches }) => {
+        const uniqueAnnouncements = new Map<number, AnnouncementDto>();
 
-  forkJoin({
-    platform: this.announcementApi.getByScope(0),
-    companies: this.announcementApi.getByScope(1),
-    batches: this.announcementApi.getByScope(2),
-  }).subscribe({
-    next: ({ platform, companies, batches }) => {
-      const uniqueAnnouncements = new Map<number, AnnouncementDto>();
+        [...platform, ...companies, ...batches].forEach((dto) => {
+          uniqueAnnouncements.set(dto.announcementId, dto);
+        });
 
-      [...platform, ...companies, ...batches].forEach((dto) => {
-        uniqueAnnouncements.set(dto.announcementId, dto);
-      });
+        const mapped = Array.from(uniqueAnnouncements.values())
+          .map((dto) => this.mapAnnouncement(dto))
+          .sort(
+            (a, b) =>
+              new Date(b.date).getTime() - new Date(a.date).getTime() ||
+              b.id - a.id,
+          );
 
-      const mapped = Array.from(uniqueAnnouncements.values())
-        .map((dto) => this.mapAnnouncement(dto))
-        .sort(
-          (a, b) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime() ||
-            b.id - a.id,
+        this.announcements.set(mapped);
+        this.announcementsLoading.set(false);
+
+        const lastPage = Math.max(
+          0,
+          this.announcementTotalPages() - 1,
         );
 
-      this.announcements.set(mapped);
-      this.announcementsLoading.set(false);
+        this.announcementPageIndex.set(
+          Math.min(this.announcementPageIndex(), lastPage),
+        );
 
-      const lastPage = Math.max(
-        0,
-        this.announcementTotalPages() - 1,
-      );
+        console.log('Platform announcements:', platform.length);
+        console.log('Company announcements:', companies.length);
+        console.log('Batch announcements:', batches.length);
+        console.log('Total unique announcements:', mapped.length);
+      },
+      error: (error: unknown) => {
+        console.error('Failed to load announcements by scope:', error);
 
-      this.announcementPageIndex.set(
-        Math.min(this.announcementPageIndex(), lastPage),
-      );
+        this.announcementsError.set(
+          'تعذر تحميل الإعلانات حسب النطاق. يرجى التحقق من استجابات الـ API.',
+        );
 
-      console.log('Platform announcements:', platform.length);
-      console.log('Company announcements:', companies.length);
-      console.log('Batch announcements:', batches.length);
-      console.log('Total unique announcements:', mapped.length);
-    },
-    error: (error: unknown) => {
-      console.error('Failed to load announcements by scope:', error);
-
-      this.announcementsError.set(
-        'تعذر تحميل الإعلانات حسب النطاق. يرجى التحقق من استجابات الـ API.',
-      );
-
-      this.announcementsLoading.set(false);
-    },
-  });
-}
-
+        this.announcementsLoading.set(false);
+      },
+    });
+  }
 
   private mapAnnouncement(
     dto: AnnouncementDto,
@@ -571,7 +572,27 @@ loadAnnouncements(): void {
     }
   }
 
+  // Opens the form in Add mode and resets its values.
   resetAnnouncementForm(): void {
+    if (this.savingAnnouncement()) return;
+
+    this.editingAnnouncementId.set(null);
+    this.announcementMessage.set('');
+    this.announcementScopeType.set(ANNOUNCEMENT_SCOPE.Platform);
+    this.announcementScopeId.set(null);
+    this.announcementFormError.set('');
+    this.announcementSuccessMessage.set('');
+
+    this.announcementFormVisible.set(true);
+
+    this.scrollToAnnouncementForm();
+  }
+
+  // Closes the form without changing the announcement list.
+  closeAnnouncementForm(): void {
+    if (this.savingAnnouncement()) return;
+
+    this.announcementFormVisible.set(false);
     this.editingAnnouncementId.set(null);
     this.announcementMessage.set('');
     this.announcementScopeType.set(ANNOUNCEMENT_SCOPE.Platform);
@@ -580,6 +601,7 @@ loadAnnouncements(): void {
     this.announcementSuccessMessage.set('');
   }
 
+  // Opens the same form in Edit mode.
   editAnnouncement(announcement: AnnouncementViewModel): void {
     this.editingAnnouncementId.set(announcement.id);
     this.announcementMessage.set(announcement.message);
@@ -589,10 +611,25 @@ loadAnnouncements(): void {
     this.announcementScopeId.set(announcement.scopeId);
     this.announcementFormError.set('');
     this.announcementSuccessMessage.set('');
+
+    this.announcementFormVisible.set(true);
     this.closeMenu();
 
-    document.getElementById('announcementMessage')?.focus({
-      preventScroll: true,
+    this.scrollToAnnouncementForm();
+  }
+
+  private scrollToAnnouncementForm(): void {
+    setTimeout(() => {
+      document
+        .getElementById('announcementFormCard')
+        ?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+
+      document
+        .getElementById('announcementMessage')
+        ?.focus({ preventScroll: true });
     });
   }
 
@@ -684,6 +721,7 @@ loadAnnouncements(): void {
           this.announcementPageIndex.set(0);
         }
 
+        // Keep the form visible so the success message can be seen.
         this.loadAnnouncements();
       },
       error: (error: unknown) => {
