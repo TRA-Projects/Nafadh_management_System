@@ -21,8 +21,159 @@ export class AdminReports implements OnInit {
   selectedBatch: any = null;
   batchIdInput = 1;
 
-  trainerView: 'grid' | 'details' = 'grid';
+  trainerView: 'grid' | 'details' | 'attendance' = 'grid';
   selectedTrainer: any = null;
+
+  // ==========================================
+ // Admin Trainer Attendance - Read Only
+ // ==========================================
+
+ // سجلات الحضور القادمة من قاعدة البيانات
+ trainerAttendanceRecords: any[] = [];
+
+ // حالة تحميل سجل الحضور
+ trainerAttendanceLoading = false;
+
+ // رسالة الخطأ
+ trainerAttendanceError = '';
+
+ // طريقة عرض السجل
+ trainerAttendanceView: 'day' | 'week' | 'month' | 'custom' = 'month';
+  trainerAttendanceDate = this.getLocalDateKey(new Date());
+  trainerAttendanceFrom = this.getLocalDateKey(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  trainerAttendanceTo = this.getLocalDateKey(new Date());
+  trainerAttendanceCompanyFilter = 'ALL';
+  trainerAttendanceStatusFilter = 'ALL';
+  trainerAttendanceConfirmationFilter = 'ALL';
+  private attendanceRequestId = 0;
+
+private getLocalDateKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+ trainerAttendanceCompanies: { id: number; name: string }[] = [];
+
+
+private updateTrainerAttendanceCompanies(): void {
+  const companies = new Map<number, string>();
+
+  for (const record of this.trainerAttendanceRecords) {
+    if (record.companyId != null) {
+      const id = Number(record.companyId);
+
+      companies.set(
+        id,
+        record.companyName || `شركة #${id}`
+      );
+    }
+  }
+
+  this.trainerAttendanceCompanies = [...companies]
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+}
+
+
+  get filteredTrainerAttendanceRecords(): any[] {
+    return this.trainerAttendanceRecords.filter(r =>
+      (this.trainerAttendanceCompanyFilter === 'ALL' || String(r.companyId) === this.trainerAttendanceCompanyFilter) &&
+      (this.trainerAttendanceStatusFilter === 'ALL' || r.status === this.trainerAttendanceStatusFilter) &&
+      (this.trainerAttendanceConfirmationFilter === 'ALL' || String(!!r.isConfirmed) === this.trainerAttendanceConfirmationFilter)
+    ).sort((a, b) => String(b.date).localeCompare(String(a.date)) || Number(b.trainerAttendanceId) - Number(a.trainerAttendanceId));
+  }
+
+  get trainerAttendanceConfirmedCount(): number {
+    return this.filteredTrainerAttendanceRecords.filter(r => r.isConfirmed).length;
+  }
+
+  get trainerAttendanceCompanyCount(): number {
+    return new Set(this.filteredTrainerAttendanceRecords.map(r => r.companyId).filter((id: any) => id != null)).size;
+  }
+
+  getTrainerAttendanceStatusLabel(status: string): string {
+    switch (status) {
+      case 'Present': return 'حاضر';
+      case 'Late': return 'متأخر';
+      case 'Absent': return 'غائب';
+      case 'EarlyLeave': return 'انصراف مبكر';
+      default: return status || 'غير محدد';
+    }
+  }
+
+  getTrainerAttendanceStatusClass(status: string): string {
+    switch (status) {
+      case 'Present': return 'present';
+      case 'Late': return 'late';
+      case 'Absent': return 'absent';
+      case 'EarlyLeave': return 'early';
+      default: return 'unknown';
+    }
+  }
+
+  private setTrainerAttendanceRange(view: 'day' | 'week' | 'month'): void {
+    const date = new Date(`${this.trainerAttendanceDate}T12:00:00`);
+    if (Number.isNaN(date.getTime())) return;
+    if (view === 'day') {
+      this.trainerAttendanceFrom = this.trainerAttendanceDate;
+      this.trainerAttendanceTo = this.trainerAttendanceDate;
+    } else if (view === 'week') {
+      const start = new Date(date);
+      start.setDate(date.getDate() - date.getDay());
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      this.trainerAttendanceFrom = this.getLocalDateKey(start);
+      this.trainerAttendanceTo = this.getLocalDateKey(end);
+    } else {
+      this.trainerAttendanceFrom = this.getLocalDateKey(new Date(date.getFullYear(), date.getMonth(), 1));
+      this.trainerAttendanceTo = this.getLocalDateKey(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+    }
+  }
+setTrainerAttendanceView(view: 'day' | 'week' | 'month'): void {
+  // Start from today's date when switching views
+  this.trainerAttendanceDate = this.getLocalDateKey(new Date());
+
+  this.trainerAttendanceView = view;
+  this.setTrainerAttendanceRange(view);
+  this.loadTrainerAttendance();
+}
+
+
+navigateTrainerAttendance(direction: -1 | 1): void {
+  if (this.trainerAttendanceView === 'custom') return;
+
+  const date = new Date(`${this.trainerAttendanceDate}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return;
+
+  if (this.trainerAttendanceView === 'day') {
+    date.setDate(date.getDate() + direction);
+  } else if (this.trainerAttendanceView === 'week') {
+    date.setDate(date.getDate() + direction * 7);
+  } else if (this.trainerAttendanceView === 'month') {
+    // Prevent dates like January 31 from skipping February
+    date.setDate(1);
+    date.setMonth(date.getMonth() + direction);
+  }
+
+  this.trainerAttendanceDate = this.getLocalDateKey(date);
+
+  this.setTrainerAttendanceRange(this.trainerAttendanceView);
+  this.loadTrainerAttendance();
+}
+
+
+  onTrainerAttendanceDateChange(): void {
+    this.trainerAttendanceView = 'custom';
+    this.loadTrainerAttendance();
+  }
+
+  resetTrainerAttendanceFilters(): void {
+    this.trainerAttendanceCompanyFilter = 'ALL';
+    this.trainerAttendanceStatusFilter = 'ALL';
+    this.trainerAttendanceConfirmationFilter = 'ALL';
+  }
 
   report = signal<BatchPerformanceReportDto | null>(null);
   isLoading = signal<boolean>(false);
@@ -564,7 +715,7 @@ export class AdminReports implements OnInit {
     }
   }
 
-  getTrainerPageNumbers(): number[] {
+   getTrainerPageNumbers(): number[] {
     const pages: number[] = [];
     const maxVisible = 5;
     let start = Math.max(1, this.trainersCurrentPage - 2);
@@ -578,7 +729,223 @@ export class AdminReports implements OnInit {
       pages.push(i);
     }
     return pages;
+   }
+
+    // ==========================================
+    // Open Trainer Attendance - Admin Read Only
+   // ==========================================
+openTrainerAttendance(trainer: any): void {
+  if (!trainer?.id) return;
+
+  ++this.attendanceRequestId;
+
+  this.selectedTrainer = trainer;
+  this.trainerAttendanceRecords = [];
+  this.trainerAttendanceError = '';
+
+  this.trainerAttendanceDate = this.getLocalDateKey(new Date());
+  this.trainerAttendanceView = 'month';
+
+  this.resetTrainerAttendanceFilters();
+  this.setTrainerAttendanceRange('month');
+
+  this.trainerView = 'attendance';
+  this.loadTrainerAttendance();
+  this.cdr.detectChanges();
+}
+
+
+
+
+loadTrainerAttendance(): void {
+  if (!this.selectedTrainer?.id) return;
+
+  const trainerId = Number(this.selectedTrainer.id);
+  const from = this.trainerAttendanceFrom;
+  const to = this.trainerAttendanceTo;
+
+  // Prevent old requests from updating the screen
+  const requestId = ++this.attendanceRequestId;
+
+  this.trainerAttendanceError = '';
+  this.trainerAttendanceRecords = [];
+
+  if (!from || !to || from > to) {
+    this.trainerAttendanceLoading = false;
+    this.trainerAttendanceError =
+      'يرجى اختيار فترة صحيحة: تاريخ البداية يجب أن يسبق تاريخ النهاية.';
+    this.cdr.detectChanges();
+    return;
   }
+
+  const start = new Date(`${from}T12:00:00`);
+  const end = new Date(`${to}T12:00:00`);
+
+  if (
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(end.getTime())
+  ) {
+    this.trainerAttendanceLoading = false;
+    this.trainerAttendanceError = 'التاريخ المحدد غير صالح.';
+    this.cdr.detectChanges();
+    return;
+  }
+
+  const days =
+    Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+
+  if (days > 366) {
+    this.trainerAttendanceLoading = false;
+    this.trainerAttendanceError =
+      'الحد الأقصى للفترة هو 366 يومًا.';
+    this.cdr.detectChanges();
+    return;
+  }
+
+  this.trainerAttendanceLoading = true;
+
+  this.api.getAdminTrainerAttendance(
+    from,
+    to,
+    trainerId
+  ).subscribe({
+    next: (records) => {
+      if (requestId !== this.attendanceRequestId) return;
+
+      this.trainerAttendanceRecords = records ?? [];
+      this.updateTrainerAttendanceCompanies();
+      this.trainerAttendanceLoading = false;
+      this.cdr.detectChanges();
+    },
+    error: (err) => {
+      if (requestId !== this.attendanceRequestId) return;
+
+      console.error('Trainer attendance error:', err);
+      this.trainerAttendanceRecords = [];
+      this.trainerAttendanceError =
+        'تعذر تحميل سجل حضور المدرب. حاول مرة أخرى.';
+      this.trainerAttendanceLoading = false;
+      this.cdr.detectChanges();
+    }
+  });
+}
+
+
+
+// Weekly attendance - Admin Read Only
+
+getTrainerAttendanceWeekDays(): { date: string; label: string }[] {
+  const selected = new Date(`${this.trainerAttendanceDate}T12:00:00`);
+
+  if (Number.isNaN(selected.getTime())) return [];
+
+  // Week starts on Sunday
+  const start = new Date(selected);
+  start.setDate(selected.getDate() - selected.getDay());
+
+  const dayNames = [
+    'الأحد', 'الاثنين', 'الثلاثاء',
+    'الأربعاء', 'الخميس', 'الجمعة', 'السبت'
+  ];
+
+  return dayNames.map((label, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+
+    const dateKey = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0')
+    ].join('-');
+
+    return { date: dateKey, label };
+  });
+}
+
+
+// Return filtered attendance records for a specific day
+getTrainerAttendanceRecordsForDay(date: string): any[] {
+  return this.filteredTrainerAttendanceRecords.filter(record =>
+    String(record.date).substring(0, 10) === date
+  );
+}
+
+
+// Convert attendance status to the same symbols used in Company Portal
+getTrainerAttendanceSymbol(status: string | null | undefined): string {
+  switch (status) {
+    case 'Present': return 'ح';
+    case 'Late': return 'ت';
+    case 'Absent': return 'غ';
+    case 'EarlyLeave': return 'م';
+    default: return '—';
+  }
+}
+
+
+// Monthly attendance weeks - Admin Read Only
+getTrainerAttendanceMonthWeeks(): {
+  index: number;
+  label: string;
+  days: { date: string; label: string }[];
+}[] {
+  const selected = new Date(`${this.trainerAttendanceDate}T12:00:00`);
+
+  if (Number.isNaN(selected.getTime())) return [];
+
+  const year = selected.getFullYear();
+  const month = selected.getMonth();
+  const lastDay = new Date(year, month + 1, 0).getDate();
+
+  const weeks: {
+    index: number;
+    label: string;
+    days: { date: string; label: string }[];
+  }[] = [];
+
+  let currentWeek: { date: string; label: string }[] = [];
+
+  for (let day = 1; day <= lastDay; day++) {
+    const date = new Date(year, month, day, 12);
+
+    const dateKey = [
+      year,
+      String(month + 1).padStart(2, '0'),
+      String(day).padStart(2, '0')
+    ].join('-');
+
+    currentWeek.push({
+      date: dateKey,
+      label: `${day}`
+    });
+
+    // Saturday ends the week, or the final day of the month
+    if (date.getDay() === 6 || day === lastDay) {
+      weeks.push({
+        index: weeks.length,
+        label: `${currentWeek[0].date} إلى ${currentWeek[currentWeek.length - 1].date}`,
+        days: currentWeek
+      });
+
+      currentWeek = [];
+    }
+  }
+
+  return weeks;
+}
+
+
+
+ // Return to trainers list
+ backFromTrainerAttendance(): void {
+  this.trainerView = 'grid';
+  this.selectedTrainer = null;
+  ++this.attendanceRequestId;
+  this.trainerAttendanceRecords = [];
+  this.trainerAttendanceError = '';
+
+  this.cdr.detectChanges();
+ }
 
   openTrainerModal(trainer: any) {
     this.selectedTrainer = trainer;

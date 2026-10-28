@@ -168,6 +168,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<decimal>("Capacity")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int?>("CompanyId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
@@ -181,6 +184,8 @@ namespace Nafadh_Backend.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("BatchId");
+
+                    b.HasIndex("CompanyId");
 
                     b.HasIndex("ProgramId");
 
@@ -3011,11 +3016,18 @@ namespace Nafadh_Backend.Migrations
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Batch", b =>
                 {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Nafadh_Backend.Models.NFD_Program", "Program")
                         .WithMany("Batches")
                         .HasForeignKey("ProgramId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Company");
 
                     b.Navigation("Program");
                 });

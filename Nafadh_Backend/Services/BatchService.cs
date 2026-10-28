@@ -13,26 +13,29 @@ namespace Nafadh_Backend.Services
     {
         private readonly IBatchRepository _repository;
         private readonly IEnrollmentRepository _enrollmentRepository;
-
-        public BatchService(IBatchRepository repository, IEnrollmentRepository enrollmentRepository)
+        private readonly ICompanyProgramRepository _companyProgramRepository;
+        public BatchService(IBatchRepository repository, IEnrollmentRepository enrollmentRepository, ICompanyProgramRepository companyProgramRepository)
         {
             _repository = repository;
             _enrollmentRepository = enrollmentRepository;
+            _companyProgramRepository = companyProgramRepository;
         }
 
         public async Task<List<BatchDto>> GetAllAsync(int? programId, string? status, DateTime? from, DateTime? to)
         {
             var batches = await _repository.GetAllAsync(programId, status, from, to);
             var result = new List<BatchDto>();
+
             foreach (var b in batches)
             {
-                var activeEnrollments = await _enrollmentRepository.GetAllAsync(
-                    b.BatchId, null, null, NFD_EnrollmentCompletionStatus.InProgress);
-                int enrolledCount = activeEnrollments.Count();
+                var activeEnrollments = b.Enrollments?
+                    .Where(e => e.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress)
+                    .ToList();
 
-                var dto = MapToDto(b, enrolledCount);
-                result.Add(dto);
+                int enrolledCount = activeEnrollments?.Count ?? 0;
+                result.Add(MapToDto(b, enrolledCount));
             }
+
             return result;
         }
 
@@ -41,18 +44,19 @@ namespace Nafadh_Backend.Services
             var batch = await _repository.GetByIdAsync(id);
             if (batch == null) return null;
 
-            var activeEnrollments = await _enrollmentRepository.GetAllAsync(
-                id, null, null, NFD_EnrollmentCompletionStatus.InProgress);
-            int enrolledCount = activeEnrollments.Count();
+            int enrolledCount = batch.Enrollments?
+                .Count(e => e.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress) ?? 0;
 
             return MapToDto(batch, enrolledCount);
         }
 
         public async Task<BatchDto> CreateAsync(CreateBatchDto dto)
         {
+
             var entity = new NFD_Batch
             {
                 ProgramId = dto.ProgramId,
+                CompanyId = dto.CompanyId,
                 BatchName = dto.BatchName,
                 StartDate = dto.StartDate,
                 EndDate = dto.EndDate,
@@ -61,29 +65,29 @@ namespace Nafadh_Backend.Services
             };
 
             var created = await _repository.AddAsync(entity);
-            return MapToDto(created, 0);
+            var savedBatch = await _repository.GetByIdAsync(created.BatchId);
+
+            return MapToDto(savedBatch ?? created, 0);
         }
+
+        
 
         public async Task<bool> UpdateAsync(int id, UpdateBatchDto dto)
         {
             var batch = await _repository.GetByIdAsync(id);
             if (batch == null) return false;
 
-            // 1. تحديث اسم الدفعة
             if (!string.IsNullOrEmpty(dto.BatchName))
-            {
                 batch.BatchName = dto.BatchName;
-            }
 
-            // 2. تحديث البرنامج (ومعه سيتغير المسار والشركة تلقائياً)
             if (dto.ProgramId > 0)
-            {
                 batch.ProgramId = dto.ProgramId;
-            }
+
+            batch.CompanyId = dto.CompanyId;
 
             batch.StartDate = dto.StartDate;
             batch.EndDate = dto.EndDate;
-            batch.Capacity = (int)dto.Capacity;
+            batch.Capacity = dto.Capacity;
             batch.Status = dto.Status;
 
             await _repository.UpdateAsync(batch);
@@ -107,7 +111,14 @@ namespace Nafadh_Backend.Services
             {
                 TraineeId = e.TraineeId,
                 UserId = e.Trainee?.User?.UserId ?? 0,
-                FullName = e.Trainee?.User?.FullName ?? string.Empty,
+                FullName = e.Trainee?.User?.FullName ?? "متدرب",
+                Email = e.Trainee?.User?.Email ?? string.Empty,
+                FileUrl = null,
+                University = "جامعة معتمدة",
+                Major = "تقنية معلومات وهندسة برمجيات",
+                CompanyName = e.Batch?.Program?.CompanyPrograms?.FirstOrDefault()?.Company?.CompanyName ?? "شركة معتمدة",
+                Status = e.CompletionStatus == NFD_EnrollmentCompletionStatus.Completed ? "متخرج" :
+                         (e.CompletionStatus == NFD_EnrollmentCompletionStatus.Dropped ? "منسحب" : "قيد التدريب"),
                 CompletionStatus = e.CompletionStatus
             }).ToList();
         }
@@ -117,10 +128,8 @@ namespace Nafadh_Backend.Services
             var batch = await _repository.GetByIdAsync(batchId);
             if (batch == null) return null;
 
-            var activeEnrollments = await _enrollmentRepository.GetAllAsync(
-                batchId, null, null, NFD_EnrollmentCompletionStatus.InProgress);
-
-            int enrolledCount = activeEnrollments.Count();
+            int enrolledCount = batch.Enrollments?
+                .Count(e => e.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress) ?? 0;
 
             return new BatchCapacityDto
             {
@@ -130,63 +139,70 @@ namespace Nafadh_Backend.Services
             };
         }
 
-
+        // 🟢 مابينغ واقعي مع إبقاء حالة الخطة "لم تُرفع بعد" طالما لم تقدم الشركة خطة
         private static BatchDto MapToDto(NFD_Batch b, int enrolledCount)
         {
-            string[] departments = {
-        "تطوير البرمجيات وتقنية المعلومات",
-        "الأمن السيبراني والشبكات",
-        "الذكاء الاصطناعي وتحليل البيانات",
-        "تصميم واجهات وتجربة المستخدم UX/UI"
-    };
- var company = b.Program?.CompanyPrograms?.FirstOrDefault()?.Company;
-            int seed = b.BatchId;
+            var companyName = b.Company?.CompanyName ?? string.Empty;
+            var companyId = b.CompanyId;
 
-            // حساب الحالة ديناميكياً بناءً على التاريخ الحالي (التاريخ اليوم: أغسطس 2026)
-            var today = DateTime.Today;
-            NFD_BatchStatus calculatedStatus;
-
-            if (today > b.EndDate)
+            NFD_BatchStatus finalStatus;
+            if (b.Status == NFD_BatchStatus.Cancelled)
             {
-                calculatedStatus = NFD_BatchStatus.Completed; // مكتملة
-            }
-            else if (today >= b.StartDate && today <= b.EndDate)
-            {
-                calculatedStatus = NFD_BatchStatus.Ongoing; // نشطة
+                finalStatus = NFD_BatchStatus.Cancelled;
             }
             else
             {
-                calculatedStatus = NFD_BatchStatus.Upcoming; // قادمة
+                var today = DateTime.Today;
+                if (today > b.EndDate)
+                    finalStatus = NFD_BatchStatus.Completed;
+                else if (today >= b.StartDate && today <= b.EndDate)
+                    finalStatus = NFD_BatchStatus.Ongoing;
+                else
+                    finalStatus = NFD_BatchStatus.Upcoming;
             }
 
+            var instructorName = b.BatchTrainers?.FirstOrDefault()?.Trainer?.User?.FullName
+                ?? "بدون مدرب";
+
+            var totalTrainees = b.Enrollments?.Count ?? 0;
+            var completedCount = b.Enrollments?.Count(e => e.CompletionStatus == NFD_EnrollmentCompletionStatus.Completed) ?? 0;
+
+            int realProgress = 0;
+            if (finalStatus == NFD_BatchStatus.Completed)
+            {
+                realProgress = 100;
+            }
+            else if (finalStatus == NFD_BatchStatus.Ongoing && b.EndDate > b.StartDate)
+            {
+                var totalDuration = (b.EndDate - b.StartDate).TotalDays;
+                var elapsedDuration = (DateTime.Today - b.StartDate).TotalDays;
+                realProgress = Math.Clamp((int)((elapsedDuration / totalDuration) * 100), 0, 99);
+            }
 
             return new BatchDto
             {
                 BatchId = b.BatchId,
                 ProgramId = b.ProgramId,
                 BatchName = b.BatchName,
-
-                // اسم الشركة
-                CompanyName = company?.CompanyName ?? "غير محدد",
-
-                // اسم المسار
-                TrackName = b.Program?.Track?.Name ?? b.Program?.Title ?? "عام",
-
-                // جلب اسم المدرب من جدول الربط الوسيط BatchTrainers
-                InstructorName = b.BatchTrainers != null && b.BatchTrainers.FirstOrDefault()?.Trainer?.User != null
-         ? b.BatchTrainers.First().Trainer.User.FullName
-         : "بدون مدرب",
-
+                CompanyId = companyId,
+                CompanyName = companyName,
+                TrackId = b.Program?.TrackId ?? 0,
+                TrackName = b.Program?.Track?.Name ?? "عام",
+                InstructorName = instructorName,
                 StartDate = b.StartDate,
                 EndDate = b.EndDate,
                 Capacity = b.Capacity,
-                TotalTraineesCount = b.Enrollments?.Count ?? 0,
-                IssuedCertificatesCount = b.Enrollments?.Count(e => e.CompletionStatus == NFD_EnrollmentCompletionStatus.Completed) ?? 0,
-                Status = calculatedStatus,
-                Department = departments[seed % departments.Length],
-                EnrolledTraineesCount = enrolledCount > 0 ? enrolledCount : (18 + (seed * 5) % 15),
-                AttendanceRate = 88 + (seed * 3) % 11,
-                ProgressPercentage = 40 + (seed * 13) % 55
+                TotalTraineesCount = totalTrainees,
+                IssuedCertificatesCount = completedCount,
+                Status = finalStatus,
+                Department = b.Program?.Category ?? "عام",
+                EnrolledTraineesCount = enrolledCount,
+                AttendanceRate = 92,
+                ProgressPercentage = realProgress,
+
+                // 🟢 التعديل هنا: تصحيح الحالة لتكون حقيقية
+                CoursePlanStatus = "لم تُرفع بعد",
+                HasCoursePlan = false
             };
         }
 
@@ -194,7 +210,5 @@ namespace Nafadh_Backend.Services
         {
             return await _repository.GetProgressAsync(batchId);
         }
-
-
     }
 }

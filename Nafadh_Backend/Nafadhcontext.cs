@@ -130,6 +130,12 @@ namespace Nafadh_Backend
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            modelBuilder.Entity<NFD_Batch>()
+                .HasOne(b => b.Company)
+                .WithMany()
+                .HasForeignKey(b => b.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // ---- NFD_Role ----
             modelBuilder.Entity<NFD_Role>(entity =>
             {

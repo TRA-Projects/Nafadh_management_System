@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
+using static Nafadh_Backend.DTOs.QuizAttemptDto;
 
 namespace Nafadh_Backend.Controllers
 {

@@ -5226,6 +5226,747 @@
   display: inline-block;
 }
 
+
+/* صفحة إنشاء الدفعة كاملة الشاشة */
+.create-batch-page {
+  direction: rtl;
+  width: 100%;
+  min-height: 100vh;
+  padding: 28px;
+  box-sizing: border-box;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: 'Cairo', sans-serif;
+}
+
+.create-batch-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 22px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.create-batch-back-btn,
+.create-batch-cancel-btn,
+.create-batch-save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 18px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.create-batch-back-btn {
+  border: 0;
+  background: transparent;
+  color: #475569;
+}
+
+.create-batch-back-btn:hover {
+  color: #0d1c8c;
+  background: #eef2ff;
+}
+
+.create-batch-top-actions,
+.create-batch-bottom-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.create-batch-cancel-btn {
+  background: #fff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.create-batch-cancel-btn:hover {
+  background: #f1f5f9;
+}
+
+.create-batch-save-btn {
+  color: #fff;
+  background: #0d1c8c;
+  border: 1px solid #0d1c8c;
+}
+
+.create-batch-save-btn:hover:not(:disabled) {
+  background: #172fa8;
+}
+
+.create-batch-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.create-batch-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.create-batch-heading-icon,
+.create-batch-capacity-icon,
+.create-batch-trainees-note-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #eef2ff;
+  color: #0d1c8c;
+  font-size: 20px;
+}
+
+.create-batch-heading h2 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.create-batch-heading p,
+.create-batch-section-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.create-batch-capacity-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  margin-bottom: 22px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+
+.create-batch-capacity-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.create-batch-capacity-info > span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.create-batch-capacity-info strong {
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.create-batch-capacity-info small {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.create-batch-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.create-batch-section {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+
+.create-batch-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 20px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.create-batch-section-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #eef2ff;
+  color: #0d1c8c;
+  font-weight: 800;
+}
+
+.create-batch-section-heading h3,
+.create-batch-trainees-note h3 {
+  margin: 0 0 5px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.create-batch-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 18px;
+}
+
+.create-batch-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.create-batch-field-full {
+  grid-column: 1 / -1;
+}
+
+.create-batch-field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.create-batch-field label span {
+  color: #dc2626;
+}
+
+.create-batch-field input,
+.create-batch-field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.create-batch-field input:focus,
+.create-batch-field select:focus {
+  border-color: #0d1c8c;
+  box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.1);
+}
+
+.create-batch-field small {
+  color: #64748b;
+  font-size: 11.5px;
+}
+
+.create-batch-field .create-batch-field-error {
+  color: #dc2626;
+}
+
+.create-batch-trainees-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px;
+  background: #fff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+}
+
+.create-batch-trainees-note p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+.create-batch-error-banner {
+  padding: 14px 16px;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.create-batch-bottom-actions {
+  justify-content: flex-start;
+  padding-top: 8px;
+}
+
+@media (max-width: 700px) {
+  .create-batch-page {
+    padding: 16px;
+  }
+
+  .create-batch-heading h2 {
+    font-size: 20px;
+  }
+
+  .create-batch-section {
+    padding: 18px;
+  }
+
+  .create-batch-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .create-batch-field-full {
+    grid-column: auto;
+  }
+
+  .create-batch-topbar {
+    align-items: flex-start;
+  }
+}
+
+
+
+/* ===== تحسين قسم اختيار المتدربين ===== */
+
+.batch-trainee-picker {
+  direction: rtl;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 28px 0;
+  padding: 26px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
+}
+
+.batch-trainee-picker h3 {
+  margin: 0 0 10px;
+  color: #172554;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.batch-trainee-picker p {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.batch-trainee-picker > label {
+  display: block;
+  margin: 22px 0 16px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.batch-trainee-picker input[type="search"] {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 10px;
+  padding: 13px 16px;
+  color: #0f172a;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  outline: none;
+  font: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s,
+    background 0.2s;
+}
+
+.batch-trainee-picker input[type="search"]:focus {
+  background: #fff;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* قائمة المتدربين */
+.batch-trainee-picker .batch-trainee-row {
+  display: inline-flex;
+  width: calc(50% - 10px);
+  box-sizing: border-box;
+  margin: 5px;
+  vertical-align: top;
+}
+
+.batch-trainee-row > label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  color: #334155;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.7;
+  transition: background 0.2s, border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.batch-trainee-row > label:hover {
+  background: #f8faff;
+  border-color: #a5b4fc;
+}
+
+.batch-trainee-row input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #4f46e5;
+  cursor: pointer;
+}
+
+.batch-trainee-row small {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  direction: ltr;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* إظهار عدد المتدربين المحددين */
+.batch-trainee-picker > p:last-child {
+  margin: 20px 0 0;
+  padding: 13px 16px;
+  background: #eef2ff;
+  border: 1px solid #e0e7ff;
+  border-radius: 10px;
+  color: #3730a3;
+  font-weight: 600;
+}
+
+/* رسائل التحميل والخطأ */
+.batch-trainee-picker p:empty {
+  display: none;
+}
+
+/* الشاشات الصغيرة */
+@media (max-width: 768px) {
+  .batch-trainee-picker {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .batch-trainee-picker h3 {
+    font-size: 18px;
+  }
+
+  .batch-trainee-picker .batch-trainee-row {
+    width: 100%;
+    margin: 5px 0;
+  }
+}
+
+/* إصلاح نافذة تعديل الدفعة */
+.modal-overlay:has(.batch-trainee-picker) {
+  align-items: center;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.modal-container:has(.batch-trainee-picker) {
+  width: min(900px, 96vw);
+  max-width: 900px;
+  max-height: 92vh;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* عنوان النافذة */
+.modal-container:has(.batch-trainee-picker) .modal-header {
+  flex-shrink: 0;
+}
+
+/* تمرير محتوى النموذج */
+.modal-container:has(.batch-trainee-picker) .modal-form {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 2px 12px;
+}
+
+/* ترتيب حقول الشركة */
+.modal-container:has(.batch-trainee-picker) .create-batch-field-full {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-container:has(.batch-trainee-picker) .create-batch-field-full select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* قائمة المتدربين داخل مساحة محددة */
+.batch-trainee-picker {
+  margin: 12px 0;
+  padding: 16px;
+  max-height: 280px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+/* عرض اسم المتدرب وبريده بشكل واضح */
+.batch-trainee-picker .batch-trainee-row {
+  display: flex;
+  width: 100%;
+  margin: 5px 0;
+}
+
+.batch-trainee-row > label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  overflow-wrap: anywhere;
+}
+
+.batch-trainee-row small {
+  display: block;
+  width: 100%;
+  padding-right: 30px;
+  overflow-wrap: anywhere;
+}
+
+/* أزرار الحفظ والإلغاء */
+.modal-container:has(.batch-trainee-picker) .modal-footer-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+}
+
+.batch-form-error {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 18px;
+  margin: 10px 0;
+  color: #991b1b;
+  background: #fee2e2;
+  border: 2px solid #dc2626;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.8;
+}
+
+/* تحويل واجهة تعديل الدفعة إلى مساحة كاملة */
+.modal-overlay:has(.batch-trainee-picker) {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  display: block;
+  overflow: auto;
+  background: #f1f5f9;
+  backdrop-filter: none;
+  box-sizing: border-box;
+  z-index: 99999;
+}
+
+/* إزالة شكل المربع المنبثق */
+.modal-overlay:has(.batch-trainee-picker) .modal-container {
+  width: 100%;
+  max-width: none;
+  min-height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 32px clamp(18px, 5vw, 72px);
+  border-radius: 0;
+  box-shadow: none;
+  background: #f8fafc;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* عنوان صفحة التعديل */
+.modal-overlay:has(.batch-trainee-picker) .modal-header {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+/* عرض النموذج على مساحة الصفحة */
+.modal-overlay:has(.batch-trainee-picker) .modal-form {
+  width: 100%;
+  max-width: 1200px;
+  margin: 24px auto 0;
+  overflow: visible;
+}
+
+/* توسيع مساحة اختيار المتدربين */
+.modal-overlay:has(.batch-trainee-picker) .batch-trainee-picker {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.modal-overlay:has(.batch-trainee-picker)
+.create-batch-field-full small {
+  display: block;
+  margin-top: 8px;
+  padding: 10px 12px;
+  color: #dc2626 !important;
+  background: #fef2f2;
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.8;
+}
+
+.trainee-methods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.trainee-methods button {
+  padding: 14px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+}
+
+.trainee-methods button.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+@media (max-width: 600px) {
+  .trainee-methods {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* مساحة قسم اختيار المتدربين */
+.batch-trainee-picker {
+  display: flow-root;
+  width: 100%;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  padding: 28px;
+  box-sizing: border-box;
+  overflow: visible;
+  margin-bottom: 24px;
+}
+
+/* عناصر المتدربين تظهر بترتيب طبيعي */
+.batch-trainee-picker .batch-trainee-row {
+  display: block;
+  width: 100%;
+  min-height: 58px;
+  margin-bottom: 10px;
+  padding: 14px;
+  box-sizing: border-box;
+}
+
+/* نموذج الإضافة اليدوية */
+.manual-trainee-form {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+}
+
+/* تحسين عرض أزرار اختيار الطريقة */
+.trainee-methods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 24px 0;
+}
+
+.trainee-methods button {
+  min-height: 62px;
+  padding: 16px;
+  font-size: 16px;
+}
+
+@media (max-width: 700px) {
+  .batch-trainee-picker {
+    padding: 18px;
+  }
+
+  .trainee-methods {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* تنسيق قسم المتدربين عند تعديل الدفعة */
+.edit-batch-trainees {
+  display: flow-root;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+  padding: 28px;
+  margin-bottom: 28px;
+  box-sizing: border-box;
+}
+
+.edit-batch-trainees .trainee-mode-content {
+  display: flow-root;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.edit-batch-trainees .batch-trainee-row {
+  width: 100%;
+  min-height: 58px;
+  margin-bottom: 10px;
+  padding: 14px;
+  box-sizing: border-box;
+}
+
+.edit-batch-trainees .trainee-search-label,
+.edit-batch-trainees .manual-trainee-form > label {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.edit-batch-trainees input:not([type="checkbox"]):not([type="file"]) {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 700px) {
+  .edit-batch-trainees {
+    padding: 18px;
+  }
+}
+
 /* ==========================================================
    إعدادات الطباعة الرسمية A4 بالعرض (Landscape)
    ========================================================== */
@@ -5234,4 +5975,93 @@
     size: A4 landscape !important;
     margin: 8mm 10mm !important;
   }
+}
+
+/* Pagination and Excel preview for trainee selection */
+.trainee-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 18px 0;
+  padding: 12px;
+}
+.trainee-pagination button,
+.trainee-import-preview button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 9px 16px;
+  background: #fff;
+  cursor: pointer;
+}
+.trainee-pagination button:disabled,
+.trainee-import-preview button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.trainee-import-preview {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.trainee-preview-table-wrap { width: 100%; overflow-x: auto; margin: 12px 0; }
+.trainee-preview-table { width: 100%; border-collapse: collapse; background: #fff; }
+.trainee-preview-table th, .trainee-preview-table td {
+  padding: 10px 12px;
+  text-align: right;
+  border: 1px solid #e2e8f0;
+}
+.trainee-preview-table th { background: #eaf0f8; }
+
+
+/* Final fixes: company warning, manual trainee validation and Excel confirmation */
+.company-assignment-warning {
+  display: block;
+  margin-top: 10px;
+  padding: 10px 12px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.manual-trainee-form label {
+  display: block;
+  margin: 12px 0 6px;
+}
+.manual-trainee-form input:not([type="checkbox"]):not([type="file"]) {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+  margin-top: 6px;
+  padding: 10px 12px;
+}
+.trainee-import-preview button.create-batch-save-btn,
+.trainee-import-preview button:first-of-type {
+  background: #14258f;
+  color: #fff;
+  border-color: #14258f;
+  opacity: 1;
+  visibility: visible;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  font-weight: 700;
+  position: relative;
+  z-index: 1;
+}
+.trainee-import-preview button.create-batch-save-btn:hover:not(:disabled),
+.trainee-import-preview button:first-of-type:hover:not(:disabled) {
+  background: #0f1c72;
+  color: #fff;
+}
+.trainee-import-preview button:last-of-type {
+  background: #fff;
+  color: #334155;
+  border-color: #cbd5e1;
+  min-height: 44px;
 }

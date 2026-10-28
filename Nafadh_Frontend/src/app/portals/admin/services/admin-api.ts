@@ -26,7 +26,8 @@ import {
   ModuleDto,
   AdminBatchGroupDto,
   AdminBatchGroupMessageDto,
-  AdminSupervisorReportDto
+  AdminSupervisorReportDto,
+  EnrollmentDto
 } from '../../../core/models/dtos';
 
 export interface TraineeCertificateStatusDto {
@@ -110,10 +111,14 @@ export class AdminApi {
     return this.http.get<{ items: TraineeListItemDto[]; totalCount: number }>(`${this.base}/Trainee`, { params: httpParams });
   }
 
-  // 🟢 دالة جلب سجل نتائج الاختبارات الخاصة بالمتدرب
+
+  // جلب نتائج اختبارات المتدرب للأدمن
   getTraineeExams(traineeId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(traineeId);
-    return this.http.get<any[]>(`${this.base}/QuizResult/trainee/${cleanId}`);
+
+    return this.http.get<any[]>(
+      `${this.base}/quiz-results/admin/trainee/${cleanId}`
+    );
   }
 
   getTrainee(id: number): Observable<TraineeProfileDto> {
@@ -137,6 +142,19 @@ export class AdminApi {
     const cleanId = this.sanitizeId(traineeId);
     return this.http.get<any[]>(`${this.base}/Enrollment/trainee/${cleanId}`);
   }
+
+createEnrollment(dto: {
+  batchId: number;
+  traineeId: number;
+  companyId: number;
+  departmentId: number | null;
+  supervisorId: number | null;
+}): Observable<EnrollmentDto> {
+  return this.http.post<EnrollmentDto>(
+    `${this.base}/Enrollment`,
+    dto
+  );
+}
 
   getTraineeProgressPercentage(traineeId: number): Observable<{ traineeId: number; percentage: number }> {
     const cleanId = this.sanitizeId(traineeId);
@@ -385,6 +403,34 @@ export class AdminApi {
   // 12. Reports & Audit
   // ==========================================================
 
+
+ // Get trainer attendance records for Admin - Read Only
+ getAdminTrainerAttendance(
+  from: string,
+  to: string,
+  trainerId?: number,
+  companyId?: number
+ ): Observable<any[]> {
+
+  let params = new HttpParams()
+    .set('from', from)
+    .set('to', to);
+
+  if (trainerId !== undefined) {
+    params = params.set('trainerId', String(this.sanitizeId(trainerId)));
+  }
+
+  if (companyId !== undefined) {
+    params = params.set('companyId', String(this.sanitizeId(companyId)));
+  }
+
+  return this.http.get<any[]>(
+    `${this.base}/admin/reports/trainer-attendance`,
+    { params }
+  );
+ }
+
+
   // Get supervisor reports for Admin
   getAdminSupervisorReports(
     year?: number,
@@ -474,4 +520,42 @@ export class AdminApi {
   createWithdrawalRequest(payload: { traineeId: number; reason: string }): Observable<any> {
     return this.http.post(`${this.base}/WithdrawalRequests`, payload);
   }
+
+  // ==========================================================
+  // 🟢 دوال الاختبارات والنزاهة الحقيقية من الباك إند
+  // ==========================================================
+  
+  // 1. جلب اختبارات الدفعة المقررة من جدول NFD_Quizzes
+  getBatchQuizzes(batchId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(batchId);
+    return this.http.get<any[]>(`${this.base}/Quizzes/batch/${cleanId}`);
+  }
+
+  // 2. كشف درجات ومحضر الاختبار وربطه بحضور وأعذار المتدربين من قاعدة البيانات
+  getQuizAttendanceDetails(quizId: number): Observable<any> {
+    const cleanId = this.sanitizeId(quizId);
+    return this.http.get<any>(`${this.base}/Quizzes/${cleanId}/attendance-details`);
+  }
+
+  // 3. اعتماد أو رفض عذر غياب المتدرب
+  decideExcuse(dto: { attemptId: number; approve: boolean; rejectionReason?: string }): Observable<any> {
+    return this.http.post<any>(`${this.base}/quiz-attempts/decide-excuse`, dto);
+  }
+
+  // ==========================================================
+  // 🟢 دوال تسليمات المهام والمشاريع الحقيقية
+  // ==========================================================
+
+  // 4. جلب تسليمات المتدربين لمهمة معينة
+  getTaskSubmissions(taskId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(taskId);
+    return this.http.get<any[]>(`${this.base}/Submission/task/${cleanId}/trainer-view`);
+  }
+
+  // 5. رصد تقييم ودرجة التسليم
+  gradeTaskSubmission(submissionId: number, dto: { grade: string; feedback: string }): Observable<any> {
+    const cleanId = this.sanitizeId(submissionId);
+    return this.http.put(`${this.base}/Submission/${cleanId}/grade`, dto);
+  }
 }
+

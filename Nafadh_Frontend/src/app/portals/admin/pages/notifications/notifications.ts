@@ -471,9 +471,24 @@ export class AdminNotifications implements OnInit {
   // =========================================================================
   // نشر الإعلان وتصدير البيانات
   // =========================================================================
-  postAnnouncement(): void {
+ postAnnouncement(): void {
     if (!this.newAnnounceData.title.trim() || !this.newAnnounceData.content.trim() || this.posting()) {
       alert('يرجى تعبئة الحقول الإلزامية (العنوان، الرسالة)');
+      return;
+    }
+
+    const fd = this.newAnnounceData;
+
+    if (fd.mainAudience === 'companies' && fd.companyScope === 'specific_companies' && fd.selectedCompanyIds.length === 0) {
+      alert('يرجى اختيار شركة واحدة على الأقل، أو اختيار "كافة الشركات".');
+      return;
+    }
+    if (fd.mainAudience === 'trainees' && fd.traineeScope === 'specific_trainees' && fd.selectedTraineeIds.length === 0) {
+      alert('يرجى اختيار متدرب واحد على الأقل، أو اختيار "كافة المتدربين".');
+      return;
+    }
+    if (fd.mainAudience === 'trainers' && fd.trainerScope === 'specific_trainers' && fd.selectedTrainerIds.length === 0) {
+      alert('يرجى اختيار مدرب واحد على الأقل، أو اختيار "كافة المدربين".');
       return;
     }
 
@@ -481,37 +496,47 @@ export class AdminNotifications implements OnInit {
     this.posting.set(true);
     this.announceError.set(null);
 
-    const scopeVal = this.newAnnounceData.mainAudience === 'companies' ? 1 : 
-                     this.newAnnounceData.mainAudience === 'trainers' ? 2 : 
-                     this.newAnnounceData.mainAudience === 'trainees' ? 3 : 0;
+    const scopeVal =
+      fd.mainAudience === 'companies' ? 1 :
+      fd.mainAudience === 'trainees'  ? 3 :
+      fd.mainAudience === 'trainers'  ? 4 :
+      fd.mainAudience === 'admins'    ? 5 : 0;
 
     const payload = {
-      title: this.newAnnounceData.title.trim(),
-      message: this.newAnnounceData.content.trim(),
-      description: this.newAnnounceData.content.trim(),
+      title: fd.title.trim(),
+      message: fd.content.trim(),
+      description: fd.content.trim(),
       scopeType: scopeVal,
-      targetScope: this.newAnnounceData.mainAudience,
+      targetScope: fd.mainAudience,
       createdByUserId: uid,
-      priority: this.newAnnounceData.priority, 
+      priority: fd.priority,
       createdAt: new Date().toISOString(),
-      companyIds: this.newAnnounceData.selectedCompanyIds.map(id => Number(id)),
-      traineeIds: this.newAnnounceData.selectedTraineeIds.map(id => Number(id)),
-      trainerIds: this.newAnnounceData.selectedTrainerIds.map(id => Number(id)),
-      channels: this.newAnnounceData.channels,
-      isPinned: this.newAnnounceData.isPinned
+      companyIds: fd.mainAudience === 'companies' && fd.companyScope === 'specific_companies'
+        ? fd.selectedCompanyIds.map(id => Number(id))
+        : [],
+      traineeIds: fd.mainAudience === 'trainees' && fd.traineeScope === 'specific_trainees'
+        ? fd.selectedTraineeIds.map(id => Number(id))
+        : [],
+      trainerIds: fd.mainAudience === 'trainers' && fd.trainerScope === 'specific_trainers'
+        ? fd.selectedTrainerIds.map(id => Number(id))
+        : [],
+      channels: fd.channels,
+      isPinned: fd.isPinned
     };
 
     this.api.createAnnouncement(payload as any).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.posting.set(false);
         this.showAnnounce.set(false);
-        this.showToast('تم نشر الإعلان بنجاح في قاعدة البيانات.');
+        const inAppCount = res?.notificationsCreated ?? 0;
+        const emailCount = res?.emailsSent ?? 0;
+        this.showToast(`تم نشر الإعلان بنجاح (وصل إلى ${inAppCount} إشعار بالمنصة و ${emailCount} بريد إلكتروني).`);
         this.load();
       },
       error: (err: any) => {
         const isSuccessStatus = err?.status === 200 || err?.status === 201 || err?.status === 204;
         const isParsingError = typeof err?.message === 'string' && err.message.includes('Http failure during parsing');
-        
+
         if (isSuccessStatus || isParsingError) {
           this.posting.set(false);
           this.showAnnounce.set(false);
