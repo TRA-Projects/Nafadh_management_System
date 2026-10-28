@@ -52,6 +52,33 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
         }
 
+
+        public async Task<List<NFD_TrainerAttendance>> GetAdminRangeAsync(
+            DateTime from,
+            DateTime to,
+            int? trainerId,
+            int? companyId)
+        {
+            var query = _context.Set<NFD_TrainerAttendance>()
+                .AsNoTracking()
+                .Include(a => a.Trainer)
+                    .ThenInclude(t => t.User)
+                .Include(a => a.Company)
+                .Where(a => a.Date >= from && a.Date <= to);
+
+            if (trainerId.HasValue)
+                query = query.Where(a => a.TrainerId == trainerId.Value);
+
+            if (companyId.HasValue)
+                query = query.Where(a => a.CompanyId == companyId.Value);
+
+            return await query
+                .OrderByDescending(a => a.Date)
+                .ThenBy(a => a.TrainerId)
+                .ToListAsync();
+        }
+
+
         public async Task<List<NFD_TrainerAttendance>> GetDayAsync(int companyId, DateTime date)
         {
             return await _context.Set<NFD_TrainerAttendance>()

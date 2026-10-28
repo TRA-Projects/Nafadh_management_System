@@ -45,6 +45,7 @@ export class UserManualShell implements OnDestroy {
     notifications: 'notifications',
     support: 'support',
     achievements: 'achievements',
+    quizzes: 'quizzes',
   };
 
   // =========================================================

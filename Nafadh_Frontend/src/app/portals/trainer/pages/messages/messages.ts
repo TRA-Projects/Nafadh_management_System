@@ -74,9 +74,15 @@ export class TrainerMessages implements OnInit {
     }
   }
 
-  showMeetingDetails(meeting: MeetingNotification): void {
-    alert(`تفاصيل الاجتماع:\nالعنوان: ${meeting.title}\nالتاريخ: ${meeting.startDate}\nالوقت: ${meeting.time}\nالمدة: ${meeting.durationMinutes} دقيقة\nالحالة: ${this.getMeetingStatusLabel(meeting.status)}`);
-  }
+ selectedMeeting: MeetingNotification | null = null;
+
+showMeetingDetails(meeting: MeetingNotification): void {
+  this.selectedMeeting = meeting;
+}
+
+closeMeetingDetails(): void {
+  this.selectedMeeting = null;
+}
 
   openRecording(recordingUrl?: string): void {
     if (recordingUrl) {
@@ -287,14 +293,16 @@ export class TrainerMessages implements OnInit {
   batchGroups: any[] = [];
   isBatchGroupSelected = false;
 
-  createBatchGroup(batchId: number, trainerUserId: number): void {
-    this.api.createBatchGroup({ batchId, trainerUserId }).subscribe({
-      next: (response) => {
-        this.selectedBatchGroupId = response?.conversationId ?? null;
-        this.loadTrainerConversations(this.auth.userId!);
-      }
-    });
-  }
+ createBatchGroup(batchId: number, trainerUserId: number): void {
+  this.api.createBatchGroup({ batchId, trainerUserId }).subscribe({
+    next: () => {
+      this.loadTrainerConversations(trainerUserId);
+    },
+    error: (error) => {
+      console.error('فشل مزامنة مجموعة الدفعة:', error);
+    }
+  });
+}
 
   isNewMessage = false;
   selectedTraineeId = signal<number | null>(null);
@@ -334,8 +342,9 @@ selectBatchGroup(conversationId: number): void {
     return;
   }
 
-  this.selectedTraineeId.set(null);
-  this.messages = [];
+ this.selectedTraineeId.set(null);
+this.messages = [];
+this.cdr.markForCheck();
 
   const currentGroup = this.selectedBatchGroup();
   const batchId = currentGroup?.batchId;

@@ -1,6 +1,6 @@
 :host {
   display: block;
-  font-family: var(--font-arabic, 'Cairo', sans-serif);
+  font-family: var(--font-arabic, 'Cairo', 'IBM Plex Sans Arabic', sans-serif);
 }
 
 .nfd-audit-container {
@@ -127,11 +127,12 @@
   font-size: 12px;
   font-weight: 600;
   display: inline-block;
+  white-space: nowrap;
 }
 
 .badge-warning { background-color: var(--status-review-bg, #fffbe6); color: var(--status-review-fg, #d48806); border: 1px solid #ffe58f; }
-.badge-success { background-color: var(--status-active-bg, #e6fffa); color: var(--status-active-fg, #13c2c2); border: 1px solid #87e8de; }
-.badge-info { background-color: var(--status-completed-bg, #f0f5ff); color: var(--status-completed-fg, #2f54eb); border: 1px solid #adc6ff; }
+.badge-success { background-color: var(--status-active-bg, #e6fffa); color: var(--status-active-fg, #0d9488); border: 1px solid #87e8de; }
+.badge-info { background-color: var(--status-completed-bg, #f0f5ff); color: var(--status-completed-fg, #2563eb); border: 1px solid #adc6ff; }
 .badge-primary { background-color: var(--status-new-bg, #e8eaf6); color: var(--status-new-fg, #0A1172); border: 1px solid #c5cae9; }
 
 .entity-tag {
@@ -312,7 +313,7 @@
   transform: translateX(4px);
 }
 
-/* جسم الصفحة بعرض كامل 100% بدون أي max-width يضيقها */
+/* جسم الصفحة بعرض كامل 100% */
 .nfd-audit-fullpage-body {
   width: 100%;
   padding: 28px 36px 64px;

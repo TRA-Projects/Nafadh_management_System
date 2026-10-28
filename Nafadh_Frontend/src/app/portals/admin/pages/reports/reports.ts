@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
-import { BatchPerformanceReportDto } from '../../../../core/models/dtos';
+import { BatchPerformanceReportDto, AdminSupervisorReportDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-admin-reports',
@@ -14,15 +14,166 @@ import { BatchPerformanceReportDto } from '../../../../core/models/dtos';
 })
 export class AdminReports implements OnInit {
   // 1. التحكم في الأقسام والشاشات
-  currentSubSection: 'company' | 'trainer' | 'trainee' = 'company';
+  currentSubSection: 'company' | 'trainer' | 'trainee' | 'supervisor' = 'company';
   currentView: 'companies' | 'programs' | 'batch-report' | 'company-details' = 'companies';
 
   selectedCompany: any = null;
   selectedBatch: any = null;
   batchIdInput = 1;
 
-  trainerView: 'grid' | 'details' = 'grid';
+  trainerView: 'grid' | 'details' | 'attendance' = 'grid';
   selectedTrainer: any = null;
+
+  // ==========================================
+ // Admin Trainer Attendance - Read Only
+ // ==========================================
+
+ // سجلات الحضور القادمة من قاعدة البيانات
+ trainerAttendanceRecords: any[] = [];
+
+ // حالة تحميل سجل الحضور
+ trainerAttendanceLoading = false;
+
+ // رسالة الخطأ
+ trainerAttendanceError = '';
+
+ // طريقة عرض السجل
+ trainerAttendanceView: 'day' | 'week' | 'month' | 'custom' = 'month';
+  trainerAttendanceDate = this.getLocalDateKey(new Date());
+  trainerAttendanceFrom = this.getLocalDateKey(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  trainerAttendanceTo = this.getLocalDateKey(new Date());
+  trainerAttendanceCompanyFilter = 'ALL';
+  trainerAttendanceStatusFilter = 'ALL';
+  trainerAttendanceConfirmationFilter = 'ALL';
+  private attendanceRequestId = 0;
+
+private getLocalDateKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+ trainerAttendanceCompanies: { id: number; name: string }[] = [];
+
+
+private updateTrainerAttendanceCompanies(): void {
+  const companies = new Map<number, string>();
+
+  for (const record of this.trainerAttendanceRecords) {
+    if (record.companyId != null) {
+      const id = Number(record.companyId);
+
+      companies.set(
+        id,
+        record.companyName || `شركة #${id}`
+      );
+    }
+  }
+
+  this.trainerAttendanceCompanies = [...companies]
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+}
+
+
+  get filteredTrainerAttendanceRecords(): any[] {
+    return this.trainerAttendanceRecords.filter(r =>
+      (this.trainerAttendanceCompanyFilter === 'ALL' || String(r.companyId) === this.trainerAttendanceCompanyFilter) &&
+      (this.trainerAttendanceStatusFilter === 'ALL' || r.status === this.trainerAttendanceStatusFilter) &&
+      (this.trainerAttendanceConfirmationFilter === 'ALL' || String(!!r.isConfirmed) === this.trainerAttendanceConfirmationFilter)
+    ).sort((a, b) => String(b.date).localeCompare(String(a.date)) || Number(b.trainerAttendanceId) - Number(a.trainerAttendanceId));
+  }
+
+  get trainerAttendanceConfirmedCount(): number {
+    return this.filteredTrainerAttendanceRecords.filter(r => r.isConfirmed).length;
+  }
+
+  get trainerAttendanceCompanyCount(): number {
+    return new Set(this.filteredTrainerAttendanceRecords.map(r => r.companyId).filter((id: any) => id != null)).size;
+  }
+
+  getTrainerAttendanceStatusLabel(status: string): string {
+    switch (status) {
+      case 'Present': return 'حاضر';
+      case 'Late': return 'متأخر';
+      case 'Absent': return 'غائب';
+      case 'EarlyLeave': return 'انصراف مبكر';
+      default: return status || 'غير محدد';
+    }
+  }
+
+  getTrainerAttendanceStatusClass(status: string): string {
+    switch (status) {
+      case 'Present': return 'present';
+      case 'Late': return 'late';
+      case 'Absent': return 'absent';
+      case 'EarlyLeave': return 'early';
+      default: return 'unknown';
+    }
+  }
+
+  private setTrainerAttendanceRange(view: 'day' | 'week' | 'month'): void {
+    const date = new Date(`${this.trainerAttendanceDate}T12:00:00`);
+    if (Number.isNaN(date.getTime())) return;
+    if (view === 'day') {
+      this.trainerAttendanceFrom = this.trainerAttendanceDate;
+      this.trainerAttendanceTo = this.trainerAttendanceDate;
+    } else if (view === 'week') {
+      const start = new Date(date);
+      start.setDate(date.getDate() - date.getDay());
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      this.trainerAttendanceFrom = this.getLocalDateKey(start);
+      this.trainerAttendanceTo = this.getLocalDateKey(end);
+    } else {
+      this.trainerAttendanceFrom = this.getLocalDateKey(new Date(date.getFullYear(), date.getMonth(), 1));
+      this.trainerAttendanceTo = this.getLocalDateKey(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+    }
+  }
+setTrainerAttendanceView(view: 'day' | 'week' | 'month'): void {
+  // Start from today's date when switching views
+  this.trainerAttendanceDate = this.getLocalDateKey(new Date());
+
+  this.trainerAttendanceView = view;
+  this.setTrainerAttendanceRange(view);
+  this.loadTrainerAttendance();
+}
+
+
+navigateTrainerAttendance(direction: -1 | 1): void {
+  if (this.trainerAttendanceView === 'custom') return;
+
+  const date = new Date(`${this.trainerAttendanceDate}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return;
+
+  if (this.trainerAttendanceView === 'day') {
+    date.setDate(date.getDate() + direction);
+  } else if (this.trainerAttendanceView === 'week') {
+    date.setDate(date.getDate() + direction * 7);
+  } else if (this.trainerAttendanceView === 'month') {
+    // Prevent dates like January 31 from skipping February
+    date.setDate(1);
+    date.setMonth(date.getMonth() + direction);
+  }
+
+  this.trainerAttendanceDate = this.getLocalDateKey(date);
+
+  this.setTrainerAttendanceRange(this.trainerAttendanceView);
+  this.loadTrainerAttendance();
+}
+
+
+  onTrainerAttendanceDateChange(): void {
+    this.trainerAttendanceView = 'custom';
+    this.loadTrainerAttendance();
+  }
+
+  resetTrainerAttendanceFilters(): void {
+    this.trainerAttendanceCompanyFilter = 'ALL';
+    this.trainerAttendanceStatusFilter = 'ALL';
+    this.trainerAttendanceConfirmationFilter = 'ALL';
+  }
 
   report = signal<BatchPerformanceReportDto | null>(null);
   isLoading = signal<boolean>(false);
@@ -37,7 +188,7 @@ export class AdminReports implements OnInit {
 
   programSearchTerm = '';
   programSortFilter = 'ALL';
-
+  batchMajorFilter = 'ALL';
   pageSize = 5;
   currentPageNumber = 1;
 
@@ -77,6 +228,97 @@ export class AdminReports implements OnInit {
   traineesTotalCount = 0;
   traineesTotalPages = 1;
 
+  // 5. إدارة كشف الدرجات العام والفردي المعتمد مع Pagination
+  traineeSubView: 'roster' | 'master_transcript' | 'single_transcript' = 'roster';
+  selectedTraineeForTranscript: any = null;
+
+  // متغيرات الترقيم لكشف الدرجات العام
+  masterTranscriptCurrentPage = 1;
+  masterTranscriptPageSize = 10;
+  masterTranscriptTotalPages = 1;
+  pagedMasterTranscriptList: any[] = [];
+
+  // متغيرات البحث والفلترة الشاملة لكشف الدرجات العام
+  masterSearchTerm = '';
+  masterCompanyFilter = 'ALL';
+  masterLevelFilter = 'ALL';
+  masterScoreRangeFilter = 'ALL';
+  filteredMasterTranscriptList: any[] = [];
+
+  
+  // =========================================================
+  // Supervisor Reports - تقارير المشرفين
+  // =========================================================
+  allSupervisorsData: AdminSupervisorReportDto[] = [];
+  filteredSupervisorsList: AdminSupervisorReportDto[] = [];
+
+  supervisorSearchTerm = '';
+  supervisorCompanyFilter = 'ALL';
+  supervisorStatusFilter = 'ALL';
+
+  supervisorYear = new Date().getFullYear();
+  supervisorMonth = new Date().getMonth() + 1;
+
+  supervisorLoading = false;
+  supervisorError = '';
+  supervisorDataLoaded = false;
+
+  get supervisorCompanies(): string[] {
+    return Array.from(
+      new Set(
+        this.allSupervisorsData
+          .map(s => s.companyName)
+          .filter((name): name is string => !!name)
+      )
+    ).sort();
+  }
+
+  get supervisorTotalCount(): number {
+    return this.allSupervisorsData.length;
+  }
+
+  get supervisorAssignedTrainees(): number {
+    return this.allSupervisorsData.reduce(
+      (sum, s) => sum + s.assignedTraineesCount, 0
+    );
+  }
+
+  get supervisorAverageAttendance(): number | null {
+    const rates = this.allSupervisorsData
+      .map(s => s.averageAttendanceRate)
+      .filter((rate): rate is number => rate !== null);
+
+    if (rates.length === 0) return null;
+
+    return Math.round(
+      (rates.reduce((sum, rate) => sum + rate, 0) / rates.length) * 100
+    ) / 100;
+  }
+
+   get supervisorTrainerEvaluations(): number {
+    return this.allSupervisorsData.reduce(
+      (sum, s) => sum + (s.trainerEvaluationsCount ?? 0), 0
+    );
+  }
+
+  get supervisorActiveCount(): number {
+    return this.allSupervisorsData.filter(
+      s => s.status === 'Active'
+    ).length;
+  }
+
+  get supervisorFollowUpCount(): number | null {
+    const counts = this.allSupervisorsData
+      .map(s => s.traineesNeedingFollowUpCount);
+
+    if (counts.some(count => count === null)) return null;
+
+    return counts.reduce(
+      (sum: number, count) => sum + (count ?? 0), 0
+    );
+  }
+
+
   constructor(
     private api: AdminApi,
     private cdr: ChangeDetectorRef,
@@ -85,7 +327,7 @@ export class AdminReports implements OnInit {
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      if (params['sub'] && ['company', 'trainer', 'trainee'].includes(params['sub'])) {
+      if (params['sub'] && ['company', 'trainer', 'trainee', 'supervisor'].includes(params['sub'])) {
         this.currentSubSection = params['sub'];
         this.cdr.detectChanges();
       }
@@ -94,6 +336,10 @@ export class AdminReports implements OnInit {
     this.loadCompaniesData();
     this.loadTrainersData();
     this.loadTraineesData();
+
+    if (this.currentSubSection === 'supervisor') {
+    this.loadSupervisorsData();
+    }
   }
 
   formatRating(val: any): string {
@@ -103,8 +349,22 @@ export class AdminReports implements OnInit {
   }
 
   // =========================================================
-  // دوال وفلاتر قسم الشركات
+  // دوال وفلاتر قسم الشركات (مع Getters لحساب بطاقات الإحصائيات)
   // =========================================================
+
+  // حساب متوسط تقييم الشركات للبطاقة العلوية
+  get avgCompanyRating(): string {
+    if (!this.companies || this.companies.length === 0) return '4.9';
+    const sum = this.companies.reduce((acc, c) => acc + (parseFloat(c.ratingScore) || 4.9), 0);
+    return (sum / this.companies.length).toFixed(1);
+  }
+
+  // حساب إجمالي المتدربين المستضافين للبطاقة العلوية
+  get totalCompanyTrainees(): number {
+    if (!this.companies) return 0;
+    return this.companies.reduce((acc, c) => acc + (c.traineesCount || 0), 0);
+  }
+
   loadCompaniesData() {
     this.isLoading.set(true);
     this.api.getCompanies().subscribe({
@@ -184,6 +444,7 @@ export class AdminReports implements OnInit {
         (c.name && c.name.toLowerCase().includes(q)) ||
         (c.commercialRegister && c.commercialRegister.includes(q)) ||
         (c.city && c.city.toLowerCase().includes(q)) ||
+        (c.workField && c.workField.toLowerCase().includes(q)) ||
         (c.phone && c.phone.includes(q))
       );
     }
@@ -293,7 +554,18 @@ export class AdminReports implements OnInit {
       }
     });
   }
+  // استخراج جميع التخصصات الفعلية القادمة من الداتابيز تلقائياً بدون تكرار
+  get uniqueBatchMajors(): string[] {
+    const rows = this.report()?.rows || [];
+    let list = rows.map((t: any) => t.major).filter(Boolean);
 
+    // إذا كانت الدفعة جديدة، يقرأ التخصصات من قاعدة بيانات المتدربين العامة
+    if (list.length === 0 && this.allTraineesData) {
+      list = this.allTraineesData.map((t: any) => t.major).filter(Boolean);
+    }
+
+    return Array.from(new Set(list));
+  }
   get filteredBatchReportRows(): any[] {
     const rawRows = this.report()?.rows || [];
     return rawRows.filter(t => {
@@ -302,10 +574,11 @@ export class AdminReports implements OnInit {
         (t.major && t.major.toLowerCase().includes(this.batchTraineeSearch.toLowerCase().trim()));
 
       const matchLevel = this.batchLevelFilter === 'ALL' || (t.level && t.level.includes(this.batchLevelFilter));
-      return matchSearch && matchLevel;
+      const matchMajor = this.batchMajorFilter === 'ALL' || (t.major && t.major.includes(this.batchMajorFilter));
+
+      return matchSearch && matchLevel && matchMajor;
     });
   }
-
   nextPage() {
     const r = this.report();
     const totalPages = r?.totalPages || Math.ceil((r?.totalCount || 0) / this.pageSize);
@@ -442,7 +715,7 @@ export class AdminReports implements OnInit {
     }
   }
 
-  getTrainerPageNumbers(): number[] {
+   getTrainerPageNumbers(): number[] {
     const pages: number[] = [];
     const maxVisible = 5;
     let start = Math.max(1, this.trainersCurrentPage - 2);
@@ -456,9 +729,224 @@ export class AdminReports implements OnInit {
       pages.push(i);
     }
     return pages;
+   }
+
+    // ==========================================
+    // Open Trainer Attendance - Admin Read Only
+   // ==========================================
+openTrainerAttendance(trainer: any): void {
+  if (!trainer?.id) return;
+
+  ++this.attendanceRequestId;
+
+  this.selectedTrainer = trainer;
+  this.trainerAttendanceRecords = [];
+  this.trainerAttendanceError = '';
+
+  this.trainerAttendanceDate = this.getLocalDateKey(new Date());
+  this.trainerAttendanceView = 'month';
+
+  this.resetTrainerAttendanceFilters();
+  this.setTrainerAttendanceRange('month');
+
+  this.trainerView = 'attendance';
+  this.loadTrainerAttendance();
+  this.cdr.detectChanges();
+}
+
+
+
+
+loadTrainerAttendance(): void {
+  if (!this.selectedTrainer?.id) return;
+
+  const trainerId = Number(this.selectedTrainer.id);
+  const from = this.trainerAttendanceFrom;
+  const to = this.trainerAttendanceTo;
+
+  // Prevent old requests from updating the screen
+  const requestId = ++this.attendanceRequestId;
+
+  this.trainerAttendanceError = '';
+  this.trainerAttendanceRecords = [];
+
+  if (!from || !to || from > to) {
+    this.trainerAttendanceLoading = false;
+    this.trainerAttendanceError =
+      'يرجى اختيار فترة صحيحة: تاريخ البداية يجب أن يسبق تاريخ النهاية.';
+    this.cdr.detectChanges();
+    return;
   }
 
-  // فتح تفاصيل المدرب واستبيانات المتدربين (مطابق للصورة 2)
+  const start = new Date(`${from}T12:00:00`);
+  const end = new Date(`${to}T12:00:00`);
+
+  if (
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(end.getTime())
+  ) {
+    this.trainerAttendanceLoading = false;
+    this.trainerAttendanceError = 'التاريخ المحدد غير صالح.';
+    this.cdr.detectChanges();
+    return;
+  }
+
+  const days =
+    Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+
+  if (days > 366) {
+    this.trainerAttendanceLoading = false;
+    this.trainerAttendanceError =
+      'الحد الأقصى للفترة هو 366 يومًا.';
+    this.cdr.detectChanges();
+    return;
+  }
+
+  this.trainerAttendanceLoading = true;
+
+  this.api.getAdminTrainerAttendance(
+    from,
+    to,
+    trainerId
+  ).subscribe({
+    next: (records) => {
+      if (requestId !== this.attendanceRequestId) return;
+
+      this.trainerAttendanceRecords = records ?? [];
+      this.updateTrainerAttendanceCompanies();
+      this.trainerAttendanceLoading = false;
+      this.cdr.detectChanges();
+    },
+    error: (err) => {
+      if (requestId !== this.attendanceRequestId) return;
+
+      console.error('Trainer attendance error:', err);
+      this.trainerAttendanceRecords = [];
+      this.trainerAttendanceError =
+        'تعذر تحميل سجل حضور المدرب. حاول مرة أخرى.';
+      this.trainerAttendanceLoading = false;
+      this.cdr.detectChanges();
+    }
+  });
+}
+
+
+
+// Weekly attendance - Admin Read Only
+
+getTrainerAttendanceWeekDays(): { date: string; label: string }[] {
+  const selected = new Date(`${this.trainerAttendanceDate}T12:00:00`);
+
+  if (Number.isNaN(selected.getTime())) return [];
+
+  // Week starts on Sunday
+  const start = new Date(selected);
+  start.setDate(selected.getDate() - selected.getDay());
+
+  const dayNames = [
+    'الأحد', 'الاثنين', 'الثلاثاء',
+    'الأربعاء', 'الخميس', 'الجمعة', 'السبت'
+  ];
+
+  return dayNames.map((label, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+
+    const dateKey = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0')
+    ].join('-');
+
+    return { date: dateKey, label };
+  });
+}
+
+
+// Return filtered attendance records for a specific day
+getTrainerAttendanceRecordsForDay(date: string): any[] {
+  return this.filteredTrainerAttendanceRecords.filter(record =>
+    String(record.date).substring(0, 10) === date
+  );
+}
+
+
+// Convert attendance status to the same symbols used in Company Portal
+getTrainerAttendanceSymbol(status: string | null | undefined): string {
+  switch (status) {
+    case 'Present': return 'ح';
+    case 'Late': return 'ت';
+    case 'Absent': return 'غ';
+    case 'EarlyLeave': return 'م';
+    default: return '—';
+  }
+}
+
+
+// Monthly attendance weeks - Admin Read Only
+getTrainerAttendanceMonthWeeks(): {
+  index: number;
+  label: string;
+  days: { date: string; label: string }[];
+}[] {
+  const selected = new Date(`${this.trainerAttendanceDate}T12:00:00`);
+
+  if (Number.isNaN(selected.getTime())) return [];
+
+  const year = selected.getFullYear();
+  const month = selected.getMonth();
+  const lastDay = new Date(year, month + 1, 0).getDate();
+
+  const weeks: {
+    index: number;
+    label: string;
+    days: { date: string; label: string }[];
+  }[] = [];
+
+  let currentWeek: { date: string; label: string }[] = [];
+
+  for (let day = 1; day <= lastDay; day++) {
+    const date = new Date(year, month, day, 12);
+
+    const dateKey = [
+      year,
+      String(month + 1).padStart(2, '0'),
+      String(day).padStart(2, '0')
+    ].join('-');
+
+    currentWeek.push({
+      date: dateKey,
+      label: `${day}`
+    });
+
+    // Saturday ends the week, or the final day of the month
+    if (date.getDay() === 6 || day === lastDay) {
+      weeks.push({
+        index: weeks.length,
+        label: `${currentWeek[0].date} إلى ${currentWeek[currentWeek.length - 1].date}`,
+        days: currentWeek
+      });
+
+      currentWeek = [];
+    }
+  }
+
+  return weeks;
+}
+
+
+
+ // Return to trainers list
+ backFromTrainerAttendance(): void {
+  this.trainerView = 'grid';
+  this.selectedTrainer = null;
+  ++this.attendanceRequestId;
+  this.trainerAttendanceRecords = [];
+  this.trainerAttendanceError = '';
+
+  this.cdr.detectChanges();
+ }
+
   openTrainerModal(trainer: any) {
     this.selectedTrainer = trainer;
     if (this.selectedTrainer) {
@@ -537,13 +1025,15 @@ export class AdminReports implements OnInit {
   }
 
   // =========================================================
-  // دوال وفلاتر قسم المتدربين (مطابق للصورة 1)
+  // دوال وفلاتر قسم المتدربين
   // =========================================================
   loadTraineesData() {
     this.isLoading.set(true);
     const params = { pageNumber: 1, pageSize: 1000 };
     const apiRef = this.api as any;
-    const apiCall = apiRef.getTrainees ? apiRef.getTrainees(params) : (apiRef.getAllTrainees ? apiRef.getAllTrainees() : null);
+    const apiCall = apiRef.getTrainees
+      ? apiRef.getTrainees(params)
+      : (apiRef.getAllTrainees ? apiRef.getAllTrainees() : null);
 
     if (!apiCall) {
       this.isLoading.set(false);
@@ -554,44 +1044,39 @@ export class AdminReports implements OnInit {
       next: (res: any) => {
         const raw = res.items || res.data || res.rows || (Array.isArray(res) ? res : []);
 
-        const quotes = [
-          'متدرب استثنائي ومتقن للمفاهيم التقنية، يمتلك مهارات تحليلية وسرعة بديهة في حل المشكلات البرمجية.',
-          'أظهر التزاماً عالياً في حضور المحاضرات وتسليم المشاريع في مواعيدها المحددة مع تفاعل ممتاز.',
-          'تطور مستواه التقني بشكل ملحوظ خلال فترة التدريب، ولديه شغف كبير بالتعلم الذاتي وتطبيق المهام.',
-          'مشارك فعال ومتميز في العمل الجماعي وحل التحديات المشتركة داخل الورش العملية.',
-          'يمتلك مهارات برمجية واعدة وقدرة سريعة على استيعاب أدوات التطوير المتقدمة.'
-        ];
+        this.allTraineesData = (raw || []).map((t: any) => {
+          const attendRate = t.attendanceRate ?? t.AttendanceRate ?? 0;
+          const techScore = t.technicalScore ?? t.TechnicalScore ?? 0;
+          const projScore = t.projectScore ?? t.ProjectScore ?? 0;
+          const behavScore = t.behavioralScore ?? t.BehavioralScore ?? 0;
 
-        const recs = [
-          'موصى به بقوة لمشاريع العمل المتقدمة',
-          'مؤهل للانتقال لسوق العمل الفعلي',
-          'مرشح للمسار التدريبي المتقدم',
-          'موصى به للتوظيف والتدريب التطبيقي'
-        ];
-
-        const trainersNames = ['فاطمة المذرية', 'محمد العامري', 'خلود الرواحي', 'غالية الحبسي', 'هلال الريامي'];
-
-        this.allTraineesData = (raw || []).map((t: any, index: number) => {
-          const techScore = t.technicalScore ?? (85 + (index % 10));
-          const behavScore = t.behavioralScore ?? (88 + (index % 8));
-          const attendRate = t.attendanceRate ?? (90 + (index % 8));
+          const calculatedLevel = techScore >= 90
+            ? 'ممتاز'
+            : (techScore >= 80 ? 'جيد جداً' : (techScore >= 70 ? 'جيد' : 'غير مجتاز'));
 
           return {
-            traineeId: t.traineeId || t.id,
-            traineeName: t.fullName || t.name || t.traineeName || 'متدرب',
-            companyName: t.companyName || t.company?.companyName || 'مجموعة أفق التقنية',
-            major: t.major || t.specialization || 'علوم الحاسوب',
+            traineeId: t.traineeId || t.TraineeId || t.id,
+            traineeName: t.fullName || t.FullName || t.traineeName || 'متدرب',
+            companyName: t.companyName || t.CompanyName || t.company?.companyName || '—',
+            major: t.major || t.Major || t.specialization || 'علوم الحاسوب',
+
             attendanceRate: attendRate,
             technicalScore: techScore,
+            projectScore: projScore,
             behavioralScore: behavScore,
-            level: t.level || (techScore >= 90 ? 'ممتاز' : 'جيد جداً'),
-            assignedTrainer: t.trainerName || t.trainer?.fullName || trainersNames[index % trainersNames.length],
-            trainerNotes: t.trainerNotes || quotes[index % quotes.length],
-            trainerRecommendation: t.trainerRecommendation || recs[index % recs.length]
+            level: t.level || calculatedLevel,
+
+            assignedTrainer: t.trainerName || t.assignedTrainer || 'المشرف المعتمد',
+
+            trainerNotes: t.trainerNotes || t.TrainerNotes || 'لا توجد ملاحظات مسجلة',
+            trainerRecommendation: t.trainerRecommendation || t.TrainerRecommendation || 'قيد المراجعة والاعتماد'
           };
         });
 
         this.applyTraineeFilters();
+        if (this.updateMasterTranscriptPage) {
+          this.updateMasterTranscriptPage();
+        }
         this.isLoading.set(false);
         this.cdr.detectChanges();
       },
@@ -642,6 +1127,7 @@ export class AdminReports implements OnInit {
     this.traineesTotalPages = Math.ceil(this.traineesTotalCount / this.traineesPageSize) || 1;
     this.traineesCurrentPage = 1;
     this.updateTraineesPage();
+    this.updateMasterTranscriptPage();
   }
 
   resetTraineeFilters() {
@@ -674,10 +1160,243 @@ export class AdminReports implements OnInit {
     }
   }
 
-  setSubSection(sub: 'company' | 'trainer' | 'trainee') {
-    this.currentSubSection = sub;
-    this.trainerView = 'grid';
+  // =========================================================
+  // دوال كشف الدرجات العام والفردي المعتمد
+  // =========================================================
+  openTraineeTranscript(trainee: any) {
+    this.selectedTraineeForTranscript = trainee;
+    this.traineeSubView = 'single_transcript';
+    this.cdr.detectChanges();
   }
+
+  closeTraineeTranscript() {
+    this.traineeSubView = 'roster';
+    this.selectedTraineeForTranscript = null;
+    this.cdr.detectChanges();
+  }
+
+  openMasterTranscript() {
+    this.traineeSubView = 'master_transcript';
+    this.masterSearchTerm = '';
+    this.masterCompanyFilter = 'ALL';
+    this.masterLevelFilter = 'ALL';
+    this.masterScoreRangeFilter = 'ALL';
+    this.applyMasterTranscriptFilters();
+    this.cdr.detectChanges();
+  }
+  // دالة البحث الشامل في كل حقول كشف الدرجات
+  applyMasterTranscriptFilters() {
+    let list = [...this.allTraineesData];
+
+    // 1. البحث الشامل بالاسم، الرقم الأكاديمي، الشركة، التخصص، أو المدرب
+    if (this.masterSearchTerm.trim()) {
+      const q = this.masterSearchTerm.toLowerCase().trim();
+      list = list.filter(t => {
+        const name = (t.traineeName || '').toLowerCase();
+        const id = String(t.traineeId || '').toLowerCase();
+        const fullId = `nfd-${id}`;
+        const comp = (t.companyName || '').toLowerCase();
+        const major = (t.major || '').toLowerCase();
+        const trainer = (t.assignedTrainer || '').toLowerCase();
+        const level = (t.level || '').toLowerCase();
+        const score = String(this.getTraineeFinalScore(t));
+
+        return name.includes(q) ||
+          id.includes(q) ||
+          fullId.includes(q) ||
+          comp.includes(q) ||
+          major.includes(q) ||
+          trainer.includes(q) ||
+          level.includes(q) ||
+          score.includes(q);
+      });
+    }
+
+    // 2. فلتر المنشأة المستضيفة
+    if (this.masterCompanyFilter !== 'ALL') {
+      list = list.filter(t => t.companyName === this.masterCompanyFilter);
+    }
+
+    // 3. فلتر التقدير
+    if (this.masterLevelFilter !== 'ALL') {
+      list = list.filter(t => t.level && t.level.includes(this.masterLevelFilter));
+    }
+
+    // 4. فلتر نطاق المجموع النهائي
+    if (this.masterScoreRangeFilter === '90_PLUS') {
+      list = list.filter(t => this.getTraineeFinalScore(t) >= 90);
+    } else if (this.masterScoreRangeFilter === '80_PLUS') {
+      list = list.filter(t => this.getTraineeFinalScore(t) >= 80);
+    } else if (this.masterScoreRangeFilter === '70_PLUS') {
+      list = list.filter(t => this.getTraineeFinalScore(t) >= 70);
+    }
+
+    this.filteredMasterTranscriptList = list;
+    this.masterTranscriptCurrentPage = 1;
+    this.updateMasterTranscriptPage();
+  }
+
+  // إعادة تعيين وتصفير فلاتر الكشف العام
+  resetMasterTranscriptFilters() {
+    this.masterSearchTerm = '';
+    this.masterCompanyFilter = 'ALL';
+    this.masterLevelFilter = 'ALL';
+    this.masterScoreRangeFilter = 'ALL';
+    this.applyMasterTranscriptFilters();
+  }
+
+  // تحديث الصفحة المعروضة في كشف الدرجات بعد الفلترة
+  updateMasterTranscriptPage() {
+    const list = this.filteredMasterTranscriptList || [];
+    this.masterTranscriptTotalPages = Math.ceil(list.length / this.masterTranscriptPageSize) || 1;
+    if (this.masterTranscriptCurrentPage > this.masterTranscriptTotalPages) {
+      this.masterTranscriptCurrentPage = this.masterTranscriptTotalPages;
+    }
+    const startIndex = (this.masterTranscriptCurrentPage - 1) * this.masterTranscriptPageSize;
+    const endIndex = startIndex + this.masterTranscriptPageSize;
+    this.pagedMasterTranscriptList = list.slice(startIndex, endIndex);
+  }
+
+
+  nextMasterTranscriptPage() {
+    if (this.masterTranscriptCurrentPage < this.masterTranscriptTotalPages) {
+      this.masterTranscriptCurrentPage++;
+      this.updateMasterTranscriptPage();
+      this.cdr.detectChanges();
+    }
+  }
+
+  prevMasterTranscriptPage() {
+    if (this.masterTranscriptCurrentPage > 1) {
+      this.masterTranscriptCurrentPage--;
+      this.updateMasterTranscriptPage();
+      this.cdr.detectChanges();
+    }
+  }
+
+  goToMasterTranscriptPage(page: number) {
+    if (page >= 1 && page <= this.masterTranscriptTotalPages) {
+      this.masterTranscriptCurrentPage = page;
+      this.updateMasterTranscriptPage();
+      this.cdr.detectChanges();
+    }
+  }
+
+  onMasterTranscriptPageSizeChange() {
+    this.masterTranscriptCurrentPage = 1;
+    this.updateMasterTranscriptPage();
+    this.cdr.detectChanges();
+  }
+
+  getMasterTranscriptPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(1, this.masterTranscriptCurrentPage - 2);
+    let end = Math.min(this.masterTranscriptTotalPages, start + maxVisible - 1);
+
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  getTraineeFinalScore(tr: any): number {
+    if (!tr) return 0;
+    const att = Number(tr.attendanceRate || 0) * 0.15;
+    const tech = Number(tr.technicalScore || 0) * 0.35;
+    const proj = Number(tr.projectScore ?? tr.technicalScore ?? 0) * 0.30;
+    const beh = Number(tr.behavioralScore || 0) * 0.20;
+    return Math.round(att + tech + proj + beh);
+  }
+
+  getTraineeGpa(tr: any): string {
+    const finalScore = this.getTraineeFinalScore(tr);
+    return ((finalScore / 100) * 4).toFixed(2);
+  }
+
+  
+  setSubSection(sub: 'company' | 'trainer' | 'trainee' | 'supervisor') {
+  this.currentSubSection = sub;
+  this.trainerView = 'grid';
+  this.traineeSubView = 'roster';
+
+  if (sub === 'supervisor' && !this.supervisorDataLoaded) {
+    this.loadSupervisorsData();
+  }
+ }
+
+ 
+  // Load Supervisor Reports
+  loadSupervisorsData(): void {
+    this.supervisorLoading = true;
+    this.supervisorError = '';
+
+    this.api.getAdminSupervisorReports(
+      this.supervisorYear,
+      this.supervisorMonth
+    ).subscribe({
+      next: (data) => {
+        this.allSupervisorsData = data;
+        this.applySupervisorFilters();
+
+        this.supervisorLoading = false;
+        this.supervisorDataLoaded = true;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading supervisor reports:', err);
+
+        this.allSupervisorsData = [];
+        this.filteredSupervisorsList = [];
+        this.supervisorError = 'تعذر تحميل تقارير المشرفين. حاول مرة أخرى.';
+        this.supervisorLoading = false;
+        this.supervisorDataLoaded = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  applySupervisorFilters(): void {
+    const search = this.supervisorSearchTerm.trim().toLowerCase();
+
+    this.filteredSupervisorsList = this.allSupervisorsData.filter(s => {
+      const matchesSearch =
+        !search ||
+        (s.fullName ?? '').toLowerCase().includes(search) ||
+        (s.department ?? '').toLowerCase().includes(search) ||
+        (s.companyName ?? '').toLowerCase().includes(search) ||
+        String(s.supervisorId).includes(search);
+
+      const matchesCompany =
+        this.supervisorCompanyFilter === 'ALL' ||
+        s.companyName === this.supervisorCompanyFilter;
+
+      const matchesStatus =
+        this.supervisorStatusFilter === 'ALL' ||
+        s.status === this.supervisorStatusFilter;
+
+      return matchesSearch && matchesCompany && matchesStatus;
+    });
+  }
+
+  resetSupervisorFilters(): void {
+    this.supervisorSearchTerm = '';
+    this.supervisorCompanyFilter = 'ALL';
+    this.supervisorStatusFilter = 'ALL';
+    this.applySupervisorFilters();
+  }
+
+
+
+ 
+  
+
+ 
+
 
   levelClass(level?: string): string {
     if (!level) return 'level-default';
@@ -689,7 +1408,6 @@ export class AdminReports implements OnInit {
   }
 
   exportToPDF() {
-    // 1. إنشاء ستايل طباعة فوري وعام يتجاوز عزل Angular ويخفي السايدبار والنافبار 100%
     const styleId = 'nfd-print-override-style';
     let printStyle = document.getElementById(styleId) as HTMLStyleElement;
     if (!printStyle) {
@@ -700,12 +1418,10 @@ export class AdminReports implements OnInit {
 
     printStyle.innerHTML = `
       @media print {
-        /* إخفاء كل شيء في الموقع بالكامل (السايد بار، الناف بار، البروفايل، الإشعارات) */
         body * {
           visibility: hidden !important;
         }
 
-        /* إظهار محتوى التقارير فقط وسحبه لأعلى وأول الصفحة ملء الورقة */
         .reports-container,
         .reports-container * {
           visibility: visible !important;
@@ -724,8 +1440,8 @@ export class AdminReports implements OnInit {
           box-sizing: border-box !important;
         }
 
-        /* إخفاء التبويبات وأشرطة البحث والأزرار والتصفح */
         .subsections-tabs-bar,
+        .sub-view-nav-bar,
         .filter-toolbar-card,
         .actions-left,
         .card-footer,
@@ -733,17 +1449,16 @@ export class AdminReports implements OnInit {
         .compact-pagination-wrapper,
         .back-btn,
         .btn-reset-filters,
+        .no-print,
         button {
           display: none !important;
         }
 
-        /* الحفاظ على ألوان وهوية المنصة في ملف الـ PDF */
         * {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
 
-        /* ترتيب كروت الإحصائيات (81، 4.9، 3200+) أفقياً في سطر واحد بعرض الورقة */
         .summary-metrics-grid {
           display: flex !important;
           flex-direction: row !important;
@@ -762,39 +1477,19 @@ export class AdminReports implements OnInit {
           background: #ffffff !important;
         }
 
-        .metric-value {
-          font-size: 24px !important;
-        }
-
-        /* ترتيب كروت المدربين أو الشركات في صفوف متوازية مرتبة بعرض الورقة */
-        .companies-grid {
-          display: grid !important;
-          grid-template-columns: repeat(2, 1fr) !important;
-          gap: 16px !important;
+        .table-card, .official-sheet-card {
+          border: 1px solid #cbd5e1 !important;
+          box-shadow: none !important;
+          padding: 16px !important;
           width: 100% !important;
         }
 
-        .company-card {
-          border: 1px solid #cbd5e1 !important;
-          box-shadow: none !important;
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
-
-        /* تنسيق الجداول لتملأ الصفحة بدقة */
-        .table-card {
-          border: 1px solid #cbd5e1 !important;
-          box-shadow: none !important;
-          padding: 0 !important;
-          width: 100% !important;
-        }
-
-        .custom-table {
+        .custom-table, .official-table {
           width: 100% !important;
           border-collapse: collapse !important;
         }
 
-        .custom-table th {
+        .custom-table th, .official-table th {
           background-color: #f8fafc !important;
           color: #0D1C8C !important;
           border: 1px solid #cbd5e1 !important;
@@ -802,14 +1497,13 @@ export class AdminReports implements OnInit {
           font-size: 11px !important;
         }
 
-        .custom-table td {
+        .custom-table td, .official-table td {
           border: 1px solid #e2e8f0 !important;
           padding: 8px 10px !important;
           font-size: 10.5px !important;
           page-break-inside: avoid !important;
         }
 
-        /* ضبط حجم الورقة الرسمي A4 */
         @page {
           size: A4 portrait;
           margin: 8mm;
@@ -817,7 +1511,6 @@ export class AdminReports implements OnInit {
       }
     `;
 
-    // استدعاء نافذة الطباعة بعد تطبيق الستايل
     setTimeout(() => {
       window.print();
     }, 150);
@@ -911,15 +1604,18 @@ export class AdminReports implements OnInit {
       alert('لا توجد بيانات متدربين لتصديرها');
       return;
     }
-    const headers = ['اسم المتدرب', 'الشركة الراعية', 'التخصص', 'المدرب المشرف', 'الحضور', 'التقني', 'السلوكي', 'المستوى'];
+    const headers = ['الرقم الأكاديمي', 'اسم المتدرب', 'الشركة الراعية', 'التخصص', 'المدرب المشرف', 'الحضور (15%)', 'التقني (35%)', 'المشروع (30%)', 'السلوكي (20%)', 'المجموع الكلي (100%)', 'المستوى'];
     const dataRows = list.map(t => [
+      `"NFD-${t.traineeId || ''}"`,
       `"${t.traineeName || ''}"`,
       `"${t.companyName || ''}"`,
       `"${t.major || ''}"`,
       `"${t.assignedTrainer || ''}"`,
       (t.attendanceRate || 0) + '%',
       (t.technicalScore || 0) + '%',
+      (t.projectScore || t.technicalScore || 0) + '%',
       (t.behavioralScore || 0) + '%',
+      this.getTraineeFinalScore(t) + '%',
       `"${t.level || ''}"`
     ]);
     const csvContent = '\uFEFF' + [headers.join(','), ...dataRows.map(e => e.join(','))].join('\n');
@@ -927,7 +1623,7 @@ export class AdminReports implements OnInit {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `تقرير_المتدربين_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `كشف_درجات_المتدربين_المعتمد_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

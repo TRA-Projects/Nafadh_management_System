@@ -72,15 +72,28 @@ namespace Nafadh_Backend.Services
                     throw new AuthenticationException("Invalid email or password.");
                 }
 
-                // Self-registered company waiting for approval / rejected: clear 403 (see ApiExceptionFilter).
+                // التحقق من حالة الحساب العامة
+                if (user.Status != NFD_UserStatus.Active)
+                {
+                    throw new AuthenticationException($"This account is {user.Status.ToString().ToLower()} and cannot sign in.");
+                }
+
+                // التحقق من حالة الشركة
                 if (user.Role?.RoleName == "CompanySupervisor")
                 {
                     await _companyRegistrationService.EnsureCompanyLoginAllowedAsync(user);
                 }
 
-                if (user.Status != NFD_UserStatus.Active)
+                // التحقق من حالة المتدرب (هل هو منسحب؟)
+                if (user.Role?.RoleName == "Trainee")
                 {
-                    throw new AuthenticationException($"This account is {user.Status.ToString().ToLower()} and cannot sign in.");
+                    bool isWithdrawn = await _repository.IsTraineeWithdrawnAsync(user.UserId);
+                    if (isWithdrawn)
+                    {
+                        // تم تغيير Exception إلى AuthenticationException لكي لا يتوقف الـ Debugger
+                        // وتظهر الرسالة في الفرونت اند
+                        throw new AuthenticationException("تم إلغاء حسابك بسبب الانسحاب من البرنامج التدريبي.");
+                    }
                 }
 
                 var (token, expiresAtUtc) = _jwtTokenService.GenerateToken(user);
@@ -114,11 +127,16 @@ namespace Nafadh_Backend.Services
             {
                 throw;
             }
+            catch (AuthenticationException)
+            {
+                throw;
+            }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("LOGIN ERROR: " + e.Message);
+                // نمرر رسالة الخطأ الأصلية لكي نعرف السبب إذا فشل الاستعلام
+                throw new AuthenticationException(e.Message);
             }
-            return null;
         }
 
         public async Task<UserResponseDTO?> GetByIdAsync(int userId)

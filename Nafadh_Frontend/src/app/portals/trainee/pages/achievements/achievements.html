@@ -360,7 +360,7 @@
           <p> 
  
             @if ( 
-              progressPercentage() >= 50 && 
+              progressPercentage() >= 85 && 
               certificates().length > 0 
             ) { 
  
@@ -369,7 +369,7 @@
               🎉 أصبحت الشهادة متاحة للتحميل 
  
             } @else if ( 
-              progressPercentage() >= 50 && 
+              progressPercentage() >= 85 && 
               certificates().length === 0 
             ) { 
  
@@ -381,7 +381,7 @@
  
               <i class="fas fa-hourglass-half"></i> 
  
-              أكمل 50% من البرنامج للحصول على الشهادة 
+              أكمل 85% من البرنامج للحصول على الشهادة 
  
             } 
  
@@ -395,7 +395,7 @@
       <div class="certificate-status"> 
  
         @if ( 
-          progressPercentage() >= 50 && 
+          progressPercentage() >= 85 && 
           certificates().length > 0 
         ) { 
  

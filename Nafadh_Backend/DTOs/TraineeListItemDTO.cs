@@ -34,5 +34,17 @@ namespace Nafadh_Backend.DTOs
         public int EnrollmentId { get; set; }
         public string? FileUrl { get; set; }
         public string? ProgramName { get; set; }
+
+        public int? AttendanceRate { get; set; }
+        public int? TechnicalScore { get; set; }
+        public int? ProjectScore { get; set; }
+        public int? BehavioralScore { get; set; }
+        public string? TrainerNotes { get; set; }
+        public string? TrainerRecommendation { get; set; }
+
+        public string? AttendanceNotes { get; set; }
+        public string? TechnicalNotes { get; set; }
+        public string? ProjectNotes { get; set; }
+        public string? BehavioralNotes { get; set; }
     }
 }

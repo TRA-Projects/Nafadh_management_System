@@ -7,6 +7,8 @@ import { AnnouncementDto } from '../../../../core/models/dtos';
 
 export type NotificationFilter = 'all' | 'unread' | 'announcement' | 'alert' | 'company';
 export type NotificationPriority = 'all' | 'urgent' | 'high' | 'normal';
+export type PriorityLevel = 'normal' | 'important' | 'urgent';
+export type MainAudienceType = 'all' | 'admins' | 'trainers' | 'companies' | 'trainees';
 
 export interface NotificationViewModel {
   notificationId: number;
@@ -21,19 +23,11 @@ export interface NotificationViewModel {
   source: string;
 }
 
-// دالة تطبيع النصوص العربية لدعم البحث الدقيق بمختلف أشكال الهمزات والتاء
 export function normalizeArabic(text: string): string {
   if (!text) return '';
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[أإآٱ]/g, 'ا')
-    .replace(/[ة]/g, 'ه')
-    .replace(/[ى]/g, 'ي')
-    .replace(/[ًٌٍَُِّْـ]/g, '');
+  return text.toLowerCase().trim().replace(/[أإآٱ]/g, 'ا').replace(/[ة]/g, 'ه').replace(/[ى]/g, 'ي').replace(/[ًٌٍَُِّْـ]/g, '');
 }
 
-// دالة تطبيع مستوى الأهمية للربط الدقيق مع قيم الباك إند (سواء نصوص، أرقام Enum 0,1,2، أو نصوص عربية)
 export function normalizePriority(val: any): 'urgent' | 'high' | 'normal' {
   if (val === null || val === undefined) return 'normal';
   const s = String(val).trim().toLowerCase();
@@ -42,7 +36,6 @@ export function normalizePriority(val: any): 'urgent' | 'high' | 'normal' {
   return 'normal';
 }
 
-// دالة تطبيع التصنيف
 export function normalizeCategory(item: any): 'announcement' | 'alert' | 'company' | 'evaluation' | 'system' {
   const cat = String(item.category || item.Category || '').trim().toLowerCase();
   const scope = item.scopeType ?? item.ScopeType;
@@ -63,11 +56,9 @@ export class AdminNotifications implements OnInit {
   private readonly api = inject(AdminApi);
   private readonly auth = inject(AuthService);
 
-  // إشارات الحالة لجلب البيانات من قاعدة البيانات
   rawNotifications = signal<AnnouncementDto[]>([]);
   activeFilter = signal<NotificationFilter>('all');
   
-  // فلترة مستويات الأهمية
   priorityFilter: NotificationPriority = 'all';
   priorityFilterSignal = signal<NotificationPriority>('all');
   
@@ -76,29 +67,60 @@ export class AdminNotifications implements OnInit {
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
 
-  // بيانات نافذة إعلان جديد
+  // ==========================================
+  // متغيرات النافذة المنبثقة (إعلان جديد)
+  // ==========================================
   showAnnounce = signal<boolean>(false);
-  announceTitle = '';
-  announceMsg = '';
-  announcePriority: 'normal' | 'high' | 'urgent' = 'normal';
-  announceScope: 'all' | 'companies' | 'trainers' | 'trainees' = 'all';
+  activeAnnounceTab: 'edit' | 'preview' = 'edit';
   posting = signal<boolean>(false);
   announceError = signal<string | null>(null);
 
-  // نافذة التفاصيل ورسالة التنبيه
+  newAnnounceData = {
+    title: '',
+    priority: 'normal' as PriorityLevel,
+    content: '',
+    mainAudience: 'all' as MainAudienceType,
+    companyScope: 'all_companies' as 'all_companies' | 'specific_companies',
+    selectedCompanyIds: [] as string[],
+    traineeScope: 'all_trainees' as 'all_trainees' | 'specific_trainees',
+    selectedTraineeIds: [] as string[],
+    trainerScope: 'all_trainers' as 'all_trainers' | 'specific_trainers',
+    selectedTrainerIds: [] as string[],
+    channels: { inApp: true, email: true, sms: false },
+    isPinned: false
+  };
+
+  // ==========================================
+  // 🌟 البيانات التي تأتي من قاعدة البيانات
+  // ==========================================
+  dbCompanies = signal<any[]>([]);
+  dbTrainees = signal<any[]>([]);
+  dbTrainers = signal<any[]>([]);
+  isLoadingData = signal<boolean>(false);
+
+  // متغيرات التصفية للشركات
+  companySearch = '';
+  companyFilterWorkField = '';
+  companyFilterCapacity = '';
+
+  // متغيرات التصفية للمتدربين
+  traineeSearch = '';
+  traineeFilterTrack = '';
+  traineeFilterBatch = '';
+  traineeFilterCompany = '';
+
+  // متغيرات التصفية للمدربين
+  trainerSearch = '';
+  trainerFilterSpecialty = '';
+  trainerFilterExperience = '';
+
   selectedNotification = signal<NotificationViewModel | null>(null);
   toastMessage = signal<string | null>(null);
 
-  // استرجاع الإشعارات المقروءة المحفوظة
   private readIds(): number[] {
-    try {
-      return JSON.parse(localStorage.getItem('admin_read_announcements') || '[]');
-    } catch {
-      return [];
-    }
+    try { return JSON.parse(localStorage.getItem('admin_read_announcements') || '[]'); } catch { return []; }
   }
 
-  // تحويل البيانات القادمة من قاعدة البيانات إلى واجهة العرض مباشرة
   viewModels = computed<NotificationViewModel[]>(() => {
     const readIds = this.readIds();
     return this.rawNotifications().map((n, idx) => {
@@ -113,22 +135,10 @@ export class AdminNotifications implements OnInit {
       const source = item.source || item.Source || item.createdByName || item.CreatedByName || 'الإدارة العامة لمنظومة نفاذ';
       const targetScope = item.targetScope || item.TargetScope || 'all';
 
-      return {
-        notificationId: id,
-        title,
-        message,
-        category: cat,
-        priority: prio,
-        targetScope,
-        isRead,
-        createdAt: rawDate,
-        dateLabel: this.timeAgo(rawDate),
-        source
-      };
+      return { notificationId: id, title, message, category: cat, priority: prio, targetScope, isRead, createdAt: rawDate, dateLabel: this.timeAgo(rawDate), source };
     });
   });
 
-  // إحصائيات العدادات العلوية
   stats = computed(() => {
     const list = this.viewModels();
     return {
@@ -139,30 +149,20 @@ export class AdminNotifications implements OnInit {
     };
   });
 
-  // عدد غير المقروءة
   unreadCount = computed(() => this.stats().unread);
 
-  // القائمة المفلترة وفقاً للتبويب، البحث، ومستوى الأهمية المفعل
   filteredNotifications = computed<NotificationViewModel[]>(() => {
     const tab = this.activeFilter();
     const prio = this.priorityFilterSignal();
-    const rawQuery = this.searchQuerySignal().trim();
-    const query = normalizeArabic(rawQuery);
+    const query = normalizeArabic(this.searchQuerySignal().trim());
 
     return this.viewModels().filter((item) => {
-      // 1. فلتر التبويب
       if (tab === 'unread' && item.isRead) return false;
       if (tab === 'announcement' && item.category !== 'announcement') return false;
       if (tab === 'alert' && item.category !== 'alert') return false;
       if (tab === 'company' && item.category !== 'company') return false;
+      if (prio !== 'all' && normalizePriority(item.priority) !== prio) return false;
 
-      // 2. فلتر مستوى الأهمية
-      if (prio !== 'all') {
-        const itemPrio = normalizePriority(item.priority);
-        if (itemPrio !== prio) return false;
-      }
-
-      // 3. البحث الذكي بالعربية
       if (query) {
         const normTitle = normalizeArabic(item.title);
         const normMsg = normalizeArabic(item.message);
@@ -170,26 +170,14 @@ export class AdminNotifications implements OnInit {
         const normCat = normalizeArabic(this.getCategoryLabel(item.category));
         const prioText = item.priority === 'urgent' ? 'عاجل' : item.priority === 'high' ? 'هام' : 'عادي';
         const normPrio = normalizeArabic(prioText);
-
-        const matches =
-          normTitle.includes(query) ||
-          normMsg.includes(query) ||
-          normSrc.includes(query) ||
-          normCat.includes(query) ||
-          normPrio.includes(query);
-
-        if (!matches) return false;
+        return normTitle.includes(query) || normMsg.includes(query) || normSrc.includes(query) || normCat.includes(query) || normPrio.includes(query);
       }
-
       return true;
     });
   });
 
-  ngOnInit(): void {
-    this.load();
-  }
+  ngOnInit(): void { this.load(); }
 
-  // جلب الإعلانات من الباك إند
   load(): void {
     this.loading.set(true);
     this.error.set(null);
@@ -203,32 +191,16 @@ export class AdminNotifications implements OnInit {
         this.rawNotifications.set(sorted);
         this.loading.set(false);
       },
-      error: (err) => {
-        console.error('Failed to load admin notifications.', err);
-        this.error.set('تعذر تحميل الإشعارات من الخادم.');
-        this.loading.set(false);
-      },
+      error: (err) => { this.error.set('تعذر تحميل الإشعارات من الخادم.'); this.loading.set(false); },
     });
   }
 
-  refresh(): void {
-    this.load();
-    this.showToast('تم تحديث قائمة الإشعارات بنجاح.');
-  }
+  refresh(): void { this.load(); this.showToast('تم تحديث قائمة الإشعارات بنجاح.'); }
+  setFilter(filter: NotificationFilter): void { this.activeFilter.set(filter); }
+  onSearchChange(): void { this.searchQuerySignal.set(this.searchQuery); }
 
-  setFilter(filter: NotificationFilter): void {
-    this.activeFilter.set(filter);
-  }
-
-  onSearchChange(): void {
-    this.searchQuerySignal.set(this.searchQuery);
-  }
-
-  // دالة تغيير مستوى الأهمية (عاجل / هام / عادي / الكل)
   onPriorityChange(newVal?: string): void {
-    if (newVal) {
-      this.priorityFilter = newVal as NotificationPriority;
-    }
+    if (newVal) this.priorityFilter = newVal as NotificationPriority;
     this.priorityFilterSignal.set(this.priorityFilter);
   }
 
@@ -243,11 +215,8 @@ export class AdminNotifications implements OnInit {
   toggleReadStatus(item: NotificationViewModel, event?: Event): void {
     event?.stopPropagation();
     let readIds = this.readIds();
-    if (item.isRead) {
-      readIds = readIds.filter((id) => id !== item.notificationId);
-    } else {
-      if (!readIds.includes(item.notificationId)) readIds.push(item.notificationId);
-    }
+    if (item.isRead) readIds = readIds.filter((id) => id !== item.notificationId);
+    else if (!readIds.includes(item.notificationId)) readIds.push(item.notificationId);
     localStorage.setItem('admin_read_announcements', JSON.stringify(readIds));
     this.rawNotifications.update((list) => [...list]);
     this.showToast(item.isRead ? 'تم التحديد كغير مقروء.' : 'تم التعليم كمقروء.');
@@ -273,12 +242,8 @@ export class AdminNotifications implements OnInit {
 
   deleteNotification(id: number, event?: Event): void {
     event?.stopPropagation();
-    this.rawNotifications.update((list) =>
-      list.filter((n) => Number(n.announcementId ?? (n as any).id) !== id)
-    );
-    if (this.selectedNotification()?.notificationId === id) {
-      this.selectedNotification.set(null);
-    }
+    this.rawNotifications.update((list) => list.filter((n) => Number(n.announcementId ?? (n as any).id) !== id));
+    if (this.selectedNotification()?.notificationId === id) this.selectedNotification.set(null);
     this.showToast('تم حذف الإشعار بنجاح.');
   }
 
@@ -287,127 +252,314 @@ export class AdminNotifications implements OnInit {
     this.markRead(item);
     this.selectedNotification.set(item);
   }
+  closeDetails(): void { this.selectedNotification.set(null); }
 
-  closeDetails(): void {
-    this.selectedNotification.set(null);
+  // =========================================================================
+  // 🌟 جلب البيانات من قاعدة البيانات (الداتا بيز)
+  // =========================================================================
+  fetchTargetAudienceData(): void {
+    this.isLoadingData.set(true);
+    
+    // 1. جلب الشركات
+    this.api.getCompanies().subscribe({
+      next: (res: any) => {
+        const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
+        const mappedCompanies = items.map((c: any) => ({
+          id: String(c.companyId || c.id || c.CompanyId || c.Id),
+          name: c.companyName || c.name || c.CompanyName || c.Name || 'شركة غير مسماة',
+          workField: c.workField || c.WorkField || 'غير محدد',
+          capacity: c.capacity || c.Capacity || 0,
+          commercialRegister: c.commercialRegister || c.CommercialRegister || 'غير متوفر'
+        }));
+        this.dbCompanies.set(mappedCompanies);
+      },
+      error: () => this.dbCompanies.set([])
+    });
+
+    // 2. جلب المتدربين
+    this.api.getTrainees({ pageSize: 10000 }).subscribe({
+      next: (res: any) => {
+        const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
+        const mappedTrainees = items.map((t: any) => {
+          const name = t.fullName || t.FullName || t.name || t.Name || 'اسم غير متوفر';
+          const code = t.registrationNumber || t.RegistrationNumber || t.code || t.Code || 'N/A';
+          let track = t.trackName || t.TrackName || t.track?.name || t.Track?.Name || t.specialty || t.programName || 'غير محدد';
+          let companyName = t.companyName || t.CompanyName || t.company?.name || t.Company?.Name || 'غير محدد';
+          let batch = t.batchName || t.BatchName || t.batch?.name || t.Batch?.Name || 'غير محدد';
+
+          return { id: String(t.traineeId || t.id || t.TraineeId || t.Id), name, code, track, companyName, batch };
+        });
+        this.dbTrainees.set(mappedTrainees);
+      },
+      error: () => this.dbTrainees.set([])
+    });
+
+    // 3. جلب المدربين (مع التخصص وسنوات الخبرة)
+    this.api.getTrainers({ pageSize: 10000 }).subscribe({
+      next: (res: any) => {
+        const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
+        const mappedTrainers = items.map((tr: any) => ({
+          id: String(tr.trainerId || tr.id || tr.TrainerId || tr.Id),
+          name: tr.fullName || tr.name || tr.FullName || tr.Name || 'اسم غير متوفر',
+          specialty: tr.specialty || tr.Specialty || 'غير محدد',
+          experienceYears: tr.experienceYears || tr.ExperienceYears || 0
+        }));
+        this.dbTrainers.set(mappedTrainers);
+        this.isLoadingData.set(false);
+      },
+      error: () => {
+        this.dbTrainers.set([]);
+        this.isLoadingData.set(false);
+      }
+    });
   }
 
+  // =========================================================================
+  // منطق النافذة المنبثقة (إعلان جديد)
+  // =========================================================================
   openAnnounceModal(): void {
-    this.announceTitle = '';
-    this.announceMsg = '';
-    this.announcePriority = 'normal';
-    this.announceScope = 'all';
+    this.newAnnounceData = {
+      title: '', priority: 'normal', content: '', mainAudience: 'all',
+      companyScope: 'all_companies', selectedCompanyIds: [],
+      traineeScope: 'all_trainees', selectedTraineeIds: [],
+      trainerScope: 'all_trainers', selectedTrainerIds: [],
+      channels: { inApp: true, email: true, sms: false },
+      isPinned: false
+    };
+    this.resetCompanyFilters();
+    this.resetTraineeFilters();
+    this.resetTrainerFilters();
+    this.activeAnnounceTab = 'edit';
     this.announceError.set(null);
+    
+    this.fetchTargetAudienceData(); 
+    
     this.showAnnounce.set(true);
   }
 
   closeAnnounceModal(): void {
+    if (this.posting()) return;
     this.showAnnounce.set(false);
   }
 
-  // =========================================================================
-  // نشر إعلان جديد في قاعدة البيانات (مع حل مشكلة النشر وخطأ Text/JSON Parsing)
-  // =========================================================================
-  postAnnouncement(): void {
-    if (!this.announceMsg.trim() || this.posting()) return;
+  expectedReach = computed(() => {
+    const fd = this.newAnnounceData;
+    if (fd.mainAudience === 'all') return 18500;
+    if (fd.mainAudience === 'admins') return 45;
+    if (fd.mainAudience === 'trainers') return fd.trainerScope === 'all_trainers' ? this.dbTrainers().length : fd.selectedTrainerIds.length;
+    if (fd.mainAudience === 'companies') {
+      if (fd.companyScope === 'all_companies') return this.dbCompanies().length;
+      return this.dbCompanies().filter(c => fd.selectedCompanyIds.includes(c.id)).reduce((sum, c) => sum + (c.capacity || 0), 0);
+    }
+    if (fd.mainAudience === 'trainees') return fd.traineeScope === 'all_trainees' ? this.dbTrainees().length : fd.selectedTraineeIds.length;
+    return 0;
+  });
 
-    const uid =
-      this.auth?.userId ||
-      (this.auth as any)?.currentUser?.id ||
-      (this.auth as any)?.user?.id ||
-      Number(localStorage.getItem('userId')) ||
-      1;
+  setAudience(aud: MainAudienceType) {
+    this.newAnnounceData.mainAudience = aud;
+    this.newAnnounceData.selectedCompanyIds = [];
+    this.newAnnounceData.selectedTraineeIds = [];
+    this.newAnnounceData.selectedTrainerIds = [];
+  }
 
+  // =========================================================================
+  // 🌟 دوال التصفية الذكية والاختيار
+  // =========================================================================
+
+  // --- الشركات ---
+  getFilteredCompanies() {
+    return this.dbCompanies().filter(c => {
+      const term = this.companySearch.toLowerCase();
+      const matchesSearch = !term || c.name.toLowerCase().includes(term) || c.commercialRegister.toLowerCase().includes(term);
+      const matchesWorkField = !this.companyFilterWorkField || c.workField === this.companyFilterWorkField;
+
+      let matchesCapacity = true;
+      if (this.companyFilterCapacity === 'high') matchesCapacity = c.capacity >= 100;
+      else if (this.companyFilterCapacity === 'medium') matchesCapacity = c.capacity >= 50 && c.capacity < 100;
+      else if (this.companyFilterCapacity === 'low') matchesCapacity = c.capacity < 50;
+
+      return matchesSearch && matchesWorkField && matchesCapacity;
+    });
+  }
+  getUniqueCompanyWorkFields() { return [...new Set(this.dbCompanies().map(c => c.workField))].filter(Boolean); }
+  resetCompanyFilters() { this.companySearch = ''; this.companyFilterWorkField = ''; this.companyFilterCapacity = ''; }
+  toggleCompany(id: string) {
+    const ids = this.newAnnounceData.selectedCompanyIds;
+    this.newAnnounceData.selectedCompanyIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];
+  }
+  isCompanySelected(id: string) { return this.newAnnounceData.selectedCompanyIds.includes(id); }
+  getSelectedCompanyObjects() { return this.dbCompanies().filter(c => this.newAnnounceData.selectedCompanyIds.includes(c.id)); }
+  selectAllCompanies(event: any) {
+    const filtered = this.getFilteredCompanies();
+    if (event.target.checked) {
+      const newIds = new Set([...this.newAnnounceData.selectedCompanyIds, ...filtered.map(c => c.id)]);
+      this.newAnnounceData.selectedCompanyIds = Array.from(newIds);
+    } else {
+      const filteredIds = filtered.map(c => c.id);
+      this.newAnnounceData.selectedCompanyIds = this.newAnnounceData.selectedCompanyIds.filter(id => !filteredIds.includes(id));
+    }
+  }
+
+  // --- المتدربين ---
+  getFilteredTrainees() {
+    return this.dbTrainees().filter(t => {
+      const term = this.traineeSearch.toLowerCase();
+      const matchesSearch = !term || t.name.toLowerCase().includes(term) || t.code.toLowerCase().includes(term) || t.track.toLowerCase().includes(term) || t.companyName.toLowerCase().includes(term);
+      const matchesTrack = !this.traineeFilterTrack || t.track === this.traineeFilterTrack;
+      const matchesBatch = !this.traineeFilterBatch || t.batch === this.traineeFilterBatch;
+      const matchesCompany = !this.traineeFilterCompany || t.companyName === this.traineeFilterCompany;
+
+      return matchesSearch && matchesTrack && matchesBatch && matchesCompany;
+    });
+  }
+  toggleTrainee(id: string) {
+    const ids = this.newAnnounceData.selectedTraineeIds;
+    this.newAnnounceData.selectedTraineeIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];
+  }
+  isTraineeSelected(id: string) { return this.newAnnounceData.selectedTraineeIds.includes(id); }
+  getSelectedTraineeObjects() { return this.dbTrainees().filter(t => this.newAnnounceData.selectedTraineeIds.includes(t.id)); }
+  selectAllTrainees(event: any) {
+    const filtered = this.getFilteredTrainees();
+    if (event.target.checked) {
+      const newIds = new Set([...this.newAnnounceData.selectedTraineeIds, ...filtered.map(t => t.id)]);
+      this.newAnnounceData.selectedTraineeIds = Array.from(newIds);
+    } else {
+      const filteredIds = filtered.map(t => t.id);
+      this.newAnnounceData.selectedTraineeIds = this.newAnnounceData.selectedTraineeIds.filter(id => !filteredIds.includes(id));
+    }
+  }
+  resetTraineeFilters() { this.traineeSearch = ''; this.traineeFilterTrack = ''; this.traineeFilterBatch = ''; this.traineeFilterCompany = ''; }
+  getUniqueTracks() { return [...new Set(this.dbTrainees().map(t => t.track))].filter(Boolean); }
+  getUniqueBatches() { return [...new Set(this.dbTrainees().map(t => t.batch))].filter(Boolean); }
+  getUniqueTraineeCompanies() { return [...new Set(this.dbTrainees().map(t => t.companyName))].filter(Boolean); }
+
+  // --- المدربين (التصفية الذكية) ---
+  getFilteredTrainers() {
+    return this.dbTrainers().filter(t => {
+      const term = this.trainerSearch.toLowerCase();
+      const matchesSearch = !term || t.name.toLowerCase().includes(term) || t.specialty.toLowerCase().includes(term);
+      const matchesSpecialty = !this.trainerFilterSpecialty || t.specialty === this.trainerFilterSpecialty;
+
+      let matchesExperience = true;
+      if (this.trainerFilterExperience === 'high') matchesExperience = t.experienceYears >= 5;
+      else if (this.trainerFilterExperience === 'medium') matchesExperience = t.experienceYears >= 2 && t.experienceYears < 5;
+      else if (this.trainerFilterExperience === 'low') matchesExperience = t.experienceYears < 2;
+
+      return matchesSearch && matchesSpecialty && matchesExperience;
+    });
+  }
+  getUniqueTrainerSpecialties() { return [...new Set(this.dbTrainers().map(t => t.specialty))].filter(Boolean); }
+  resetTrainerFilters() { this.trainerSearch = ''; this.trainerFilterSpecialty = ''; this.trainerFilterExperience = ''; }
+  
+  toggleTrainer(id: string) {
+    const ids = this.newAnnounceData.selectedTrainerIds;
+    this.newAnnounceData.selectedTrainerIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];
+  }
+  isTrainerSelected(id: string) { return this.newAnnounceData.selectedTrainerIds.includes(id); }
+  getSelectedTrainerObjects() { return this.dbTrainers().filter(t => this.newAnnounceData.selectedTrainerIds.includes(t.id)); }
+  selectAllTrainers(event: any) {
+    const filtered = this.getFilteredTrainers();
+    if (event.target.checked) {
+      const newIds = new Set([...this.newAnnounceData.selectedTrainerIds, ...filtered.map(t => t.id)]);
+      this.newAnnounceData.selectedTrainerIds = Array.from(newIds);
+    } else {
+      const filteredIds = filtered.map(t => t.id);
+      this.newAnnounceData.selectedTrainerIds = this.newAnnounceData.selectedTrainerIds.filter(id => !filteredIds.includes(id));
+    }
+  }
+
+  // =========================================================================
+  // نشر الإعلان وتصدير البيانات
+  // =========================================================================
+ postAnnouncement(): void {
+    if (!this.newAnnounceData.title.trim() || !this.newAnnounceData.content.trim() || this.posting()) {
+      alert('يرجى تعبئة الحقول الإلزامية (العنوان، الرسالة)');
+      return;
+    }
+
+    const fd = this.newAnnounceData;
+
+    if (fd.mainAudience === 'companies' && fd.companyScope === 'specific_companies' && fd.selectedCompanyIds.length === 0) {
+      alert('يرجى اختيار شركة واحدة على الأقل، أو اختيار "كافة الشركات".');
+      return;
+    }
+    if (fd.mainAudience === 'trainees' && fd.traineeScope === 'specific_trainees' && fd.selectedTraineeIds.length === 0) {
+      alert('يرجى اختيار متدرب واحد على الأقل، أو اختيار "كافة المتدربين".');
+      return;
+    }
+    if (fd.mainAudience === 'trainers' && fd.trainerScope === 'specific_trainers' && fd.selectedTrainerIds.length === 0) {
+      alert('يرجى اختيار مدرب واحد على الأقل، أو اختيار "كافة المدربين".');
+      return;
+    }
+
+    const uid = this.auth?.userId || (this.auth as any)?.currentUser?.id || 1;
     this.posting.set(true);
     this.announceError.set(null);
 
-    const titleValue = this.announceTitle.trim() || 'إعلان نظامي عام';
-    const msgValue = this.announceMsg.trim();
-    const scopeVal = this.announceScope === 'companies' ? 1 : this.announceScope === 'trainers' ? 2 : 0;
+    const scopeVal =
+      fd.mainAudience === 'companies' ? 1 :
+      fd.mainAudience === 'trainees'  ? 3 :
+      fd.mainAudience === 'trainers'  ? 4 :
+      fd.mainAudience === 'admins'    ? 5 : 0;
 
-    // تجهيز الـ Payload بدقة ليطابق كود الـ Backend DTO
     const payload = {
-      title: titleValue,
-      message: msgValue,
-      description: msgValue,
+      title: fd.title.trim(),
+      message: fd.content.trim(),
+      description: fd.content.trim(),
       scopeType: scopeVal,
-      targetScope: this.announceScope,
-      scopeId: null,
+      targetScope: fd.mainAudience,
       createdByUserId: uid,
-      priority: this.announcePriority, // إرسال الأهمية المحددة: normal / high / urgent
+      priority: fd.priority,
       createdAt: new Date().toISOString(),
+      companyIds: fd.mainAudience === 'companies' && fd.companyScope === 'specific_companies'
+        ? fd.selectedCompanyIds.map(id => Number(id))
+        : [],
+      traineeIds: fd.mainAudience === 'trainees' && fd.traineeScope === 'specific_trainees'
+        ? fd.selectedTraineeIds.map(id => Number(id))
+        : [],
+      trainerIds: fd.mainAudience === 'trainers' && fd.trainerScope === 'specific_trainers'
+        ? fd.selectedTrainerIds.map(id => Number(id))
+        : [],
+      channels: fd.channels,
+      isPinned: fd.isPinned
     };
 
     this.api.createAnnouncement(payload as any).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.posting.set(false);
         this.showAnnounce.set(false);
-        this.announceTitle = '';
-        this.announceMsg = '';
-        this.showToast('تم نشر الإعلان بنجاح في قاعدة البيانات.');
+        const inAppCount = res?.notificationsCreated ?? 0;
+        const emailCount = res?.emailsSent ?? 0;
+        this.showToast(`تم نشر الإعلان بنجاح (وصل إلى ${inAppCount} إشعار بالمنصة و ${emailCount} بريد إلكتروني).`);
         this.load();
       },
       error: (err: any) => {
-        console.warn('Response info:', err);
-        // حل سبب مشكلة النشر في الباك إند:
-        // إذا كان السيرفر أرجع كود 200/201 ولكن الباك إند أعاد نصاً عادياً وليس JSON،
-        // يعتبر أنجولار ذلك Parse Error بينما هو في الواقع نجح وحفظ في الداتابيز!
         const isSuccessStatus = err?.status === 200 || err?.status === 201 || err?.status === 204;
         const isParsingError = typeof err?.message === 'string' && err.message.includes('Http failure during parsing');
-        const hasTextBody = err?.error && typeof err.error.text === 'string' && err.status === 200;
 
-        if (isSuccessStatus || isParsingError || hasTextBody) {
+        if (isSuccessStatus || isParsingError) {
           this.posting.set(false);
           this.showAnnounce.set(false);
-          this.announceTitle = '';
-          this.announceMsg = '';
-          this.showToast('تم نشر الإعلان بنجاح في قاعدة البيانات.');
+          this.showToast('تم نشر الإعلان بنجاح.');
           this.load();
           return;
         }
 
         this.posting.set(false);
-        this.announceError.set(
-          err?.error?.message ||
-          err?.error?.title ||
-          err?.message ||
-          'تعذر نشر الإعلان، يرجى التحقق من الاتصال بالخادم.'
-        );
+        this.announceError.set(err?.error?.message || err?.message || 'تعذر نشر الإعلان.');
       },
     });
   }
 
-  // تصدير الإشعارات إلى CSV
   exportAll(): void {
     const rows = this.filteredNotifications();
-    if (!rows.length) {
-      this.showToast('لا توجد إشعارات مطابقة للتصدير.');
-      return;
-    }
-
+    if (!rows.length) { this.showToast('لا توجد إشعارات مطابقة للتصدير.'); return; }
     const header = ['رقم الإشعار', 'العنوان', 'الرسالة', 'التصنيف', 'الأهمية', 'الحالة', 'المصدر', 'التاريخ'];
-    const lines = rows.map((n) =>
-      [
-        n.notificationId,
-        n.title,
-        n.message,
-        this.getCategoryLabel(n.category),
-        n.priority === 'urgent' ? 'عاجل' : n.priority === 'high' ? 'هام' : 'عادي',
-        n.isRead ? 'مقروء' : 'غير مقروء',
-        n.source,
-        n.dateLabel,
-      ]
-        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
-        .join(',')
-    );
-
+    const lines = rows.map((n) => [n.notificationId, n.title, n.message, this.getCategoryLabel(n.category), n.priority === 'urgent' ? 'عاجل' : n.priority === 'high' ? 'هام' : 'عادي', n.isRead ? 'مقروء' : 'غير مقروء', n.source, n.dateLabel].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','));
     const blob = new Blob(['\uFEFF' + [header.join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `إشعارات_منصة_نفاذ_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    a.href = url; a.download = `إشعارات_منصة_نفاذ_${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(url);
     this.showToast('تم تصدير ملف الإشعارات بنجاح.');
   }
 
@@ -430,9 +582,7 @@ export class AdminNotifications implements OnInit {
     }
   }
 
-  trackById(_: number, item: NotificationViewModel): number {
-    return item.notificationId;
-  }
+  trackById(_: number, item: NotificationViewModel): number { return item.notificationId; }
 
   timeAgo(value?: string | Date): string {
     if (!value) return 'وقت غير محدد';
@@ -452,8 +602,6 @@ export class AdminNotifications implements OnInit {
 
   private showToast(msg: string): void {
     this.toastMessage.set(msg);
-    setTimeout(() => {
-      this.toastMessage.set(null);
-    }, 3500);
+    setTimeout(() => { this.toastMessage.set(null); }, 3500);
   }
 }

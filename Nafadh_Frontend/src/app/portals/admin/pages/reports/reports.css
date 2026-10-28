@@ -964,3 +964,441 @@
     margin: 10mm;
   }
 }
+/* رأس الكرت */
+.company-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.company-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.company-field {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* المربع النيلي للأيقونة */
+.company-avatar-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background-color: #0D1C8C;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* صف الأعمدة الأربعة السفلية */
+.card-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 14px;
+  text-align: center;
+}
+
+.stat-col .stat-num {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  font-family: monospace;
+}
+
+.stat-col .stat-lbl {
+  display: block;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* لون الإنذارات */
+.stat-num.warning-active {
+  color: #ef4444 !important;
+}
+
+
+/* ==========================================
+   Admin Trainer Attendance Tabs
+   ========================================== */
+
+.trainer-attendance-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  margin: 20px 0;
+  background: #f0f4f9;
+  border-radius: 12px;
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+  direction: rtl;
+}
+
+.trainer-attendance-tabs button {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  padding: 12px 24px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.trainer-attendance-tabs button:hover {
+  background: #e2e8f0;
+  color: #101c88;
+}
+
+.trainer-attendance-tabs button.active {
+  background: #101c88;
+  color: white;
+  box-shadow: 0 3px 8px rgba(16, 28, 136, 0.18);
+}
+
+@media (max-width: 600px) {
+  .trainer-attendance-tabs {
+    width: 100%;
+  }
+
+  .trainer-attendance-tabs button {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}
+
+/* ==========================================
+   Admin Trainer Attendance - Trainer Info
+   ========================================== */
+
+.trainer-attendance-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 170px;
+  direction: rtl;
+}
+
+.trainer-attendance-avatar {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 50%;
+  background: #eef2ff;
+  color: #101c88;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.trainer-attendance-person-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
+
+.trainer-attendance-person-info strong {
+  color: #101c88;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.trainer-attendance-person-info small {
+  color: #64748b;
+  font-size: 11px;
+}
+
+/* ==========================================
+   Admin Trainer Weekly Attendance
+   ========================================== */
+
+.trainer-week-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.trainer-week-table th,
+.trainer-week-table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 14px 10px;
+}
+
+.trainer-week-table th:first-child,
+.trainer-week-table td:first-child {
+  text-align: right;
+  min-width: 180px;
+}
+
+.trainer-week-table th small {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #64748b;
+}
+
+.trainer-week-day-records {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.trainer-week-record {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.trainer-week-record small {
+  color: #64748b;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.trainer-week-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.trainer-week-status.present {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.trainer-week-status.late {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.trainer-week-status.absent {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.trainer-week-status.early {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.trainer-week-empty {
+  color: #94a3b8;
+  font-size: 18px;
+}
+
+.trainer-week-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 12px;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+/* ==========================================
+   Admin Trainer Monthly Attendance
+   ========================================== */
+
+.trainer-monthly-attendance {
+  padding: 22px;
+}
+
+.trainer-month-week {
+  margin-top: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.trainer-month-week details {
+  width: 100%;
+}
+
+.trainer-month-week-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 17px 20px;
+  background: #f8fafc;
+  cursor: pointer;
+  list-style: none;
+  transition: background 0.2s ease;
+}
+
+.trainer-month-week-header::-webkit-details-marker {
+  display: none;
+}
+
+.trainer-month-week-header:hover {
+  background: #eef2ff;
+}
+
+.trainer-month-week-header strong {
+  color: #101c88;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.trainer-month-week-header span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.trainer-month-chevron {
+  font-size: 20px !important;
+  color: #101c88 !important;
+  transition: transform 0.2s ease;
+}
+
+.trainer-month-week details[open] .trainer-month-chevron {
+  transform: rotate(180deg);
+}
+
+.trainer-month-week .trainer-week-table {
+  margin: 0;
+}
+
+.trainer-month-week .trainer-week-table th {
+  background: #f8fafc;
+}
+
+.trainer-month-week .trainer-week-table td {
+  background: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .trainer-monthly-attendance {
+    padding: 14px;
+  }
+
+  .trainer-month-week-header {
+    padding: 14px;
+    gap: 8px;
+  }
+
+  .trainer-month-week-header strong {
+    font-size: 12px;
+  }
+
+  .trainer-month-week-header span {
+    font-size: 11px;
+  }
+}
+
+/* ==========================================
+   Trainer Attendance - Period Navigation
+   ========================================== */
+
+.trainer-attendance-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 14px 20px;
+  margin: 16px 0 20px;
+  background: #f0f4f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  direction: rtl;
+}
+
+.attendance-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #ffffff;
+  color: #0D1C8C;
+  border: 1px solid #d6deeb;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.attendance-nav-btn:hover {
+  background: #0D1C8C;
+  color: #ffffff;
+  border-color: #0D1C8C;
+  box-shadow: 0 4px 12px rgba(13, 28, 140, 0.18);
+}
+
+.attendance-nav-btn:focus-visible {
+  outline: 3px solid #a5b4fc;
+  outline-offset: 2px;
+}
+
+.attendance-period-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 22px;
+  min-width: 260px;
+  background: #ffffff;
+  color: #0D1C8C;
+  border: 1px solid #d6deeb;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.attendance-period-separator {
+  color: #94a3b8;
+  margin: 0 8px;
+  font-weight: 500;
+}
+
+@media (max-width: 650px) {
+  .trainer-attendance-navigation {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .attendance-period-display {
+    order: -1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .attendance-nav-btn {
+    flex: 1;
+  }
+}

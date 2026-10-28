@@ -1,6 +1,9 @@
 ﻿
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
+using Nafadh_Backend.Models;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -228,5 +231,163 @@ namespace Nafadh_Backend.Controllers
                 return StatusCode(403, new { message = ex.Message });
             }
         }
+
+        [HttpGet("batch/{batchId:int}")]
+        public async Task<IActionResult> GetBatchQuizzes(int batchId, [FromServices] Nafadhcontext context)
+        {
+            var quizzes = await context.NFD_Quizzes
+                .Where(q => q.BatchId == batchId)
+                .Select(q => new
+                {
+                    q.QuizId,
+                    q.Title,
+                    q.Description,
+                    q.BatchId,
+                    q.StartDateTime,
+                    q.EndDateTime,
+                    q.DurationMinutes,
+                    q.Status,
+                    q.PassingPercentage,
+                    TrainerName = q.Trainer != null && q.Trainer.User != null
+                        ? q.Trainer.User.FullName
+                        : "المدرب المسؤول"
+                })
+                .ToListAsync();
+
+            return Ok(quizzes);
+        }
+
+        // GET /api/Quizzes/{quizId}/attendance-details
+        // كشف متكامل يربط بين درجات الاختبار وسجل حضور وعذر المتدرب اليومي المعتمد من المدرب
+        [HttpGet("{quizId:int}/attendance-details")]
+        public async Task<IActionResult> GetQuizAttendanceDetails(int quizId, [FromServices] Nafadhcontext context)
+        {
+            var quiz = await context.NFD_Quizzes
+                .Include(q => q.Trainer)
+                    .ThenInclude(t => t.User)
+                .Include(q => q.Attempts)
+                    .ThenInclude(a => a.Trainee)
+                        .ThenInclude(tr => tr.User)
+                .FirstOrDefaultAsync(q => q.QuizId == quizId);
+
+            if (quiz == null)
+                return NotFound(new { message = "الاختبار غير موجود" });
+
+            // 1. جلب متدربي الدفعة
+            var enrollments = await context.NFD_Enrollments
+                .Where(e => e.BatchId == quiz.BatchId)
+                .Include(e => e.Trainee)
+                    .ThenInclude(t => t.User)
+                .ToListAsync();
+
+            var enrollmentIds = enrollments.Select(e => e.EnrollmentId).ToList();
+            var examDate = quiz.StartDateTime.Date;
+
+            // 2. تحسين الأداء: جلب الحضور اليومي والأعذار دفعة واحدة في استعلام واحد بدلاً من تكراره باللوب
+            var dailyAttendances = await context.NFD_DailyAttendances
+                .Where(da => enrollmentIds.Contains(da.EnrollmentId) && da.Date.Date == examDate)
+                .ToListAsync();
+
+            var attendanceIds = dailyAttendances.Select(da => da.DailyAttendanceId).ToList();
+            var excuses = await context.NFD_Excuses
+                .Where(ex => attendanceIds.Contains(ex.DailyAttendanceId))
+                .ToListAsync();
+
+            string trainerName = quiz.Trainer?.User?.FullName ?? "المدرب المسؤول";
+            var attendeesList = new List<object>();
+
+            foreach (var enrollment in enrollments)
+            {
+                var trainee = enrollment.Trainee;
+
+                // المحاولة: هل دخل الاختبار؟
+                var attempt = quiz.Attempts
+                    .Where(a => a.TraineeId == trainee.TraineeId)
+                    .OrderByDescending(a => a.Score)
+                    .FirstOrDefault();
+
+                // 🟢 فحص سليم يشمل InProgress و Submitted معاً
+                bool hasAttempt = attempt != null && (
+                    attempt.Status == "Submitted" ||
+                    attempt.Status == "InProgress" ||
+                    attempt.Status == "Started" ||
+                    attempt.SubmittedAt != null
+                );
+
+                var dailyAttendance = dailyAttendances.FirstOrDefault(da => da.EnrollmentId == enrollment.EnrollmentId);
+                var excuse = dailyAttendance != null
+                    ? excuses.FirstOrDefault(ex => ex.DailyAttendanceId == dailyAttendance.DailyAttendanceId)
+                    : null;
+
+                // تحديد الحالة الأكاديمية بدقة
+                string attendanceStatus = "حاضر";
+                string excuseStatusEnum = "None";
+
+                if (!hasAttempt)
+                {
+                    if (dailyAttendance != null && dailyAttendance.Status == NFD_AttendanceStatus.Excused && excuse != null)
+                    {
+                        attendanceStatus = "غائب بعذر";
+                        excuseStatusEnum = excuse.Status == NFD_ExcuseStatus.Approved ? "Approved" :
+                                          (excuse.Status == NFD_ExcuseStatus.Rejected ? "Rejected" : "PendingReview");
+                    }
+                    else
+                    {
+                        attendanceStatus = "غائب دون عذر";
+                    }
+                }
+
+                // تحديد حالة النتيجة (Passed / Failed / Absent)
+                string resultStatus = "Absent";
+                if (hasAttempt && attempt != null)
+                {
+                    resultStatus = attempt.Percentage >= quiz.PassingPercentage ? "Passed" : "Failed";
+                }
+
+                attendeesList.Add(new
+                {
+                    attemptId = attempt?.AttemptId ?? 0,
+                    traineeId = trainee.TraineeId,
+                    traineeName = trainee.User?.FullName ?? "متدرب",
+                    traineeAvatar = (string?)null,
+                    attendanceStatus = attendanceStatus,
+                    status = resultStatus,
+                    submittedAt = attempt?.SubmittedAt,
+                    score = attempt != null ? (decimal?)attempt.Score : null,
+                    totalScore = 100,
+                    percentage = attempt != null ? (decimal?)attempt.Percentage : null,
+
+                    // رصد النزاهة من ViolationCount الحقيقي في قاعدة البيانات
+                    cheatingRiskPercentage = attempt != null ? Math.Min(attempt.ViolationCount * 25, 100) : 0,
+                    tabSwitchCount = attempt?.ViolationCount ?? 0,
+                    cameraDisconnectionsCount = 0,
+
+                    // العذر
+                    hasExcuse = excuse != null,
+                    excuseReason = excuse?.Reason,
+                    excuseAttachmentUrl = excuse?.ProofUrl,
+                    excuseStatus = excuseStatusEnum,
+
+                    notes = attempt != null ? (attempt.IsTerminatedByViolation ? "تم إنهاء المحاولة لتكرار المخالفات." : null) : null,
+                    gradedBy = hasAttempt ? trainerName : "-"
+                });
+            }
+
+            return Ok(new
+            {
+                quizId = quiz.QuizId,
+                title = quiz.Title,
+                startDateTime = quiz.StartDateTime,
+                endDateTime = quiz.EndDateTime,
+                durationMinutes = quiz.DurationMinutes,
+                passingPercentage = quiz.PassingPercentage,
+                trainerName = trainerName,
+                totalTrainees = enrollments.Count,
+                presentCount = attendeesList.Count(a => ((dynamic)a).attendanceStatus == "حاضر"),
+                excusedCount = attendeesList.Count(a => ((dynamic)a).attendanceStatus == "غائب بعذر"),
+                absentCount = attendeesList.Count(a => ((dynamic)a).attendanceStatus == "غائب دون عذر"),
+                trainees = attendeesList
+            });
+        }
     }
-}
+    }

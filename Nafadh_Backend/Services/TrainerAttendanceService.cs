@@ -84,6 +84,52 @@ namespace Nafadh_Backend.Services
             return items.Select(ToDto).ToList();
         }
 
+
+        public async Task<List<AdminTrainerAttendanceDto>> GetAdminRangeAsync(
+            DateTime from,
+            DateTime to,
+            int? trainerId,
+            int? companyId)
+        {
+            from = from.Date;
+            to = to.Date;
+
+            if (from > to)
+                throw new ArgumentException(
+                    "'from' must be on or before 'to'.");
+
+            if ((to - from).TotalDays > 366)
+                throw new ArgumentException(
+                    "The date range cannot exceed one year.");
+
+            var records = await _repository.GetAdminRangeAsync(
+                from,
+                to,
+                trainerId,
+                companyId);
+
+            return records.Select(a => new AdminTrainerAttendanceDto
+            {
+                TrainerAttendanceId = a.TrainerAttendanceId,
+                TrainerId = a.TrainerId,
+                TrainerName = a.Trainer?.User?.FullName,
+
+                CompanyId = a.CompanyId,
+                CompanyName = a.Company?.CompanyName,
+
+                Date = a.Date,
+                Status = a.Status,
+
+                CheckInTime = a.CheckInTime,
+                CheckOutTime = a.CheckOutTime,
+
+                Reason = a.Reason,
+                ExcuseProofUrl = a.ExcuseProofUrl,
+                IsConfirmed = a.IsConfirmed
+            }).ToList();
+        }
+
+
         public async Task<TrainerAttendanceDto> UpsertAsync(TrainerAttendanceUpsertDto dto)
         {
             var date = dto.Date.Date;

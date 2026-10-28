@@ -15,14 +15,30 @@ export interface LoginNotice {
 
 const GENERIC_LOGIN_ERROR = 'تعذّر تسجيل الدخول، تأكد من البريد الإلكتروني وكلمة المرور.';
 
-/**
- * يحوّل خطأ تسجيل الدخول القادم من الباك إلى رسالة واضحة.
- * لو الباك ما أرسل code (السلوك القديم) نرجع للرسالة العامة.
- */
 export function describeLoginError(err: unknown): LoginNotice {
   const body = ((err as { error?: BackendErrorBody } | null)?.error ?? {}) as BackendErrorBody;
   const rejectionReason = body.rejectionReason ?? body.reason;
+  const errorObj = err as any;
+  // الباك اند يرسل الخطأ داخل حقل detail (لأنه يستخدم ProblemDetails)
+  const body = (errorObj?.error ?? {}) as ApiErrorBody & { detail?: string };
 
+  let errorMessage = body.message || body.detail || (typeof errorObj?.error === 'string' ? errorObj.error : '');
+
+  // ترجمة رسالة الباك اند الإنجليزية إلى العربية (عند إدخال كلمة مرور خاطئة)
+  if (errorMessage && (errorMessage.includes('Invalid email or password') || errorMessage.includes('Authentication failed'))) {
+    errorMessage = GENERIC_LOGIN_ERROR;
+  }
+
+  // التحقق من رسالة الانسحاب
+  if (errorMessage && (errorMessage.includes('انسحاب') || errorMessage.includes('الانسحاب'))) {
+    return {
+      kind: 'rejected',
+      title: 'تم إلغاء الحساب',
+      text: errorMessage
+    };
+  }
+
+  // التحقق من بقية أخطاء الشركات
   switch (body.code) {
     case 'COMPANY_PENDING_APPROVAL':
       return {
@@ -46,10 +62,14 @@ export function describeLoginError(err: unknown): LoginNotice {
         text: 'تم إيقاف حساب الشركة مؤقتًا. للاستفسار تواصل مع إدارة نفاذ.',
       };
     default:
-      return { kind: 'error', title: '', text: body.message || GENERIC_LOGIN_ERROR };
+      // إرجاع الرسالة القادمة من الباك اند
+      return { 
+        kind: 'error', 
+        title: '', 
+        text: errorMessage || GENERIC_LOGIN_ERROR 
+      };
   }
 }
-
 
 /** رسالة عامة لفشل تسجيل الشركة (غير أخطاء الحقول) */
 export function describeRegistrationError(err: unknown): { text: string; fieldErrors: Record<string, string> } {

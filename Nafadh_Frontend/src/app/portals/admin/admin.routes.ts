@@ -17,7 +17,6 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'certificates', loadComponent: () => import('./pages/certificates/certificates').then((m) => m.AdminCertificates) },
       { path: 'warnings', loadComponent: () => import('./pages/warnings/warnings').then((m) => m.AdminWarnings) },
       
-      // 👈 المسار المحدث بناءً على مكون الـ CLI الجديد
      {
 
   path: 'remediation-requests',
