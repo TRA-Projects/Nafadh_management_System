@@ -178,6 +178,15 @@ createEnrollment(dto: {
     return this.http.get<CompanyDto[]>(`${this.base}/Company`, { params });
   }
 
+
+  // Admin Reports - Companies Summary
+getAdminCompaniesSummary(): Observable<any> {
+  return this.http.get<any>(
+    `${this.base}/Report/admin-companies-summary`
+  );
+}
+
+
   getCompany(id: number): Observable<CompanyDto> { return this.http.get<CompanyDto>(`${this.base}/Company/${this.sanitizeId(id)}`); }
   createCompany(dto: unknown) { return this.http.post(`${this.base}/Company`, dto); }
   updateCompany(id: number, dto: unknown) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}`, dto); }
@@ -463,6 +472,23 @@ createEnrollment(dto: {
       { params }
     );
   }
+
+  getAdminCompanyBatchPerformanceReport(
+  companyId: number,
+  batchId: number,
+  pageNumber: number = 1,
+  pageSize: number = 15
+): Observable<any> {
+  return this.http.get<any>(
+    `${this.base}/Report/admin-company-batch-performance/${companyId}/${batchId}`,
+    {
+      params: {
+        pageNumber: pageNumber.toString(),
+        pageSize: pageSize.toString()
+      }
+    }
+  );
+}
 
   getEvaluationBucketRollup(enrollmentId: number): Observable<EvaluationBucketRollupDto> {
     return this.http.get<EvaluationBucketRollupDto>(`${this.base}/Evaluation/enrollment/${this.sanitizeId(enrollmentId)}/by-bucket`);

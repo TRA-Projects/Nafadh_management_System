@@ -245,7 +245,7 @@ navigateTrainerAttendance(direction: -1 | 1): void {
   masterScoreRangeFilter = 'ALL';
   filteredMasterTranscriptList: any[] = [];
 
-  
+
   // =========================================================
   // Supervisor Reports - تقارير المشرفين
   // =========================================================
@@ -342,88 +342,153 @@ navigateTrainerAttendance(direction: -1 | 1): void {
     }
   }
 
-  formatRating(val: any): string {
-    if (!val) return '4.9';
-    const num = parseFloat(String(val));
-    return isNaN(num) ? '4.9' : num.toFixed(1);
+ formatRating(val: any): string {
+  if (val === null || val === undefined || val === '') {
+    return 'غير متوفر';
   }
+
+  const num = Number(val);
+
+  return Number.isFinite(num) ? num.toFixed(1) : 'غير متوفر';
+}
 
   // =========================================================
   // دوال وفلاتر قسم الشركات (مع Getters لحساب بطاقات الإحصائيات)
   // =========================================================
 
   // حساب متوسط تقييم الشركات للبطاقة العلوية
-  get avgCompanyRating(): string {
-    if (!this.companies || this.companies.length === 0) return '4.9';
-    const sum = this.companies.reduce((acc, c) => acc + (parseFloat(c.ratingScore) || 4.9), 0);
-    return (sum / this.companies.length).toFixed(1);
+
+get avgCompanyRating(): string {
+  const validRatings = (this.allCompaniesData || [])
+    .map(c => Number(c.ratingScore))
+    .filter((rating, index) =>
+      this.allCompaniesData[index].ratingScore != null &&
+      Number.isFinite(rating) &&
+      rating >= 0 &&
+      rating <= 5
+    );
+
+  if (validRatings.length === 0) {
+    return 'غير متوفر';
   }
+
+  const sum = validRatings.reduce((acc, rating) => acc + rating, 0);
+
+  return (sum / validRatings.length).toFixed(1);
+}
+
 
   // حساب إجمالي المتدربين المستضافين للبطاقة العلوية
-  get totalCompanyTrainees(): number {
-    if (!this.companies) return 0;
-    return this.companies.reduce((acc, c) => acc + (c.traineesCount || 0), 0);
-  }
+
+get totalCompanyTrainees(): number {
+  return (this.allCompaniesData || []).reduce(
+    (total, company) =>
+      total + (Number(company.traineesCount) || 0),
+    0
+  );
+}
+
 
   loadCompaniesData() {
-    this.isLoading.set(true);
-    this.api.getCompanies().subscribe({
-      next: (res: any) => {
-        const rawData = res.items || res;
-        this.allCompaniesData = (rawData || []).map((c: any) => {
-          const sup = c.supervisors && c.supervisors.length > 0 ? c.supervisors[0] : null;
-          const supName = sup ? (sup.fullName || sup.user?.fullName) : (c.supervisorName || null);
+  this.isLoading.set(true);
 
-          return {
-            id: c.companyId,
-            companyId: c.companyId,
-            name: c.companyName || 'شركة تدريبية',
-            commercialRegister: c.commercialRegister || c.commercialRegistrationNo || '—',
-            workField: c.workField || 'عام',
-            city: c.city || (c.address ? c.address.split('،')[0] : 'المركز الرئيسي'),
-            address: c.address || '—',
-            phone: c.phone || '—',
-            email: c.email || '—',
-            website: c.website || '',
-            capacity: c.capacity || 50,
-            status: c.status,
-            rejectionReason: c.rejectionReason,
-            ratingScore: c.ratingScore || 4.9,
-            notes: c.notes || '',
-            supervisorName: supName,
-            programsCount: c.programsCount ?? (c.programs?.length || 0),
-            batchesCount: c.batchesCount ?? 0,
-            traineesCount: c.traineesCount ?? 0,
-            supervisors: c.supervisors || [],
-            programs: (c.programs || []).map((p: any) => ({
-              id: p.programId,
-              name: p.title || p.name || 'برنامج بدون اسم',
-              track: p.track || '—',
-              batchesCount: p.batchesCount ?? (p.batches?.length || 0),
-              traineesCount: p.traineesCount ?? 0,
-              batches: (p.batches || []).map((b: any) => ({
-                id: b.batchId,
-                dates: b.startDate ? String(b.startDate).split('T')[0] : '—',
-                endDate: b.endDate ? String(b.endDate).split('T')[0] : '—',
-                traineesCount: b.traineesCount ?? 0,
-                programName: p.title || p.name || 'برنامج بدون اسم'
-              }))
-            }))
-          };
-        });
+  this.api.getAdminCompaniesSummary().subscribe({
+    next: (summary: any) => {
+      const reportCompanies = summary.companies ?? [];
 
-        this.applyCompanyFilters();
-        this.isLoading.set(false);
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.allCompaniesData = [];
-        this.companies = [];
-        this.isLoading.set(false);
-        this.cdr.detectChanges();
-      }
-    });
-  }
+      // تفاصيل البرامج والمشرفين من API القديم
+      this.api.getCompanies().subscribe({
+        next: (res: any) => {
+          const oldCompanies = Array.isArray(res)
+            ? res
+            : (res?.items ?? []);
+
+          const detailsMap = new Map<number, any>(
+            oldCompanies.map((c: any) => [Number(c.companyId), c])
+          );
+
+          this.allCompaniesData = reportCompanies.map((c: any) => {
+            const details = detailsMap.get(Number(c.companyId));
+
+            const supervisor = details?.supervisors?.[0];
+            const supervisorName = supervisor
+              ? (supervisor.fullName ?? supervisor.user?.fullName ?? null)
+              : (details?.supervisorName ?? null);
+
+            return {
+              id: c.companyId,
+              companyId: c.companyId,
+              name: c.companyName ?? 'غير متوفر',
+              commercialRegister: c.commercialRegister ?? '—',
+              workField: c.workField ?? 'غير متوفر',
+              city: details?.city ??
+                (c.address ? c.address.split('،')[0] : 'غير متوفر'),
+              address: c.address ?? '—',
+              phone: c.phone ?? '—',
+              email: c.email ?? '—',
+              website: details?.website ?? '',
+              capacity: c.capacity,
+              status: c.status,
+              rejectionReason: details?.rejectionReason ?? null,
+
+              // لا نعرض تقييمات غير موجودة
+              ratingScore: details?.ratingScore ?? null,
+
+              notes: details?.notes ?? '',
+              supervisorName,
+
+              // الأعداد المعتمدة من API التقارير الجديد
+              programsCount: c.programsCount,
+              batchesCount: c.batchesCount,
+              traineesCount: c.traineesCount,
+
+              // تفاصيل البرامج فقط من API القديم
+              supervisors: details?.supervisors ?? [],
+              // البرامج والدفعات من API التقارير الجديد
+programs: (c.programs ?? []).map((p: any) => ({
+  id: p.programId,
+  name: p.programName ?? 'غير متوفر',
+  track: p.trackName ?? '—',
+
+  batchesCount: p.batchesCount,
+  traineesCount: p.traineesCount,
+
+  batches: (p.batches ?? []).map((b: any) => ({
+    id: b.batchId,
+    name: b.batchName,
+    dates: b.startDate
+      ? String(b.startDate).split('T')[0]
+      : '—',
+    endDate: b.endDate
+      ? String(b.endDate).split('T')[0]
+      : '—',
+    traineesCount: b.traineesCount,
+    programName: p.programName ?? 'غير متوفر'
+  }))
+}))
+            };
+          });
+
+          this.applyCompanyFilters();
+          this.isLoading.set(false);
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Company details error:', err);
+          this.isLoading.set(false);
+          this.cdr.detectChanges();
+        }
+      });
+    },
+    error: (err) => {
+      console.error('Admin companies summary error:', err);
+      this.allCompaniesData = [];
+      this.companies = [];
+      this.isLoading.set(false);
+      this.cdr.detectChanges();
+    }
+  });
+}
 
   get uniqueCompanyCities(): string[] {
     const list = this.allCompaniesData.map(c => c.city).filter(Boolean);
@@ -532,28 +597,50 @@ navigateTrainerAttendance(direction: -1 | 1): void {
   }
 
   loadReportPage() {
-    this.isLoading.set(true);
-    this.api.getBatchPerformanceReport(this.batchIdInput, this.currentPageNumber, this.pageSize).subscribe({
-      next: (r: any) => {
-        if (r) {
-          r.totalCount = r.TotalCount ?? r.totalCount ?? (r.rows ? r.rows.length : 0);
-          r.totalPages = r.TotalPages ?? r.totalPages ?? (Math.ceil(r.totalCount / this.pageSize) || 1);
-          r.pageNumber = r.PageNumber ?? r.pageNumber ?? this.currentPageNumber;
-          if (this.selectedBatch) {
-            this.selectedBatch.traineesCount = r.totalCount;
-          }
-        }
-        this.report.set(r);
-        this.isLoading.set(false);
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.report.set(null);
-        this.isLoading.set(false);
-        this.cdr.detectChanges();
-      }
+  const companyId = Number(this.selectedCompany?.id);
+  const batchId = Number(this.batchIdInput);
+
+  if (!companyId || !batchId) {
+    console.error('Missing companyId or batchId', {
+      companyId,
+      batchId
     });
+    this.report.set(null);
+    this.isLoading.set(false);
+    return;
   }
+
+  this.isLoading.set(true);
+
+  this.api.getAdminCompanyBatchPerformanceReport(
+    companyId,
+    batchId,
+    this.currentPageNumber,
+    this.pageSize
+  ).subscribe({
+    next: (r: any) => {
+      if (r) {
+        r.totalCount = r.TotalCount ?? r.totalCount ?? (r.rows ? r.rows.length : 0);
+        r.totalPages = r.TotalPages ?? r.totalPages ?? (Math.ceil(r.totalCount / this.pageSize) || 1);
+        r.pageNumber = r.PageNumber ?? r.pageNumber ?? this.currentPageNumber;
+
+        if (this.selectedBatch) {
+          this.selectedBatch.traineesCount = r.totalCount;
+        }
+      }
+
+      this.report.set(r);
+      this.isLoading.set(false);
+      this.cdr.detectChanges();
+    },
+    error: (err) => {
+      console.error('Company batch performance error:', err);
+      this.report.set(null);
+      this.isLoading.set(false);
+      this.cdr.detectChanges();
+    }
+  });
+}
   // استخراج جميع التخصصات الفعلية القادمة من الداتابيز تلقائياً بدون تكرار
   get uniqueBatchMajors(): string[] {
     const rows = this.report()?.rows || [];
@@ -614,10 +701,12 @@ navigateTrainerAttendance(direction: -1 | 1): void {
         const raw = res.items || res.data || res.rows || (Array.isArray(res) ? res : []);
 
         this.allTrainersData = (raw || []).map((t: any, index: number) => {
-          const rawRating = t.rating ? Number(t.rating) : (index % 2 === 0 ? 4.9 : 4.8);
-          const cleanRating = this.formatRating(rawRating);
-          const cleanExp = t.experienceYears ? Number(t.experienceYears).toFixed(1) : (4 + (index % 8)).toFixed(1);
-          const hasWarning = index % 5 === 2;
+          const rawRating = t.rating != null ? Number(t.rating) : null;
+          const cleanRating = rawRating != null ? rawRating.toFixed(1) : '—';
+          const cleanExp = t.experienceYears != null
+  ? Number(t.experienceYears).toFixed(1)
+  : 'غير متوفر';
+
 
           return {
             id: t.trainerId || t.id,
@@ -625,12 +714,12 @@ navigateTrainerAttendance(direction: -1 | 1): void {
             specialization: t.specialty || t.specialization || t.track || 'تقنية المعلومات',
             rating: cleanRating,
             experienceYears: cleanExp,
-            totalHours: t.experienceYears ? Math.round(t.experienceYears * 15) : (40 + (index * 12)),
-            batchesCount: t.batchesCount ?? (1 + (index % 4)),
+            totalHours: t.totalHours != null ? Number(t.totalHours) : null,
+            batchesCount: t.batchesCount != null ? Number(t.batchesCount) : null,
             biography: t.biography || 'مدرب تقني معتمد لدى الهيئة، يمتلك سجلاً حافلاً بالخبرات العملية في تأهيل الكوادر الوطنية.',
-            status: 'معتمد ونشط',
-            warningsCount: t.warningsCount !== undefined ? t.warningsCount : (hasWarning ? 1 : 0),
-            warningTitle: hasWarning ? 'إنذار تأخير إداري' : 'سجل نظيف'
+            status: t.status === 'Active' ? 'نشط': t.status === 'Inactive' ? 'غير نشط': t.status === 'Suspended' ? 'موقوف' : t.status ?? 'غير متوفر',
+            warningsCount: t.warningsCount != null ? Number(t.warningsCount) : null,
+            warningTitle: t.warningTitle ?? 'غير متوفر'
           };
         });
 
@@ -667,9 +756,17 @@ navigateTrainerAttendance(direction: -1 | 1): void {
     }
 
     if (this.trainerRatingFilter !== 'ALL') {
-      const r = parseFloat(this.trainerRatingFilter);
-      result = result.filter(t => parseFloat(t.rating) >= r);
+  const minRating = Number(this.trainerRatingFilter);
+
+  result = result.filter(t => {
+    if (t.rating == null || t.rating === '' || t.rating === 'غير متوفر' || t.rating === '—') {
+      return false;
     }
+
+    const rating = Number(t.rating);
+    return Number.isFinite(rating) && rating >= minRating;
+  });
+}
 
     this.filteredTrainersList = result;
     this.trainersTotalCount = result.length;
@@ -810,13 +907,14 @@ loadTrainerAttendance(): void {
     trainerId
   ).subscribe({
     next: (records) => {
-      if (requestId !== this.attendanceRequestId) return;
 
-      this.trainerAttendanceRecords = records ?? [];
-      this.updateTrainerAttendanceCompanies();
-      this.trainerAttendanceLoading = false;
-      this.cdr.detectChanges();
-    },
+  if (requestId !== this.attendanceRequestId) return;
+
+  this.trainerAttendanceRecords = records ?? [];
+  this.updateTrainerAttendanceCompanies();
+  this.trainerAttendanceLoading = false;
+  this.cdr.detectChanges();
+},
     error: (err) => {
       if (requestId !== this.attendanceRequestId) return;
 
@@ -948,41 +1046,20 @@ getTrainerAttendanceMonthWeeks(): {
  }
 
   openTrainerModal(trainer: any) {
-    this.selectedTrainer = trainer;
-    if (this.selectedTrainer) {
-      this.selectedTrainer.rating = this.formatRating(this.selectedTrainer.rating);
-    }
-    this.trainerReviewsPage = 1;
-    this.trainerReviewSearch = '';
+  this.selectedTrainer = trainer;
 
-    const comments = [
-      'أسلوب الشرح ممتاز جداً ومبسط، وتطبيق عملي متميز طوال الجلسات التدريبية',
-      'مدرب خبير ومتمكن، دائماً متجاوب مع استفساراتنا وحل المشكلات التقنية أولاً بأول'
-    ];
+  if (!this.selectedTrainer) return;
 
-    const traineesPool = this.allTraineesData.length > 0 ? this.allTraineesData : [
-      { traineeName: 'لمياء المعمري', companyName: 'شركة تدريبية' },
-      { traineeName: 'حسن الجابري', companyName: 'مجموعة أفق التقنية' },
-      { traineeName: 'نورة السعيدي', companyName: 'شركة القمة للتكنولوجيا' },
-      { traineeName: 'بدر الزدجالي', companyName: 'شركة الريادة للبرمجيات' },
-      { traineeName: 'ماجد الخروصي', companyName: 'شركة الابتكار التقني 26' }
-    ];
+  this.trainerReviewsPage = 1;
+  this.trainerReviewSearch = '';
 
-    this.selectedTrainer.allReviews = traineesPool.slice(0, 8).map((t: any, idx: number) => ({
-      traineeName: t.traineeName,
-      companyName: t.companyName,
-      trackName: 'الحوسبة السحابية (هندسة البرمجيات)',
-      batchName: `الدفعة التدريبية ${(idx % 2) + 1}`,
-      clarityRating: idx % 2 === 0 ? '5 / 5' : '4.9 / 5',
-      interactionRating: idx % 3 === 0 ? '5 / 5' : '4.8 / 5',
-      overallRating: '5.0',
-      comment: comments[idx % comments.length]
-    }));
+  // لا نعرض تقييمات وهمية
+  this.selectedTrainer.allReviews = [];
+  this.selectedTrainer.traineeReviews = [];
 
-    this.updateTrainerReviewsSlice();
-    this.trainerView = 'details';
-    this.cdr.detectChanges();
-  }
+  this.trainerView = 'details';
+  this.cdr.detectChanges();
+}
 
   get filteredTrainerReviewsList(): any[] {
     const all = this.selectedTrainer?.allReviews || [];
@@ -1318,7 +1395,7 @@ getTrainerAttendanceMonthWeeks(): {
     return ((finalScore / 100) * 4).toFixed(2);
   }
 
-  
+
   setSubSection(sub: 'company' | 'trainer' | 'trainee' | 'supervisor') {
   this.currentSubSection = sub;
   this.trainerView = 'grid';
@@ -1329,7 +1406,7 @@ getTrainerAttendanceMonthWeeks(): {
   }
  }
 
- 
+
   // Load Supervisor Reports
   loadSupervisorsData(): void {
     this.supervisorLoading = true;
@@ -1392,10 +1469,10 @@ getTrainerAttendanceMonthWeeks(): {
 
 
 
- 
-  
 
- 
+
+
+
 
 
   levelClass(level?: string): string {
@@ -1579,14 +1656,14 @@ getTrainerAttendanceMonthWeeks(): {
     }
     const headers = ['اسم المدرب', 'التخصص', 'التقييم العام', 'سنوات الخبرة', 'إجمالي الساعات', 'عدد الدفعات', 'عدد الإنذارات'];
     const dataRows = list.map(t => [
-      `"${t.name || ''}"`,
-      `"${t.specialization || ''}"`,
-      t.rating || '4.9',
-      t.experienceYears || '0',
-      t.totalHours || '0',
-      t.batchesCount || '0',
-      t.warningsCount || '0'
-    ]);
+  `"${String(t.name ?? '').replace(/"/g, '""')}"`,
+  `"${String(t.specialization ?? '').replace(/"/g, '""')}"`,
+  t.rating ?? 'غير متوفر',
+  t.experienceYears ?? 'غير متوفر',
+  t.totalHours ?? 'غير متوفر',
+  t.batchesCount ?? 'غير متوفر',
+  t.warningsCount ?? 'غير متوفر'
+]);
     const csvContent = '\uFEFF' + [headers.join(','), ...dataRows.map(e => e.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

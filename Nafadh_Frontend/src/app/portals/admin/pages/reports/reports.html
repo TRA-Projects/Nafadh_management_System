@@ -54,13 +54,20 @@
           <span class="metric-label">إجمالي الشركات المطابقة للبحث</span>
         </div>
         <div class="metric-card">
-          <span class="metric-value" style="color: #f59e0b;">
-            {{ avgCompanyRating }} <small style="color: #94a3b8; font-size: 1.1rem;">/ 5.0</small>
-          </span>
+
+<span class="metric-value" style="color: #f59e0b;">
+  {{ avgCompanyRating }}
+  <small
+    *ngIf="avgCompanyRating !== 'غير متوفر'"
+    style="color: #94a3b8; font-size: 1.1rem;">
+    / 5.0
+  </small>
+</span>
+
           <span class="metric-label">متوسط التقييم العام للشركات</span>
         </div>
         <div class="metric-card">
-          <span class="metric-value green">+{{ totalCompanyTrainees }}</span>
+          <span class="metric-value green">{{ totalCompanyTrainees }}</span>
           <span class="metric-label">إجمالي المتدربين المستضافين</span>
         </div>
       </div>
@@ -131,10 +138,14 @@
 
           <!-- صف الإحصائيات الأربعة السفلية: (التقييم | متدرب | دفعات | البرامج) -->
           <div class="card-stats-row" (click)="selectCompany(company)">
+
             <div class="stat-col">
-              <strong class="stat-num">{{ company.ratingScore || 4.9 }}</strong>
+              <strong class="stat-num">
+                {{ company.ratingScore != null ? formatRating(company.ratingScore) : 'غير متوفر' }}
+              </strong>
               <span class="stat-lbl">التقييم</span>
             </div>
+
             <div class="stat-col">
               <strong class="stat-num">{{ company.traineesCount || 0 }}</strong>
               <span class="stat-lbl">متدرب</span>
@@ -369,21 +380,25 @@
           <span class="metric-label">إجمالي المتدربين المسجلين بالدفعة</span>
         </div>
 
-        <!-- البطاقة 2: متوسط الحضور (باللون الذهبي) -->
-        <div class="metric-card">
-          <span class="metric-value" style="color: #f59e0b;">
-            {{ selectedBatch?.attendanceAvg || 89 }}%
-          </span>
-          <span class="metric-label">متوسط الحضور العام للدفعة</span>
-        </div>
+       <!-- البطاقة 2: متوسط الحضور الفعلي من API -->
+<div class="metric-card">
+  <span class="metric-value" style="color: #f59e0b;">
+    {{ report()?.avgAttendance != null
+        ? (report()?.avgAttendance | number:'1.0-1') + '%'
+        : 'غير متوفر' }}
+  </span>
+  <span class="metric-label">متوسط الحضور العام للدفعة</span>
+</div>
 
-        <!-- البطاقة 3: نسبة النجاح (بالأخضر الزمردي) -->
-        <div class="metric-card">
-          <span class="metric-value green">
-            +{{ selectedBatch?.passRate || 100 }}%
-          </span>
-          <span class="metric-label">نسبة النجاح والتأهل للاعتماد</span>
-        </div>
+       <!-- البطاقة 3: نسبة النجاح من API -->
+<div class="metric-card">
+  <span class="metric-value green">
+    {{ report()?.successRate != null
+        ? (report()?.successRate | number:'1.0-1') + '%'
+        : 'غير متوفر' }}
+  </span>
+  <span class="metric-label">نسبة اجتياز التقييمات المتوفرة (60% فأكثر)</span>
+</div>
       </div>
 
       <!-- 3. شريط البحث والفلترة (نفس ترتيب الصورة: البحث باليمين والمنسدلات باليسار) -->
@@ -436,9 +451,23 @@
             <tr *ngFor="let tr of filteredBatchReportRows">
               <td class="bold text-navy-strong">{{ tr.traineeName }}</td>
               <td>{{ tr.major }}</td>
-              <td><strong style="color: #059669;">{{ tr.attendanceRate }}%</strong></td>
-              <td><strong style="color: #0D1C8C;">{{ tr.technicalScore }}%</strong></td>
-              <td><strong style="color: #2563eb;">{{ tr.behavioralScore }}%</strong></td>
+              <td>
+                <strong style="color: #059669;">
+                  {{ tr.attendanceRate != null ? tr.attendanceRate + '%' : 'غير متوفر' }}
+                </strong>
+              </td>
+
+              <td>
+                <strong style="color: #0D1C8C;">
+                  {{ tr.technicalScore != null ? tr.technicalScore + '%' : 'غير متوفر' }}
+                </strong>
+              </td>
+
+              <td>
+                <strong style="color: #2563eb;">
+                  {{ tr.behavioralScore != null ? tr.behavioralScore + '%' : 'غير متوفر' }}
+                </strong>
+              </td>
               <td><span class="status-pill" [ngClass]="levelClass(tr.level)">{{ tr.level }}</span></td>
             </tr>
           </tbody>
@@ -792,11 +821,15 @@
           <span class="metric-label">إجمالي المدربين المطابقين للبحث</span>
         </div>
         <div class="metric-card">
-          <span class="metric-value" style="color: #f59e0b;">{{ formatRating(allTrainersData[0]?.rating) }} / 5.0</span>
-          <span class="metric-label">متوسط التقييم العام للمدربين</span>
-        </div>
+  <span class="metric-value" style="color: #f59e0b;">
+    غير متوفر
+  </span>
+  <span class="metric-label">
+    متوسط التقييم العام للمدربين
+  </span>
+</div>
         <div class="metric-card">
-          <span class="metric-value green">3,200+</span>
+          <span class="metric-value green">غير متوفر</span>
           <span class="metric-label">إجمالي الساعات التدريبية المنجزة</span>
         </div>
       </div>
@@ -845,11 +878,26 @@
             </div>
           </div>
           <div class="stats-row" style="grid-template-columns: repeat(4, 1fr);">
-            <div class="stat-box"><strong>{{ formatRating(tr.rating) }}</strong><span>التقييم</span></div>
-            <div class="stat-box"><strong>{{ tr.totalHours }}</strong><span>ساعة</span></div>
-            <div class="stat-box"><strong>{{ tr.batchesCount }}</strong><span>دفعات</span></div>
             <div class="stat-box">
-              <strong [style.color]="tr.warningsCount > 0 ? '#dc2626' : '#15803d'">{{ tr.warningsCount || 0 }}</strong>
+              <strong>{{ tr.rating != null ? formatRating(tr.rating) : '—' }}</strong>
+              <span>التقييم</span>
+            </div>
+
+            <div class="stat-box">
+              <strong>{{ tr.totalHours ?? 'غير متوفر' }}</strong>
+              <span>ساعة</span>
+            </div>
+
+            <div class="stat-box">
+              <strong>{{ tr.batchesCount ?? 'غير متوفر' }}</strong>
+              <span>دفعات</span>
+            </div>
+
+            <div class="stat-box">
+              <strong
+                [style.color]="tr.warningsCount == null ? 'inherit' : tr.warningsCount > 0 ? '#dc2626' : '#15803d'">
+                {{ tr.warningsCount ?? 'غير متوفر' }}
+              </strong>
               <span>الإنذارات</span>
             </div>
           </div>
@@ -915,25 +963,40 @@
       </div>
 
       <div class="summary-metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));">
+
         <div class="metric-card">
-          <span class="metric-value star" style="color: #f59e0b;">{{ formatRating(selectedTrainer?.rating) }} /
-            5.0</span>
-          <span class="metric-label">متوسط تقييم المتدربين العام للمدرب</span>
-        </div>
+  <span class="metric-value star" style="color: #f59e0b;">
+    {{ selectedTrainer?.rating != null &&
+       selectedTrainer?.rating !== '—' &&
+       selectedTrainer?.rating !== 'غير متوفر'
+       ? formatRating(selectedTrainer?.rating) + ' / 5.0'
+       : 'غير متوفر' }}
+  </span>
+  <span class="metric-label">
+    متوسط تقييم المتدربين العام للمدرب
+  </span>
+</div>
+
         <div class="metric-card">
-          <span class="metric-value green">98%</span>
+          <span class="metric-value green">غير متوفر</span>
           <span class="metric-label">نسبة رضا المتدربين عن المدرب</span>
         </div>
+
         <div class="metric-card">
-          <span class="metric-value blue">{{ selectedTrainer?.totalHours }} ساعة</span>
+          <span class="metric-value blue">
+            {{ selectedTrainer?.totalHours != null ? selectedTrainer.totalHours + ' ساعة' : 'غير متوفر' }}
+          </span>
           <span class="metric-label">إجمالي الساعات التدريبية المنجزة</span>
         </div>
+
         <div class="metric-card">
-          <span class="metric-value" [style.color]="selectedTrainer?.warningsCount > 0 ? '#dc2626' : '#10b981'">
-            {{ selectedTrainer?.warningsCount || 0 }}
+          <span class="metric-value"
+            [style.color]="selectedTrainer?.warningsCount == null ? 'inherit' : selectedTrainer.warningsCount > 0 ? '#dc2626' : '#10b981'">
+            {{ selectedTrainer?.warningsCount ?? 'غير متوفر' }}
           </span>
           <span class="metric-label">الإنذارات والملاحظات الرسمية</span>
         </div>
+
       </div>
 
       <div class="table-card" style="margin-top: 24px;">
@@ -1002,10 +1065,22 @@
             صفحة تقييمات المتدربين: <strong>{{ trainerReviewsPage }}</strong>
           </div>
           <div class="pagination-compact-controls" style="display: flex; gap: 8px;">
-            <button class="compact-nav-btn" [disabled]="trainerReviewsPage <= 1"
-              (click)="prevTrainerReviewPage()">السابق</button>
-            <button class="compact-nav-btn" (click)="nextTrainerReviewPage()">التالي</button>
-          </div>
+
+  <button
+    class="compact-nav-btn"
+    [disabled]="trainerReviewsPage <= 1"
+    (click)="prevTrainerReviewPage()">
+    السابق
+  </button>
+
+  <button
+    class="compact-nav-btn"
+    [disabled]="!selectedTrainer?.allReviews?.length"
+    (click)="nextTrainerReviewPage()">
+    التالي
+  </button>
+
+</div>
         </div>
       </div>
     </div>
@@ -1026,102 +1101,106 @@
         </div>
       </div>
 
-      <!-- Trainer Attendance Tabs -->
-      <div class="trainer-attendance-tabs">
+      <!-- Trainer Attendance Tabs + Period Navigation -->
+      <div class="trainer-attendance-topbar">
 
-        <button type="button" [class.active]="trainerAttendanceView === 'day'"
-          (click)="setTrainerAttendanceView('day')">
-          الحضور اليومي
-        </button>
+        <!-- التبويبات على اليمين -->
+        <div class="trainer-attendance-tabs">
 
-        <button type="button" [class.active]="trainerAttendanceView === 'week'"
-          (click)="setTrainerAttendanceView('week')">
-          الحضور الأسبوعي
-        </button>
+          <button type="button" [class.active]="trainerAttendanceView === 'day'"
+            (click)="setTrainerAttendanceView('day')">
+            الحضور اليومي
+          </button>
 
-        <button type="button" [class.active]="trainerAttendanceView === 'month'"
-          (click)="setTrainerAttendanceView('month')">
-          الحضور الشهري
-        </button>
+          <button type="button" [class.active]="trainerAttendanceView === 'week'"
+            (click)="setTrainerAttendanceView('week')">
+            الحضور الأسبوعي
+          </button>
 
-      </div>
-      <div class="trainer-attendance-navigation" *ngIf="trainerAttendanceView !== 'custom'">
-
-        <button type="button" class="btn-reset-filters" (click)="navigateTrainerAttendance(-1)">
-          السابق
-        </button>
-
-        <span class="trainer-attendance-period">
-          {{ trainerAttendanceFrom }} إلى {{ trainerAttendanceTo }}
-        </span>
-
-        <button type="button" class="btn-reset-filters" (click)="navigateTrainerAttendance(1)">
-          التالي
-        </button>
-
-      </div>
-
-
-
-
-      <div class="filter-toolbar-card">
-        <div class="filters-actions-wrap">
-
-          <label for="trainer-attendance-from">من تاريخ:</label>
-          <input id="trainer-attendance-from" type="date" class="custom-select-filter"
-            [(ngModel)]="trainerAttendanceFrom" />
-
-          <label for="trainer-attendance-to">إلى تاريخ:</label>
-          <input id="trainer-attendance-to" type="date" class="custom-select-filter"
-            [(ngModel)]="trainerAttendanceTo" />
-          <button type="button" class="btn-reset-filters" [disabled]="trainerAttendanceLoading"
-            (click)="onTrainerAttendanceDateChange()">
-            عرض السجل
+          <button type="button" [class.active]="trainerAttendanceView === 'month'"
+            (click)="setTrainerAttendanceView('month')">
+            الحضور الشهري
           </button>
 
         </div>
-      </div>
 
+        <!-- التنقل بين الفترات على اليسار -->
+        <div class="trainer-attendance-navigation" *ngIf="trainerAttendanceView !== 'custom'">
 
-      <!-- Trainer Attendance Filters -->
-      <div class="filter-toolbar-card">
-        <div class="filters-actions-wrap">
-
-          <!-- Company Filter -->
-          <label for="attendance-company">الشركة:</label>
-          <select id="attendance-company" class="custom-select-filter" [(ngModel)]="trainerAttendanceCompanyFilter">
-
-            <option value="ALL">جميع الشركات</option>
-
-            <option *ngFor="let company of trainerAttendanceCompanies" [value]="company.id">
-              {{ company.name }}
-            </option>
-          </select>
-
-          <!-- Attendance Status Filter -->
-          <label for="attendance-status">حالة الحضور:</label>
-          <select id="attendance-status" class="custom-select-filter" [(ngModel)]="trainerAttendanceStatusFilter">
-            <option value="ALL">جميع الحالات</option>
-            <option value="Present">حاضر</option>
-            <option value="Late">متأخر</option>
-            <option value="Absent">غائب</option>
-            <option value="EarlyLeave">انصراف مبكر</option>
-          </select>
-
-          <!-- Confirmation Filter -->
-          <label for="attendance-confirmation">حالة التأكيد:</label>
-          <select id="attendance-confirmation" class="custom-select-filter"
-            [(ngModel)]="trainerAttendanceConfirmationFilter">
-
-            <option value="ALL">جميع السجلات</option>
-            <option value="true">مؤكد</option>
-            <option value="false">غير مؤكد</option>
-          </select>
-
-          <!-- Reset Filters -->
-          <button type="button" class="btn-reset-filters" (click)="resetTrainerAttendanceFilters()">
-            مسح الفلاتر
+          <button type="button" class="btn-reset-filters" (click)="navigateTrainerAttendance(-1)">
+            ❮ السابق
           </button>
+
+          <span class="trainer-attendance-period">
+            {{ trainerAttendanceFrom }} إلى {{ trainerAttendanceTo }}
+          </span>
+
+          <button type="button" class="btn-reset-filters" (click)="navigateTrainerAttendance(1)">
+            التالي ❯
+          </button>
+
+        </div>
+
+        <div class="filter-toolbar-card">
+          <div class="filters-actions-wrap">
+
+            <label for="trainer-attendance-from">من تاريخ:</label>
+            <input id="trainer-attendance-from" type="date" class="custom-select-filter"
+              [(ngModel)]="trainerAttendanceFrom" />
+
+            <label for="trainer-attendance-to">إلى تاريخ:</label>
+            <input id="trainer-attendance-to" type="date" class="custom-select-filter"
+              [(ngModel)]="trainerAttendanceTo" />
+            <button type="button" class="btn-reset-filters" [disabled]="trainerAttendanceLoading"
+              (click)="onTrainerAttendanceDateChange()">
+              عرض السجل
+            </button>
+
+          </div>
+        </div>
+
+
+        <!-- Trainer Attendance Filters -->
+        <div class="filter-toolbar-card">
+          <div class="filters-actions-wrap">
+
+            <!-- Company Filter -->
+            <label for="attendance-company">الشركة:</label>
+            <select id="attendance-company" class="custom-select-filter" [(ngModel)]="trainerAttendanceCompanyFilter">
+
+              <option value="ALL">جميع الشركات</option>
+
+              <option *ngFor="let company of trainerAttendanceCompanies" [value]="company.id">
+                {{ company.name }}
+              </option>
+            </select>
+
+            <!-- Attendance Status Filter -->
+            <label for="attendance-status">حالة الحضور:</label>
+            <select id="attendance-status" class="custom-select-filter" [(ngModel)]="trainerAttendanceStatusFilter">
+              <option value="ALL">جميع الحالات</option>
+              <option value="Present">حاضر</option>
+              <option value="Late">متأخر</option>
+              <option value="Absent">غائب</option>
+              <option value="EarlyLeave">انصراف مبكر</option>
+            </select>
+
+            <!-- Confirmation Filter -->
+            <label for="attendance-confirmation">حالة التأكيد:</label>
+            <select id="attendance-confirmation" class="custom-select-filter"
+              [(ngModel)]="trainerAttendanceConfirmationFilter">
+
+              <option value="ALL">جميع السجلات</option>
+              <option value="true">مؤكد</option>
+              <option value="false">غير مؤكد</option>
+            </select>
+
+            <!-- Reset Filters -->
+            <button type="button" class="btn-reset-filters" (click)="resetTrainerAttendanceFilters()">
+              مسح الفلاتر
+            </button>
+
+          </div>
 
         </div>
       </div>

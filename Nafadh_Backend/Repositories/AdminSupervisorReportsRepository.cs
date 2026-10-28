@@ -64,7 +64,10 @@ namespace Nafadh_Backend.Repositories
             var attendance = await _context
                 .Set<NFD_DailyAttendance>()
                 .AsNoTracking()
-                .Where(a => enrollmentIds.Contains(a.EnrollmentId))
+                .Where(a =>
+    enrollmentIds.Contains(a.EnrollmentId) &&
+    a.Date >= monthStart &&
+    a.Date < nextMonthStart)
                 .Select(a => new
                 {
                     a.EnrollmentId,
@@ -192,7 +195,10 @@ namespace Nafadh_Backend.Repositories
                         .Count(),
                     AverageAttendanceRate = attendanceRate,
                     MonthlyEvaluationsCount = monthlyEvaluations,
-                    TraineesNeedingFollowUpCount = traineesNeedingFollowUp
+                    TraineesNeedingFollowUpCount = traineesNeedingFollowUp,
+                    TrainerEvaluationsCount = trainerEvaluationsCount,
+                    EvaluatedTrainersCount = evaluatedTrainersCount,
+                    LastTrainerEvaluationDate = lastTrainerEvaluationDate
                 };
             }).ToList();
 

@@ -30,7 +30,16 @@ namespace Nafadh_Backend.Repositories
         Task<List<DTOs.TrainerTraineesReportRowDto>> GetTrainerTraineesReportRowsAsync(
     int trainerId, int? batchId, int? traineeId);
 
+        // Admin Reports - Companies Summary
+        Task<AdminCompaniesSummaryDTO> GetAdminCompaniesSummaryAsync();
 
+        // Admin Reports - Company-specific Batch Performance
+        Task<AdminCompanyBatchPerformanceDTO?> GetAdminCompanyBatchPerformanceAsync(
+            int companyId,
+            int batchId,
+            int pageNumber,
+            int pageSize
+        );
 
     }
 }
