@@ -238,8 +238,8 @@ export class CompanyProfile implements OnInit {
     const workFields = Array.isArray(dto.workFields) && dto.workFields.length
       ? dto.workFields
       : dto.workField
-      ? dto.workField.split(/[،,]/).map((x) => x.trim()).filter(Boolean)
-      : [];
+        ? dto.workField.split(/[،,]/).map((x) => x.trim()).filter(Boolean)
+        : [];
 
     return {
       ...dto,
@@ -300,7 +300,7 @@ export class CompanyProfile implements OnInit {
       return;
     }
     this.savingCompany.set(true);
-    this.api.updateCompanyContact(c.companyId, { phone, email })
+    this.api.updatePortalCompanyContact(c.companyId, { phone, email })
       .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.savingCompany.set(false)))
       .subscribe({
         next: (updated) => {
