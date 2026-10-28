@@ -153,8 +153,8 @@
                     <button type="button" [disabled]="joiningSessionId() !== null" (click)="startSession(session)">
                         {{
                         joiningSessionId() === session.id
-                        ? 'جاري الدخول...'
-                        : 'دخول المحاضرة'
+                        ? ' Loading...'
+                        : 'Join Meeting'
                         }}
                     </button>
                     }
