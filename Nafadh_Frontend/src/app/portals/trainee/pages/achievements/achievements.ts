@@ -885,6 +885,9 @@ export class TraineeAchievements implements OnInit {
   enrollment = signal<EnrollmentDto | null>(null);
   moduleProgress = signal<TraineeModuleProgressDto[]>([]);
 
+  // ⬇️ تمت إضافة الـ signal الخاص بالتقييم الكلي هنا ⬇️
+  overallEvaluation = signal<any | null>(null);
+
   allBadges = signal<BadgeDto[]>([]);
   myBadges = signal<TraineeBadgeDto[]>([]);
   certificates = signal<CertificateDto[]>([]);
@@ -1410,6 +1413,9 @@ export class TraineeAchievements implements OnInit {
             activeEnrollment.batchId
           );
 
+          // ⬇️ تمت إضافة استدعاء التقييم الكلي هنا ⬇️
+          this.loadOverallEvaluation(activeEnrollment.enrollmentId);
+
           this.loadBatchAndProgram(
             activeEnrollment.batchId
           );
@@ -1683,8 +1689,7 @@ export class TraineeAchievements implements OnInit {
 
               console.error(
                 '❌ فشل جلب الدروس:',
-                err
-              );
+                err              );
 
               const result =
                 modules.map(
@@ -1964,6 +1969,19 @@ export class TraineeAchievements implements OnInit {
 
     });
 
+  }
+
+  // ⬇️ تمت إضافة دالة جلب التقييم الكلي هنا ⬇️
+  private loadOverallEvaluation(enrollmentId: number): void {
+    this.api.getOverallEvaluation(enrollmentId).subscribe({
+      next: (data) => {
+        this.overallEvaluation.set(data);
+      },
+      error: (err) => {
+        console.warn('⚠️ لم يتم العثور على التقييم الكلي أو حدث خطأ:', err);
+        this.overallEvaluation.set(null);
+      }
+    });
   }
 
 

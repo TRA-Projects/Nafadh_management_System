@@ -83,5 +83,26 @@ namespace Nafadh_Backend.Controllers
                     new { message = ex.Message });
             }
         }
+
+        // المتدرب أو الإدارة تعرض التقييم الكلي (ملف الإنجاز)
+        [HttpGet("{enrollmentId:int}/overall-evaluation")]
+        public async Task<IActionResult> GetOverallEvaluation(int enrollmentId)
+        {
+            try
+            {
+                var result = await _service.GetTraineeOverallEvaluationAsync(enrollmentId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "حدث خطأ أثناء جلب التقييم الكلي.", details = ex.Message });
+            }
+        }
+
+
     }
 }
