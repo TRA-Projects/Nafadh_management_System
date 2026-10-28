@@ -265,6 +265,13 @@ export class CompanyApi {
     );
   }
 
+  updateCompanyContact(id: number, dto: { phone: string; email: string }): Observable<{ phone: string; email: string }> {
+    return this.http.patch<{ phone: string; email: string }>(
+      `${this.base}/Company/${id}/contact`,
+      { phone: dto.phone, email: dto.email }
+    );
+  }
+
   updateCompany(
     id: number,
     dto: unknown
@@ -338,7 +345,7 @@ export class CompanyApi {
 
   downloadMyAccountPdf(): Observable<Blob> {
     return this.http.get(
-      `${this.base}/CompanyAccount/me/export-pdf`,
+      `${this.base}/CompanyAccount/me/pdf`,
       {
         responseType: 'blob',
       }
