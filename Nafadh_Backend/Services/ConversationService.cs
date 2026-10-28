@@ -1,4 +1,5 @@
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.DTOs.CompanyPayment;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
@@ -40,6 +41,15 @@ namespace Nafadh_Backend.Services
 
 
             var result = new List<ConversationListItemDTO>();
+            var groupUnreadCounts = participantUserId.HasValue
+    ? await _repository.GetGroupUnreadCountsAsync(
+        participantUserId.Value,
+        conversations
+            .Where(c => c.Category == "BatchGroup")
+            .Select(c => c.TicketId)
+            .ToList()
+      )
+    : new Dictionary<int, int>();
 
             foreach (var conversation in conversations)
             {
@@ -61,7 +71,12 @@ namespace Nafadh_Backend.Services
                     )
                 );
             }
-
+            foreach (var item in result.Where(
+      x => x.Category == "BatchGroup"))
+            {
+                item.UnreadCount =
+                    groupUnreadCounts.GetValueOrDefault(item.ConversationId);
+            }
             return result;
         }
 
@@ -94,6 +109,17 @@ namespace Nafadh_Backend.Services
                 conversation,
                 batchId
             );
+        }
+
+        public async Task<List<AdminBatchGroupListDTO>> GetAdminBatchGroupsAsync()
+        {
+            return await _repository.GetAdminBatchGroupsAsync();
+        }
+
+        public async Task<List<AdminBatchGroupMessageDTO>?>
+    GetAdminBatchGroupMessagesAsync(int conversationId)
+        {
+            return await _repository.GetAdminBatchGroupMessagesAsync(conversationId);
         }
 
         public async Task<bool> IsBatchGroupMemberAsync(
@@ -336,57 +362,65 @@ namespace Nafadh_Backend.Services
             AddConversationMessageDTO dto
         )
         {
-            int? receiverId =
-    dto.ReceiverUserId;
 
-            if (!receiverId.HasValue)
+            var conversation = await _repository.GetByIdAsync(conversationId);
+
+            if (conversation == null)
             {
-                var conversation =
-                    await _repository.GetByIdAsync(
-                        conversationId
-                    );
+                throw new Exception("Conversation not found.");
+            }
 
-                if (conversation == null)
+            int? receiverId = dto.ReceiverUserId;
+
+            // رسائل جروب الدفعة ليس لها مستلم فردي
+            if (conversation.Category == "BatchGroup")
+            {
+                receiverId = null;
+            }
+            else if (
+                conversation.Type == NFD_ConversationType.Other &&
+                conversation.Category == "TrainerTrainee"
+            )
+            {
+                // أول رسالة تحدد الطرفين الأصليين للمحادثة
+                var firstMessage = conversation.Messages?
+                    .OrderBy(m => m.SentDate)
+                    .ThenBy(m => m.MessageId)
+                    .FirstOrDefault();
+
+                int creatorUserId = conversation.UserId;
+
+                int? otherUserId =
+                    firstMessage?.SenderId == creatorUserId
+                        ? firstMessage.ReceiverId
+                        : firstMessage?.SenderId;
+
+                if (!otherUserId.HasValue)
                 {
-                    throw new Exception(
-                        "Conversation not found."
+                    throw new InvalidOperationException(
+                        "Conversation participant could not be determined."
                     );
                 }
 
-                if (
-                    conversation.Type ==
-                        NFD_ConversationType.Other
-                    &&
-                    conversation.Category ==
-                        "TrainerTrainee"
-                )
+                if (dto.SenderId == creatorUserId)
                 {
-                    var lastMessage =
-                        conversation.Messages?
-                            .OrderByDescending(
-                                m => m.SentDate
-                            )
-                            .FirstOrDefault();
-
-                    if (
-                        lastMessage != null
-                        &&
-                        lastMessage.SenderId !=
-                            dto.SenderId
-                    )
-                    {
-                        receiverId =
-                            lastMessage.SenderId;
-                    }
-                    else
-                    {
-                        receiverId =
-                            conversation.UserId;
-                    }
+                    receiverId = otherUserId.Value;
+                }
+                else if (dto.SenderId == otherUserId.Value)
+                {
+                    receiverId = creatorUserId;
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        "Sender is not a conversation participant."
+                    );
                 }
             }
 
-            var message =
+        
+
+        var message =
                 new NFD_Message
                 {
                     Content =

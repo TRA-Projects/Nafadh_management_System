@@ -1,3 +1,4 @@
+
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -44,11 +45,12 @@ export interface QuestionBankDto {
   options: QuestionOptionDto[];
 }
 
-
 export interface QuizResultDto {
   attemptId: number;
   quizId: number;
   quizTitle: string;
+  batchId: number;
+  batchName: string;
   traineeId: number;
   traineeName: string;
   attemptNumber: number;
@@ -57,7 +59,7 @@ export interface QuizResultDto {
   score: number;
   percentage: number;
   status: string;
-// نتيجة التقييم
+  // نتيجة التقييم
   passingPercentage: number;
 
   // هل اكتمل تصحيح جميع الأسئلة؟
@@ -88,7 +90,6 @@ export interface AttemptAnswerDetailsDto {
 
   isMarkedForReview: boolean;
 }
-
 
 export interface QuizAttemptFullDetailsDto {
   attemptId: number;
@@ -123,7 +124,6 @@ export interface CreateQuestionDto {
   explanation?: string | null;
   options: CreateQuestionOptionDto[];
 }
-
 
 export interface GradeQuizAnswerDto {
   answerId: number;
@@ -165,13 +165,173 @@ export interface QuizAttemptDetailsDto {
   answers: QuizAnswerDetailsDto[];
 }
 
+export interface TrainerLiveSessionDto {
+  sessionId: number;
+  batchId: number;
+  trainerId: number;
+  topic: string | null;
+  sessionDate: string;
+  startTime: string | null;
+  endTime: string | null;
+  meetingLink: string | null;
+  learningObjectives: string | null;
+  summary: string | null;
+  recordingUrl: string | null;
+  status: number | string;
+  isLive: boolean | null;
+  isRecordingVisibleToTrainees: boolean;
+}
+
+export interface TrainerLiveSessionPageDto {
+  items: TrainerLiveSessionDto[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface TrainerLiveSessionFormDto {
+  topic: string;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  meetingLink?: string | null;
+  learningObjectives: string;
+}
+
+export type TrainerAttendanceStatus = 0 | 1 | 2 | 3;
+
+export interface TrainerSessionAttendanceDto {
+  attendanceId: number;
+  sessionId: number;
+  traineeId: number;
+  status: TrainerAttendanceStatus | null;
+  note: string | null;
+}
+
+export interface UpdateTrainerSessionAttendanceDto {
+  status: TrainerAttendanceStatus;
+  note: string | null;
+}
+
+export interface TrainerLiveRoomStartResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface TrainerLiveRoomJoinResponse {
+  sessionId: number;
+  roomName: string;
+  serverUrl: string;
+  participantToken: string;
+  tokenExpiresAtUtc: string;
+}
+
+export interface TrainerLiveRoomDetailsResponse {
+  sessionId: number;
+  roomName: string;
+  topic: string;
+  isLive: boolean;
+  participantCount: number;
+  isRecording: boolean;
+}
+
+export interface LiveAttendanceResponse {
+  sessionId: number;
+  connectedTraineeCount: number;
+  participantIdentities: string[];
+  enrolledConnectedTrainees: Array<{
+    userId: number;
+    traineeId: number;
+  }>;
+}
+export interface TrainerLivePollOption {
+  optionId: number;
+  optionText: string;
+  sortOrder: number;
+}
+
+export interface TrainerLivePoll {
+  pollId: number;
+  sessionId: number;
+  question: string;
+  isOpen: boolean;
+  createdAtUtc: string;
+  closedAtUtc: string | null;
+  totalVotes: number;
+  options: TrainerLivePollOption[];
+}
+
+export interface TrainerLivePollListResponse {
+  sessionId: number;
+  polls: TrainerLivePoll[];
+}
+
+export interface TrainerLivePollResultsResponse {
+  pollId: number;
+  sessionId: number;
+  question: string;
+  isOpen: boolean;
+  closedAtUtc: string | null;
+  totalVotes: number;
+  results: Array<{
+    optionId: number;
+    optionText: string;
+    sortOrder: number;
+    voteCount: number;
+    votePercentage: number;
+  }>;
+}
+export interface TrainerLiveSessionReport {
+  sessionId: number;
+  topic: string | null;
+  status: number | string;
+  attendance: {
+    totalEnrolled: number;
+    recordedCount: number;
+    presentCount: number;
+    absentCount: number;
+    lateCount: number;
+    excusedCount: number;
+    notRecordedCount: number;
+    presentPercentage: number;
+  };
+  totalPolls: number;
+  polls: Array<{
+    pollId: number;
+    question: string;
+    isOpen: boolean;
+    closedAtUtc: string | null;
+    totalVotes: number;
+    options: Array<{
+      optionId: number;
+      optionText: string;
+      voteCount: number;
+    }>;
+  }>;
+}
+export interface TrainerSessionSurveyReport {
+  surveyId: number;
+  sessionId: number;
+  question: string;
+  isPublished: boolean;
+  enrolledCount: number;
+  responseCount: number;
+  responseRatePercent: number;
+  averageRating: number | null;
+  responses: Array<{
+    traineeId: number;
+    rating: number;
+    comment: string | null;
+    submittedAtUtc: string;
+  }>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TrainerApi {
 
   private base = environment.apiBaseUrl;
 
   constructor(private http: HttpClient) { }
-
 
   // =====================================================
   // Dashboard / Batches
@@ -190,7 +350,6 @@ export class TrainerApi {
     );
   }
 
-
   /**
    * Retrieves all batches assigned to a trainer.
    */
@@ -202,7 +361,6 @@ export class TrainerApi {
       `${this.base}/BatchTrainer/trainer/${trainerId}`
     );
   }
-
 
   /**
    * Retrieves full batch details.
@@ -216,7 +374,6 @@ export class TrainerApi {
     );
   }
 
-
   /**
    * Retrieves program details.
    */
@@ -228,7 +385,6 @@ export class TrainerApi {
       `${this.base}/Program/${programId}`
     );
   }
-
 
   /**
    * Retrieves all sessions assigned to a trainer.
@@ -266,6 +422,45 @@ export class TrainerApi {
     );
   }
 
+
+  // ============================================
+  // LIVE SESSIONS - GET BY BATCH
+  // ============================================
+
+  getBatchLiveSessions(
+    batchId: number
+  ): Observable<SessionDto[]> {
+
+    const params = new HttpParams()
+      .set('batchId', batchId.toString());
+
+    return this.http.get<SessionDto[]>(
+      `${this.base}/Session`,
+      { params }
+    );
+  }
+
+  // ============================================
+  // LIVE SESSIONS - UPDATE
+  // ============================================
+
+  updateSession(
+    sessionId: number,
+    dto: {
+      topic?: string | null;
+      meetingLink?: string | null;
+      learningObjectives?: string | null;
+      recordingUrl?: string | null;
+      summary?: string | null;
+    }
+  ): Observable<void> {
+
+    return this.http.put<void>(
+      `${this.base}/Session/${sessionId}`,
+      dto
+    );
+  }
+
   /**
    * Retrieves trainees assigned to a specific batch.
    */
@@ -277,7 +472,6 @@ export class TrainerApi {
       `${this.base}/Batch/${batchId}/trainees`
     );
   }
-
 
   /**
    * Creates a new announcement.
@@ -291,7 +485,6 @@ export class TrainerApi {
       dto
     );
   }
-
 
 
   // =====================================================
@@ -327,7 +520,6 @@ export class TrainerApi {
     );
   }
 
-
   getLessonsByModule(
     moduleId: number
   ): Observable<LessonDto[]> {
@@ -336,7 +528,6 @@ export class TrainerApi {
       `${this.base}/Lesson/module/${moduleId}`
     );
   }
-
 
   createModule(
     dto: {
@@ -393,7 +584,6 @@ export class TrainerApi {
     );
   }
 
-
   createMaterial(
     dto: {
       fileUrl: string;
@@ -415,7 +605,6 @@ export class TrainerApi {
     );
   }
 
-
   uploadTrainingMaterial(
     file: File,
     fileType:
@@ -431,37 +620,31 @@ export class TrainerApi {
     const formData =
       new FormData();
 
-
     formData.append(
       'File',
       file
     );
-
 
     formData.append(
       'FileType',
       fileType
     );
 
-
     formData.append(
       'LessonId',
       lessonId.toString()
     );
-
 
     formData.append(
       'UploadedByUserId',
       uploadedByUserId.toString()
     );
 
-
     return this.http.post(
       `${this.base}/TrainingMaterial/upload`,
       formData
     );
   }
-
 
   getTrainingMaterialsByLesson(
     lessonId: number
@@ -499,7 +682,6 @@ export class TrainerApi {
     );
   }
 
-
   checkIn(
     dto: unknown
   ) {
@@ -509,7 +691,6 @@ export class TrainerApi {
       dto
     );
   }
-
 
   updateAttendance(
     id: number,
@@ -522,14 +703,12 @@ export class TrainerApi {
     );
   }
 
-
   getPendingExcuses(): Observable<ExcuseDto[]> {
 
     return this.http.get<ExcuseDto[]>(
       `${this.base}/Excuse/pending`
     );
   }
-
 
   reviewExcuse(
     id: number,
@@ -542,7 +721,6 @@ export class TrainerApi {
     );
   }
 
-
   reportRepeatedAbsence(
     dto: unknown
   ) {
@@ -552,7 +730,6 @@ export class TrainerApi {
       dto
     );
   }
-
 
 
   // =====================================================
@@ -568,7 +745,6 @@ export class TrainerApi {
     );
   }
 
-
   createTask(
     dto: unknown
   ) {
@@ -578,7 +754,6 @@ export class TrainerApi {
       dto
     );
   }
-
 
   // Updates task information or status.
   updateTask(
@@ -592,7 +767,6 @@ export class TrainerApi {
     );
   }
 
-
   // Deletes a task.
   deleteTask(
     id: number
@@ -602,7 +776,6 @@ export class TrainerApi {
       `${this.base}/Task/${id}`
     );
   }
-
 
   gradeSubmission(
     id: number,
@@ -615,7 +788,6 @@ export class TrainerApi {
     );
   }
 
-
   reopenSubmission(
     id: number
   ) {
@@ -625,7 +797,6 @@ export class TrainerApi {
       {}
     );
   }
-
 
   getSubmissionsByTask(
     taskId: number
@@ -677,7 +848,6 @@ export class TrainerApi {
 
     let params = new HttpParams();
 
-
     if (companyId) {
 
       params = params.set(
@@ -686,7 +856,6 @@ export class TrainerApi {
       );
     }
 
-
     if (batchId) {
 
       params = params.set(
@@ -694,7 +863,6 @@ export class TrainerApi {
         batchId.toString()
       );
     }
-
 
     return this.http.get<EnrollmentDto[]>(
       `${this.base}/Enrollment`,
@@ -746,7 +914,6 @@ export class TrainerApi {
 
     let params = new HttpParams();
 
-
     if (moduleId) {
 
       params = params.set(
@@ -754,7 +921,6 @@ export class TrainerApi {
         moduleId.toString()
       );
     }
-
 
     if (stage) {
 
@@ -764,13 +930,11 @@ export class TrainerApi {
       );
     }
 
-
     return this.http.get<EvaluationTemplateDto[]>(
       `${this.base}/EvaluationTemplate/GetTemplates`,
       { params }
     );
   }
-
 
   getTemplateDetail(
     templateId: number
@@ -810,7 +974,6 @@ export class TrainerApi {
     );
   }
 
-
   createCriterion(
     dto: unknown
   ): Observable<string> {
@@ -847,7 +1010,6 @@ export class TrainerApi {
 
   }
 
-
   // =====================================================
   // DELETE EVALUATION CRITERION
   // =====================================================
@@ -875,7 +1037,6 @@ export class TrainerApi {
     );
   }
 
-
   getTrainerFeedback(
     trainerId: number
   ): Observable<FeedbackSummaryDto> {
@@ -884,7 +1045,6 @@ export class TrainerApi {
       `${this.base}/Feedback/trainer/${trainerId}`
     );
   }
-
 
   // =====================================================
   // Reports
@@ -898,7 +1058,6 @@ export class TrainerApi {
       `${this.base}/Report/trainer-kpis/${trainerId}`
     );
   }
-
 
   // =====================================================
   // TRAINER REPORT HISTORY
@@ -928,7 +1087,6 @@ export class TrainerApi {
           userId.toString()
         );
 
-
     return this.http.get<{
       reportId: number;
       type:
@@ -946,7 +1104,6 @@ export class TrainerApi {
       { params }
     );
   }
-
 
   // Shared report generator.
   // Keep this unchanged because other portals may use it.
@@ -1043,7 +1200,6 @@ export class TrainerApi {
   }
 
 
-
   downloadReport(
     reportId: number
   ): Observable<Blob> {
@@ -1074,6 +1230,13 @@ export class TrainerApi {
     );
   }
   // =====================================================
+  // SESSIONS FOR BATCH
+  // =====================================================
+  getSessions(batchId: number): Observable<any[]> {
+    const params = new HttpParams().set('batchId', batchId.toString());
+    return this.http.get<any[]>(`${this.base}/Session`, { params });
+  }
+  // =====================================================
   // Messaging
   // =====================================================
 
@@ -1097,7 +1260,6 @@ export class TrainerApi {
     );
   }
 
-
   getConversation(
     conversationId: number
   ): Observable<any> {
@@ -1114,11 +1276,24 @@ export class TrainerApi {
     firstMessage: string;
     receiverUserId: number;
   }): Observable<any> {
+    const formData = new FormData();
+
+    formData.append('Type', dto.type);
+    formData.append('Category', dto.category);
+    formData.append('Subject', dto.subject);
+    formData.append(
+      'StartedByUserId',
+      String(dto.startedByUserId)
+    );
+    formData.append('FirstMessage', dto.firstMessage);
+    formData.append('ReceiverUserId', String(dto.receiverUserId));
+
     return this.http.post<any>(
       `${this.base}/Conversation`,
-      dto
+      formData
     );
   }
+
   createBatchGroup(dto: {
     batchId: number;
     trainerUserId: number;
@@ -1144,7 +1319,6 @@ export class TrainerApi {
     );
   }
 
-
   markConversationAsRead(
     conversationId: number,
     userId: number
@@ -1167,7 +1341,6 @@ export class TrainerApi {
       `${this.base}/Trainer/${id}`
     );
   }
-
 
   updateTrainer(
     id: number,
@@ -1245,7 +1418,6 @@ export class TrainerApi {
     );
   }
 
-
   // =====================================
   // QUIZZES - الاختبارات
   // =====================================
@@ -1281,6 +1453,20 @@ export class TrainerApi {
       { params }
     );
   }
+
+  publishQuiz(
+  quizId: number,
+  trainerId: number
+) {
+  const params = new HttpParams()
+    .set('trainerId', trainerId.toString());
+
+  return this.http.post(
+    `${this.base}/Quizzes/${quizId}/publish`,
+    {},
+    { params }
+  );
+}
   // =====================================
   // QUESTION BANK - بنك الأسئلة
   // =====================================
@@ -1368,7 +1554,6 @@ export class TrainerApi {
     );
   }
 
-
   getQuizQuestions(
     quizId: number,
     trainerId: number
@@ -1382,7 +1567,6 @@ export class TrainerApi {
       { params }
     );
   }
-
 
   // =====================================
   // QUIZ RESULTS
@@ -1406,29 +1590,188 @@ export class TrainerApi {
       `${this.base}/quiz-results/trainer/${trainerId}`,
       { params }
     );
-    
+
   }
 
-  
 
-gradeEssayAnswer(dto: GradeQuizAnswerDto): Observable<{ message: string }> {
 
-  return this.http.post<{ message: string }>(
-    `${this.base}/quiz-attempts/grade-essay`,
+  gradeEssayAnswer(dto: GradeQuizAnswerDto): Observable<{ message: string }> {
+
+    return this.http.post<{ message: string }>(
+      `${this.base}/quiz-attempts/grade-essay`,
+      dto
+    );
+  }
+
+  getQuizAttemptDetails(
+    trainerId: number,
+    attemptId: number
+  ): Observable<QuizAttemptDetailsDto> {
+
+    return this.http.get<QuizAttemptDetailsDto>(
+      `${this.base}/quiz-results/trainer/${trainerId}/attempts/${attemptId}`
+    );
+  }
+
+  // ==========================================
+  // TRAINER LIVE SESSIONS
+  // ==========================================
+
+  getLiveSessionsByBatch(
+    batchId: number,
+    page = 1,
+    pageSize = 100
+  ): Observable<TrainerLiveSessionPageDto> {
+    const params = new HttpParams()
+      .set('batchId', String(batchId))
+      .set('page', String(page))
+      .set('pageSize', String(pageSize));
+
+    return this.http.get<TrainerLiveSessionPageDto>(
+      `${this.base}/trainer/live-sessions`,
+      { params }
+    );
+  }
+
+  createTrainerLiveSession(
+    dto: TrainerLiveSessionFormDto & { batchId: number }
+  ): Observable<TrainerLiveSessionDto> {
+    return this.http.post<TrainerLiveSessionDto>(
+      `${this.base}/trainer/live-sessions`,
+      dto
+    );
+  }
+
+  updateTrainerLiveSession(
+    sessionId: number,
+    dto: TrainerLiveSessionFormDto
+  ): Observable<TrainerLiveSessionDto> {
+    return this.http.put<TrainerLiveSessionDto>(
+      `${this.base}/trainer/live-sessions/${sessionId}`,
+      dto
+    );
+  }
+
+  changeTrainerLiveSessionStatus(
+    sessionId: number,
+    status: number
+  ): Observable<TrainerLiveSessionDto> {
+    return this.http.put<TrainerLiveSessionDto>(
+      `${this.base}/trainer/live-sessions/${sessionId}/status`,
+      { status }
+    );
+  }
+
+  getTrainerSessionAttendance(
+    sessionId: number
+  ): Observable<TrainerSessionAttendanceDto[]> {
+    return this.http.get<TrainerSessionAttendanceDto[]>(
+      `${this.base}/trainer/live-sessions/${sessionId}/attendance`
+    );
+  }
+getLiveAttendance(
+  sessionId: number
+): Observable<LiveAttendanceResponse> {
+  return this.http.get<LiveAttendanceResponse>(
+    `${this.base}/trainer/live-sessions/${sessionId}/room/attendance/live`
+  );
+}
+
+  updateTrainerSessionAttendance(
+    sessionId: number,
+    traineeId: number,
+    dto: UpdateTrainerSessionAttendanceDto
+  ): Observable<TrainerSessionAttendanceDto> {
+    return this.http.put<TrainerSessionAttendanceDto>(
+      `${this.base}/trainer/live-sessions/${sessionId}/attendance/${traineeId}`,
+      dto
+    );
+  }
+
+  startTrainerLiveRoom(
+    sessionId: number
+  ): Observable<TrainerLiveRoomStartResponse> {
+    return this.http.post<TrainerLiveRoomStartResponse>(
+      `${this.base}/trainer/live-sessions/${sessionId}/room/start`,
+      {}
+    );
+  }
+
+  joinTrainerLiveRoom(
+    sessionId: number
+  ): Observable<TrainerLiveRoomJoinResponse> {
+    return this.http.post<TrainerLiveRoomJoinResponse>(
+      `${this.base}/trainer/live-sessions/${sessionId}/room/join`,
+      {}
+    );
+  }
+
+  getTrainerLiveRoom(
+    sessionId: number
+  ): Observable<TrainerLiveRoomDetailsResponse> {
+    return this.http.get<TrainerLiveRoomDetailsResponse>(
+      `${this.base}/trainer/live-sessions/${sessionId}/room`
+    );
+  }
+getTrainerLivePolls(
+  sessionId: number
+): Observable<TrainerLivePollListResponse> {
+  return this.http.get<TrainerLivePollListResponse>(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls`
+  );
+}
+
+createTrainerLivePoll(
+  sessionId: number,
+  dto: { question: string; options: string[] }
+): Observable<TrainerLivePoll> {
+  return this.http.post<TrainerLivePoll>(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls`,
     dto
   );
 }
 
-getQuizAttemptDetails(
-  trainerId: number,
-  attemptId: number
-): Observable<QuizAttemptDetailsDto> {
-
-  return this.http.get<QuizAttemptDetailsDto>(
-    `${this.base}/quiz-results/trainer/${trainerId}/attempts/${attemptId}`
+openTrainerLivePoll(
+  sessionId: number,
+  pollId: number
+): Observable<unknown> {
+  return this.http.post(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/open`,
+    {}
   );
 }
 
-
+closeTrainerLivePoll(
+  sessionId: number,
+  pollId: number
+): Observable<unknown> {
+  return this.http.post(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/close`,
+    {}
+  );
 }
 
+getTrainerLivePollResults(
+  sessionId: number,
+  pollId: number
+): Observable<TrainerLivePollResultsResponse> {
+  return this.http.get<TrainerLivePollResultsResponse>(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/results`
+  );
+}
+getTrainerLiveSessionReport(
+  sessionId: number
+): Observable<TrainerLiveSessionReport> {
+  return this.http.get<TrainerLiveSessionReport>(
+    `${this.base}/trainer/live-sessions/${sessionId}/report`
+  );
+}
+getTrainerSessionSurveyResults(
+  sessionId: number
+): Observable<TrainerSessionSurveyReport> {
+  return this.http.get<TrainerSessionSurveyReport>(
+    `${this.base}/trainer/live-sessions/${sessionId}/survey/results`
+  );
+}
+
+}

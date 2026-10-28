@@ -1518,3 +1518,10 @@
     print-color-adjust: exact !important;
   }
 }
+.company-avatar-icon {
+  width: 18px;
+  height: 18px;
+  stroke: #ffffff;
+  display: inline-block;
+  vertical-align: middle;
+}

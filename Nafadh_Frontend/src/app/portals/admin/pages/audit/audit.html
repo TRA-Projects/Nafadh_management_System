@@ -22,16 +22,14 @@
         />
       </div>
 
+      <!-- 🟢 القائمة المنسدلة الديناميكية الشاملة لجميع إجراءات SQL -->
       <div class="nfd-field">
         <label>نوع الإجراء</label>
         <select class="nfd-select" [ngModel]="selectedAction()" (ngModelChange)="selectedAction.set($event); currentPage.set(1)">
           <option value="">كل الإجراءات</option>
-          <option value="إصدار إنذار">إصدار إنذار</option>
-          <option value="تعديل بيانات شركة">تعديل بيانات شركة</option>
-          <option value="إصدار شهادة">إصدار شهادة</option>
-          <option value="منح شهادة إتمام">منح شهادة إتمام</option>
-          <option value="تحديث تقييم">تحديث تقييم</option>
-          <option value="إنشاء حساب مستخدم">إنشاء حساب مستخدم</option>
+          @for (action of availableActions(); track action) {
+            <option [value]="action">{{ action }}</option>
+          }
         </select>
       </div>
 
@@ -61,11 +59,12 @@
           @for (l of paginatedLogs(); track (l.logId ?? l.id ?? $index)) {
             <tr>
               <td>
+                <!-- 🟢 توزيع الشارات الملونة الذكي ليشمل الحضور والاعتماد والمحادثات والإعلانات -->
                 <span class="nfd-badge" [ngClass]="{
                   'badge-warning': (l.action || '').includes('إنذار'),
-                  'badge-success': (l.action || '').includes('شهادة') || (l.action || '').includes('منح'),
-                  'badge-info': (l.action || '').includes('تعديل') || (l.action || '').includes('تحديث'),
-                  'badge-primary': (l.action || '').includes('إنشاء')
+                  'badge-success': (l.action || '').includes('شهادة') || (l.action || '').includes('منح') || (l.action || '').includes('اعتماد'),
+                  'badge-info': (l.action || '').includes('تعديل') || (l.action || '').includes('تحديث') || (l.action || '').includes('حضور'),
+                  'badge-primary': (l.action || '').includes('إنشاء') || (l.action || '').includes('إعلان') || (l.action || '').includes('محادثة') || (l.action || '').includes('الرد')
                 }">
                   {{ l.action }}
                 </span>
@@ -144,8 +143,13 @@
     <div class="audit-hero-card">
       <div>
         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
-          <span class="nfd-badge badge-warning" style="padding: 6px 16px; font-weight: 700; font-size: 14px;">
-            {{ selectedLog()?.action || 'إصدار إنذار' }}
+          <span class="nfd-badge" [ngClass]="{
+            'badge-warning': (selectedLog()?.action || '').includes('إنذار'),
+            'badge-success': (selectedLog()?.action || '').includes('شهادة') || (selectedLog()?.action || '').includes('منح') || (selectedLog()?.action || '').includes('اعتماد'),
+            'badge-info': (selectedLog()?.action || '').includes('تعديل') || (selectedLog()?.action || '').includes('تحديث') || (selectedLog()?.action || '').includes('حضور'),
+            'badge-primary': (selectedLog()?.action || '').includes('إنشاء') || (selectedLog()?.action || '').includes('إعلان') || (selectedLog()?.action || '').includes('محادثة')
+          }" style="padding: 6px 16px; font-weight: 700; font-size: 14px;">
+            {{ selectedLog()?.action || 'إجراء إداري' }}
           </span>
           <span class="entity-tag" style="font-size: 14px;">
             {{ selectedLog()?.entityName }} <strong *ngIf="selectedLog()?.entityId">#{{ selectedLog()?.entityId }}</strong>
@@ -236,13 +240,13 @@
         <tbody>
           <tr>
             <td style="font-weight: 700; color: #0A1172;">حالة الكيان (Status)</td>
-            <td style="color: #991b1b; text-decoration: line-through; background: #fff5f5;">نشط وملتزم (Compliant)</td>
-            <td style="color: #15803d; font-weight: 700; background: #f0fdf4;">تنبيه إداري نشط (Warning Level 1)</td>
+            <td style="color: #991b1b; text-decoration: line-through; background: #fff5f5;">سجل نظامي سابق</td>
+            <td style="color: #15803d; font-weight: 700; background: #f0fdf4;">مكتمل وموثق في السجل</td>
           </tr>
           <tr>
-            <td style="font-weight: 700; color: #0A1172;">سجل الإنذارات (Warnings Count)</td>
-            <td style="color: #991b1b; text-decoration: line-through; background: #fff5f5;">0 إنذار</td>
-            <td style="color: #15803d; font-weight: 700; background: #f0fdf4;">1 إنذار رسمي مسجل</td>
+            <td style="font-weight: 700; color: #0A1172;">نوع الإجراء المنفّذ</td>
+            <td style="color: #64748b; background: #f8fafc;">قيد التنفيذ</td>
+            <td style="color: #15803d; font-weight: 700; background: #f0fdf4;">{{ selectedLog()?.action }}</td>
           </tr>
         </tbody>
       </table>

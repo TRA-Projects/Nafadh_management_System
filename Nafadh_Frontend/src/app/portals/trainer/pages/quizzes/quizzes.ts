@@ -149,6 +149,8 @@ export class TrainerQuizzes implements OnInit {
   questionError = signal('');
 
   questionSuccess = signal('');
+  showPublishConfirm = signal(false);
+quizToPublish = signal<QuizDto | null>(null);
 
   selectedQuestionIds = signal<Set<number>>(new Set());
 
@@ -177,10 +179,15 @@ export class TrainerQuizzes implements OnInit {
           .includes(term);
 
 
-      const matchesStatus =
-        filter === 'all' ||
-        (filter === 'draft' &&
-          this.getStatusNumber(quiz.status) === 0);
+      const statusNumber = this.getStatusNumber(quiz.status);
+
+const matchesStatus =
+  filter === 'all' ||
+  (filter === 'draft' && statusNumber === 0) ||
+  (filter === 'scheduled' && statusNumber === 1) ||
+  (filter === 'open' && statusNumber === 2) ||
+  (filter === 'closed' && statusNumber === 3) ||
+  (filter === 'archived' && statusNumber === 4);
 
       return matchesTerm && matchesStatus;
     });
@@ -513,6 +520,139 @@ export class TrainerQuizzes implements OnInit {
     });
   }
 
+  // =====================================================
+// PUBLISH QUIZ
+// =====================================================
+
+publishQuiz(quiz: QuizDto): void {
+  const trainerId = this.trainer()?.trainerId;
+
+  if (!trainerId) {
+    this.errorMessage.set(
+      'تعذر تحديد المدرب الحالي.'
+    );
+    return;
+  }
+
+  if (this.getStatusNumber(quiz.status) !== 0) {
+    return;
+  }
+
+  // التأكد من وجود أسئلة قبل النشر
+  this.api
+    .getQuizQuestions(quiz.quizId, trainerId)
+    .subscribe({
+      next: questions => {
+
+        if (!questions || questions.length === 0) {
+          this.errorMessage.set(
+            'لا يمكن نشر الاختبار قبل إضافة سؤال واحد على الأقل.'
+          );
+          return;
+        }
+this.saving.set(true);
+this.errorMessage.set('');
+this.successMessage.set('');
+
+this.api.publishQuiz(
+  quiz.quizId,
+  trainerId
+).subscribe({
+  next: () => {
+    this.saving.set(false);
+
+    this.successMessage.set(
+      'تم نشر الاختبار بنجاح.'
+    );
+    this.questionSuccess.set(
+    'تم نشر الاختبار بنجاح.'
+  );
+
+  this.loadQuizQuestions(quiz.quizId);
+
+    this.loadQuizzes(trainerId);
+  },
+
+  error: error => {
+    console.error(
+      'Error publishing quiz:',
+      error
+    );
+
+    this.saving.set(false);
+
+    this.errorMessage.set(
+      error?.error?.message ||
+      'تعذر نشر الاختبار. تأكدي من اكتمال بيانات الاختبار والأسئلة.'
+    );
+  }
+});
+      
+      },
+
+      error: error => {
+        console.error(
+          'Error checking quiz questions:',
+          error
+        );
+
+        this.errorMessage.set(
+          'تعذر التحقق من أسئلة الاختبار.'
+        );
+      }
+    });
+}
+cancelPublish(): void {
+  this.showPublishConfirm.set(false);
+  this.quizToPublish.set(null);
+}
+
+confirmPublish(): void {
+  const quiz = this.quizToPublish();
+  const trainerId = this.trainer()?.trainerId;
+
+  if (!quiz || trainerId === undefined) {
+    return;
+  }
+
+  this.saving.set(true);
+  this.errorMessage.set('');
+  this.successMessage.set('');
+
+  this.api.publishQuiz(
+    quiz.quizId,
+    trainerId
+  ).subscribe({
+    next: () => {
+      this.saving.set(false);
+      this.showPublishConfirm.set(false);
+      this.quizToPublish.set(null);
+
+      this.successMessage.set(
+        'تم نشر الاختبار بنجاح.'
+      );
+      
+      
+      this.loadQuizzes(trainerId);
+    },
+
+    error: error => {
+      console.error(
+        'Error publishing quiz:',
+        error
+      );
+
+      this.saving.set(false);
+      this.showPublishConfirm.set(false);
+      this.quizToPublish.set(null);
+
+      this.errorMessage.set(
+        error?.error?.message ||
+        'تعذر نشر الاختبار. تأكدي من اكتمال بيانات الاختبار والأسئلة.'
+      );
+    }
+  });
+}
   // =====================================================
   // QUESTION BANK
   // =====================================================
@@ -1114,76 +1254,97 @@ loadQuizQuestions(quizId: number): void {
       });
   }
 
+
   // =====================================================
-  // ADD QUESTIONS TO QUIZ
-  // =====================================================
+// ADD QUESTIONS TO QUIZ
+// =====================================================
 
-  addSelectedQuestionsToQuiz(): void {
-    const quiz =
-      this.selectedQuiz();
+addSelectedQuestionsToQuiz(): void {
 
-    if (!quiz) {
-      return;
-    }
+  const quiz = this.selectedQuiz();
 
-    const questionIds =
-      Array.from(
-        this.selectedQuestionIds()
-      );
-
-    if (!questionIds.length) {
-      this.questionError.set(
-        'اختاري سؤالًا واحدًا على الأقل.'
-      );
-      return;
-    }
-
-    const trainerId =
-      this.trainer()?.trainerId;
-
-    if (!trainerId) {
-      this.questionError.set(
-        'تعذر تحديد المدرب الحالي.'
-      );
-      return;
-    }
-
-    this.questionSaving.set(true);
-
-    this.questionError.set('');
-
-    this.api
-      .addQuestionsToQuiz(
-        quiz.quizId,
-        trainerId,
-        questionIds
-      )
-      .subscribe({
-        next: () => {
-          this.questionSaving.set(false);
-
-          this.questionSuccess.set(
-            'تمت إضافة الأسئلة إلى الاختبار بنجاح.'
-          );
-
-          this.clearQuestionSelection();
-        },
-
-        error: error => {
-          console.error(
-            'Error adding questions to quiz:',
-            error
-          );
-
-          this.questionSaving.set(false);
-
-          this.questionError.set(
-            error?.error?.message ||
-            'تعذر إضافة الأسئلة إلى الاختبار.'
-          );
-        }
-      });
+  if (!quiz) {
+    return;
   }
+
+  const questionIds =
+    Array.from(
+      this.selectedQuestionIds()
+    );
+
+  if (!questionIds.length) {
+
+    this.questionError.set(
+      'اختاري سؤالًا واحدًا على الأقل.'
+    );
+
+    return;
+  }
+
+  const trainerId =
+    this.trainer()?.trainerId;
+
+  if (!trainerId) {
+
+    this.questionError.set(
+      'تعذر تحديد المدرب الحالي.'
+    );
+
+    return;
+  }
+
+  this.questionSaving.set(true);
+
+  this.questionError.set('');
+  this.questionSuccess.set('');
+
+  this.api
+    .addQuestionsToQuiz(
+      quiz.quizId,
+      trainerId,
+      questionIds
+    )
+    .subscribe({
+
+      next: () => {
+
+        this.questionSaving.set(false);
+
+        this.questionSuccess.set(
+          'تمت إضافة الأسئلة إلى الاختبار بنجاح. يمكنك الآن نشر الاختبار.'
+        );
+
+        // إلغاء التحديد
+        this.clearQuestionSelection();
+
+        // تحديث أسئلة الاختبار مباشرة
+        // بدون إغلاق بنك الأسئلة
+        this.loadQuizQuestions(
+          quiz.quizId
+        );
+
+        // تحديث قائمة الاختبارات في الخلفية
+        this.loadQuizzes(trainerId);
+
+      },
+
+      error: error => {
+
+        console.error(
+          'Error adding questions to quiz:',
+          error
+        );
+
+        this.questionSaving.set(false);
+
+        this.questionError.set(
+          error?.error?.message ||
+          'تعذر إضافة الأسئلة إلى الاختبار.'
+        );
+      }
+
+    });
+}
   // =====================================================
   // EMPTY QUESTION FORM
   // =====================================================
@@ -1256,12 +1417,39 @@ loadQuizQuestions(quizId: number): void {
 
 
   getStatusClass(status: number | string): string {
-    return String(status).toLowerCase() === 'draft' ||
-      String(status) === '0'
-      ? 'draft'
-      : 'other';
-  }
 
+  switch (this.getStatusNumber(status)) {
+
+    case 0:
+      return 'draft';
+
+    case 1:
+      return 'scheduled';
+
+    case 2:
+      return 'open';
+
+    case 3:
+      return 'closed';
+
+    case 4:
+      return 'archived';
+
+    default:
+      return 'unknown';
+  }
+}
+canEditQuiz(status: number | string): boolean {
+  const statusNumber = this.getStatusNumber(status);
+
+  return statusNumber === 0 || statusNumber === 1;
+}
+
+canManageQuestions(status: number | string): boolean {
+  const statusNumber = this.getStatusNumber(status);
+
+  return statusNumber === 0;
+}
 
   formatDate(value: string): string {
 
@@ -1398,7 +1586,7 @@ loadQuizQuestions(quizId: number): void {
     }
   }
 
-  private getStatusNumber(status: number | string): number {
+  getStatusNumber(status: number | string): number {
     const value = String(status).trim().toLowerCase();
 
     switch (value) {

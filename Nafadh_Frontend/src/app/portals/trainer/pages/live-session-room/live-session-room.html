@@ -1,0 +1,304 @@
+
+<section class="live-room-page" dir="rtl">
+
+  <header class="room-header">
+    <div>
+      <span class="eyebrow">منصة نفاذ التدريبية</span>
+      <h1>المحاضرة المباشرة</h1>
+      <p>الجلسة رقم {{ sessionId }}</p>
+    </div>
+
+    <div class="room-status">
+      <span [class.live-indicator]="connected()">
+        {{ connected() ? 'متصل' : 'غير متصل' }}
+      </span>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="room-error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (connecting()) {
+    <div class="connecting-message">
+      جاري الاتصال بالمحاضرة...
+    </div>
+  }
+
+  <!-- غرفة المحاضرة -->
+  <div
+    class="room-content"
+    [class.has-participants]="showParticipants()"
+    [class.has-chat]="showChat()">
+
+    <!-- المشاركون: جهة اليمين -->
+    @if (showParticipants()) {
+      <aside class="participants-panel">
+        <h2>
+          <i class="fa-solid fa-users"></i>
+          المشاركون ({{ participantCount() }})
+        </h2>
+
+        @if (connected()) {
+          <div class="participant-item">
+            <span>
+              <i class="fa-solid fa-user-tie"></i>
+              أنتِ (المدرب)
+            </span>
+
+            <i
+              [class]="micEnabled()
+                ? 'fa-solid fa-microphone'
+                : 'fa-solid fa-microphone-slash'">
+            </i>
+          </div>
+        }
+
+        @for (participant of participants(); track participant.identity) {
+          <div class="participant-item">
+            <span>
+              <i class="fa-solid fa-user"></i>
+              {{ participant.name }}
+            </span>
+
+            <i
+              [class]="participant.micEnabled
+                ? 'fa-solid fa-microphone'
+                : 'fa-solid fa-microphone-slash'">
+            </i>
+          </div>
+        } @empty {
+          <p class="empty-participants">
+            لا يوجد مشاركون آخرون حاليًا.
+          </p>
+        }
+      </aside>
+    }
+
+    <!-- الفيديو: الوسط -->
+    <main class="video-area">
+      <div class="video-container" #videoContainer>
+        @if (!cameraEnabled() && participantCount() <= 1) {
+          <div class="video-placeholder">
+            <i class="fa-solid fa-video-slash"></i>
+            <p>الكاميرا متوقفة</p>
+          </div>
+        }
+      </div>
+    </main>
+
+    <!-- الشات: جهة اليسار -->
+    @if (showChat()) {
+      <aside class="chat-panel">
+        <h2>
+          <i class="fa-solid fa-comments"></i>
+          شات المحاضرة
+        </h2>
+
+        <div class="chat-messages">
+          @for (message of chatMessages(); track message.id) {
+            <div
+              class="chat-message"
+              [class.my-message]="message.mine">
+
+              <strong>{{ message.sender }}</strong>
+              <p>{{ message.text }}</p>
+            </div>
+          } @empty {
+            <p class="chat-empty">
+              لا توجد رسائل بعد. ابدئي المحادثة!
+            </p>
+          }
+        </div>
+
+        <form
+          class="chat-form"
+          (ngSubmit)="sendChatMessage()">
+
+          <input
+            type="text"
+            name="chatMessage"
+            placeholder="اكتبي رسالة..."
+            [(ngModel)]="chatInput"
+            maxlength="1000"
+            required />
+
+          <button
+            type="submit"
+            [disabled]="!connected() || !chatInput.trim()"
+            aria-label="إرسال الرسالة">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </form>
+      </aside>
+    }
+
+  </div>
+
+  <!-- لوحة التحكم بالمحاضرة -->
+  <section class="meeting-toolbar">
+
+    <div class="toolbar-heading">
+      <h2>
+        المحاضرة المباشرة
+        <i class="fa-solid fa-tower-broadcast"></i>
+      </h2>
+
+      <p>لوحة التحكم بالمحاضرة داخل نفاذ</p>
+    </div>
+
+    <div class="toolbar-grid">
+
+      <!-- المايك -->
+      <button
+        type="button"
+        class="tool-button"
+        [class.tool-active]="micEnabled()"
+        [disabled]="!connected()"
+        (click)="toggleMic()">
+
+        <i
+          [class]="micEnabled()
+            ? 'fa-solid fa-microphone'
+            : 'fa-solid fa-microphone-slash'">
+        </i>
+
+        <span>
+          {{ micEnabled() ? 'إيقاف المايك' : 'المايك' }}
+        </span>
+      </button>
+
+      <!-- الكاميرا -->
+      <button
+        type="button"
+        class="tool-button"
+        [class.tool-active]="cameraEnabled()"
+        [disabled]="!connected()"
+        (click)="toggleCamera()">
+
+        <i
+          [class]="cameraEnabled()
+            ? 'fa-solid fa-video'
+            : 'fa-solid fa-video-slash'">
+        </i>
+
+        <span>
+          {{ cameraEnabled() ? 'إيقاف الكاميرا' : 'الكاميرا' }}
+        </span>
+      </button>
+
+      <!-- مشاركة الشاشة -->
+      <button
+        type="button"
+        class="tool-button"
+        [class.tool-active]="screenSharing()"
+        [disabled]="!connected()"
+        (click)="toggleScreenShare()">
+
+        <i class="fa-solid fa-arrow-up-from-bracket"></i>
+
+        <span>
+          {{ screenSharing()
+            ? 'إيقاف المشاركة'
+            : 'مشاركة الشاشة' }}
+        </span>
+      </button>
+
+      <!-- المشاركون -->
+      <button
+        type="button"
+        class="tool-button"
+        [class.tool-active]="showParticipants()"
+        (click)="toggleParticipantsPanel()">
+
+        <i class="fa-solid fa-users"></i>
+
+        <span>
+          المشاركون ({{ participantCount() }})
+        </span>
+      </button>
+
+      <!-- الشات -->
+      <button
+        type="button"
+        class="tool-button"
+        [class.tool-active]="showChat()"
+        [disabled]="!connected()"
+        (click)="toggleChat()">
+
+        <i class="fa-solid fa-comments"></i>
+        <span>الشات</span>
+      </button>
+
+      <!-- الحضور المباشر -->
+      <button
+        type="button"
+        class="tool-button"
+        [disabled]="!connected()"
+        (click)="openLiveAttendance()">
+
+        <i class="fa-solid fa-clipboard-user"></i>
+        <span>الحضور المباشر</span>
+      </button>
+
+      <!-- الاستطلاعات -->
+      <button
+        type="button"
+        class="tool-button"
+        [disabled]="!connected()"
+        (click)="openSessionPolls()">
+
+        <i class="fa-solid fa-square-poll-vertical"></i>
+        <span>الاستطلاعات</span>
+      </button>
+
+      <!-- التسجيل -->
+      <button
+        type="button"
+        class="tool-button"
+        disabled
+        title="تسجيل المحاضرة يحتاج ربطًا بخدمة التسجيل">
+
+        <i class="fa-regular fa-circle-dot"></i>
+        <span>التسجيل (غير متاح)</span>
+      </button>
+
+      <!-- التحكم بالصوت -->
+      <button
+        type="button"
+        class="tool-button"
+        [class.tool-active]="!speakerMuted()"
+        (click)="toggleSpeaker()">
+
+        <i
+          [class]="speakerMuted()
+            ? 'fa-solid fa-volume-xmark'
+            : 'fa-solid fa-volume-high'">
+        </i>
+
+        <span>
+          {{ speakerMuted()
+            ? 'تشغيل الصوت'
+            : 'التحكم بالصوت' }}
+        </span>
+      </button>
+
+    </div>
+
+    <!-- مغادرة المحاضرة -->
+    <button
+      type="button"
+      class="end-meeting-btn"
+      (click)="leaveSession()">
+
+      <i class="fa-solid fa-right-from-bracket"></i>
+      مغادرة المحاضرة
+    </button>
+
+  </section>
+
+  <div #audioContainer class="audio-container"></div>
+
+</section>

@@ -60,7 +60,7 @@ namespace Nafadh_Backend.Enums
 
     public enum NFD_SessionStatus
     {
-        Scheduled, Completed, Cancelled, Postponed
+        Scheduled, Completed, Cancelled, Postponed, InProgress
     }
 
     public enum NFD_AttendanceStatus
@@ -155,9 +155,13 @@ namespace Nafadh_Backend.Enums
 
     public enum NFD_AnnouncementScopeType
     {
-        Platform, Company, Batch
+        Platform = 0,              // الجميع (كامل المنظومة)
+        Company = 1,              // شركة محددة أو كل الشركات
+        Batch = 2,               // دفعة تدريبية محددة
+        Trainee = 3,             // متدرب محدد أو كل المتدربين
+        Trainer = 4,              // مدرب محدد أو كل المدربين
+        Admin = 5                      // الأدمن / الإداريين
     }
-
     public enum NFD_MessageStatus
     {
         Sent, Delivered, Read

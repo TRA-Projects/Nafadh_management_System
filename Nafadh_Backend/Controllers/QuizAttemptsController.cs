@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
+using static Nafadh_Backend.DTOs.QuizAttemptDto;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -12,13 +13,16 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly IQuizAttemptService _service;
         private readonly IQuizAccessService _access;
+        private readonly IQuizProctoringService _proctoring;
 
         public QuizAttemptsController(
             IQuizAttemptService service,
-            IQuizAccessService access)
+            IQuizAccessService access,
+            IQuizProctoringService proctoring)
         {
             _service = service;
             _access = access;
+            _proctoring = proctoring;
         }
 
         // قائمة اختبارات المتدرب + أرقام البطاقات
@@ -103,10 +107,7 @@ namespace Nafadh_Backend.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(new
-                {
-                    message = ex.Message
-                });
+                return NotFound(new { message = ex.Message });
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -117,10 +118,7 @@ namespace Nafadh_Backend.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new
-                {
-                    message = ex.Message
-                });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -143,35 +141,21 @@ namespace Nafadh_Backend.Controllers
 
             try
             {
-                await _service.SaveAnswerAsync(
-                    attemptId,
-                    dto);
+                await _service.SaveAnswerAsync(attemptId, dto);
 
-                return Ok(new
-                {
-                    message = "تم حفظ الإجابة بنجاح."
-                });
+                return Ok(new { message = "تم حفظ الإجابة بنجاح." });
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(new
-                {
-                    message = ex.Message
-                });
+                return NotFound(new { message = ex.Message });
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(new
-                {
-                    message = ex.Message
-                });
+                return BadRequest(new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new
-                {
-                    message = ex.Message
-                });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -197,23 +181,16 @@ namespace Nafadh_Backend.Controllers
 
                 return Ok(new
                 {
-                    message =
-                        "تم تسليم الاختبار وحساب الدرجة بنجاح."
+                    message = "تم تسليم الاختبار وحساب الدرجة بنجاح."
                 });
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(new
-                {
-                    message = ex.Message
-                });
+                return NotFound(new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new
-                {
-                    message = ex.Message
-                });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -239,31 +216,19 @@ namespace Nafadh_Backend.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(new
-                {
-                    message = ex.Message
-                });
+                return NotFound(new { message = ex.Message });
             }
             catch (UnauthorizedAccessException ex)
             {
-                return StatusCode(403, new
-                {
-                    message = ex.Message
-                });
+                return StatusCode(403, new { message = ex.Message });
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(new
-                {
-                    message = ex.Message
-                });
+                return BadRequest(new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new
-                {
-                    message = ex.Message
-                });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -295,17 +260,91 @@ namespace Nafadh_Backend.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(new
-                {
-                    message = ex.Message
-                });
+                return NotFound(new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ==========================================================
+        // 🌟 الإضافات الجديدة هنا (قبل نهاية الكلاس):
+        // ==========================================================
+
+        // 1️⃣ جلب كافة محاولات المتدربين لاختبار معين (لكشف الدرجات ومؤشرات النزاهة في شاشة العرض)
+        [HttpGet("by-quiz/{quizId:int}")]
+        public async Task<IActionResult> GetAttemptsByQuiz(int quizId)
+        {
+            try
+            {
+                var attempts = await _service.GetAttemptsByQuizIdAsync(quizId);
+                return Ok(attempts);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // 2️⃣ اعتماد أو رفض عذر المتدرب المتغيب (خاص بالمدرب/الإدارة من خلال زر الاعتماد في الشاشة)
+        [HttpPost("decide-excuse")]
+        public async Task<IActionResult> DecideExcuse([FromBody] ExcuseDecisionRequestDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _service.DecideExcuseAsync(dto.AttemptId, dto.Approve, dto.RejectionReason);
+
+                return Ok(new
                 {
-                    message = ex.Message
+                    message = dto.Approve
+                        ? "تم اعتماد عذر المتدرب بنجاح وتحديث حالته إلى (معذور)."
+                        : "تم رفض العذر وإبقاء الحالة (غائب)."
                 });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // 3️⃣ إضافة ملاحظة على التسليم من المتدرب (للمشاريع/الواجبات/الاختبار)
+        [HttpPost("{attemptId:int}/submission-note")]
+        public async Task<IActionResult> AddSubmissionNote(int attemptId, [FromBody] string note)
+        {
+            try
+            {
+                await _service.AddSubmissionNoteAsync(attemptId, note);
+                return Ok(new { message = "تم حفظ ملاحظة التسليم بنجاح." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // 4️⃣ رفع وإرفاق عذر طبي/رسمي من المتدرب للغياب
+        [HttpPost("{quizId:int}/submit-excuse")]
+        public async Task<IActionResult> SubmitAbsenceExcuse(int quizId, [FromForm] string reason, IFormFile? attachment)
+        {
+            try
+            {
+                // يتم تمرير العذر والملف لخدمة المحاولات لحفظ المرفق وتعيين الحالة PendingReview
+                await _service.SubmitExcuseAsync(quizId, reason, attachment);
+                return Ok(new { message = "تم إرسال العذر بنجاح وهو قيد المراجعة والاعتماد." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -336,6 +375,98 @@ namespace Nafadh_Backend.Controllers
                 {
                     message = ex.Message
                 });
+            }
+        }
+
+        // Trainee Portal: إرسال حدث مراقبة (أو لقطة Snapshot)
+        [HttpPost("{attemptId:int}/proctoring")]
+        [Authorize(Roles = "Trainee")]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(512 * 1024)]
+        public async Task<IActionResult> AddProctoringEvent(
+            int attemptId,
+            [FromForm] CreateProctoringEventDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!await _access.TraineeOwnsAttemptAsync(User, attemptId))
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                var result = await _proctoring.AddEventAsync(attemptId, dto);
+
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // Trainer Portal: تقرير المراقبة للمحاولة
+        [HttpGet("{attemptId:int}/proctoring")]
+        [Authorize(Roles = "Trainer,Admin")]
+        public async Task<IActionResult> GetProctoringReport(int attemptId)
+        {
+            if (!await _access.CanReviewAttemptAsync(User, attemptId))
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                var report = await _proctoring.GetAttemptReportAsync(attemptId);
+
+                return Ok(report);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // Trainer Portal: صورة اللقطة (تُقرأ من Proctoring Storage)
+        [HttpGet("proctoring/events/{eventId:int}/snapshot")]
+        [Authorize(Roles = "Trainer,Admin")]
+        public async Task<IActionResult> GetProctoringSnapshot(int eventId)
+        {
+            var quizId = await _proctoring.GetQuizIdOfEventAsync(eventId);
+
+            if (quizId == null)
+            {
+                return NotFound(new { message = "اللقطة غير موجودة." });
+            }
+
+            if (!await _access.CanReviewQuizAsync(User, quizId.Value))
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                var (path, contentType) = await _proctoring.GetSnapshotAsync(eventId);
+
+                Response.Headers["Cache-Control"] = "private, no-store";
+
+                return PhysicalFile(path, contentType);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
             }
         }
     }

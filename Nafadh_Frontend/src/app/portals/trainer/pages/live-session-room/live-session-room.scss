@@ -1,0 +1,618 @@
+
+/* =========================================
+   Live Session Room - Nafadh Trainer Portal
+   ========================================= */
+
+.live-room-page {
+  min-height: 100vh;
+  padding: 24px;
+  background: #f5f7fb;
+  color: #172b4d;
+  direction: rtl;
+  box-sizing: border-box;
+}
+
+/* =========================================
+   Room Header
+   ========================================= */
+
+.room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  h1 {
+    margin: 6px 0;
+    font-size: 26px;
+    font-weight: 700;
+    color: #102b52;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+  }
+}
+
+.eyebrow {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.room-status {
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 18px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.live-indicator {
+  color: #16845b;
+  font-weight: 700;
+}
+
+/* =========================================
+   Messages
+   ========================================= */
+
+.room-error {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #a11d2b;
+  background: #fff0f1;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.connecting-message {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #eef4ff;
+  border-radius: 10px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* =========================================
+   Room Layout
+
+   RTL order:
+   Participants | Video | Chat
+   Right           Center  Left
+   ========================================= */
+
+.room-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 18px;
+  margin-bottom: 18px;
+  min-width: 0;
+}
+
+/* Participants only */
+.room-content.has-participants:not(.has-chat) {
+  grid-template-columns: 250px minmax(0, 1fr);
+}
+
+/* Chat only */
+.room-content.has-chat:not(.has-participants) {
+  grid-template-columns: minmax(0, 1fr) 300px;
+}
+
+/* Participants + Video + Chat */
+.room-content.has-participants.has-chat {
+  grid-template-columns: 250px minmax(0, 1fr) 300px;
+}
+
+.participants-panel,
+.video-area,
+.chat-panel {
+  min-width: 0;
+}
+
+/* =========================================
+   Video Area
+   ========================================= */
+
+.video-area {
+  background: #142238;
+  border-radius: 18px;
+  overflow: hidden;
+  min-height: 380px;
+}
+
+.video-container {
+  min-height: 380px;
+  padding: 16px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  .participant-video {
+    width: min(100%, 480px);
+    max-width: 100%;
+    max-height: 360px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: #0b1524;
+  }
+}
+
+.video-placeholder {
+  color: #cbd5e1;
+  text-align: center;
+
+  i {
+    display: block;
+    font-size: 45px;
+    margin-bottom: 14px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 15px;
+  }
+}
+
+/* =========================================
+   Participants Panel - Right Side
+   ========================================= */
+
+.participants-panel {
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px;
+  box-sizing: border-box;
+  min-height: 380px;
+  max-height: 480px;
+  overflow-y: auto;
+
+  h2 {
+    margin: 0 0 18px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #102b52;
+
+    i {
+      margin-inline-end: 6px;
+    }
+  }
+}
+
+.participant-item {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f1f5f9;
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  color: #172b4d;
+  font-size: 14px;
+
+  span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.empty-participants {
+  margin-top: 16px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* =========================================
+   Chat Panel - Left Side
+   ========================================= */
+
+.chat-panel {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+
+  min-height: 380px;
+  height: 100%;
+  max-height: 480px;
+  overflow: hidden;
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #102b52;
+
+    i {
+      margin-inline-end: 6px;
+    }
+  }
+}
+
+.chat-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  padding: 8px 2px;
+}
+
+.chat-message {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  overflow-wrap: anywhere;
+
+  strong {
+    display: block;
+    font-size: 12px;
+    color: #315c87;
+    margin-bottom: 5px;
+  }
+
+  p {
+    margin: 0;
+    color: #172b4d;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  &.my-message {
+    background: #e2f2ee;
+  }
+}
+
+.chat-empty {
+  color: #94a3b8;
+  font-size: 13px;
+  text-align: center;
+  line-height: 1.7;
+}
+
+.chat-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px;
+
+    border: 1px solid #dbe4ef;
+    border-radius: 10px;
+    background: #fff;
+
+    color: #172b4d;
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+
+    &:focus {
+      border-color: #1257a6;
+    }
+  }
+
+  button {
+    min-width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 10px;
+
+    background: #1257a6;
+    color: #fff;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: #0c468b;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+/* =========================================
+   Meeting Toolbar
+   ========================================= */
+
+.meeting-toolbar {
+  background: #192842;
+  color: #fff;
+  padding: 20px 18px 18px;
+  border-radius: 24px;
+}
+
+.toolbar-heading {
+  text-align: center;
+  margin-bottom: 18px;
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 23px;
+    font-weight: 700;
+    color: #fff;
+
+    i {
+      margin-inline-start: 8px;
+      font-size: 17px;
+      color: #12d987;
+    }
+  }
+
+  p {
+    margin: 0;
+    color: #aebbd0;
+    font-size: 15px;
+  }
+}
+
+/* =========================================
+   Toolbar Buttons
+   ========================================= */
+
+.toolbar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.tool-button {
+  min-height: 92px;
+  padding: 12px;
+
+  border: 1px solid transparent;
+  border-radius: 17px;
+
+  background: #2b3e5b;
+  color: #f3f6ff;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+
+  cursor: pointer;
+  font: inherit;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+
+  i {
+    font-size: 22px;
+  }
+
+  span {
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  &:hover:not(:disabled) {
+    background: #365071;
+  }
+
+  &.tool-active {
+    border-color: #46c6a0;
+    background: #294d60;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+/* =========================================
+   Leave Meeting Button
+   ========================================= */
+
+.end-meeting-btn {
+  width: 100%;
+  min-height: 74px;
+  margin-top: 18px;
+  padding: 14px;
+
+  border: none;
+  border-radius: 17px;
+
+  background: #b92e48;
+  color: #fff;
+
+  font: inherit;
+  font-size: 22px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #a5253e;
+  }
+}
+
+/* =========================================
+   Audio
+   ========================================= */
+
+.audio-container {
+  display: none;
+}
+
+/* =========================================
+   Scrollbar
+   ========================================= */
+
+.chat-messages,
+.participants-panel {
+  scrollbar-width: thin;
+  scrollbar-color: #b8cde8 transparent;
+}
+
+.chat-messages::-webkit-scrollbar,
+.participants-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb,
+.participants-panel::-webkit-scrollbar-thumb {
+  background: #b8cde8;
+  border-radius: 10px;
+}
+
+/* =========================================
+   Responsive - Tablet
+   ========================================= */
+
+@media (max-width: 1100px) {
+  .room-content.has-participants.has-chat {
+    grid-template-columns: 210px minmax(0, 1fr) 240px;
+    gap: 12px;
+  }
+
+  .room-content.has-participants:not(.has-chat) {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+
+  .room-content.has-chat:not(.has-participants) {
+    grid-template-columns: minmax(0, 1fr) 240px;
+  }
+
+  .participants-panel,
+  .chat-panel {
+    padding: 14px;
+  }
+}
+
+/* =========================================
+   Responsive - Mobile
+   ========================================= */
+
+@media (max-width: 900px) {
+  .live-room-page {
+    padding: 14px;
+  }
+
+  .room-content,
+  .room-content.has-participants:not(.has-chat),
+  .room-content.has-chat:not(.has-participants),
+  .room-content.has-participants.has-chat {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .participants-panel,
+  .video-area,
+  .chat-panel {
+    grid-column: 1;
+  }
+
+  .video-area,
+  .video-container {
+    min-height: 280px;
+  }
+
+  .participants-panel {
+    min-height: 0;
+    max-height: 320px;
+  }
+
+  .chat-panel {
+    min-height: 320px;
+    max-height: 420px;
+  }
+
+  .toolbar-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tool-button {
+    min-height: 85px;
+  }
+}
+
+/* =========================================
+   Responsive - Small Mobile
+   ========================================= */
+
+@media (max-width: 480px) {
+  .room-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+
+    h1 {
+      font-size: 22px;
+    }
+  }
+
+  .toolbar-grid {
+    gap: 8px;
+  }
+
+  .meeting-toolbar {
+    padding: 16px 12px;
+    border-radius: 18px;
+  }
+
+  .toolbar-heading h2 {
+    font-size: 20px;
+  }
+
+  .tool-button {
+    min-height: 78px;
+    gap: 8px;
+
+    i {
+      font-size: 20px;
+    }
+
+    span {
+      font-size: 12px;
+    }
+  }
+
+  .end-meeting-btn {
+    min-height: 62px;
+    font-size: 18px;
+  }
+
+  .chat-form input {
+    padding: 10px;
+  }
+}

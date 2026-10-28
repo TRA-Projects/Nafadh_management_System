@@ -128,6 +128,7 @@
           <span class="pill pill-status" [class.pill-withdrawn]="withdrawalStatus() === 'Approved'">
             <span class="status-dot"></span>{{ enrollmentStatusLabel() }}
           </span>
+
         </div>
 
         <!-- المهارات التقنية -->
@@ -207,6 +208,70 @@
         <span class="summary-sub">مرات التأخير</span>
       </div>
     </div>
+
+    <!-- سجل ونتائج الاختبارات -->
+    <section class="nfd-card exam-record-card" aria-label="سجل ونتائج الاختبارات">
+      <div class="exam-card-header">
+        <div class="exam-title-group">
+          <div class="exam-icon-box">▤</div>
+          <div>
+            <h3 class="exam-card-title">سجل ونتائج الاختبارات <span class="exam-count-badge">{{ traineeExams().length }}</span></h3>
+            <p class="exam-card-subtitle">متابعة درجات الاختبارات وحالات التصحيح للمتدرب</p>
+          </div>
+        </div>
+        <div class="exam-top-actions">
+          <button type="button" class="exam-action-btn" (click)="printExamStatement()">طباعة الكشف</button>
+          <button type="button" class="exam-action-btn exam-primary-btn" (click)="openExamResultsModal()">عرض جميع النتائج</button>
+        </div>
+      </div>
+
+      <div class="exam-stats-grid">
+        <div class="exam-stat"><span>إجمالي الاختبارات</span><strong>{{ traineeExams().length }}</strong><small>اختبار مسجل</small></div>
+        <div class="exam-stat exam-stat-green"><span>مكتمل</span><strong>{{ completedExamsCount() }}</strong><small>تم إعلان النتيجة</small></div>
+        <div class="exam-stat exam-stat-amber"><span>قيد التصحيح</span><strong>{{ pendingExamsCount() }}</strong><small>بانتظار النتيجة</small></div>
+        <div class="exam-stat exam-stat-red"><span>لم يجتز</span><strong>{{ failedExamsCount() }}</strong><small>يحتاج إلى متابعة</small></div>
+        <div class="exam-stat exam-stat-blue"><span>متوسط الدرجات</span><strong>{{ examAverageScore() !== null ? (examAverageScore() + '%') : '—' }}</strong><small>من الاختبارات المصححة</small></div>
+      </div>
+
+      <div class="exam-list-heading">
+        <div><h4>نتائج الاختبارات</h4><p>عرض {{ filteredExams().length }} من أصل {{ traineeExams().length }} اختبار</p></div>
+        <div class="exam-filter-bar">
+          <div class="filter-tabs" aria-label="تصفية الاختبارات">
+            <button type="button" class="filter-tab" [class.active]="examFilter() === 'ALL'" (click)="examFilter.set('ALL')">الكل <span>{{ traineeExams().length }}</span></button>
+            <button type="button" class="filter-tab" [class.active]="examFilter() === 'COMPLETED'" (click)="examFilter.set('COMPLETED')">مكتمل <span>{{ completedExamsCount() }}</span></button>
+            <button type="button" class="filter-tab" [class.active]="examFilter() === 'PENDING'" (click)="examFilter.set('PENDING')">قيد التصحيح <span>{{ pendingExamsCount() }}</span></button>
+            <button type="button" class="filter-tab" [class.active]="examFilter() === 'FAILED'" (click)="examFilter.set('FAILED')">لم يجتز <span>{{ failedExamsCount() }}</span></button>
+          </div>
+          <input class="exam-search-input" type="search" aria-label="بحث في الاختبارات" placeholder="ابحث باسم الاختبار أو الوحدة..." [ngModel]="examSearchQuery()" (ngModelChange)="examSearchQuery.set($event)" />
+        </div>
+      </div>
+
+      @if (filteredExams().length === 0) {
+        <div class="empty-exams-state">{{ traineeExams().length === 0 ? 'لا توجد اختبارات مسجلة لهذا المتدرب حتى الآن.' : 'لا توجد اختبارات مطابقة للبحث أو الفلتر المختار.' }}</div>
+      } @else {
+        <div class="exam-table-scroll">
+          <table class="exam-main-table">
+            <thead><tr><th>اسم الاختبار</th><th>الوحدة التدريبية</th><th>الدرجة</th><th>الحالة</th><th>تاريخ التقديم</th><th>إجراءات</th></tr></thead>
+            <tbody>
+              @for (exam of filteredExams(); track exam.id) {
+                <tr>
+                  <td><strong>{{ exam.examTitle || exam.title || 'اختبار بدون عنوان' }}</strong><small>{{ exam.id }}</small></td>
+                  <td>{{ exam.moduleName || exam.moduleTitle || '—' }}</td>
+                  <td>
+                    @if (exam.score !== null && exam.score !== undefined && exam.maxScore > 0) {
+                      <div class="exam-score" [class.score-low]="(exam.score / exam.maxScore) < 0.7"><strong>{{ (exam.score / exam.maxScore * 100) | number:'1.0-0' }}%</strong><span class="exam-score-track"><span [style.width.%]="exam.score / exam.maxScore * 100"></span></span></div>
+                    } @else { <span class="exam-muted">قيد التقييم</span> }
+                  </td>
+                  <td><span class="exam-status" [class.status-green]="exam.status === 'مكتمل' || exam.status === 'Completed'" [class.status-amber]="exam.status === 'قيد التصحيح' || exam.status === 'Pending'" [class.status-red]="exam.status === 'لم يجتز' || exam.status === 'Failed'">{{ examStatusLabel(exam.status) }}</span></td>
+                  <td>{{ exam.examDate || '—' }}</td>
+                  <td><button type="button" class="exam-details-btn" (click)="openExamDetails(exam)">التفاصيل ◉</button></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
 
     <!-- متوسط التقييم عبر وحدات البرنامج -->
     @if (stages().length > 0) {
@@ -361,7 +426,7 @@
     </div>
   }
 
-  <!-- نافذة مشاهدة السيرة الذاتية CV من داخل البروفايل (بدون المربع الأبيض الفارغ) -->
+  <!-- نافذة مشاهدة السيرة الذاتية CV -->
   @if (showCvModal()) {
     <div class="prof-modal-backdrop" (click)="showCvModal.set(false)">
       <div class="prof-modal-card lg" (click)="$event.stopPropagation()">
@@ -371,7 +436,6 @@
         </div>
 
         <div class="prof-modal-body" style="direction: rtl; text-align: right;">
-          <!-- بطاقة ملخص السيرة الذاتية الأنيقة -->
           <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; margin-bottom: 18px;">
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; margin-bottom: 16px;">
               <div>
@@ -381,7 +445,6 @@
               <span class="pill pill-status">نسبة الإنجاز: {{ completionPercentage() }}%</span>
             </div>
 
-            <!-- شبكة البيانات الأكاديمية والمهنية -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 16px;">
               <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
                 <span style="display: block; font-size: 0.76rem; color: #64748b; margin-bottom: 3px;">الجامعة / الكلية</span>
@@ -401,7 +464,6 @@
               </div>
             </div>
 
-            <!-- المهارات المسجلة -->
             @if (skillsList().length > 0) {
               <div>
                 <span style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 8px;">المهارات التقنية المسجلة:</span>
@@ -414,7 +476,6 @@
             }
           </div>
 
-          <!-- أزرار عرض وتنزيل ملف الـ CV والروابط المهنية -->
           <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
             @if (resumeUrl()) {
               <button class="cv-btn" style="padding: 10px 18px; font-weight: 700;" (click)="openExternalUrl(resumeUrl())">
@@ -442,7 +503,7 @@
     </div>
   }
 
-  <!-- نافذة إدارة واعتماد الانسحاب من داخل البروفايل -->
+  <!-- نافذة إدارة واعتماد الانسحاب -->
   @if (showWithdrawalModal()) {
     <div class="prof-modal-backdrop">
       <div class="prof-modal-card lg">
@@ -460,7 +521,6 @@
             placeholder="سبب طلب الانسحاب..."
           ></textarea>
 
-          <!-- أسباب مقنعة جاهزة للرفض -->
           <div style="margin-top: 12px; margin-bottom: 10px;">
             <label style="display:block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px;">
               أسباب مقنعة جاهزة (في حال رفض الطلب - اضغط لاختيار السبب وإرساله للمتدرب):
@@ -504,6 +564,84 @@
           >
             اعتماد الانسحاب النهائي (وإيقاف الحساب)
           </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- نافذة Modal تفاصيل الاختبار المحدد -->
+  @if (showExamResultsModal()) {
+    <div class="prof-modal-backdrop" (click)="showExamResultsModal.set(false)">
+      <div class="prof-modal-card lg" (click)="$event.stopPropagation()">
+        <div class="prof-modal-head">
+          <h3>سجل ونتائج الاختبارات التفصيلية — {{ fullName() }}</h3>
+          <button class="prof-close-btn" (click)="showExamResultsModal.set(false)">×</button>
+        </div>
+        <div class="prof-modal-body" style="direction: rtl; text-align: right;">
+          <p style="color: #64748b; font-size: 13.5px; margin-bottom: 16px;">هذا الكشف يوضح كافة درجات الاختبارات الدورية والنهائية والتقييمات الأكاديمية الخاصة بالمتدرب.</p>
+          
+          <div class="table-responsive" style="overflow-x: auto;">
+            <table class="exam-main-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <thead>
+                <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                  <th style="padding: 10px; text-align: right;">اسم الاختبار</th>
+                  <th style="padding: 10px; text-align: center;">الدرجة</th>
+                  <th style="padding: 10px; text-align: center;">الحالة</th>
+                  <th style="padding: 10px; text-align: center;">التاريخ</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (exam of traineeExams(); track exam.id) {
+                  <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 10px; font-weight: 700;">{{ exam.examTitle }}</td>
+                    <td style="padding: 10px; text-align: center; font-weight: 800; color: #047857;">{{ exam.score !== null ? (exam.score + '/' + exam.maxScore) : 'قيد التدقيق' }}</td>
+                    <td style="padding: 10px; text-align: center;">{{ exam.status }}</td>
+                    <td style="padding: 10px; text-align: center; color: #64748b;">{{ exam.examDate }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="prof-modal-foot">
+          <button class="back-btn" (click)="showExamResultsModal.set(false)">إغلاق</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- نافذة تفاصيل الأسئلة لاختبار معين -->
+  @if (showExamDetailsModal() && selectedExam()) {
+    <div class="prof-modal-backdrop" (click)="showExamDetailsModal.set(false)">
+      <div class="prof-modal-card lg" (click)="$event.stopPropagation()">
+        <div class="prof-modal-head">
+          <h3>تفاصيل: {{ selectedExam()?.examTitle }}</h3>
+          <button class="prof-close-btn" (click)="showExamDetailsModal.set(false)">×</button>
+        </div>
+        <div class="prof-modal-body" style="direction: rtl; text-align: right;">
+          <div style="background: #f8fafc; padding: 12px; border-radius: 10px; margin-bottom: 14px; font-size: 13px;">
+            <p style="margin: 0 0 6px 0;"><strong>الوحدة:</strong> {{ selectedExam()?.moduleName }}</p>
+            <p style="margin: 0 0 6px 0;"><strong>الدرجة النهائية:</strong> {{ selectedExam()?.score }}/{{ selectedExam()?.maxScore }}</p>
+            <p style="margin: 0;"><strong>الحالة:</strong> {{ selectedExam()?.status }}</p>
+          </div>
+
+          <h4 style="font-size: 14px; color: #0f172a; margin-bottom: 10px;">أسئلة الاختبار وإجابات المتدرب:</h4>
+          @if (!selectedExam()?.questions || selectedExam()?.questions.length === 0) {
+            <p class="empty-note">لا توجد تفاصيل تفصيلية مخزنة لهذا الاختبار.</p>
+          } @else {
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              @for (q of selectedExam()?.questions; track q.id) {
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+                  <p style="font-weight: 700; color: #1e293b; margin: 0 0 6px 0;">س{{ q.questionNumber }}: {{ q.text }}</p>
+                  <p style="color: #047857; margin: 0 0 4px 0; font-size: 12.5px;"><strong>إجابة المتدرب:</strong> {{ q.traineeAnswer }}</p>
+                  <p style="color: #475569; margin: 0; font-size: 12.5px;"><strong>الإجابة النموذجية:</strong> {{ q.correctAnswer }}</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <div class="prof-modal-foot">
+          <button class="back-btn" (click)="showExamDetailsModal.set(false)">إغلاق</button>
         </div>
       </div>
     </div>

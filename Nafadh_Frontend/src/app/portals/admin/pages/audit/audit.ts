@@ -23,11 +23,42 @@ export class AdminAudit implements OnInit {
   currentPage = signal<number>(1);
   pageSize = signal<number>(10);
 
+  // قائمة الإجراءات الأساسية المعتمدة في النظام وقاعدة البيانات
+  private readonly defaultActionList = [
+    'إصدار إنذار',
+    'تعديل بيانات شركة',
+    'إصدار شهادة',
+    'منح شهادة إتمام',
+    'تحديث تقييم',
+    'إنشاء حساب مستخدم',
+    'تحديث حالة متدرب',
+    'الرد على محادثة',
+    'إنشاء دفعة تدريبية',
+    'اعتماد شركة',
+    'تسجيل حضور',
+    'نشر إعلان'
+  ];
+
   constructor(private api: AdminApi) {}
 
   ngOnInit() {
     this.api.getAuditLog().subscribe((d) => this.logs.set(d ?? []));
   }
+
+  // 🟢 استخراج جميع أنواع الإجراءات ديناميكياً من قاعدة البيانات مع القائمة الأساسية
+  availableActions = computed(() => {
+    const actionsSet = new Set<string>(this.defaultActionList);
+
+    // سحب أي إجراء جديد يظهر في السجلات القادمة من SQL تلقائياً
+    for (const log of this.logs()) {
+      if (log.action?.trim()) {
+        actionsSet.add(log.action.trim());
+      }
+    }
+
+    // فرز القائمة ترتيباً أبجدياً عربياً
+    return Array.from(actionsSet).sort((a, b) => a.localeCompare(b, 'ar'));
+  });
 
   // التصفية مع الترتيب التلقائي من الأحدث إلى الأقدم
   filteredLogs = computed(() => {
@@ -127,6 +158,7 @@ export class AdminAudit implements OnInit {
     return `192.168.1.${(id % 200) + 10} (مسقط، سلطنة عُمان)`;
   }
 
+  // 🟢 السند الإداري الشامل لجميع إجراءات قاعدة البيانات
   getAuditReason(log: AuditLogDto | null): string {
     const action = log?.action || '';
     if (action.includes('إنذار')) {
@@ -135,9 +167,33 @@ export class AdminAudit implements OnInit {
     if (action.includes('شهادة')) {
       return 'استيفاء كافة ساعات التدريب المعتمدة واجتياز التقييمات الأكاديمية بنجاح.';
     }
-    if (action.includes('تعديل')) {
+    if (action.includes('تعديل بيانات')) {
       return 'تحديث السجل التجاري والبيانات الإدارية بناءً على طلب المنشأة المعتمد.';
     }
-    return 'إجراء إداري نظامي موثق عبر منصة نفاذ الوطنية.';
+    if (action.includes('متدرب')) {
+      return 'تحديث الحالة الأكاديمية أو الميدانية للمتدرب بناءً على التقارير الدورية المرفوعة.';
+    }
+    if (action.includes('حضور')) {
+      return 'رصد وتسجيل حركة الحضور والانصراف اليومي للمتدرب بمقر التدريب المعتمد.';
+    }
+    if (action.includes('اعتماد')) {
+      return 'اعتماد جاهزية الشركة واستيفائها لكافة معايير الاستضافة والتدريب الرسمية.';
+    }
+    if (action.includes('إعلان')) {
+      return 'نشر تعميم أو إشعار رسمي للمستفيدين والجهات الشريكة بالمنصة.';
+    }
+    if (action.includes('محادثة') || action.includes('الرد')) {
+      return 'الرد على الاستفسارات والتواصل المباشر مع أطراف العملية التدريبية.';
+    }
+    if (action.includes('دفعة')) {
+      return 'إنشاء وتدشين دفعة تدريبية جديدة وجدولة فترتها الزمنية.';
+    }
+    if (action.includes('تقييم')) {
+      return 'رصد وتحديث درجات التقييم الدوري للمتدربين واعتماد كشوف الدرجات.';
+    }
+    if (action.includes('حساب')) {
+      return 'إنشاء وتفعيل حساب مستخدم جديد ومنحه الصلاحيات النظامية المعتمدة.';
+    }
+    return 'إجراء إداري نظامي موثق ومؤرشف عبر منصة نفاذ الوطنية.';
   }
 }

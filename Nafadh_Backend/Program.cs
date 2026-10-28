@@ -206,6 +206,16 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ITrainerCertificateService, TrainerCertificateService>();
             builder.Services.AddScoped<IReportRepository, ReportRepository>();
             builder.Services.AddScoped<IReportService, ReportService>();
+
+            // Admin Supervisor Reports
+            builder.Services.AddScoped<
+                IAdminSupervisorReportsRepository,
+                AdminSupervisorReportsRepository>();
+
+            builder.Services.AddScoped<
+                IAdminSupervisorReportsService,
+                AdminSupervisorReportsService>();
+
             builder.Services.AddScoped<ISystemSettingRepository, SystemSettingRepository>();
             builder.Services.AddScoped<ISystemSettingService, SystemSettingService>();
             builder.Services.AddScoped<ITraineePaymentRepository, TraineePaymentRepository>();
@@ -236,6 +246,8 @@ namespace Nafadh_Backend
 
             builder.Services.AddScoped<IQuizAccessService, QuizAccessService>();
             builder.Services.AddScoped<IQuizProctoringService, QuizProctoringService>();
+            // Trainer Portal - LiveKit automatic attendance tracking.
+            builder.Services.AddScoped<SessionAttendanceTrackingService>();
             builder.Services.AddHostedService<ProctoringCleanupService>();
 
             builder.Services.AddScoped<ITraineeEvaluationRepository, TraineeEvaluationRepository>();
@@ -265,7 +277,13 @@ namespace Nafadh_Backend
             // Email settings
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
             builder.Services.Configure<AbsenceWarningSettings>(builder.Configuration.GetSection("AbsenceWarnings"));
+            // Trainer live sessions
+            builder.Services.AddScoped<TrainerLiveSessionService>();
+            // Trainer Portal - Register LiveKit Cloud room service.
+            builder.Services.AddScoped<ILiveKitService, LiveKitService>();
 
+            // Trainer session recordings
+            builder.Services.AddScoped<TrainerSessionRecordingService>();
             // Automatic absence warnings
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IAbsenceWarningService, AbsenceWarningService>();

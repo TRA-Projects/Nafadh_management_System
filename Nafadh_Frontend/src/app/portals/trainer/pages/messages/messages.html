@@ -72,25 +72,25 @@
         <span class="search-icon">
           ⌕
         </span>
-<select
-  class="batch-filter"
-  [(ngModel)]="selectedBatchName"
->
-  <option value="">كل الدفعات</option>
+        <select
+          class="batch-filter"
+          [(ngModel)]="selectedBatchName"
+        >
+          <option value="">كل الدفعات</option>
 
-  @for (batch of batchNames; track batch) {
-    <option [value]="batch">
-      {{ batch }}
-    </option>
-  }
-</select>
+          @for (batch of batchNames; track batch) {
+            <option [value]="batch">
+              {{ batch }}
+            </option>
+          }
+        </select>
 
-<input
-  type="text"
-  placeholder="ابحث عن متدرب..."
-  [value]="searchText"
-  (input)="searchText = $any($event.target).value"
-/>
+        <input
+          type="text"
+          placeholder="ابحث عن متدرب..."
+          [value]="searchText"
+          (input)="searchText = $any($event.target).value"
+        />
       </div>
 
 
@@ -123,33 +123,37 @@
       <!-- BATCH GROUP -->
 
 
-@for (group of filteredBatchGroups; track group.conversationId) {
+      @for (group of filteredBatchGroups; track group.conversationId) {
 
-  <button
-    type="button"
-    class="batch-group-item"
-    (click)="selectBatchGroup(group.conversationId)"
-  >
+        <button
+          type="button"
+          class="batch-group-item"
+          (click)="selectBatchGroup(group.conversationId)"
+        >
 
-    <div class="batch-group-avatar">
-      👥
-    </div>
+          <div class="batch-group-avatar">
+            👥
+          </div>
 
-    <div class="batch-group-info">
+          <div class="batch-group-info">
 
-      <strong>
-        {{ group.subject }}
-      </strong>
+            <strong>
+              {{ group.subject }}
+            </strong>
 
-      <small>
-        محادثة جماعية
-      </small>
-
-    </div>
-
-  </button>
-
+            <small>
+              محادثة جماعية
+            </small>
+@if (group.unreadCount > 0) {
+  <span class="unread-count">
+    {{ group.unreadCount }}
+  </span>
 }
+          </div>
+
+        </button>
+
+      }
 
       <div class="trainees-list">
 
@@ -242,24 +246,24 @@
       <header class="chat-header">
        @if (isBatchGroupSelected) {
 
-  <div class="chat-user">
+          <div class="chat-user">
 
-    <div class="chat-avatar">
-      👥
-    </div>
+            <div class="chat-avatar">
+              👥
+            </div>
 
-    <div>
+            <div>
 
-     <h2>{{ selectedBatchGroup()?.subject }}</h2>
-      <p>
-        محادثة جماعية
-      </p>
+             <h2>{{ selectedBatchGroup()?.subject }}</h2>
+              <p>
+                محادثة جماعية
+              </p>
 
-    </div>
+            </div>
 
-  </div>
+          </div>
 
-} @else if (selectedTrainee()) {
+        } @else if (selectedTrainee()) {
        
 
           <div class="chat-user">
@@ -370,34 +374,104 @@
 
         @if (isBatchGroupSelected || selectedTrainee()) {
 
-          @for (
-            message of messages;
-            track $index
-          ) {
+          @for (message of messages; track $index) {
 
-            <div
-              class="message-row"
-              [class.trainer-message]="
-                message.sender === 'trainer'
-              "
-              [class.trainee-message]="
-                message.sender === 'trainee'
-              "
-            >
+            <!-- إشعار تفاعلي خاص بالاجتماعات (يظهر في جروب الدفعة فقط) -->
+            @if (message.isMeetingNotification && message.meeting) {
 
-              <div class="message-bubble">
+              <div class="message-row system-meeting-row">
 
-                <p>
-                  {{ message.text }}
-                </p>
+                <div class="meeting-notification-card">
 
-                <small>
-                  {{ message.time }}
-                </small>
+                  <div class="meeting-card-header">
+                    <div class="meeting-badge" [ngClass]="message.meeting.status.toLowerCase()">
+                      <span class="status-dot"></span>
+                      {{ getMeetingStatusLabel(message.meeting.status) }}
+                    </div>
+
+                    <div class="meeting-icon-title">
+                      <span class="m-icon">📅</span>
+                      <strong>إشعار اجتماع دفعة</strong>
+                    </div>
+                  </div>
+
+                  <div class="meeting-card-body">
+                    <h3>{{ message.meeting.title }}</h3>
+
+                    <div class="meeting-info-grid">
+                      <div class="info-item">
+                        <span class="icon">🕒</span>
+                        <span>وقت الاجتماع: <strong>{{ message.meeting.time }}</strong></span>
+                      </div>
+
+                      <div class="info-item">
+                        <span class="icon">⏳</span>
+                        <span>المدة: <strong>{{ message.meeting.durationMinutes }} دقيقة</strong></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- الأزرار التفاعلية -->
+                  <div class="meeting-card-actions">
+                    
+                    <button 
+                      type="button" 
+                      class="btn-meeting-details"
+                      (click)="showMeetingDetails(message.meeting)"
+                    >
+                      عرض تفاصيل الاجتماع
+                    </button>
+
+                    <!-- زر الانضمام يتفعل عندما يصبح الاجتماع جاري أو يبدأ المدرب -->
+                    <button 
+                      type="button" 
+                      class="btn-meeting-join"
+                      [disabled]="!message.meeting.joinUrl || (message.meeting.status !== 'Ongoing' && !message.meeting.isHostStarted)"
+                      (click)="joinMeeting(message.meeting)"
+                    >
+                      <span>🎥</span> Join Meeting
+                    </button>
+
+                  </div>
+
+                  <!-- إشعار وفرة تسجيل المحاضرة إذا كانت مكتملة ومتوفرة -->
+                  @if (message.meeting.status === 'Completed' && message.meeting.recordingUrl) {
+                    <div class="recording-available-banner" (click)="openRecording(message.meeting.recordingUrl)">
+                      <span>📹</span>
+                      <span>تسجيل المحاضرة متوفر الآن - اضغط للمشاهدة</span>
+                    </div>
+                  }
+
+                  <small class="meeting-time-footer">{{ message.time }}</small>
+
+                </div>
 
               </div>
 
-            </div>
+            } @else {
+
+              <!-- 2. الرسائل العادية (طالب / مدرب) -->
+              <div
+                class="message-row"
+                [class.trainer-message]="message.sender === 'trainer'"
+                [class.trainee-message]="message.sender === 'trainee'"
+              >
+
+                <div class="message-bubble">
+
+                  <p>
+                    {{ message.text }}
+                  </p>
+
+                  <small>
+                    {{ message.time }}
+                  </small>
+
+                </div>
+
+              </div>
+
+            }
 
           }
 
@@ -429,9 +503,8 @@
           <input
             type="text"
             [(ngModel)]="messageText"
-          (keydown.enter)="$event.preventDefault(); sendMessage()"
+            (keydown.enter)="$event.preventDefault(); sendMessage()"
             placeholder="اكتب رسالتك هنا..."
-            
           />
 
           <button
@@ -450,5 +523,46 @@
     </main>
 
   </section>
+
+  <!-- نافذة تفاصيل الاجتماع -->
+  @if (selectedMeeting) {
+    <div class="meeting-modal-overlay"
+         (click)="closeMeetingDetails()">
+
+      <div class="meeting-modal"
+           role="dialog"
+           aria-modal="true"
+           aria-label="تفاصيل الاجتماع"
+           (click)="$event.stopPropagation()">
+
+        <div class="meeting-modal-header">
+          <h2>تفاصيل الاجتماع</h2>
+
+          <button type="button"
+                  class="meeting-modal-close"
+                  (click)="closeMeetingDetails()">
+            ✕
+          </button>
+        </div>
+
+        <div class="meeting-modal-body">
+          <h3>{{ selectedMeeting.title }}</h3>
+
+          <p><strong>التاريخ:</strong> {{ selectedMeeting.startDate }}</p>
+          <p><strong>الوقت:</strong> {{ selectedMeeting.time }}</p>
+          <p><strong>المدة:</strong> {{ selectedMeeting.durationMinutes }} دقيقة</p>
+          <p><strong>الحالة:</strong> {{ getMeetingStatusLabel(selectedMeeting.status) }}</p>
+        </div>
+
+        <div class="meeting-modal-footer">
+          <button type="button"
+                  (click)="closeMeetingDetails()">
+            إغلاق
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
 
 </div>

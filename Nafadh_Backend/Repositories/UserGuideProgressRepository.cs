@@ -1,5 +1,4 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -13,8 +12,13 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
+        // =========================
+        // Trainee - Existing
+        // =========================
+
         // Get all progress records for a trainee.
-        public async Task<IEnumerable<NFD_UserGuideProgress>> GetByTraineeIdAsync(int traineeId)
+        public async Task<IEnumerable<NFD_UserGuideProgress>> GetByTraineeIdAsync(
+            int traineeId)
         {
             return await _context.NFD_UserGuideProgresses
                 .AsNoTracking()
@@ -22,7 +26,7 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
         }
 
-        // Get progress for one guide.
+        // Get progress for one trainee guide.
         public async Task<NFD_UserGuideProgress?> GetByTraineeAndGuideAsync(
             int traineeId,
             string guideKey)
@@ -32,6 +36,35 @@ namespace Nafadh_Backend.Repositories
                     p.TraineeId == traineeId &&
                     p.GuideKey == guideKey);
         }
+
+        // =========================
+        // Trainer - New
+        // =========================
+
+        // Get all progress records for a trainer.
+        public async Task<IEnumerable<NFD_UserGuideProgress>> GetByTrainerIdAsync(
+            int trainerId)
+        {
+            return await _context.NFD_UserGuideProgresses
+                .AsNoTracking()
+                .Where(p => p.TrainerId == trainerId)
+                .ToListAsync();
+        }
+
+        // Get progress for one trainer guide.
+        public async Task<NFD_UserGuideProgress?> GetByTrainerAndGuideAsync(
+            int trainerId,
+            string guideKey)
+        {
+            return await _context.NFD_UserGuideProgresses
+                .FirstOrDefaultAsync(p =>
+                    p.TrainerId == trainerId &&
+                    p.GuideKey == guideKey);
+        }
+
+        // =========================
+        // Shared - Existing
+        // =========================
 
         // Create a new progress record.
         public async Task<NFD_UserGuideProgress> CreateAsync(

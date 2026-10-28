@@ -14,6 +14,10 @@ namespace Nafadh_Backend.Repositories
 
         Task<List<NFD_TrainerAttendance>> GetRangeAsync(int companyId, DateTime from, DateTime to, int? trainerId);
 
+
+        Task<List<NFD_TrainerAttendance>> GetAdminRangeAsync(DateTime from, DateTime to, int? trainerId, int? companyId);
+
+
         Task<List<NFD_TrainerAttendance>> GetDayAsync(int companyId, DateTime date);
 
         Task<NFD_TrainerAttendance?> GetAsync(int companyId, int trainerId, DateTime date);
