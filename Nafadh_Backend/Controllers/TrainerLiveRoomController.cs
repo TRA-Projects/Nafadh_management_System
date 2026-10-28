@@ -22,13 +22,16 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly Nafadhcontext _context;
         private readonly ILiveKitService _liveKit;
+        private readonly SessionAttendanceTrackingService _attendanceTracking;
 
         public TrainerLiveRoomController(
-            Nafadhcontext context,
-            ILiveKitService liveKit)
+    Nafadhcontext context,
+    ILiveKitService liveKit,
+    SessionAttendanceTrackingService attendanceTracking)
         {
             _context = context;
             _liveKit = liveKit;
+            _attendanceTracking = attendanceTracking;
         }
 
         // Trainer Portal - Verify that the authenticated trainer
@@ -80,11 +83,22 @@ namespace Nafadh_Backend.Controllers
                 {
                     message = "This session cannot be started."
                 });
-
             var result = await _liveKit.StartRoomAsync(
                 sessionId, HttpContext.RequestAborted);
 
-            return result.Success ? Ok(result) : BadRequest(result);
+            if (!result.Success)
+                return BadRequest(result);
+      
+
+            // Update session status only after LiveKit starts successfully.
+            if (session.Status == NFD_SessionStatus.Scheduled)
+            {
+                session.Status = NFD_SessionStatus.InProgress;
+                await _context.SaveChangesAsync(
+                    HttpContext.RequestAborted);
+            }
+
+            return Ok(result);
         }
 
         // GET: api/trainer/live-sessions/5/room
@@ -365,6 +379,10 @@ namespace Nafadh_Backend.Controllers
 
             if (!result.Success)
                 return BadRequest(result);
+            // Close remaining attendance periods after ending the LiveKit room.
+            await _attendanceTracking.CloseOpenPeriodsAsync(
+                sessionId,
+                DateTime.UtcNow);
 
             // Trainer Portal - Prevent issuing new join tokens
             // once the session has been completed.

@@ -32,6 +32,7 @@ interface TaskWithSubmissionDto extends TaskDto {
   selector: 'app-trainee-dashboard',
   imports: [CommonModule, RouterLink],
   templateUrl: './dashboard.html',
+  styleUrl: './dashboard.scss',
 })
 export class TraineeDashboard implements OnInit {
   private api = inject(TraineeApi);

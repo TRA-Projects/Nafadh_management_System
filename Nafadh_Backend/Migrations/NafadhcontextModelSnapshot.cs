@@ -453,6 +453,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<int>("ConversationId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("LastReadMessageId")
+                        .HasColumnType("int");
+
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
@@ -1975,11 +1978,52 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("AttendanceId");
 
-                    b.HasIndex("SessionId");
+                    b.HasIndex("TraineeId");
+
+                    b.HasIndex("SessionId", "TraineeId")
+                        .IsUnique();
+
+                    b.ToTable("NFD_SessionAttendances", (string)null);
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_SessionAttendancePeriod", b =>
+                {
+                    b.Property<int>("PeriodId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PeriodId"));
+
+                    b.Property<int>("DurationSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("JoinedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LeftAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ParticipantSid")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("SessionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TraineeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("PeriodId");
+
+                    b.HasIndex("ParticipantSid")
+                        .IsUnique();
 
                     b.HasIndex("TraineeId");
 
-                    b.ToTable("NFD_SessionAttendances", (string)null);
+                    b.HasIndex("SessionId", "TraineeId");
+
+                    b.ToTable("NFD_SessionAttendancePeriods", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_SessionSurvey", b =>
@@ -2773,7 +2817,10 @@ namespace Nafadh_Backend.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TraineeId")
+                    b.Property<int?>("TraineeId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TrainerId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -2782,9 +2829,17 @@ namespace Nafadh_Backend.Migrations
                     b.HasKey("ProgressId");
 
                     b.HasIndex("TraineeId", "GuideKey")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[TraineeId] IS NOT NULL");
 
-                    b.ToTable("NFD_UserGuideProgress", (string)null);
+                    b.HasIndex("TrainerId", "GuideKey")
+                        .IsUnique()
+                        .HasFilter("[TrainerId] IS NOT NULL");
+
+                    b.ToTable("NFD_UserGuideProgress", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UserGuideProgress_Owner", "([TraineeId] IS NOT NULL AND [TrainerId] IS NULL) OR ([TraineeId] IS NULL AND [TrainerId] IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Warning", b =>
@@ -3811,6 +3866,25 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Trainee");
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_SessionAttendancePeriod", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Session", "Session")
+                        .WithMany()
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainee", "Trainee")
+                        .WithMany()
+                        .HasForeignKey("TraineeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Session");
+
+                    b.Navigation("Trainee");
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_SessionSurvey", b =>
                 {
                     b.HasOne("Nafadh_Backend.Models.NFD_Session", "Session")
@@ -4066,8 +4140,12 @@ namespace Nafadh_Backend.Migrations
                     b.HasOne("Nafadh_Backend.Models.NFD_Trainee", null)
                         .WithMany()
                         .HasForeignKey("TraineeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainer", null)
+                        .WithMany()
+                        .HasForeignKey("TrainerId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Warning", b =>

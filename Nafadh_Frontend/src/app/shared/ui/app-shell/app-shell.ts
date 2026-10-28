@@ -299,4 +299,33 @@ export class AppShell {
       JSON.stringify(this.accessibility())
     );
   }
+  // =========================================================
+// 🆕 Sidebar Mobile State
+// =========================================================
+readonly sidebarOpen = signal(false);
+
+toggleSidebar(): void {
+  this.sidebarOpen.update((v) => !v);
+}
+
+closeSidebar(): void {
+  if (this.sidebarOpen()) {
+    this.sidebarOpen.set(false);
+  }
+}
+
+/** إغلاق السايدبار عند الضغط على ESC */
+@HostListener('document:keydown.escape')
+onEscapeKey(): void {
+  this.closeSidebar();
+}
+
+/** إغلاق تلقائي عند تكبير الشاشة فوق 900px */
+@HostListener('window:resize', ['$event'])
+onWindowResize(event: Event): void {
+  const width = (event.target as Window).innerWidth;
+  if (width > 900 && this.sidebarOpen()) {
+    this.sidebarOpen.set(false);
+  }
+}
 }

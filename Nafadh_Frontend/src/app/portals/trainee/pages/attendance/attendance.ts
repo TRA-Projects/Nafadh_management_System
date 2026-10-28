@@ -11,6 +11,7 @@ import { ExcuseDto } from '../../../../core/models/dtos';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './attendance.html',
+  styleUrl: './attendance.scss',
 })
 export class TraineeAttendance implements OnInit {
 

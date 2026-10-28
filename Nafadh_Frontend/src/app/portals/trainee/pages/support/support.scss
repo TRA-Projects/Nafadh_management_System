@@ -1644,6 +1644,9 @@
   }
 }
 
+/* =========================================================
+   TABLET / MOBILE (≤ 900px)
+========================================================= */
 @media (max-width: 900px) {
   .support-page {
     height: auto;
@@ -1673,12 +1676,50 @@
     min-height: 500px;
   }
 
+  /* ============================================================
+     🆕 MEMBERS PANEL AS SLIDING DRAWER ON MOBILE
+  ============================================================ */
+
+  /* الـ chat-shell يحتاج position: relative عشان نحدد مكان الـ panel */
+  .chat-shell {
+    position: relative;
+    grid-template-columns: minmax(0, 1fr) 0;
+  }
+
+  /* في الحالة المفتوحة، نبقيه عمود واحد على الموبايل */
   .chat-shell.members-open {
     grid-template-columns: minmax(0, 1fr) 0;
   }
 
-  .chat-shell.members-open .chat-members-panel {
+  /* الـ panel يبقى overlay منزلق من اليمين */
+  .chat-members-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+
+    width: min(300px, 85vw);
+    max-width: 85vw;
+
+    z-index: 30;
+
+    /* مخفي افتراضياً */
     transform: translateX(100%);
+    transition: transform 0.28s ease;
+
+    box-shadow: -8px 0 24px rgba(15, 23, 42, 0.15);
+    border-left: 1px solid #e7ebf0;
+    border-radius: 15px 0 0 15px;
+  }
+
+  /* لما يفتح، ينزلق للداخل */
+  .chat-shell.members-open .chat-members-panel {
+    transform: translateX(0);
+  }
+
+  /* الـ panel يغطي كامل الـ chat-shell (بما فيها header) */
+  .chat-members-panel {
+    top: 0;
   }
 }
 

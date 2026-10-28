@@ -870,3 +870,25 @@ textarea:focus-visible {
     cursor: not-allowed;
   }
 }
+/* Scroll when live sessions exceed 5 */
+.session-list.scrollable {
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-inline-end: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #b8cde8 transparent;
+}
+
+.session-list.scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.session-list.scrollable::-webkit-scrollbar-thumb {
+  background: #b8cde8;
+  border-radius: 10px;
+}
+
+.session-list.scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}

@@ -138,7 +138,7 @@
     }
   </section>
 
-  @if (selectedResults(); as results) {
+@if (selectedResults(); as results) {
     <section class="results-card">
       <h2>نتائج: {{ results.question }}</h2>
       <p>إجمالي الأصوات: {{ results.totalVotes }}</p>
@@ -147,13 +147,13 @@
         <div class="result-row">
           <div class="result-label">
             <span>{{ item.optionText }}</span>
-            <span>{{ item.voteCount }} صوت — {{ item.percentage }}%</span>
+            <span>{{ item.voteCount }} صوت — {{ item.votePercentage }}%</span>
           </div>
 
           <div class="progress-track">
             <div
               class="progress-value"
-              [style.width.%]="item.percentage"
+              [style.width.%]="item.votePercentage"
             ></div>
           </div>
         </div>
