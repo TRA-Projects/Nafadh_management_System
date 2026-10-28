@@ -61,7 +61,9 @@
                 ✓ تم إكمال الجولة الإرشادية لهذه الصفحة.
               } @else if (progress.status === 'Skipped') {
                 تم تخطي الجولة الإرشادية لهذه الصفحة سابقًا.
-              }
+               } @else {
+                لم يتم إكمال الجولة الإرشادية لهذه الصفحة بعد.
+                 }
             </p>
           } @else {
             <p class="guide-progress-status" role="status">
