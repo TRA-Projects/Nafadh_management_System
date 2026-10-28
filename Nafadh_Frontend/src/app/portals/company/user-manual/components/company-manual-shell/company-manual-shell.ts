@@ -81,6 +81,11 @@ export class CompanyManualShell implements OnDestroy {
     if (section === 'dashboard' && parts.length === 2) key = 'dashboard';
     else if (section === 'specialties' && parts.length === 2) key = 'programs';
     else if (section === 'specialties' && parts.length === 3) key = 'program-details';
+   else if (
+  section === 'specialties' &&
+  parts.length === 4 &&
+  parts[3] === 'quiz-results'
+) key = 'quiz-results';
     else if (section === 'tasks' && parts.length === 2) key = 'tasks';
     else if (section === 'tasks' && parts.length === 3) key = 'workspace';
     else if (section === 'profile' && parts.length === 2) key = 'profile';
@@ -89,6 +94,8 @@ export class CompanyManualShell implements OnDestroy {
     else if (section === 'contact' && parts.length === 2) key = 'contact';
     else if (section === 'notifications' && parts.length === 2) key = 'notifications';
     else if (section === 'daily-attendance' && parts.length === 2) key = 'daily-attendance';
+    else if (section === 'warnings' && parts.length === 2) key = 'warnings';
+    else if (section === 'my-account' && parts.length === 2) key = 'my-account';
     this.guideService.setPage(key);
   }
 

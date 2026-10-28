@@ -44,12 +44,15 @@ export class CompanyGuidedTour implements OnDestroy {
       const available = [...steps]
         .sort((a, b) => a.order - b.order)
         .filter(step => this.findElement(step.target));
-      // Async Angular pages may still be loading; wait briefly for a second anchor.
-      if (available.length < 2 && this.retryCount++ < this.maxRetries) {
+      // The profile renders most anchors only after the company request finishes.
+      const pageLoading = steps.some(step =>
+        this.findElement(step.target)?.getAttribute('data-guide-loading') === 'true');
+      const retryLimit = pageLoading ? 75 : this.maxRetries;
+      if ((pageLoading || available.length < 2) && this.retryCount++ < retryLimit) {
         this.schedule(steps);
         return;
       }
-      if (!available.length) {
+      if (pageLoading || !available.length) {
         this.guideService.stopTour();
         return;
       }
