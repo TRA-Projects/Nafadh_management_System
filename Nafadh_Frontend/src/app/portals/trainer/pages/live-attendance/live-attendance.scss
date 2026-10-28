@@ -178,3 +178,96 @@ td {
     align-items: flex-start;
   }
 }
+.table-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  .search-box {
+    .search-input {
+      padding: 0.55rem 1rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      width: 250px;
+      outline: none;
+      transition: all 0.2s ease-in-out;
+
+      &:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      }
+    }
+  }
+}
+.th-search-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+
+  .th-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap; // يمنع نزول الكلمة لسطر جديد
+
+    .search-toggle-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: #f1f5f9;
+      }
+
+      .search-icon {
+        color: #64748b;
+        transition: color 0.2s;
+
+        &:hover {
+          color: #3b82f6;
+        }
+      }
+    }
+  }
+
+  .inline-search-input {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    width: 220px; // عرض مناسب للمستطيل بجانب العدسة
+    outline: none;
+    background-color: #ffffff;
+    transition: all 0.2s ease-in-out;
+    animation: fadeIn 0.2s ease-in-out;
+
+    &:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
