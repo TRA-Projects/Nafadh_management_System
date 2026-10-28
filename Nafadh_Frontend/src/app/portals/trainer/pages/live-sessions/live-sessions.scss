@@ -892,3 +892,19 @@ textarea:focus-visible {
 .session-list.scrollable::-webkit-scrollbar-track {
   background: transparent;
 }
+.session-actions .session-report-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 15px;
+  border: 1px solid #b9d9f4;
+  border-radius: 10px;
+  background: #eff7ff;
+  color: #0754ac;
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    background: #dceeff;
+  }
+}

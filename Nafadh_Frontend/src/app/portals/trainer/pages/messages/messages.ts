@@ -26,13 +26,13 @@ export interface MeetingNotification {
   startDate: string;
   time: string;
   durationMinutes: number;
- status:
+status:
   | 'Upcoming'
   | 'Ongoing'
   | 'Completed'
   | 'Cancelled'
-  | 'Postponed';
-
+  | 'Postponed'
+  | 'Expired';
   joinUrl?: string;
   recordingUrl?: string;
   isHostStarted?: boolean;
@@ -97,6 +97,7 @@ closeMeetingDetails(): void {
     case 'Completed': return 'منتهٍ';
     case 'Cancelled': return 'ملغي';
     case 'Postponed': return 'مؤجل';
+    case 'Expired': return 'انتهى الموعد';
     default: return '';
   }
 }
@@ -418,9 +419,23 @@ this.cdr.markForCheck();
                 numericStatus === 3
               ) {
                 meetingStatus = 'Postponed';
-              } else {
-                meetingStatus = 'Upcoming';
-              }
+             } else {
+  // الجلسة مجدولة: نتحقق هل انتهى موعدها
+  const datePart = String(session.sessionDate ?? '').split('T')[0];
+  const timePart = String(session.startTime ?? '00:00:00');
+
+  const startDateTime = new Date(`${datePart}T${timePart}`);
+  const durationMinutes = Number(session.durationMinutes ?? 60);
+
+  if (
+    !Number.isNaN(startDateTime.getTime()) &&
+    Date.now() >= startDateTime.getTime() + durationMinutes * 60_000
+  ) {
+    meetingStatus = 'Expired';
+  } else {
+    meetingStatus = 'Upcoming';
+  }
+}
 
               const sessionDateFormatted = session.sessionDate
                 ? new Date(session.sessionDate).toLocaleDateString(

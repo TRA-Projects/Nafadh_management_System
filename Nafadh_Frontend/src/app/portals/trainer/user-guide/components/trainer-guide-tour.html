@@ -1,0 +1,98 @@
+
+@if (guideService.isTourActive() && currentStep; as step) {
+  <div class="trainer-tour" dir="rtl">
+
+    <!-- خلفية التعتيم مع فتحة شفافة حول العنصر -->
+    <div
+      class="tour-backdrop"
+      [style.clip-path]="
+        highlightRect()
+          ? 'polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ' +
+            highlightRect()!.left + 'px ' + highlightRect()!.top + 'px, ' +
+            (highlightRect()!.left + highlightRect()!.width) + 'px ' + highlightRect()!.top + 'px, ' +
+            (highlightRect()!.left + highlightRect()!.width) + 'px ' +
+            (highlightRect()!.top + highlightRect()!.height) + 'px, ' +
+            highlightRect()!.left + 'px ' +
+            (highlightRect()!.top + highlightRect()!.height) + 'px, ' +
+            highlightRect()!.left + 'px ' + highlightRect()!.top + 'px)'
+          : 'none'
+      "
+    ></div>
+
+    <!-- إطار العنصر المستهدف -->
+    @if (highlightRect(); as rect) {
+      <div
+        class="tour-highlight-frame"
+        [style.top.px]="rect.top"
+        [style.left.px]="rect.left"
+        [style.width.px]="rect.width"
+        [style.height.px]="rect.height"
+      ></div>
+    }
+
+    <!-- بطاقة شرح الجولة -->
+    <section
+      class="tour-card"
+      role="dialog"
+      aria-label="الجولة الإرشادية"
+      aria-modal="true"
+    >
+      <div class="tour-header">
+        <span class="tour-label">دليل المدرب</span>
+
+        <button
+          type="button"
+          class="tour-skip"
+          (click)="skipTour()"
+        >
+          تخطي الجولة
+        </button>
+      </div>
+
+      <div class="tour-progress">
+        الخطوة {{ currentStepIndex() + 1 }}
+        من {{ steps.length }}
+      </div>
+
+      <h2 class="tour-title">
+        {{ step.title }}
+      </h2>
+
+      <p class="tour-description">
+        {{ step.description }}
+      </p>
+
+      @if (step.steps?.length) {
+        <ol class="tour-instructions">
+          @for (instruction of step.steps; track $index) {
+            <li>{{ instruction }}</li>
+          }
+        </ol>
+      }
+
+      <div class="tour-actions">
+        <button
+          type="button"
+          class="tour-previous"
+          (click)="previousStep()"
+          [disabled]="currentStepIndex() === 0"
+        >
+          السابق
+        </button>
+
+        <button
+          type="button"
+          class="tour-next"
+          (click)="nextStep()"
+        >
+          @if (currentStepIndex() === steps.length - 1) {
+            إنهاء الجولة
+          } @else {
+            التالي
+          }
+        </button>
+      </div>
+    </section>
+
+  </div>
+}

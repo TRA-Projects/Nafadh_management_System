@@ -24,9 +24,9 @@ namespace Nafadh_Backend.Repositories
         Task<bool> HasQuizAttemptsAsync(int quizId);
 
         void RemoveQuizQuestion(NFD_QuizQuestion quizQuestion);
-        Task<bool> AreQuizQuestionsValidAsync(
-    int quizId,
-    int trainerId);
+        Task<string?> AreQuizQuestionsValidAsync(
+     int quizId,
+     int trainerId);
         Task SaveChangesAsync();
     }
 }

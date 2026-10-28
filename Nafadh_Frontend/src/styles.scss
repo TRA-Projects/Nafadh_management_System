@@ -320,3 +320,10 @@ a[href*="github.com"] {
   .access-panel { left: 10px; width: calc(100vw - 20px); top: 70px; max-height: calc(100vh - 80px); }
   .access-panel-scroll { max-height: calc(100vh - 80px); }
 }
+/* Trainer User Guide - Highlighted Element */
+body .trainer-guide-highlight {
+  position: relative !important;
+  z-index: 3001 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}

@@ -111,6 +111,13 @@
                         {{ getSessionStatusLabel(session) }}
                     </span>
 
+                    @if (session.status === 'Completed') {
+                    <button type="button" class="session-report-btn" (click)="openSessionReport(session)">
+                        <i class="fa-solid fa-chart-column"></i>
+                        تقرير الجلسة
+                    </button>
+                    }
+
                     <!-- إعادة جدولة الجلسات التي فات موعدها -->
                     @if (isMissedSession(session)) {
                     <button type="button" class="reschedule-btn" [disabled]="saving()"
@@ -122,7 +129,7 @@
 
                     <!-- تعديل وإلغاء الجلسات القادمة -->
                     @if (
-                    session.status === 'Scheduled' &&
+                    (session.status === 'Scheduled' || session.status === 'Postponed') &&
                     activeTab() === 'upcoming'
                     ) {
                     <button type="button" (click)="editSession(session)">
@@ -139,14 +146,15 @@
                     activeTab() === 'ongoing' &&
                     (
                     session.status === 'Scheduled' ||
+                    session.status === 'Postponed' ||
                     session.status === 'InProgress'
                     )
                     ) {
                     <button type="button" [disabled]="joiningSessionId() !== null" (click)="startSession(session)">
                         {{
                         joiningSessionId() === session.id
-                        ? 'جاري الدخول...'
-                        : 'دخول المحاضرة'
+                        ? ' Loading...'
+                        : 'Join Meeting'
                         }}
                     </button>
                     }
@@ -171,7 +179,9 @@
             <div class="modal-header">
                 <h2 id="session-form-title">
                     {{
-                    editingId() === null
+                    reschedulingId() !== null
+                    ? 'إعادة جدولة الجلسة'
+                    : editingId() === null
                     ? 'إنشاء جلسة جديدة'
                     : 'تعديل الجلسة'
                     }}
@@ -223,7 +233,13 @@
                     </button>
 
                     <button type="submit" class="primary-btn" [disabled]="saving()">
-                        حفظ الجلسة
+                        {{
+                        saving()
+                        ? 'جاري الحفظ...'
+                        : reschedulingId() !== null
+                        ? 'حفظ الموعد الجديد'
+                        : 'حفظ الجلسة'
+                        }}
                     </button>
                 </div>
             </form>

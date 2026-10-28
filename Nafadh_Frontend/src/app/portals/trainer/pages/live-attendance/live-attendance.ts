@@ -2,8 +2,10 @@ import {
   Component,
   OnInit,
   signal,
+  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
@@ -18,7 +20,7 @@ interface LiveAttendanceRow {
 @Component({
   selector: 'app-live-attendance',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule,FormsModule],
   templateUrl: './live-attendance.html',
   styleUrl: './live-attendance.scss',
 })
@@ -29,7 +31,19 @@ export class LiveAttendanceComponent implements OnInit {
   rows = signal<LiveAttendanceRow[]>([]);
   loading = signal(false);
   errorMessage = signal('');
+  searchQuery = signal('');
 
+  isSearchOpen = signal(false);
+
+  filteredRows = computed(() => {
+    const query = this.searchQuery().toLowerCase().trim();
+    if (!query) {
+      return this.rows();
+    }
+    return this.rows().filter(row =>
+      row.traineeName.toLowerCase().includes(query)
+    );
+  });
   constructor(
     private trainerApi: TrainerApi,
     private route: ActivatedRoute
@@ -48,6 +62,12 @@ export class LiveAttendanceComponent implements OnInit {
         this.loadAttendance();
       }
     });
+  }
+  toggleSearch() {
+    this.isSearchOpen.update(value => !value);
+    if (!this.isSearchOpen()) {
+      this.searchQuery.set(''); // مسح نص البحث عند إغلاقه
+    }
   }
 
   private loadAttendance(): void {
