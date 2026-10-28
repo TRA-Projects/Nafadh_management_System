@@ -44,5 +44,14 @@
 
 
         Task SendCoursePlanDecisionAsync(string email, string companyName, string planTitle, bool approved, string? note = null);
+
+        Task SendBatchAssignedToCompanyAsync(
+        string email,
+        string companyName,
+        string batchName,
+        string programName,
+        DateTime startDate,
+        DateTime endDate,
+        decimal capacity);
     }
 }

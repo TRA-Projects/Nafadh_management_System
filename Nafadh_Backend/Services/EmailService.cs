@@ -648,5 +648,47 @@ namespace Nafadh_Backend.Services
 
             await SendAsync(email, subject, body);
         }
+
+        public async Task SendBatchAssignedToCompanyAsync(
+            string email,
+            string companyName,
+            string batchName,
+            string programName,
+            DateTime startDate,
+            DateTime endDate,
+            decimal capacity)
+        {
+            string safeCompany = WebUtility.HtmlEncode(companyName);
+            string safeBatch = WebUtility.HtmlEncode(batchName);
+            string safeProgram = WebUtility.HtmlEncode(programName);
+            string startStr = startDate.ToString("yyyy-MM-dd");
+            string endStr = endDate.ToString("yyyy-MM-dd");
+
+            string subject = $"إسناد دفعة تدريبية جديدة ({batchName}) - منصة نفاذ";
+
+            string body = $@"
+            <div dir='rtl' style='font-family: Arial, Tahoma, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #dbeafe; border-radius: 10px; overflow: hidden; background-color: #ffffff;'>
+                <div style='background-color: #1e3a8a; color: #ffffff; padding: 18px 24px;'>
+                    <h2 style='margin: 0; font-size: 20px;'>📋 إشعار إسناد دفعة تدريبية جديدة</h2>
+                </div>
+                <div style='padding: 24px; color: #1f2937; line-height: 1.8;'>
+                    <p style='margin-top: 0;'>السادة شركة <strong>{safeCompany}</strong> المحترمين،</p>
+                    <p>نود إبلاغكم بأنه قد تم تسجيل وإسناد دفعة تدريبية جديدة لشركتكم عبر منصة <strong>نفاذ</strong> وفق التفاصيل التالية:</p>
+
+                    <div style='background-color: #f8fafc; border-right: 4px solid #1e3a8a; padding: 14px 18px; margin: 18px 0; border-radius: 6px;'>
+                        <p style='margin: 4px 0;'><strong>اسم الدفعة:</strong> {safeBatch}</p>
+                        <p style='margin: 4px 0;'><strong>البرنامج التدريبي:</strong> {safeProgram}</p>
+                        <p style='margin: 4px 0;'><strong>فترة التدريب:</strong> من <span dir='ltr'>{startStr}</span> إلى <span dir='ltr'>{endStr}</span></p>
+                        <p style='margin: 4px 0;'><strong>الطاقة الاستيعابية:</strong> {(int)capacity} متدرب</p>
+                    </div>
+
+                    <p>يرجى الدخول إلى حساب الشركة في منصة نفاذ لمتابعة تفاصيل الدفعة واستكمال الإجراءات والخطط التدريبية اللازمة.</p>
+                    <hr style='border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;' />
+                    <p style='font-size: 12px; color: #6b7280; margin-bottom: 0;'>مع التحية،<br/>إدارة الهيئة - منصة نفاذ</p>
+                </div>
+            </div>";
+
+            await SendAsync(email, subject, body);
+        }
     }
 }
