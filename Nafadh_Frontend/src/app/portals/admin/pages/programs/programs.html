@@ -694,10 +694,16 @@
       <div>
         <div class="plan-title-row">
           <h3 class="plan-title">مراجعة واعتماد خطة الدورة التدريبية</h3>
-          <span class="plan-batch-pill">{{ selectedPlanBatch()?.batchName }}</span>
+          <span class="plan-batch-pill">{{ selectedPlanBatch()?.batchName }} — دفعة #{{ selectedPlanBatch()?.batchId }}</span>
         </div>
         <p class="plan-sub">الشركة المستضيفة: <strong>{{ selectedPlanBatch()?.companyName || 'شركة معتمدة' }}</strong> ·
           البرنامج: <strong>{{ getProgramName(selectedPlanBatch()) }}</strong></p>
+        <p class="plan-sub" *ngIf="selectedPlan() as plan">
+          رقم الخطة: <strong>{{ plan.planId }}</strong> ·
+          حالة الخطة: <strong>{{ plan.approvalStatus === 1 ? 'بانتظار الاعتماد' :
+            plan.approvalStatus === 2 ? 'معتمدة' :
+            plan.approvalStatus === 3 ? 'مرفوضة' : 'مسودة' }}</strong>
+        </p>
       </div>
       <button type="button" (click)="closePlanModal()" class="modal-close-btn">&times;</button>
     </div>
@@ -706,7 +712,7 @@
       <button type="button" (click)="activePlanTab.set('curriculum')" [class.active]="activePlanTab() === 'curriculum'"
         class="plan-tab-btn">
         <i class="fa-solid fa-layer-group"></i>
-        <span>المنهج والمراحل ({{ selectedPlan()?.stages?.length || selectedPlan()?.stageCount || 0 }})</span>
+        <span>المنهج والمراحل ({{ selectedPlan()?.stages?.length ?? 0 }})</span>
       </button>
       <button type="button" (click)="activePlanTab.set('trainers')" [class.active]="activePlanTab() === 'trainers'"
         class="plan-tab-btn">
@@ -736,15 +742,17 @@
           <div class="stage-header">
             <span class="stage-num">المرحلة {{ stage.stageOrder || stage.orderIndex || sIdx + 1 }}</span>
             <h4 class="stage-title">{{ stage.title || stage.name }}</h4>
-            <span class="stage-duration">{{ stage.durationHours || 40 }} ساعة تدريبية</span>
+            <span class="stage-duration" *ngIf="stage.startDate && stage.endDate">
+              {{ stage.startDate | date:'yyyy/MM/dd' }} – {{ stage.endDate | date:'yyyy/MM/dd' }}
+            </span>
           </div>
-          <p class="stage-desc">{{ stage.description || 'تغطية المفاهيم الأساسية والتطبيقات العملية.' }}</p>
+          <p class="stage-desc">{{ stage.description || 'لم يُدخل وصف لهذه المرحلة.' }}</p>
 
           <div *ngIf="stage.items && stage.items.length > 0" class="stage-items-list">
             <div *ngFor="let itm of stage.items" class="stage-item-row">
               <i class="fa-regular fa-circle-check text-emerald"></i>
               <span class="item-title">{{ itm.title || itm.name }}</span>
-              <span class="item-type-badge">{{ itm.itemType || 'موضوع تقني' }}</span>
+              <span class="item-type-badge">{{ itm.itemType === 0 || itm.itemType === 'Task' ? 'مهمة' : itm.itemType === 1 || itm.itemType === 'Project' ? 'مشروع' : 'عنصر تدريبي' }}</span>
             </div>
           </div>
         </div>
@@ -755,12 +763,16 @@
           <div class="trainer-avatar-box"><i class="fa-solid fa-user-tie"></i></div>
           <div class="trainer-info">
             <h4 class="trainer-name">{{ tr.trainerName || tr.fullName || 'المدرب المسجل' }}</h4>
-            <span class="trainer-role">{{ tr.specialty || tr.role || 'مدرب تقني رئيسي' }}</span>
+            <span class="trainer-role">{{ tr.specialty || tr.role || 'لم يُحدد التخصص' }}</span>
           </div>
         </div>
       </div>
 
       <div *ngIf="!isLoadingPlan() && activePlanTab() === 'decision'" class="decision-view">
+        <div *ngIf="decisionErrorMessage()" class="plan-error-alert" role="alert">{{ decisionErrorMessage() }}</div>
+        <div *ngIf="!canReviewSelectedPlan()" class="plan-error-alert">
+          لا يمكن اعتماد أو رفض خطة لم يتم التحقق من ربطها بالدفعة أو ليست بانتظار الاعتماد.
+        </div>
         <div class="decision-grid">
           <div class="decision-card approve-card">
             <div class="decision-card-top">
@@ -772,7 +784,7 @@
             </div>
             <textarea [(ngModel)]="approvalNotes" placeholder="ملاحظات الاعتماد (اختياري)..." rows="3"
               class="decision-textarea"></textarea>
-            <button type="button" (click)="executeApproval()" [disabled]="isSubmittingDecision()"
+            <button type="button" (click)="executeApproval()" [disabled]="!canReviewSelectedPlan()"
               class="btn-decision-approve">
               {{ isSubmittingDecision() ? 'جاري الاعتماد...' : 'اعتماد الخطة رسمياً' }}
             </button>
@@ -795,7 +807,7 @@
             </div>
             <textarea [(ngModel)]="rejectionNotes" placeholder="شرح تفصيلي إضافي للشركة..." rows="2"
               class="decision-textarea"></textarea>
-            <button type="button" (click)="executeRejection()" [disabled]="isSubmittingDecision()"
+            <button type="button" (click)="executeRejection()" [disabled]="!canReviewSelectedPlan()"
               class="btn-decision-reject">
               {{ isSubmittingDecision() ? 'جاري الإرجاع...' : 'إرجاع الخطة للشركة مع الملاحظات' }}
             </button>
