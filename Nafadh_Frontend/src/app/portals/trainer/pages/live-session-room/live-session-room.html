@@ -61,6 +61,12 @@
             <span>
               <i class="fa-solid fa-user"></i>
               {{ participant.name }}
+
+              @if (participant.handRaised) {
+  <span class="raised-hand-indicator" title="المتدرب رفع يده">
+    ✋
+  </span>
+}
             </span>
 
             <i

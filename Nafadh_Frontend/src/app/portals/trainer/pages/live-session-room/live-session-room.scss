@@ -215,6 +215,13 @@
   line-height: 1.7;
 }
 
+.raised-hand-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-start: 6px;
+  font-size: 18px;
+}
+
 /* =========================================
    Chat Panel - Left Side
    ========================================= */

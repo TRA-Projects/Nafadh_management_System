@@ -54,6 +54,7 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
     identity: string;
     name: string;
     micEnabled: boolean;
+    handRaised: boolean;
   }[]>([]);
 
   showChat = signal(false);
@@ -69,6 +70,7 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
   private chatMessageId = 0;
 
   private room: Room | null = null;
+  private raisedHands = new Map<string, boolean>();
   private destroyed = false;
 
   constructor(
@@ -113,13 +115,29 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
 
 
           room.on(RoomEvent.DataReceived, (payload, participant, _kind, topic) => {
-            if (topic !== 'session-chat') return;
+            if (topic !== 'session-chat' && topic !== 'session-hand') return;
 
             try {
               const decoded = new TextDecoder().decode(payload);
-
               const data = JSON.parse(decoded);
 
+              // استقبال رفع اليد من المتدرب
+              if (topic === 'session-hand') {
+                if (
+                  !participant ||
+                  !room.remoteParticipants.has(participant.identity) ||
+                  data.type !== 'raise-hand' ||
+                  typeof data.raised !== 'boolean'
+                ) {
+                  return;
+                }
+
+                this.raisedHands.set(participant.identity, data.raised);
+                this.updateParticipants();
+                return;
+              }
+
+              // الشات الحالي بدون تغيير
               if (
                 data.type !== 'chat' ||
                 typeof data.text !== 'string' ||
@@ -138,7 +156,7 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
                 }
               ]);
             } catch (error) {
-              console.error('Invalid chat message:', error);
+              console.error('Invalid LiveKit message:', error);
             }
           });
 
@@ -171,7 +189,8 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
             this.updateParticipants();
           });
 
-          room.on(RoomEvent.ParticipantDisconnected, () => {
+          room.on(RoomEvent.ParticipantDisconnected, participant => {
+            this.raisedHands.delete(participant.identity);
             this.updateParticipants();
           });
 
@@ -196,6 +215,7 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
             this.micEnabled.set(false);
             this.cameraEnabled.set(false);
             this.screenSharing.set(false);
+            this.raisedHands.clear();
             this.updateParticipants();
           });
 
@@ -297,7 +317,8 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
         return {
           identity: participant.identity,
           name: participant.name || participant.identity,
-          micEnabled: !!microphone && !microphone.isMuted
+          micEnabled: !!microphone && !microphone.isMuted,
+          handRaised: this.raisedHands.get(participant.identity) ?? false
         };
       })
     );
@@ -426,7 +447,7 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
   }
 
 
-openLiveAttendance(): void {
+  openLiveAttendance(): void {
     if (!this.connected()) return;
 
     this.router.navigate(['/trainer/live-session-attendance', this.sessionId], {
@@ -447,39 +468,39 @@ openLiveAttendance(): void {
   }
 
   endSession(): void {
-  if (!this.connected() || this.endingSession()) return;
+    if (!this.connected() || this.endingSession()) return;
 
-  this.endingSession.set(true);
-  this.errorMessage.set('');
+    this.endingSession.set(true);
+    this.errorMessage.set('');
 
-  this.api.endTrainerLiveRoom(this.sessionId).subscribe({
-    next: async () => {
-      try {
-        await this.room?.disconnect();
-      } catch (error) {
-        console.error('LiveKit disconnect failed:', error);
-      }
-
-      this.connected.set(false);
-      this.endingSession.set(false);
-      this.showEndConfirmation.set(false);      
-
-      void this.router.navigate(['/trainer/live-sessions'], {
-        queryParams: {
-          batchId: this.batchId,
-          tab: 'past'
+    this.api.endTrainerLiveRoom(this.sessionId).subscribe({
+      next: async () => {
+        try {
+          await this.room?.disconnect();
+        } catch (error) {
+          console.error('LiveKit disconnect failed:', error);
         }
-      });
-    },
-    error: error => {
-      console.error('Failed to end session:', error);
-      this.errorMessage.set(
-        'تعذر إنهاء المحاضرة. حاولي مرة أخرى.'
-      );
-      this.endingSession.set(false);
-    }
-  });
-}
+
+        this.connected.set(false);
+        this.endingSession.set(false);
+        this.showEndConfirmation.set(false);
+
+        void this.router.navigate(['/trainer/live-sessions'], {
+          queryParams: {
+            batchId: this.batchId,
+            tab: 'past'
+          }
+        });
+      },
+      error: error => {
+        console.error('Failed to end session:', error);
+        this.errorMessage.set(
+          'تعذر إنهاء المحاضرة. حاولي مرة أخرى.'
+        );
+        this.endingSession.set(false);
+      }
+    });
+  }
 
   async leaveSession(): Promise<void> {
     await this.room?.disconnect();
@@ -543,15 +564,15 @@ openLiveAttendance(): void {
   }
 
   openEndConfirmation(): void {
-  if (!this.connected() || this.endingSession()) return;
+    if (!this.connected() || this.endingSession()) return;
 
-  this.showEndConfirmation.set(true);
-}
+    this.showEndConfirmation.set(true);
+  }
 
-closeEndConfirmation(): void {
-  if (this.endingSession()) return;
+  closeEndConfirmation(): void {
+    if (this.endingSession()) return;
 
-  this.showEndConfirmation.set(false);
-}
+    this.showEndConfirmation.set(false);
+  }
 
 }
