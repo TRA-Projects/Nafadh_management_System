@@ -340,13 +340,20 @@
                 (ngModelChange)="studentSearchQuery.set($event)" placeholder="ابحث..." class="search-input" />
             </th>
 
-            <th class="th-search">
+          <th class="th-search">
               <span class="th-text">الدفعة</span>
-              <button type="button" class="glass-btn" (click)="toggleBatchSearch()" title="بحث">
+              <button type="button" class="glass-btn" (click)="toggleBatchSearch()" title="فلترة">
                 <i class="fa-solid fa-magnifying-glass"></i>
               </button>
-              <input type="text" *ngIf="showBatchSearch" [ngModel]="batchSearchQuery()"
-                (ngModelChange)="batchSearchQuery.set($event)" placeholder="ابحث..." class="search-input" />
+              <select *ngIf="showBatchSearch" [ngModel]="batchSearchQuery()"
+                (ngModelChange)="batchSearchQuery.set($event)" class="search-input">
+                <option value="">جميع الدفعات</option>
+                @for (batch of batches(); track batch.batchId) {
+                  <option [value]="batch.batchName">
+                    {{ batch.batchName }}
+                  </option>
+                }
+              </select>
             </th>
 
             <th>
