@@ -97,66 +97,109 @@
       }
     </div>
 
-    <!-- Desktop table -->
-    <div class="table-responsive block">
-      <table class="sys-config-table">
-        <thead>
+  
+   
+<!-- Desktop table -->
+<div class="table-responsive block">
+  <table class="sys-config-table sys-config-table--modern">
+    <thead>
+      <tr>
+        <th i18n="@@jobseeker.common.rowNumber">#</th>
+        <th>الإعداد</th>
+        <th i18n="@@jobseeker.common.type">Type</th>
+        <th i18n="@@jobseeker.common.value">Value</th>
+        <th class="sys-config-actions-cell" i18n="@@jobseeker.common.actions">Actions</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      @if (totalCount() > 0 && rows().length === 0) {
+        <tr>
+          <td colspan="5" class="py-8 text-center text-sm text-white-dark"
+              i18n="@@jobseeker.admin.systemConfig.noMatches">
+            No variables match your search.
+          </td>
+        </tr>
+      } @else if (totalCount() === 0) {
+        <tr>
+          <td colspan="5" class="py-8 text-center text-sm text-white-dark"
+              i18n="@@jobseeker.admin.systemConfig.empty">
+            No system variables found.
+          </td>
+        </tr>
+      } @else {
+        @for (row of rows(); track row.Code; let i = $index) {
           <tr>
-            <th i18n="@@jobseeker.common.rowNumber">#</th>
-            <th i18n="@@jobseeker.common.key">Key</th>
-            <th i18n="@@jobseeker.common.name">Name</th>
-            <th i18n="@@jobseeker.common.type">Type</th>
-            <th i18n="@@jobseeker.common.value">Value</th>
-            <th class="sys-config-actions-cell" i18n="@@jobseeker.common.actions">Actions</th>
+            <td class="text-white-dark">
+              {{ safePageIndex() * pageSize() + i + 1 }}
+            </td>
+
+            <td>
+              <div class="sys-config-setting">
+                <span class="sys-config-setting__name">
+                  {{ variableName(row) }}
+                </span>
+                <span class="sys-config-setting__key" [attr.title]="row.Code">
+                  {{ row.Code }}
+                </span>
+              </div>
+            </td>
+
+            <td>
+              <span class="sys-config-type-badge">
+                {{ row.ValueType === 'String' ? 'نصي' :
+                   row.ValueType === 'Integer' ? 'عدد صحيح' :
+                   row.ValueType }}
+              </span>
+            </td>
+
+            <td>
+              @if (isToggleSystemVariable(row)) {
+                <span class="yn-switch yn-switch--disabled"
+                      [attr.aria-label]="variableName(row)">
+                  <input
+                    type="checkbox"
+                    class="yn-switch-input"
+                    [checked]="ynEnabledFromValue(row.Value)"
+                    disabled
+                    tabindex="-1"
+                  />
+                  <span class="yn-switch-track" aria-hidden="true"></span>
+                </span>
+              } @else if (isEducationDegreeRanksVariable(row) || isNafathValidityCheckVariable(row)) {
+                <span class="sys-config-value-preview">
+                  {{ displayValue(row) }}
+                </span>
+              } @else {
+                <span
+                  class="sys-config-value-preview"
+                  [attr.title]="row.Value"
+                  [attr.dir]="row.ValueType === 'Time' ? 'ltr' : null"
+                >
+                  {{ row.Value }}
+                </span>
+              }
+            </td>
+
+            <td class="sys-config-actions-cell">
+              <button
+                type="button"
+                class="sys-config-edit-btn"
+                (click)="openEdit(row)"
+                title="تعديل الإعداد"
+                aria-label="تعديل الإعداد"
+              >
+                <span aria-hidden="true">✎</span>
+                <span>تعديل</span>
+              </button>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          @if (totalCount() > 0 && rows().length === 0) {
-            <tr>
-              <td colspan="6" class="py-8 text-center text-sm text-white-dark" i18n="@@jobseeker.admin.systemConfig.noMatches">
-                No variables match your search.
-              </td>
-            </tr>
-          } @else if (totalCount() === 0) {
-            <tr>
-              <td colspan="6" class="py-8 text-center text-sm text-white-dark" i18n="@@jobseeker.admin.systemConfig.empty">
-                No system variables found.
-              </td>
-            </tr>
-          } @else {
-            @for (row of rows(); track row.Code; let i = $index) {
-              <tr>
-                <td class="text-white-dark">{{ safePageIndex() * pageSize() + i + 1 }}</td>
-                <td class="whitespace-nowrap font-mono text-xs">{{ row.Code }}</td>
-                <td class="font-semibold text-black dark:text-white-light">{{ variableName(row) }}</td>
-                <td class="text-white-dark">{{ row.ValueType === 'String' ? 'نصي' : row.ValueType === 'Integer' ? 'عدد صحيح' : row.ValueType }}</td>
-                <td class="max-w-xs truncate align-middle text-white-dark">
-                  @if (isToggleSystemVariable(row)) {
-                    <span class="yn-switch yn-switch--disabled" [attr.aria-label]="variableName(row)">
-                      <input
-                        type="checkbox"
-                        class="yn-switch-input"
-                        [checked]="ynEnabledFromValue(row.Value)"
-                        disabled
-                        tabindex="-1"
-                      />
-                      <span class="yn-switch-track" aria-hidden="true"></span>
-                    </span>
-                  } @else if (isEducationDegreeRanksVariable(row) || isNafathValidityCheckVariable(row)) {
-                    <span>{{ displayValue(row) }}</span>
-                  } @else {
-                    <span class="sys-config-value-preview" [attr.title]="row.Value" [attr.dir]="row.ValueType === 'Time' ? 'ltr' : null">{{ row.Value }}</span>
-                  }
-                </td>
-                <td class="sys-config-actions-cell">
-                  <button type="button" class="sys-config-edit-btn" (click)="openEdit(row)" title="تعديل الإعداد" aria-label="تعديل الإعداد"><span aria-hidden="true">✎</span><span>تعديل</span></button>
-                </td>
-              </tr>
-            }
-          }
-        </tbody>
-      </table>
-    </div>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
 
     <div class="sys-config-pager">
       <span class="sys-config-pager__summary">{{ pageFooterLabel() }}</span>
