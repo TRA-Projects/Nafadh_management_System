@@ -242,7 +242,7 @@ export class TrainerTrainees implements OnInit {
     }
 
     // 2. فلترة حسب الدفعة
-    if (batchQuery) {
+if (batchQuery) {
       list = list.filter(enrollment => {
         const batchName = (enrollment as any).batchName || '';
         const batchId = (enrollment as any).batchId?.toString() || '';
