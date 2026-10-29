@@ -1,15 +1,29 @@
-﻿<div
+﻿
+<div
   class="rounded-xl border border-[#ebedf2] bg-white p-3 shadow-sm dark:border-[#191e3a] dark:bg-[#0e1726] sm:p-4 md:p-6"
 >
-  <h2 class="min-w-0 text-xl font-bold text-black dark:text-white-light sm:text-2xl" i18n="@@jobseeker.admin.systemConfig.pageTitle">
-    System configuration
-  </h2>
+  <div class="sys-config-toolbar">
+    <div class="sys-config-toolbar__heading">
+      <h2
+        class="text-xl font-bold text-black dark:text-white-light sm:text-2xl"
+        i18n="@@jobseeker.admin.systemConfig.pageTitle"
+      >
+        System configuration
+      </h2>
 
-  <div class="mt-4 flex flex-wrap items-center gap-3">
-   <label class="system-config-search">
-      <span class="shrink-0 whitespace-nowrap text-sm text-white-dark" i18n="@@jobseeker.admin.systemConfig.search">Search</span>
+  
+    </div>
+
+    <label class="system-config-search">
+      <span
+        class="text-sm text-white-dark"
+        i18n="@@jobseeker.admin.systemConfig.search"
+      >
+        Search
+      </span>
+
       <input
-        class="form-input w-72 max-w-full"
+        class="form-input"
         type="search"
         [value]="searchQuery()"
         (input)="setSearchQuery(($any($event.target).value ?? '').toString())"
@@ -18,6 +32,7 @@
       />
     </label>
   </div>
+
 
   <div class="mt-4 rounded-xl border border-[#ebedf2] bg-white dark:border-[#191e3a] dark:bg-[#0e1726] md:overflow-hidden">
     <!-- Mobile / tablet cards -->

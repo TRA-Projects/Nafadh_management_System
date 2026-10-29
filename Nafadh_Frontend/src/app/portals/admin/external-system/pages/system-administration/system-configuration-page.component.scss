@@ -567,3 +567,123 @@
 .sys-config-table td.sys-config-actions-cell {
   overflow: visible;
 }
+
+/* Modern system configuration table */
+.sys-config-table--modern {
+  table-layout: fixed;
+  width: 100%;
+
+  th:nth-child(1),
+  td:nth-child(1) {
+    width: 5%;
+  }
+
+  th:nth-child(2),
+  td:nth-child(2) {
+    width: 40%;
+  }
+
+  th:nth-child(3),
+  td:nth-child(3) {
+    width: 13%;
+  }
+
+  th:nth-child(4),
+  td:nth-child(4) {
+    width: 30%;
+  }
+
+  th:nth-child(5),
+  td:nth-child(5) {
+    width: 12%;
+  }
+
+  tbody tr {
+    height: 58px;
+  }
+
+  tbody td {
+    padding: 12px 14px;
+  }
+}
+
+.sys-config-setting {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.sys-config-setting__name {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.sys-config-setting__key {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: ltr;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.sys-config-type-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 7px;
+  background: #f1f5ff;
+  color: #4361ee;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+:host-context(.dark) .sys-config-type-badge {
+  background: rgba(67, 97, 238, 0.15);
+  color: #a5b4fc;
+}
+
+/* Fix RTL toolbar alignment */
+.sys-config-toolbar {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  margin-bottom: 20px;
+  direction: rtl;
+}
+
+.sys-config-toolbar__heading {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.sys-config-toolbar .system-config-search {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  width: 100%;
+  gap: 8px;
+  margin: 0;
+}
+
+.sys-config-toolbar .system-config-search .form-input {
+  width: 100%;
+  max-width: 420px;
+  margin: 0;
+  text-align: right;
+}
+
+.sys-config-toolbar__count {
+  flex-shrink: 0;
+}
