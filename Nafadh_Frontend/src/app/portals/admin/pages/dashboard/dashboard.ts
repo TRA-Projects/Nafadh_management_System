@@ -22,6 +22,7 @@ export interface AdminDashboardSummary {
     used: number;
     remaining: number;
   };
+  
   attendanceWeeks: { label: string; value: number }[];
   companyDistribution: { label: string; value: number }[];
   programDistribution: { label: string; value: number }[];
@@ -142,20 +143,223 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   lastUpdated = signal<Date | null>(new Date());
   showRefreshToast = signal<boolean>(false);
 
-  // حالة عرض صفحة المتدرب التفصيلية الكاملة
-  selectedTraineeProfile = signal<SelectedTraineeDetailView | null>(null);
 
-  // حالة عرض صفحة تفاصيل الإنذار للشركة المستضيفة
+  // --- متغيرات فلترة صفحة المتميزين ---
+  topLimit = signal<number>(0); // 0 تعني عرض الكل
+  topSearchQuery = signal<string>('');
+  topSelectedProgram = signal<string>('all');
+  topSelectedCompany = signal<string>('all');
+  topSortBy = signal<string>('score_desc');
+
+  // استخراج البرامج الفريدة تلقائياً
+  availableTopPrograms = computed(() => {
+    const list = this.allTopPerformers().map(t => t.major).filter(Boolean);
+    return Array.from(new Set(list));
+  });
+
+  // استخراج الشركات الفريدة تلقائياً
+  availableTopCompanies = computed(() => {
+    const list = this.allTopPerformers().map(t => t.companyName).filter(Boolean);
+    return Array.from(new Set(list));
+  });
+
+  // التحقق هل الفلاتر مفعلة
+  hasTopActiveFilters = computed(() => {
+    return (
+      this.topLimit() !== 0 ||
+      this.topSearchQuery().trim() !== '' ||
+      this.topSelectedProgram() !== 'all' ||
+      this.topSelectedCompany() !== 'all' ||
+      this.topSortBy() !== 'score_desc'
+    );
+  });
+
+  // المتدربون المفلترون حسب الاختيارات
+  filteredTopPerformers = computed(() => {
+    let list = [...this.allTopPerformers()];
+
+    // 1. البحث النصي (اسم، برنامج، شركة)
+    const q = this.topSearchQuery().trim().toLowerCase();
+    if (q) {
+      list = list.filter(t => 
+        (t.fullName && t.fullName.toLowerCase().includes(q)) ||
+        (t.major && t.major.toLowerCase().includes(q)) ||
+        (t.companyName && t.companyName.toLowerCase().includes(q))
+      );
+    }
+
+    // 2. فلتر البرنامج
+    if (this.topSelectedProgram() !== 'all') {
+      list = list.filter(t => t.major === this.topSelectedProgram());
+    }
+
+    // 3. فلتر الشركة
+    if (this.topSelectedCompany() !== 'all') {
+      list = list.filter(t => t.companyName === this.topSelectedCompany());
+    }
+
+    // 4. الترتيب
+    const sort = this.topSortBy();
+    list.sort((a, b) => {
+      if (sort === 'score_desc') return (b.performancePercent || 0) - (a.performancePercent || 0);
+      if (sort === 'attendance_desc') return (b.attendancePercent || 0) - (a.attendancePercent || 0);
+      if (sort === 'name_asc') return (a.fullName || '').localeCompare(b.fullName || '', 'ar');
+      return 0;
+    });
+
+    // 5. تطبيق تحديد العدد (3 أو 5 أو 10 أو 20 أو الكل)
+    const limit = this.topLimit();
+    if (limit > 0) {
+      list = list.slice(0, limit);
+    }
+
+    return list;
+  });
+
+  // حساب متوسط الأداء للنتائج المفلترة
+  currentFilteredAvgScore = computed(() => {
+    const list = this.filteredTopPerformers();
+    if (list.length === 0) return 0;
+    const total = list.reduce((sum, item) => sum + (item.performancePercent || 0), 0);
+    return Math.round((total / list.length) * 10) / 10;
+  });
+
+  // دوال التحكم
+  setTopLimit(limit: number) { this.topLimit.set(limit); }
+  onTopSearchInput(e: Event) { this.topSearchQuery.set((e.target as HTMLInputElement).value); }
+  clearTopSearch() { this.topSearchQuery.set(''); }
+  onTopProgramChange(e: Event) { this.topSelectedProgram.set((e.target as HTMLSelectElement).value); }
+  onTopCompanyChange(e: Event) { this.topSelectedCompany.set((e.target as HTMLSelectElement).value); }
+  onTopSortChange(e: Event) { this.topSortBy.set((e.target as HTMLSelectElement).value); }
+  resetTopFilters() {
+    this.topLimit.set(0);
+    this.topSearchQuery.set('');
+    this.topSelectedProgram.set('all');
+    this.topSelectedCompany.set('all');
+    this.topSortBy.set('score_desc');
+  }
+
+  // --- متغيرات فلترة صفحة المتعثرين ---
+  riskLimit = signal<number>(0); // 0 تعني عرض الكل
+  riskSearchQuery = signal<string>('');
+  riskSelectedProgram = signal<string>('all');
+  riskSelectedCompany = signal<string>('all');
+  riskSeverity = signal<string>('all');
+  riskSortBy = signal<string>('attendance_asc'); // الأكثر حرجاً أولاً
+
+  // استخراج البرامج والشركات الخاصة بالمتعثرين
+  availableRiskPrograms = computed(() => {
+    const list = this.allAtRiskTrainees().map(t => t.major).filter(Boolean);
+    return Array.from(new Set(list));
+  });
+
+  availableRiskCompanies = computed(() => {
+    const list = this.allAtRiskTrainees().map(t => t.companyName).filter(Boolean);
+    return Array.from(new Set(list));
+  });
+
+  // هل توجد فلاتر مفعلة في صفحة المتعثرين؟
+  hasRiskActiveFilters = computed(() => {
+    return (
+      this.riskLimit() !== 0 ||
+      this.riskSearchQuery().trim() !== '' ||
+      this.riskSelectedProgram() !== 'all' ||
+      this.riskSelectedCompany() !== 'all' ||
+      this.riskSeverity() !== 'all' ||
+      this.riskSortBy() !== 'attendance_asc'
+    );
+  });
+
+  // المتعثرون بعد تطبيق الفلترة
+  filteredAtRiskTrainees = computed(() => {
+    let list = [...this.allAtRiskTrainees()];
+
+    // 1. البحث النصي (اسم، تخصص، شركة)
+    const q = this.riskSearchQuery().trim().toLowerCase();
+    if (q) {
+      list = list.filter(t => 
+        (t.fullName && t.fullName.toLowerCase().includes(q)) ||
+        (t.major && t.major.toLowerCase().includes(q)) ||
+        (t.companyName && t.companyName.toLowerCase().includes(q))
+      );
+    }
+
+    // 2. فلتر شدة الخطورة (حضور < 60% أو 60-70% أو 70-79%)
+    if (this.riskSeverity() !== 'all') {
+      if (this.riskSeverity() === 'critical') {
+        list = list.filter(t => (t.attendancePercent || 0) < 60);
+      } else if (this.riskSeverity() === 'moderate') {
+        list = list.filter(t => (t.attendancePercent || 0) >= 60 && (t.attendancePercent || 0) < 70);
+      } else if (this.riskSeverity() === 'warning') {
+        list = list.filter(t => (t.attendancePercent || 0) >= 70 && (t.attendancePercent || 0) < 80);
+      }
+    }
+
+    // 3. فلتر البرنامج
+    if (this.riskSelectedProgram() !== 'all') {
+      list = list.filter(t => t.major === this.riskSelectedProgram());
+    }
+
+    // 4. فلتر الشركة
+    if (this.riskSelectedCompany() !== 'all') {
+      list = list.filter(t => t.companyName === this.riskSelectedCompany());
+    }
+
+    // 5. الترتيب
+    const sort = this.riskSortBy();
+    list.sort((a, b) => {
+      if (sort === 'attendance_asc') return (a.attendancePercent || 0) - (b.attendancePercent || 0);
+      if (sort === 'attendance_desc') return (b.attendancePercent || 0) - (a.attendancePercent || 0);
+      if (sort === 'name_asc') return (a.fullName || '').localeCompare(b.fullName || '', 'ar');
+      return 0;
+    });
+
+    // 6. تطبيق تحديد العدد (أول 3 أو 5 أو 10 أو الكل)
+    const limit = this.riskLimit();
+    if (limit > 0) {
+      list = list.slice(0, limit);
+    }
+
+    return list;
+  });
+
+  // حساب متوسط حضور المتعثرين المفلترين
+  currentFilteredRiskAvgAttendance = computed(() => {
+    const list = this.filteredAtRiskTrainees();
+    if (list.length === 0) return 0;
+    const total = list.reduce((sum, item) => sum + (item.attendancePercent || 0), 0);
+    return Math.round((total / list.length) * 10) / 10;
+  });
+
+  // دوال التحكم بالمتعثرين
+  setRiskLimit(limit: number) { this.riskLimit.set(limit); }
+  onRiskSearchInput(e: Event) { this.riskSearchQuery.set((e.target as HTMLInputElement).value); }
+  clearRiskSearch() { this.riskSearchQuery.set(''); }
+  onRiskSeverityChange(e: Event) { this.riskSeverity.set((e.target as HTMLSelectElement).value); }
+  onRiskProgramChange(e: Event) { this.riskSelectedProgram.set((e.target as HTMLSelectElement).value); }
+  onRiskCompanyChange(e: Event) { this.riskSelectedCompany.set((e.target as HTMLSelectElement).value); }
+  onRiskSortChange(e: Event) { this.riskSortBy.set((e.target as HTMLSelectElement).value); }
+  resetRiskFilters() {
+    this.riskLimit.set(0);
+    this.riskSearchQuery.set('');
+    this.riskSeverity.set('all');
+    this.riskSelectedProgram.set('all');
+    this.riskSelectedCompany.set('all');
+    this.riskSortBy.set('attendance_asc');
+  }
+
+  // حالة عرض صفحة المتدرب التفصيلية الكاملة
+
+
+  selectedTraineeProfile = signal<SelectedTraineeDetailView | null>(null);
   selectedWarningDetail = signal<SelectedWarningDetailView | null>(null);
 
-  // قوائم المتميزين والمتعثرين الكاملة وحالة فتح صفحاتهم الخاصة
   allTopPerformers = signal<any[]>([]);
   showAllTopPerformersPage = signal<boolean>(false);
   allAtRiskTrainees = signal<any[]>([]);
   showAllAtRiskPage = signal<boolean>(false);
   isProfileLoading = signal<boolean>(false);
 
-  // سجل الأنشطة الأخيرة + نظام الـ Pagination
   recentActivity = signal<AuditLogDto[]>([]);
   allActivity = signal<AuditLogDto[]>([]);
   showAllActivity = signal<boolean>(false);
@@ -864,7 +1068,6 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.showAnnouncements.update(v => !v);
   }
 
-  // دوال التحكم في عرض وترقيم صفحات سجل الأنشطة الأخيرة
   toggleShowAllActivity() {
     this.showAllActivity.update(val => !val);
     this.activityPage.set(1);
@@ -955,6 +1158,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         }
       }
     };
+    
 
     this.barChartInstance = new Chart(ctx, {
       type: 'bar',
@@ -990,8 +1194,8 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
             cornerRadius: 10,
             displayColors: false,
             callbacks: {
-              title: (tooltipItems: TooltipItem<'bar'>[]) => tooltipItems[0].label,
-              label: (context: TooltipItem<'bar'>) => `عدد الدفعات : ${context.raw || 0}`
+              title: (tooltipItems: any) => tooltipItems[0].label,
+              label: (context: any) => `عدد الدفعات : ${context.raw || 0}`
             }
           }
         },
@@ -1007,39 +1211,168 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     const ctx = document.getElementById('tracksDonutChart') as HTMLCanvasElement;
     if (!ctx) return;
 
+    let hoveredSlice: { label: string; value: number | string; color: string } | null = null;
+
+    // =========================================================================
+    // Plugin متطور لضبط الاسم من عدة كلمات على سطرين بخط أنيق (10px) والرقم تحته
+    // =========================================================================
+    const insideDonutCenterAndLabelsPlugin = {
+      id: 'insideDonutCenterAndLabelsPlugin',
+      beforeEvent: (chart: any, args: any) => {
+        const event = args.event;
+        if (event.type === 'mousemove') {
+          const elements = chart.getElementsAtEventForMode(
+            event.native,
+            'nearest',
+            { intersect: true },
+            false
+          );
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const label = chart.data.labels[index] || '';
+            const value = chart.data.datasets[0].data[index] || 0;
+            const colors = chart.data.datasets[0].backgroundColor as string[];
+            const color = colors[index % colors.length] || '#0A1172';
+            hoveredSlice = { label, value, color };
+          } else {
+            hoveredSlice = null;
+          }
+          chart.draw();
+        } else if (event.type === 'mouseout') {
+          hoveredSlice = null;
+          chart.draw();
+        }
+      },
+      afterDatasetsDraw: (chart: any) => {
+        const { ctx, chartArea } = chart;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta || !meta.data || !meta.data.length) return;
+
+        const dataset = chart.data.datasets[0];
+        if (!dataset || !dataset.data) return;
+
+        // 1. رسم الأرقام باللون الأبيض داخل كل جزء ملون
+        meta.data.forEach((element: any, index: number) => {
+          const val = dataset.data[index];
+          if (val === undefined || val === null || Number(val) <= 0) return;
+
+          const { startAngle, endAngle, innerRadius, outerRadius, x, y } = element;
+          const angle = startAngle + (endAngle - startAngle) / 2;
+          const radius = innerRadius + (outerRadius - innerRadius) / 2;
+
+          const posX = x + Math.cos(angle) * radius;
+          const posY = y + Math.sin(angle) * radius;
+
+          if (endAngle - startAngle > 0.16) {
+            ctx.save();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Cairo, Tajawal, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+            ctx.shadowBlur = 3;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 1;
+            ctx.fillText(String(val), posX, posY);
+            ctx.restore();
+          }
+        });
+
+        // 2. رسم (الكلام مع الرقم) في منتصف الدائرة بشكل مرتب وصغير ليتسع تماماً
+        const centerX = (chartArea.left + chartArea.right) / 2;
+        const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        if (hoveredSlice && hoveredSlice.label) {
+          const raw = hoveredSlice.label.trim();
+          const words = raw.split(/\s+/);
+
+          // إعداد لون وخط النص (10px أنيق وصغير ليناسب الدائرة)
+          ctx.font = 'bold 10px Cairo, Tajawal, system-ui, sans-serif';
+          ctx.fillStyle = hoveredSlice.color || '#0A1172';
+
+          if (words.length >= 3) {
+            // للمسارات الطويلة مثل: "Project Management Track"
+            // السطر الأول: Project Management
+            // السطر الثاني: Track
+            const line1 = words.slice(0, words.length - 1).join(' ');
+            const line2 = words[words.length - 1];
+
+            ctx.fillText(line1, centerX, centerY - 17);
+            ctx.fillText(line2, centerX, centerY - 5);
+
+            // الرقم في الأسفل
+            ctx.font = 'bold 20px Cairo, Tajawal, system-ui, sans-serif';
+            ctx.fillStyle = '#0f172a';
+            ctx.fillText(String(hoveredSlice.value), centerX, centerY + 15);
+          } else if (words.length === 2 && raw.length > 15) {
+            // مسار من كلمتين طويل
+            ctx.fillText(words[0], centerX, centerY - 17);
+            ctx.fillText(words[1], centerX, centerY - 5);
+
+            ctx.font = 'bold 20px Cairo, Tajawal, system-ui, sans-serif';
+            ctx.fillStyle = '#0f172a';
+            ctx.fillText(String(hoveredSlice.value), centerX, centerY + 15);
+          } else {
+            // المسارات القصيرة التي تتسع في سطر واحد براحة
+            ctx.fillText(raw, centerX, centerY - 12);
+
+            ctx.font = 'bold 22px Cairo, Tajawal, system-ui, sans-serif';
+            ctx.fillStyle = '#0f172a';
+            ctx.fillText(String(hoveredSlice.value), centerX, centerY + 12);
+          }
+        } else {
+          // الحالة العادية: إجمالي عدد المسارات
+          const total = (dataset.data as number[]).reduce((sum, n) => sum + (Number(n) || 0), 0);
+          ctx.font = '600 11px Cairo, Tajawal, system-ui, sans-serif';
+          ctx.fillStyle = '#64748b';
+          ctx.fillText('المسارات التدريبية', centerX, centerY - 10);
+
+          ctx.font = 'bold 20px Cairo, Tajawal, system-ui, sans-serif';
+          ctx.fillStyle = '#0A1172';
+          ctx.fillText(String(total), centerX, centerY + 12);
+        }
+
+        ctx.restore();
+      }
+    };
+
     this.donutChartInstance = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: [],
         datasets: [{
           data: [],
-          backgroundColor: ['#ef4444', '#3b82f6', '#eab308', '#10b981', '#1e293b', '#8b5cf6', '#ec4899']
+          backgroundColor: ['#ef4444', '#3b82f6', '#eab308', '#10b981', '#1e293b', '#8b5cf6', '#ec4899'],
+          borderWidth: 2,
+          borderColor: '#ffffff'
         }]
       },
+      plugins: [insideDonutCenterAndLabelsPlugin],
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16 } },
-          tooltip: {
-            enabled: true,
-            backgroundColor: '#ffffff',
-            borderColor: '#e2e8f0',
-            borderWidth: 1,
-            cornerRadius: 8,
-            padding: { top: 8, bottom: 8, left: 12, right: 12 },
-            displayColors: false,
-            callbacks: {
-              title: () => '',
-              label: (context: TooltipItem<'doughnut'>) => `${context.label || ''} : ${context.raw || 0}`,
-              labelTextColor: (context: TooltipItem<'doughnut'>) => {
-                const colors = context.dataset.backgroundColor as string[];
-                return colors[context.dataIndex % colors.length];
+          legend: { 
+            position: 'bottom', 
+            labels: { 
+              boxWidth: 12, 
+              padding: 16,
+              font: {
+                family: 'Cairo, Tajawal, sans-serif',
+                size: 12
               }
-            }
+            } 
+          },
+          tooltip: {
+            enabled: false
           }
         },
-        cutout: '70%'
+        // سماكة 66% تعطي اتساعاً داخلياً كافياً لراحة العين وعدم ملامسة الأطراف
+        cutout: '66%'
       }
     });
   }

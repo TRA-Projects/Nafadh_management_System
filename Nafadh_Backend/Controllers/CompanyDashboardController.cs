@@ -117,7 +117,12 @@ namespace Nafadh_Backend.Controllers
             // 6. Attendance records
             // ============================================================
 
+            // ACTIVE enrollments only (InProgress). Completed / Dropped /
+            // Failed enrollments must not affect any dashboard number.
             var attendanceRecords = enrollments
+                .Where(e =>
+                    e.CompletionStatus ==
+                    NFD_EnrollmentCompletionStatus.InProgress)
                 .SelectMany(e => e.DailyAttendances)
                 .ToList();
 
@@ -280,17 +285,33 @@ namespace Nafadh_Backend.Controllers
             // the current month has no new evaluations.
             // ============================================================
 
-            var topPerformers = baseRows
-                .Where(x =>
-                    x.Evaluations.Count > 0)
+            // Top performer = ACTIVE trainee with at least one evaluation
+            // and overall performance >= 80%.
+            const double TopPerformerThreshold = 80;
 
+            var topPerformerRows = baseRows
+                .Where(x =>
+                    x.Evaluations.Count > 0
+                    && x.Performance >= TopPerformerThreshold)
+                .ToList();
+
+            // KPI values cover ALL qualifying trainees (not only the
+            // 15 rows returned for the list below).
+            var topPerformersCount = topPerformerRows.Count;
+
+            var topPerformersAveragePercent =
+                topPerformersCount == 0
+                    ? 0
+                    : Math.Round(
+                        topPerformerRows.Average(x => x.Performance),
+                        1);
+
+            var topPerformers = topPerformerRows
                 .OrderByDescending(x =>
                     x.Performance)
 
                 .ThenByDescending(x =>
                     x.Attendance)
-
-                .Take(5)
 
                 .Select(x => new CompanyDashboardTraineeDTO
                 {
@@ -355,8 +376,6 @@ namespace Nafadh_Backend.Controllers
 
                 .ThenBy(x =>
                     x.Performance)
-
-                .Take(5)
 
                 .ToList();
 
@@ -534,12 +553,15 @@ namespace Nafadh_Backend.Controllers
 
                         &&
                         w.Enrollment.CompanyId ==
-                        companyId)
+                        companyId
+
+                        // Active trainees only.
+                        &&
+                        w.Enrollment.CompletionStatus ==
+                        NFD_EnrollmentCompletionStatus.InProgress)
 
                     .OrderByDescending(w =>
                         w.IssuedDate)
-
-                    .Take(10)
 
                     .Select(w =>
                         new CompanyDashboardWarningDTO
@@ -581,8 +603,9 @@ namespace Nafadh_Backend.Controllers
             // 16. Unique trainee counts
             // ============================================================
 
+            // Active trainees only, so TotalTrainees == ActiveTrainees.
             var totalTrainees =
-                enrollments
+                activeEnrollments
                     .Select(e =>
                         e.TraineeId)
                     .Distinct()
@@ -629,6 +652,12 @@ namespace Nafadh_Backend.Controllers
 
                     TopPerformers =
                         topPerformers,
+
+                    TopPerformersCount =
+                        topPerformersCount,
+
+                    TopPerformersAveragePercent =
+                        topPerformersAveragePercent,
 
                     AtRiskTrainees =
                         atRiskTrainees,

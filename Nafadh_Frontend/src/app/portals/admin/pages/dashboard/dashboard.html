@@ -1,8 +1,6 @@
 <div class="dashboard-container">
 
-  <!-- =========================================================================
-       1) صفحة معاينة المتدرب الكاملة (تظهر عند الضغط على زر العين لأي متدرب)
-       ========================================================================= -->
+  <!-- 1) صفحة معاينة المتدرب الكاملة -->
   @if (selectedTraineeProfile(); as tp) {
     <div class="trainee-full-page">
 
@@ -92,7 +90,7 @@
         <div class="stat-card">
           <div class="stat-icon icon-teal">⭐</div>
           <div class="stat-info">
-            <div class="stat-label">التقييم العام للمدرب</div>
+            <div class="stat-label"> التقييم بالمسار</div>
             <div class="stat-value">{{ tp.performancePercent }}%</div>
             <div class="stat-subtext">تقني: {{ tp.technicalScore }}% · سلوكي: {{ tp.behavioralScore }}%</div>
           </div>
@@ -252,9 +250,7 @@
     </div>
   }
 
-  <!-- =========================================================================
-       2) صفحة معاينة تفاصيل إنذار الشركة المستضيفة (تظهر عند الضغط على معاينة إنذار شركة)
-       ========================================================================= -->
+  <!-- 2) صفحة معاينة تفاصيل إنذار الشركة -->
   @if (selectedWarningDetail(); as wd) {
     <div class="trainee-full-page">
 
@@ -374,9 +370,13 @@
     </div>
   }
 
+
   <!-- =========================================================================
        3) صفحة المتدربين المتميزين لهذا الشهر فقط (تظهر عند الضغط على عرض الكل)
        ========================================================================= -->
+
+ 
+
   @if (showAllTopPerformersPage() && selectedTraineeProfile() === null && selectedWarningDetail() === null) {
     <div class="trainee-full-page">
 
@@ -406,15 +406,105 @@
       </div>
 
       <div class="list-panel-card" style="padding: 22px;">
+        
+        <!-- ======================= شريط الفلترة والبحث المتقدم ======================= -->
+        <div class="tp-filter-box" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px 18px; margin-bottom:20px; display:flex; flex-direction:column; gap:14px;">
+          
+          <!-- السطر الأول: تحديد العدد (أفضل 3 / 5 / 10 / 20 / الكل) + شريط البحث بالاسم -->
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+            
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-size:13px; font-weight:700; color:#334155;">عرض المتميزين:</span>
+              <div style="display:flex; gap:6px; background:#ffffff; padding:3px; border-radius:8px; border:1px solid #cbd5e1;">
+                <button type="button" class="tp-filter-pill" [class.active]="topLimit() === 3" (click)="setTopLimit(3)">أفضل 3 ⭐</button>
+                <button type="button" class="tp-filter-pill" [class.active]="topLimit() === 5" (click)="setTopLimit(5)">أفضل 5 ⭐</button>
+                <button type="button" class="tp-filter-pill" [class.active]="topLimit() === 10" (click)="setTopLimit(10)">أفضل 10</button>
+                <button type="button" class="tp-filter-pill" [class.active]="topLimit() === 20" (click)="setTopLimit(20)">أفضل 20</button>
+                <button type="button" class="tp-filter-pill" [class.active]="topLimit() === 0" (click)="setTopLimit(0)">الكل ({{ allTopPerformers().length }})</button>
+              </div>
+            </div>
+
+            <!-- حقل البحث الفوري -->
+            <div style="position:relative; min-width:280px; flex:1; max-width:380px;">
+              <input 
+                type="text" 
+                placeholder="ابحث بالاسم، البرنامج، أو الشركة..." 
+                [value]="topSearchQuery()"
+                (input)="onTopSearchInput($event)"
+                style="width:100%; height:38px; padding:6px 36px 6px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:13px; outline:none; background:#ffffff;"
+              />
+              <span style="position:absolute; right:12px; top:10px; color:#94a3b8;">🔍</span>
+              @if (topSearchQuery()) {
+                <button type="button" (click)="clearTopSearch()" style="position:absolute; left:10px; top:8px; border:none; background:transparent; color:#94a3b8; font-weight:bold; cursor:pointer;">✕</button>
+              }
+            </div>
+
+          </div>
+
+          <!-- السطر الثاني: خيارات التصفية بالبرنامج والشركة والترتيب -->
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; border-top:1px dashed #cbd5e1; padding-top:12px;">
+            
+            <!-- فلتر البرنامج / المسار -->
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:12px; font-weight:600; color:#64748b;">البرنامج:</span>
+              <select [value]="topSelectedProgram()" (change)="onTopProgramChange($event)" style="height:34px; padding:0 8px; border-radius:6px; border:1px solid #cbd5e1; background:#ffffff; font-size:12px; color:#1e293b; cursor:pointer;">
+                <option value="all">جميع البرامج التدريبية</option>
+                @for (prog of availableTopPrograms(); track prog) {
+                  <option [value]="prog">{{ prog }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- فلتر الشركة المستضيفة -->
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:12px; font-weight:600; color:#64748b;">الشركة:</span>
+              <select [value]="topSelectedCompany()" (change)="onTopCompanyChange($event)" style="height:34px; padding:0 8px; border-radius:6px; border:1px solid #cbd5e1; background:#ffffff; font-size:12px; color:#1e293b; cursor:pointer;">
+                <option value="all">جميع الشركات</option>
+                @for (comp of availableTopCompanies(); track comp) {
+                  <option [value]="comp">{{ comp }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- الترتيب -->
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:12px; font-weight:600; color:#64748b;">الترتيب:</span>
+              <select [value]="topSortBy()" (change)="onTopSortChange($event)" style="height:34px; padding:0 8px; border-radius:6px; border:1px solid #cbd5e1; background:#ffffff; font-size:12px; color:#1e293b; cursor:pointer;">
+                <option value="score_desc">الأعلى أداءً (افتراضي)</option>
+                <option value="attendance_desc">الأعلى حضوراً</option>
+                <option value="name_asc">الاسم (أبجدياً)</option>
+              </select>
+            </div>
+
+            <!-- زر تفريغ الفلاتر -->
+            @if (hasTopActiveFilters()) {
+              <button type="button" (click)="resetTopFilters()" style="margin-right:auto; height:32px; padding:0 12px; border:1px solid #fca5a5; background:#fef2f2; color:#dc2626; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">
+                ↺ إعادة تعيين الفلاتر
+              </button>
+            }
+
+          </div>
+
+          <!-- شريط الإحصائية السريعة المباشرة -->
+          <div style="display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#64748b; background:#f1f5f9; padding:8px 12px; border-radius:6px;">
+            <div>المعروض حالياً: <strong style="color:#0f172a;">{{ filteredTopPerformers().length }}</strong> من أصل <strong>{{ allTopPerformers().length }}</strong> متدرباً</div>
+            @if (filteredTopPerformers().length > 0) {
+              <div>متوسط أداء المعروضين: <strong style="color:#059669; font-size:13px;">{{ currentFilteredAvgScore() }}%</strong></div>
+            }
+          </div>
+
+        </div>
+        <!-- ======================= نهاية شريط الفلترة والبحث ======================= -->
+
         <div class="list-panel-header" style="margin-bottom: 16px;">
-          <h3 class="list-panel-title">جميع المتدربين المتميزين لهذا الشهر مرتبين حسب الأعلى أداءً</h3>
+          <h3 class="list-panel-title">قائمة المتدربين المتميزين (النتائج المفلترة)</h3>
           <span class="tp-trainer-badge" style="background:#f0fdf4; color:#0d9488; border:1px solid #99f6e4; padding:6px 14px; font-size:13px; font-weight:700; border-radius:8px;">
-            إجمالي المتميزين: {{ allTopPerformers().length }} متدرباً
+            النتائج: {{ filteredTopPerformers().length }} متدرباً
           </span>
         </div>
 
         <div class="top-performers-full-grid">
-          @for (t of allTopPerformers(); track t.traineeId; let idx = $index) {
+          @for (t of filteredTopPerformers(); track t.traineeId; let idx = $index) {
             <div class="person-item-row tp-card-row" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
               <div class="person-right" style="display:flex; align-items:center; gap:12px;">
                 <span class="tp-rank-badge">#{{ idx + 1 }}</span>
@@ -446,7 +536,7 @@
                 </button>
 
                 <a [href]="getSafeGitHubUrl(t.gitHubUrl, t.fullName)" target="_blank" rel="noopener" class="icon-action-btn gh-btn" title="حساب GitHub">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
                     <path d="M9 18c-4.51 2-5-2-7-2"/>
                   </svg>
@@ -462,7 +552,9 @@
               </div>
             </div>
           } @empty {
-            <div class="empty-state">لا توجد بيانات للمتميزين حالياً</div>
+            <div class="empty-state" style="text-align:center; padding:32px; color:#64748b; background:#f8fafc; border-radius:10px; border:1px dashed #cbd5e1;">
+              لا توجد نتائج مطابقة لخيارات البحث أو الفلترة المحددة.
+            </div>
           }
         </div>
       </div>
@@ -470,7 +562,7 @@
     </div>
   }
 
-  <!-- =========================================================================
+ <!-- =========================================================================
        4) صفحة المتدربين المتعثرين فقط (تظهر عند الضغط على عرض الكل في المتعثرين)
        ========================================================================= -->
   @if (showAllAtRiskPage() && selectedTraineeProfile() === null && selectedWarningDetail() === null) {
@@ -502,15 +594,115 @@
       </div>
 
       <div class="list-panel-card" style="padding: 22px;">
+        
+        <!-- ======================= شريط الفلترة والبحث للمتعثرين ======================= -->
+        <div class="tp-filter-box" style="background:#fffaf0; border:1px solid #fee2e2; border-radius:12px; padding:16px 18px; margin-bottom:20px; display:flex; flex-direction:column; gap:14px;">
+          
+          <!-- السطر الأول: تحديد العدد (أول 3 / 5 / 10 / الكل) + البحث الفوري -->
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+            
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-size:13px; font-weight:700; color:#7f1d1d;">الأكثر تعثراً:</span>
+              <div style="display:flex; gap:6px; background:#ffffff; padding:3px; border-radius:8px; border:1px solid #fca5a5;">
+                <button type="button" class="tp-filter-pill-danger" [class.active]="riskLimit() === 3" (click)="setRiskLimit(3)">أول 3 ⚠️</button>
+                <button type="button" class="tp-filter-pill-danger" [class.active]="riskLimit() === 5" (click)="setRiskLimit(5)">أول 5 ⚠️</button>
+                <button type="button" class="tp-filter-pill-danger" [class.active]="riskLimit() === 10" (click)="setRiskLimit(10)">أول 10</button>
+                <button type="button" class="tp-filter-pill-danger" [class.active]="riskLimit() === 0" (click)="setRiskLimit(0)">الكل ({{ allAtRiskTrainees().length }})</button>
+              </div>
+            </div>
+
+            <!-- حقل البحث الفوري -->
+            <div style="position:relative; min-width:280px; flex:1; max-width:380px;">
+              <input 
+                type="text" 
+                placeholder="ابحث بالاسم، البرنامج، أو الشركة..." 
+                [value]="riskSearchQuery()"
+                (input)="onRiskSearchInput($event)"
+                style="width:100%; height:38px; padding:6px 36px 6px 12px; border-radius:8px; border:1px solid #fca5a5; font-size:13px; outline:none; background:#ffffff;"
+              />
+              <span style="position:absolute; right:12px; top:10px; color:#94a3b8;">🔍</span>
+              @if (riskSearchQuery()) {
+                <button type="button" (click)="clearRiskSearch()" style="position:absolute; left:10px; top:8px; border:none; background:transparent; color:#94a3b8; font-weight:bold; cursor:pointer;">✕</button>
+              }
+            </div>
+
+          </div>
+
+          <!-- السطر الثاني: الفلاتر المنسدلة -->
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; border-top:1px dashed #fed7aa; padding-top:12px;">
+            
+            <!-- 1. فلتر شدة الخطورة -->
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:12px; font-weight:600; color:#7f1d1d;">شدة التعثر:</span>
+              <select [value]="riskSeverity()" (change)="onRiskSeverityChange($event)" style="height:34px; padding:0 8px; border-radius:6px; border:1px solid #cbd5e1; background:#ffffff; font-size:12px; color:#1e293b; cursor:pointer;">
+                <option value="all">جميع الحالات</option>
+                <option value="critical">حرج جداً (حضور أقل من 60%)</option>
+                <option value="moderate">تعثر متوسط (60% إلى 69%)</option>
+                <option value="warning">تحت المتابعة (70% إلى 79%)</option>
+              </select>
+            </div>
+
+            <!-- 2. فلتر البرنامج -->
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:12px; font-weight:600; color:#64748b;">البرنامج:</span>
+              <select [value]="riskSelectedProgram()" (change)="onRiskProgramChange($event)" style="height:34px; padding:0 8px; border-radius:6px; border:1px solid #cbd5e1; background:#ffffff; font-size:12px; color:#1e293b; cursor:pointer;">
+                <option value="all">جميع البرامج التدريبية</option>
+                @for (prog of availableRiskPrograms(); track prog) {
+                  <option [value]="prog">{{ prog }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- 3. فلتر الشركة -->
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:12px; font-weight:600; color:#64748b;">الشركة:</span>
+              <select [value]="riskSelectedCompany()" (change)="onRiskCompanyChange($event)" style="height:34px; padding:0 8px; border-radius:6px; border:1px solid #cbd5e1; background:#ffffff; font-size:12px; color:#1e293b; cursor:pointer;">
+                <option value="all">جميع الشركات</option>
+                @for (comp of availableRiskCompanies(); track comp) {
+                  <option [value]="comp">{{ comp }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- 4. الترتيب -->
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:12px; font-weight:600; color:#64748b;">الترتيب:</span>
+              <select [value]="riskSortBy()" (change)="onRiskSortChange($event)" style="height:34px; padding:0 8px; border-radius:6px; border:1px solid #cbd5e1; background:#ffffff; font-size:12px; color:#1e293b; cursor:pointer;">
+                <option value="attendance_asc">الأكثر انخفاضاً بالحضور (الأشد خطورة أولاً)</option>
+                <option value="attendance_desc">الأعلى حضوراً بين المتعثرين</option>
+                <option value="name_asc">الاسم (أبجدياً)</option>
+              </select>
+            </div>
+
+            <!-- زر تفريغ الفلاتر -->
+            @if (hasRiskActiveFilters()) {
+              <button type="button" (click)="resetRiskFilters()" style="margin-right:auto; height:32px; padding:0 12px; border:1px solid #fca5a5; background:#fef2f2; color:#dc2626; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">
+                ↺ إعادة تعيين الفلاتر
+              </button>
+            }
+
+          </div>
+
+          <!-- شريط الإحصائية الحية -->
+          <div style="display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#7f1d1d; background:#fee2e2; padding:8px 12px; border-radius:6px;">
+            <div>المعروض للمتابعة: <strong style="color:#991b1b;">{{ filteredAtRiskTrainees().length }}</strong> من أصل <strong>{{ allAtRiskTrainees().length }}</strong> متدرباً متعثراً</div>
+            @if (filteredAtRiskTrainees().length > 0) {
+              <div>متوسط حضور المعروضين: <strong style="color:#b91c1c; font-size:13px;">{{ currentFilteredRiskAvgAttendance() }}%</strong></div>
+            }
+          </div>
+
+        </div>
+        <!-- ======================= نهاية شريط الفلترة ======================= -->
+
         <div class="list-panel-header" style="margin-bottom: 16px;">
-          <h3 class="list-panel-title">جميع المتدربين المتعثرين المسجلين للمتابعة</h3>
+          <h3 class="list-panel-title">قائمة المتدربين المتعثرين (النتائج المفلترة)</h3>
           <span class="tp-trainer-badge" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; padding:6px 14px; font-size:13px; font-weight:700; border-radius:8px;">
-            إجمالي المتعثرين: {{ allAtRiskTrainees().length }} متدرباً
+            النتائج: {{ filteredAtRiskTrainees().length }} متدرباً
           </span>
         </div>
 
         <div class="top-performers-full-grid">
-          @for (t of allAtRiskTrainees(); track t.traineeId; let idx = $index) {
+          @for (t of filteredAtRiskTrainees(); track t.traineeId; let idx = $index) {
             <div class="person-item-row tp-card-row" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
               <div class="person-right" style="display:flex; align-items:center; gap:12px;">
                 <span class="tp-rank-badge" style="background:#fef2f2; color:#dc2626; border-color:#fecaca;">#{{ idx + 1 }}</span>
@@ -520,7 +712,7 @@
                 <div class="person-text" style="display:flex; flex-direction:column; gap:3px; text-align:right;">
                   <div class="person-name">{{ t.fullName }}</div>
                   <div class="person-sub">{{ t.major }} · <strong style="color:#0f172a;">{{ t.companyName || 'شركة مستضيفة معتمدة' }}</strong></div>
-                  <div class="person-sub danger-sub">انخفاض الحضور ({{ t.attendancePercent }}%)</div>
+                  <div class="person-sub danger-sub" style="color:#dc2626; font-weight:600;">انخفاض الحضور ({{ t.attendancePercent }}%)</div>
                 </div>
               </div>
 
@@ -538,7 +730,7 @@
                 </button>
 
                 <a [href]="getSafeGitHubUrl(t.gitHubUrl, t.fullName)" target="_blank" rel="noopener" class="icon-action-btn gh-btn" title="حساب GitHub">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
                     <path d="M9 18c-4.51 2-5-2-7-2"/>
                   </svg>
@@ -554,7 +746,9 @@
               </div>
             </div>
           } @empty {
-            <div class="empty-state">لا يوجد متدربون متعثرون حالياً</div>
+            <div class="empty-state" style="text-align:center; padding:32px; color:#64748b; background:#f8fafc; border-radius:10px; border:1px dashed #cbd5e1;">
+              لا توجد نتائج مطابقة لخيارات البحث أو الفلترة في قائمة المتعثرين.
+            </div>
           }
         </div>
       </div>
@@ -562,12 +756,17 @@
     </div>
   }
 
+
+
   <!-- =========================================================================
        5) صفحة لوحة التحكم التنفيذية (تبقى محفوظة في الـ DOM لعدم ضياع الشارتات)
        ========================================================================= -->
+
+  <!-- 5) لوحة التحكم الرئيسية -->
+
   <div [hidden]="selectedTraineeProfile() !== null || selectedWarningDetail() !== null || showAllTopPerformersPage() || showAllAtRiskPage()">
 
-    <!-- 1. Hero Banner -->
+    <!-- Hero Banner -->
     <div class="hero-banner">
       <div class="hero-overlay"></div>
       <div class="hero-content">
@@ -588,7 +787,7 @@
       </div>
     </div>
 
-    <!-- 2. إعلانات الهيئة والمنصة -->
+    <!-- إعلانات المنصة -->
     @if (announcements().length > 0) {
       <div class="announcements-panel">
         <div class="announcements-header">
@@ -626,7 +825,7 @@
       </div>
     }
 
-    <!-- 3. الصف الأول: إحصائيات المنظومة الأساسية -->
+    <!-- إحصائيات المنظومة الأساسية -->
     <div class="stat-cards-grid four-cols">
       <div class="stat-card clickable-card" (click)="goToTraineesList()" role="button" tabindex="0">
         <div class="stat-icon icon-blue">
@@ -688,7 +887,7 @@
       </div>
     </div>
 
-    <!-- 4. الصف الثاني: مؤشرات الأداء والالتزام -->
+    <!-- مؤشرات الأداء -->
     <div class="stat-cards-grid four-cols">
       <div class="stat-card">
         <div class="stat-icon icon-indigo">
@@ -748,7 +947,7 @@
       </div>
     </div>
 
-    <!-- 5. قسم لوحة تشغيل الاستضافة والتدريب + شريط الطاقة الاستيعابية -->
+    <!-- لوحة تشغيل الاستضافة -->
     <div class="section-heading-row">
       <div>
         <h2 class="section-main-title">لوحة تشغيل الاستضافة والتدريب</h2>
@@ -798,7 +997,7 @@
       </div>
     </div>
 
-    <!-- 6. أشرطة التقدم الأفقية -->
+    <!-- أشرطة التقدم الأفقية -->
     <div class="horizontal-bars-grid">
       <div class="chart-card">
         <div class="chart-header">
@@ -847,7 +1046,7 @@
       </div>
     </div>
 
-    <!-- 7. الرسوم البيانية (Bar + Donut) -->
+    <!-- الرسوم البيانية -->
     <div class="charts-grid">
       <div class="chart-card">
         <div class="chart-header">
@@ -867,7 +1066,7 @@
             <h3 class="chart-title">تقسيم المسارات</h3>
             <p class="chart-subtitle">بناءً على السنة المختارة</p>
           </div>
-          <select class="batch-select" [value]="selectedYear()" (change)="onYearChange($event)">
+          <select class="batch-select" [value]="selectedYear()" (change)="onYearChange($event)" aria-label="اختر السنة">
             @for (year of availableYears(); track year) {
               <option [value]="year">{{ year }}</option>
             } @empty {
@@ -881,12 +1080,9 @@
       </div>
     </div>
 
-    <!-- =========================================================================
-         8. القوائم الثلاثية التفصيلية في الأسفل
-         ========================================================================= -->
+    <!-- القوائم السفلية -->
     <div class="bottom-three-cols">
-
-      <!-- العمود 1: المتدربون المتميزون هذا الشهر -->
+      <!-- المتدربون المتميزون -->
       <div class="list-panel-card">
         <div class="list-panel-header">
           <h3 class="list-panel-title">⭐ المتدربون المتميزون هذا الشهر</h3>
@@ -941,7 +1137,7 @@
         </div>
       </div>
 
-      <!-- العمود 2: المتدربون المتعثرون -->
+      <!-- المتدربون المتعثرون -->
       <div class="list-panel-card">
         <div class="list-panel-header">
           <h3 class="list-panel-title">⚠️ المتدربون المتعثرون</h3>
@@ -992,7 +1188,7 @@
         </div>
       </div>
 
-      <!-- العمود 3: أحدث الإنذارات (بدون أيقونات GitHub و LinkedIn + معاينة ذكية للشركة أو المتدرب) -->
+      <!-- أحدث الإنذارات -->
       <div class="list-panel-card">
         <div class="list-panel-header">
           <h3 class="list-panel-title">🔔 أحدث الإنذارات</h3>
@@ -1027,12 +1223,9 @@
           }
         </div>
       </div>
-
     </div>
 
-    <!-- =========================================================================
-         9. سجل الأنشطة الأخيرة (مع زر عرض الكل الموحد + بدون ثواني + Pagination)
-         ========================================================================= -->
+    <!-- سجل الأنشطة الأخيرة -->
     <div class="activity-card">
       <div class="list-panel-header" style="margin-bottom: 14px;">
         <div style="display:flex; align-items:center; gap:10px;">
@@ -1064,7 +1257,6 @@
               </div>
             </div>
 
-            <!-- التاريخ والساعة والدقيقة فقط بدون ثوانٍ -->
             <div class="activity-time" dir="ltr">
               {{ (item.timestamp || item.createdAt) | date:'MMM d, y · h:mm a' }}
             </div>
@@ -1074,7 +1266,6 @@
         }
       </div>
 
-      <!-- شريط ترقيم الصفحات (Pagination) يظهر عند الضغط على "عرض الكل" -->
       @if (showAllActivity() && totalActivityPages() > 1) {
         <div class="activity-pagination">
           <div class="pagination-info">

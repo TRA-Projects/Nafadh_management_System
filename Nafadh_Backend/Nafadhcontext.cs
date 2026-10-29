@@ -54,7 +54,7 @@ namespace Nafadh_Backend
         // Trainer Portal - Post-session surveys and trainee responses.
         public DbSet<NFD_SessionSurvey> NFD_SessionSurveys { get; set; }
         public DbSet<NFD_SessionSurveyResponse> NFD_SessionSurveyResponses { get; set; }
-    
+
         public DbSet<NFD_LivePoll> NFD_LivePolls { get; set; }
         public DbSet<NFD_LivePollOption> NFD_LivePollOptions { get; set; }
         public DbSet<NFD_LivePollVote> NFD_LivePollVotes { get; set; }
@@ -111,12 +111,19 @@ namespace Nafadh_Backend
         public DbSet<NFD_TraineeSkill> NFD_TraineeSkills { get; set; }
         public DbSet<NFD_WithdrawalRequest> NFD_WithdrawalRequests { get; set; }
 
+        public DbSet<NFD_CompanySupervisorTrainer>
+    NFD_CompanySupervisorTrainers
+        { get; set; }
 
+        public DbSet<NFD_CompanyTrainerEvaluation>
+            NFD_CompanyTrainerEvaluations
+        { get; set; }
         // Remediation Request Entity
         public DbSet<RemediationRequest> RemediationRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
             base.OnModelCreating(modelBuilder);
 
             // ---- NFD_User ----
@@ -129,6 +136,12 @@ namespace Nafadh_Backend
                     .HasForeignKey(e => e.RoleId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+            modelBuilder.Entity<NFD_Batch>()
+                .HasOne(b => b.Company)
+                .WithMany()
+                .HasForeignKey(b => b.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // ---- NFD_Role ----
             modelBuilder.Entity<NFD_Role>(entity =>
@@ -1182,13 +1195,77 @@ namespace Nafadh_Backend
             // ---- Company Portal course plans ----
             modelBuilder.ConfigureCoursePlans();
 
+
             // ---- NFD_TraineeSkill ----
             modelBuilder.Entity<NFD_TraineeSkill>()
-            .HasOne(ts => ts.Trainee)
-            .WithMany(t => t.TraineeSkills)
-            .HasForeignKey(ts => ts.TraineeId)
-            .OnDelete(DeleteBehavior.Cascade);
+                .HasOne(ts => ts.Trainee)
+                .WithMany(t => t.TraineeSkills)
+                .HasForeignKey(ts => ts.TraineeId)
+                .OnDelete(DeleteBehavior.Cascade);
 
+            // =====================================================
+            // Company Supervisor - Trainer Assignment
+            // =====================================================
+            modelBuilder.Entity<NFD_CompanySupervisorTrainer>(entity =>
+            {
+                entity.ToTable("NFD_CompanySupervisorTrainers");
+
+                entity.HasKey(x => new
+                {
+                    x.SupervisorId,
+                    x.TrainerId
+                });
+
+                entity.HasOne(x => x.Supervisor)
+                    .WithMany()
+                    .HasForeignKey(x => x.SupervisorId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Trainer)
+                    .WithMany()
+                    .HasForeignKey(x => x.TrainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // =====================================================
+            // Company Supervisor - Trainer Evaluation
+            // =====================================================
+            modelBuilder.Entity<NFD_CompanyTrainerEvaluation>(entity =>
+            {
+                entity.ToTable("NFD_CompanyTrainerEvaluations");
+
+                entity.HasKey(x => x.EvaluationId);
+
+                // منع تكرار سجل التقييم نفسه للمشرف والمدرب
+                entity.HasIndex(x => new
+                {
+                    x.SupervisorId,
+                    x.TrainerId
+                }).IsUnique();
+
+                entity.Property(x => x.Rating)
+                    .IsRequired();
+
+                entity.Property(x => x.Comment)
+                    .HasMaxLength(2000);
+
+                entity.Property(x => x.CreatedAt)
+                    .IsRequired();
+
+                entity.Property(x => x.UpdatedAt)
+                    .IsRequired();
+
+                entity.HasOne(x => x.Supervisor)
+                    .WithMany()
+                    .HasForeignKey(x => x.SupervisorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Trainer)
+                    .WithMany()
+                    .HasForeignKey(x => x.TrainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
         }
+
     }
 }

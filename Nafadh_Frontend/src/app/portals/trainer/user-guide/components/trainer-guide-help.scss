@@ -130,3 +130,44 @@
   font-size: 12px;
   line-height: 1.9;
 }
+
+/* حالة تقدم المدرب في الدليل */
+.guide-progress-status {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 9px;
+
+  color: #1e40af;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.8;
+  text-align: right;
+}
+
+/* رسالة الخطأ عند تحميل أو حفظ التقدم */
+.guide-progress-error {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.8;
+  text-align: right;
+}
+
+/* تحسين زر بدء الجولة */
+.guide-start-button:hover:not(:disabled) {
+  background: #003b82;
+}
+
+.guide-start-button {
+  transition: background-color 0.2s ease;
+}

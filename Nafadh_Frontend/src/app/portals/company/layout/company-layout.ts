@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { AppShell, ShellNavItem } from '../../../shared/ui/app-shell/app-shell';
+import { CompanyManualShell } from '../user-manual/components/company-manual-shell/company-manual-shell';
 
 @Component({
   selector: 'app-company-layout',
-  imports: [AppShell],
-  template: `<app-shell portalTitle="بوابة الشركة المستضيفة" accountLabel="مسؤول التدريب والتطوير" [navItems]="navItems" />`,
+  imports: [AppShell, CompanyManualShell],
+  template: `<app-shell portalTitle="بوابة الشركة المستضيفة" accountLabel="مسؤول التدريب والتطوير" [navItems]="navItems" /><app-company-manual-shell />`,
 })
 export class CompanyLayout {
   navItems: ShellNavItem[] = [

@@ -13,10 +13,11 @@ export const TRAINEE_ROUTES: Routes = [
       { path: 'program', loadComponent: () => import('./pages/program/program').then((m) => m.TraineeProgram) },
     // {path: 'program/:id',loadComponent: () =>import('./pages/program/program').then((m) => m.TraineeProgram)},
       { path: 'tasks', loadComponent: () => import('./pages/tasks/tasks').then((m) => m.TraineeTasks) },
-      { path: 'attendance', loadComponent: () => import('./pages/attendance/attendance').then((m) => m.TraineeAttendance) },
+{ path: 'attendance', loadComponent: () => import('./pages/attendance/attendance').then((m) => m.TraineeAttendance) },
       { path: 'notifications', loadComponent: () => import('./pages/notifications/notifications').then((m) => m.TraineeNotifications) },
       { path: 'support', loadComponent: () => import('./pages/support/support').then((m) => m.TraineeSupport) },
       { path: 'achievements', loadComponent: () => import('./pages/achievements/achievements').then((m) => m.TraineeAchievements) },
+      { path: 'quizzes', loadComponent: () => import('./pages/quizzes/trainee-quizzes').then((m) => m.TraineeQuizzes) },
     ],
   },
 ];

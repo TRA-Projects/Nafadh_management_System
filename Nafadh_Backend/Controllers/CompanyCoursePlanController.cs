@@ -27,7 +27,7 @@ namespace Nafadh_Backend.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "CompanySupervisor")]
+    [Authorize(Roles = "CompanySupervisor, Admin")]
     public class CompanyCoursePlanController : ControllerBase
     {
         private readonly Nafadhcontext _context;
@@ -1130,6 +1130,10 @@ namespace Nafadh_Backend.Controllers
         // Same ownership rule used by CompanyProgramController.
         private async Task<bool> OwnsCompanyAsync(int companyId)
         {
+            // ★ إذا كان المستخدم آدمن، اسمح له بالوصول فوراً لبيانات أي شركة!
+            if (User.IsInRole("Admin"))
+                return true;
+
             var userId = GetUserId();
             if (userId is null)
                 return false;

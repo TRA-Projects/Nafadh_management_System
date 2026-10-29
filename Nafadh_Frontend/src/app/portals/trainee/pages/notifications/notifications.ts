@@ -56,7 +56,7 @@ type NotificationTypeFilter =
   selector: 'app-trainee-notifications',
   imports: [CommonModule],
   templateUrl: './notifications.html',
-  styleUrl: './notifications.css',
+  styleUrl: './notifications.scss',
 })
 
 export class TraineeNotifications implements OnInit {

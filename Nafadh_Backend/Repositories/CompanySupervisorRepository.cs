@@ -148,5 +148,235 @@ namespace Nafadh_Backend.Repositories
 
                 .ToListAsync();
         }
+
+        // ============================================================
+        // Get all enrollments for a company, including current supervisor
+        // ============================================================
+        public async Task<IEnumerable<NFD_Enrollment>> GetCompanyEnrollmentsAsync(
+            int companyId)
+        {
+            return await _context.Set<NFD_Enrollment>()
+                .AsNoTracking()
+                .Where(e => e.CompanyId == companyId)
+                .Include(e => e.Trainee)
+                    .ThenInclude(t => t.User)
+                .Include(e => e.Batch)
+                .OrderBy(e => e.BatchId)
+                .ThenBy(e => e.TraineeId)
+                .ToListAsync();
+        }
+
+        // ============================================================
+        // Save supervisor assignment per enrollment (not per trainee)
+        // ============================================================
+        public async Task<bool> SaveEnrollmentDistributionAsync(
+            int companyId,
+            int supervisorId,
+            IReadOnlyCollection<int> enrollmentIds)
+        {
+            var supervisorExists = await _context.Set<NFD_CompanySupervisor>()
+                .AnyAsync(s =>
+                    s.SupervisorId == supervisorId &&
+                    s.CompanyId == companyId);
+
+            if (!supervisorExists)
+                return false;
+
+            var selectedIds = enrollmentIds
+                .Where(id => id > 0)
+                .Distinct()
+                .ToHashSet();
+
+            // Load the company's enrollments as tracked entities.
+            var enrollments = await _context.Set<NFD_Enrollment>()
+                .Where(e => e.CompanyId == companyId)
+                .ToListAsync();
+
+            // Reject the entire request if any selected enrollment is not
+            // part of this company. Do not partially save.
+            var companyEnrollmentIds = enrollments
+                .Select(e => e.EnrollmentId)
+                .ToHashSet();
+
+            if (!selectedIds.IsSubsetOf(companyEnrollmentIds))
+                return false;
+
+            // Unassign only this supervisor's unchecked enrollments.
+            // Other supervisors' unrelated enrollments remain unchanged.
+            foreach (var enrollment in enrollments)
+            {
+                if (enrollment.SupervisorId == supervisorId &&
+                    !selectedIds.Contains(enrollment.EnrollmentId))
+                {
+                    enrollment.SupervisorId = null;
+                }
+            }
+
+            // Assign the selected enrollment records to this supervisor.
+            // A record previously assigned to another supervisor is reassigned.
+            foreach (var enrollment in enrollments)
+            {
+                if (selectedIds.Contains(enrollment.EnrollmentId))
+                {
+                    enrollment.SupervisorId = supervisorId;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        // ============================================================
+        // Get trainers assigned to a supervisor
+        // ============================================================
+        public async Task<List<SupervisorTrainerDto>> GetAssignedTrainersAsync(
+     int supervisorId)
+        {
+            return await _context.NFD_CompanySupervisorTrainers
+                .AsNoTracking()
+                .Where(x => x.SupervisorId == supervisorId)
+                .Select(x => new SupervisorTrainerDto
+                {
+                    TrainerId = x.Trainer.TrainerId,
+                    FullName = x.Trainer.User.FullName,
+                    Specialty = x.Trainer.Specialty
+                })
+                .OrderBy(x => x.FullName)
+                .ToListAsync();
+        }
+
+        // ============================================================
+        // Save trainer assignments
+        // The submitted IDs represent the complete desired assignment.
+        // ============================================================
+        public async Task<bool> SaveTrainerAssignmentsAsync(
+            int supervisorId,
+            IReadOnlyCollection<int> trainerIds)
+        {
+            var supervisorExists = await _context.NFD_CompanySupervisors
+                .AnyAsync(s => s.SupervisorId == supervisorId);
+
+            if (!supervisorExists)
+                return false;
+
+            var selectedIds = trainerIds
+                .Where(id => id > 0)
+                .Distinct()
+                .ToHashSet();
+
+            // Reject invalid IDs instead of partially saving.
+            if (selectedIds.Count != trainerIds.Distinct().Count() ||
+                trainerIds.Any(id => id <= 0))
+            {
+                return false;
+            }
+
+            var existingTrainers = await _context.NFD_Trainers
+                .Where(t => selectedIds.Contains(t.TrainerId))
+                .Select(t => t.TrainerId)
+                .ToListAsync();
+
+            if (existingTrainers.Count != selectedIds.Count)
+                return false;
+
+            var currentAssignments = await _context.NFD_CompanySupervisorTrainers
+                .Where(x => x.SupervisorId == supervisorId)
+                .ToListAsync();
+
+            var currentIds = currentAssignments
+                .Select(x => x.TrainerId)
+                .ToHashSet();
+
+            var toRemove = currentAssignments
+                .Where(x => !selectedIds.Contains(x.TrainerId))
+                .ToList();
+
+            _context.NFD_CompanySupervisorTrainers.RemoveRange(toRemove);
+
+            var toAdd = selectedIds
+                .Where(id => !currentIds.Contains(id))
+                .Select(id => new NFD_CompanySupervisorTrainer
+                {
+                    SupervisorId = supervisorId,
+                    TrainerId = id
+                })
+                .ToList();
+
+            await _context.NFD_CompanySupervisorTrainers.AddRangeAsync(toAdd);
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // ============================================================
+        // Get saved trainer evaluations for a supervisor
+        // ============================================================
+        public async Task<List<SupervisorTrainerEvaluationDto>>
+            GetTrainerEvaluationsAsync(int supervisorId)
+        {
+            return await _context.NFD_CompanyTrainerEvaluations
+                .AsNoTracking()
+                .Where(x => x.SupervisorId == supervisorId)
+                .Select(x => new SupervisorTrainerEvaluationDto
+                {
+                    TrainerId = x.TrainerId,
+                    Rating = x.Rating,
+                    Comment = x.Comment,
+                    CreatedAt = x.CreatedAt,
+                    UpdatedAt = x.UpdatedAt
+                })
+                .ToListAsync();
+        }
+
+        // ============================================================
+        // Save or update a trainer evaluation
+        // ============================================================
+        public async Task<bool> SaveTrainerEvaluationAsync(
+            int supervisorId,
+            int trainerId,
+            int rating,
+            string? comment)
+        {
+            if (rating < 1 || rating > 5)
+                return false;
+
+            var assigned = await _context.NFD_CompanySupervisorTrainers
+                .AnyAsync(x =>
+                    x.SupervisorId == supervisorId &&
+                    x.TrainerId == trainerId);
+
+            if (!assigned)
+                return false;
+
+            var now = DateTime.UtcNow;
+
+            var evaluation = await _context.NFD_CompanyTrainerEvaluations
+                .FirstOrDefaultAsync(x =>
+                    x.SupervisorId == supervisorId &&
+                    x.TrainerId == trainerId);
+
+            if (evaluation == null)
+            {
+                evaluation = new NFD_CompanyTrainerEvaluation
+                {
+                    SupervisorId = supervisorId,
+                    TrainerId = trainerId,
+                    Rating = rating,
+                    Comment = comment,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+
+                await _context.NFD_CompanyTrainerEvaluations.AddAsync(evaluation);
+            }
+            else
+            {
+                evaluation.Rating = rating;
+                evaluation.Comment = comment;
+                evaluation.UpdatedAt = now;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

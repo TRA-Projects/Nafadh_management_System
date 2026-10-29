@@ -36,5 +36,30 @@ namespace Nafadh_Backend.Interfaces
         //7-
         Task<IEnumerable<NFD_CompanySupervisor>> GetAllAsync();
         //
+
+        //8-
+        Task<IEnumerable<NFD_Enrollment>> GetCompanyEnrollmentsAsync(
+    int companyId);
+
+        Task<bool> SaveEnrollmentDistributionAsync(
+            int companyId,
+            int supervisorId,
+            IReadOnlyCollection<int> enrollmentIds);
+        //9-
+        Task<List<SupervisorTrainerDto>> GetAssignedTrainersAsync(
+        int supervisorId);
+
+        Task<bool> SaveTrainerAssignmentsAsync(
+            int supervisorId,
+            IReadOnlyCollection<int> trainerIds);
+
+        Task<List<SupervisorTrainerEvaluationDto>>
+            GetTrainerEvaluationsAsync(int supervisorId);
+
+        Task<bool> SaveTrainerEvaluationAsync(
+            int supervisorId,
+            int trainerId,
+            int rating,
+            string? comment);
     }
 }

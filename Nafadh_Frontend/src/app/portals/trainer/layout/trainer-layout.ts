@@ -60,7 +60,16 @@ export class TrainerLayout implements OnInit, OnDestroy {
       return;
     }
 
-    const pageKey = segments[trainerIndex + 1] ?? 'dashboard';
+   
+    const section = segments[trainerIndex + 1] ?? 'dashboard';
+
+    const pageKey =
+      section === 'quizzes' &&
+      segments[trainerIndex + 2] !== undefined &&
+      segments[trainerIndex + 3] === 'questions'
+        ? 'question-bank'
+        : section;
+
 
     const guide = TRAINER_GUIDE_CONTENT[pageKey] ?? null;
 

@@ -1,0 +1,411 @@
+
+<div class="quizzes-page" dir="rtl">
+
+  <!-- ========================================== -->
+  <!-- STEP 1: QUIZZES LIST -->
+  <!-- ========================================== -->
+  @if (currentStep() === 1) {
+
+    <section class="page-hero" data-guide="quizzes-header">
+      <div class="hero-content">
+        <div class="hero-icon"><i class="fa-solid fa-clipboard-question"></i></div>
+        <div>
+          <span class="page-kicker">إدارة التقييمات</span>
+          <h1>الاختبارات المتاحة</h1>
+          <p>يمكنك الاطلاع على الاختبارات المخصصة لدفعتك والبدء بحلها.</p>
+        </div>
+      </div>
+      <button type="button" class="secondary-btn" (click)="refresh()" [disabled]="loading()">
+        <i class="fa-solid fa-rotate" [class.fa-spin]="loading()"></i> تحديث
+      </button>
+    </section>
+
+    @if (errorMessage()) {
+      <div class="message error-message" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+        <button type="button" aria-label="إغلاق" (click)="errorMessage.set('')">×</button>
+      </div>
+    }
+
+    <section class="stats-grid" data-guide="quizzes-stats">
+      <article class="stat-card available">
+        <div class="stat-icon"><i class="fa-solid fa-circle-play"></i></div>
+        <div class="stat-body"><strong>{{ availableCount() }}</strong><span>متاح الآن</span></div>
+      </article>
+      <article class="stat-card upcoming">
+        <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+        <div class="stat-body"><strong>{{ upcomingCount() }}</strong><span>قادم</span></div>
+      </article>
+      <article class="stat-card pending">
+        <div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div class="stat-body"><strong>{{ pendingGradingCount() }}</strong><span>بانتظار التصحيح</span></div>
+      </article>
+      <article class="stat-card completed">
+        <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="stat-body"><strong>{{ completedCount() }}</strong><span>مكتمل</span></div>
+      </article>
+    </section>
+
+    <section class="toolbar">
+      <label class="search-box" data-guide="quizzes-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" placeholder="ابحث باسم الاختبار أو الدفعة..." [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" />
+      </label>
+      <select data-guide="quizzes-filter" aria-label="تصفية حسب الحالة" [ngModel]="stateFilter()" (ngModelChange)="stateFilter.set($event)">
+        <option value="all">كل الاختبارات</option>
+        <option value="Available">متاح</option>
+        <option value="InProgress">قيد التقدم</option>
+        <option value="PendingGrading">بانتظار التصحيح</option>
+        <option value="Completed">مكتمل</option>
+        <option value="Upcoming">قادم</option>
+        <option value="Missed">فائت</option>
+      </select>
+    </section>
+
+    @if (loading()) {
+      <div class="loading-state">
+        <i class="fa-solid fa-spinner fa-spin"></i><strong>جاري تحميل الاختبارات</strong><span>لحظات من فضلك...</span>
+      </div>
+    } @else {
+      <section class="quiz-grid" data-guide="quizzes-list">
+        @for (quiz of filteredQuizzes(); track quiz.quizId) {
+          <article class="quiz-card">
+            <div class="quiz-card-top">
+              <div class="quiz-icon"><i class="fa-solid fa-file-circle-question"></i></div>
+              <span class="state-badge" [ngClass]="getStateClass(quiz.state)">
+                <i class="fa-solid" [ngClass]="getStateIcon(quiz.state)"></i> {{ getStateLabel(quiz.state) }}
+              </span>
+            </div>
+            <div class="quiz-main">
+              <h2>{{ quiz.title }}</h2>
+              <p class="description">{{ quiz.description || 'لا يوجد وصف.' }}</p>
+              <div class="batch-line"><i class="fa-solid fa-users"></i> {{ quiz.batchName || '—' }}</div>
+            </div>
+            <div class="quiz-details">
+              <div class="detail-row"><i class="fa-regular fa-calendar"></i><span>البداية</span><strong>{{ formatDate(quiz.startDateTime) }}</strong></div>
+              <div class="detail-row"><i class="fa-regular fa-calendar-check"></i><span>النهاية</span><strong>{{ formatDate(quiz.endDateTime) }}</strong></div>
+              <div class="detail-row"><i class="fa-regular fa-clock"></i><span>المدة</span><strong>{{ quiz.durationMinutes }} دقيقة</strong></div>
+              <div class="detail-row"><i class="fa-solid fa-list-check"></i><span>الأسئلة</span><strong>{{ quiz.questionCount }}</strong></div>
+              <div class="detail-row"><i class="fa-solid fa-percent"></i><span>نسبة النجاح</span><strong>{{ quiz.passingPercentage }}%</strong></div>
+            </div>
+            <div class="attempts-block">
+              <div class="attempts-label"><i class="fa-solid fa-repeat"></i> المحاولات: {{ quiz.attemptsUsed }} / {{ quiz.maxAttempts }}</div>
+              <div class="attempts-bar"><span [style.width.%]="getAttemptsProgressPercent(quiz)"></span></div>
+            </div>
+            <div class="quiz-flags">
+              @if (quiz.cameraRequired) { <span class="enabled"><i class="fa-solid fa-video"></i> الكاميرا مطلوبة</span> }
+              @if (quiz.latestPercentage !== null && quiz.state === 'Completed') {
+                <span class="enabled" [class.failed]="quiz.isPassed === false">
+                  <i class="fa-solid" [ngClass]="quiz.isPassed ? 'fa-circle-check' : 'fa-circle-xmark'"></i> {{ quiz.latestPercentage }}%
+                </span>
+              }
+            </div>
+            <div class="quiz-actions">
+              @switch (quiz.state) {
+                @case ('Available') {
+                  <button type="button" class="primary-btn full-width" (click)="onStartQuiz(quiz)"><i class="fa-solid fa-play"></i> ابدأ الاختبار</button>
+                }
+                @case ('InProgress') {
+                  <button type="button" class="primary-btn full-width" (click)="onResumeQuiz(quiz)"><i class="fa-solid fa-circle-play"></i> متابعة الاختبار</button>
+                }
+                @case ('PendingGrading') {
+                  <button type="button" class="secondary-btn full-width" disabled><i class="fa-solid fa-hourglass-half"></i> بانتظار التصحيح</button>
+                }
+                @case ('Completed') {
+                  <!-- تم التعديل: يفتح سجل المحاولات -->
+                  <button type="button" class="primary-btn full-width" (click)="openAttemptsModal(quiz)"><i class="fa-solid fa-chart-column"></i> عرض النتائج</button>
+                  @if (quiz.attemptsRemaining > 0) {
+                    <button type="button" class="secondary-btn full-width" (click)="onRetryQuiz(quiz)"><i class="fa-solid fa-rotate-right"></i> إعادة المحاولة</button>
+                  }
+                }
+                @case ('Upcoming') {
+                  <button type="button" class="secondary-btn full-width" disabled><i class="fa-solid fa-clock"></i> لم يبدأ بعد</button>
+                }
+                @case ('Missed') {
+                  <button type="button" class="secondary-btn full-width" disabled><i class="fa-solid fa-circle-xmark"></i> فاتك الاختبار</button>
+                }
+              }
+            </div>
+          </article>
+        } @empty {
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fa-regular fa-clipboard"></i></div>
+            <strong>{{ hasActiveFilter() ? 'لا توجد نتائج مطابقة' : 'لا توجد اختبارات' }}</strong>
+            <span>{{ hasActiveFilter() ? 'جرّب تغيير الفلترة أو البحث' : 'ستظهر الاختبارات هنا بمجرد أن يقوم المدرب بنشرها لدفعتك.' }}</span>
+          </div>
+        }
+      </section>
+    }
+  }
+
+  <!-- ========================================== -->
+  <!-- STEP 2: TERMS & CAMERA -->
+  <!-- ========================================== -->
+  @if (currentStep() === 2) {
+    <section class="page-hero">
+      <div class="hero-content">
+        <button class="back-btn" (click)="goBack()"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+        <div>
+          <h1>الشروط والأحكام</h1>
+          <p>قبل البدء في اختبار: <strong>{{ selectedQuiz()?.title }}</strong></p>
+        </div>
+      </div>
+    </section>
+
+    @if (errorMessage()) {
+      <div class="message error-message" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>{{ errorMessage() }}</span>
+        <button type="button" aria-label="إغلاق" (click)="errorMessage.set('')">×</button>
+      </div>
+    }
+
+    <div class="terms-layout">
+      <div class="terms-card">
+        <h3>يرجى قراءة الشروط التالية:</h3>
+        <ul>
+          <li>لا يُسمح بالخروج من الصفحة أو تغيير التبويب أثناء الاختبار.</li>
+          <li>سيتم تسجيل أي انتهاكات للمراقبة.</li>
+          @if (selectedQuiz()?.cameraRequired) {
+            <li class="text-danger">هذا الاختبار يتطلب فتح الكاميرا طوال فترة الاختبار.</li>
+          }
+        </ul>
+
+        @if (selectedQuiz()?.cameraRequired) {
+          <div class="camera-preview-box">
+            <video #videoElement autoplay playsinline [class.active]="isCameraReady()"></video>
+            @if (!isCameraReady()) {
+              <div class="camera-overlay">
+                <i class="fa-solid fa-video-slash"></i>
+                <p>الكاميرا مغلقة</p>
+                <button class="secondary-btn" (click)="turnOnCamera()">تشغيل الكاميرا</button>
+              </div>
+            }
+          </div>
+          @if (cameraError()) { <div class="error-text">{{ cameraError() }}</div> }
+        }
+
+        <label class="checkbox-row">
+          <input type="checkbox" [(ngModel)]="agreedToTerms">
+          <span>أوافق على الشروط والأحكام وأتحمل مسؤولية أي انتهاك.</span>
+        </label>
+
+        <button class="primary-btn full-width mt-3"
+                [disabled]="!agreedToTerms || loading() || (selectedQuiz()?.cameraRequired && !isCameraReady())"
+                (click)="beginAttempt()">
+          @if (loading()) { <i class="fa-solid fa-spinner fa-spin"></i> جاري التحضير... }
+          @else { <i class="fa-solid fa-play"></i> أوافق وأبدأ الاختبار }
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- STEP 3: QUESTIONS (EXAM) -->
+  <!-- ========================================== -->
+  @if (currentStep() === 3) {
+    <!-- Floating Camera -->
+    @if (selectedQuiz()?.cameraRequired) {
+      <div class="floating-camera">
+        <video #videoElement autoplay playsinline muted class="floating-video"></video>
+        <div class="camera-indicator">
+          <i class="fa-solid fa-circle text-danger fa-fade"></i> جاري المراقبة
+        </div>
+      </div>
+    }
+
+    <section class="exam-header">
+      <div class="exam-title"><h2>{{ attempt()?.quizTitle }}</h2></div>
+      <div class="exam-timer" [class.warning]="timeRemaining() < 300">
+        <i class="fa-solid fa-stopwatch"></i> {{ formatTime(timeRemaining()) }}
+      </div>
+    </section>
+
+    <div class="exam-layout">
+      <div class="questions-container">
+        @for (q of questions(); track q.attemptQuestionId; let i = $index) {
+          <div class="question-card">
+            <div class="question-header">
+              <span class="q-number">السؤال {{ i + 1 }}</span>
+              <span class="q-points">{{ q.points }} درجة</span>
+            </div>
+            <h3 class="q-text">{{ q.questionText }}</h3>
+
+            @if ($any(q.questionType) === 0 || $any(q.questionType) === 1 || $any(q.questionType) === 'MultipleChoice' || $any(q.questionType) === 'TrueFalse') {
+              <div class="options-list">
+                @for (opt of q.options; track opt.optionId) {
+                  <label class="option-item" [class.selected]="answers[q.attemptQuestionId]?.selectedOptionId === opt.optionId">
+                    <input type="radio" [name]="'q_' + q.attemptQuestionId" [value]="opt.optionId"
+                           [checked]="answers[q.attemptQuestionId]?.selectedOptionId === opt.optionId"
+                           (change)="onSelectOption(q.attemptQuestionId, opt.optionId)">
+                    <span class="option-code">{{ opt.optionCode }}</span>
+                    <span class="option-text">{{ opt.optionText }}</span>
+                  </label>
+                }
+              </div>
+            }
+
+            @if ($any(q.questionType) === 2 || $any(q.questionType) === 'Essay') {
+              <textarea class="essay-input" rows="4" placeholder="اكتب إجابتك هنا..."
+                        [ngModel]="answers[q.attemptQuestionId]?.textAnswer"
+                        (ngModelChange)="onEssayChange(q.attemptQuestionId, $event)"
+                        (blur)="onEssayBlur(q.attemptQuestionId)"></textarea>
+            }
+          </div>
+        }
+      </div>
+
+      <aside class="exam-sidebar">
+        <h3>حالة الأسئلة</h3>
+        <div class="q-grid">
+          @for (q of questions(); track q.attemptQuestionId; let i = $index) {
+            <div class="q-box" [class.answered]="answers[q.attemptQuestionId]?.selectedOptionId || answers[q.attemptQuestionId]?.textAnswer">
+              {{ i + 1 }}
+            </div>
+          }
+        </div>
+        <button class="primary-btn full-width mt-3" [disabled]="loading()" (click)="submitQuiz()">
+          @if (loading()) { <i class="fa-solid fa-spinner fa-spin"></i> جاري التسليم... }
+          @else { <i class="fa-solid fa-paper-plane"></i> تسليم الاختبار }
+        </button>
+      </aside>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- STEP 4: RESULT -->
+  <!-- ========================================== -->
+  @if (currentStep() === 4 && result()) {
+    <section class="result-container">
+      <div class="result-hero" [class.passed]="result().isPassed" [class.failed]="result().isPassed === false">
+        <div class="result-icon">
+          <i class="fa-solid" [ngClass]="result().isPassed ? 'fa-award' : 'fa-circle-xmark'"></i>
+        </div>
+        <h1>{{ result().isPassed ? 'مبروك، لقد نجحت!' : 'للأسف، لم تنجح' }}</h1>
+        <p>لقد أكملت الاختبار: {{ result().quizTitle }}</p>
+      </div>
+
+      <div class="result-stats">
+        <div class="stat-box">
+          <span>الدرجة</span>
+          <strong>{{ result().score }} / {{ totalPossiblePoints() }}</strong>
+        </div>
+        <div class="stat-box main">
+          <span>النسبة</span>
+          <strong>{{ result().percentage }}%</strong>
+        </div>
+        <div class="stat-box">
+          <span>نسبة النجاح</span>
+          <strong>{{ result().passingPercentage }}%</strong>
+        </div>
+      </div>
+
+      <div class="result-actions">
+        <button class="primary-btn" (click)="goToQuizzesList()">
+          <i class="fa-solid fa-arrow-left"></i> العودة إلى الاختبارات
+        </button>
+      </div>
+    </section>
+  }
+
+  <!-- ========================================== -->
+  <!-- SUBMIT CONFIRMATION MODAL -->
+  <!-- ========================================== -->
+  @if (showSubmitModal()) {
+    <div class="modal-backdrop">
+      <div class="confirm-modal">
+        <div class="modal-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h3>تأكيد التسليم</h3>
+        <p>هل أنت متأكد من تسليم الاختبار؟ لن تتمكن من تعديل إجاباتك بعد ذلك.</p>
+        <div class="modal-actions">
+          <button class="secondary-btn" (click)="cancelSubmit()">تراجع</button>
+          <button class="primary-btn" (click)="confirmSubmit()" [disabled]="loading()">
+            @if (loading()) { <i class="fa-solid fa-spinner fa-spin"></i> جاري التسليم... }
+            @else { <i class="fa-solid fa-paper-plane"></i> نعم، تسليم }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- AUTO SUBMIT MODAL -->
+  <!-- ========================================== -->
+  @if (showAutoSubmitModal()) {
+    <div class="modal-backdrop">
+      <div class="confirm-modal">
+        <div class="modal-icon danger"><i class="fa-solid fa-clock"></i></div>
+        <h3>انتهى الوقت!</h3>
+        <p>انتهى وقت الاختبار المخصص. يتم الآن تسليم إجاباتك تلقائياً، يرجى الانتظار...</p>
+        <div class="modal-actions center">
+          <button class="primary-btn" disabled><i class="fa-solid fa-spinner fa-spin"></i> جاري التسليم...</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- VIOLATION MODAL -->
+  <!-- ========================================== -->
+  @if (showViolationModal()) {
+    <div class="modal-backdrop">
+      <div class="confirm-modal">
+        <div class="modal-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h3>تحذير!</h3>
+        <p>لقد قمت بالخروج من صفحة الاختبار. تم تسجيل هذه المخالفة، وقد يتم إنهاء الاختبار إذا تكرر ذلك.</p>
+        <div class="modal-actions center">
+          <button class="primary-btn" (click)="showViolationModal.set(false)">حسناً، فهمت</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- ATTEMPTS HISTORY MODAL -->
+  <!-- ========================================== -->
+  @if (showAttemptsModal()) {
+    <div class="modal-backdrop">
+      <div class="attempts-modal">
+        <div class="attempts-modal-header">
+          <div>
+            <h3>سجل المحاولات</h3>
+            <p>{{ selectedQuizForAttempts()?.title }}</p>
+          </div>
+          <button class="close-btn" (click)="showAttemptsModal.set(false)">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="attempts-modal-body">
+          @if (quizAttempts().length === 0) {
+            <div class="empty-state">لا توجد محاولات سابقة.</div>
+          } @else {
+            @for (attempt of quizAttempts(); track attempt.attemptId; let i = $index) {
+              <div class="attempt-item" [class.passed]="attempt.isPassed" [class.failed]="attempt.isPassed === false">
+                <div class="attempt-info">
+                  <strong>المحاولة {{ attempt.attemptNumber }}</strong>
+                  <span>{{ formatDate(attempt.startedAt) }}</span>
+                </div>
+                <div class="attempt-stats">
+                  <span>النسبة: <strong>{{ attempt.percentage }}%</strong></span>
+                  <span>الحالة:
+                    @if(attempt.isGradingCompleted) {
+                      {{ attempt.isPassed ? 'ناجح' : 'راسب' }}
+                    } @else {
+                      بانتظار التصحيح
+                    }
+                  </span>
+                </div>
+                <button class="secondary-btn" (click)="viewSpecificAttempt(attempt.attemptId)">
+                  <i class="fa-solid fa-eye"></i> عرض
+                </button>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

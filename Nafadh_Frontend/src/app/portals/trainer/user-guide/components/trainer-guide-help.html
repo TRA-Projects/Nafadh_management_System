@@ -50,13 +50,47 @@
             {{ guide.description }}
           </p>
 
+          <!-- حالة تقدم المدرب -->
+          @if (guideService.isProgressLoading()) {
+            <p class="guide-progress-status" role="status">
+              جارٍ تحميل حالة الدليل...
+            </p>
+          } @else if (guideService.currentProgress(); as progress) {
+            <p class="guide-progress-status" role="status">
+              @if (progress.status === 'Completed') {
+                ✓ تم إكمال الجولة الإرشادية لهذه الصفحة.
+              } @else if (progress.status === 'Skipped') {
+                تم تخطي الجولة الإرشادية لهذه الصفحة سابقًا.
+               } @else {
+                لم يتم إكمال الجولة الإرشادية لهذه الصفحة بعد.
+                 }
+            </p>
+          } @else {
+            <p class="guide-progress-status" role="status">
+              لم يتم إكمال الجولة الإرشادية لهذه الصفحة بعد.
+            </p>
+          }
+
+          <!-- رسالة الخطأ -->
+          @if (guideService.progressError(); as errorMessage) {
+            <p class="guide-progress-error" role="alert">
+              {{ errorMessage }}
+            </p>
+          }
+
+          <!-- بدء الجولة أو إعادة تشغيلها -->
           <button
             type="button"
             class="guide-start-button"
             (click)="startTour()"
             [disabled]="!guide.steps.length"
           >
-            ▶ بدء الجولة الإرشادية
+            @if (guideService.currentProgress()?.status === 'Completed' ||
+                 guideService.currentProgress()?.status === 'Skipped') {
+              ↻ إعادة تشغيل الجولة الإرشادية
+            } @else {
+              ▶ بدء الجولة الإرشادية
+            }
           </button>
 
           <section class="guide-faq-section">

@@ -1,20 +1,7 @@
-import {
-  Component,
-  HostListener,
-  OnInit,
-  ChangeDetectorRef,
-  inject
-} from '@angular/core';
-
 import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectorRef, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
 import { CompanyApi } from '../../services/company-api';
-
-
-// =========================================================
-// Interfaces
-// =========================================================
 
 interface SupervisorStats {
   monthlyEvaluations: number;
@@ -25,29 +12,19 @@ interface SupervisorStats {
 interface Supervisor {
   supervisorId: number;
   id: number;
-
   fullName: string;
   phone: string;
   email: string;
-
   department: string;
   position: string;
-
   status: string;
-
   companyId?: number;
   userId?: number;
-
   permissions?: string[];
-
   avatarColor?: string;
-
   isInactive?: boolean;
-
   showMenu?: boolean;
-
   lastActivity?: string;
-
   stats?: SupervisorStats;
 }
 
@@ -55,80 +32,49 @@ interface Trainee {
   id: number;
   name: string;
   email?: string;
-
   assigned: boolean;
-
   color: string;
   initials: string;
-
   track: string;
   batch: string;
 }
 
-interface Toast {
-  visible: boolean;
-  type: 'success' | 'error' | 'info';
-  message: string;
+interface EvaluationTrainer {
+  id: number;
+  name: string;
+  color: string;
+  initials: string;
+  track: string;
+  currentRating: string;
+  explanationClarity: number;
+  interactionAndSupport: number;
+  evaluationComment: string;
 }
 
-
-// =========================================================
-// Component
-// =========================================================
+type ToastType = 'success' | 'error' | 'info';
 
 @Component({
   selector: 'app-company-supervisors',
   standalone: true,
-
-  imports: [
-    CommonModule,
-    FormsModule
-  ],
-
+  imports: [CommonModule, FormsModule],
   templateUrl: './supervisors.html',
   styleUrls: ['./supervisors.scss']
 })
 export class CompanySupervisors implements OnInit {
-
-  // =========================================================
-  // API
-  // =========================================================
-
-  private readonly companyApi =
-    inject(CompanyApi);
-
-  private readonly cdr =
-    inject(ChangeDetectorRef);
-
-
-  // =========================================================
-  // Company
-  // =========================================================
+  private readonly companyApi = inject(CompanyApi);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   companyId = 1;
-
-
-  // =========================================================
-  // Loading
-  // =========================================================
-
   loading = false;
-
   errorMessage = '';
 
-
-  // =========================================================
-  // Supervisors
-  // =========================================================
+  activeView: 'supervisors' | 'evaluations' = 'supervisors';
+  evaluationSearch = '';
+  editingSavedEvaluation = false;
 
   supervisors: Supervisor[] = [];
 
-
-  // =========================================================
-  // Departments
-  // =========================================================
-
-  departments: string[] = [
+  departments = [
     'تقنية المعلومات',
     'الموارد البشرية',
     'التسويق',
@@ -139,54 +85,29 @@ export class CompanySupervisors implements OnInit {
   ];
 
   selectedDept = 'all';
-
-
-  // =========================================================
-  // Search
-  // =========================================================
-
   searchQuery = '';
 
-
-  // =========================================================
-  // Statistics
-  // =========================================================
-
   totalAssignedTrainees = 0;
-
   averageAttendance = 0;
-
   supervisorsNeedingAttention = 0;
 
-
-  // =========================================================
-  // Add / Edit Modal
-  // =========================================================
-
   showAddModal = false;
-
   editingSupervisor = false;
 
-
-  // =========================================================
-  // Supervisor Profile Modal
-  // =========================================================
-
   showProfileModal = false;
-
   selectedProfileSupervisor: Supervisor | null = null;
-
-
-  // =========================================================
-  // Selected Supervisor
-  // =========================================================
 
   selectedSupervisor: Supervisor | null = null;
 
+  isEvaluationModalOpen = false;
+  evaluationLoading = false;
+  supervisorTrainers: EvaluationTrainer[] = [];
 
-  // =========================================================
-  // New Supervisor Form
-  // =========================================================
+  isDistributeModalOpen = false;
+  distributionLoading = false;
+  traineesList: Trainee[] = [];
+
+  distributionMap: Record<number, number[]> = {};
 
   newSupervisor = {
     fullName: '',
@@ -197,34 +118,15 @@ export class CompanySupervisors implements OnInit {
     isInactive: false
   };
 
-
-  // =========================================================
-  // Distribution
-  // =========================================================
-
-  isDistributeModalOpen = false;
-
-  traineesList: Trainee[] = [];
-
-  distributionMap: {
-    [supervisorId: number]: number[]
-  } = {};
-
-
-  // =========================================================
-  // Toast
-  // =========================================================
-
-  toast: Toast = {
+  toast: {
+    visible: boolean;
+    type: ToastType;
+    message: string;
+  } = {
     visible: false,
     type: 'info',
     message: ''
   };
-
-
-  // =========================================================
-  // ألوان الصور
-  // =========================================================
 
   private readonly avatarColors = [
     'navy',
@@ -237,1308 +139,935 @@ export class CompanySupervisors implements OnInit {
     'pink'
   ];
 
-
-  // =========================================================
-  // Init
-  // =========================================================
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
     this.loadSupervisors();
   }
 
+  private normalizeTrainers(response: any): any[] {
+    if (Array.isArray(response)) {
+      return response;
+    }
 
-  // =========================================================
-  // تحميل المشرفين من API
-  // =========================================================
+    for (const value of [
+      response?.items,
+      response?.data,
+      response?.trainers,
+      response?.data?.items
+    ]) {
+      if (Array.isArray(value)) {
+        return value;
+      }
+    }
 
+    return [];
+  }
+
+  private trainerId(item: any): number {
+    return Number(
+      item.trainerId ??
+      item.TrainerId ??
+      item.id ??
+      item.Id
+    );
+  }
+
+  private trainerName(item: any): string {
+    return String(
+      item.fullName ??
+      item.FullName ??
+      item.trainerName ??
+      item.TrainerName ??
+      item.name ??
+      item.Name ??
+      ''
+    );
+  }
+
+  // تحميل المشرفين
   loadSupervisors(): void {
-
     this.loading = true;
     this.errorMessage = '';
 
-    this.companyApi
-      .getSupervisors(this.companyId)
-      .subscribe({
+    this.companyApi.getSupervisors(this.companyId).subscribe({
+      next: (response: any) => {
+        const data: any[] = Array.isArray(response)
+          ? response
+          : (response?.items ?? response?.data ?? []);
 
-        next: (data: any[]) => {
+        const fakeStats: SupervisorStats[] = [
+          { monthlyEvaluations: 4, attendanceRate: 94, assignedTrainees: 6 },
+          { monthlyEvaluations: 3, attendanceRate: 88, assignedTrainees: 5 },
+          { monthlyEvaluations: 6, attendanceRate: 96, assignedTrainees: 8 },
+          { monthlyEvaluations: 2, attendanceRate: 72, assignedTrainees: 4 },
+          { monthlyEvaluations: 5, attendanceRate: 91, assignedTrainees: 7 },
+          { monthlyEvaluations: 3, attendanceRate: 79, assignedTrainees: 5 },
+          { monthlyEvaluations: 7, attendanceRate: 97, assignedTrainees: 9 },
+          { monthlyEvaluations: 4, attendanceRate: 85, assignedTrainees: 6 }
+        ];
 
-          const fakeStats: SupervisorStats[] = [
+        this.supervisors = data.map((item, index) => {
+          const id = Number(item.supervisorId ?? item.id ?? index + 1);
+          const status = item.status ?? 'Active';
+          const stats = item.stats ?? fakeStats[index % fakeStats.length];
 
-            {
-              monthlyEvaluations: 4,
-              attendanceRate: 94,
-              assignedTrainees: 6
-            },
-
-            {
-              monthlyEvaluations: 3,
-              attendanceRate: 88,
-              assignedTrainees: 5
-            },
-
-            {
-              monthlyEvaluations: 6,
-              attendanceRate: 96,
-              assignedTrainees: 8
-            },
-
-            {
-              monthlyEvaluations: 2,
-              attendanceRate: 72,
-              assignedTrainees: 4
-            },
-
-            {
-              monthlyEvaluations: 5,
-              attendanceRate: 91,
-              assignedTrainees: 7
-            },
-
-            {
-              monthlyEvaluations: 3,
-              attendanceRate: 79,
-              assignedTrainees: 5
-            },
-
-            {
-              monthlyEvaluations: 7,
-              attendanceRate: 97,
-              assignedTrainees: 9
-            },
-
-            {
-              monthlyEvaluations: 4,
-              attendanceRate: 85,
-              assignedTrainees: 6
+          return {
+            supervisorId: id,
+            id,
+            fullName: item.fullName ?? item.name ?? 'مشرف',
+            phone: item.phone ?? '',
+            email: item.email ?? '',
+            department: item.department ?? 'القسم العام',
+            position: item.position ?? 'مشرف',
+            status,
+            companyId: item.companyId ?? this.companyId,
+            userId: item.userId,
+            permissions: item.permissions ?? [],
+            avatarColor: this.avatarColors[index % this.avatarColors.length],
+            isInactive: [
+              'Inactive',
+              'Frozen',
+              'غير نشط',
+              'مجمد'
+            ].includes(status),
+            showMenu: false,
+            lastActivity: item.lastActivity ?? 'نشط مؤخراً',
+            stats: {
+              monthlyEvaluations: Number(stats.monthlyEvaluations ?? 0),
+              attendanceRate: Number(stats.attendanceRate ?? 0),
+              assignedTrainees: Number(stats.assignedTrainees ?? 0)
             }
+          } as Supervisor;
+        });
 
-          ];
+        this.calculateStatistics();
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
 
+      error: (error: unknown) => {
+        console.error('Error loading supervisors:', error);
 
-          this.supervisors =
-            data.map(
-              (
-                item: any,
-                index: number
-              ) => {
+        this.loading = false;
+        this.errorMessage = 'حدث خطأ أثناء تحميل بيانات المشرفين';
 
-                const supervisorId =
-                  Number(
-                    item.supervisorId ??
-                    item.id ??
-                    index + 1
-                  );
-
-
-                const status =
-                  item.status ??
-                  'Active';
-
-
-                const stats =
-                  item.stats ??
-                  fakeStats[
-                    index %
-                    fakeStats.length
-                  ];
-
-
-                return {
-
-                  supervisorId,
-
-                  id: supervisorId,
-
-                  fullName:
-                    item.fullName ??
-                    item.name ??
-                    'مشرف',
-
-                  phone:
-                    item.phone ??
-                    '',
-
-                  email:
-                    item.email ??
-                    '',
-
-                  department:
-                    item.department ??
-                    'القسم العام',
-
-                  position:
-                    item.position ??
-                    'مشرف',
-
-                  status,
-
-                  companyId:
-                    item.companyId ??
-                    this.companyId,
-
-                  userId:
-                    item.userId,
-
-                  permissions:
-                    item.permissions ??
-                    [],
-
-                  avatarColor:
-                    this.avatarColors[
-                      index %
-                      this.avatarColors.length
-                    ],
-
-                  isInactive:
-                    status === 'Inactive' ||
-                    status === 'Frozen' ||
-                    status === 'غير نشط' ||
-                    status === 'مجمد',
-
-                  showMenu: false,
-
-                  lastActivity:
-                    item.lastActivity ??
-                    'نشط مؤخراً',
-
-                  stats: {
-
-                    monthlyEvaluations:
-                      Number(
-                        stats.monthlyEvaluations ??
-                        0
-                      ),
-
-                    attendanceRate:
-                      Number(
-                        stats.attendanceRate ??
-                        0
-                      ),
-
-                    assignedTrainees:
-                      Number(
-                        stats.assignedTrainees ??
-                        0
-                      )
-
-                  }
-
-                };
-
-              }
-            );
-
-
-          this.calculateStatistics();
-
-          this.loading = false;
-
-          this.cdr.detectChanges();
-
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Error loading supervisors:',
-            error
-          );
-
-          this.loading = false;
-
-          this.errorMessage =
-            'حدث خطأ أثناء تحميل بيانات المشرفين';
-
-          this.showToast(
-            'error',
-            'تعذر تحميل بيانات المشرفين'
-          );
-
-          this.cdr.detectChanges();
-
-        }
-
-      });
-
+        this.showToast('error', this.errorMessage);
+        this.cdr.detectChanges();
+      }
+    });
   }
-
-
-  // =========================================================
-  // تحديث البيانات
-  // =========================================================
 
   refreshData(): void {
-
     this.loadSupervisors();
-
-    this.showToast(
-      'info',
-      'جاري تحديث بيانات المشرفين...'
-    );
-
   }
-
-
-  // =========================================================
-  // الفلترة الديناميكية
-  // =========================================================
 
   get filteredSupervisors(): Supervisor[] {
+    const query = this.searchQuery.trim().toLowerCase();
 
-    const query =
-      this.searchQuery
-        .trim()
-        .toLowerCase();
-
-
-    return this.supervisors.filter(
-      (supervisor) => {
-
-        const matchesDepartment =
-          this.selectedDept === 'all' ||
-          supervisor.department ===
-          this.selectedDept;
-
-
-        const matchesSearch =
-          !query ||
-
-          supervisor.fullName
-            ?.toLowerCase()
-            .includes(query) ||
-
-          supervisor.email
-            ?.toLowerCase()
-            .includes(query) ||
-
-          supervisor.phone
-            ?.toLowerCase()
-            .includes(query) ||
-
-          supervisor.department
-            ?.toLowerCase()
-            .includes(query) ||
-
-          supervisor.position
-            ?.toLowerCase()
-            .includes(query);
-
-
-        return (
-          matchesDepartment &&
-          matchesSearch
-        );
-
-      }
+    return this.supervisors.filter(s =>
+      (this.selectedDept === 'all' || s.department === this.selectedDept) &&
+      (
+        !query ||
+        [s.fullName, s.email, s.phone, s.department, s.position]
+          .some(value =>
+            String(value ?? '').toLowerCase().includes(query)
+          )
+      )
     );
-
   }
-
-
-  // =========================================================
-  // مسح الفلاتر
-  // =========================================================
 
   clearFilters(): void {
-
     this.searchQuery = '';
-
     this.selectedDept = 'all';
-
   }
 
-
-  // =========================================================
-  // اختيار القسم
-  // =========================================================
-
-  selectDepartment(
-    department: string
-  ): void {
-
-    this.selectedDept =
-      department;
-
+  selectDepartment(department: string): void {
+    this.selectedDept = department;
   }
-
-
-  // =========================================================
-  // الإحصائيات
-  // =========================================================
 
   calculateStatistics(): void {
+    this.totalAssignedTrainees = this.supervisors.reduce(
+      (sum, s) => sum + (s.stats?.assignedTrainees ?? 0),
+      0
+    );
 
-    this.totalAssignedTrainees =
-      this.supervisors.reduce(
-        (
-          total,
-          supervisor
-        ) =>
-          total +
-          (
-            supervisor.stats
-              ?.assignedTrainees ??
+    this.averageAttendance = this.supervisors.length
+      ? Math.round(
+          this.supervisors.reduce(
+            (sum, s) => sum + (s.stats?.attendanceRate ?? 0),
             0
-          ),
-        0
-      );
+          ) / this.supervisors.length
+        )
+      : 0;
 
-
-    if (
-      this.supervisors.length > 0
-    ) {
-
-      const totalAttendance =
-        this.supervisors.reduce(
-          (
-            total,
-            supervisor
-          ) =>
-            total +
-            (
-              supervisor.stats
-                ?.attendanceRate ??
-              0
-            ),
-          0
-        );
-
-
-      this.averageAttendance =
-        Math.round(
-          totalAttendance /
-          this.supervisors.length
-        );
-
-    } else {
-
-      this.averageAttendance = 0;
-
-    }
-
-
-    this.supervisorsNeedingAttention =
-      this.supervisors.filter(
-        supervisor =>
-
-          (
-            supervisor.stats
-              ?.attendanceRate ??
-            0
-          ) < 70 ||
-
-          supervisor.isInactive
-      ).length;
-
+    this.supervisorsNeedingAttention = this.supervisors.filter(
+      s => (s.stats?.attendanceRate ?? 0) < 70 || s.isInactive
+    ).length;
   }
 
+  initials(name: string): string {
+    const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
 
-  // =========================================================
-  // الأحرف الأولى
-  // =========================================================
-
-  initials(
-    name: string
-  ): string {
-
-    if (!name) {
+    if (!parts.length) {
       return 'م';
     }
 
-
-    const parts =
-      name
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean);
-
-
-    if (
-      parts.length === 1
-    ) {
-
-      return parts[0]
-        .substring(0, 2);
-
-    }
-
-
-    return (
-      parts[0].charAt(0) +
-      parts[1].charAt(0)
-    );
-
+    return parts.length === 1
+      ? parts[0].slice(0, 2)
+      : parts[0][0] + parts[1][0];
   }
 
-
-  // =========================================================
-  // فتح ملف المشرف
-  // =========================================================
-
-  openSupervisorProfile(
-    supervisor: Supervisor
-  ): void {
-
-    this.selectedProfileSupervisor =
-      supervisor;
-
-    this.showProfileModal =
-      true;
-
-    // إغلاق أي قائمة مفتوحة
-    supervisor.showMenu =
-      false;
-
+  // الملف الشخصي للمشرف
+  openSupervisorProfile(s: Supervisor): void {
+    this.selectedProfileSupervisor = s;
+    this.showProfileModal = true;
+    s.showMenu = false;
   }
-
-
-  // =========================================================
-  // إغلاق ملف المشرف
-  // =========================================================
 
   closeSupervisorProfile(): void {
-
-    this.showProfileModal =
-      false;
-
-    this.selectedProfileSupervisor =
-      null;
-
+    this.showProfileModal = false;
+    this.selectedProfileSupervisor = null;
   }
 
+  // فتح تقييمات مدرب تابع لمشرف
+  openSupervisorEvaluations(supervisor: Supervisor, event?: Event): void {
+    event?.stopPropagation();
 
-  // =========================================================
-  // فتح القائمة
-  // =========================================================
+    this.selectedSupervisor = supervisor;
+    supervisor.showMenu = false;
 
-  toggleDropdown(
-    supervisor: Supervisor,
-    event?: MouseEvent
-  ): void {
+    this.editingSavedEvaluation = false;
+    this.isEvaluationModalOpen = true;
+    this.evaluationLoading = true;
+    this.supervisorTrainers = [];
 
-    if (event) {
-      event.stopPropagation();
+    const assignedIds = this.distributionMap[supervisor.supervisorId];
+
+    if (!assignedIds) {
+      this.evaluationLoading = false;
+
+      this.showToast(
+        'info',
+        'يجب تحميل توزيع المدربين لهذا المشرف أولاً. التوزيع المحلي غير متوفر بعد تحديث الصفحة.'
+      );
+
+      this.cdr.detectChanges();
+      return;
     }
 
+    this.companyApi.getCompanyTrainers(this.companyId).subscribe({
+      next: (response: any) => {
+        this.supervisorTrainers = this.normalizeTrainers(response)
+          .map((item, index): EvaluationTrainer => {
+            const name = this.trainerName(item);
 
-    this.supervisors.forEach(
-      item => {
+            return {
+              id: this.trainerId(item),
+              name,
+              track:
+                item.specialty ??
+                item.Specialty ??
+                item.program ??
+                item.Program ??
+                'مدرب',
+              color: this.avatarColors[index % this.avatarColors.length],
+              initials: this.initials(name),
+              currentRating: String(
+                item.currentRating ??
+                item.CurrentRating ??
+                ''
+              ),
+              explanationClarity: this.toEvaluationScore(
+                item.explanationClarity ?? item.ExplanationClarity,
+                3
+              ),
+              interactionAndSupport: this.toEvaluationScore(
+                item.interactionAndSupport ?? item.InteractionAndSupport,
+                3
+              ),
+              evaluationComment: String(
+                item.evaluationComment ??
+                item.EvaluationComment ??
+                ''
+              )
+            };
+          })
+          .filter(
+            t => Number.isFinite(t.id) &&
+              t.id > 0 &&
+              assignedIds.includes(t.id)
+          );
 
-        if (
-          item !== supervisor
-        ) {
+        // استرجاع التقييم المحفوظ لكل مدرب ومشرف
+        const savedEvaluations = this.readLocalEvaluations();
 
-          item.showMenu =
-            false;
+        this.supervisorTrainers = this.supervisorTrainers.map(trainer => {
+          const saved = savedEvaluations.find(item =>
+            Number(item.trainerId) === trainer.id &&
+            Number(item.supervisorId) === supervisor.supervisorId
+          );
 
-        }
+          if (!saved) {
+            return trainer;
+          }
 
+          return {
+            ...trainer,
+            currentRating: String(
+              saved.currentRating ?? trainer.currentRating
+            ),
+            explanationClarity: this.toEvaluationScore(
+              saved.explanationClarity,
+              trainer.explanationClarity
+            ),
+            interactionAndSupport: this.toEvaluationScore(
+              saved.interactionAndSupport,
+              trainer.interactionAndSupport
+            ),
+            evaluationComment: String(
+              saved.evaluationComment ??
+              trainer.evaluationComment ??
+              ''
+            )
+          };
+        });
+
+        this.evaluationLoading = false;
+        this.cdr.detectChanges();
+      },
+
+      error: (error: unknown) => {
+        console.error('Error loading supervisor trainers:', error);
+
+        this.evaluationLoading = false;
+
+        this.showToast(
+          'error',
+          'تعذر تحميل المدربين التابعين للمشرف'
+        );
+
+        this.cdr.detectChanges();
       }
+    });
+  }
+
+  closeEvaluationModal(): void {
+    this.isEvaluationModalOpen = false;
+    this.supervisorTrainers = [];
+    this.editingSavedEvaluation = false;
+  }
+
+  private toEvaluationScore(value: unknown, fallback = 3): number {
+    const score = Number(value);
+
+    return Number.isFinite(score) && score >= 1 && score <= 5
+      ? score
+      : fallback;
+  }
+
+  // حساب المتوسط تلقائياً
+  getEvaluationAverage(trainer: EvaluationTrainer): string {
+    const clarity = this.toEvaluationScore(trainer.explanationClarity);
+    const interaction = this.toEvaluationScore(trainer.interactionAndSupport);
+
+    return ((clarity + interaction) / 2).toFixed(2);
+  }
+
+  readEvaluationCount(): number {
+    return this.readLocalEvaluations().length;
+  }
+
+  getHistoryAverage(evaluation: any): string {
+    const clarity = Number(evaluation?.explanationClarity ?? 0);
+    const interaction = Number(evaluation?.interactionAndSupport ?? 0);
+
+    return Number.isFinite(clarity) && Number.isFinite(interaction)
+      ? ((clarity + interaction) / 2).toFixed(2)
+      : '0.00';
+  }
+
+  // التقييمات المعروضة في تبويب السجل
+  get evaluationHistory(): any[] {
+    const query = this.evaluationSearch.trim().toLowerCase();
+
+    return this.readLocalEvaluations()
+      .filter(item =>
+        !query ||
+        [
+          item.trainerName,
+          item.supervisorName,
+          item.currentRating,
+          item.evaluationComment
+        ].some(value =>
+          String(value ?? '').toLowerCase().includes(query)
+        )
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.savedAt ?? 0).getTime() -
+          new Date(a.savedAt ?? 0).getTime()
+      );
+  }
+
+  showSupervisorsView(): void {
+    this.activeView = 'supervisors';
+  }
+
+  showEvaluationHistory(): void {
+    this.activeView = 'evaluations';
+  }
+
+  // فتح التقييم المحفوظ في نافذة التعديل
+  editSavedEvaluation(evaluation: any): void {
+    const supervisor = this.supervisors.find(
+      item => item.supervisorId === Number(evaluation.supervisorId)
     );
 
+    if (!supervisor) {
+      this.showToast(
+        'error',
+        'تعذر العثور على المشرف المرتبط بهذا التقييم'
+      );
+      return;
+    }
 
-    supervisor.showMenu =
-      !supervisor.showMenu;
+    this.selectedSupervisor = supervisor;
 
+    this.supervisorTrainers = [{
+      id: Number(evaluation.trainerId),
+      name: String(evaluation.trainerName ?? 'مدرب'),
+      color: this.avatarColors[0],
+      initials: this.initials(
+        String(evaluation.trainerName ?? 'مدرب')
+      ),
+      track: 'مدرب',
+      currentRating: String(evaluation.currentRating ?? ''),
+      explanationClarity: this.toEvaluationScore(
+        evaluation.explanationClarity
+      ),
+      interactionAndSupport: this.toEvaluationScore(
+        evaluation.interactionAndSupport
+      ),
+      evaluationComment: String(
+        evaluation.evaluationComment ?? ''
+      )
+    }];
+
+    this.editingSavedEvaluation = true;
+    this.isEvaluationModalOpen = true;
+    this.evaluationLoading = false;
   }
 
+  formatEvaluationDate(value: string | undefined): string {
+    if (!value) {
+      return 'غير محدد';
+    }
 
-  // =========================================================
-  // تعديل المشرف
-  // =========================================================
+    const date = new Date(value);
 
-  editSupervisor(
-    supervisor: Supervisor
-  ): void {
-
-    this.selectedSupervisor =
-      supervisor;
-
-    this.editingSupervisor =
-      true;
-
-    this.showAddModal =
-      true;
-
-    this.newSupervisor = {
-
-      fullName:
-        supervisor.fullName,
-
-      department:
-        supervisor.department,
-
-      position:
-        supervisor.position,
-
-      email:
-        supervisor.email,
-
-      phone:
-        supervisor.phone,
-
-      isInactive:
-        supervisor.isInactive ??
-        false
-
-    };
-
-
-    supervisor.showMenu =
-      false;
-
+    return Number.isNaN(date.getTime())
+      ? 'غير محدد'
+      : date.toLocaleString('ar-OM');
   }
 
+  // قراءة التقييمات الحالية والسابقة من التخزين المحلي
+  private readLocalEvaluations(): any[] {
+    try {
+      const current = JSON.parse(
+        localStorage.getItem('company_supervisor_evaluations') || '[]'
+      );
 
-  // =========================================================
-  // إضافة مشرف
-  // =========================================================
+      const legacy = JSON.parse(
+        localStorage.getItem('nafadh_company_supervisor_evaluations') || '[]'
+      );
 
-  openAddModal(): void {
+      const records = [
+        ...(Array.isArray(current) ? current : []),
+        ...(Array.isArray(legacy) ? legacy : [])
+      ];
 
-    this.editingSupervisor =
-      false;
+      const unique = new Map<string, any>();
 
-    this.selectedSupervisor =
-      null;
+      records.forEach(item => {
+        const key =
+          `${Number(item.trainerId)}-${Number(item.supervisorId)}`;
 
-    this.showAddModal =
-      true;
+        const previous = unique.get(key);
 
-    this.newSupervisor = {
+        if (
+          !previous ||
+          new Date(item.savedAt ?? 0).getTime() >=
+          new Date(previous.savedAt ?? 0).getTime()
+        ) {
+          unique.set(key, item);
+        }
+      });
 
-      fullName: '',
-
-      department:
-        'تقنية المعلومات',
-
-      position:
-        'مشرف تقنية المعلومات',
-
-      email: '',
-
-      phone: '',
-
-      isInactive: false
-
-    };
-
+      return Array.from(unique.values());
+    } catch (error) {
+      console.warn('Could not read local trainer evaluations:', error);
+      return [];
+    }
   }
 
+  // حفظ التقييم أو تحديث التقييم السابق
+  saveTrainerEvaluation(trainer: EvaluationTrainer): void {
+    if (!this.selectedSupervisor || !trainer.currentRating) {
+      this.showToast(
+        'error',
+        'يرجى اختيار التقييم العام أولاً'
+      );
+      return;
+    }
 
-  // =========================================================
-  // إغلاق Modal
-  // =========================================================
-
-  closeAddModal(): void {
-
-    this.showAddModal =
-      false;
-
-    this.editingSupervisor =
-      false;
-
-    this.selectedSupervisor =
-      null;
-
-  }
-
-
-  // =========================================================
-  // حفظ الإضافة / التعديل
-  // =========================================================
-
-  submitSupervisor(): void {
+    const clarity = Number(trainer.explanationClarity);
+    const interaction = Number(trainer.interactionAndSupport);
 
     if (
-      !this.newSupervisor.fullName.trim()
+      !Number.isFinite(clarity) ||
+      clarity < 1 ||
+      clarity > 5 ||
+      !Number.isFinite(interaction) ||
+      interaction < 1 ||
+      interaction > 5
     ) {
+      this.showToast(
+        'error',
+        'يرجى إدخال درجات صحيحة من 1 إلى 5'
+      );
+      return;
+    }
+
+    const supervisor = this.selectedSupervisor;
+    const averageRating = Number(
+      ((clarity + interaction) / 2).toFixed(2)
+    );
+    const savedAt = new Date().toISOString();
+
+    const evaluation = {
+      trainerId: trainer.id,
+      trainerName: trainer.name,
+      supervisorId: supervisor.supervisorId,
+      supervisorName: supervisor.fullName,
+      currentRating: trainer.currentRating,
+      explanationClarity: clarity,
+      interactionAndSupport: interaction,
+      averageRating,
+      evaluationComment: String(
+        trainer.evaluationComment ?? ''
+      ).trim(),
+      savedAt
+    };
+
+    try {
+      // تحديث التقييم الموجود أو إضافة تقييم جديد
+      const evaluations = this.readLocalEvaluations();
+
+      const existingIndex = evaluations.findIndex(item =>
+        Number(item.trainerId) === trainer.id &&
+        Number(item.supervisorId) === supervisor.supervisorId
+      );
+
+      if (existingIndex >= 0) {
+        evaluations[existingIndex] = evaluation;
+      } else {
+        evaluations.unshift(evaluation);
+      }
+
+      localStorage.setItem(
+        'company_supervisor_evaluations',
+        JSON.stringify(evaluations)
+      );
+
+      localStorage.setItem(
+        'nafadh_company_supervisor_evaluations',
+        JSON.stringify(evaluations)
+      );
+
+      // إضافة سجل نشاط منفصل دون الانتقال إلى صفحة سجل النشاطات
+      const key = 'company_supervisor_activities';
+
+      let previous: unknown;
+
+      try {
+        previous = JSON.parse(localStorage.getItem(key) || '[]');
+      } catch {
+        previous = [];
+      }
+
+      const activities = Array.isArray(previous)
+        ? previous as any[]
+        : [];
+
+      activities.unshift({
+        message:
+          `تم تقييم المدرب (${trainer.name}) بتقدير: ` +
+          `[${trainer.currentRating}] بواسطة المشرف: ` +
+          `(${supervisor.fullName})`,
+        date: new Date(savedAt).toLocaleString('ar-OM'),
+        type: 'evaluation',
+        ...evaluation
+      });
+
+      localStorage.setItem(
+        key,
+        JSON.stringify(activities)
+      );
+
+      this.editingSavedEvaluation = false;
+
+      this.showToast(
+        'success',
+        'تم حفظ التقييم بنجاح. يمكنك مراجعته وتعديله من تبويب سجل التقييمات.'
+      );
+
+      // تبقى نافذة التقييم مفتوحة ولا يتم الانتقال لسجل النشاطات
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Evaluation local save failed:', error);
 
       this.showToast(
         'error',
-        'يرجى إدخال اسم المشرف'
+        'تعذر حفظ التقييم في التخزين المحلي'
       );
+    }
+  }
 
+  // قائمة خيارات المشرف
+  toggleDropdown(s: Supervisor, event?: MouseEvent): void {
+    event?.stopPropagation();
+
+    this.supervisors.forEach(item => {
+      if (item !== s) {
+        item.showMenu = false;
+      }
+    });
+
+    s.showMenu = !s.showMenu;
+  }
+
+  // تعديل بيانات المشرف
+  editSupervisor(s: Supervisor): void {
+    this.selectedSupervisor = s;
+    this.editingSupervisor = true;
+    this.showAddModal = true;
+
+    this.newSupervisor = {
+      fullName: s.fullName,
+      department: s.department,
+      position: s.position,
+      email: s.email,
+      phone: s.phone,
+      isInactive: s.isInactive ?? false
+    };
+
+    s.showMenu = false;
+  }
+
+  // فتح نافذة إضافة مشرف
+  openAddModal(): void {
+    this.editingSupervisor = false;
+    this.selectedSupervisor = null;
+    this.showAddModal = true;
+
+    this.newSupervisor = {
+      fullName: '',
+      department: 'تقنية المعلومات',
+      position: 'مشرف تقنية المعلومات',
+      email: '',
+      phone: '',
+      isInactive: false
+    };
+  }
+
+  closeAddModal(): void {
+    this.showAddModal = false;
+    this.editingSupervisor = false;
+    this.selectedSupervisor = null;
+  }
+
+  // إضافة مشرف أو حفظ تعديلاته
+  submitSupervisor(): void {
+    if (!this.newSupervisor.fullName.trim()) {
+      this.showToast('error', 'يرجى إدخال اسم المشرف');
       return;
-
     }
 
+    const dto = {
+      fullName: this.newSupervisor.fullName,
+      phone: this.newSupervisor.phone,
+      email: this.newSupervisor.email,
+      department: this.newSupervisor.department,
+      position: this.newSupervisor.position,
+      companyId: this.companyId,
+      status: this.newSupervisor.isInactive ? 'Inactive' : 'Active'
+    };
 
-    if (
-      this.editingSupervisor &&
-      this.selectedSupervisor
-    ) {
+    const editing =
+      this.editingSupervisor && !!this.selectedSupervisor;
 
-      const id =
-        this.selectedSupervisor
-          .supervisorId;
-
-
-      const dto = {
-
-        fullName:
-          this.newSupervisor.fullName,
-
-        phone:
-          this.newSupervisor.phone,
-
-        email:
-          this.newSupervisor.email,
-
-        department:
-          this.newSupervisor.department,
-
-        position:
-          this.newSupervisor.position,
-
-        status:
-          this.newSupervisor.isInactive
-            ? 'Inactive'
-            : 'Active',
-
-        companyId:
-          this.companyId
-
-      };
-
-
-      this.companyApi
-        .updateSupervisor(
-          id,
+    const request = editing
+      ? this.companyApi.updateSupervisor(
+          this.selectedSupervisor!.supervisorId,
           dto
         )
-        .subscribe({
+      : this.companyApi.addSupervisor(dto);
 
-          next: () => {
+    request.subscribe({
+      next: () => {
+        this.showToast(
+          'success',
+          editing
+            ? 'تم تحديث بيانات المشرف بنجاح'
+            : 'تمت إضافة المشرف بنجاح'
+        );
 
-            this.showToast(
-              'success',
-              'تم تحديث بيانات المشرف بنجاح'
-            );
+        this.closeAddModal();
+        this.loadSupervisors();
+      },
 
-            this.closeAddModal();
+      error: (error: unknown) => {
+        console.error('Supervisor save error:', error);
 
-            this.loadSupervisors();
-
-          },
-
-          error: (error) => {
-
-            console.error(
-              'Update supervisor error:',
-              error
-            );
-
-            this.showToast(
-              'error',
-              'تعذر تحديث بيانات المشرف'
-            );
-
-          }
-
-        });
-
-
-      return;
-
-    }
-
-
-    const dto = {
-
-      fullName:
-        this.newSupervisor.fullName,
-
-      phone:
-        this.newSupervisor.phone,
-
-      email:
-        this.newSupervisor.email,
-
-      department:
-        this.newSupervisor.department,
-
-      position:
-        this.newSupervisor.position,
-
-      companyId:
-        this.companyId,
-
-      status:
-        'Active'
-
-    };
-
-
-    this.companyApi
-      .addSupervisor(dto)
-      .subscribe({
-
-        next: () => {
-
-          this.showToast(
-            'success',
-            'تمت إضافة المشرف بنجاح'
-          );
-
-          this.closeAddModal();
-
-          this.loadSupervisors();
-
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Add supervisor error:',
-            error
-          );
-
-          this.showToast(
-            'error',
-            'تعذر إضافة المشرف'
-          );
-
-        }
-
-      });
-
+        this.showToast(
+          'error',
+          editing
+            ? 'تعذر تحديث بيانات المشرف'
+            : 'تعذر إضافة المشرف'
+        );
+      }
+    });
   }
 
-
-  // =========================================================
-  // تجميد / تنشيط
-  // =========================================================
-
-  toggleStatus(
-    supervisor: Supervisor
-  ): void {
-
-    const id =
-      supervisor.supervisorId;
-
-
-    const newStatus =
-      supervisor.isInactive
-        ? 'Active'
-        : 'Inactive';
-
-
+  // تجميد الحساب أو تنشيطه
+  toggleStatus(s: Supervisor): void {
     const dto = {
-
-      fullName:
-        supervisor.fullName,
-
-      phone:
-        supervisor.phone,
-
-      email:
-        supervisor.email,
-
-      department:
-        supervisor.department,
-
-      position:
-        supervisor.position,
-
-      status:
-        newStatus,
-
-      companyId:
-        supervisor.companyId ??
-        this.companyId,
-
-      userId:
-        supervisor.userId
-
+      fullName: s.fullName,
+      phone: s.phone,
+      email: s.email,
+      department: s.department,
+      position: s.position,
+      status: s.isInactive ? 'Active' : 'Inactive',
+      companyId: s.companyId ?? this.companyId,
+      userId: s.userId
     };
 
+    this.companyApi.updateSupervisor(
+      s.supervisorId,
+      dto
+    ).subscribe({
+      next: () => {
+        this.showToast(
+          'success',
+          s.isInactive
+            ? 'تم تنشيط الحساب بنجاح'
+            : 'تم تجميد الحساب بنجاح'
+        );
 
-    this.companyApi
-      .updateSupervisor(
-        id,
-        dto
-      )
-      .subscribe({
+        this.loadSupervisors();
+      },
 
-        next: () => {
+      error: (error: unknown) => {
+        console.error('Toggle status error:', error);
+        this.showToast('error', 'تعذر تغيير حالة الحساب');
+      }
+    });
 
-          this.showToast(
-            'success',
-            supervisor.isInactive
-              ? 'تم تنشيط الحساب'
-              : 'تم تجميد الحساب'
-          );
-
-          this.loadSupervisors();
-
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Toggle status error:',
-            error
-          );
-
-          this.showToast(
-            'error',
-            'تعذر تغيير حالة الحساب'
-          );
-
-        }
-
-      });
-
-
-    supervisor.showMenu =
-      false;
-
+    s.showMenu = false;
   }
 
-
-  // =========================================================
-  // حذف
-  // =========================================================
-
-  deleteSupervisor(
-    supervisor: Supervisor
-  ): void {
-
-    const id =
-      supervisor.supervisorId;
-
-
-    const confirmed =
-      confirm(
-        `هل أنت متأكد من حذف المشرف ${supervisor.fullName}؟`
-      );
-
-
-    if (!confirmed) {
+  // حذف المشرف
+  deleteSupervisor(s: Supervisor): void {
+    if (!confirm(`هل أنت متأكد من حذف المشرف ${s.fullName}؟`)) {
       return;
     }
 
+    this.companyApi.deleteSupervisor(s.supervisorId).subscribe({
+      next: () => {
+        this.showToast('success', 'تم حذف المشرف بنجاح');
+        this.loadSupervisors();
+      },
 
-    this.companyApi
-      .deleteSupervisor(id)
-      .subscribe({
+      error: (error: unknown) => {
+        console.error('Delete supervisor error:', error);
+        this.showToast('error', 'تعذر حذف المشرف');
+      }
+    });
 
-        next: () => {
-
-          this.showToast(
-            'success',
-            'تم حذف المشرف بنجاح'
-          );
-
-          this.loadSupervisors();
-
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Delete supervisor error:',
-            error
-          );
-
-          this.showToast(
-            'error',
-            'تعذر حذف المشرف'
-          );
-
-        }
-
-      });
-
-
-    supervisor.showMenu =
-      false;
-
+    s.showMenu = false;
   }
 
-
-  // =========================================================
   // فتح نافذة توزيع المدربين
-  // =========================================================
-
-  distributionLoading = false;
-
-  openDistributeModal(supervisor: Supervisor): void {
-    this.selectedSupervisor = supervisor;
+  openDistributeModal(s: Supervisor): void {
+    this.selectedSupervisor = s;
     this.isDistributeModalOpen = true;
     this.distributionLoading = true;
     this.traineesList = [];
+    s.showMenu = false;
 
-    supervisor.showMenu = false;
+    const selected = this.distributionMap[s.supervisorId] ?? [];
 
-    const supervisorId = supervisor.supervisorId;
+    this.companyApi.getCompanyTrainers(this.companyId).subscribe({
+      next: (response: any) => {
+        this.traineesList = this.normalizeTrainers(response)
+          .map((item, index): Trainee => {
+            const id = this.trainerId(item);
+            const name = this.trainerName(item);
 
-    // الاحتفاظ بالاختيارات السابقة خلال الجلسة
-    const previouslySelected =
-      this.distributionMap[supervisorId] ?? [];
-
-    // جلب مدربي الشركة بدلاً من المتدربين
-    this.companyApi
-      .getCompanyTrainers(this.companyId)
-      .subscribe({
-        next: (response: any) => {
-          // التعامل مع استجابة عبارة عن قائمة مباشرة
-          // أو قائمة داخل خاصية معروفة
-          const data = Array.isArray(response)
-            ? response
-            : Array.isArray(response?.items)
-              ? response.items
-              : Array.isArray(response?.data)
-                ? response.data
-                : Array.isArray(response?.trainers)
-                  ? response.trainers
-                  : [];
-
-          this.traineesList = data
-            .map((item: any, index: number) => {
-              const id = Number(
-                item.trainerId ??
-                item.TrainerId ??
-                item.id ??
-                item.Id
-              );
-
-              const name =
-                item.fullName ??
-                item.FullName ??
-                item.trainerName ??
-                item.TrainerName ??
-                item.name ??
-                item.Name ??
-                '';
-
-              return {
-                id,
-                name,
-                email:
-                  item.email ??
-                  item.Email ??
-                  '',
-                assigned:
-                  previouslySelected.includes(id),
-                color:
-                  this.avatarColors[
-                    index % this.avatarColors.length
-                  ],
-                initials: this.initials(name),
-                track:
-                  item.specialty ??
-                  item.Specialty ??
-                  item.program ??
-                  item.Program ??
-                  'مدرب',
-                batch:
-                  item.department ??
-                  item.Department ??
-                  ''
-              } as Trainee;
-            })
-            .filter(
-              (trainer: Trainee) =>
-                Number.isFinite(trainer.id) &&
-                trainer.id > 0 &&
-                trainer.name.trim().length > 0
-            );
-
-          this.distributionLoading = false;
-
-          if (this.traineesList.length === 0) {
-            this.showToast(
-              'info',
-              'لم يتم العثور على مدربين. تحقق من بيانات الاستجابة.'
-            );
-          }
-
-          this.cdr.detectChanges();
-        },
-
-        error: (error) => {
-          console.error(
-            'Error loading company trainers:',
-            error
+            return {
+              id,
+              name,
+              email: item.email ?? item.Email ?? '',
+              assigned: selected.includes(id),
+              color: this.avatarColors[index % this.avatarColors.length],
+              initials: this.initials(name),
+              track:
+                item.specialty ??
+                item.Specialty ??
+                item.program ??
+                item.Program ??
+                'مدرب',
+              batch: item.department ?? item.Department ?? ''
+            };
+          })
+          .filter(
+            t => Number.isFinite(t.id) &&
+              t.id > 0 &&
+              !!t.name.trim()
           );
 
-          this.traineesList = [];
-          this.distributionLoading = false;
+        this.distributionLoading = false;
+        this.cdr.detectChanges();
+      },
 
-          this.showToast(
-            'error',
-            'تعذر تحميل المدربين. تحقق من استجابة API.'
-          );
+      error: (error: unknown) => {
+        console.error('Error loading company trainers:', error);
 
-          this.cdr.detectChanges();
-        }
-      });
+        this.distributionLoading = false;
+        this.traineesList = [];
+
+        this.showToast('error', 'تعذر تحميل قائمة المدربين');
+        this.cdr.detectChanges();
+      }
+    });
   }
-
-
-
-  // =========================================================
-  // إغلاق توزيع المتدربين
-  // =========================================================
 
   closeDistributeModal(): void {
-
-    this.isDistributeModalOpen =
-      false;
-
-    this.selectedSupervisor =
-      null;
-
+    this.isDistributeModalOpen = false;
+    this.selectedSupervisor = null;
     this.traineesList = [];
-
   }
-
-
-  // =========================================================
-  // عدد المتدربين المحددين
-  // =========================================================
 
   get selectedAssignedCount(): number {
-
-    return this.traineesList
-      .filter(
-        trainee =>
-          trainee.assigned
-      )
-      .length;
-
+    return this.traineesList.filter(t => t.assigned).length;
   }
-
-
-  // =========================================================
-  // هل الكل محدد؟
-  // =========================================================
 
   get allTraineesSelected(): boolean {
-
-    return (
-      this.traineesList.length > 0 &&
-      this.traineesList.every(
-        trainee =>
-          trainee.assigned
-      )
-    );
-
+    return this.traineesList.length > 0 &&
+      this.traineesList.every(t => t.assigned);
   }
-
-
-  // =========================================================
-  // تحديد / إلغاء تحديد الكل
-  // =========================================================
 
   toggleAllTrainees(): void {
+    const value = !this.allTraineesSelected;
 
-    const newValue =
-      !this.allTraineesSelected;
-
-
-    this.traineesList.forEach(
-      trainee => {
-
-        trainee.assigned =
-          newValue;
-
-      }
-    );
-
+    this.traineesList.forEach(t => {
+      t.assigned = value;
+    });
   }
 
-
-  // =========================================================
-  // حفظ التوزيع
-  // =========================================================
-
+  // حفظ توزيع المدربين عبر API
   saveDistribution(): void {
-
-    if (
-      !this.selectedSupervisor
-    ) {
-
+    if (!this.selectedSupervisor || this.distributionLoading) {
       return;
-
     }
 
+    const supervisor = this.selectedSupervisor;
+    const id = supervisor.supervisorId;
 
-    const supervisorId =
-      this.selectedSupervisor
-        .supervisorId;
+    const selectedIds = this.traineesList
+      .filter(t => t.assigned)
+      .map(t => t.id);
 
+    this.distributionLoading = true;
 
-    const selectedTrainees =
-      this.traineesList
-        .filter(
-          trainee =>
-            trainee.assigned
-        )
-        .map(
-          trainee =>
-            trainee.id
+    this.companyApi.assignTrainersToSupervisor(
+      id,
+      selectedIds
+    ).subscribe({
+      next: () => {
+        this.distributionMap[id] = [...selectedIds];
+
+        if (supervisor.stats) {
+          supervisor.stats.assignedTrainees = selectedIds.length;
+        }
+
+        this.calculateStatistics();
+
+        this.showToast(
+          'success',
+          'تم حفظ توزيع المدربين في الباك إند بنجاح'
         );
 
+        this.closeDistributeModal();
+        this.distributionLoading = false;
+        this.cdr.detectChanges();
+      },
 
-    this.distributionMap[
-      supervisorId
-    ] = selectedTrainees;
+      error: (error: unknown) => {
+        console.error('Backend distribution save failed:', error);
 
+        this.distributionLoading = false;
 
-    this.showToast(
-      'success',
-      'تم حفظ توزيع المتدربين'
-    );
+        this.showToast(
+          'error',
+          'فشل حفظ التوزيع في قاعدة البيانات، لم يتم اعتماد التغيير'
+        );
 
-
-    this.closeDistributeModal();
-
+        this.cdr.detectChanges();
+      }
+    });
   }
 
-
-  // =========================================================
-  // الحضور
-  // =========================================================
-
-  getAttendanceValue(
-    value: number | undefined
-  ): number {
-
-    if (
-      value === undefined ||
-      value === null ||
-      Number.isNaN(value)
-    ) {
-
-      return 0;
-
-    }
-
-
-    return Math.max(
-      0,
-      Math.min(
-        100,
-        Number(value)
-      )
-    );
-
+  getAttendanceValue(value?: number): number {
+    return Number.isFinite(Number(value))
+      ? Math.max(0, Math.min(100, Number(value)))
+      : 0;
   }
 
+  getAttendanceClass(value?: number): string {
+    const n = Number(value ?? 0);
 
-  // =========================================================
-  // لون الحضور
-  // =========================================================
-
-  getAttendanceClass(
-    value: number | undefined
-  ): string {
-
-    const attendance =
-      Number(value ?? 0);
-
-
-    if (
-      attendance >= 90
-    ) {
-
-      return 'attendance-good';
-
-    }
-
-
-    if (
-      attendance >= 70
-    ) {
-
-      return 'attendance-medium';
-
-    }
-
-
-    return 'attendance-low';
-
+    return n >= 90
+      ? 'excellent'
+      : n >= 70
+        ? 'warning'
+        : 'danger';
   }
 
-
-  // =========================================================
-  // Toast
-  // =========================================================
-
-  showToast(
-    type: 'success' | 'error' | 'info',
-    message: string
-  ): void {
+  // رسائل التنبيه
+  showToast(type: ToastType, message: string): void {
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
 
     this.toast = {
-
       visible: true,
-
       type,
-
       message
-
     };
 
-
-    setTimeout(() => {
-
-      this.toast.visible =
-        false;
-
+    this.toastTimer = setTimeout(() => {
+      this.toast.visible = false;
+      this.cdr.detectChanges();
     }, 3000);
-
   }
-
-
-  // =========================================================
-  // إخفاء Toast
-  // =========================================================
 
   hideToast(): void {
-
-    this.toast.visible =
-      false;
-
-  }
-
-
-  // =========================================================
-  // إغلاق القوائم عند الضغط خارجها
-  // =========================================================
-
-  @HostListener(
-    'document:click',
-    ['$event']
-  )
-  onDocumentClick(
-    event: MouseEvent
-  ): void {
-
-    const target =
-      event.target as HTMLElement;
-
-
-    if (
-      !target.closest(
-        '.dropdown-container'
-      )
-    ) {
-
-      this.supervisors.forEach(
-        supervisor => {
-
-          supervisor.showMenu =
-            false;
-
-        }
-      );
-
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
     }
 
+    this.toast.visible = false;
   }
-
 }

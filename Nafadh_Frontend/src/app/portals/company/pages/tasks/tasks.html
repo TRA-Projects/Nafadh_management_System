@@ -1,5 +1,5 @@
 <section class="tasks-page" dir="rtl">
-  <header class="page-head">
+  <header class="page-head" data-guide="company-tasks-header">
     <div>
       <h2>المهام والمشروعات</h2>
       <p>
@@ -19,7 +19,7 @@
   </header>
 
   @if (!loading() && !error()) {
-    <div class="stats-grid">
+    <div class="stats-grid" data-guide="company-tasks-stats">
       <article class="stat-card">
         <div class="stat-icon bg-blue">
           <i class="fa-solid fa-diagram-project"></i>
@@ -106,6 +106,7 @@
     <!-- Filters -->
     <div
       class="chips"
+      data-guide="company-tasks-filters"
       role="group"
       aria-label="تصفية الخطط والكورسات">
 
@@ -145,7 +146,7 @@
           </span>
         </div>
 
-        <div class="plan-grid">
+        <div class="plan-grid" data-guide="company-tasks-approved">
           @for (
             course of visibleApprovedCourses();
             track trackCourse($index, course)
@@ -234,7 +235,7 @@
 
     <!-- Course Plans -->
     @if (filtered().length) {
-      <div class="plan-grid">
+      <div class="plan-grid" data-guide="company-tasks-list">
         @for (
           plan of pagedPlans();
           track trackPlan($index, plan)

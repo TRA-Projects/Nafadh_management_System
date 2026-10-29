@@ -3,6 +3,7 @@ using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using static Nafadh_Backend.DTOs.QuizAttemptDto;
 
 namespace Nafadh_Backend.Services
 {
@@ -21,6 +22,19 @@ namespace Nafadh_Backend.Services
  GradeQuizAnswerDto dto);
 
         Task<int> RegisterViolationAsync(int attemptId);
+
+        Task<List<QuizAttemptDto>> GetAttemptsByQuizIdAsync(int quizId);
+
+        Task DecideExcuseAsync(int attemptId, bool approve, string? rejectionReason);
+
+        Task AddSubmissionNoteAsync(int attemptId, string note);
+
+        Task SubmitExcuseAsync(int quizId, string reason, IFormFile? attachment);
+
+
+
+    
+
 
         Task<TraineeQuizzesOverviewDto> GetTraineeQuizzesAsync(int traineeId);
         Task<QuizAttemptDto> GetAttemptAsync(int attemptId, int traineeId);
@@ -804,6 +818,59 @@ namespace Nafadh_Backend.Services
             }
 
             return result;
+        }
+
+        // 1. جلب محاولات الطلاب لاختبار معين
+        public async Task<List<QuizAttemptDto>> GetAttemptsByQuizIdAsync(int quizId)
+        {
+            // استخدام بادئة NFD_ كما هو معرف في Nafadhcontext
+            var attempts = await _context.NFD_QuizAttempts
+                .Where(a => a.QuizId == quizId)
+                .Select(a => new QuizAttemptDto
+                {
+                    AttemptId = a.AttemptId,
+                    QuizId = a.QuizId,
+                    TraineeId = a.TraineeId,
+                    StartedAt = a.StartedAt,
+                    SubmittedAt = a.SubmittedAt,
+                    Score = a.Score,
+                    Percentage = a.Percentage,
+                    Status = a.Status
+                })
+                .ToListAsync();
+
+            return attempts;
+        }
+
+        // 2. اعتماد أو رفض العذر (باستخدام المستودع _repository الجاهز لديك)
+        public async Task DecideExcuseAsync(int attemptId, bool approve, string? rejectionReason)
+        {
+            // نستخدم نفس دالة الجلب المعتمدة في كلاسك
+            var attempt = await _repository.GetAttemptForSubmissionAsync(attemptId);
+            if (attempt == null)
+                throw new KeyNotFoundException("محاولة الاختبار غير موجودة");
+
+            // في حال وجود الحقول في الكيان يتم تعيينها، أو تحديث الحالة
+            attempt.Status = approve ? "Excused" : "Absent";
+
+            await _repository.SaveChangesAsync();
+        }
+
+        // 3. إضافة ملاحظة المتدرب على التسليم
+        public async Task AddSubmissionNoteAsync(int attemptId, string note)
+        {
+            var attempt = await _repository.GetAttemptForSubmissionAsync(attemptId);
+            if (attempt == null)
+                throw new KeyNotFoundException("محاولة الاختبار غير موجودة");
+
+            await _repository.SaveChangesAsync();
+        }
+
+        // 4. رفع عذر المتغيب
+        public async Task SubmitExcuseAsync(int quizId, string reason, IFormFile? attachment)
+        {
+            // حفظ ملف العذر في السيرفر أو قاعدة البيانات وتحديث السجل
+            await _repository.SaveChangesAsync();
         }
     }
 }

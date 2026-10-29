@@ -2,7 +2,7 @@
 
     <!-- Header -->
 
-    <header class="head">
+    <header class="head" data-guide="company-attendance-header">
 
         <div class="head-text">
 
@@ -14,7 +14,7 @@
 
         <div class="head-actions">
 
-            <div class="export-actions">
+            <div class="export-actions" data-guide="company-attendance-export">
                 <div class="export-group">
                     <button type="button" class="btn ghost" (click)="toggleExportMenu('week')"
                         [attr.aria-expanded]="exportMenu() === 'week'">تصدير السجل الأسبوعي ▾</button>
@@ -59,7 +59,7 @@
 
         <div class="top">
 
-            <div class="tabs">
+            <div class="tabs" data-guide="company-attendance-tabs">
 
                 <button type="button" [class.active]="view() === 'day'" (click)="setView('day')">سجل اليوم</button>
 
@@ -73,7 +73,7 @@
 
             @if (view() === 'day') {
 
-            <div class="stats">
+            <div class="stats" data-guide="company-attendance-day-stats">
 
                 <span class="stat"><i class="dot blue"></i>حاضر <strong>{{ counts().Present }}</strong></span>
 
@@ -103,14 +103,15 @@
 
             <h3>سجل حضور اليوم — {{ todayLabel }}</h3>
 
-            <div class="daily-confirm-actions">
+            <div class="daily-confirm-actions" data-guide="company-attendance-confirm">
                 @if (isConfirmed()) {
-                    <span class="hint">تم تأكيد السجل ولا يمكن تعديله</span>
+                <span class="hint">تم تأكيد السجل ولا يمكن تعديله</span>
                 }
 
                 <button type="button" class="btn primary confirm-day-btn" [disabled]="!canConfirm()"
                     [title]="'سيتم حفظ الحضور الافتراضي للمدربين غير المسجلين قبل التأكيد'"
-                    (click)="showConfirmPopover.set(!showConfirmPopover())" [attr.aria-expanded]="showConfirmPopover()" aria-controls="attendance-confirm-popover">
+                    (click)="showConfirmPopover.set(!showConfirmPopover())" [attr.aria-expanded]="showConfirmPopover()"
+                    aria-controls="attendance-confirm-popover">
 
                     {{ isConfirmed() ? 'تم تأكيد سجل اليوم' : 'تأكيد سجل اليوم' }}
 
@@ -125,14 +126,16 @@
 
                 </button>
                 @if (showConfirmPopover() && !isConfirmed()) {
-                    <div id="attendance-confirm-popover" class="attendance-confirm-popover" role="dialog" aria-modal="false" aria-labelledby="attendance-confirm-title" dir="rtl">
-                        <strong id="attendance-confirm-title">هل أنت متأكد من تأكيد الحضور؟</strong>
-                        <p>بعد التأكيد لن تتمكن من تعديل سجل اليوم.</p>
-                        <div class="attendance-confirm-popover-actions">
-                            <button type="button" class="btn ghost" (click)="showConfirmPopover.set(false)">إلغاء</button>
-                            <button type="button" class="btn primary" [disabled]="!canConfirm()" (click)="confirmDay()">نعم، تأكيد الحضور</button>
-                        </div>
+                <div id="attendance-confirm-popover" class="attendance-confirm-popover" role="dialog" aria-modal="false"
+                    aria-labelledby="attendance-confirm-title" dir="rtl">
+                    <strong id="attendance-confirm-title">هل أنت متأكد من تأكيد الحضور؟</strong>
+                    <p>بعد التأكيد لن تتمكن من تعديل سجل اليوم.</p>
+                    <div class="attendance-confirm-popover-actions">
+                        <button type="button" class="btn ghost" (click)="showConfirmPopover.set(false)">إلغاء</button>
+                        <button type="button" class="btn primary" [disabled]="!canConfirm()" (click)="confirmDay()">نعم،
+                            تأكيد الحضور</button>
                     </div>
+                </div>
                 }
             </div>
 
@@ -168,7 +171,7 @@
 
         <!-- Daily table -->
 
-        <div class="table-wrap">
+        <div class="table-wrap" data-guide="company-attendance-day-table">
 
             <table>
 
@@ -176,7 +179,7 @@
 
                     <tr>
 
-                        <th class="trainer-filter-heading">
+                        <th class="trainer-filter-heading" data-guide="company-attendance-trainer-filter">
                             <div class="trainer-filter-header">
                                 <span>المدرب</span>
                                 <details class="trainer-filter-menu" #trainerFilterMenu>
@@ -191,11 +194,9 @@
                                         }
                                     </summary>
                                     <div class="trainer-filter-panel" [style.top.px]="trainerFilterTop()"
-                                        [style.left.px]="trainerFilterLeft()"
-                                        (click)="$event.stopPropagation()">
-                                        <input type="search" class="trainer-filter-search"
-                                            placeholder="ابحث عن مدرب..." [ngModel]="trainerSearch()"
-                                            (ngModelChange)="trainerSearch.set($event)" />
+                                        [style.left.px]="trainerFilterLeft()" (click)="$event.stopPropagation()">
+                                        <input type="search" class="trainer-filter-search" placeholder="ابحث عن مدرب..."
+                                            [ngModel]="trainerSearch()" (ngModelChange)="trainerSearch.set($event)" />
                                         <div class="trainer-filter-options">
                                             <button type="button" class="all-trainers-option"
                                                 [class.selected]="selectedDayTrainerId() === null"
@@ -237,17 +238,12 @@
 
                             <div class="person">
 
-                                @if ($any(row.trainer).profileImageUrl) {
-
-                                <img class="avatar img" [src]="fileUrl($any(row.trainer).profileImageUrl)"
-                                    [alt]="row.trainer.fullName" />
-
+                                @if (trainerImageUrl(row.trainer) && !failedTrainerImages().includes(row.trainer.trainerId)) {
+                                <img class="avatar img" [src]="trainerImageUrl(row.trainer)"
+                                    [alt]="'صورة ' + (row.trainer.fullName || 'المدرب')"
+                                    loading="lazy" (error)="markTrainerImageFailed(row.trainer.trainerId)" />
                                 } @else {
-
-                                <span class="avatar" [style.background]="row.color">{{ initials(row.trainer.fullName) }}
-
-                                </span>
-
+                                <span class="avatar" [style.background]="row.color">{{ initials(row.trainer.fullName) }}</span>
                                 }
 
                                 <div>
@@ -268,7 +264,7 @@
 
                             <div class="status-cell">
 
-                                <div class="segments">
+                                <div class="segments" [attr.data-guide]="$first ? 'company-attendance-status' : null">
 
                                     @for (state of states; track state.key) {
 
@@ -315,7 +311,7 @@
 
                         </td>
 
-                        <td>
+                        <td [attr.data-guide]="$first ? 'company-attendance-note' : null">
 
                             @if (canManageAttendance() && noteEditingId() === row.trainer.trainerId) {
 
@@ -350,7 +346,7 @@
 
                         </td>
 
-                        <td>
+                        <td [attr.data-guide]="$first ? 'company-attendance-proof' : null">
 
                             @if (row.record?.excuseProofUrl) {
 
@@ -408,18 +404,18 @@
 
         } @else {
 
-        <div class="monthly-summary" aria-live="polite">
+        <div class="monthly-summary" aria-live="polite" data-guide="company-attendance-month-summary">
             <span>معدل الالتزام الشهري للشركة</span>
             <strong>{{ monthlyAttendanceRate() === null ? '—' : monthlyAttendanceRate() + '%' }}</strong>
         </div>
 
-        <div class="month-weeks">
+        <div class="month-weeks" data-guide="company-attendance-month-weeks">
 
             @for (week of monthWeeks(); track week.index) {
 
             <section class="week-section">
 
-                <button type="button" class="week-toggle" [attr.aria-expanded]="selectedWeek() === week.index"
+                <button type="button" class="week-toggle" [attr.data-guide]="$first ? 'company-attendance-month-toggle' : null" [attr.aria-expanded]="selectedWeek() === week.index"
                     (click)="toggleWeek(week.index)">
 
                     <span>الأسبوع {{ ['الأول','الثاني','الثالث','الرابع','الخامس','السادس'][week.index] }}</span>
@@ -448,7 +444,7 @@
 
         <ng-template #weekTable let-week>
 
-            <div class="week-summary">
+            <div class="week-summary" [attr.data-guide]="view() === 'week' ? 'company-attendance-week-summary' : null">
 
                 <div class="stats">
 
@@ -468,7 +464,7 @@
 
                 </div>
 
-                <div class="attendance-legend">
+                <div class="attendance-legend" [attr.data-guide]="view() === 'week' ? 'company-attendance-week-legend' : null">
                     <span class="legend-item legend-present">ح = حاضر</span>
                     <span class="legend-item legend-late">ت = متأخر</span>
                     <span class="legend-item legend-absent">غ = غائب</span>
@@ -478,7 +474,7 @@
 
             </div>
 
-            <div class="table-wrap">
+            <div class="table-wrap" [attr.data-guide]="view() === 'week' ? 'company-attendance-week-table' : 'company-attendance-month-table'">
 
                 <table class="week-table">
 
@@ -493,8 +489,7 @@
                                     <details class="trainer-filter-menu" #trainerFilterMenu>
 
                                         <summary class="trainer-filter-trigger" title="تصفية حسب اسم المدرب"
-                                            aria-label="تصفية حسب اسم المدرب"
-                                            (click)="positionTrainerFilter($event)">
+                                            aria-label="تصفية حسب اسم المدرب" (click)="positionTrainerFilter($event)">
 
                                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -511,8 +506,7 @@
                                         </summary>
 
                                         <div class="trainer-filter-panel" [style.top.px]="trainerFilterTop()"
-                                            [style.left.px]="trainerFilterLeft()"
-                                            (click)="$event.stopPropagation()">
+                                            [style.left.px]="trainerFilterLeft()" (click)="$event.stopPropagation()">
 
                                             <input type="search" class="trainer-filter-search"
                                                 placeholder="ابحث عن مدرب..." aria-label="البحث عن اسم المدرب"
@@ -571,16 +565,12 @@
 
                                 <div class="person">
 
-                                    @if (row.trainer.profileImageUrl) {
-
-                                    <img class="avatar img" [src]="fileUrl(row.trainer.profileImageUrl)"
-                                        [alt]="row.trainer.fullName || 'مدرب'" />
-
+                                    @if (trainerImageUrl(row.trainer) && !failedTrainerImages().includes(row.trainer.trainerId)) {
+                                    <img class="avatar img" [src]="trainerImageUrl(row.trainer)"
+                                        [alt]="'صورة ' + (row.trainer.fullName || 'المدرب')"
+                                        loading="lazy" (error)="markTrainerImageFailed(row.trainer.trainerId)" />
                                     } @else {
-
-                                    <span class="avatar" [style.background]="row.color">{{
-                                        initials(row.trainer.fullName) }}</span>
-
+                                    <span class="avatar" [style.background]="row.color">{{ initials(row.trainer.fullName) }}</span>
                                     }
 
                                     <strong>{{ row.trainer.fullName || 'مدرب' }}</strong>
@@ -602,13 +592,16 @@
 
                                     </span>
 
-                                    @if (day.record && (day.record.status === 'Absent' || day.record.status === 'Late' || day.record.status === 'EarlyLeave') && (view() === 'week' || hasExcuse(day.record))) {
+                                    @if (day.record && (day.record.status === 'Absent' || day.record.status === 'Late'
+                                    || day.record.status === 'EarlyLeave') && (view() === 'week' ||
+                                    hasExcuse(day.record))) {
 
                                     <button type="button" class="weekly-excuse-btn"
                                         [class.has-excuse]="hasExcuse(day.record)"
                                         (click)="openWeeklyExcuse(day.record!)">
 
-                                        {{ view() === 'month' || hasExcuse(day.record) ? 'عرض السبب / الإثبات' : '+ سبب / إثبات' }}
+                                        {{ view() === 'month' || hasExcuse(day.record) ? 'عرض السبب / الإثبات' : '+ سبب
+                                        / إثبات' }}
 
                                     </button>
 
@@ -622,8 +615,7 @@
 
                             <td class="num">
 
-                                <strong class="week-rate"
-                                    [class.low]="row.rate !== null && row.rate < 100">
+                                <strong class="week-rate" [class.low]="row.rate !== null && row.rate < 100">
 
                                     {{ row.rate === null ? '—' : row.rate + '%' }}
 
@@ -686,10 +678,10 @@
 
             <div class="weekly-excuse-proof">
                 @if (excuse.excuseProofUrl) {
-                <a [href]="fileUrl(excuse.excuseProofUrl)" target="_blank"
-                    rel="noopener noreferrer">عرض الإثبات</a>
+                <a [href]="fileUrl(excuse.excuseProofUrl)" target="_blank" rel="noopener noreferrer">عرض الإثبات</a>
                 @if (weeklyExcuseEditing()) {
-                <button type="button" (click)="removeWeeklyProof()" [disabled]="weeklyExcuseSaving()">حذف الإثبات</button>
+                <button type="button" (click)="removeWeeklyProof()" [disabled]="weeklyExcuseSaving()">حذف
+                    الإثبات</button>
                 }
                 } @else {
                 <span>لم يُرفق إثبات</span>
@@ -697,8 +689,8 @@
                 @if (weeklyExcuseEditing()) {
                 <label class="weekly-excuse-upload">
                     {{ excuse.excuseProofUrl ? 'استبدال الإثبات' : '+ رفع صورة أو PDF' }}
-                    <input type="file" hidden accept=".jpg,.jpeg,.png,.webp,.pdf"
-                        [disabled]="weeklyExcuseSaving()" (change)="uploadWeeklyProof($event)" />
+                    <input type="file" hidden accept=".jpg,.jpeg,.png,.webp,.pdf" [disabled]="weeklyExcuseSaving()"
+                        (change)="uploadWeeklyProof($event)" />
                 </label>
                 }
             </div>
@@ -706,7 +698,8 @@
             @if (weeklyExcuseEditing()) {
             <div class="weekly-excuse-footer">
                 <button type="button" class="weekly-excuse-action" (click)="saveWeeklyReason()"
-                    [disabled]="weeklyExcuseSaving()">{{ weeklyExcuseSaving() ? 'جاري الحفظ...' : 'حفظ السبب' }}</button>
+                    [disabled]="weeklyExcuseSaving()">{{ weeklyExcuseSaving() ? 'جاري الحفظ...' : 'حفظ السبب'
+                    }}</button>
                 @if (hasExcuse(excuse)) {
                 <button type="button" class="weekly-excuse-cancel" (click)="cancelWeeklyExcuseEdit()"
                     [disabled]="weeklyExcuseSaving()">إلغاء التعديل</button>

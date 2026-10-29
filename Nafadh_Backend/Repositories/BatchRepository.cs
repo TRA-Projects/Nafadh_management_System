@@ -21,6 +21,7 @@ namespace Nafadh_Backend.Repositories
         public async Task<List<NFD_Batch>> GetAllAsync(int? programId, string? status, DateTime? from, DateTime? to)
         {
             var query = _context.NFD_Batches
+                .Include(b => b.Company)
                 .Include(b => b.Program)
                     .ThenInclude(p => p.Track)
                 .Include(b => b.Program)

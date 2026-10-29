@@ -1,7 +1,7 @@
 <div class="dashboard-page" dir="rtl">
   <section class="dashboard">
 
-    <header class="company-dashboard-header">
+    <header class="company-dashboard-header" data-guide="company-dashboard-header">
       <div class="company-brand">
         <div class="company-brand-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24">
@@ -32,7 +32,7 @@
     </header>
 
     @if (!announcementsDismissed()) {
-      <div class="card announcements-card">
+      <div class="card announcements-card" data-guide="company-dashboard-announcements">
         <div class="announcements-header">
           <div class="header-right">
             <span class="icon-doc">
@@ -114,7 +114,7 @@
       </div>
     }
 
-    <div class="kpi-grid">
+    <div class="kpi-grid" data-guide="company-dashboard-kpis">
       <article class="kpi-card">
         <div class="kpi-icon blue">
           <svg viewBox="0 0 24 24">
@@ -126,7 +126,7 @@
           <strong class="kpi-value">
             {{ attendanceAverage() | number:'1.0-0' }}%
           </strong>
-          <small>من الأسابيع المتاحة</small>
+          <small>من سجلات حضور المتدربين النشطين</small>
         </div>
       </article>
 
@@ -138,8 +138,8 @@
         </div>
         <div class="kpi-info">
           <span class="kpi-label">المتدربون المتميزون</span>
-          <strong class="kpi-value">{{ topPerformers().length }}</strong>
-          <small>هذا الشهر</small>
+          <strong class="kpi-value">{{ kpiTopPerformersCount() }}</strong>
+          <small>النشطون بأداء 80% فأعلى</small>
         </div>
       </article>
 
@@ -154,7 +154,7 @@
           <strong class="kpi-value">
             {{ topPerformersAverage() | number:'1.0-0' }}%
           </strong>
-          <small>محسوب من بيانات الأداء الحقيقية</small>
+          <small>متوسط أداء النشطين بأداء 80% فأعلى</small>
         </div>
       </article>
 
@@ -168,8 +168,8 @@
         </div>
         <div class="kpi-info">
           <span class="kpi-label">متعثرون بحاجة لمتابعة</span>
-          <strong class="kpi-value">{{ atRisk().length }}</strong>
-          <small>بيانات حقيقية من لوحة الشركة</small>
+          <strong class="kpi-value">{{ kpiAtRisk().length }}</strong>
+          <small>من المتدربين النشطين</small>
         </div>
       </article>
     </div>
@@ -182,7 +182,7 @@
     </div>
 
     @if (capacity(); as cap) {
-      <div class="card card-pad capacity-card">
+      <div class="card card-pad capacity-card" data-guide="company-dashboard-capacity">
         <div class="card-title">
           الطاقة الاستيعابية
           <span class="hint">
@@ -225,21 +225,9 @@
       </div>
     }
 
-    <div class="grid g2 g2-14 quick-stats">
-      <div class="card card-pad quick-stat">
-        <span>إجمالي المتدربين</span>
-        <b>{{ totalTrainees() }}</b>
-        <small>المربوطون بهذه الشركة</small>
-      </div>
-      <div class="card card-pad quick-stat">
-        <span>المتدربون النشطون</span>
-        <b>{{ activeTrainees() }}</b>
-        <small>حالة التدريب الحالية</small>
-      </div>
-    </div>
-
+    
     @if (plansOverview(); as plans) {
-      <div class="card card-pad plans-card">
+      <div class="card card-pad plans-card" data-guide="company-dashboard-plans">
         <div class="card-title">
           <span>خطط الكورسات (المهام والمشروعات)</span>
           <button
@@ -362,15 +350,23 @@
             <span class="icon-star">★</span>
             المتدربون المتميزون 
           </span>
-          <button
-            class="link-btn"
-            type="button"
-            (click)="openTrainees()">عرض الكل</button>
+          <label class="limit-picker">
+            <span>عدد المعروض</span>
+            <select
+              class="limit-select"
+              [value]="topLimit()"
+              (change)="setTopLimit($any($event.target).value)"
+              aria-label="عدد المتدربين المتميزين المعروضين">
+              @for (n of limitOptions; track n) {
+                <option [value]="n" [selected]="n === topLimit()">{{ n === 0 ? 'الكل' : n }}</option>
+              }
+            </select>
+          </label>
         </div>
 
         <div class="lower-list">
           @for (
-            trainee of topPerformers().slice(0, 5);
+            trainee of limited(topPerformers(), topLimit());
             track trainee.enrollmentId
           ) {
             <div class="top-row">
@@ -425,11 +421,22 @@
             <span class="icon-warn">⚠️</span>
             المتدربون المتعثرون
           </span>
-          <span class="list-count">{{ atRisk().length }}</span>
+          <label class="limit-picker">
+            <span>عدد المعروض</span>
+            <select
+              class="limit-select"
+              [value]="riskLimit()"
+              (change)="setRiskLimit($any($event.target).value)"
+              aria-label="عدد المتدربين المتعثرين المعروضين">
+              @for (n of limitOptions; track n) {
+                <option [value]="n" [selected]="n === riskLimit()">{{ n === 0 ? 'الكل' : n }}</option>
+              }
+            </select>
+          </label>
         </div>
 
         <div class="trainee-list">
-          @for (trainee of atRisk(); track trainee.enrollmentId) {
+          @for (trainee of limited(atRisk(), riskLimit()); track trainee.enrollmentId) {
             <div class="trainee-row" style="display: flex; align-items: center; justify-content: space-between;">
               
               <div style="display: flex; align-items: center; gap: 12px;">
@@ -499,15 +506,23 @@
             <span class="icon-bell">🔔</span>
             أحدث الإنذارات
           </span>
-          <button
-            class="link-btn"
-            type="button"
-            (click)="openWarnings()">عرض الكل</button>
+          <label class="limit-picker">
+            <span>عدد المعروض</span>
+            <select
+              class="limit-select"
+              [value]="warnLimit()"
+              (change)="setWarnLimit($any($event.target).value)"
+              aria-label="عدد الإنذارات المعروضة">
+              @for (n of limitOptions; track n) {
+                <option [value]="n" [selected]="n === warnLimit()">{{ n === 0 ? 'الكل' : n }}</option>
+              }
+            </select>
+          </label>
         </div>
 
         <div class="lower-list">
           @for (
-            warning of warnings().slice(0, 5);
+            warning of limited(warnings(), warnLimit());
             track warning.warningId
           ) {
             <div class="warning-row">

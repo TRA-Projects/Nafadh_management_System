@@ -1,6 +1,6 @@
 <section class="specialties-page" dir="rtl">
   <!-- رأس الصفحة -->
-  <header class="page-head">
+  <header class="page-head" data-guide="company-programs-header">
     <div>
       <h2>التخصصات المعتمدة وخطط التدريب</h2>
       <p>نظرة عامة على البرامج التدريبية المعتمدة وتوزيع الطاقة الاستيعابية ومتابعة مسارات التدريب</p>
@@ -9,7 +9,7 @@
 
   <!-- بطاقات الإحصائيات العلوية -->
   @if (!loading()) {
-    <div class="stats-grid">
+    <div class="stats-grid" data-guide="company-programs-stats">
       <article class="stat-card">
         <div class="stat-icon-box bg-blue-soft"><i class="fa-solid fa-certificate"></i></div>
         <div>
@@ -124,7 +124,7 @@
         </div>
 
         <!-- أدوات البحث والتصفية والترتيب -->
-        <div class="list-toolbar">
+        <div class="list-toolbar" data-guide="company-programs-filters">
           <div class="toolbar-row">
             <input
               type="search"
@@ -176,7 +176,7 @@
           </div>
         }
 
-        <div class="specialty-grid">
+        <div class="specialty-grid" data-guide="company-programs-list">
           @for (card of visibleCards(); track trackByProgramId($index, card)) {
             <article
               class="specialty-card"

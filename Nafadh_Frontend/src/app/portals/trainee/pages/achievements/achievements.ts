@@ -55,6 +55,7 @@ export interface TrainerOptionDto {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './achievements.html',
+  styleUrl: './achievements.scss',
 
   styles: [
     `
@@ -936,7 +937,7 @@ export class TraineeAchievements implements OnInit {
     );
 
   canDownloadCertificate = computed(() => {
-    return this.progressPercentage() >= 50;
+    return this.progressPercentage() >= 85;
   });
 
   traineeName = computed(() => {
