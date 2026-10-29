@@ -57,15 +57,15 @@ export class TrainerTrainees implements OnInit {
   // =====================================================
 
   trainer = signal<TrainerDto | null>(null);
-   
 
-    batches =  signal<TrainerBatchDto[]>(  [] );
 
-  
- 
+  batches = signal<TrainerBatchDto[]>([]);
 
-  enrollments =  signal<EnrollmentDto[]>([]);
-  
+
+
+
+  enrollments = signal<EnrollmentDto[]>([]);
+
 
   batchId: number | null = null;
 
@@ -73,94 +73,94 @@ export class TrainerTrainees implements OnInit {
 
 
   // =====================================================
-// EVALUATION BATCH PICKER
-// =====================================================
+  // EVALUATION BATCH PICKER
+  // =====================================================
 
-selectedEvaluationBatchId =
-  signal<number | null>(
-    null
-  );
-
-
-evaluationBatchOptions =
-  computed(() => {
-
-    const batches =
-      new Map<
-        number,
-        string
-      >();
+  selectedEvaluationBatchId =
+    signal<number | null>(
+      null
+    );
 
 
-    this.enrollments()
-      .filter(
-        enrollment =>
-          this.canEvaluateEnrollment(
-            enrollment
-          )
-      )
-      .forEach(
-        enrollment => {
+  evaluationBatchOptions =
+    computed(() => {
 
-          batches.set(
-            enrollment.batchId,
-            enrollment.batchName ||
+      const batches =
+        new Map<
+          number,
+          string
+        >();
+
+
+      this.enrollments()
+        .filter(
+          enrollment =>
+            this.canEvaluateEnrollment(
+              enrollment
+            )
+        )
+        .forEach(
+          enrollment => {
+
+            batches.set(
+              enrollment.batchId,
+              enrollment.batchName ||
               `دفعة ${enrollment.batchId}`
-          );
+            );
 
-        }
-      );
-
-
-    return Array
-      .from(
-        batches.entries()
-      )
-      .map(
-        ([batchId, batchName]) => ({
-
-          batchId,
-
-          batchName
-
-        })
-      );
-
-  });
+          }
+        );
 
 
-// =====================================================
-// EVALUABLE ENROLLMENTS
-// =====================================================
+      return Array
+        .from(
+          batches.entries()
+        )
+        .map(
+          ([batchId, batchName]) => ({
 
-evaluableEnrollments =
-  computed(() => {
+            batchId,
 
-    const batchId =
-      this.selectedEvaluationBatchId();
+            batchName
 
+          })
+        );
 
-    if (batchId === null) {
-
-      return [];
-
-    }
+    });
 
 
-    return this.enrollments()
-      .filter(
-        enrollment =>
+  // =====================================================
+  // EVALUABLE ENROLLMENTS
+  // =====================================================
 
-          enrollment.batchId ===
+  evaluableEnrollments =
+    computed(() => {
+
+      const batchId =
+        this.selectedEvaluationBatchId();
+
+
+      if (batchId === null) {
+
+        return [];
+
+      }
+
+
+      return this.enrollments()
+        .filter(
+          enrollment =>
+
+            enrollment.batchId ===
             batchId &&
 
-          this.canEvaluateEnrollment(
-            enrollment
-          )
+            this.canEvaluateEnrollment(
+              enrollment
+            )
 
-      );
+        );
 
-  });
+    });
   // =====================================================
   // REPORT EXPORT STATE
   // =====================================================
@@ -210,21 +210,21 @@ evaluableEnrollments =
       );
     });
 
-// =====================================================
-// TRAINEES TABLE FILTER
-// =====================================================
+  // =====================================================
+  // TRAINEES TABLE FILTER
+  // =====================================================
 
-traineeListFilter =
-  signal<
-    'all' |
-    'support' |
-    'high'
-  >(
-    'all'
-  );
+  traineeListFilter =
+    signal<
+      'all' |
+      'support' |
+      'high'
+    >(
+      'all'
+    );
 
 
-get filteredEnrollments() {
+  get filteredEnrollments() {
     const filter = this.traineeListFilter();
     const averages = this.evaluationAverages();
 
@@ -240,7 +240,7 @@ get filteredEnrollments() {
         return name.toLowerCase().includes(studentQuery);
       });
     }
-    
+
     // 2. فلترة حسب الدفعة
     if (batchQuery) {
       list = list.filter(enrollment => {
@@ -281,43 +281,43 @@ get filteredEnrollments() {
     // =========================
     return list;
   }
-// =====================================================
-// SHOW SUPPORT TRAINEES
-// =====================================================
+  // =====================================================
+  // SHOW SUPPORT TRAINEES
+  // =====================================================
 
-showSupportTrainees(): void {
+  showSupportTrainees(): void {
 
-  this.traineeListFilter.set(
-    'support'
-  );
+    this.traineeListFilter.set(
+      'support'
+    );
 
-}
-
-
-// =====================================================
-// SHOW HIGH PERFORMERS
-// =====================================================
-
-showHighPerformers(): void {
-
-  this.traineeListFilter.set(
-    'high'
-  );
-
-}
+  }
 
 
-// =====================================================
-// SHOW ALL TRAINEES
-// =====================================================
+  // =====================================================
+  // SHOW HIGH PERFORMERS
+  // =====================================================
 
-showAllTrainees(): void {
+  showHighPerformers(): void {
 
-  this.traineeListFilter.set(
-    'all'
-  );
+    this.traineeListFilter.set(
+      'high'
+    );
 
-}
+  }
+
+
+  // =====================================================
+  // SHOW ALL TRAINEES
+  // =====================================================
+
+  showAllTrainees(): void {
+
+    this.traineeListFilter.set(
+      'all'
+    );
+
+  }
   // =====================================================
   // KPI
   // =====================================================
@@ -343,7 +343,23 @@ showAllTrainees(): void {
 
   evaluationAverages =
     signal<Record<number, number | null>>({});
+  quizResults = signal<any[]>([]);
+  quizResultsLoading = signal(false);
+  showQuizResults = signal(false);
 
+  selectedQuizTraineeId = signal<number | null>(null);
+
+  selectedQuizResults = computed(() => {
+    const traineeId = this.selectedQuizTraineeId();
+
+    if (traineeId === null) {
+      return [];
+    }
+
+    return this.quizResults().filter(
+      result => result.traineeId === traineeId
+    );
+  });
 
   performanceScores =
     computed(() => {
@@ -352,20 +368,20 @@ showAllTrainees(): void {
         this.evaluationAverages();
 
 
-    return this.enrollments()
-  .filter(
-    enrollment =>
-      enrollment.completionStatus !== 'Dropped' &&
-      this.canShowTrainingMetrics(
-        enrollment
-      )
-  )
-  .map(
-    enrollment =>
-      averages[
-        enrollment.enrollmentId
-      ]
-  )
+      return this.enrollments()
+        .filter(
+          enrollment =>
+            enrollment.completionStatus !== 'Dropped' &&
+            this.canShowTrainingMetrics(
+              enrollment
+            )
+        )
+        .map(
+          enrollment =>
+            averages[
+            enrollment.enrollmentId
+            ]
+        )
         .filter(
           (score): score is number =>
             typeof score === 'number' &&
@@ -445,7 +461,7 @@ showAllTrainees(): void {
 
     const percentage =
       this.attendancePercentages()[
-        enrollmentId
+      enrollmentId
       ];
 
 
@@ -472,7 +488,7 @@ showAllTrainees(): void {
 
     const score =
       this.evaluationAverages()[
-        enrollmentId
+      enrollmentId
       ];
 
 
@@ -553,60 +569,44 @@ showAllTrainees(): void {
   }
 
 
- // =====================================================
-// ENROLLMENT STATUS
-// =====================================================
+  // =====================================================
+  // ENROLLMENT STATUS
+  // =====================================================
 
-effectiveEnrollmentStatus(
-  enrollment: EnrollmentDto
-): string {
+  effectiveEnrollmentStatus(
+    enrollment: EnrollmentDto
+  ): string {
 
-  const status =
-    enrollment.completionStatus;
-
-
-  // المنسحب يبقى منسحب.
-  if (
-    status === 'Dropped'
-  ) {
-    return status;
-  }
+    const status =
+      enrollment.completionStatus;
 
 
-  const batch =
-    this.batches()
-      .find(
-        item =>
-          item.batchId ===
-          enrollment.batchId
-      );
+    // المنسحب يبقى منسحب.
+    if (
+      status === 'Dropped'
+    ) {
+      return status;
+    }
 
 
-  if (!batch) {
-    return status;
-  }
+    const batch =
+      this.batches()
+        .find(
+          item =>
+            item.batchId ===
+            enrollment.batchId
+        );
 
 
-  const today =
-    new Date();
-
-  today.setHours(
-    0,
-    0,
-    0,
-    0
-  );
+    if (!batch) {
+      return status;
+    }
 
 
-  // الدفعة لم تبدأ بعد.
-  if (batch.startDate) {
+    const today =
+      new Date();
 
-    const startDate =
-      new Date(
-        batch.startDate
-      );
-
-    startDate.setHours(
+    today.setHours(
       0,
       0,
       0,
@@ -614,157 +614,173 @@ effectiveEnrollmentStatus(
     );
 
 
-    if (
-      today < startDate
-    ) {
-      return 'NotStarted';
+    // الدفعة لم تبدأ بعد.
+    if (batch.startDate) {
+
+      const startDate =
+        new Date(
+          batch.startDate
+        );
+
+      startDate.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+
+      if (
+        today < startDate
+      ) {
+        return 'NotStarted';
+      }
+
     }
 
-  }
+
+    if (!batch.endDate) {
+      return status;
+    }
 
 
-  if (!batch.endDate) {
+    const endDate =
+      new Date(
+        batch.endDate
+      );
+
+    endDate.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    // طالما الدفعة مستمرة،
+    // لا نظهر Completed أو Failed.
+    if (
+      today <= endDate &&
+      (
+        status === 'Completed' ||
+        status === 'Failed'
+      )
+    ) {
+      return 'InProgress';
+    }
+
+
+    // إذا انتهت الدفعة وما زالت
+    // حالة المتدرب InProgress،
+    // نعرضه كمكتمل.
+    if (
+      today > endDate &&
+      status === 'InProgress'
+    ) {
+      return 'Completed';
+    }
+
+
     return status;
   }
 
 
-  const endDate =
-    new Date(
-      batch.endDate
+  enrollmentStatusLabel(
+    status: string | null | undefined
+  ): string {
+
+    switch (status) {
+
+      case 'NotStarted':
+
+        return 'لم يبدأ';
+
+
+      case 'InProgress':
+
+        return 'قيد التدريب';
+
+
+      case 'Completed':
+
+        return 'مكتمل';
+
+
+      case 'Dropped':
+
+        return 'منسحب';
+
+
+      case 'Failed':
+
+        return 'لم يجتز';
+
+
+      default:
+
+        return '—';
+    }
+  }
+
+
+  enrollmentStatusClass(
+    status: string | null | undefined
+  ): string {
+
+    switch (status) {
+
+      case 'NotStarted':
+
+        return 'neutral';
+
+
+      case 'InProgress':
+
+        return 'good';
+
+
+      case 'Completed':
+
+        return 'excellent';
+
+
+      case 'Dropped':
+
+        return 'neutral';
+
+
+      case 'Failed':
+
+        return 'support';
+
+
+      default:
+
+        return 'neutral';
+    }
+  }
+
+
+  canEvaluateEnrollment(
+    enrollment: EnrollmentDto
+  ): boolean {
+
+    return (
+      this.effectiveEnrollmentStatus(
+        enrollment
+      ) === 'InProgress'
     );
-
-  endDate.setHours(
-    0,
-    0,
-    0,
-    0
-  );
-
-
- // طالما الدفعة مستمرة،
-// لا نظهر Completed أو Failed.
-if (
-  today <= endDate &&
-  (
-    status === 'Completed' ||
-    status === 'Failed'
-  )
-) {
-  return 'InProgress';
-}
-
-
-// إذا انتهت الدفعة وما زالت
-// حالة المتدرب InProgress،
-// نعرضه كمكتمل.
-if (
-  today > endDate &&
-  status === 'InProgress'
-) {
-  return 'Completed';
-}
-
-
-return status;
-}
-
-
-enrollmentStatusLabel(
-  status: string | null | undefined
-): string {
-
-  switch (status) {
-
-    case 'NotStarted':
-
-      return 'لم يبدأ';
-
-
-    case 'InProgress':
-
-      return 'قيد التدريب';
-
-
-    case 'Completed':
-
-      return 'مكتمل';
-
-
-    case 'Dropped':
-
-      return 'منسحب';
-
-
-    case 'Failed':
-
-      return 'لم يجتز';
-
-
-    default:
-
-      return '—';
   }
-}
+  canShowTrainingMetrics(
+    enrollment: EnrollmentDto
+  ): boolean {
 
-
-enrollmentStatusClass(
-  status: string | null | undefined
-): string {
-
-  switch (status) {
-
-    case 'NotStarted':
-
-      return 'neutral';
-
-
-    case 'InProgress':
-
-      return 'good';
-
-
-    case 'Completed':
-
-      return 'excellent';
-
-
-    case 'Dropped':
-
-      return 'neutral';
-
-
-    case 'Failed':
-
-      return 'support';
-
-
-    default:
-
-      return 'neutral';
+    return (
+      this.effectiveEnrollmentStatus(
+        enrollment
+      ) !== 'NotStarted'
+    );
   }
-}
-
-
-canEvaluateEnrollment(
-  enrollment: EnrollmentDto
-): boolean {
-
-  return (
-    this.effectiveEnrollmentStatus(
-      enrollment
-    ) === 'InProgress'
-  );
-}
-canShowTrainingMetrics(
-  enrollment: EnrollmentDto
-): boolean {
-
-  return (
-    this.effectiveEnrollmentStatus(
-      enrollment
-    ) !== 'NotStarted'
-  );
-}
   // =====================================================
   // EVALUATION STATE
   // =====================================================
@@ -778,16 +794,16 @@ canShowTrainingMetrics(
     );
 
   evaluationModules =
-  signal<ModuleDto[]>([]);
+    signal<ModuleDto[]>([]);
 
-selectedModuleId:
-  number | null = null;
+  selectedModuleId:
+    number | null = null;
 
-evaluationStages =
-  signal<number[]>([]);
+  evaluationStages =
+    signal<number[]>([]);
 
-selectedStage:
-  number | null = null;
+  selectedStage:
+    number | null = null;
 
   selectedEnrollmentId:
     number | null = null;
@@ -803,125 +819,125 @@ selectedStage:
     weight: 0,
     maxPoints: 0
   };
-// =====================================================
-// EDIT CRITERION STATE
-// =====================================================
+  // =====================================================
+  // EDIT CRITERION STATE
+  // =====================================================
 
-editingCriterionId =
-  signal<number | null>(
-    null
-  );
+  editingCriterionId =
+    signal<number | null>(
+      null
+    );
 
-criterionEditForm = {
-  name: '',
-  weight: 0,
-  maxPoints: 0
-};
+  criterionEditForm = {
+    name: '',
+    weight: 0,
+    maxPoints: 0
+  };
 
-// =====================================================
-// DELETE CRITERION MODAL STATE
-// =====================================================
+  // =====================================================
+  // DELETE CRITERION MODAL STATE
+  // =====================================================
 
-criterionToDelete =
-  signal<{
-    criteriaId: number;
-    criterionName: string;
-  } | null>(
-    null
-  );
+  criterionToDelete =
+    signal<{
+      criteriaId: number;
+      criterionName: string;
+    } | null>(
+      null
+    );
 
-criterionDeleting =
-  signal(false);
+  criterionDeleting =
+    signal(false);
 
-// =====================================================
-// CUSTOM EVALUATION NOTIFICATION
-// =====================================================
+  // =====================================================
+  // CUSTOM EVALUATION NOTIFICATION
+  // =====================================================
 
-evaluationNotice =
-  signal<{
-    tone:
+  evaluationNotice =
+    signal<{
+      tone:
       'success' |
       'warning' |
       'error';
 
-    title: string;
+      title: string;
 
-    message: string;
-  } | null>(
-    null
-  );
+      message: string;
+    } | null>(
+      null
+    );
 
-private evaluationNoticeTimer:
-  ReturnType<typeof setTimeout> |
-  null = null;
+  private evaluationNoticeTimer:
+    ReturnType<typeof setTimeout> |
+    null = null;
 
 
-private showEvaluationNotice(
-  tone:
-    'success' |
-    'warning' |
-    'error',
-  title: string,
-  message: string
-): void {
+  private showEvaluationNotice(
+    tone:
+      'success' |
+      'warning' |
+      'error',
+    title: string,
+    message: string
+  ): void {
 
-  if (
-    this.evaluationNoticeTimer
-  ) {
-
-    clearTimeout(
+    if (
       this.evaluationNoticeTimer
-    );
+    ) {
 
-  }
+      clearTimeout(
+        this.evaluationNoticeTimer
+      );
 
-
-  this.evaluationNotice.set({
-    tone,
-    title,
-    message
-  });
+    }
 
 
-  this.evaluationNoticeTimer =
-    setTimeout(
-      () => {
+    this.evaluationNotice.set({
+      tone,
+      title,
+      message
+    });
 
-        this.evaluationNotice.set(
-          null
-        );
-
-        this.evaluationNoticeTimer =
-          null;
-
-      },
-      4500
-    );
-
-}
-
-
-closeEvaluationNotice(): void {
-
-  if (
-    this.evaluationNoticeTimer
-  ) {
-
-    clearTimeout(
-      this.evaluationNoticeTimer
-    );
 
     this.evaluationNoticeTimer =
-      null;
+      setTimeout(
+        () => {
+
+          this.evaluationNotice.set(
+            null
+          );
+
+          this.evaluationNoticeTimer =
+            null;
+
+        },
+        4500
+      );
 
   }
 
 
-  this.evaluationNotice.set(
-    null
-  );
+  closeEvaluationNotice(): void {
 
-}
+    if (
+      this.evaluationNoticeTimer
+    ) {
+
+      clearTimeout(
+        this.evaluationNoticeTimer
+      );
+
+      this.evaluationNoticeTimer =
+        null;
+
+    }
+
+
+    this.evaluationNotice.set(
+      null
+    );
+
+  }
 
   // =====================================================
   // CONSTRUCTOR
@@ -931,7 +947,7 @@ closeEvaluationNotice(): void {
     private api: TrainerApi,
     private auth: AuthService,
     private route: ActivatedRoute
-  ) {}
+  ) { }
 
 
   // =====================================================
@@ -984,6 +1000,7 @@ closeEvaluationNotice(): void {
       );
 
       this.enrollments.set([]);
+      this.loadQuizResults();
 
       this.evaluationAverages.set({});
 
@@ -999,14 +1016,16 @@ closeEvaluationNotice(): void {
 
         next: (trainer) => {
 
-          this.trainer.set(
-            trainer
-          );
+  this.trainer.set(
+    trainer
+  );
 
-          this.loadTrainerBatches(
-            trainer.trainerId
-          );
-        },
+  this.loadQuizResults();
+
+  this.loadTrainerBatches(
+    trainer.trainerId
+  );
+},
 
 
         error: (err) => {
@@ -1044,9 +1063,9 @@ closeEvaluationNotice(): void {
           const batches =
             data ?? [];
 
-         this.batches.set(
-             batches
-                  );
+          this.batches.set(
+            batches
+          );
           if (
             this.batchId &&
             this.batchId > 0
@@ -1105,7 +1124,7 @@ closeEvaluationNotice(): void {
           );
 
           this.enrollments.set([]);
-          this.batches.set(  []);
+          this.batches.set([]);
 
           this.evaluationAverages.set({});
 
@@ -1391,7 +1410,51 @@ closeEvaluationNotice(): void {
       });
   }
 
+private loadQuizResults(): void {
+  const trainer = this.trainer();
 
+  if (!trainer) {
+    return;
+  }
+
+  this.quizResultsLoading.set(true);
+
+  this.api.getTrainerQuizResults(
+    trainer.trainerId
+  ).subscribe({
+    next: results => {
+      console.log(
+        'Trainer Quiz Results:',
+        results
+      );
+
+      this.quizResults.set(
+        results ?? []
+      );
+
+      this.quizResultsLoading.set(false);
+    },
+
+    error: error => {
+      console.error(
+        'Quiz Results API Error:',
+        error
+      );
+
+      this.quizResults.set([]);
+      this.quizResultsLoading.set(false);
+    }
+  });
+}
+openQuizResults(traineeId: number): void {
+  this.selectedQuizTraineeId.set(traineeId);
+  this.showQuizResults.set(true);
+}
+
+closeQuizResults(): void {
+  this.showQuizResults.set(false);
+  this.selectedQuizTraineeId.set(null);
+}
   // =====================================================
   // EXPORT TRAINEES REPORT
   // =====================================================
@@ -1562,250 +1625,45 @@ closeEvaluationNotice(): void {
   }
 
 
- startEvaluationFromProfile(): void {
+  startEvaluationFromProfile(): void {
 
-  const enrollment =
-    this.selectedProfileEnrollment();
+    const enrollment =
+      this.selectedProfileEnrollment();
 
 
-  if (
-    !enrollment ||
-    !this.canEvaluateEnrollment(enrollment)
-  ) {
-    return;
+    if (
+      !enrollment ||
+      !this.canEvaluateEnrollment(enrollment)
+    ) {
+      return;
+    }
+
+
+    const enrollmentId =
+      enrollment.enrollmentId;
+
+
+    this.closeTraineeProfile();
+
+
+    this.openEval(
+      enrollmentId
+    );
   }
-
-
-  const enrollmentId =
-    enrollment.enrollmentId;
-
-
-  this.closeTraineeProfile();
-
-
-  this.openEval(
-    enrollmentId
-  );
-}
-// =====================================================
-// LOAD EVALUATION MODULES
-// =====================================================
-
-private loadEvaluationModules(
-  batchId: number
-): void {
-
-  this.evaluationModules.set(
-    []
-  );
-
-  this.selectedModuleId =
-    null;
-
-  this.templateDetail.set(
-    null
-  );
-
-  this.criteriaScores = {};
-
-
-  this.api
-    .getBatch(
-      batchId
-    )
-    .subscribe({
-
-      next: (batch) => {
-
-        this.api
-          .getModulesByProgram(
-            batch.programId
-          )
-          .subscribe({
-
-            next: (modules) => {
-
-              const activeModules =
-                (modules ?? [])
-                  .filter(
-                    module =>
-                      !module.isArchived
-                  )
-                  .sort(
-                    (a, b) =>
-                      a.orderIndex -
-                      b.orderIndex
-                  );
-
-
-              this.evaluationModules.set(
-                activeModules
-              );
-
-
-              const firstModule =
-                activeModules[0];
-
-
-              if (!firstModule) {
-
-                this.templateDetail.set(
-                  null
-                );
-
-                return;
-              }
-
-
-              this.selectedModuleId =
-                firstModule.moduleId;
-
-
-              this.loadEvaluationStages();
-
-            },
-
-
-            error: (err) => {
-
-              console.error(
-                'خطأ في تحميل وحدات التقييم:',
-                err
-              );
-
-              this.evaluationModules.set(
-                []
-              );
-
-            }
-
-          });
-
-      },
-
-
-      error: (err) => {
-
-        console.error(
-          'خطأ في تحميل بيانات الدفعة للتقييم:',
-          err
-        );
-
-      }
-
-    });
-
-}
-// =====================================================
-// LOAD EVALUATION STAGES
-// =====================================================
-
-loadEvaluationStages(): void {
-
-  if (!this.selectedModuleId) {
-
-    this.evaluationStages.set([]);
-
-    this.selectedStage = null;
-
-    this.templateDetail.set(null);
-
-    this.criteriaScores = {};
-
-    return;
-  }
-
-
-  this.api
-    .getEvaluationTemplates(
-      this.selectedModuleId
-    )
-    .subscribe({
-
-      next: (templates) => {
-
-        const stages =
-          [
-            ...new Set(
-              (templates ?? [])
-                .map(
-                  template =>
-                    template.stage
-                )
-                .filter(
-                  (stage):
-                    stage is number =>
-                      typeof stage ===
-                      'number'
-                )
-            )
-          ]
-            .sort(
-              (a, b) =>
-                a - b
-            );
-
-
-        this.evaluationStages.set(
-          stages
-        );
-
-
-        this.selectedStage =
-          stages[0] ?? null;
-
-
-        if (
-          this.selectedStage !== null
-        ) {
-
-          this.loadTemplates();
-
-        }
-        else {
-
-          this.templateDetail.set(
-            null
-          );
-
-          this.criteriaScores = {};
-
-        }
-
-      },
-
-
-      error: (err) => {
-
-        console.error(
-          'خطأ في تحميل فترات التقييم:',
-          err
-        );
-
-        this.evaluationStages.set([]);
-
-        this.selectedStage = null;
-
-        this.templateDetail.set(null);
-
-        this.criteriaScores = {};
-
-      }
-
-    });
-
-}
   // =====================================================
-  // EVALUATION TEMPLATES
+  // LOAD EVALUATION MODULES
   // =====================================================
 
-  loadTemplates(): void {
+  private loadEvaluationModules(
+    batchId: number
+  ): void {
 
+    this.evaluationModules.set(
+      []
+    );
 
-       if (
-    !this.selectedModuleId ||
-    this.selectedStage === null
-  ) {
+    this.selectedModuleId =
+      null;
 
     this.templateDetail.set(
       null
@@ -1813,15 +1671,220 @@ loadEvaluationStages(): void {
 
     this.criteriaScores = {};
 
-    return;
+
+    this.api
+      .getBatch(
+        batchId
+      )
+      .subscribe({
+
+        next: (batch) => {
+
+          this.api
+            .getModulesByProgram(
+              batch.programId
+            )
+            .subscribe({
+
+              next: (modules) => {
+
+                const activeModules =
+                  (modules ?? [])
+                    .filter(
+                      module =>
+                        !module.isArchived
+                    )
+                    .sort(
+                      (a, b) =>
+                        a.orderIndex -
+                        b.orderIndex
+                    );
+
+
+                this.evaluationModules.set(
+                  activeModules
+                );
+
+
+                const firstModule =
+                  activeModules[0];
+
+
+                if (!firstModule) {
+
+                  this.templateDetail.set(
+                    null
+                  );
+
+                  return;
+                }
+
+
+                this.selectedModuleId =
+                  firstModule.moduleId;
+
+
+                this.loadEvaluationStages();
+
+              },
+
+
+              error: (err) => {
+
+                console.error(
+                  'خطأ في تحميل وحدات التقييم:',
+                  err
+                );
+
+                this.evaluationModules.set(
+                  []
+                );
+
+              }
+
+            });
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'خطأ في تحميل بيانات الدفعة للتقييم:',
+            err
+          );
+
+        }
+
+      });
+
   }
+  // =====================================================
+  // LOAD EVALUATION STAGES
+  // =====================================================
+
+  loadEvaluationStages(): void {
+
+    if (!this.selectedModuleId) {
+
+      this.evaluationStages.set([]);
+
+      this.selectedStage = null;
+
+      this.templateDetail.set(null);
+
+      this.criteriaScores = {};
+
+      return;
+    }
 
 
-  this.api
-    .getEvaluationTemplates(
-      this.selectedModuleId,
-      this.selectedStage
-    )
+    this.api
+      .getEvaluationTemplates(
+        this.selectedModuleId
+      )
+      .subscribe({
+
+        next: (templates) => {
+
+          const stages =
+            [
+              ...new Set(
+                (templates ?? [])
+                  .map(
+                    template =>
+                      template.stage
+                  )
+                  .filter(
+                    (stage):
+                      stage is number =>
+                      typeof stage ===
+                      'number'
+                  )
+              )
+            ]
+              .sort(
+                (a, b) =>
+                  a - b
+              );
+
+
+          this.evaluationStages.set(
+            stages
+          );
+
+
+          this.selectedStage =
+            stages[0] ?? null;
+
+
+          if (
+            this.selectedStage !== null
+          ) {
+
+            this.loadTemplates();
+
+          }
+          else {
+
+            this.templateDetail.set(
+              null
+            );
+
+            this.criteriaScores = {};
+
+          }
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'خطأ في تحميل فترات التقييم:',
+            err
+          );
+
+          this.evaluationStages.set([]);
+
+          this.selectedStage = null;
+
+          this.templateDetail.set(null);
+
+          this.criteriaScores = {};
+
+        }
+
+      });
+
+  }
+  // =====================================================
+  // EVALUATION TEMPLATES
+  // =====================================================
+
+  loadTemplates(): void {
+
+
+    if (
+      !this.selectedModuleId ||
+      this.selectedStage === null
+    ) {
+
+      this.templateDetail.set(
+        null
+      );
+
+      this.criteriaScores = {};
+
+      return;
+    }
+
+
+    this.api
+      .getEvaluationTemplates(
+        this.selectedModuleId,
+        this.selectedStage
+      )
       .subscribe({
 
         next: (templates) => {
@@ -1894,18 +1957,18 @@ loadEvaluationStages(): void {
   // =====================================================
   // START NEW EVALUATION
   // =====================================================
-startNewEvaluation(): void {
+  startNewEvaluation(): void {
 
-  this.selectedEvaluationBatchId.set(
-    null
-  );
+    this.selectedEvaluationBatchId.set(
+      null
+    );
 
 
-  this.showTraineePicker.set(
-    true
-  );
+    this.showTraineePicker.set(
+      true
+    );
 
-}
+  }
 
   // =====================================================
   // SELECT TRAINEE FOR EVALUATION
@@ -1943,33 +2006,33 @@ startNewEvaluation(): void {
         );
 
 
-   if (
-  !enrollment ||
-  !this.canEvaluateEnrollment(
-    enrollment
-  )
-) {
+    if (
+      !enrollment ||
+      !this.canEvaluateEnrollment(
+        enrollment
+      )
+    ) {
 
-  console.warn(
-    'لا يمكن تقييم هذا المتدرب حاليًا'
-  );
+      console.warn(
+        'لا يمكن تقييم هذا المتدرب حاليًا'
+      );
 
-  return;
-}
-
-
-   this.selectedEnrollmentId =
-  enrollmentId;
+      return;
+    }
 
 
-this.loadEvaluationModules(
-  enrollment.batchId
-);
+    this.selectedEnrollmentId =
+      enrollmentId;
 
 
-this.showEvalModal.set(
-  true
-);
+    this.loadEvaluationModules(
+      enrollment.batchId
+    );
+
+
+    this.showEvalModal.set(
+      true
+    );
   }
 
 
@@ -1985,832 +2048,832 @@ this.showEvalModal.set(
         ?.criteria ?? []
     );
   }
-// =====================================================
-// CRITERIA TOTAL WEIGHT
-// =====================================================
+  // =====================================================
+  // CRITERIA TOTAL WEIGHT
+  // =====================================================
 
-criteriaTotalWeight(
-  excludeCriteriaId?: number
-): number {
+  criteriaTotalWeight(
+    excludeCriteriaId?: number
+  ): number {
 
-  return this.criteria()
-    .filter(
-      criterion =>
-        criterion.criteriaId !==
-        excludeCriteriaId
-    )
-    .reduce(
-      (total, criterion) =>
-        total +
-        Number(
-          criterion.weight ?? 0
-        ),
-      0
-    );
-}
+    return this.criteria()
+      .filter(
+        criterion =>
+          criterion.criteriaId !==
+          excludeCriteriaId
+      )
+      .reduce(
+        (total, criterion) =>
+          total +
+          Number(
+            criterion.weight ?? 0
+          ),
+        0
+      );
+  }
 
   // =====================================================
-// ADD CRITERION
-// =====================================================
+  // ADD CRITERION
+  // =====================================================
 
-addCriterion(): void {
+  addCriterion(): void {
 
-  const templateId =
-    this.templateDetail()
-      ?.templateId;
+    const templateId =
+      this.templateDetail()
+        ?.templateId;
 
 
-  if (!templateId) {
-    return;
-  }
+    if (!templateId) {
+      return;
+    }
 
 
-  const name =
-    this.newCriterion.name.trim();
+    const name =
+      this.newCriterion.name.trim();
 
-  const weight =
-    Number(
-      this.newCriterion.weight
-    );
-
-  const maxPoints =
-    Number(
-      this.newCriterion.maxPoints
-    );
-
-
-  if (!name) {
-
-    this.showEvaluationNotice(
-      'warning',
-      'بيانات غير مكتملة',
-      'أدخلي اسم المعيار.'
-    );
-
-    return;
-  }
-
-
-  if (
-    !Number.isFinite(weight) ||
-    weight <= 0 ||
-    weight > 100
-  ) {
-
-    this.showEvaluationNotice(
-      'warning',
-      'الوزن غير صحيح',
-      'أدخلي وزنًا صحيحًا من 1 إلى 100.'
-    );
-
-    return;
-  }
-
-
-  if (
-    !Number.isFinite(maxPoints) ||
-    maxPoints <= 0
-  ) {
-
-    this.showEvaluationNotice(
-      'warning',
-      'الدرجة القصوى غير صحيحة',
-      'أدخلي الحد الأقصى للدرجة بشكل صحيح.'
-    );
-
-    return;
-  }
-const currentWeight =
-  this.criteriaTotalWeight();
-
-const remainingWeight =
-  100 - currentWeight;
-
-
-if (
-  currentWeight + weight > 100
-) {
-
-  this.showEvaluationNotice(
-    'warning',
-    'الوزن غير مسموح',
-    `لا يمكن إضافة المعيار. الوزن المتبقي هو ${remainingWeight}% فقط.`
-  );
-
-  return;
-}
-
-  this.api
-    .createCriterion({
-
-      templateId,
-
-      name,
-
-      weight,
-
-      maxPoints
-
-    })
-    .subscribe({
-
-      next: () => {
-
-        this.showAddCriterion.set(
-          false
-        );
-
-
-        this.newCriterion = {
-          name: '',
-          weight: 0,
-          maxPoints: 0
-        };
-
-
-        this.showEvaluationNotice(
-          'success',
-          'تمت الإضافة',
-          'تمت إضافة معيار التقييم بنجاح.'
-        );
-
-
-        this.api
-          .getTemplateDetail(
-            templateId
-          )
-          .subscribe({
-
-            next: (detail) => {
-
-              this.templateDetail.set(
-                detail
-              );
-
-            },
-
-
-            error: (err) => {
-
-              console.error(
-                'خطأ في إعادة تحميل تفاصيل نموذج التقييم:',
-                err
-              );
-
-            }
-
-          });
-
-      },
-
-
-      error: (err) => {
-
-        console.error(
-          'خطأ في إضافة معيار التقييم:',
-          err
-        );
-
-
-        this.showEvaluationNotice(
-          'error',
-          'تعذر إضافة المعيار',
-          'حدث خطأ أثناء إضافة معيار التقييم.'
-        );
-
-      }
-
-    });
-
-}
-// =====================================================
-// CANCEL ADD CRITERION
-// =====================================================
-
-cancelAddCriterion(): void {
-
-  this.showAddCriterion.set(
-    false
-  );
-
-  this.newCriterion = {
-    name: '',
-    weight: 0,
-    maxPoints: 0
-  };
-
-}
-// =====================================================
-// DELETE CRITERION
-// =====================================================
-
-deleteCriterion(
-  criteriaId: number,
-  criterionName: string
-): void {
-
-  if (
-    !this.templateDetail()
-      ?.templateId
-  ) {
-    return;
-  }
-
-
-  this.criterionToDelete.set({
-    criteriaId,
-    criterionName
-  });
-
-}
-
-
-// =====================================================
-// CLOSE DELETE CRITERION MODAL
-// =====================================================
-
-closeDeleteCriterionModal(): void {
-
-  if (
-    this.criterionDeleting()
-  ) {
-    return;
-  }
-
-
-  this.criterionToDelete.set(
-    null
-  );
-
-}
-
-
-// =====================================================
-// CONFIRM DELETE CRITERION
-// =====================================================
-
-confirmDeleteCriterion(): void {
-
-  const target =
-    this.criterionToDelete();
-
-  const templateId =
-    this.templateDetail()
-      ?.templateId;
-
-
-  if (
-    !target ||
-    !templateId ||
-    this.criterionDeleting()
-  ) {
-    return;
-  }
-
-
-  this.criterionDeleting.set(
-    true
-  );
-
-
-  this.api
-    .deleteCriterion(
-      target.criteriaId
-    )
-    .subscribe({
-
-      next: () => {
-
-        delete this.criteriaScores[
-          target.criteriaId
-        ];
-
-
-        this.criterionDeleting.set(
-          false
-        );
-
-        this.criterionToDelete.set(
-          null
-        );
-
-
-        // Reload the template so the deleted
-        // criterion disappears immediately.
-        this.api
-          .getTemplateDetail(
-            templateId
-          )
-          .subscribe({
-
-            next: (detail) => {
-
-              this.templateDetail.set(
-                detail
-              );
-
-
-              this.showEvaluationNotice(
-                'success',
-                'تم حذف المعيار',
-                'تم حذف معيار التقييم بنجاح.'
-              );
-
-            },
-
-
-            error: (err) => {
-
-              console.error(
-                'خطأ في إعادة تحميل نموذج التقييم:',
-                err
-              );
-
-            }
-
-          });
-
-      },
-
-
-      error: (err) => {
-
-        console.error(
-          'خطأ في حذف معيار التقييم:',
-          err
-        );
-
-
-        this.criterionDeleting.set(
-          false
-        );
-
-
-        this.showEvaluationNotice(
-          'error',
-          'تعذر حذف المعيار',
-          'قد يكون هذا المعيار مستخدمًا في تقييم محفوظ.'
-        );
-
-      }
-
-    });
-
-}
-
-// =====================================================
-// START EDIT CRITERION
-// =====================================================
-
-startEditCriterion(
-  criterion: EvaluationCriterionDto
-): void {
-
-  this.editingCriterionId.set(
-    criterion.criteriaId
-  );
-
-
-  this.criterionEditForm = {
-    name:
-      criterion.name,
-
-    weight:
+    const weight =
       Number(
-        criterion.weight
-      ),
+        this.newCriterion.weight
+      );
 
-    maxPoints:
+    const maxPoints =
       Number(
-        criterion.maxPoints
-      )
-  };
-}
-
-
-// =====================================================
-// CANCEL EDIT CRITERION
-// =====================================================
-
-cancelCriterionEdit(): void {
-
-  this.editingCriterionId.set(
-    null
-  );
-
-
-  this.criterionEditForm = {
-    name: '',
-    weight: 0,
-    maxPoints: 0
-  };
-}
-
-
-// =====================================================
-// SAVE CRITERION EDIT
-// =====================================================
-
-saveCriterionEdit(
-  criteriaId: number
-): void {
-
-  const templateId =
-    this.templateDetail()
-      ?.templateId;
-
-
-  if (!templateId) {
-    return;
-  }
-
-
-  const name =
-    this.criterionEditForm
-      .name
-      .trim();
-
-  const weight =
-    Number(
-      this.criterionEditForm.weight
-    );
-
-  const maxPoints =
-    Number(
-      this.criterionEditForm.maxPoints
-    );
-
-
-  if (
-    !name ||
-    !Number.isFinite(weight) ||
-    !Number.isFinite(maxPoints) ||
-    weight <= 0 ||
-    weight > 100 ||
-    maxPoints <= 0
-  ) {
-
-    this.showEvaluationNotice(
-      'warning',
-      'تحققي من بيانات المعيار',
-      'تأكدي من اسم المعيار والوزن والحد الأقصى.'
-    );
-
-    return;
-  }
-
-const otherCriteriaWeight =
-  this.criteriaTotalWeight(
-    criteriaId
-  );
-
-const remainingWeight =
-  100 - otherCriteriaWeight;
-
-
-if (
-  otherCriteriaWeight + weight > 100
-) {
-
-  this.showEvaluationNotice(
-    'warning',
-    'لا يمكن حفظ التعديل',
-    `أقصى وزن مسموح لهذا المعيار هو ${remainingWeight}%.`
-  );
-
-  return;
-}
-  this.api
-    .updateCriterion(
-      criteriaId,
-      {
-        templateId,
-        name,
-        weight,
-        maxPoints
-      }
-    )
-    .subscribe({
-
-      next: () => {
-
-        this.api
-          .getTemplateDetail(
-            templateId
-          )
-          .subscribe({
-
-            next: (detail) => {
-
-              this.templateDetail.set(
-                detail
-              );
-
-
-              this.cancelCriterionEdit();
-
-
-              this.showEvaluationNotice(
-                'success',
-                'تم حفظ التعديل',
-                'تم تحديث معيار التقييم بنجاح.'
-              );
-
-            },
-
-
-            error: (err) => {
-
-              console.error(
-                'خطأ في إعادة تحميل نموذج التقييم:',
-                err
-              );
-
-            }
-
-          });
-
-      },
-
-
-      error: (err) => {
-
-        console.error(
-          'خطأ في تعديل معيار التقييم:',
-          err
-        );
-
-
-        this.showEvaluationNotice(
-          'error',
-          'تعذر تعديل المعيار',
-          'حدث خطأ أثناء حفظ تعديلات المعيار.'
-        );
-
-      }
-
-    });
-
-}// =====================================================
-// SUBMIT EVALUATION
-// =====================================================
-
-submitEvaluation(): void {
-
-  const trainer =
-    this.trainer();
-
-  const userId =
-    this.auth.session()?.userId;
-
-  const template =
-    this.templateDetail();
-
-
-  if (
-    !this.selectedEnrollmentId ||
-    !trainer ||
-    !userId ||
-    !template
-  ) {
-    return;
-  }
-
-
-  const enrollment =
-    this.enrollments()
-      .find(
-        item =>
-          item.enrollmentId ===
-          this.selectedEnrollmentId
+        this.newCriterion.maxPoints
       );
 
 
-  if (
-    !enrollment ||
-    !this.canEvaluateEnrollment(
-      enrollment
-    )
-  ) {
+    if (!name) {
 
-    this.showEvaluationNotice(
-      'warning',
-      'التقييم غير متاح',
-      'لا يمكن تقييم هذا المتدرب حاليًا.'
+      this.showEvaluationNotice(
+        'warning',
+        'بيانات غير مكتملة',
+        'أدخلي اسم المعيار.'
+      );
+
+      return;
+    }
+
+
+    if (
+      !Number.isFinite(weight) ||
+      weight <= 0 ||
+      weight > 100
+    ) {
+
+      this.showEvaluationNotice(
+        'warning',
+        'الوزن غير صحيح',
+        'أدخلي وزنًا صحيحًا من 1 إلى 100.'
+      );
+
+      return;
+    }
+
+
+    if (
+      !Number.isFinite(maxPoints) ||
+      maxPoints <= 0
+    ) {
+
+      this.showEvaluationNotice(
+        'warning',
+        'الدرجة القصوى غير صحيحة',
+        'أدخلي الحد الأقصى للدرجة بشكل صحيح.'
+      );
+
+      return;
+    }
+    const currentWeight =
+      this.criteriaTotalWeight();
+
+    const remainingWeight =
+      100 - currentWeight;
+
+
+    if (
+      currentWeight + weight > 100
+    ) {
+
+      this.showEvaluationNotice(
+        'warning',
+        'الوزن غير مسموح',
+        `لا يمكن إضافة المعيار. الوزن المتبقي هو ${remainingWeight}% فقط.`
+      );
+
+      return;
+    }
+
+    this.api
+      .createCriterion({
+
+        templateId,
+
+        name,
+
+        weight,
+
+        maxPoints
+
+      })
+      .subscribe({
+
+        next: () => {
+
+          this.showAddCriterion.set(
+            false
+          );
+
+
+          this.newCriterion = {
+            name: '',
+            weight: 0,
+            maxPoints: 0
+          };
+
+
+          this.showEvaluationNotice(
+            'success',
+            'تمت الإضافة',
+            'تمت إضافة معيار التقييم بنجاح.'
+          );
+
+
+          this.api
+            .getTemplateDetail(
+              templateId
+            )
+            .subscribe({
+
+              next: (detail) => {
+
+                this.templateDetail.set(
+                  detail
+                );
+
+              },
+
+
+              error: (err) => {
+
+                console.error(
+                  'خطأ في إعادة تحميل تفاصيل نموذج التقييم:',
+                  err
+                );
+
+              }
+
+            });
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'خطأ في إضافة معيار التقييم:',
+            err
+          );
+
+
+          this.showEvaluationNotice(
+            'error',
+            'تعذر إضافة المعيار',
+            'حدث خطأ أثناء إضافة معيار التقييم.'
+          );
+
+        }
+
+      });
+
+  }
+  // =====================================================
+  // CANCEL ADD CRITERION
+  // =====================================================
+
+  cancelAddCriterion(): void {
+
+    this.showAddCriterion.set(
+      false
     );
 
-    return;
+    this.newCriterion = {
+      name: '',
+      weight: 0,
+      maxPoints: 0
+    };
+
+  }
+  // =====================================================
+  // DELETE CRITERION
+  // =====================================================
+
+  deleteCriterion(
+    criteriaId: number,
+    criterionName: string
+  ): void {
+
+    if (
+      !this.templateDetail()
+        ?.templateId
+    ) {
+      return;
+    }
+
+
+    this.criterionToDelete.set({
+      criteriaId,
+      criterionName
+    });
+
   }
 
 
-  // First make sure criterion
-  // weights total exactly 100%.
-  this.api
-    .checkTemplateWeights(
-      template.templateId
-    )
-    .subscribe({
+  // =====================================================
+  // CLOSE DELETE CRITERION MODAL
+  // =====================================================
 
-      next: (result) => {
+  closeDeleteCriterionModal(): void {
 
-        if (!result.isValid) {
+    if (
+      this.criterionDeleting()
+    ) {
+      return;
+    }
 
-          this.showEvaluationNotice(
-            'warning',
-            'مجموع الأوزان غير مكتمل',
-            'مجموع أوزان معايير التقييم يجب أن يساوي 100%.'
+
+    this.criterionToDelete.set(
+      null
+    );
+
+  }
+
+
+  // =====================================================
+  // CONFIRM DELETE CRITERION
+  // =====================================================
+
+  confirmDeleteCriterion(): void {
+
+    const target =
+      this.criterionToDelete();
+
+    const templateId =
+      this.templateDetail()
+        ?.templateId;
+
+
+    if (
+      !target ||
+      !templateId ||
+      this.criterionDeleting()
+    ) {
+      return;
+    }
+
+
+    this.criterionDeleting.set(
+      true
+    );
+
+
+    this.api
+      .deleteCriterion(
+        target.criteriaId
+      )
+      .subscribe({
+
+        next: () => {
+
+          delete this.criteriaScores[
+            target.criteriaId
+          ];
+
+
+          this.criterionDeleting.set(
+            false
           );
 
-          return;
-        }
-
-
-        const criteria =
-          this.criteria();
-
-
-        // There must be at least one criterion.
-        if (criteria.length === 0) {
-
-          this.showEvaluationNotice(
-            'warning',
-            'لا توجد معايير',
-            'لا توجد معايير تقييم لهذا النموذج.'
-          );
-
-          return;
-        }
-
-
-        // Make sure every criterion has a score.
-        const hasMissingScore =
-          criteria.some(
-            criterion => {
-
-              const score =
-                this.criteriaScores[
-                  criterion.criteriaId
-                ];
-
-
-              return (
-                score === undefined ||
-                score === null
-              );
-            }
+          this.criterionToDelete.set(
+            null
           );
 
 
-        if (hasMissingScore) {
+          // Reload the template so the deleted
+          // criterion disappears immediately.
+          this.api
+            .getTemplateDetail(
+              templateId
+            )
+            .subscribe({
 
-          this.showEvaluationNotice(
-            'warning',
-            'درجات غير مكتملة',
-            'يجب إدخال درجة لكل معيار قبل حفظ التقييم.'
-          );
+              next: (detail) => {
 
-          return;
-        }
-
-
-        // Make sure every score is valid
-        // and does not exceed max points.
-        const hasInvalidScore =
-          criteria.some(
-            criterion => {
-
-              const score =
-                Number(
-                  this.criteriaScores[
-                    criterion.criteriaId
-                  ]
+                this.templateDetail.set(
+                  detail
                 );
 
 
-              return (
-                !Number.isFinite(score) ||
-                score < 0 ||
-                score >
-                  criterion.maxPoints
-              );
-            }
+                this.showEvaluationNotice(
+                  'success',
+                  'تم حذف المعيار',
+                  'تم حذف معيار التقييم بنجاح.'
+                );
+
+              },
+
+
+              error: (err) => {
+
+                console.error(
+                  'خطأ في إعادة تحميل نموذج التقييم:',
+                  err
+                );
+
+              }
+
+            });
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'خطأ في حذف معيار التقييم:',
+            err
           );
 
 
-        if (hasInvalidScore) {
+          this.criterionDeleting.set(
+            false
+          );
+
 
           this.showEvaluationNotice(
-            'warning',
-            'درجة غير صحيحة',
-            'تأكدي أن كل درجة بين 0 والحد الأقصى للمعيار.'
+            'error',
+            'تعذر حذف المعيار',
+            'قد يكون هذا المعيار مستخدمًا في تقييم محفوظ.'
           );
 
-          return;
         }
 
+      });
 
-        const criteriaScores =
-          criteria.map(
-            criterion => ({
+  }
 
-              criteriaId:
-                criterion.criteriaId,
+  // =====================================================
+  // START EDIT CRITERION
+  // =====================================================
 
-              score:
-                Number(
-                  this.criteriaScores[
-                    criterion.criteriaId
-                  ]
-                )
+  startEditCriterion(
+    criterion: EvaluationCriterionDto
+  ): void {
 
-            })
+    this.editingCriterionId.set(
+      criterion.criteriaId
+    );
+
+
+    this.criterionEditForm = {
+      name:
+        criterion.name,
+
+      weight:
+        Number(
+          criterion.weight
+        ),
+
+      maxPoints:
+        Number(
+          criterion.maxPoints
+        )
+    };
+  }
+
+
+  // =====================================================
+  // CANCEL EDIT CRITERION
+  // =====================================================
+
+  cancelCriterionEdit(): void {
+
+    this.editingCriterionId.set(
+      null
+    );
+
+
+    this.criterionEditForm = {
+      name: '',
+      weight: 0,
+      maxPoints: 0
+    };
+  }
+
+
+  // =====================================================
+  // SAVE CRITERION EDIT
+  // =====================================================
+
+  saveCriterionEdit(
+    criteriaId: number
+  ): void {
+
+    const templateId =
+      this.templateDetail()
+        ?.templateId;
+
+
+    if (!templateId) {
+      return;
+    }
+
+
+    const name =
+      this.criterionEditForm
+        .name
+        .trim();
+
+    const weight =
+      Number(
+        this.criterionEditForm.weight
+      );
+
+    const maxPoints =
+      Number(
+        this.criterionEditForm.maxPoints
+      );
+
+
+    if (
+      !name ||
+      !Number.isFinite(weight) ||
+      !Number.isFinite(maxPoints) ||
+      weight <= 0 ||
+      weight > 100 ||
+      maxPoints <= 0
+    ) {
+
+      this.showEvaluationNotice(
+        'warning',
+        'تحققي من بيانات المعيار',
+        'تأكدي من اسم المعيار والوزن والحد الأقصى.'
+      );
+
+      return;
+    }
+
+    const otherCriteriaWeight =
+      this.criteriaTotalWeight(
+        criteriaId
+      );
+
+    const remainingWeight =
+      100 - otherCriteriaWeight;
+
+
+    if (
+      otherCriteriaWeight + weight > 100
+    ) {
+
+      this.showEvaluationNotice(
+        'warning',
+        'لا يمكن حفظ التعديل',
+        `أقصى وزن مسموح لهذا المعيار هو ${remainingWeight}%.`
+      );
+
+      return;
+    }
+    this.api
+      .updateCriterion(
+        criteriaId,
+        {
+          templateId,
+          name,
+          weight,
+          maxPoints
+        }
+      )
+      .subscribe({
+
+        next: () => {
+
+          this.api
+            .getTemplateDetail(
+              templateId
+            )
+            .subscribe({
+
+              next: (detail) => {
+
+                this.templateDetail.set(
+                  detail
+                );
+
+
+                this.cancelCriterionEdit();
+
+
+                this.showEvaluationNotice(
+                  'success',
+                  'تم حفظ التعديل',
+                  'تم تحديث معيار التقييم بنجاح.'
+                );
+
+              },
+
+
+              error: (err) => {
+
+                console.error(
+                  'خطأ في إعادة تحميل نموذج التقييم:',
+                  err
+                );
+
+              }
+
+            });
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'خطأ في تعديل معيار التقييم:',
+            err
           );
 
 
-        this.api
-          .submitEvaluation({
+          this.showEvaluationNotice(
+            'error',
+            'تعذر تعديل المعيار',
+            'حدث خطأ أثناء حفظ تعديلات المعيار.'
+          );
 
-            enrollmentId:
-              this.selectedEnrollmentId,
+        }
 
-            trainerId:
-              trainer.trainerId,
+      });
 
-            templateId:
-              template.templateId,
+  }// =====================================================
+  // SUBMIT EVALUATION
+  // =====================================================
 
-            evaluatorUserId:
-              userId,
+  submitEvaluation(): void {
 
-            criteriaScores
+    const trainer =
+      this.trainer();
 
-          })
-          .subscribe({
+    const userId =
+      this.auth.session()?.userId;
 
-            next: () => {
-
-              this.showEvalModal.set(
-                false
-              );
-
-              this.criteriaScores = {};
-
-              this.selectedEnrollmentId =
-                null;
+    const template =
+      this.templateDetail();
 
 
-              this.loadEvaluationAverages(
-                this.enrollments()
-              );
+    if (
+      !this.selectedEnrollmentId ||
+      !trainer ||
+      !userId ||
+      !template
+    ) {
+      return;
+    }
 
 
-              this.showEvaluationNotice(
-                'success',
-                'تم حفظ التقييم',
-                'تم حفظ تقييم المتدرب بنجاح.'
-              );
-
-            },
-
-
-            error: (err) => {
-
-              console.error(
-                'خطأ في حفظ التقييم:',
-                err
-              );
-
-
-              this.showEvaluationNotice(
-                'error',
-                'تعذر حفظ التقييم',
-                'حدث خطأ أثناء حفظ تقييم المتدرب.'
-              );
-
-            }
-
-          });
-
-      },
-
-
-      error: (err) => {
-
-        console.error(
-          'خطأ في التحقق من أوزان التقييم:',
-          err
+    const enrollment =
+      this.enrollments()
+        .find(
+          item =>
+            item.enrollmentId ===
+            this.selectedEnrollmentId
         );
 
 
-        this.showEvaluationNotice(
-          'error',
-          'تعذر التحقق من الأوزان',
-          'حدث خطأ أثناء التحقق من مجموع أوزان معايير التقييم.'
-        );
+    if (
+      !enrollment ||
+      !this.canEvaluateEnrollment(
+        enrollment
+      )
+    ) {
 
-      }
+      this.showEvaluationNotice(
+        'warning',
+        'التقييم غير متاح',
+        'لا يمكن تقييم هذا المتدرب حاليًا.'
+      );
 
-    });
+      return;
+    }
 
-}
+
+    // First make sure criterion
+    // weights total exactly 100%.
+    this.api
+      .checkTemplateWeights(
+        template.templateId
+      )
+      .subscribe({
+
+        next: (result) => {
+
+          if (!result.isValid) {
+
+            this.showEvaluationNotice(
+              'warning',
+              'مجموع الأوزان غير مكتمل',
+              'مجموع أوزان معايير التقييم يجب أن يساوي 100%.'
+            );
+
+            return;
+          }
+
+
+          const criteria =
+            this.criteria();
+
+
+          // There must be at least one criterion.
+          if (criteria.length === 0) {
+
+            this.showEvaluationNotice(
+              'warning',
+              'لا توجد معايير',
+              'لا توجد معايير تقييم لهذا النموذج.'
+            );
+
+            return;
+          }
+
+
+          // Make sure every criterion has a score.
+          const hasMissingScore =
+            criteria.some(
+              criterion => {
+
+                const score =
+                  this.criteriaScores[
+                  criterion.criteriaId
+                  ];
+
+
+                return (
+                  score === undefined ||
+                  score === null
+                );
+              }
+            );
+
+
+          if (hasMissingScore) {
+
+            this.showEvaluationNotice(
+              'warning',
+              'درجات غير مكتملة',
+              'يجب إدخال درجة لكل معيار قبل حفظ التقييم.'
+            );
+
+            return;
+          }
+
+
+          // Make sure every score is valid
+          // and does not exceed max points.
+          const hasInvalidScore =
+            criteria.some(
+              criterion => {
+
+                const score =
+                  Number(
+                    this.criteriaScores[
+                    criterion.criteriaId
+                    ]
+                  );
+
+
+                return (
+                  !Number.isFinite(score) ||
+                  score < 0 ||
+                  score >
+                  criterion.maxPoints
+                );
+              }
+            );
+
+
+          if (hasInvalidScore) {
+
+            this.showEvaluationNotice(
+              'warning',
+              'درجة غير صحيحة',
+              'تأكدي أن كل درجة بين 0 والحد الأقصى للمعيار.'
+            );
+
+            return;
+          }
+
+
+          const criteriaScores =
+            criteria.map(
+              criterion => ({
+
+                criteriaId:
+                  criterion.criteriaId,
+
+                score:
+                  Number(
+                    this.criteriaScores[
+                    criterion.criteriaId
+                    ]
+                  )
+
+              })
+            );
+
+
+          this.api
+            .submitEvaluation({
+
+              enrollmentId:
+                this.selectedEnrollmentId,
+
+              trainerId:
+                trainer.trainerId,
+
+              templateId:
+                template.templateId,
+
+              evaluatorUserId:
+                userId,
+
+              criteriaScores
+
+            })
+            .subscribe({
+
+              next: () => {
+
+                this.showEvalModal.set(
+                  false
+                );
+
+                this.criteriaScores = {};
+
+                this.selectedEnrollmentId =
+                  null;
+
+
+                this.loadEvaluationAverages(
+                  this.enrollments()
+                );
+
+
+                this.showEvaluationNotice(
+                  'success',
+                  'تم حفظ التقييم',
+                  'تم حفظ تقييم المتدرب بنجاح.'
+                );
+
+              },
+
+
+              error: (err) => {
+
+                console.error(
+                  'خطأ في حفظ التقييم:',
+                  err
+                );
+
+
+                this.showEvaluationNotice(
+                  'error',
+                  'تعذر حفظ التقييم',
+                  'حدث خطأ أثناء حفظ تقييم المتدرب.'
+                );
+
+              }
+
+            });
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'خطأ في التحقق من أوزان التقييم:',
+            err
+          );
+
+
+          this.showEvaluationNotice(
+            'error',
+            'تعذر التحقق من الأوزان',
+            'حدث خطأ أثناء التحقق من مجموع أوزان معايير التقييم.'
+          );
+
+        }
+
+      });
+
+  }
 }
