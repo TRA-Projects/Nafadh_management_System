@@ -20,6 +20,11 @@ namespace Nafadh_Backend.Models
         public NFD_Company Company { get; set; } = null!;
 
         /// <summary>Canonical course/program record. Nullable keeps existing plans compatible.</summary>
+        // Each batch owns one independent plan, even when several batches share a ProgramId.
+        // Nullable only for pre-migration legacy plans that cannot be mapped safely.
+        public int? BatchId { get; set; }
+        public NFD_Batch? Batch { get; set; }
+
         public int? ProgramId { get; set; }
         public NFD_Program? Program { get; set; }
 
@@ -153,6 +158,11 @@ namespace Nafadh_Backend.Models
                 entity.ToTable("NFD_CoursePlans");
                 entity.HasIndex(e => new { e.CompanyId, e.ApprovalStatus });
                 entity.HasIndex(e => e.ProgramId);
+                entity.HasIndex(e => e.BatchId).IsUnique().HasFilter("[BatchId] IS NOT NULL");
+                entity.HasOne(e => e.Batch)
+                    .WithMany()
+                    .HasForeignKey(e => e.BatchId)
+                    .OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(e => e.Program)
                     .WithMany()
                     .HasForeignKey(e => e.ProgramId)

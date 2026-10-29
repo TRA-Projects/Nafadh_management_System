@@ -1,4 +1,4 @@
-﻿using MailKit.Security;
+using MailKit.Security;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
 using MimeKit;
@@ -590,6 +590,28 @@ namespace Nafadh_Backend.Services
 
             await SendAsync(email, subject, body);
 
+        }
+
+        public async Task SendCoursePlanSubmittedAsync(
+            string email, string companyName, string planTitle, int planId, bool resubmitted)
+        {
+            var safeCompany = WebUtility.HtmlEncode(companyName);
+            var safePlan = WebUtility.HtmlEncode(planTitle);
+            var statusText = resubmitted ? "إعادة تقديم" : "تقديم";
+            var subject = $"{statusText} خطة تدريبية لاعتماد الهيئة - منصة نفاذ (#{planId})";
+            var body = $@"
+            <div dir='rtl' style='font-family:Arial,Tahoma,sans-serif;max-width:620px;margin:auto;line-height:1.8'>
+                <h2>إشعار {statusText} خطة تدريبية</h2>
+                <p>السادة فريق اعتماد البرامج في الهيئة،</p>
+                <p>قامت شركة <strong>{safeCompany}</strong> بـ{statusText} الخطة
+                   <strong>«{safePlan}»</strong> إلى قائمة المراجعة.</p>
+                <p>رقم الخطة: <strong>{planId}</strong></p>
+                <p>يرجى الدخول إلى بوابة الإدارة لمراجعة المراحل وتسجيل قرار الاعتماد أو الرفض.</p>
+                <p style='color:#64748b;font-size:12px'>هذه رسالة آلية من نظام نفاذ نيابة عن الشركة.
+                   لا يُعتمد على الرد على هذا البريد لاتخاذ قرار.</p>
+            </div>";
+
+            await SendAsync(email, subject, body);
         }
 
         public async Task SendCoursePlanDecisionAsync(

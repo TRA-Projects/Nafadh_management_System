@@ -28,6 +28,53 @@
     </div>
   </header>
 
+  <!-- Canonical pending approvals, visible even when a notification was missed. -->
+  <section class="toolbar-card" aria-label="قائمة الخطط بانتظار الاعتماد" style="margin-bottom: 16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <h2 style="font-size:1.1rem;margin:0;">الخطط بانتظار اعتماد الهيئة ({{ pendingCoursePlans().length }})</h2>
+      <button type="button" class="btn btn-secondary" (click)="loadPlanRequests()">تحديث القائمة</button>
+    </div>
+    @if (pendingPlansError()) { <p role="alert">{{ pendingPlansError() }}</p> }
+    @else if (!pendingCoursePlans().length) { <p>لا توجد خطط معلقة في قائمة الهيئة.</p> }
+    @else {
+      <div style="display:grid;gap:10px;margin-top:12px;">
+        @for (plan of pendingCoursePlans(); track plan.planId) {
+          <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <div><strong>{{ plan.title }}</strong> — خطة رقم {{ plan.planId }}<br />
+              <small>تاريخ التقديم: {{ plan.submittedAt | date:'yyyy/MM/dd HH:mm' }}</small></div>
+            <button type="button" class="btn btn-primary" (click)="openPlanById(plan.planId)">مراجعة واعتماد</button>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Real approval requests, sourced from NFD_Notifications (not announcements). -->
+  <section class="toolbar-card" aria-label="طلبات اعتماد الخطط التدريبية" style="margin-bottom: 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <h2 style="font-size:1.1rem;margin:0;">طلبات اعتماد الخطط التدريبية</h2>
+      <button class="btn btn-secondary" type="button" (click)="loadPlanRequests()" [disabled]="planRequestsLoading()">تحديث الطلبات</button>
+    </div>
+    @if (planRequestsLoading()) { <p>جارٍ تحميل طلبات الاعتماد...</p> }
+    @else if (planRequestsError()) { <p role="alert">{{ planRequestsError() }}</p> }
+    @else if (!planRequestNotifications().length) { <p>لا توجد إشعارات تقديم خطط لهذا الحساب.</p> }
+    @else {
+      <div style="display:grid;gap:10px;margin-top:12px;">
+        @for (request of planRequestNotifications(); track request.notificationId) {
+          <div style="border:1px solid #e2e8f0;padding:12px;border-radius:9px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <div>
+              <strong>{{ request.title }}</strong>
+              @if (!request.isRead) { <span style="color:#0756aa;margin-inline:8px;">جديد</span> }
+              <div>{{ request.message }}</div>
+              <small>{{ request.createdAt | date:'yyyy/MM/dd HH:mm' }}</small>
+            </div>
+            <button type="button" class="btn btn-primary" (click)="openPlanRequest(request)">مراجعة الخطة</button>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
   <!-- 2. كروت المؤشرات والإحصائيات التراكمية (KPIs) -->
   <div class="metrics-grid">
     <div class="metric-card">

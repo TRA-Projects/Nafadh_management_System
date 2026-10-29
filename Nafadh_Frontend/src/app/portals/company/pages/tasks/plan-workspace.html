@@ -419,7 +419,7 @@
         <form class="modal-body" (ngSubmit)="savePlan()">
           <label class="field">
             <span>عنوان الكورس <em>*</em></span>
-            <input type="text" name="title" [(ngModel)]="planForm.title" maxlength="150" />
+            <input type="text" name="title" [(ngModel)]="planForm.title" maxlength="150" [readonly]="!!plan()?.programId" />
           </label>
           <label class="field">
             <span>وصف الكورس وأهدافه</span>
@@ -428,24 +428,24 @@
           <div class="field-row">
             <label class="field">
               <span>التصنيف</span>
-              <input type="text" name="category" [(ngModel)]="planForm.category" maxlength="100" list="ws-categories" />
+              <input type="text" name="category" [(ngModel)]="planForm.category" maxlength="100" list="ws-categories" [readonly]="!!plan()?.programId" />
               <datalist id="ws-categories">
                 @for (c of categories(); track c) { <option [value]="c"></option> }
               </datalist>
             </label>
             <label class="field">
               <span>إجمالي الساعات <em>*</em></span>
-              <input type="number" name="hours" min="1" max="10000" [(ngModel)]="planForm.durationHours" />
+              <input type="number" name="hours" min="1" max="10000" [(ngModel)]="planForm.durationHours" [readonly]="!!plan()?.programId" />
             </label>
           </div>
           <div class="field-row">
             <label class="field">
               <span>تاريخ البدء <em>*</em></span>
-              <input type="date" name="start" [(ngModel)]="planForm.startDate" />
+              <input type="date" name="start" [(ngModel)]="planForm.startDate" [readonly]="!!plan()?.programId" />
             </label>
             <label class="field">
               <span>تاريخ الانتهاء <em>*</em></span>
-              <input type="date" name="end" [(ngModel)]="planForm.endDate" [attr.min]="planForm.startDate" />
+              <input type="date" name="end" [(ngModel)]="planForm.endDate" [attr.min]="planForm.startDate" [readonly]="!!plan()?.programId" />
             </label>
           </div>
           @if (formError()) { <div class="form-error"><i class="fa-solid fa-circle-exclamation"></i> {{ formError() }}</div> }

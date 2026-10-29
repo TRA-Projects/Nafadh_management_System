@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
 import * as XLSX from 'xlsx';
 
@@ -16,6 +16,8 @@ export class AdminPrograms implements OnInit {
   private fb = inject(FormBuilder);
   private adminApi = inject(AdminApi);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private notificationPlanId: number | null = null;
 
   traineeAddMode: 'existing' | 'manual' | 'excel' = 'existing';
 
@@ -225,6 +227,8 @@ export class AdminPrograms implements OnInit {
   // 6. Lifecycle Hook
   // ==========================================================
   ngOnInit(): void {
+    const incomingId = Number(this.route.snapshot.queryParamMap.get('coursePlanId'));
+    this.notificationPlanId = Number.isInteger(incomingId) && incomingId > 0 ? incomingId : null;
     this.initBatchForm();
     this.initEditBatchForm();
     this.initProgramForm();
@@ -234,7 +238,13 @@ export class AdminPrograms implements OnInit {
 
   loadInitialData(): void {
     this.adminApi.getBatches().subscribe({
-      next: (res: any) => this.batches.set(res || []),
+      next: (res: any) => {
+        const loaded = Array.isArray(res) ? res : [];
+        this.batches.set(loaded);
+        const planId = this.notificationPlanId;
+        this.notificationPlanId = null;
+        if (planId) this.openPlanFromNotification(planId, loaded);
+      },
       error: () => this.batchesError.set('فشل تحميل قائمة الدفعات من قاعدة البيانات')
     });
 
@@ -248,6 +258,18 @@ export class AdminPrograms implements OnInit {
 
     this.adminApi.getTracks().subscribe({
       next: (res: any) => this.tracks.set(res || [])
+    });
+  }
+
+  private openPlanFromNotification(planId: number, batches: any[]): void {
+    this.adminApi.getBatchForCoursePlan(planId).subscribe({
+      next: ({ batchId }) => {
+        const batch = batches.find((b: any) => Number(b.batchId ?? b.BatchId ?? b.id) === Number(batchId));
+        if (batch) this.onViewPlan(batch);
+        else this.showToast('تعذر العثور على الدفعة المرتبطة بالخطة في قائمة الإدارة.', 'error');
+      },
+      error: (err: any) => this.showToast(
+        err?.error?.message || 'لا يمكن تحديد الدفعة المرتبطة بهذا الإشعار.', 'error')
     });
   }
 
@@ -1283,11 +1305,11 @@ export class AdminPrograms implements OnInit {
 
   getBatchPlanStatus(batch: any): string {
     const s = batch?.coursePlanStatus ?? batch?.planStatus ?? batch?.CoursePlanStatus;
-    if (s === 1 || s === 'PendingApproval' || s === 'Pending') return 'بانتظار الاعتماد';
-    if (s === 2 || s === 'Approved') return 'معتمدة';
-    if (s === 3 || s === 'Rejected' || s === 'NeedsRevision') return 'مرفوضة';
-    if (s === 0 || s === 'Draft') return 'مسودة';
-    return batch?.hasCoursePlan ? 'بانتظار الاعتماد' : 'لم تُرفع بعد';
+    if (s === 1 || s === 'PendingApproval' || s === 'Pending' || s === 'بانتظار اعتماد الهيئة') return 'بانتظار الاعتماد';
+    if (s === 2 || s === 'Approved' || s === 'معتمدة') return 'معتمدة';
+    if (s === 3 || s === 'Rejected' || s === 'NeedsRevision' || s === 'مرفوضة - تحتاج تعديل') return 'مرفوضة';
+    if (s === 0 || s === 'Draft' || s === 'مسودة لدى الشركة') return 'مسودة';
+    return s === 'الربط يحتاج مراجعة' ? s : 'لم تُرفع بعد';
   }
 
   onViewPlan(batch: any): void {
@@ -1303,76 +1325,48 @@ export class AdminPrograms implements OnInit {
     this.rejectionNotes = '';
     this.selectedModifications = [];
 
-    const companyId = Number(batch.companyId ?? batch.CompanyId);
-    const programId = Number(batch.programId ?? batch.ProgramId);
+    const batchId = Number(batch.batchId ?? batch.BatchId ?? batch.id);
+    if (!Number.isInteger(batchId) || batchId <= 0) {
+      this.isLoadingPlan.set(false);
+      this.planErrorMessage.set('رقم الدفعة غير صالح؛ لا يمكن مراجعة خطة غير محددة.');
+      return;
+    }
 
-    this.adminApi.getPendingCoursePlans().subscribe({
-      next: (pendingList: any[]) => {
-        const rawList = Array.isArray(pendingList) ? pendingList : [];
-
-        // 🟢 بحث حصري ودقيق دون أي Fallback عشوائي!
-        const matched = rawList.find(p =>
-          (companyId && Number(p.companyId ?? p.CompanyId) === companyId) ||
-          (programId && Number(p.programId ?? p.ProgramId) === programId)
-        );
-
-        if (matched) {
-          const planId = Number(matched.planId ?? matched.PlanId ?? matched.id);
-          this.adminApi.getCoursePlanDetails(planId).subscribe({
-            next: (detailedPlan: any) => {
-              this.selectedPlan.set(detailedPlan);
-              this.isLoadingPlan.set(false);
-            },
-            error: () => {
-              this.selectedPlan.set(matched);
-              this.isLoadingPlan.set(false);
-            }
-          });
+    // Never select by companyId OR programId, or fall back to plans[0].
+    // The backend rejects ambiguous legacy mappings with HTTP 409.
+    this.adminApi.getBatchCoursePlan(batchId).subscribe({
+      next: (plan: any) => {
+        if (!plan || Number(plan.planId ?? plan.PlanId) <= 0 ||
+            Number(plan.batchId ?? plan.BatchId) !== batchId) {
+          this.planErrorMessage.set('الخطة لا تتطابق مع الدفعة المحددة؛ تم إيقاف المراجعة لحماية البيانات.');
         } else {
-          // إذا لم تكن في قائمة المعلقة، ابحث في خطط الشركة المعتمدة
-          this.fallbackToCompany(companyId, programId);
+          this.selectedPlan.set(plan);
         }
+        this.isLoadingPlan.set(false);
       },
-      error: () => {
-        this.fallbackToCompany(companyId, programId);
+      error: (err: any) => {
+        this.isLoadingPlan.set(false);
+        this.planErrorMessage.set(
+          err?.error?.message ||
+          (err?.status === 404 ? 'لم تُرسل خطة لهذه الدفعة بعد.' :
+           err?.status === 409 ? 'ربط خطة الدفعة غير واضح ويحتاج تصحيحًا من الإدارة.' :
+           'تعذر تحميل الخطة والتحقق من ربطها بالدفعة.')
+        );
       }
     });
   }
 
-  private fallbackToCompany(companyId: number, programId: number): void {
-    if (!companyId) {
-      this.isLoadingPlan.set(false);
-      this.planErrorMessage.set('لا توجد خطة مرفوعة لهذه الدفعة.');
-      return;
-    }
-
-    this.adminApi.getCompanyCoursePlans(companyId).subscribe({
-      next: (res: any) => {
-        const plans = res?.plans || res?.Plans || (Array.isArray(res) ? res : []);
-        const matched = plans.find((p: any) => Number(p.programId ?? p.ProgramId) === programId) || plans[0];
-
-        if (matched) {
-          const planId = Number(matched.planId ?? matched.PlanId ?? matched.id);
-          this.adminApi.getCoursePlanDetails(planId).subscribe({
-            next: (detailed: any) => {
-              this.selectedPlan.set(detailed || matched);
-              this.isLoadingPlan.set(false);
-            },
-            error: () => {
-              this.selectedPlan.set(matched);
-              this.isLoadingPlan.set(false);
-            }
-          });
-        } else {
-          this.isLoadingPlan.set(false);
-          this.planErrorMessage.set('لم تقم الشركة برفع خطة تدريبية بعد.');
-        }
-      },
-      error: () => {
-        this.isLoadingPlan.set(false);
-        this.planErrorMessage.set('تعذر تحميل خطة الدورة من الخادم.');
-      }
-    });
+  // Approval applies only to plans that the backend identifies as PendingApproval.
+  canReviewSelectedPlan(): boolean {
+    const plan = this.selectedPlan();
+    const batch = this.selectedPlanBatch();
+    const id = Number(plan?.planId ?? plan?.PlanId);
+    const batchId = Number(batch?.batchId ?? batch?.BatchId ?? batch?.id);
+    const status = plan?.approvalStatus ?? plan?.ApprovalStatus;
+    return !this.isLoadingPlan() && !this.isSubmittingDecision() &&
+      !this.planErrorMessage() && Number.isInteger(id) && id > 0 &&
+      Number.isInteger(batchId) && batchId > 0 &&
+      (status === 1 || status === 'PendingApproval');
   }
 
   closePlanModal(): void {
@@ -1399,7 +1393,9 @@ export class AdminPrograms implements OnInit {
   executeApproval(): void {
     const plan = this.selectedPlan();
     const planId = Number(plan?.planId ?? plan?.PlanId ?? plan?.id);
-    if (!planId) return;
+    const batch = this.selectedPlanBatch();
+    const batchId = Number(batch?.batchId ?? batch?.BatchId ?? batch?.id);
+    if (!this.canReviewSelectedPlan() || !planId || !batchId) return;
 
     this.isSubmittingDecision.set(true);
     this.decisionErrorMessage.set(null);
@@ -1409,7 +1405,7 @@ export class AdminPrograms implements OnInit {
       note: this.approvalNotes?.trim() || 'تم اعتماد الخطة التدريبية رسمياً من قِبل الإدارة.'
     };
 
-    this.adminApi.reviewCoursePlan(planId, payload).subscribe({
+    this.adminApi.reviewBatchCoursePlan(batchId, planId, payload).subscribe({
       next: () => {
         this.isSubmittingDecision.set(false);
         this.closePlanModal();
@@ -1431,7 +1427,9 @@ export class AdminPrograms implements OnInit {
 
     const plan = this.selectedPlan();
     const planId = Number(plan?.planId ?? plan?.PlanId ?? plan?.id);
-    if (!planId) return;
+    const batch = this.selectedPlanBatch();
+    const batchId = Number(batch?.batchId ?? batch?.BatchId ?? batch?.id);
+    if (!this.canReviewSelectedPlan() || !planId || !batchId) return;
 
     this.decisionErrorMessage.set(null);
     this.isSubmittingDecision.set(true);
@@ -1446,7 +1444,7 @@ export class AdminPrograms implements OnInit {
       note: fullReason
     };
 
-    this.adminApi.reviewCoursePlan(planId, payload).subscribe({
+    this.adminApi.reviewBatchCoursePlan(batchId, planId, payload).subscribe({
       next: () => {
         this.isSubmittingDecision.set(false);
         this.closePlanModal();

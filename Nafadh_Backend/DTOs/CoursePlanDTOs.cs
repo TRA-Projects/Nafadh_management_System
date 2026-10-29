@@ -33,6 +33,7 @@ namespace Nafadh_Backend.DTOs
         public int PlanId { get; set; }
         public int CompanyId { get; set; }
         public int? ProgramId { get; set; }
+        public int? BatchId { get; set; }
         public string CompanyName { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
@@ -143,6 +144,10 @@ namespace Nafadh_Backend.DTOs
     public class CoursePlanProgramOptionDTO
     {
         public int ProgramId { get; set; }
+        public int BatchId { get; set; }
+        public string BatchName { get; set; } = string.Empty;
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? Category { get; set; }
@@ -170,10 +175,11 @@ namespace Nafadh_Backend.DTOs
 
     public class SaveCoursePlanDTO
     {
-        /// <summary>Use an existing company program when supplied; null means create a new Program.</summary>
+        /// <summary>Required Admin-owned program, already assigned to the company through its batch.</summary>
         public int? ProgramId { get; set; }
+        public int? BatchId { get; set; }
 
-        /// <summary>Required only when creating a new Program manually.</summary>
+        /// <summary>Legacy field; company does not create or edit Admin programs.</summary>
         public int? TrackId { get; set; }
 
         public decimal Price { get; set; }

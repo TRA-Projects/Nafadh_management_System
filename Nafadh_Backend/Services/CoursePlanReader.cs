@@ -131,6 +131,7 @@ namespace Nafadh_Backend.Services
             dto.CompanyId = plan.CompanyId;
             dto.CompanyName = plan.Company?.CompanyName ?? string.Empty;
             dto.ProgramId = plan.ProgramId;
+            dto.BatchId = plan.BatchId;
             dto.Trainers = plan.Trainers
                 .Select(pt => pt.Trainer)
                 .Concat(plan.Stages.SelectMany(st => st.Trainers.Select(x => x.Trainer)))

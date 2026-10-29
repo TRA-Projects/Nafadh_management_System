@@ -73,6 +73,73 @@ namespace Nafadh_Backend.Controllers
             return Ok(CoursePlanReader.ToDetail(plan, DateTime.Today));
         }
 
+        // Resolve strictly by the actual BatchId, never by company, program title,
+        // or the first plan for a reused ProgramId.
+        private async Task<(int? PlanId, ActionResult? Error)> ResolveBatchPlanAsync(int batchId)
+        {
+            var batch = await _context.NFD_Batches.AsNoTracking()
+                .Where(b => b.BatchId == batchId)
+                .Select(b => new { b.CompanyId, b.ProgramId, b.Status })
+                .SingleOrDefaultAsync();
+            if (batch is null)
+                return (null, NotFound(new { message = "الدفعة غير موجودة." }));
+            if (!batch.CompanyId.HasValue || batch.Status == NFD_BatchStatus.Cancelled)
+                return (null, Conflict(new { message = "الدفعة غير مسندة حاليًا أو ملغاة." }));
+
+            var plans = await _context.NFD_CoursePlans.AsNoTracking()
+                .Where(p => p.BatchId == batchId && p.ProgramId == batch.ProgramId &&
+                            p.CompanyId == batch.CompanyId.Value)
+                .Select(p => new { p.PlanId, p.ApprovalStatus }).Take(2).ToListAsync();
+            if (plans.Count == 0 || plans[0].ApprovalStatus == NFD_CoursePlanApprovalStatus.Draft)
+                return (null, NotFound(new { message = "لم تُرسل خطة هذه الدفعة للاعتماد بعد." }));
+            if (plans.Count != 1)
+                return (null, Conflict(new { message = "توجد عدة خطط للدفعة نفسها؛ يلزم مراجعة قاعدة البيانات." }));
+            return (plans[0].PlanId, null);
+        }
+
+        // GET: api/CoursePlanApproval/batch/{batchId}/plan
+        [HttpGet("batch/{batchId:int}/plan")]
+        public async Task<ActionResult<CoursePlanDetailDTO>> GetBatchPlan(int batchId)
+        {
+            var match = await ResolveBatchPlanAsync(batchId);
+            if (match.Error is not null) return match.Error;
+            return await GetPlan(match.PlanId!.Value);
+        }
+
+        // Link a plan notification directly to its unique Admin batch.
+        [HttpGet("{planId:int}/batch")]
+        public async Task<IActionResult> GetBatchForPlan(int planId)
+        {
+            var plan = await _context.NFD_CoursePlans.AsNoTracking()
+                .Where(p => p.PlanId == planId && p.ApprovalStatus != NFD_CoursePlanApprovalStatus.Draft)
+                .Select(p => new { p.CompanyId, p.ProgramId, p.BatchId })
+                .SingleOrDefaultAsync();
+            if (plan is null)
+                return NotFound(new { message = "الخطة غير موجودة." });
+            if (!plan.BatchId.HasValue)
+                return Conflict(new { message = "الخطة القديمة ليس لها دفعة مؤكدة. يلزم تصحيح الربط قبل المراجعة." });
+            var valid = await _context.NFD_Batches.AsNoTracking().AnyAsync(b =>
+                b.BatchId == plan.BatchId.Value && b.ProgramId == plan.ProgramId &&
+                b.CompanyId == plan.CompanyId && b.Status != NFD_BatchStatus.Cancelled);
+            if (!valid)
+                return Conflict(new { message = "تكليف الدفعة لا يطابق الخطة الحالية." });
+            return Ok(new { batchId = plan.BatchId.Value });
+        }
+
+        // PUT: api/CoursePlanApproval/batch/{batchId}/plans/{planId}/decision
+        // This route verifies again at decision time that the reviewed plan belongs
+        // to the selected batch; the existing plan-id API remains compatible.
+        [HttpPut("batch/{batchId:int}/plans/{planId:int}/decision")]
+        public async Task<ActionResult<CoursePlanDetailDTO>> DecideForBatch(
+            int batchId, int planId, [FromBody] CoursePlanDecisionDTO dto)
+        {
+            var match = await ResolveBatchPlanAsync(batchId);
+            if (match.Error is not null) return match.Error;
+            if (match.PlanId != planId)
+                return Conflict(new { message = "الخطة المختارة لا تتبع الدفعة المحددة. لم يُحفظ أي قرار." });
+            return await Decide(planId, dto);
+        }
+
         // PUT: api/CoursePlanApproval/{planId}/decision
         // Approve (note optional) or Reject (note required). The company is notified and the
         // note is added to the plan's notes timeline as an Authority note.
@@ -85,6 +152,9 @@ namespace Nafadh_Backend.Controllers
 
             var note = string.IsNullOrWhiteSpace(dto.Note) ? null : dto.Note.Trim();
 
+            if (dto.Decision != CoursePlanDecision.Approve && dto.Decision != CoursePlanDecision.Reject)
+                return BadRequest(new { message = "قرار الاعتماد غير صالح." });
+
             if (dto.Decision == CoursePlanDecision.Reject && note is null)
                 return BadRequest(new { message = "سبب الرفض مطلوب." });
 
@@ -93,6 +163,14 @@ namespace Nafadh_Backend.Controllers
 
             if (plan is null)
                 return NotFound(new { message = "الخطة غير موجودة." });
+
+            // Double-check the exact assignment when applying the decision. Legacy
+            // plans with unknown BatchId are deliberately not auto-approved.
+            if (!plan.BatchId.HasValue ||
+                !await _context.NFD_Batches.AsNoTracking().AnyAsync(b =>
+                    b.BatchId == plan.BatchId.Value && b.ProgramId == plan.ProgramId &&
+                    b.CompanyId == plan.CompanyId && b.Status != NFD_BatchStatus.Cancelled))
+                return Conflict(new { message = "لا يمكن اعتماد الخطة قبل تأكيد الدفعة والشركة والبرنامج المرتبطين بها." });
 
             if (plan.ApprovalStatus != NFD_CoursePlanApprovalStatus.PendingApproval)
                 return Conflict(new { message = "لا يمكن البت إلا في الخطط التي بانتظار الاعتماد." });
@@ -109,29 +187,8 @@ namespace Nafadh_Backend.Controllers
             plan.ReviewNote = note;
             plan.UpdatedAt = now;
 
-            // A manually-created course becomes a normal company program only after Authority approval.
-            // Existing company-program links are left untouched.
-            if (approved && plan.ProgramId.HasValue)
-            {
-                var companyProgramExists = await _context.NFD_CompanyPrograms
-                    .AnyAsync(cp => cp.CompanyId == plan.CompanyId && cp.ProgramId == plan.ProgramId.Value);
-
-                if (!companyProgramExists)
-                {
-                    _context.NFD_CompanyPrograms.Add(new NFD_CompanyProgram
-                    {
-                        CompanyId = plan.CompanyId,
-                        ProgramId = plan.ProgramId.Value
-                    });
-
-                    var program = await _context.NFD_Programs
-                        .FirstOrDefaultAsync(p => p.ProgramId == plan.ProgramId.Value);
-
-                    // Only programs created by this Company Course Plan flow are promoted from Draft.
-                    if (program is not null && program.Status == NFD_ProgramStatus.Draft)
-                        program.Status = NFD_ProgramStatus.Published;
-                }
-            }
+            // Admin owns program publication and company-batch assignment.
+            // A plan decision must not publish a program or change eligibility.
 
             if (note is not null)
             {

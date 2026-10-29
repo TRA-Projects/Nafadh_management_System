@@ -230,6 +230,22 @@ createEnrollment(dto: {
     return this.http.get<any>(`${this.base}/CompanyCoursePlan/company/${cleanId}/plans`);
   }
 
+  // Server-verified lookup: a batch resolves to exactly one course plan or a clear error.
+  getBatchForCoursePlan(planId: number): Observable<{ batchId: number }> {
+    return this.http.get<{ batchId: number }>(`${this.base}/CoursePlanApproval/${this.sanitizeId(planId)}/batch`);
+  }
+
+  getBatchCoursePlan(batchId: number): Observable<any> {
+    return this.http.get<any>(`${this.base}/CoursePlanApproval/batch/${this.sanitizeId(batchId)}/plan`);
+  }
+
+  reviewBatchCoursePlan(batchId: number, planId: number, payload: any): Observable<any> {
+    return this.http.put(
+      `${this.base}/CoursePlanApproval/batch/${this.sanitizeId(batchId)}/plans/${this.sanitizeId(planId)}/decision`,
+      payload
+    );
+  }
+
   getPendingCoursePlans(): Observable<any[]> {
     return this.http.get<any[]>(`${this.base}/CoursePlanApproval`);
   }
@@ -474,6 +490,10 @@ createEnrollment(dto: {
   // ==========================================================
   // 13. Notifications & Announcements
   // ==========================================================
+  getMyNotifications(): Observable<NotificationDto[]> {
+    return this.http.get<NotificationDto[]>(`${this.base}/Notification/me`);
+  }
+
   getNotifications(userId: number): Observable<NotificationDto[]> {
     return this.http.get<NotificationDto[]>(`${this.base}/Notification/user/${this.sanitizeId(userId)}`);
   }

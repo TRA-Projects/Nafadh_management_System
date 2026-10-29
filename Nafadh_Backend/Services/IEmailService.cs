@@ -1,4 +1,4 @@
-﻿namespace Nafadh_Backend.Services
+namespace Nafadh_Backend.Services
 {
     public interface IEmailService
     {
@@ -44,5 +44,8 @@
 
 
         Task SendCoursePlanDecisionAsync(string email, string companyName, string planTitle, bool approved, string? note = null);
+
+        // Informs active Authority administrators when a company submits or resubmits a plan.
+        Task SendCoursePlanSubmittedAsync(string email, string companyName, string planTitle, int planId, bool resubmitted);
     }
 }
