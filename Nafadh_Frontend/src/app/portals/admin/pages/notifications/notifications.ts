@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { NotificationDto as UserNotification, NotificationService } from '../../../../shared/services/notification.service';
 import { AdminApi } from '../../services/admin-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AnnouncementDto } from '../../../../core/models/dtos';
@@ -55,6 +57,14 @@ export function normalizeCategory(item: any): 'announcement' | 'alert' | 'compan
 export class AdminNotifications implements OnInit {
   private readonly api = inject(AdminApi);
   private readonly auth = inject(AuthService);
+  private readonly notificationsApi = inject(NotificationService);
+  private readonly router = inject(Router);
+  readonly planRequestNotifications = signal<UserNotification[]>([]);
+  readonly pendingCoursePlans = signal<any[]>([]);
+  readonly pendingPlansError = signal<string | null>(null);
+  readonly planRequestsLoading = signal(false);
+  readonly planRequestsError = signal<string | null>(null);
+
 
   rawNotifications = signal<AnnouncementDto[]>([]);
   activeFilter = signal<NotificationFilter>('all');
@@ -178,7 +188,50 @@ export class AdminNotifications implements OnInit {
 
   ngOnInit(): void { this.load(); }
 
+  loadPlanRequests(): void {
+    // The approval queue is the source of truth. Notifications can be missed by
+    // accounts created after the submission or marked read on another device.
+    this.pendingPlansError.set(null);
+    this.api.getPendingCoursePlans().subscribe({
+      next: plans => this.pendingCoursePlans.set(plans ?? []),
+      error: () => this.pendingPlansError.set('تعذر تحميل قائمة الخطط بانتظار الاعتماد.')
+    });
+    this.planRequestsLoading.set(true);
+    this.planRequestsError.set(null);
+    this.notificationsApi.getMine().subscribe({
+      next: rows => {
+        this.planRequestNotifications.set((rows ?? []).filter(n =>
+          /^CoursePlan:[1-9]\d*$/.test((n.relatedEntity ?? '').trim())
+        ).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)));
+        this.planRequestsLoading.set(false);
+      },
+      error: () => {
+        this.planRequestsError.set('تعذر تحميل طلبات الاعتماد. أعيدي المحاولة.');
+        this.planRequestsLoading.set(false);
+      }
+    });
+  }
+
+  openPlanById(planId: number): void {
+    if (Number.isInteger(planId) && planId > 0)
+      this.router.navigate(['/admin/programs'], { queryParams: { coursePlanId: planId } });
+  }
+
+  openPlanRequest(item: UserNotification): void {
+    const match = /^CoursePlan:([1-9]\d*)$/.exec(item.relatedEntity ?? '');
+    if (!match) return;
+    if (!item.isRead) {
+      this.notificationsApi.markAsRead(item.notificationId).subscribe({
+        next: () => this.planRequestNotifications.update(list =>
+          list.map(n => n.notificationId === item.notificationId ? { ...n, isRead: true } : n)),
+        error: () => { /* A failed read receipt must not block review. */ }
+      });
+    }
+    this.openPlanById(Number(match[1]));
+  }
+
   load(): void {
+    this.loadPlanRequests();
     this.loading.set(true);
     this.error.set(null);
     this.api.getAnnouncements().subscribe({
