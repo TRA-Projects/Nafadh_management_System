@@ -1,5 +1,5 @@
-﻿
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -7,22 +7,25 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Enums;
+using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
 {
     // Trainer Portal - Live classroom session reports.
-    // Separate from the shared ReportController.
     [ApiController]
     [Authorize(Roles = "Trainer")]
     [Route("api/trainer/live-sessions/{sessionId:int}/report")]
     public class TrainerLiveSessionReportController : ControllerBase
     {
         private readonly Nafadhcontext _context;
+        private readonly ILiveKitService _liveKit;
 
         public TrainerLiveSessionReportController(
-            Nafadhcontext context)
+            Nafadhcontext context,
+            ILiveKitService liveKit)
         {
             _context = context;
+            _liveKit = liveKit;
         }
 
         // GET: api/trainer/live-sessions/418/report
@@ -62,60 +65,67 @@ namespace Nafadh_Backend.Controllers
                 });
             }
 
-            // Trainees enrolled in this session's batch.
-            var traineeIds = await _context.NFD_Enrollments
+            // 1. Fetch enrolled trainees along with their FullName, TraineeId, and UserId.
+            var trainees = await _context.NFD_Enrollments
                 .AsNoTracking()
                 .Where(e => e.BatchId == session.BatchId)
-                .Select(e => e.TraineeId)
-                .Distinct()
-                .ToListAsync(HttpContext.RequestAborted);
-
-            // Read existing attendance records only.
-            var attendance = await _context.NFD_SessionAttendances
-                .AsNoTracking()
-                .Where(a =>
-                    a.SessionId == sessionId &&
-                    traineeIds.Contains(a.TraineeId))
-                .Select(a => new
+                .Select(e => new
                 {
-                    a.TraineeId,
-                    a.Status
+                    e.TraineeId,
+                    e.Trainee.UserId,
+                    FullName = e.Trainee.User.FullName
                 })
+                .Distinct()
                 .ToListAsync(HttpContext.RequestAborted);
 
-            var recordedCount = attendance
-                .Select(a => a.TraineeId)
-                .Distinct()
-                .Count();
+            var traineeIds = trainees.Select(t => t.TraineeId).ToList();
 
-            var presentCount = attendance
-                .Where(a => a.Status == NFD_AttendanceStatus.Present)
-                .Select(a => a.TraineeId)
-                .Distinct()
-                .Count();
+            // 2. Get connected trainee identities strictly from LiveKit service (Live Room)
+            var identities = await _liveKit.GetConnectedTraineeIdentitiesAsync(
+                sessionId,
+                HttpContext.RequestAborted);
 
-            var absentCount = attendance
-                .Where(a => a.Status == NFD_AttendanceStatus.Absent)
-                .Select(a => a.TraineeId)
-                .Distinct()
-                .Count();
+            const string traineePrefix = "nafadh-trainee-";
+            var connectedUserIds = new HashSet<int>();
 
-            var lateCount = attendance
-                .Where(a => a.Status == NFD_AttendanceStatus.Late)
-                .Select(a => a.TraineeId)
-                .Distinct()
-                .Count();
+            foreach (var identity in identities)
+            {
+                if (!identity.StartsWith(traineePrefix, StringComparison.Ordinal))
+                    continue;
 
-            var excusedCount = attendance
-                .Where(a => a.Status == NFD_AttendanceStatus.Excused)
-                .Select(a => a.TraineeId)
-                .Distinct()
-                .Count();
+                var userIdText = identity.Substring(traineePrefix.Length);
+                if (int.TryParse(userIdText, out var parsedUserId))
+                {
+                    connectedUserIds.Add(parsedUserId);
+                }
+            }
+
+            // 3. Read session evaluation scores (survey responses) for each trainee.
+            var evaluationScores = await _context.NFD_SessionSurveyResponses
+                .AsNoTracking()
+                .Where(r => r.Survey.SessionId == sessionId)
+                .ToDictionaryAsync(
+                    r => r.TraineeId,
+                    r => (int?)r.Rating,
+                    HttpContext.RequestAborted);
+
+            // 4. Build detailed attendance strictly based on LiveKit connection status.
+            var attendanceList = trainees.Select(t => new
+            {
+                TraineeId = t.TraineeId,
+                FullName = t.FullName,
+                // يعتمد حصرياً على ما إذا كان الـ UserId الخاص بالمتدرب موجوداً في قائمة المتصلين حالياً بالميتنج
+                IsPresent = connectedUserIds.Contains(t.UserId),
+                EvaluationScore = evaluationScores.TryGetValue(t.TraineeId, out var rating) && rating.HasValue ? rating.Value.ToString() : null
+            }).ToList();
+
+            // Calculate aggregate counts strictly from live connection status.
+            var presentCount = attendanceList.Count(a => a.IsPresent);
+            var absentCount = attendanceList.Count - presentCount;
 
             var attendanceRate = traineeIds.Count == 0
                 ? 0m
-                : Math.Round(
-                    presentCount * 100m / traineeIds.Count, 2);
+                : Math.Round(presentCount * 100m / traineeIds.Count, 2);
 
             // Poll results for this session.
             var polls = await _context.NFD_LivePolls
@@ -152,15 +162,16 @@ namespace Nafadh_Backend.Controllers
                 Attendance = new
                 {
                     TotalEnrolled = traineeIds.Count,
-                    RecordedCount = recordedCount,
+                    RecordedCount = presentCount,
                     PresentCount = presentCount,
                     AbsentCount = absentCount,
-                    LateCount = lateCount,
-                    ExcusedCount = excusedCount,
-                    NotRecordedCount =
-                        Math.Max(0, traineeIds.Count - recordedCount),
+                    LateCount = 0,
+                    ExcusedCount = 0,
+                    NotRecordedCount = absentCount,
                     PresentPercentage = attendanceRate
                 },
+
+                AttendanceList = attendanceList,
 
                 TotalPolls = polls.Count,
                 Polls = polls
