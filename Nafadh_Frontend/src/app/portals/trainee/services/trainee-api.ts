@@ -492,6 +492,47 @@ getSessionsByBatch(
   }
 
 
+
+// =========================================================
+// Trainee Live Room
+// =========================================================
+
+joinTraineeLiveRoom(
+  sessionId: number
+): Observable<{
+  sessionId: number;
+  roomName: string;
+  serverUrl: string;
+  participantToken: string;
+  tokenExpiresAtUtc: string;
+}> {
+  return this.http.post<{
+    sessionId: number;
+    roomName: string;
+    serverUrl: string;
+    participantToken: string;
+    tokenExpiresAtUtc: string;
+  }>(
+    `${this.base}/trainee/live-sessions/${sessionId}/room/join`,
+    {}
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // =========================================================
   // Lesson Feedback
   // =========================================================

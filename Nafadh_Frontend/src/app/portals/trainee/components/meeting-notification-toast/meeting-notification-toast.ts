@@ -7,6 +7,7 @@ import {
   OnChanges,
   SimpleChanges
 } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-meeting-notification-toast',
@@ -19,10 +20,13 @@ export class MeetingNotificationToast implements OnChanges {
   @Input() title = 'بدأت الحصة المباشرة';
   @Input() message = 'يمكنك الآن الانضمام إلى الحصة.';
   @Input() meetingLink = '';
+  @Input() sessionId: number | null = null;
 
   @Output() dismissed = new EventEmitter<void>();
 
   private audioContext?: AudioContext;
+
+  constructor(private router: Router) {}
 
   // تشغيل الصوت تلقائيًا عند ظهور الإشعار
   ngOnChanges(changes: SimpleChanges): void {
@@ -41,19 +45,15 @@ export class MeetingNotificationToast implements OnChanges {
   }
 
   joinMeeting(): void {
-    if (!this.meetingLink) return;
-
-    try {
-      const url = new URL(this.meetingLink);
-
-      if (url.protocol !== 'https:' && url.protocol !== 'http:') {
-        return;
-      }
-
-      window.open(url.href, '_blank', 'noopener,noreferrer');
-    } catch {
-      console.warn('Invalid meeting link');
+    if (this.sessionId == null || this.sessionId <= 0) {
+      console.warn('Missing session ID');
+      return;
     }
+
+    void this.router.navigate([
+      '/trainee/live-session-room',
+      this.sessionId
+    ]);
   }
 
   async playNotificationSound(): Promise<void> {

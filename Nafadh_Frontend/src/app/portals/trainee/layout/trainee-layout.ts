@@ -22,6 +22,7 @@ import { MeetingSessionWatcher } from '../components/meeting-notification-toast/
       [title]="meetingWatcher.activeMeeting()?.topic || 'حان موعد الحصة المباشرة'"
       message="حان موعد الحصة المجدولة، يمكنك الانضمام الآن."
       [meetingLink]="meetingWatcher.activeMeeting()?.meetingLink || ''"
+      [sessionId]="meetingWatcher.activeMeeting()?.sessionId ?? null"
       (dismissed)="meetingWatcher.dismiss()"
     />
   `,

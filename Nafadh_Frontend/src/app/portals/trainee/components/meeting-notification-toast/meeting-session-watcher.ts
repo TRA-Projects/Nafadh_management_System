@@ -78,14 +78,8 @@ export class MeetingSessionWatcher {
   private checkSessions(sessions: SessionDto[]): void {
     if (this.activeMeeting()) return;
 
-    const now = new Date();
-
-    const upcoming = sessions.find(session => {
-      if (
-        session.status !== 'Scheduled' ||
-        !session.startTime ||
-        !session.sessionDate
-      ) {
+    const liveSession = sessions.find(session => {
+      if (session.status !== 'InProgress') {
         return false;
       }
 
@@ -93,22 +87,11 @@ export class MeetingSessionWatcher {
         return false;
       }
 
-      const datePart = session.sessionDate.substring(0, 10);
-      const startDate = new Date(`${datePart}T${session.startTime}`);
-
-      if (Number.isNaN(startDate.getTime())) {
-        return false;
-      }
-
-      const elapsed = now.getTime() - startDate.getTime();
-
-      // Show notification after the scheduled start time.
-      // Allow five minutes for delayed API responses.
-      return elapsed >= 0 && elapsed < 300000;
+      return true;
     });
 
-    if (upcoming) {
-      this.activeMeeting.set(upcoming);
+    if (liveSession) {
+      this.activeMeeting.set(liveSession);
     }
   }
 

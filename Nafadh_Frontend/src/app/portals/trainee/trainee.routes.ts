@@ -18,6 +18,16 @@ export const TRAINEE_ROUTES: Routes = [
       { path: 'support', loadComponent: () => import('./pages/support/support').then((m) => m.TraineeSupport) },
       { path: 'achievements', loadComponent: () => import('./pages/achievements/achievements').then((m) => m.TraineeAchievements) },
       { path: 'quizzes', loadComponent: () => import('./pages/quizzes/trainee-quizzes').then((m) => m.TraineeQuizzes) },
+   
+   
+{
+  path: 'live-session-room/:sessionId',
+  loadComponent: () =>
+    import('./pages/trainee-live-session-room/trainee-live-session-room')
+      .then((m) => m.TraineeLiveSessionRoom)
+},
+
+   
     ],
   },
 ];
