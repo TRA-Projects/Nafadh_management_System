@@ -97,25 +97,126 @@ export class QuizResults implements OnInit {
   attemptDetails = signal<QuizAttemptDetailsDto | null>(null);
   detailsLoading = signal(false);
 
-  // PROCTORING PREPARATION
+ // =========================================
+// PROCTORING
+// =========================================
 
-  proctoringEvents = signal<any[]>([]);
-  proctoringLoading = signal(false);
-  proctoringError = signal('');
-  selectedSnapshot = signal<any | null>(null);
-  showProctoringViewer = signal(false);
+proctoringEvents = signal<any[]>([]);
+proctoringLoading = signal(false);
+proctoringError = signal('');
+selectedSnapshot = signal<any | null>(null);
+showProctoringViewer = signal(false);
+
+proctoringSnapshots = signal<any[]>([]);
 
 openProctoringViewer(): void {
+  const attempt = this.attemptDetails();
+
+  if (!attempt?.attemptId) {
+    this.proctoringError.set('تعذر تحديد محاولة الاختبار.');
+    return;
+  }
+
   this.showProctoringViewer.set(true);
+  this.proctoringLoading.set(true);
+  this.proctoringError.set('');
+  this.proctoringEvents.set([]);
+  this.proctoringSnapshots.set([]);
+
+  this.api.getQuizAttemptProctoring(attempt.attemptId).subscribe({
+    next: report => {
+      console.log('Proctoring report:', report);
+
+      const events = report?.events ?? [];
+
+      this.proctoringEvents.set(events);
+
+      const snapshotEvents = events.filter(
+        (event: any) =>
+          event.hasSnapshot === true &&
+          event.eventId
+      );
+
+      if (snapshotEvents.length === 0) {
+        this.proctoringLoading.set(false);
+        return;
+      }
+
+      let loaded = 0;
+      const snapshots: any[] = [];
+
+      snapshotEvents.forEach((event: any) => {
+        this.api.getProctoringSnapshot(event.eventId).subscribe({
+          next: (blob: Blob) => {
+            const imageUrl = URL.createObjectURL(blob);
+
+            snapshots.push({
+              eventId: event.eventId,
+              eventType: event.eventType,
+              createdAt: event.createdAt,
+              imageUrl
+            });
+
+            loaded++;
+
+            if (loaded === snapshotEvents.length) {
+              snapshots.sort(
+                (a, b) =>
+                  new Date(a.createdAt).getTime() -
+                  new Date(b.createdAt).getTime()
+              );
+
+              this.proctoringSnapshots.set(snapshots);
+              this.proctoringLoading.set(false);
+            }
+          },
+
+          error: error => {
+            console.error(
+              `Snapshot ${event.eventId} error:`,
+              error
+            );
+
+            loaded++;
+
+            if (loaded === snapshotEvents.length) {
+              this.proctoringSnapshots.set(snapshots);
+              this.proctoringLoading.set(false);
+            }
+          }
+        });
+      });
+    },
+
+    error: error => {
+      console.error('Proctoring API Error:', error);
+
+      this.proctoringError.set(
+        error?.error?.message ||
+        'تعذر تحميل بيانات المراقبة.'
+      );
+
+      this.proctoringLoading.set(false);
+    }
+  });
 }
 
 closeProctoringViewer(): void {
+  this.proctoringSnapshots().forEach(snapshot => {
+    if (snapshot.imageUrl) {
+      URL.revokeObjectURL(snapshot.imageUrl);
+    }
+  });
+
+  this.proctoringSnapshots.set([]);
+  this.proctoringEvents.set([]);
+  this.proctoringError.set('');
   this.showProctoringViewer.set(false);
 }
-  closeSnapshot(): void {
-    this.selectedSnapshot.set(null);
-  }
 
+closeSnapshot(): void {
+  this.selectedSnapshot.set(null);
+}
   gradingPoints: { [answerId: number]: number } = {};
   gradingSaving = signal(false);
 

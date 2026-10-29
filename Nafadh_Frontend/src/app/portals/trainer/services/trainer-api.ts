@@ -1619,7 +1619,30 @@ export class TrainerApi {
       `${this.base}/quiz-results/trainer/${trainerId}/attempts/${attemptId}`
     );
   }
+// =====================================
+// QUIZ PROCTORING
+// =====================================
 
+getQuizAttemptProctoring(
+  attemptId: number
+): Observable<any> {
+
+  return this.http.get<any[]>(
+    `${this.base}/quiz-attempts/${attemptId}/proctoring`
+  );
+}
+
+getProctoringSnapshot(
+  eventId: number
+): Observable<Blob> {
+
+  return this.http.get(
+    `${this.base}/quiz-attempts/proctoring/events/${eventId}/snapshot`,
+    {
+      responseType: 'blob'
+    }
+  );
+}
   // ==========================================
   // TRAINER LIVE SESSIONS
   // ==========================================
