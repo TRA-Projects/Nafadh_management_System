@@ -32,11 +32,18 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly Nafadhcontext _context;
         private readonly CoursePlanReader _reader;
+        private readonly IEmailService _emailService;
+        private readonly ILogger<CompanyCoursePlanController> _logger;
 
-        public CompanyCoursePlanController(Nafadhcontext context)
+        public CompanyCoursePlanController(
+            Nafadhcontext context,
+            IEmailService emailService,
+            ILogger<CompanyCoursePlanController> logger)
         {
             _context = context;
             _reader = new CoursePlanReader(context);
+            _emailService = emailService;
+            _logger = logger;
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -93,51 +100,29 @@ namespace Nafadh_Backend.Controllers
                 .Distinct()
                 .ToListAsync();
 
-            // Approved/available courses for Tasks & Projects come from two compatible sources:
-            // 1) programs already assigned to the company through NFD_CompanyPrograms;
-            // 2) programs attached to an approved CoursePlan.
-            //
-            // The second source is intentionally included as a safety net for existing/legacy
-            // approved plans. Normally the approval workflow also creates the NFD_CompanyPrograms
-            // link, but Tasks & Projects must not lose an approved course if that link was
-            // created by an older workflow or imported data.
-            //
-            // We merge by ProgramId so the same course never appears twice. No NFD_Program
-            // records are created or modified by this read-only lookup.
-            var companyProgramIds = await _context.NFD_CompanyPrograms
+            // Admin owns programs and batches. Only batches assigned by Admin to
+            // this company are eligible for a new training plan. Program titles
+            // may be shared by many batches; the BatchId identifies the assignment.
+            var programs = await _context.NFD_Batches
                 .AsNoTracking()
-                .Where(cp => cp.CompanyId == companyId)
-                .Select(cp => cp.ProgramId)
-                .ToListAsync();
-
-            var approvedPlanProgramIds = await _context.NFD_CoursePlans
-                .AsNoTracking()
-                .Where(plan =>
-                    plan.CompanyId == companyId &&
-                    plan.ApprovalStatus == NFD_CoursePlanApprovalStatus.Approved &&
-                    plan.ProgramId.HasValue)
-                .Select(plan => plan.ProgramId!.Value)
-                .ToListAsync();
-
-            var availableProgramIds = companyProgramIds
-                .Concat(approvedPlanProgramIds)
-                .Distinct()
-                .ToList();
-
-            var programs = await _context.NFD_Programs
-                .AsNoTracking()
-                .Where(p => availableProgramIds.Contains(p.ProgramId) && p.Status != NFD_ProgramStatus.Archived)
-                .OrderBy(p => p.Title)
-                .Select(p => new CoursePlanProgramOptionDTO
+                .Where(b => b.CompanyId == companyId && b.Status != NFD_BatchStatus.Cancelled &&
+                            b.Program.Status != NFD_ProgramStatus.Archived)
+                .OrderBy(b => b.StartDate)
+                .ThenBy(b => b.BatchId)
+                .Select(b => new CoursePlanProgramOptionDTO
                 {
-                    ProgramId = p.ProgramId,
-                    Title = p.Title,
-                    Description = p.Description,
-                    Category = p.Category,
-                    DurationHours = p.DurationHours,
-                    Price = p.Price,
-                    TrackId = p.TrackId,
-                    Status = p.Status.ToString()
+                    ProgramId = b.ProgramId,
+                    BatchId = b.BatchId,
+                    BatchName = b.BatchName,
+                    StartDate = b.StartDate,
+                    EndDate = b.EndDate,
+                    Title = b.Program.Title,
+                    Description = b.Program.Description,
+                    Category = b.Program.Category,
+                    DurationHours = b.Program.DurationHours,
+                    Price = b.Program.Price,
+                    TrackId = b.Program.TrackId,
+                    Status = b.Program.Status.ToString()
                 })
                 .ToListAsync();
 
@@ -205,70 +190,44 @@ namespace Nafadh_Backend.Controllers
             if (error is not null)
                 return BadRequest(new { message = error });
 
-            // Validate everything that can fail BEFORE touching the database, so a
-            // rejected request never leaves an orphan Draft program behind.
+            if (!dto.BatchId.HasValue || dto.BatchId.Value <= 0)
+                return BadRequest(new { message = "اختر دفعة مسندة لشركتك لإعداد خطتها التدريبية." });
+
+            // BatchId, not ProgramId, identifies the plan. A single Admin program
+            // can be reused by several batches, with different companies and dates.
+            var batch = await _context.NFD_Batches
+                .AsNoTracking().Include(b => b.Program)
+                .SingleOrDefaultAsync(b => b.BatchId == dto.BatchId.Value &&
+                    b.CompanyId == companyId && b.Status != NFD_BatchStatus.Cancelled &&
+                    b.Program.Status != NFD_ProgramStatus.Archived);
+            if (batch is null)
+                return BadRequest(new { message = "الدفعة غير مسندة للشركة أو تم إلغاؤها." });
+            if (dto.ProgramId.HasValue && dto.ProgramId.Value != batch.ProgramId)
+                return BadRequest(new { message = "البرنامج المحدد لا يطابق برنامج الدفعة المسندة." });
+            if (await _context.NFD_CoursePlans.AsNoTracking().AnyAsync(p => p.BatchId == batch.BatchId))
+                return Conflict(new { message = "هذه الدفعة لديها خطة بالفعل. افتحي الخطة الحالية بدل إنشاء خطة أخرى." });
+
+            var program = batch.Program;
+            if (batch.EndDate.Date < batch.StartDate.Date)
+                return BadRequest(new { message = "تواريخ الدفعة المسندة غير صالحة. تواصل مع الإدارة لتصحيحها." });
+
             var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds);
             if (trainerIds.Error is not null)
                 return BadRequest(new { message = trainerIds.Error });
 
             var now = DateTime.Now;
-            NFD_Program? program;
-
-            if (dto.ProgramId.HasValue)
-            {
-                program = await _context.NFD_CompanyPrograms
-                    .Where(cp => cp.CompanyId == companyId && cp.ProgramId == dto.ProgramId.Value)
-                    .Select(cp => cp.Program)
-                    .FirstOrDefaultAsync();
-
-                if (program is null || program.Status == NFD_ProgramStatus.Archived)
-                    return BadRequest(new { message = "الكورس المختار غير متاح لهذه الشركة." });
-            }
-            else
-            {
-                if (!dto.TrackId.HasValue)
-                    return BadRequest(new { message = "اختر المسار عند إنشاء كورس جديد يدوياً." });
-
-                var trackExists = await _context.NFD_Tracks
-                    .AsNoTracking()
-                    .AnyAsync(t => t.TrackId == dto.TrackId.Value && t.Status == NFD_TrackStatus.Active);
-
-                if (!trackExists)
-                    return BadRequest(new { message = "المسار المختار غير موجود أو غير نشط." });
-
-                if (await TitleExistsAsync(companyId, dto.Title.Trim(), null))
-                    return Conflict(new { message = "لديكم خطة بنفس عنوان الكورس مسبقاً." });
-
-                program = new NFD_Program
-                {
-                    Title = dto.Title.Trim(),
-                    Description = Clean(dto.Description),
-                    Category = Clean(dto.Category),
-                    DurationHours = dto.DurationHours,
-                    Price = dto.Price < 0 ? 0 : dto.Price,
-                    TrackId = dto.TrackId.Value,
-                    Status = NFD_ProgramStatus.Draft
-                };
-
-                _context.NFD_Programs.Add(program);
-                await _context.SaveChangesAsync();
-            }
-
-            var title = program.Title;
-            if (dto.ProgramId.HasValue && await TitleExistsAsync(companyId, title, null))
-                return Conflict(new { message = "لديكم خطة بنفس عنوان الكورس مسبقاً." });
-
             var plan = new NFD_CoursePlan
             {
                 CompanyId = companyId,
                 ProgramId = program.ProgramId,
+                BatchId = batch.BatchId,
                 CreatedByUserId = userId.Value,
-                Title = title,
-                Description = program.Description,
+                Title = program.Title,
+                Description = Clean(dto.Description) ?? program.Description,
                 Category = program.Category,
                 DurationHours = program.DurationHours,
-                StartDate = dto.StartDate.Date,
-                EndDate = dto.EndDate.Date,
+                StartDate = batch.StartDate.Date,
+                EndDate = batch.EndDate.Date,
                 ApprovalStatus = NFD_CoursePlanApprovalStatus.Draft,
                 ExecutionStatus = NFD_CoursePlanExecutionStatus.NotStarted,
                 CreatedAt = now,
@@ -298,65 +257,55 @@ namespace Nafadh_Backend.Controllers
             if (!IsEditable(plan))
                 return Conflict(new { message = LockedMessage(plan) });
 
-            var error = ValidateHeader(dto);
-            if (error is not null)
-                return BadRequest(new { message = error });
+            // Program identity and the Admin-defined batch window are immutable.
+            // The company can edit its plan description/goals and stages, not the
+            // Admin program title, category, duration or batch dates.
+            if (dto.ProgramId.HasValue && dto.ProgramId.Value != plan.ProgramId)
+                return BadRequest(new { message = "لا يمكن نقل خطة إلى برنامج آخر. الإسناد من صلاحيات الإدارة." });
 
-            var start = dto.StartDate.Date;
-            var end = dto.EndDate.Date;
+            if (dto.BatchId.HasValue && dto.BatchId != plan.BatchId)
+                return BadRequest(new { message = "لا يمكن نقل الخطة إلى دفعة أخرى." });
 
-            if (plan.Stages.Any(s => s.StartDate.Date < start || s.EndDate.Date > end))
-                return BadRequest(new { message = "نطاق التواريخ الجديد لا يشمل كل مراحل الخطة الحالية. عدّل المراحل أولاً." });
+            var assignedBatch = plan.BatchId.HasValue
+                ? await _context.NFD_Batches.AsNoTracking().Include(b => b.Program)
+                    .SingleOrDefaultAsync(b => b.BatchId == plan.BatchId.Value &&
+                        b.CompanyId == companyId && b.ProgramId == plan.ProgramId &&
+                        b.Status != NFD_BatchStatus.Cancelled)
+                : null;
+            if (plan.BatchId.HasValue && assignedBatch is null)
+                return Conflict(new { message = "تم تغيير أو إلغاء تكليف هذه الدفعة. لا يمكن تعديل الخطة قبل مراجعة الإدارة." });
 
-            var title = dto.Title.Trim();
-            if (await TitleExistsAsync(companyId, title, planId))
-                return Conflict(new { message = "لديكم خطة بنفس العنوان مسبقاً." });
-
-            if (plan.ProgramId.HasValue)
+            if (assignedBatch is not null)
             {
-                var program = await _context.NFD_Programs.FirstOrDefaultAsync(p => p.ProgramId == plan.ProgramId.Value);
-                var alreadyLinked = await _context.NFD_CompanyPrograms
-                    .AsNoTracking()
-                    .AnyAsync(cp => cp.CompanyId == companyId && cp.ProgramId == plan.ProgramId.Value);
+                if (plan.Stages.Any(stage => stage.StartDate.Date < assignedBatch.StartDate.Date ||
+                                             stage.EndDate.Date > assignedBatch.EndDate.Date))
+                    return BadRequest(new { message = "بعض مراحل الخطة خارج المدة المحددة من الإدارة. عدّل تواريخ المراحل أولًا." });
 
-                if (program is not null && !alreadyLinked)
-                {
-                    program.Title = title;
-                    program.Description = Clean(dto.Description);
-                    program.Category = Clean(dto.Category);
-                    program.DurationHours = dto.DurationHours;
-                    program.Price = dto.Price < 0 ? 0 : dto.Price;
-
-                    if (dto.TrackId.HasValue)
-                    {
-                        var trackExists = await _context.NFD_Tracks
-                            .AsNoTracking()
-                            .AnyAsync(t => t.TrackId == dto.TrackId.Value && t.Status == NFD_TrackStatus.Active);
-                        if (!trackExists)
-                            return BadRequest(new { message = "المسار المختار غير موجود أو غير نشط." });
-                        program.TrackId = dto.TrackId.Value;
-                    }
-
-                    plan.Title = program.Title;
-                    plan.Description = program.Description;
-                    plan.Category = program.Category;
-                    plan.DurationHours = program.DurationHours;
-                }
-                else
-                {
-                    plan.Title = program?.Title ?? plan.Title;
-                    plan.Description = program?.Description ?? plan.Description;
-                    plan.Category = program?.Category ?? plan.Category;
-                    plan.DurationHours = program?.DurationHours ?? plan.DurationHours;
-                }
+                plan.StartDate = assignedBatch.StartDate.Date;
+                plan.EndDate = assignedBatch.EndDate.Date;
+                plan.Title = assignedBatch.Program.Title;
+                plan.Category = assignedBatch.Program.Category;
+                plan.DurationHours = assignedBatch.Program.DurationHours;
             }
             else
             {
-                plan.Title = title;
-                plan.Description = Clean(dto.Description);
+                // Preserve editing of legacy drafts not yet assigned to a batch.
+                var headerError = ValidateHeader(dto);
+                if (headerError is not null)
+                    return BadRequest(new { message = headerError });
+
+                if (plan.Stages.Any(stage => stage.StartDate.Date < dto.StartDate.Date ||
+                                             stage.EndDate.Date > dto.EndDate.Date))
+                    return BadRequest(new { message = "تواريخ الخطة الجديدة لا تشمل كل المراحل الحالية." });
+
+                plan.Title = dto.Title.Trim();
                 plan.Category = Clean(dto.Category);
                 plan.DurationHours = dto.DurationHours;
+                plan.StartDate = dto.StartDate.Date;
+                plan.EndDate = dto.EndDate.Date;
             }
+
+            plan.Description = Clean(dto.Description);
 
             var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds);
             if (trainerIds.Error is not null)
@@ -366,8 +315,6 @@ namespace Nafadh_Backend.Controllers
             foreach (var trainerId in trainerIds.Ids)
                 plan.Trainers.Add(new NFD_CoursePlanTrainer { PlanId = plan.PlanId, TrainerId = trainerId });
 
-            plan.StartDate = start;
-            plan.EndDate = end;
             plan.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
@@ -391,26 +338,7 @@ namespace Nafadh_Backend.Controllers
 
             _context.NFD_CoursePlanNotes.RemoveRange(plan.Notes.ToList());
 
-            if (plan.ProgramId.HasValue)
-            {
-                var companyLinked = await _context.NFD_CompanyPrograms
-                    .AsNoTracking()
-                    .AnyAsync(cp => cp.CompanyId == companyId && cp.ProgramId == plan.ProgramId.Value);
-
-                var usedByOtherPlan = await _context.NFD_CoursePlans
-                    .AsNoTracking()
-                    .AnyAsync(p => p.PlanId != plan.PlanId && p.ProgramId == plan.ProgramId.Value);
-
-                if (!companyLinked && !usedByOtherPlan)
-                {
-                    var program = await _context.NFD_Programs
-                        .FirstOrDefaultAsync(p => p.ProgramId == plan.ProgramId.Value);
-
-                    if (program is not null && program.Status == NFD_ProgramStatus.Draft)
-                        _context.NFD_Programs.Remove(program);
-                }
-            }
-
+            // Deleting a company draft must never delete an Admin-owned Program.
             _context.NFD_CoursePlans.Remove(plan);
             await _context.SaveChangesAsync();
 
@@ -713,10 +641,28 @@ namespace Nafadh_Backend.Controllers
             if (!IsEditable(plan))
                 return Conflict(new { message = LockedMessage(plan) });
 
+            // A submitted plan must still belong to the batch that Admin assigned
+            // to this company. A previous assignment may have been changed.
+            if (!plan.BatchId.HasValue)
+                return Conflict(new { message = "الخطة قديمة ولا تحتوي على رقم دفعة مؤكد. يجب تصحيح ربطها قبل الإرسال." });
+            var assignedBatch = await _context.NFD_Batches.AsNoTracking()
+                .SingleOrDefaultAsync(b => b.BatchId == plan.BatchId.Value &&
+                    b.ProgramId == plan.ProgramId && b.CompanyId == companyId &&
+                    b.Status != NFD_BatchStatus.Cancelled);
+            if (assignedBatch is null)
+                return Conflict(new { message = "لم يعد تكليف هذه الدفعة ساريًا للشركة. راجعي الإدارة." });
+
+            if (plan.StartDate.Date != assignedBatch.StartDate.Date ||
+                plan.EndDate.Date != assignedBatch.EndDate.Date ||
+                plan.Stages.Any(stage => stage.StartDate.Date < assignedBatch.StartDate.Date ||
+                                         stage.EndDate.Date > assignedBatch.EndDate.Date))
+                return Conflict(new { message = "تغيرت مدة الدفعة لدى الإدارة أو توجد مراحل خارج مدتها. صححي الخطة قبل إعادة إرسالها." });
+
             var problems = ValidateForSubmission(plan);
             if (problems.Count > 0)
                 return BadRequest(new { message = "الخطة غير مكتملة: " + string.Join("، ", problems) });
 
+            var wasRejected = plan.ApprovalStatus == NFD_CoursePlanApprovalStatus.Rejected;
             var now = DateTime.Now;
             plan.ApprovalStatus = NFD_CoursePlanApprovalStatus.PendingApproval;
             plan.SubmittedAt = now;
@@ -725,18 +671,44 @@ namespace Nafadh_Backend.Controllers
             plan.ReviewNote = null;
             plan.UpdatedAt = now;
 
-            var adminIds = await _context.NFD_Users
+            var admins = await _context.NFD_Users
                 .AsNoTracking()
                 .Where(u => u.Role.RoleName == "Admin" && u.Status == NFD_UserStatus.Active)
-                .Select(u => u.UserId)
+                .Select(u => new { u.UserId, u.Email })
                 .ToListAsync();
 
-            Notify(adminIds,
-                "طلب اعتماد خطة كورس",
-                $"أرسلت شركة «{plan.Company.CompanyName}» خطة الكورس «{plan.Title}» للاعتماد.",
+            Notify(admins.Select(u => u.UserId),
+                wasRejected ? "إعادة تقديم خطة للاعتماد" : "طلب اعتماد خطة تدريبية",
+                wasRejected
+                    ? $"أعادت شركة «{plan.Company.CompanyName}» تقديم الخطة «{plan.Title}» بعد تعديلها."
+                    : $"أرسلت شركة «{plan.Company.CompanyName}» الخطة «{plan.Title}» للاعتماد.",
                 $"CoursePlan:{plan.PlanId}");
 
+            // Commit the plan and in-app notifications before sending email. An SMTP
+            // failure must never roll back the approval request or return a false error.
             await _context.SaveChangesAsync();
+
+            var emailAddresses = admins
+                .Select(u => u.Email?.Trim())
+                .Where(e => !string.IsNullOrWhiteSpace(e) && e.Contains('@') &&
+                            !e.EndsWith(".test", StringComparison.OrdinalIgnoreCase))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            foreach (var email in emailAddresses)
+            {
+                try
+                {
+                    await _emailService.SendCoursePlanSubmittedAsync(
+                        email!, plan.Company.CompanyName, plan.Title, plan.PlanId, wasRejected);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex,
+                        "Unable to email course plan {PlanId} submission to an administrator", plan.PlanId);
+                }
+            }
+
             return Ok(await ReloadAsync(companyId, planId));
         }
 
@@ -1078,25 +1050,15 @@ namespace Nafadh_Backend.Controllers
         {
             var problems = new List<string>();
 
-            if (plan.StartDate.Date < DateTime.Today)
-                problems.Add("تاريخ بدء الكورس في الماضي، حدّثه قبل الإرسال");
-
             if (string.IsNullOrWhiteSpace(plan.Description))
                 problems.Add("وصف الكورس مطلوب");
-
-            var hasTrainer = plan.Trainers.Count > 0
-                             || plan.Stages.Any(s => s.TrainerId.HasValue || s.Trainers.Count > 0);
-            if (!hasTrainer)
-                problems.Add("أسند مدرباً واحداً على الأقل للكورس أو لإحدى مراحله");
 
             if (plan.Stages.Count == 0)
                 problems.Add("أضف مرحلة واحدة على الأقل");
 
-            foreach (var stage in plan.Stages.OrderBy(s => s.OrderIndex))
-            {
-                if (stage.Items.Count == 0)
-                    problems.Add($"المرحلة «{stage.Title}» بلا مهام أو مشروعات");
-            }
+            // Approval concerns the training plan and its stages. Trainers, tasks
+            // and projects can be assigned or prepared independently; they are
+            // not a prerequisite to submitting the structural plan for review.
 
             return problems;
         }
@@ -1140,7 +1102,8 @@ namespace Nafadh_Backend.Controllers
 
             return await _context.NFD_CompanySupervisors
                 .AsNoTracking()
-                .AnyAsync(s => s.UserId == userId.Value && s.CompanyId == companyId);
+                .AnyAsync(s => s.UserId == userId.Value && s.CompanyId == companyId &&
+                               s.Status == NFD_SupervisorStatus.Active);
         }
     }
 }
