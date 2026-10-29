@@ -2,6 +2,7 @@
 import { Component, OnInit, computed, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { TrainerApi } from '../../services/trainer-api';
@@ -59,20 +60,33 @@ export interface TrainerMessage {
 export class TrainerMessages implements OnInit {
 
   constructor(
-    private api: TrainerApi,
-    public auth: AuthService,
-    private cdr: ChangeDetectorRef
-  ) {}
+  private api: TrainerApi,
+  public auth: AuthService,
+  private cdr: ChangeDetectorRef,
+  private router: Router
+) {}
 
   // =====================================================
   // MEETING ACTIONS & HELPER METHODS
   // =====================================================
 
-  joinMeeting(meeting: MeetingNotification): void {
-    if (meeting.joinUrl && (meeting.status === 'Ongoing' || meeting.isHostStarted)) {
-      window.open(meeting.joinUrl, '_blank');
-    }
+ joinMeeting(meeting: MeetingNotification): void {
+  if (
+    !meeting.meetingId ||
+    (meeting.status !== 'Ongoing' && !meeting.isHostStarted)
+  ) {
+    return;
   }
+
+  void this.router.navigate(
+    ['/trainer/live-session-room', meeting.meetingId],
+    {
+      queryParams: {
+        batchId: meeting.batchId
+      }
+    }
+  );
+}
 
  selectedMeeting: MeetingNotification | null = null;
 
