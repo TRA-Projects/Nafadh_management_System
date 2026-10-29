@@ -51,6 +51,7 @@ export class TrainerSessionReportComponent implements OnInit {
       },
     });
   }
+
   exportExcel(): void {
     const data = this.report();
 
@@ -58,49 +59,19 @@ export class TrainerSessionReportComponent implements OnInit {
       return;
     }
 
-    const summaryRows = [
-      { البيان: 'رقم الجلسة', القيمة: data.sessionId },
-      { البيان: 'عنوان الجلسة', القيمة: data.topic ?? 'بدون عنوان' },
-      { البيان: 'إجمالي المسجلين', القيمة: data.attendance.totalEnrolled },
-      { البيان: 'الحضور', القيمة: data.attendance.presentCount },
-      { البيان: 'الغياب', القيمة: data.attendance.absentCount },
-      { البيان: 'المتأخرون', القيمة: data.attendance.lateCount },
-      { البيان: 'المعذورون', القيمة: data.attendance.excusedCount },
-      {
-        البيان: 'غير المسجل حضورهم',
-        القيمة: data.attendance.notRecordedCount,
-      },
-      {
-        البيان: 'نسبة الحضور %',
-        القيمة: data.attendance.presentPercentage,
-      },
-      { البيان: 'عدد الاستطلاعات', القيمة: data.totalPolls },
-    ];
-
-    const pollRows = data.polls.flatMap((poll) =>
-      poll.options.map((option) => ({
-        السؤال: poll.question,
-        الخيار: option.optionText,
-        الأصوات: option.voteCount,
-        'إجمالي أصوات الاستطلاع': poll.totalVotes,
-      })),
-    );
+    // تجهيز صفوف جدول الحضور والتقييم للإكسل
+    const attendanceRows = (data.attendanceList && data.attendanceList.length > 0)
+      ? data.attendanceList.map((trainee: any) => ({
+          'اسم المتدرب': trainee.fullName,
+          'حالة الحضور': trainee.isPresent ? 'حاضر المحاضرة' : 'غائب',
+          'تقييم الجلسة': trainee.evaluationScore ?? 'لم يقيم',
+        }))
+      : [{ ملاحظة: 'لا توجد بيانات مسجلة للمتدربين' }];
 
     const workbook = XLSX.utils.book_new();
 
-    const summarySheet = XLSX.utils.json_to_sheet(summaryRows);
-    XLSX.utils.book_append_sheet(workbook, summarySheet, 'ملخص الجلسة');
-
-    const pollsSheet = XLSX.utils.json_to_sheet(
-      pollRows.length > 0
-        ? pollRows
-        : [{ ملاحظة: 'لا توجد استطلاعات للجلسة' }],
-    );
-    XLSX.utils.book_append_sheet(
-      workbook,
-      pollsSheet,
-      'نتائج الاستطلاعات',
-    );
+    const attendanceSheet = XLSX.utils.json_to_sheet(attendanceRows);
+    XLSX.utils.book_append_sheet(workbook, attendanceSheet, 'تقرير الحضور والتقييم');
 
     XLSX.writeFile(workbook, `session-report-${data.sessionId}.xlsx`);
   }

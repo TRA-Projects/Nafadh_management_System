@@ -1,10 +1,3 @@
-import {
- 
-  Input,
-  OnChanges,
-  SimpleChanges,
- 
-} from '@angular/core';
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +8,7 @@ import {
   TrainerLivePoll,
   TrainerLivePollResultsResponse,
 } from '../../services/trainer-api';
+
 @Component({
   selector: 'app-trainer-live-polls',
   standalone: true,
@@ -23,14 +17,16 @@ import {
   styleUrl: './live-poll.scss',
 })
 export class TrainerLivePollsComponent implements OnInit {
-  sessionId!: number; // معرف الجلسة الذي سنقرأه من الرابط
+  sessionId!: number; // معرف الجلسة من الرابط
 
   polls = signal<TrainerLivePoll[]>([]);
   selectedResults = signal<TrainerLivePollResultsResponse | null>(null);
   selectedPollId = signal<number | null>(null);
 
-  question = '';
-  optionDrafts = ['', ''];
+  // هيكل لدعم إضافة أسئلة متعددة ديناميكياً (للتقييم أو الاستطلاعات)
+  pollForms = signal<Array<{ question: string; optionDrafts: string[] }>>([
+    { question: '', optionDrafts: ['', ''] }
+  ]);
 
   loading = signal(false);
   saving = signal(false);
@@ -39,16 +35,13 @@ export class TrainerLivePollsComponent implements OnInit {
 
   constructor(
     private trainerApi: TrainerApi,
-    private route: ActivatedRoute // لجلب الـ ID من الرابط مباشرة
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-    // قراءة الرقم مباشرة من الـ URL (مثل /429/)
     this.route.paramMap.subscribe(params => {
       const id = params.get('sessionId') || params.get('id') || this.route.snapshot.paramMap.get('sessionId');
-      
-      // أو إذا كان مخزناً في الـ URL كـ path param أو query param
-      this.sessionId = Number(id) || Number(this.route.snapshot.queryParams['batchId']) || 429; // مؤقتاً للتجربة
+      this.sessionId = Number(id) || Number(this.route.snapshot.queryParams['batchId']) || 429;
       
       if (this.sessionId) {
         this.loadPolls();
@@ -56,61 +49,92 @@ export class TrainerLivePollsComponent implements OnInit {
     });
   }
 
-  addOption(): void {
-    if (this.optionDrafts.length < 10) {
-      this.optionDrafts.push('');
+  // إضافة سؤال جديد للنموذج
+  addQuestionDraft(): void {
+    this.pollForms.update(forms => [
+      ...forms,
+      { question: '', optionDrafts: ['', ''] }
+    ]);
+  }
+
+  // حذف سؤال من النموذج
+  removeQuestionDraft(index: number): void {
+    if (this.pollForms().length > 1) {
+      this.pollForms.update(forms => forms.filter((_, i) => i !== index));
     }
   }
 
-  removeOption(index: number): void {
-    if (this.optionDrafts.length > 2) {
-      this.optionDrafts.splice(index, 1);
-    }
+  // إضافة خيار داخل سؤال معين
+  addOptionToQuestion(qIndex: number): void {
+    this.pollForms.update(forms => {
+      const updated = [...forms];
+      if (updated[qIndex].optionDrafts.length < 10) {
+        updated[qIndex].optionDrafts.push('');
+      }
+      return updated;
+    });
   }
 
-  createPoll(): void {
+  // حذف خيار من سؤال معين
+  removeOptionFromQuestion(qIndex: number, optIndex: number): void {
+    this.pollForms.update(forms => {
+      const updated = [...forms];
+      if (updated[qIndex].optionDrafts.length > 2) {
+        updated[qIndex].optionDrafts.splice(optIndex, 1);
+      }
+      return updated;
+    });
+  }
+
+  // إرسال جميع الأسئلة المصممة دفعة واحدة
+  createAllPolls(): void {
     this.clearMessages();
-
-    const question = this.question.trim();
-    const options = this.optionDrafts
-      .map((option) => option.trim())
-      .filter((option) => option.length > 0);
-
-    if (!question) {
-      this.errorMessage.set('اكتبي سؤال الاستطلاع.');
-      return;
-    }
-
-    if (options.length < 2) {
-      this.errorMessage.set('أضيفي خيارين على الأقل.');
-      return;
-    }
-
-    if (options.length > 10) {
-      this.errorMessage.set('الحد الأعلى هو 10 خيارات.');
-      return;
+    
+    const forms = this.pollForms();
+    
+    for (let i = 0; i < forms.length; i++) {
+      const q = forms[i].question.trim();
+      const opts = forms[i].optionDrafts.map(o => o.trim()).filter(o => o.length > 0);
+      
+      if (!q) {
+        this.errorMessage.set(`يرجى كتابة نص السؤال رقم ${i + 1}.`);
+        return;
+      }
+      if (opts.length < 2) {
+        this.errorMessage.set(`السؤال رقم ${i + 1} يجب أن يحتوي على خيارين على الأقل.`);
+        return;
+      }
     }
 
     this.saving.set(true);
 
-    this.trainerApi
-      .createTrainerLivePoll(this.sessionId, { question, options })
-      .subscribe({
+    let completed = 0;
+    let hasError = false;
+
+    forms.forEach((form) => {
+      const question = form.question.trim();
+      const options = form.optionDrafts.map(o => o.trim()).filter(o => o.length > 0);
+
+      this.trainerApi.createTrainerLivePoll(this.sessionId, { question, options }).subscribe({
         next: () => {
-          this.question = '';
-          this.optionDrafts = ['', ''];
-          this.successMessage.set('تم إنشاء الاستطلاع كمسودة.');
-          this.saving.set(false);
-          this.loadPolls();
+          completed++;
+          if (completed === forms.length && !hasError) {
+            this.successMessage.set('تم إنشاء ونشر جميع أسئلة التقييم بنجاح.');
+            this.saving.set(false);
+            this.pollForms.set([{ question: '', optionDrafts: ['', ''] }]);
+            this.loadPolls();
+          }
         },
         error: (error: HttpErrorResponse) => {
-          console.error('Create poll failed:', error);
-          this.errorMessage.set(
-            error?.error?.message ?? 'تعذر إنشاء الاستطلاع.',
-          );
-          this.saving.set(false);
-        },
+          if (!hasError) {
+            hasError = true;
+            console.error('Create poll failed:', error);
+            this.errorMessage.set(error?.error?.message ?? 'تعذر إنشاء بعض الأسئلة.');
+            this.saving.set(false);
+          }
+        }
       });
+    });
   }
 
   loadPolls(): void {
@@ -139,13 +163,13 @@ export class TrainerLivePollsComponent implements OnInit {
       .openTrainerLivePoll(this.sessionId, poll.pollId)
       .subscribe({
         next: () => {
-          this.successMessage.set('تم نشر الاستطلاع وفتح التصويت.');
+          this.successMessage.set('تم فتح التصويت للمتدربين.');
           this.loadPolls();
         },
         error: (error: HttpErrorResponse) => {
           console.error('Open poll failed:', error);
           this.errorMessage.set(
-            error?.error?.message ?? 'تعذر نشر الاستطلاع.',
+            error?.error?.message ?? 'تعذر فتح التصويت.',
           );
         },
       });
@@ -171,7 +195,7 @@ export class TrainerLivePollsComponent implements OnInit {
       });
   }
 
-loadResults(pollId: number): void {
+  loadResults(pollId: number): void {
     this.selectedPollId.set(pollId);
     this.selectedResults.set(null);
 
@@ -179,7 +203,6 @@ loadResults(pollId: number): void {
       .getTrainerLivePollResults(this.sessionId, pollId)
       .subscribe({
         next: (results) => {
-          // تحويل القيمة القادمة من الباكند وإسنادها لـ votePercentage
           const mappedResults = {
             ...results,
             results: results.results.map((item: any) => ({
@@ -197,6 +220,7 @@ loadResults(pollId: number): void {
         },
       });
   }
+
   private clearMessages(): void {
     this.errorMessage.set('');
     this.successMessage.set('');

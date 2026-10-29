@@ -290,24 +290,17 @@ export interface TrainerLivePollResultsResponse {
 }
 export interface TrainerLiveSessionReport {
   sessionId: number;
-  topic: string | null;
-  status: number | string;
-  attendance: {
-    totalEnrolled: number;
-    recordedCount: number;
-    presentCount: number;
-    absentCount: number;
-    lateCount: number;
-    excusedCount: number;
-    notRecordedCount: number;
-    presentPercentage: number;
-  };
+  topic?: string;
   totalPolls: number;
+  attendanceList: Array<{
+    traineeId: number;
+    fullName: string;
+    isPresent: boolean;
+    evaluationScore?: string | number;
+  }>;
   polls: Array<{
     pollId: number;
     question: string;
-    isOpen: boolean;
-    closedAtUtc: string | null;
     totalVotes: number;
     options: Array<{
       optionId: number;
