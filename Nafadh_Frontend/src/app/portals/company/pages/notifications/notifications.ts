@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { finalize } from 'rxjs';
 import { NotificationDto, NotificationService } from '../../../../shared/services/notification.service';
@@ -37,7 +38,7 @@ const TEXT_RULES: { key: Category; pattern: RegExp }[] = [
 @Component({
   selector: 'app-company-notifications',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './notifications.html',
   styleUrl: './notifications.scss',
 })
@@ -170,6 +171,19 @@ export class CompanyNotifications implements OnInit {
       },
     });
   }
+  /** Only link course-plan notifications to a plan, never to an arbitrary URL. */
+  coursePlanLink(item: NotificationDto): string | null {
+    const match = /^CoursePlan:([1-9]\d*)$/.exec((item.relatedEntity ?? '').trim());
+    if (match) return `/company/tasks/${match[1]}`;
+    const batchMatch = /^BatchAssignment:([1-9]\d*)$/.exec((item.relatedEntity ?? '').trim());
+    return batchMatch ? '/company/tasks/new' : null;
+  }
+
+  batchAssignmentId(item: NotificationDto): number | null {
+    const match = /^BatchAssignment:([1-9]\d*)$/.exec((item.relatedEntity ?? '').trim());
+    return match ? Number(match[1]) : null;
+  }
+
   categoryOf(item: NotificationDto): Category {
     const entity = (item.relatedEntity ?? '').trim();
     const text = `${item.title ?? ''} ${item.message ?? ''}`;
