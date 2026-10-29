@@ -1,6 +1,8 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 import { TraineeApi } from '../../services/trainee-api';
 import { ATTENDANCE_STATUS_LABELS } from '../../../../core/models/enums';
@@ -57,15 +59,17 @@ export class TraineeAttendance implements OnInit {
   excusesCache = new Map<number, ExcuseDto>();
 
   // =========================================================
-  // POPUP MESSAGE
+  // POPUP MESSAGE (نفس صفحة البروفايل)
   // =========================================================
 
   popupVisible = signal(false);
+  popupTitle = signal('تنبيه');
   popupMessage = signal('');
-  popupType =
-    signal<'success' | 'error' | 'warning' | 'info'>(
-      'info'
-    );
+  popupType = signal<'success' | 'error' | 'info'>('info');
+
+  // الرابط الحالي لعرض المرفق (إن وجد)
+  popupAttachmentUrl = signal<string | null>(null);
+
   private popupTimer: any;
 
   constructor(
@@ -104,50 +108,37 @@ export class TraineeAttendance implements OnInit {
   }
 
   // =========================================================
-  // POPUP FUNCTIONS
+  // POPUP FUNCTIONS (نمط صفحة البروفايل)
   // =========================================================
 
-  showPopup(
+  openPopup(
     message: string,
-    type:
-      | 'success'
-      | 'error'
-      | 'warning'
-      | 'info' = 'info'
+    type: 'success' | 'error' | 'info',
+    title: string,
+    attachmentUrl: string | null = null
   ): void {
     if (this.popupTimer) {
       clearTimeout(this.popupTimer);
     }
 
+    this.popupTitle.set(title);
     this.popupMessage.set(message);
     this.popupType.set(type);
+    this.popupAttachmentUrl.set(attachmentUrl);
     this.popupVisible.set(true);
 
-    this.popupTimer =
-      setTimeout(() => {
-        this.closePopup();
-      }, 3500);
+    this.popupTimer = setTimeout(() => {
+      this.closePopup();
+    }, 6000);
   }
 
   closePopup(): void {
     this.popupVisible.set(false);
+    this.popupAttachmentUrl.set(null);
 
     if (this.popupTimer) {
       clearTimeout(this.popupTimer);
       this.popupTimer = null;
-    }
-  }
-
-  getPopupIcon(): string {
-    switch (this.popupType()) {
-      case 'success':
-        return '✓';
-      case 'error':
-        return '×';
-      case 'warning':
-        return '!';
-      default:
-        return 'i';
     }
   }
 
@@ -273,97 +264,64 @@ export class TraineeAttendance implements OnInit {
   }
 
   // =========================================================
-  // LOAD ATTENDANCE
+  // LOAD ATTENDANCE (ينتظر كل الأعذار قبل عرض الواجهة)
   // =========================================================
 
-  loadAttendanceData(): void {
+  async loadAttendanceData(): Promise<void> {
     if (!this.enrollmentId) {
       return;
     }
 
-    this.api
-      .getAttendance(
-        this.enrollmentId
-      )
-      .subscribe({
-        next: (d) => {
-          const formattedRows =
-            (d ?? []).map(
-              (item: any) => ({
-                dailyAttendanceId:
-                  item.dailyAttendanceId ||
-                  item.id,
+    try {
+      const d = await firstValueFrom(
+        this.api.getAttendance(this.enrollmentId)
+      );
 
-                date:
-                  item.date ||
-                  item.attendanceDate,
+      const dataArray: any[] = (d as any[]) ?? [];
 
-                checkInTime:
-                  item.checkInTime ||
-                  item.checkIn ||
-                  item.clockIn,
+      const formattedRows = dataArray.map((item: any) => ({
+        dailyAttendanceId: item.dailyAttendanceId || item.id,
+        date: item.date || item.attendanceDate,
+        checkInTime: item.checkInTime || item.checkIn || item.clockIn,
+        checkOutTime: item.checkOutTime || item.checkOut || item.clockOut,
+        status: item.status || item.attendanceStatus || 'Present',
+        note: item.note || item.notes || item.remarks || '',
+      }));
 
-                checkOutTime:
-                  item.checkOutTime ||
-                  item.checkOut ||
-                  item.clockOut,
+      // جلب جميع الأعذار أولاً (قبل تحديث الواجهة) حتى لا يظهر زر خاطئ
+      if (formattedRows.length > 0) {
+        this.excusesCache.clear();
 
-                status:
-                  item.status ||
-                  item.attendanceStatus ||
-                  'Present',
-
-                note:
-                  item.note ||
-                  item.notes ||
-                  item.remarks ||
-                  '',
-              })
+        const excusePromises = formattedRows.map(async (row: any) => {
+          try {
+            const excuse = await firstValueFrom(
+              this.api.getExcuse(row.dailyAttendanceId).pipe(
+                catchError(() => of(null))
+              )
             );
 
-          this.rows.set(
-            formattedRows
-          );
-
-          // =============================================
-          // LOAD EXCUSES FOR EACH ATTENDANCE ROW
-          // =============================================
-
-          formattedRows.forEach(
-            (row) => {
-              this.api
-                .getExcuse(
-                  row.dailyAttendanceId
-                )
-                .subscribe({
-                  next: (
-                    excuse: ExcuseDto
-                  ) => {
-                    if (
-                      excuse &&
-                      excuse.excuseId
-                    ) {
-                      this.excusesCache.set(
-                        row.dailyAttendanceId,
-                        excuse
-                      );
-                    }
-                  },
-                  error: () => {},
-                });
+            if (excuse && excuse.excuseId) {
+              this.excusesCache.set(row.dailyAttendanceId, excuse);
             }
-          );
-        },
+          } catch {
+            // لا يوجد عذر
+          }
+        });
 
-        error: () => {
-          this.rows.set([]);
-        },
-      });
+        await Promise.all(excusePromises);
+      }
 
+      // الآن بعد أن أصبحت كل البيانات جاهزة، نحدّث الواجهة دفعة واحدة
+      this.rows.set(formattedRows);
+
+    } catch (err) {
+      console.error('خطأ في جلب سجلات الحضور:', err);
+      this.rows.set([]);
+    }
+
+    // جلب نسبة الالتزام بشكل منفصل
     this.api
-      .getComplianceRate(
-        this.enrollmentId
-      )
+      .getComplianceRate(this.enrollmentId)
       .subscribe({
         next: (r) => {
           this.rate.set(r);
@@ -429,7 +387,7 @@ export class TraineeAttendance implements OnInit {
   }
 
   // =========================================================
-  // VIEW EXCUSE
+  // VIEW EXCUSE (Popup نفس البروفايل + زر المرفق)
   // =========================================================
 
   viewExcuse(
@@ -470,19 +428,15 @@ export class TraineeAttendance implements OnInit {
           emoji: '',
         };
 
-      const attachmentMessage =
-        excuse.proofUrl
-          ? '\n📎 يوجد مرفق'
-          : '';
-
-      this.showPopup(
-        `تفاصيل العذر\n\nالسبب: ${excuse.reason}\nالحالة: ${statusInfo.emoji} ${statusInfo.text}${attachmentMessage}`,
+      this.openPopup(
+        `تفاصيل العذر\n\nالسبب: ${excuse.reason}\nالحالة: ${statusInfo.emoji} ${statusInfo.text}`,
         excuse.status === 'Approved'
           ? 'success'
-          : excuse.status ===
-              'Rejected'
+          : excuse.status === 'Rejected'
             ? 'error'
-            : 'warning'
+            : 'info',
+        'تفاصيل العذر',
+        excuse.proofUrl || null
       );
     } else {
       // =============================================
@@ -510,21 +464,47 @@ export class TraineeAttendance implements OnInit {
                 dailyAttendanceId
               );
             } else {
-              this.showPopup(
+              this.openPopup(
                 'لا توجد تفاصيل إضافية للعذر',
-                'info'
+                'info',
+                'تفاصيل العذر'
               );
             }
           },
 
           error: () => {
-            this.showPopup(
+            this.openPopup(
               'لا توجد تفاصيل إضافية للعذر',
-              'info'
+              'info',
+              'تفاصيل العذر'
             );
           },
         });
     }
+  }
+
+  // =========================================================
+  // OPEN EXCUSE FILE
+  // =========================================================
+
+  openExcuseFile(dailyAttendanceId: number): void {
+    const excuse = this.excusesCache.get(dailyAttendanceId);
+    if (excuse && excuse.proofUrl) {
+      window.open(this.api.getFileUrl(excuse.proofUrl), '_blank');
+    } else {
+      this.openPopup('لا يوجد مرفق لهذا العذر', 'info', 'المرفق');
+    }
+  }
+
+  // =========================================================
+  // OPEN EXCUSE FILE BY URL (من داخل Popup)
+  // =========================================================
+
+  openExcuseFileByUrl(url: string | null): void {
+    if (!url) {
+      return;
+    }
+    window.open(this.api.getFileUrl(url), '_blank');
   }
 
   // =========================================================
@@ -625,8 +605,7 @@ export class TraineeAttendance implements OnInit {
     const file =
       input.files[0];
 
-    // Maximum file size:
-    // 5 MB
+    // Maximum file size: 5 MB
     const maxFileSize =
       5 * 1024 * 1024;
 
@@ -634,9 +613,10 @@ export class TraineeAttendance implements OnInit {
       file.size >
       maxFileSize
     ) {
-      this.showPopup(
+      this.openPopup(
         'حجم المرفق يجب ألا يتجاوز 5 MB',
-        'warning'
+        'error',
+        'تنبيه'
       );
 
       input.value = '';
@@ -658,9 +638,10 @@ export class TraineeAttendance implements OnInit {
         file.type
       )
     ) {
-      this.showPopup(
+      this.openPopup(
         'يسمح فقط بملفات PDF أو صور JPG و PNG و WEBP',
-        'warning'
+        'error',
+        'تنبيه'
       );
 
       input.value = '';
@@ -706,9 +687,10 @@ export class TraineeAttendance implements OnInit {
       this.excuseReason.trim();
 
     if (!reason) {
-      this.showPopup(
+      this.openPopup(
         'يرجى كتابة سبب العذر',
-        'warning'
+        'error',
+        'تنبيه'
       );
 
       return;
@@ -723,9 +705,10 @@ export class TraineeAttendance implements OnInit {
         row.dailyAttendanceId
       )
     ) {
-      this.showPopup(
+      this.openPopup(
         'يوجد عذر مسبق لهذا اليوم، لا يمكن إرسال عذر جديد',
-        'warning'
+        'error',
+        'تنبيه'
       );
 
       this.resetExcuseForm();
@@ -780,7 +763,6 @@ export class TraineeAttendance implements OnInit {
     );
 
     // Close the form.
-    // proofFile is still stored in the local variable above.
     this.resetExcuseForm();
 
     // =============================================
@@ -809,11 +791,12 @@ export class TraineeAttendance implements OnInit {
             }
           );
 
-          this.showPopup(
+          this.openPopup(
             proofFile
               ? 'تم إرسال العذر والمرفق بنجاح، وهو الآن قيد المراجعة'
               : 'تم إرسال العذر بنجاح، وهو الآن قيد المراجعة',
-            'success'
+            'success',
+            'تم بنجاح'
           );
 
           setTimeout(
@@ -865,13 +848,13 @@ export class TraineeAttendance implements OnInit {
               'يوجد عذر مسبق لهذا اليوم';
           }
 
-          this.showPopup(
+          this.openPopup(
             errorMessage,
-            'error'
+            'error',
+            'فشل الإرسال'
           );
 
           // Remove the temporary excuse
-          // because the backend request failed.
           this.excusesCache.delete(
             currentDailyAttendanceId
           );

@@ -729,83 +729,59 @@
 
 
   <!-- =========================================================
-       POPUP MESSAGE
+       GENERAL POPUP (مشابه لصفحة البروفايل)
        ========================================================= -->
 
   @if (popupVisible()) {
 
-    <div
-      class="attendance-popup-overlay"
-      (click)="closePopup()"
-    >
+    <div (click)="closePopup()" class="attendance-popup-overlay">
 
-      <div
-        class="attendance-popup"
-        [class.popup-success]="popupType() === 'success'"
-        [class.popup-error]="popupType() === 'error'"
-        [class.popup-warning]="popupType() === 'warning'"
-        [class.popup-info]="popupType() === 'info'"
-        (click)="$event.stopPropagation()"
-      >
+      <div (click)="$event.stopPropagation()" class="attendance-popup">
 
-        <div class="attendance-popup-icon">
+        <div class="attendance-popup-icon"
+             [class.popup-success]="popupType() === 'success'"
+             [class.popup-error]="popupType() === 'error'"
+             [class.popup-info]="popupType() === 'info'">
 
           @if (popupType() === 'success') {
-            ✓
-          }
-
-          @else if (popupType() === 'error') {
-            ×
-          }
-
-          @else if (popupType() === 'warning') {
-            !
-          }
-
-          @else {
-            i
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6L9 17l-5-5"></path>
+            </svg>
+          } @else if (popupType() === 'error') {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          } @else {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
           }
 
         </div>
-
 
         <div class="attendance-popup-content">
+          <div class="attendance-popup-title">{{ popupTitle() }}</div>
+          <div class="attendance-popup-message">{{ popupMessage() }}</div>
 
-          <div class="attendance-popup-title">
-
-            @if (popupType() === 'success') {
-              تم بنجاح
-            }
-
-            @else if (popupType() === 'error') {
-              حدث خطأ
-            }
-
-            @else if (popupType() === 'warning') {
-              تنبيه
-            }
-
-            @else {
-              تفاصيل
-            }
-
-          </div>
-
-
-          <div class="attendance-popup-message">
-            {{ popupMessage() }}
-          </div>
-
+          @if (popupAttachmentUrl()) {
+            <button
+              type="button"
+              class="attendance-popup-attachment-btn"
+              (click)="openExcuseFileByUrl(popupAttachmentUrl())"
+            >
+              📎 عرض المرفق
+            </button>
+          }
         </div>
 
-
-        <button
-          type="button"
-          class="attendance-popup-close"
-          (click)="closePopup()"
-        >
-          ×
-        </button>
+        <button type="button" class="attendance-popup-close" (click)="closePopup()">×</button>
 
       </div>
 
@@ -814,5 +790,3 @@
   }
 
 </div>
-
-
