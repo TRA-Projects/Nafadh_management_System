@@ -1,9 +1,9 @@
 <section class="polls-page" dir="rtl">
   <header class="page-header">
     <div>
-      <p class="eyebrow">تفاعل الجلسة</p>
-      <h1>استطلاعات الجلسة</h1>
-      <p class="subtitle">أنشئي استطلاعًا وانشريه للمتدربين المسجلين</p>
+      <p class="eyebrow">تقييم وتفاعل الجلسة</p>
+      <h1>استطلاعات وتقييمات الجلسة</h1>
+      <p class="subtitle">أنشئي أسئلة التقييم أو الاستطلاعات وانشريها للمتدربين المسجلين</p>
     </div>
 
     <button type="button" class="refresh-button" (click)="loadPolls()">
@@ -19,49 +19,59 @@
     <p class="message success-message">{{ successMessage() }}</p>
   }
 
+  <!-- نموذج إضافة أسئلة متعددة ديناميكياً -->
   <section class="form-card">
-    <h2>إنشاء استطلاع</h2>
-
-    <label for="poll-question">السؤال</label>
-    <input
-      id="poll-question"
-      type="text"
-      [(ngModel)]="question"
-      maxlength="300"
-      placeholder="اكتبي سؤال الاستطلاع"
-    />
-
-    <div class="options-heading">
-      <label>خيارات الإجابة</label>
-      <button
-        type="button"
-        class="text-button"
-        (click)="addOption()"
-        [disabled]="optionDrafts.length >= 10"
-      >
-        إضافة خيار
+    <div class="form-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h2>إنشاء أسئلة التقييم والاستطلاع</h2>
+      <button type="button" class="secondary-button" (click)="addQuestionDraft()">
+        + إضافة سؤال تقييم جديد
       </button>
     </div>
 
-    @for (option of optionDrafts; track $index; let i = $index) {
-      <div class="option-row">
+    @for (pollForm of pollForms(); track $index; let qIndex = $index) {
+      <div class="question-block" style="border: 1px solid #e0e0e0; padding: 20px; margin-bottom: 20px; border-radius: 10px; background-color: #fafafa;">
+        <div class="question-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <label [for]="'question-' + qIndex" style="font-weight: bold;">السؤال رقم {{ qIndex + 1 }}</label>
+          @if (pollForms().length > 1) {
+            <button type="button" class="remove-button" (click)="removeQuestionDraft(qIndex)" style="color: #d9534f; background: none; border: none; cursor: pointer;">حذف السؤال</button>
+          }
+        </div>
+
         <input
+          [id]="'question-' + qIndex"
           type="text"
-          [(ngModel)]="optionDrafts[i]"
-          [name]="'option-' + i"
-          [placeholder]="'الخيار ' + (i + 1)"
-          maxlength="200"
+          [(ngModel)]="pollForm.question"
+          maxlength="300"
+          placeholder="اكتبي سؤال التقييم (مثلاً: ما مدى رضاك عن محتوى الجلسة اليوم؟)"
+          style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px;"
         />
 
-        @if (optionDrafts.length > 2) {
+        <div class="options-heading" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <label style="font-size: 14px; color: #555;">خيارات الإجابة</label>
           <button
             type="button"
-            class="remove-button"
-            (click)="removeOption(i)"
-            aria-label="حذف الخيار"
+            class="text-button"
+            (click)="addOptionToQuestion(qIndex)"
+            [disabled]="pollForm.optionDrafts.length >= 10"
+            style="background: none; border: none; color: #0275d8; cursor: pointer;"
           >
-            حذف
+            + إضافة خيار
           </button>
+        </div>
+
+        @for (option of pollForm.optionDrafts; track $index; let optIndex = $index) {
+          <div class="option-row" style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
+            <input
+              type="text"
+              [(ngModel)]="pollForm.optionDrafts[optIndex]"
+              [placeholder]="'الخيار ' + (optIndex + 1)"
+              maxlength="200"
+              style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
+            />
+            @if (pollForm.optionDrafts.length > 2) {
+              <button type="button" class="remove-button" (click)="removeOptionFromQuestion(qIndex, optIndex)" style="background: #ff4d4d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">حذف</button>
+            }
+          </div>
         }
       </div>
     }
@@ -69,55 +79,57 @@
     <button
       type="button"
       class="primary-button"
-      (click)="createPoll()"
+      (click)="createAllPolls()"
       [disabled]="saving()"
+      style="width: 100%; padding: 12px; background-color: #0275d8; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;"
     >
-      {{ saving() ? 'جارٍ الإنشاء...' : 'إنشاء كمسودة' }}
+      {{ saving() ? 'جارٍ الحفظ...' : 'حفظ ونشر جميع أسئلة التقييم' }}
     </button>
   </section>
 
-  <section class="poll-list">
-    <div class="section-heading">
-      <h2>استطلاعات الجلسة</h2>
+  <!-- قائمة الأسئلة والاستطلاعات الحالية -->
+  <section class="poll-list" style="margin-top: 30px;">
+    <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h2>الأسئلة والاستطلاعات الحالية</h2>
       @if (loading()) {
         <span>جارٍ التحميل...</span>
       }
     </div>
 
     @for (poll of polls(); track poll.pollId) {
-      <article class="poll-card">
+      <article class="poll-card" style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #fff;">
         <div class="poll-details">
           <h3>{{ poll.question }}</h3>
 
-          <p>
+          <p style="margin: 8px 0;">
             الحالة:
             @if (poll.isOpen) {
-              <span class="state open">التصويت مفتوح</span>
+              <span class="state open" style="color: green; font-weight: bold;">التصويت مفتوح</span>
             } @else if (poll.closedAtUtc) {
-              <span class="state closed">مغلق</span>
+              <span class="state closed" style="color: gray; font-weight: bold;">مغلق</span>
             } @else {
-              <span class="state draft">مسودة</span>
+              <span class="state draft" style="color: orange; font-weight: bold;">مسودة</span>
             }
           </p>
 
-          <ul>
+          <ul style="padding-right: 20px; margin-bottom: 10px;">
             @for (option of poll.options; track option.optionId) {
               <li>{{ option.optionText }}</li>
             }
           </ul>
 
-          <p>عدد الأصوات: {{ poll.totalVotes }}</p>
+          <p style="font-size: 14px; color: #666;">إجمالي الأصوات: {{ poll.totalVotes }}</p>
         </div>
 
-        <div class="poll-actions">
+        <div class="poll-actions" style="display: flex; gap: 10px; margin-top: 15px;">
           @if (!poll.isOpen && !poll.closedAtUtc) {
-            <button type="button" class="primary-button" (click)="openPoll(poll)">
+            <button type="button" class="primary-button" (click)="openPoll(poll)" style="padding: 6px 12px; background: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer;">
               نشر وفتح التصويت
             </button>
           }
 
           @if (poll.isOpen) {
-            <button type="button" class="danger-button" (click)="closePoll(poll)">
+            <button type="button" class="danger-button" (click)="closePoll(poll)" style="padding: 6px 12px; background: #d9534f; color: white; border: none; border-radius: 4px; cursor: pointer;">
               إغلاق الاستطلاع
             </button>
           }
@@ -126,6 +138,7 @@
             type="button"
             class="secondary-button"
             (click)="loadResults(poll.pollId)"
+            style="padding: 6px 12px; background: #f0ad4e; color: white; border: none; border-radius: 4px; cursor: pointer;"
           >
             عرض النتائج
           </button>
@@ -133,27 +146,29 @@
       </article>
     } @empty {
       @if (!loading()) {
-        <p class="empty-state">لا توجد استطلاعات لهذه الجلسة.</p>
+        <p class="empty-state">لا توجد استطلاعات أو تقييمات لهذه الجلسة حتى الآن.</p>
       }
     }
   </section>
 
-@if (selectedResults(); as results) {
-    <section class="results-card">
+  <!-- عرض النتائج -->
+  @if (selectedResults(); as results) {
+    <section class="results-card" style="margin-top: 30px; border: 1px solid #bce8f1; background: #d9edf7; padding: 20px; border-radius: 8px;">
       <h2>نتائج: {{ results.question }}</h2>
-      <p>إجمالي الأصوات: {{ results.totalVotes }}</p>
+      <p style="margin-bottom: 15px;">إجمالي الأصوات: {{ results.totalVotes }}</p>
 
       @for (item of results.results; track item.optionId) {
-        <div class="result-row">
-          <div class="result-label">
+        <div class="result-row" style="margin-bottom: 10px;">
+          <div class="result-label" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
             <span>{{ item.optionText }}</span>
             <span>{{ item.voteCount }} صوت — {{ item.votePercentage }}%</span>
           </div>
 
-          <div class="progress-track">
+          <div class="progress-track" style="background: #ddd; height: 10px; border-radius: 5px; overflow: hidden;">
             <div
               class="progress-value"
               [style.width.%]="item.votePercentage"
+              style="background: #0275d8; height: 100%; transition: width 0.3s;"
             ></div>
           </div>
         </div>
