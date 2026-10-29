@@ -15,7 +15,7 @@
         <h2>1. تكليف الإدارة</h2>
         <label class="field">
           <span>البرنامج والدفعة <em>*</em></span>
-          <select name="assignedProgram" [ngModel]="selectedProgramId()" (ngModelChange)="selectProgram($event)" [disabled]="saving() || !!partialPlanId()">
+          <select name="assignedProgram" [ngModel]="selectedBatchId()" (ngModelChange)="selectProgram($event)" [disabled]="saving() || !!partialPlanId()">
             <option [ngValue]="null">اختاري البرنامج المسند إلى شركتك</option>
             @for (p of programs(); track p.batchId) {
               <option [ngValue]="p.batchId">{{ p.title }} — {{ p.batchName }} ({{ p.batchId }})</option>
