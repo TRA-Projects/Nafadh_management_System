@@ -183,14 +183,12 @@ export class CompanyPlanWorkspace implements OnInit {
     if (!p) return [];
 
     const checks: ReadinessCheck[] = [
-      { ok: new Date(p.startDate) >= new Date(this.today + 'T00:00:00'), label: 'تاريخ بدء الكورس لم يمضِ' },
       { ok: !!p.description?.trim(), label: 'وصف الكورس مكتوب' },
       { ok: p.stages.length > 0, label: 'أُضيفت مرحلة واحدة على الأقل' },
     ];
 
     for (const stage of p.stages) {
-      checks.push({ ok: true, label: `المرحلة «${stage.title}» يمكن إسنادها لمدرب لاحقاً` });
-      checks.push({ ok: stage.items.length > 0, label: `المرحلة «${stage.title}» فيها مهمة أو مشروع` });
+      checks.push({ ok: true, label: `المرحلة «${stage.title}» جاهزة للمراجعة؛ يمكن إسناد المدرب لاحقًا` });
     }
 
     return checks;

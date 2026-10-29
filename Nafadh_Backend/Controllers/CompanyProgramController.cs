@@ -27,11 +27,20 @@ namespace Nafadh_Backend.Controllers
 
         // GET: api/CompanyProgram/company/{companyId}
         // Programs a company is eligible to host.
+        [Authorize(Roles = "Admin,CompanySupervisor")]
         [HttpGet("company/{companyId}")]
         public async Task<IActionResult> GetByCompanyId(int companyId)
         {
-            var result = await _service.GetByCompanyIdAsync(companyId);
-            return Ok(result);
+            if (!User.IsInRole("Admin") && !await OwnsCompanyAsync(companyId))
+                return Forbid();
+            var assignments = await _context.NFD_Batches.AsNoTracking()
+                .Where(b => b.CompanyId == companyId)
+                .Select(b => new NFD_CompanyProgramOutputDTO
+                {
+                    CompanyId = companyId,
+                    ProgramId = b.ProgramId
+                }).Distinct().ToListAsync();
+            return Ok(assignments);
         }
 
         // GET: api/CompanyProgram/company/{companyId}/details
@@ -50,10 +59,11 @@ namespace Nafadh_Backend.Controllers
             if (!companyExists)
                 return NotFound(new { message = "Company not found." });
 
-            var programIds = await _context.NFD_CompanyPrograms
+            var programIds = await _context.NFD_Batches
                 .AsNoTracking()
-                .Where(cp => cp.CompanyId == companyId)
-                .Select(cp => cp.ProgramId)
+                .Where(b => b.CompanyId == companyId)
+                .Select(b => b.ProgramId)
+                .Distinct()
                 .ToListAsync();
 
             if (programIds.Count == 0)
@@ -73,7 +83,7 @@ namespace Nafadh_Backend.Controllers
                     Price = p.Price,
                     Status = p.Status.ToString(),
                     ApprovedForCompany = true,
-                    BatchCount = p.Batches.Count,
+                    BatchCount = p.Batches.Count(b => b.CompanyId == companyId),
                     EnrollmentCount = p.Batches
                         .SelectMany(b => b.Enrollments)
                         .Count(e => e.CompanyId == companyId),
@@ -83,16 +93,16 @@ namespace Nafadh_Backend.Controllers
                     // "Used" = seats currently occupied (InProgress), the same rule the
                     // Company Dashboard uses. Completed / dropped / failed enrollments
                     // no longer occupy a seat (they stay in EnrollmentCount).
-                    AllocatedCapacity = p.Batches.Sum(b => b.Capacity),
+                    AllocatedCapacity = p.Batches.Where(b => b.CompanyId == companyId).Sum(b => b.Capacity),
                     UsedCapacity = p.Batches.SelectMany(b => b.Enrollments)
                         .Count(e => e.CompanyId == companyId && e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress),
-                    RemainingCapacity = Math.Max(0, (int)p.Batches.Sum(b => b.Capacity)
+                    RemainingCapacity = Math.Max(0, (int)p.Batches.Where(b => b.CompanyId == companyId).Sum(b => b.Capacity)
                         - p.Batches.SelectMany(b => b.Enrollments)
                             .Count(e => e.CompanyId == companyId && e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress)),
-                    UtilizationPercentage = p.Batches.Sum(b => b.Capacity) > 0
+                    UtilizationPercentage = p.Batches.Where(b => b.CompanyId == companyId).Sum(b => b.Capacity) > 0
                         ? Math.Round((decimal)p.Batches.SelectMany(b => b.Enrollments)
                             .Count(e => e.CompanyId == companyId && e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress) * 100m
-                            / p.Batches.Sum(b => b.Capacity), 1)
+                            / p.Batches.Where(b => b.CompanyId == companyId).Sum(b => b.Capacity), 1)
                         : 0m,
                     Departments = p.Batches
                         .SelectMany(b => b.Enrollments)
@@ -104,7 +114,7 @@ namespace Nafadh_Backend.Controllers
                 })
                 .ToListAsync();
 
-            var openSeats = await LoadOpenSeatsAsync(programs.Select(p => p.ProgramId).ToList());
+            var openSeats = await LoadOpenSeatsAsync(programs.Select(p => p.ProgramId).ToList(), companyId);
             foreach (var program in programs)
                 ApplyOpenSeats(program, openSeats);
 
@@ -120,12 +130,10 @@ namespace Nafadh_Backend.Controllers
             if (!await OwnsCompanyAsync(companyId))
                 return Forbid();
 
-            var companyProgram = await _context.NFD_CompanyPrograms
-                .AsNoTracking()
-                .FirstOrDefaultAsync(cp => cp.CompanyId == companyId && cp.ProgramId == programId);
-
-            if (companyProgram is null)
-                return NotFound(new { message = "This program is not linked to the company." });
+            var assigned = await _context.NFD_Batches.AsNoTracking()
+                .AnyAsync(b => b.CompanyId == companyId && b.ProgramId == programId);
+            if (!assigned)
+                return NotFound(new { message = "هذا البرنامج غير مسند إلى الشركة من الإدارة." });
 
             var program = await _context.NFD_Programs
                 .AsNoTracking()
@@ -147,7 +155,7 @@ namespace Nafadh_Backend.Controllers
 
             var batches = await _context.NFD_Batches
                 .AsNoTracking()
-                .Where(b => b.ProgramId == programId)
+                .Where(b => b.ProgramId == programId && b.CompanyId == companyId)
                 .OrderBy(b => b.StartDate)
                 .Select(b => new CompanyProgramBatchDTO
                 {
@@ -265,7 +273,7 @@ namespace Nafadh_Backend.Controllers
                 Modules = modules
             };
 
-            ApplyOpenSeats(result, await LoadOpenSeatsAsync(new List<int> { programId }));
+            ApplyOpenSeats(result, await LoadOpenSeatsAsync(new List<int> { programId }, companyId));
 
             return Ok(result);
         }
@@ -307,6 +315,7 @@ namespace Nafadh_Backend.Controllers
 
         // GET: api/CompanyProgram/program/{programId}
         // Companies eligible to host a given program.
+        [Authorize(Roles = "Admin")]
         [HttpGet("program/{programId}")]
         public async Task<IActionResult> GetByProgramId(int programId)
         {
@@ -316,6 +325,7 @@ namespace Nafadh_Backend.Controllers
 
         // POST: api/CompanyProgram
         // Qualify a company for a program.
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] NFD_CompanyProgramInputDTO dto)
         {
@@ -327,6 +337,7 @@ namespace Nafadh_Backend.Controllers
 
         // DELETE: api/CompanyProgram?companyId=1&programId=2
         // Remove a company's eligibility for a program.
+        [Authorize(Roles = "Admin")]
         [HttpDelete]
         public async Task<IActionResult> Delete([FromQuery] int companyId, [FromQuery] int programId)
         {
@@ -338,7 +349,7 @@ namespace Nafadh_Backend.Controllers
         // Open batch = not cancelled and not yet ended (same date rule as DeriveBatchStatus).
         // Capacity belongs to the batch and is shared by all companies, so occupancy
         // counts InProgress enrollments of every company, not only the caller's.
-        private async Task<Dictionary<int, (decimal Capacity, int Occupied)>> LoadOpenSeatsAsync(List<int> programIds)
+        private async Task<Dictionary<int, (decimal Capacity, int Occupied)>> LoadOpenSeatsAsync(List<int> programIds, int companyId)
         {
             if (programIds.Count == 0)
                 return new Dictionary<int, (decimal Capacity, int Occupied)>();
@@ -348,6 +359,7 @@ namespace Nafadh_Backend.Controllers
             var rows = await _context.NFD_Batches
                 .AsNoTracking()
                 .Where(b => programIds.Contains(b.ProgramId)
+                            && b.CompanyId == companyId
                             && b.Status != Nafadh_Backend.Enums.NFD_BatchStatus.Cancelled
                             && b.EndDate >= today)
                 .Select(b => new

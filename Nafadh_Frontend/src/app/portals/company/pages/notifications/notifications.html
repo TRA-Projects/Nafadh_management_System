@@ -81,7 +81,7 @@
                 }
               }
               </div>
-              <div class="body"><div class="title-row"><h3>{{ item.title }}</h3>@if (!item.isRead) { <span class="new">جديد</span> }</div><p>{{ item.message }}</p><div class="meta"><span class="tag">{{ categoryLabel(categoryOf(item)) }}</span></div></div>
+              <div class="body"><div class="title-row"><h3>{{ item.title }}</h3>@if (!item.isRead) { <span class="new">جديد</span> }</div><p>{{ item.message }}</p><div class="meta"><span class="tag">{{ categoryLabel(categoryOf(item)) }}</span>@if (coursePlanLink(item); as planUrl) { <a [routerLink]="planUrl" [queryParams]="batchAssignmentId(item) ? { batchId: batchAssignmentId(item) } : null" class="tag" [attr.aria-label]="'عرض الخطة المرتبطة بإشعار ' + item.title">عرض الخطة</a> }</div></div>
               <div class="side"><time [attr.datetime]="item.createdAt" [title]="fullDate(item.createdAt)">{{ timeAgo(item.createdAt) }}</time>@if (!item.isRead) { <button type="button" class="read-action" [disabled]="isPending(item.notificationId) || markingAll()" (click)="markRead(item)" [attr.aria-label]="'تعليم إشعار ' + item.title + ' كمقروء'">{{ isPending(item.notificationId) ? 'جارٍ التعليم...' : '✓ تعليم كمقروء' }}</button> } @else { <span class="read-status">✓ تمت القراءة</span> }</div>
             </article>
           }

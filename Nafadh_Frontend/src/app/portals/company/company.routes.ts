@@ -21,6 +21,7 @@ export const COMPANY_ROUTES: Routes = [
       .then((m) => m.CompanyQuizResults),
 },
       { path: 'tasks', loadComponent: () => import('./pages/tasks/tasks').then((m) => m.CompanyTasks) },
+      { path: 'tasks/new', loadComponent: () => import('./pages/tasks/plan-create').then((m) => m.CompanyPlanCreate) },
       { path: 'tasks/:id', loadComponent: () => import('./pages/tasks/plan-workspace').then((m) => m.CompanyPlanWorkspace) },
       { path: 'profile', loadComponent: () => import('./pages/profile/profile').then((m) => m.CompanyProfile) },
       { path: 'daily-attendance', loadComponent: () => import('./pages/DailyAttendance/DailyAttendance').then((m) => m.CompanyDailyAttendance) },
