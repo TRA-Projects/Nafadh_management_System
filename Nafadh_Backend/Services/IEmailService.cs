@@ -15,7 +15,7 @@ namespace Nafadh_Backend.Services
         Task SendWithdrawalApprovedAsync(string email, string traineeName);
 
         Task SendWithdrawalRejectedAsync(string email, string traineeName, string? reason);
-       
+
         // إشعار تسجيل متدرب جديد في دفعة وبرنامج تدريبي
         Task SendTraineeEnrolledAsync(
             string email,
@@ -47,5 +47,14 @@ namespace Nafadh_Backend.Services
 
         // Informs active Authority administrators when a company submits or resubmits a plan.
         Task SendCoursePlanSubmittedAsync(string email, string companyName, string planTitle, int planId, bool resubmitted);
+
+        Task SendBatchAssignedToCompanyAsync(
+            string email,
+            string companyName,
+            string batchName,
+            string programName,
+            DateTime startDate,
+            DateTime endDate,
+            decimal capacity);
     }
 }
