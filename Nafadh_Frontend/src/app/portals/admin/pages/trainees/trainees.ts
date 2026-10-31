@@ -355,9 +355,12 @@ export class AdminTrainees implements OnInit {
   });
 
   filtered = computed(() => {
-    const list = this.trainees();
-    const q = this.searchQuery().trim().toLowerCase();
     const status = this.statusFilter();
+    const list =
+      (status === 'WITHDRAWAL_PENDING' || status === 'DROPPED') && !this.withdrawalViewLoaded && this.allDbTrainees().length > 0
+        ? this.allDbTrainees()
+        : this.trainees();
+    const q = this.searchQuery().trim().toLowerCase();
     const uni = this.universityFilter();
     const comp = this.companyFilter();
     const batch = this.batchFilter();
@@ -903,6 +906,33 @@ export class AdminTrainees implements OnInit {
   // =========================================================================
   // دوال إدارة المتدربين (إحصائيات، جدول، فلاتر)
   // =========================================================================
+  private withdrawalViewLoaded = false;
+
+  private normalizeWithdrawalStatus(rawStatus: any): 'None' | 'Pending' | 'Approved' | 'Rejected' {
+    if (rawStatus === 0 || rawStatus === '0' || rawStatus === 'Pending') return 'Pending';
+    if (rawStatus === 1 || rawStatus === '1' || rawStatus === 'Approved') return 'Approved';
+    if (rawStatus === 2 || rawStatus === '2' || rawStatus === 'Rejected') return 'Rejected';
+    return 'None';
+  }
+
+  private findTraineeWithdrawalReq(withdrawalsList: any[], traineeId: number, userId?: number | null): any | null {
+    const matches = (withdrawalsList || []).filter(w => {
+      const wTraineeId = Number(w.traineeId ?? w.TraineeId ?? 0);
+      const wUserId = Number(w.userId ?? w.UserId ?? 0);
+      if (wTraineeId > 0 && Number(traineeId) > 0 && wTraineeId === Number(traineeId)) return true;
+      if (wUserId > 0 && userId && Number(userId) > 0 && wUserId === Number(userId)) return true;
+      return false;
+    });
+    if (matches.length === 0) return null;
+    const pending = matches.find(w => this.normalizeWithdrawalStatus(w.status ?? w.Status) === 'Pending');
+    if (pending) return pending;
+    return matches.sort((a, b) => {
+      const idA = Number(a.id ?? a.requestId ?? a.RequestId ?? 0);
+      const idB = Number(b.id ?? b.requestId ?? b.RequestId ?? 0);
+      return idB - idA;
+    })[0];
+  }
+
   loadDatabaseStats() {
     forkJoin({
       allRes: this.api.getTrainees({ pageNumber: 1, pageSize: 2000 }).pipe(catchError(() => of(null))),
@@ -922,14 +952,15 @@ export class AdminTrainees implements OnInit {
       const withdrawalsList: any[] = Array.isArray(withdrawalRequests) ? withdrawalRequests : [];
 
       mappedAll.forEach(t => {
-        const req = withdrawalsList.find(w => w.traineeId === t.traineeId);
+        const req = this.findTraineeWithdrawalReq(withdrawalsList, t.traineeId, t.userId);
         if (req) {
-          t.withdrawalRequestId = req.id;
-          t.withdrawalStatus = req.status;
-          t.withdrawalReason = req.reason;
-          t.withdrawalDate = req.createdAt;
-          t.adminNotes = req.adminNotes;
-          if (req.status === 'Approved') {
+          const normStatus = this.normalizeWithdrawalStatus(req.status ?? req.Status);
+          t.withdrawalRequestId = req.id ?? req.requestId ?? req.RequestId ?? null;
+          t.withdrawalStatus = normStatus;
+          t.withdrawalReason = req.reason ?? req.Reason ?? null;
+          t.withdrawalDate = req.createdAt ?? req.CreatedAt ?? null;
+          t.adminNotes = req.adminNotes ?? req.AdminNotes ?? null;
+          if (normStatus === 'Approved') {
             t.completionStatus = 'Dropped';
           }
         }
@@ -971,7 +1002,7 @@ export class AdminTrainees implements OnInit {
       const inTrainingCount = extractTotal(inTrainingRes, mappedAll.filter(t => this.isInTraining(t)).length);
       const completedCount = extractTotal(completedRes, mappedAll.filter(t => this.isCompleted(t)).length);
 
-      const pendingWithdrawalsCount = withdrawalsList.filter(w => w.status === 'Pending').length;
+      const pendingWithdrawalsCount = withdrawalsList.filter(w => this.normalizeWithdrawalStatus(w.status ?? w.Status) === 'Pending').length;
       const droppedCount = mappedAll.filter(t => t.withdrawalStatus === 'Approved' || t.completionStatus === 'Dropped').length;
 
       this.dbStats.set({
@@ -985,10 +1016,130 @@ export class AdminTrainees implements OnInit {
     });
   }
 
-  loadTrainees() {
+  private loadWithdrawalFilteredTrainees(statusVal: 'WITHDRAWAL_PENDING' | 'DROPPED') {
     this.isLoading.set(true);
 
+    forkJoin({
+      withdrawals: this.api.getWithdrawalRequests().pipe(catchError(() => of([]))),
+      allRes: this.allDbTrainees().length > 0
+        ? of(null)
+        : this.api.getTrainees({ pageNumber: 1, pageSize: 2000 }).pipe(catchError(() => of(null)))
+    }).subscribe(({ withdrawals, allRes }: any) => {
+      const withdrawalsList: any[] = Array.isArray(withdrawals) ? withdrawalRequestsOrArray(withdrawals) : [];
+
+      let baseAll = this.allDbTrainees();
+      if (baseAll.length === 0 && allRes) {
+        const raw: any[] = Array.isArray(allRes?.items) ? allRes.items : Array.isArray(allRes) ? allRes : [];
+        baseAll = raw.map(r => this.mapRawTrainee(r));
+      }
+
+      const targetStatus = statusVal === 'WITHDRAWAL_PENDING' ? 'Pending' : 'Approved';
+      const targetRequests = withdrawalsList.filter(
+        w => this.normalizeWithdrawalStatus(w.status ?? w.Status) === targetStatus
+      );
+
+      const matchedMap = new Map<number, EnrichedTraineeItem>();
+      const missingReqs: any[] = [];
+
+      targetRequests.forEach(req => {
+        const tId = Number(req.traineeId ?? req.TraineeId ?? 0);
+        const uId = Number(req.userId ?? req.UserId ?? 0);
+        const found = baseAll.find(
+          t => (tId > 0 && Number(t.traineeId) === tId) || (uId > 0 && Number(t.userId) === uId)
+        );
+
+        const normStatus = this.normalizeWithdrawalStatus(req.status ?? req.Status);
+        const reqId = req.id ?? req.requestId ?? req.RequestId ?? null;
+
+        if (found) {
+          matchedMap.set(found.traineeId, {
+            ...found,
+            withdrawalRequestId: reqId,
+            withdrawalStatus: normStatus,
+            withdrawalReason: req.reason ?? req.Reason ?? found.withdrawalReason,
+            withdrawalDate: req.createdAt ?? req.CreatedAt ?? found.withdrawalDate,
+            adminNotes: req.adminNotes ?? req.AdminNotes ?? found.adminNotes,
+            completionStatus: normStatus === 'Approved' ? 'Dropped' : found.completionStatus
+          });
+        } else if (tId > 0) {
+          missingReqs.push(req);
+        }
+      });
+
+      if (statusVal === 'DROPPED') {
+        baseAll.forEach(t => {
+          if ((t.withdrawalStatus === 'Approved' || t.completionStatus === 'Dropped') && !matchedMap.has(t.traineeId)) {
+            matchedMap.set(t.traineeId, { ...t, withdrawalStatus: 'Approved', completionStatus: 'Dropped' });
+          }
+        });
+      }
+
+      const finalizeList = (fullMatchedList: EnrichedTraineeItem[]) => {
+        this.withdrawalViewLoaded = true;
+        const start = (this.currentPage() - 1) * this.pageSize();
+        const pagedItems = fullMatchedList.slice(start, start + this.pageSize());
+
+        this.trainees.set(pagedItems);
+        this.totalCount.set(fullMatchedList.length);
+        this.isLoading.set(false);
+
+        if (pagedItems.length > 0) {
+          this.enrichTraineesWithProfiles(pagedItems);
+        }
+      };
+
+      if (missingReqs.length === 0) {
+        finalizeList(Array.from(matchedMap.values()));
+      } else {
+        forkJoin(
+          missingReqs.map(req => {
+            const tId = Number(req.traineeId ?? req.TraineeId);
+            return this.api.getTrainee(tId).pipe(catchError(() => of(null)));
+          })
+        ).subscribe((fetchedProfiles: any[]) => {
+          missingReqs.forEach((req, idx) => {
+            const tId = Number(req.traineeId ?? req.TraineeId);
+            const prof = fetchedProfiles[idx];
+            const baseItem = prof
+              ? this.mapRawTrainee({ ...prof, traineeId: prof.traineeId ?? prof.id ?? tId })
+              : this.mapRawTrainee({
+                  traineeId: tId,
+                  fullName: req.traineeName ?? req.fullName ?? `متدرب #${tId}`,
+                  email: req.traineeEmail ?? req.email ?? ''
+                });
+
+            const normStatus = this.normalizeWithdrawalStatus(req.status ?? req.Status);
+            matchedMap.set(baseItem.traineeId, {
+              ...baseItem,
+              withdrawalRequestId: req.id ?? req.requestId ?? req.RequestId ?? null,
+              withdrawalStatus: normStatus,
+              withdrawalReason: req.reason ?? req.Reason ?? null,
+              withdrawalDate: req.createdAt ?? req.CreatedAt ?? null,
+              adminNotes: req.adminNotes ?? req.AdminNotes ?? null,
+              completionStatus: normStatus === 'Approved' ? 'Dropped' : baseItem.completionStatus
+            });
+          });
+
+          finalizeList(Array.from(matchedMap.values()));
+        });
+      }
+    });
+
+    function withdrawalRequestsOrArray(arr: any[]): any[] {
+      return arr;
+    }
+  }
+
+  loadTrainees() {
     const statusVal = this.statusFilter();
+    if (statusVal === 'WITHDRAWAL_PENDING' || statusVal === 'DROPPED') {
+      this.loadWithdrawalFilteredTrainees(statusVal);
+      return;
+    }
+
+    this.withdrawalViewLoaded = false;
+    this.isLoading.set(true);
+
     const statusParam = (statusVal === '0' || statusVal === '1' || statusVal === '2') ? Number(statusVal) : null;
 
     const queryParams: Record<string, unknown> = {
@@ -1046,7 +1197,7 @@ export class AdminTrainees implements OnInit {
             null;
 
           const pUserId = profile?.userId || profile?.UserId || item.userId;
-          const req = withdrawalsList.find(w => w.traineeId === item.traineeId);
+          const req = this.findTraineeWithdrawalReq(withdrawalsList, item.traineeId, pUserId);
 
           let wStatus: 'None' | 'Pending' | 'Approved' | 'Rejected' = 'None';
           let wReason: string | null = null;
@@ -1055,11 +1206,11 @@ export class AdminTrainees implements OnInit {
           let adminNotes: string | null = null;
 
           if (req) {
-            reqId = req.id;
-            wStatus = req.status;
-            wReason = req.reason;
-            wDate = req.createdAt;
-            adminNotes = req.adminNotes;
+            reqId = req.id ?? req.requestId ?? req.RequestId ?? null;
+            wStatus = this.normalizeWithdrawalStatus(req.status ?? req.Status);
+            wReason = req.reason ?? req.Reason ?? null;
+            wDate = req.createdAt ?? req.CreatedAt ?? null;
+            adminNotes = req.adminNotes ?? req.AdminNotes ?? null;
           } else if (activeEnrollment?.completionStatus === 'Dropped') {
             wStatus = 'Approved';
             wReason = 'تم اعتماد الانسحاب في قاعدة البيانات';
@@ -1221,20 +1372,20 @@ export class AdminTrainees implements OnInit {
     date: string | null,
     requestId?: number | null
   ) {
-    this.trainees.update(list =>
-      list.map(item =>
-        item.traineeId === traineeId
-          ? {
-              ...item,
-              withdrawalRequestId: requestId || item.withdrawalRequestId,
-              withdrawalStatus: status,
-              withdrawalReason: reason,
-              withdrawalDate: date,
-              completionStatus: status === 'Approved' ? 'Dropped' : item.completionStatus
-            }
-          : item
-      )
-    );
+    const mapper = (item: EnrichedTraineeItem) =>
+      item.traineeId === traineeId
+        ? {
+            ...item,
+            withdrawalRequestId: requestId || item.withdrawalRequestId,
+            withdrawalStatus: status,
+            withdrawalReason: reason,
+            withdrawalDate: date,
+            completionStatus: status === 'Approved' ? 'Dropped' : item.completionStatus
+          }
+        : item;
+
+    this.trainees.update(list => list.map(mapper));
+    this.allDbTrainees.update(list => list.map(mapper));
   }
 
   exportToExcel() {
@@ -1430,9 +1581,7 @@ export class AdminTrainees implements OnInit {
   onStatusFilterChange(newStatus: string) {
     this.statusFilter.set(newStatus);
     this.currentPage.set(1);
-    if (newStatus === 'ALL' || newStatus === '0' || newStatus === '1' || newStatus === '2') {
-      this.loadTrainees();
-    }
+    this.loadTrainees();
   }
 
   resetAllFilters() {
