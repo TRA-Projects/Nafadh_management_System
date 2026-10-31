@@ -57,7 +57,7 @@
   <div class="filter-toolbar">
     <div class="search-box">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" [(ngModel)]="searchTerm" placeholder="ابحث باسم الشركة أو كود الإنذار (CW-X)...">
+      <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()" placeholder="ابحث باسم الشركة أو كود الإنذار (CW-X)...">
     </div>
 
     <button class="nfd-btn filter-toggle-btn" [class.active]="isFilterDropdownOpen || hasActiveFilters()" (click)="toggleFilterMenu()">
@@ -147,7 +147,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let warning of filteredWarnings()">
+        <!-- 🟢 عرض عناصر الصفحة الحالية فقط -->
+        <tr *ngFor="let warning of pagedWarnings()">
           <td class="code-cell">CW-{{ warning.warningId }}</td>
           <td>
             <div class="company-info">
@@ -181,9 +182,45 @@
         </tr>
       </tbody>
     </table>
+
+    <!-- 🟢 5️⃣ أزرار التنقل بين الصفحات (السابق / مؤشر الصفحة / التالي) -->
+    <div class="pagination-wrapper" *ngIf="filteredWarnings().length > 0">
+      <div class="pagination-box">
+        <!-- زر السابق -->
+        <button 
+          type="button" 
+          class="page-nav-btn" 
+          [disabled]="currentPage() === 1" 
+          (click)="prevPage()">
+          السابق
+        </button>
+
+        <!-- مؤشر الصفحة: صفحة 1 من 112 -->
+        <span class="page-counter">
+          صفحة {{ currentPage() }} من {{ totalPages() }}
+        </span>
+
+        <!-- زر التالي -->
+        <button 
+          type="button" 
+          class="page-nav-btn" 
+          [disabled]="currentPage() >= totalPages()" 
+          (click)="nextPage()">
+          التالي
+        </button>
+      </div>
+    </div>
   </div>
 
-  <!-- 5️⃣ Modal إصدار إنذار جديد -->
+  <!-- 🟢 6️⃣ الزر العائم للصعود للأعلى (الدائري الكحلي) -->
+  <button type="button" class="floating-scroll-btn" (click)="scrollToTop()" title="الرجوع للأعلى">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="12" y1="19" x2="12" y2="5"></line>
+      <polyline points="5 12 12 5 19 12"></polyline>
+    </svg>
+  </button>
+
+  <!-- 7️⃣ Modal إصدار إنذار جديد -->
   <div class="modal-overlay" *ngIf="showIssue()">
     <div class="modal-card">
       <div class="modal-header">
@@ -225,8 +262,9 @@
           </div>
         </div>
 
+        <!-- 🌟 أسباب البلاغ الخاصة بمخالفات الشركات المطابقة للداتابيز -->
         <div class="form-group">
-          <label class="required">أسباب البلاغ والمخالفات المحددة</label>
+          <label class="required">أسباب البلاغ والمخالفات المحددة (المعتمدة نظامياً)</label>
           <div class="reasons-chips-grid">
             <button 
               type="button" 
@@ -253,7 +291,7 @@
         </div>
 
         <div class="form-group">
-          <label>معاينة ملخص الأدلة والأسباب المسجلة</label>
+          <label>معاينة نص الدليل والأسباب المسجلة (Evidence)</label>
           <textarea rows="3" [value]="newWarning.evidence" readonly class="readonly-textarea"></textarea>
         </div>
 
@@ -268,7 +306,7 @@
     </div>
   </div>
 
-  <!-- 6️⃣ Modal تفاصيل البلاغ والإنذار المحدد -->
+  <!-- 8️⃣ Modal تفاصيل البلاغ والإنذار المحدد -->
   <div class="modal-overlay" *ngIf="selectedWarning()">
     <div class="modal-card wide-modal">
       <div class="modal-header">
