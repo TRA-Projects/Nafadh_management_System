@@ -66,7 +66,7 @@ namespace Nafadh_Backend.Services
         }
         private static NFD_QuizStatus GetEffectiveStatus(NFD_Quiz quiz)
         {
-            
+
             if (quiz.Status == NFD_QuizStatus.Draft ||
                 quiz.Status == NFD_QuizStatus.Archived)
             {
@@ -75,7 +75,7 @@ namespace Nafadh_Backend.Services
 
             var now = DateTime.UtcNow;
 
-            
+
             if (now < quiz.StartDateTime)
             {
                 return NFD_QuizStatus.Scheduled;
@@ -86,7 +86,7 @@ namespace Nafadh_Backend.Services
                 return NFD_QuizStatus.Closed;
             }
 
-          
+
             return NFD_QuizStatus.Open;
         }
         private static void ValidateQuiz(
@@ -300,15 +300,13 @@ namespace Nafadh_Backend.Services
                 throw new InvalidOperationException(
                     "لا يمكن نشر اختبار يحتوي على أسئلة مكررة.");
 
-            var validationError =
-                await _quizQuestionRepository.AreQuizQuestionsValidAsync(
-                    id,
-                    trainerId);
-
-            if (validationError != null)
+            if (!await _quizQuestionRepository.AreQuizQuestionsValidAsync(
+                id, trainerId))
             {
-                throw new InvalidOperationException(validationError);
+                throw new InvalidOperationException(
+                    "لا يمكن نشر الاختبار؛ يوجد سؤال غير فعال أو تابع لمدرب آخر أو خياراته غير صحيحة.");
             }
+
             var now = DateTime.UtcNow;
 
             if (quiz.EndDateTime <= now)

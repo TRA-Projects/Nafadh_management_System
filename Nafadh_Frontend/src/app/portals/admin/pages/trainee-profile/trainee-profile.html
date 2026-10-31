@@ -251,19 +251,19 @@
       } @else {
         <div class="exam-table-scroll">
           <table class="exam-main-table">
-            <thead><tr><th>اسم الاختبار</th><th>الوحدة التدريبية</th><th>الدرجة</th><th>الحالة</th><th>تاريخ التقديم</th><th>إجراءات</th></tr></thead>
+            <thead><tr><th>اسم الاختبار</th><th>الوحدة / الدفعة</th><th>الدرجة</th><th>الحالة</th><th>تاريخ التقديم</th><th>إجراءات</th></tr></thead>
             <tbody>
-              @for (exam of filteredExams(); track exam.id) {
+              @for (exam of filteredExams(); track exam.attemptId ?? exam.id) {
                 <tr>
-                  <td><strong>{{ exam.examTitle || exam.title || 'اختبار بدون عنوان' }}</strong><small>{{ exam.id }}</small></td>
-                  <td>{{ exam.moduleName || exam.moduleTitle || '—' }}</td>
+                  <td><strong>{{ exam.quizTitle || exam.examTitle || exam.title || 'اختبار بدون عنوان' }}</strong><small>محاولة #{{ exam.attemptId ?? exam.id }}</small></td>
+                  <td>{{ exam.moduleName || exam.moduleTitle || exam.batchName || '—' }}</td>
                   <td>
-                    @if (exam.score !== null && exam.score !== undefined && exam.maxScore > 0) {
-                      <div class="exam-score" [class.score-low]="(exam.score / exam.maxScore) < 0.7"><strong>{{ (exam.score / exam.maxScore * 100) | number:'1.0-0' }}%</strong><span class="exam-score-track"><span [style.width.%]="exam.score / exam.maxScore * 100"></span></span></div>
-                    } @else { <span class="exam-muted">قيد التقييم</span> }
+                    @if ((exam.status === 'Graded' || exam.status === 'Completed') && exam.percentage !== null && exam.percentage !== undefined) {
+                      <div class="exam-score" [class.score-low]="exam.isPassed === false"><strong>{{ exam.percentage | number:'1.0-1' }}%</strong><span class="exam-score-track"><span [style.width.%]="exam.percentage"></span></span></div>
+                    } @else { <span class="exam-muted">—</span> }
                   </td>
-                  <td><span class="exam-status" [class.status-green]="exam.status === 'مكتمل' || exam.status === 'Completed'" [class.status-amber]="exam.status === 'قيد التصحيح' || exam.status === 'Pending'" [class.status-red]="exam.status === 'لم يجتز' || exam.status === 'Failed'">{{ examStatusLabel(exam.status) }}</span></td>
-                  <td>{{ exam.examDate || '—' }}</td>
+                  <td><span class="exam-status" [class.status-green]="exam.status === 'مكتمل' || exam.status === 'Completed' || exam.status === 'Graded'" [class.status-amber]="exam.status === 'قيد التصحيح' || exam.status === 'Pending' || exam.status === 'Submitted' || exam.status === 'Expired'" [class.status-red]="exam.isPassed === false || exam.status === 'لم يجتز' || exam.status === 'Failed'">{{ examStatusLabel(exam.status) }}</span></td>
+                  <td>{{ (exam.submittedAt || exam.startedAt) ? ((exam.submittedAt || exam.startedAt) | date:'dd/MM/yyyy') : '—' }}</td>
                   <td><button type="button" class="exam-details-btn" (click)="openExamDetails(exam)">التفاصيل ◉</button></td>
                 </tr>
               }
@@ -591,12 +591,12 @@
                 </tr>
               </thead>
               <tbody>
-                @for (exam of traineeExams(); track exam.id) {
+                @for (exam of traineeExams(); track exam.attemptId ?? exam.id) {
                   <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 10px; font-weight: 700;">{{ exam.examTitle }}</td>
-                    <td style="padding: 10px; text-align: center; font-weight: 800; color: #047857;">{{ exam.score !== null ? (exam.score + '/' + exam.maxScore) : 'قيد التدقيق' }}</td>
-                    <td style="padding: 10px; text-align: center;">{{ exam.status }}</td>
-                    <td style="padding: 10px; text-align: center; color: #64748b;">{{ exam.examDate }}</td>
+                    <td style="padding: 10px; font-weight: 700;">{{ exam.quizTitle || exam.examTitle || exam.title || '—' }}</td>
+                    <td style="padding: 10px; text-align: center; font-weight: 800; color: #047857;">{{ (exam.status === 'Graded' || exam.status === 'Completed') && exam.percentage != null ? (exam.percentage + '%') : '—' }}</td>
+                    <td style="padding: 10px; text-align: center;">{{ examStatusLabel(exam.status) }}</td>
+                    <td style="padding: 10px; text-align: center; color: #64748b;">{{ (exam.submittedAt || exam.startedAt) ? ((exam.submittedAt || exam.startedAt) | date:'dd/MM/yyyy') : '—' }}</td>
                   </tr>
                 }
               </tbody>
@@ -615,19 +615,19 @@
     <div class="prof-modal-backdrop" (click)="showExamDetailsModal.set(false)">
       <div class="prof-modal-card lg" (click)="$event.stopPropagation()">
         <div class="prof-modal-head">
-          <h3>تفاصيل: {{ selectedExam()?.examTitle }}</h3>
+          <h3>تفاصيل: {{ selectedExam()?.quizTitle || selectedExam()?.examTitle || '—' }}</h3>
           <button class="prof-close-btn" (click)="showExamDetailsModal.set(false)">×</button>
         </div>
         <div class="prof-modal-body" style="direction: rtl; text-align: right;">
           <div style="background: #f8fafc; padding: 12px; border-radius: 10px; margin-bottom: 14px; font-size: 13px;">
-            <p style="margin: 0 0 6px 0;"><strong>الوحدة:</strong> {{ selectedExam()?.moduleName }}</p>
-            <p style="margin: 0 0 6px 0;"><strong>الدرجة النهائية:</strong> {{ selectedExam()?.score }}/{{ selectedExam()?.maxScore }}</p>
-            <p style="margin: 0;"><strong>الحالة:</strong> {{ selectedExam()?.status }}</p>
+            <p style="margin: 0 0 6px 0;"><strong>الوحدة / الدفعة:</strong> {{ selectedExam()?.moduleName || selectedExam()?.moduleTitle || selectedExam()?.batchName || '—' }}</p>
+            <p style="margin: 0 0 6px 0;"><strong>الدرجة النهائية:</strong> {{ (selectedExam()?.status === 'Graded' || selectedExam()?.status === 'Completed') && selectedExam()?.percentage != null ? (selectedExam()?.percentage + '%') : '—' }}</p>
+            <p style="margin: 0;"><strong>الحالة:</strong> {{ examStatusLabel(selectedExam()?.status) }}</p>
           </div>
 
           <h4 style="font-size: 14px; color: #0f172a; margin-bottom: 10px;">أسئلة الاختبار وإجابات المتدرب:</h4>
           @if (!selectedExam()?.questions || selectedExam()?.questions.length === 0) {
-            <p class="empty-note">لا توجد تفاصيل تفصيلية مخزنة لهذا الاختبار.</p>
+            <p class="empty-note">تفاصيل الأسئلة والإجابات غير متوفرة في استجابة نتائج الاختبارات الحالية.</p>
           } @else {
             <div style="display: flex; flex-direction: column; gap: 10px;">
               @for (q of selectedExam()?.questions; track q.id) {

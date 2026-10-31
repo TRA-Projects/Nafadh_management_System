@@ -178,6 +178,15 @@ createEnrollment(dto: {
     return this.http.get<CompanyDto[]>(`${this.base}/Company`, { params });
   }
 
+
+  // Admin Reports - Companies Summary
+getAdminCompaniesSummary(): Observable<any> {
+  return this.http.get<any>(
+    `${this.base}/Report/admin-companies-summary`
+  );
+}
+
+
   getCompany(id: number): Observable<CompanyDto> { return this.http.get<CompanyDto>(`${this.base}/Company/${this.sanitizeId(id)}`); }
   createCompany(dto: unknown) { return this.http.post(`${this.base}/Company`, dto); }
   updateCompany(id: number, dto: unknown) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}`, dto); }
@@ -230,22 +239,6 @@ createEnrollment(dto: {
     return this.http.get<any>(`${this.base}/CompanyCoursePlan/company/${cleanId}/plans`);
   }
 
-  // Server-verified lookup: a batch resolves to exactly one course plan or a clear error.
-  getBatchForCoursePlan(planId: number): Observable<{ batchId: number }> {
-    return this.http.get<{ batchId: number }>(`${this.base}/CoursePlanApproval/${this.sanitizeId(planId)}/batch`);
-  }
-
-  getBatchCoursePlan(batchId: number): Observable<any> {
-    return this.http.get<any>(`${this.base}/CoursePlanApproval/batch/${this.sanitizeId(batchId)}/plan`);
-  }
-
-  reviewBatchCoursePlan(batchId: number, planId: number, payload: any): Observable<any> {
-    return this.http.put(
-      `${this.base}/CoursePlanApproval/batch/${this.sanitizeId(batchId)}/plans/${this.sanitizeId(planId)}/decision`,
-      payload
-    );
-  }
-
   getPendingCoursePlans(): Observable<any[]> {
     return this.http.get<any[]>(`${this.base}/CoursePlanApproval`);
   }
@@ -268,6 +261,36 @@ createEnrollment(dto: {
     }
 
     return this.http.put(`${this.base}/CoursePlanApproval/${planId}/decision`, payload);
+  }
+
+  // توافق مع استدعاءات صفحة إدارة البرامج الحالية.
+  // يعتمد على بيانات CoursePlanApproval؛ تحقق من وجود batchId في الاستجابة.
+  getBatchForCoursePlan(planId: number): Observable<{ batchId: number }> {
+    return this.getCoursePlanDetails(planId).pipe(
+      map((plan: any) => ({
+        batchId: Number(plan?.batchId ?? plan?.batch?.batchId ?? 0)
+      }))
+    );
+  }
+
+  // يبحث في قائمة الخطط المتاحة عن خطة الدفعة؛ لا يفترض أن batchId هو planId.
+  getBatchCoursePlan(batchId: number): Observable<any> {
+    const cleanId = this.sanitizeId(batchId);
+    return this.getPendingCoursePlans().pipe(
+      map((response: any) => {
+        const plans: any[] = Array.isArray(response)
+          ? response
+          : (response?.items ?? response?.data ?? response?.results ?? []);
+        return plans.find((plan: any) =>
+          Number(plan?.batchId ?? plan?.batch?.batchId) === cleanId
+        ) ?? null;
+      })
+    );
+  }
+
+  // قرار الاعتماد يتم حسب planId وليس batchId.
+  reviewBatchCoursePlan(batchId: number, planId: number, payload: any): Observable<any> {
+    return this.reviewCoursePlan(planId, payload);
   }
 
   // ==========================================================
@@ -480,6 +503,23 @@ createEnrollment(dto: {
     );
   }
 
+  getAdminCompanyBatchPerformanceReport(
+  companyId: number,
+  batchId: number,
+  pageNumber: number = 1,
+  pageSize: number = 15
+): Observable<any> {
+  return this.http.get<any>(
+    `${this.base}/Report/admin-company-batch-performance/${companyId}/${batchId}`,
+    {
+      params: {
+        pageNumber: pageNumber.toString(),
+        pageSize: pageSize.toString()
+      }
+    }
+  );
+}
+
   getEvaluationBucketRollup(enrollmentId: number): Observable<EvaluationBucketRollupDto> {
     return this.http.get<EvaluationBucketRollupDto>(`${this.base}/Evaluation/enrollment/${this.sanitizeId(enrollmentId)}/by-bucket`);
   }
@@ -490,10 +530,6 @@ createEnrollment(dto: {
   // ==========================================================
   // 13. Notifications & Announcements
   // ==========================================================
-  getMyNotifications(): Observable<NotificationDto[]> {
-    return this.http.get<NotificationDto[]>(`${this.base}/Notification/me`);
-  }
-
   getNotifications(userId: number): Observable<NotificationDto[]> {
     return this.http.get<NotificationDto[]>(`${this.base}/Notification/user/${this.sanitizeId(userId)}`);
   }

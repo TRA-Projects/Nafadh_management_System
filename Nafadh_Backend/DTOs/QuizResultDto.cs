@@ -61,7 +61,7 @@ namespace Nafadh_Backend.DTOs
         public bool IsMarkedForReview { get; set; }
         public bool RequiresManualGrading { get; set; }
 
-  
+
     }
 
     // الحفاظ على DTO التصحيح اليدوي الموجود

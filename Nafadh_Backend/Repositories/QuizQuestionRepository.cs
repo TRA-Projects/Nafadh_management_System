@@ -33,12 +33,11 @@ namespace Nafadh_Backend.Repositories
                     q.QuizId == quizId &&
                     q.QuizQuestionId == quizQuestionId);
         }
-        // التحقق من صلاحية جميع أسئلة الاختبار للنشر
-        // ترجع رسالة الخطأ إذا كان هناك سؤال غير صالح، و null إذا كانت جميع الأسئلة صحيحة.
 
-        public async Task<string?> AreQuizQuestionsValidAsync(
-            int quizId,
-            int trainerId)
+        // التحقق من صلاحية جميع أسئلة الاختبار للنشر
+
+        public async Task<bool> AreQuizQuestionsValidAsync(
+            int quizId, int trainerId)
         {
             var questions = await _context.NFD_QuizQuestions
                 .AsNoTracking()
@@ -48,46 +47,20 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
 
             if (questions.Count == 0)
-            {
-                return "لا يمكن نشر الاختبار. أضف سؤالاً واحداً على الأقل قبل النشر.";
-            }
+                return false;
 
             foreach (var quizQuestion in questions)
             {
                 var question = quizQuestion.Question;
 
-                // السؤال غير موجود
-                if (question == null)
+                // التحقق من ملكية السؤال وتفعيله ودرجته
+                if (question == null ||
+                    !question.IsActive ||
+                    question.TrainerId != trainerId ||
+                    string.IsNullOrWhiteSpace(question.QuestionText) ||
+                    quizQuestion.Points <= 0)
                 {
-                    return "لا يمكن نشر الاختبار. يوجد سؤال مرتبط بالاختبار ولكنه غير موجود في بنك الأسئلة.";
-                }
-
-                var questionText = string.IsNullOrWhiteSpace(question.QuestionText)
-                    ? $"رقم السؤال {question.QuestionId}"
-                    : $"السؤال \"{question.QuestionText}\"";
-
-                // السؤال غير فعال
-                if (!question.IsActive)
-                {
-                    return $"لا يمكن نشر الاختبار. {questionText} غير نشط. يرجى تفعيله قبل النشر.";
-                }
-
-                // السؤال لا يتبع للمدرب الحالي
-                if (question.TrainerId != trainerId)
-                {
-                    return $"لا يمكن نشر الاختبار. {questionText} لا يتبع للمدرب الحالي.";
-                }
-
-                // نص السؤال فارغ
-                if (string.IsNullOrWhiteSpace(question.QuestionText))
-                {
-                    return $"لا يمكن نشر الاختبار. يوجد سؤال بدون نص.";
-                }
-
-                // درجة السؤال غير صحيحة
-                if (quizQuestion.Points <= 0)
-                {
-                    return $"لا يمكن نشر الاختبار. {questionText} يجب أن تكون درجته أكبر من صفر.";
+                    return false;
                 }
 
                 var options = question.Options.ToList();
@@ -95,59 +68,39 @@ namespace Nafadh_Backend.Repositories
                 switch (question.QuestionType)
                 {
                     case Nafadh_Backend.Enums.NFD_QuizQuestionType.MultipleChoice:
-
-                        if (options.Count < 2)
-                        {
-                            return $"لا يمكن نشر الاختبار. {questionText} يجب أن يحتوي على خيارين على الأقل.";
-                        }
-
-                        if (options.Count(o => o.IsCorrect) != 1)
-                        {
-                            return $"لا يمكن نشر الاختبار. {questionText} يجب أن يحتوي على إجابة صحيحة واحدة فقط.";
-                        }
-
+                        // خياران على الأقل وإجابة صحيحة واحدة
+                        if (options.Count < 2 ||
+                            options.Count(o => o.IsCorrect) != 1)
+                            return false;
                         break;
 
                     case Nafadh_Backend.Enums.NFD_QuizQuestionType.TrueFalse:
-
-                        if (options.Count != 2)
-                        {
-                            return $"لا يمكن نشر الاختبار. {questionText} يجب أن يحتوي على خيارين بالضبط.";
-                        }
-
-                        if (options.Count(o => o.IsCorrect) != 1)
-                        {
-                            return $"لا يمكن نشر الاختبار. {questionText} يجب أن يحتوي على إجابة صحيحة واحدة فقط.";
-                        }
-
+                        // خياران بالضبط وإجابة صحيحة واحدة
+                        if (options.Count != 2 ||
+                            options.Count(o => o.IsCorrect) != 1)
+                            return false;
                         break;
 
                     case Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay:
-
+                        // السؤال المقالي لا يحتاج خيارات
                         if (options.Count != 0)
-                        {
-                            return $"لا يمكن نشر الاختبار. {questionText} من نوع مقالي ولا يجب أن يحتوي على خيارات.";
-                        }
-
+                            return false;
                         break;
 
                     default:
-
-                        return $"لا يمكن نشر الاختبار. {questionText} يحتوي على نوع سؤال غير صالح.";
+                        return false;
                 }
 
-                // التحقق من نصوص وأكواد الخيارات
-                var invalidOption = options.FirstOrDefault(o =>
+                // التأكد من أن نصوص الخيارات غير فارغة
+                if (options.Any(o =>
                     string.IsNullOrWhiteSpace(o.OptionText) ||
-                    string.IsNullOrWhiteSpace(o.OptionCode));
-
-                if (invalidOption != null)
+                    string.IsNullOrWhiteSpace(o.OptionCode)))
                 {
-                    return $"لا يمكن نشر الاختبار. {questionText} يحتوي على خيار بدون نص أو رمز خيار.";
+                    return false;
                 }
             }
 
-            return null;
+            return true;
         }
 
         // عرض أسئلة اختبار معين

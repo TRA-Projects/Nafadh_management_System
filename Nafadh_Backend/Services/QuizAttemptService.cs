@@ -33,7 +33,7 @@ namespace Nafadh_Backend.Services
 
 
 
-    
+
 
 
         Task<TraineeQuizzesOverviewDto> GetTraineeQuizzesAsync(int traineeId);
@@ -159,7 +159,7 @@ namespace Nafadh_Backend.Services
                     "المتدرب غير مسجل في دفعة هذا الاختبار.");
             }
 
-            
+
 
             // الكاميرا إلزامية => لازم موافقة المتدرب
             if (quiz.CameraRequired && !dto.CameraConsent)
