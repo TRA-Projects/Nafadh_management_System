@@ -1,4 +1,3 @@
-<div class="shell" [class.dark]="dark()" [class.access-links]="accessibilityOptionActive('links')"
 <div
   class="shell"
   [class.dark]="dark()"
@@ -15,9 +14,6 @@
   [class.access-align-left]="accessibility().textAlign === 'left'" [style.fontSize.px]="fontSize()"
   [style.--font-scale]="fontScale()">
   <header class="topbar">
-    <!-- Shared logo area -->
-    <div class="logo" [routerLink]="navItems()[0]?.path || '/company/dashboard'">
-      <img src="assets/logo.png" alt="نفاذ" class="logo-img" />
   <!-- 🆕 الجزء الأيمن: زر القائمة + الشعار -->
   <div class="topbar-right">
     <button
@@ -155,90 +151,6 @@
         </div>
         }
       </div>
-
-      <!-- Shared profile -->
-      <div class="profile-chip">
-        <div class="avatar">
-          {{ auth.session()?.fullName?.charAt(0) }}
-  <!-- Shared search -->
-  <div class="search-wrap">
-    <nfd-icon name="search" size="sm" />
-    <input class="search-input" placeholder="ابحث..." />
-  </div>
-
-  <!-- الجزء الأيسر: الأزرار والملف الشخصي -->
-  <div class="actions">
-    <!-- Accessibility -->
-    <button
-      class="icon-btn accessibility-trigger"
-      [class.is-active]="accessOpen()"
-      (click)="toggleAccessibility()"
-      title="إعدادات إمكانية الوصول"
-      aria-label="إعدادات إمكانية الوصول"
-      [attr.aria-expanded]="accessOpen()"
-    >
-      <img src="assets/accessibility-icon.png" alt="" aria-hidden="true" />
-    </button>
-
-    <!-- Shared notification bell -->
-    <div class="notif-wrap">
-      <button
-        class="icon-btn"
-        (click)="toggleNotifications()"
-        title="الإشعارات"
-        aria-label="الإشعارات"
-        [attr.aria-expanded]="notifOpen()"
-      >
-        <nfd-icon name="bell" />
-        @if (notificationSummary().totalCount > 0) {
-          <span class="notif-badge">
-            {{ notificationSummary().totalCount > 99 ? '99+' : notificationSummary().totalCount }}
-          </span>
-        }
-      </button>
-
-      @if (notifOpen()) {
-        <!-- محتوى لوحة الإشعارات كما هو بدون تغيير -->
-        <div class="notif-panel">
-          <div class="notif-head">
-            <span>الإشعارات</span>
-            @if (notificationSummary().totalCount > 0) {
-              <span class="notif-total">{{ notificationSummary().totalCount }} جديد</span>
-            }
-          </div>
-          <!-- ... باقي محتوى الإشعارات ... -->
-          @if (notificationSummary().totalCount === 0) {
-            <div class="notif-empty">
-              <nfd-icon name="bell" />
-              <span>لا توجد إشعارات جديدة</span>
-            </div>
-          }
-          <div class="notif-summary-list">
-            @if (notificationRoute()) {
-              <button type="button" class="notif-summary-item notif-summary-item-clickable" (click)="openBellItem('notifications')">
-                <span class="notif-summary-icon"><nfd-icon name="bell" /></span>
-                <span class="notif-summary-content"><strong>مركز الإشعارات</strong><small>عرض جميع الإشعارات</small></span>
-                <span class="notif-count">{{ notificationSummary().notificationsCount }}</span>
-              </button>
-            }
-            @if (communicationRoute()) {
-              <button type="button" class="notif-summary-item notif-summary-item-clickable" (click)="openBellItem('communication')">
-                <span class="notif-summary-icon"><nfd-icon name="chat" /></span>
-                <span class="notif-summary-content"><strong>التواصل والمراسلات</strong><small>محادثات غير مقروءة</small></span>
-                <span class="notif-count">{{ notificationSummary().conversationsCount }}</span>
-              </button>
-              @if (notificationSummary().directMessagesCount > 0) {
-                <button type="button" class="notif-summary-item notif-summary-item-clickable" (click)="openBellItem('messages')">
-                  <span class="notif-summary-icon"><nfd-icon name="chat" /></span>
-                  <span class="notif-summary-content"><strong>الرسائل المباشرة</strong><small>رسائل غير مقروءة</small></span>
-                  <span class="notif-count">{{ notificationSummary().directMessagesCount }}</span>
-                </button>
-              }
-            }
-          </div>
-        </div>
-      }
-    </div>
 
     <!-- Shared profile -->
     <div class="profile-chip">
