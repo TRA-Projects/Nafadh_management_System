@@ -1,0 +1,109 @@
+<div class="space-y-2">
+  @if (label) {
+    <div class="mb-1 flex flex-wrap items-center gap-1.5">
+      <label class="font-medium" [class.required-label]="required" [class.is-required]="required">
+        {{ label }}
+      </label>
+      <ng-content select="[multiSelectHelp]" />
+    </div>
+  }
+
+  <div class="relative" [class.z-[70]]="open">
+    <button
+      type="button"
+      class="form-input min-h-[42px] w-full ltr:text-left rtl:text-right"
+      [disabled]="controlDisabled"
+      (click)="toggleOpen()"
+    >
+      @if (selectedLabels().length === 0) {
+        <span class="text-gray-500">{{ searchPlaceholder }}</span>
+      } @else {
+        <div class="flex flex-wrap gap-1">
+          @for (opt of selectedOptions(); track opt.id) {
+            <span class="badge bg-primary/20 text-primary inline-flex items-center gap-1">
+              {{ opt.label }}
+              @if (!controlDisabled && !(mode === 'single' && required)) {
+                <button
+                  type="button"
+                  class="text-primary hover:text-danger"
+                  (click)="$event.stopPropagation(); removeValue(opt.id)"
+                  aria-label="Remove"
+                >
+                  ×
+                </button>
+              }
+            </span>
+          }
+        </div>
+      }
+    </button>
+
+    @if (open && !controlDisabled) {
+      <div
+        class="searchable-multi-select__dropdown absolute left-0 right-0 z-[80] w-full min-w-0 overflow-hidden rounded-md border border-[#ebedf2] bg-white p-2 shadow-lg dark:border-[#191e3a] dark:bg-[#0e1726]"
+        [class.top-full]="!openUpward"
+        [class.mt-1]="!openUpward"
+        [class.bottom-full]="openUpward"
+        [class.mb-1]="openUpward"
+      >
+        <div class="relative mb-2">
+          <span
+            class="pointer-events-none absolute top-1/2 start-4 -translate-y-1/2 text-gray-400 dark:text-white-dark/60"
+            aria-hidden="true"
+          >
+            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.5" />
+              <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            class="form-input w-full ps-11 ltr:text-left rtl:text-right"
+            [(ngModel)]="search"
+            placeholder=""
+          />
+        </div>
+        <div class="max-h-56 overflow-y-auto overflow-x-hidden">
+          @if (filteredOptions.length === 0) {
+            <div class="px-2 py-2 text-sm text-gray-500">{{ emptyText }}</div>
+          } @else {
+            @for (opt of filteredOptions; track opt.id) {
+              <label
+                class="mb-1 flex items-center gap-2 rounded px-2 py-1"
+                [ngClass]="{
+                  'cursor-pointer hover:bg-[#f3f5f7] dark:hover:bg-[#1b2e4b]': !opt.disabled,
+                  'cursor-not-allowed opacity-50': opt.disabled,
+                  'searchable-multi-select__option--new': opt.isNew,
+                }"
+                (click)="onOptionLabelClick(opt, $event)"
+              >
+                @if (mode === 'single') {
+                  <input
+                    type="radio"
+                    class="form-radio"
+                    [name]="radioGroupName"
+                    [disabled]="opt.disabled"
+                    [checked]="isSelected(opt.id)"
+                    tabindex="-1"
+                  />
+                } @else {
+                  <input
+                    type="checkbox"
+                    class="form-checkbox"
+                    [disabled]="opt.disabled"
+                    [checked]="isSelected(opt.id)"
+                    (change)="toggleOption(opt.id)"
+                  />
+                }
+                <span class="min-w-0 flex-1 truncate">{{ opt.label }}</span>
+                @if (opt.isNew) {
+                  <span class="searchable-multi-select__badge-new shrink-0">{{ newSuggestionBadge }}</span>
+                }
+              </label>
+            }
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

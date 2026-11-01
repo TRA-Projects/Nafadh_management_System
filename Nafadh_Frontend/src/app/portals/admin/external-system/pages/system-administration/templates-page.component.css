@@ -1,0 +1,102 @@
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.templates-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  color: #1f2937;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.page-header p,
+.breadcrumb {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.breadcrumb {
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.breadcrumb span {
+  color: #111827;
+  font-weight: 600;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tabs button {
+  padding: 0.75rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
+  background: transparent;
+  color: #6b7280;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  border-color: #c7d2fe;
+  background: #eef2ff;
+  color: #3730a3;
+  font-weight: 600;
+}
+
+.evaluation-placeholder {
+  padding: 1.25rem;
+  border: 1px solid #ebedf2;
+  border-radius: 0.75rem;
+  color: #6b7280;
+  background: #fff;
+}
+
+:host-context(.dark) .templates-page {
+  color: #e5e7eb;
+}
+
+:host-context(.dark) .breadcrumb span {
+  color: #e5e7eb;
+}
+
+:host-context(.dark) .tabs {
+  border-bottom-color: #191e3a;
+}
+
+:host-context(.dark) .tabs button.active {
+  border-color: #3730a3;
+  background: rgb(67 97 238 / 16%);
+  color: #c7d2fe;
+}
+
+:host-context(.dark) .evaluation-placeholder {
+  border-color: #191e3a;
+  background: #0e1726;
+}
+
+@media (max-width: 768px) {
+  .templates-page {
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.25rem;
+  }
+}

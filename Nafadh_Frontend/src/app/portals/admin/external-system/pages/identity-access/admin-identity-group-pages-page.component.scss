@@ -1,0 +1,55 @@
+:host {
+  display: block;
+}
+
+.ia-pages-table {
+  width: 100%;
+  min-width: 44rem;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.ia-pages-table th,
+.ia-pages-table td {
+  padding: 0.75rem 0.85rem;
+  border-bottom: 1px solid #ebedf2;
+  text-align: start;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+:host-context(.dark) .ia-pages-table th,
+:host-context(.dark) .ia-pages-table td {
+  border-bottom-color: #191e3a;
+}
+
+.ia-pages-table thead th {
+  font-weight: 600;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+:host-context(.dark) .ia-pages-table thead th {
+  background: #111827;
+  color: #e5e7eb;
+}
+
+.ia-pages-table__check {
+  width: 2.75rem;
+  text-align: center !important;
+}
+
+.ia-pages-table__name {
+  white-space: normal;
+  min-width: 10rem;
+  font-weight: 500;
+}
+
+.ia-pages-table__scope {
+  min-width: 7rem;
+  width: auto;
+}
+
+.ia-pages-table__row--off td {
+  opacity: 0.65;
+}

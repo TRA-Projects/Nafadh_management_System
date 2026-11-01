@@ -1,0 +1,57 @@
+/**
+ * Management backend enum references available in Nafadh Training SystemConfigValues.
+ * ValueKeys are defined by the Management C# enums and must not be edited in the UI.
+ */
+export const MANAGEMENT_SYSTEM_LOOKUP_TYPES: ReadonlyArray<{
+  code: string;
+  labelEn: string;
+  labelAr: string;
+}> = [
+  {"code": "NFD_ANN_SCOPE", "labelEn": "Announcement Scope Type", "labelAr": "نطاق الإعلان"},
+  {"code": "NFD_ATT_STAT", "labelEn": "Attendance Status", "labelAr": "حالة الحضور"},
+  {"code": "NFD_BAT_STAT", "labelEn": "Batch Status", "labelAr": "حالة الدفعة"},
+  {"code": "NFD_BDG_COND", "labelEn": "Badge Condition Type", "labelAr": "شرط منح الشارة"},
+  {"code": "NFD_CMP_STAT", "labelEn": "Company Status", "labelAr": "حالة الشركة"},
+  {"code": "NFD_CNV_TYPE", "labelEn": "Conversation Type", "labelAr": "نوع المحادثة"},
+  {"code": "NFD_CPA_STAT", "labelEn": "Course Plan Approval Status", "labelAr": "حالة اعتماد خطة الدورة"},
+  {"code": "NFD_CPE_STAT", "labelEn": "Course Plan Execution Status", "labelAr": "حالة تنفيذ خطة الدورة"},
+  {"code": "NFD_CPI_TYPE", "labelEn": "Course Plan Item Type", "labelAr": "نوع عنصر خطة الدورة"},
+  {"code": "NFD_CPP_STAT", "labelEn": "Course Plan Progress Status", "labelAr": "حالة تقدم خطة الدورة"},
+  {"code": "NFD_CRT_TYPE", "labelEn": "Certificate Type", "labelAr": "نوع الشهادة"},
+  {"code": "NFD_ENR_STAT", "labelEn": "Enrollment Completion Status", "labelAr": "حالة إكمال الالتحاق"},
+  {"code": "NFD_EVL_PER", "labelEn": "Evaluation Period", "labelAr": "فترة التقييم"},
+  {"code": "NFD_EVL_TYPE", "labelEn": "Evaluation Type", "labelAr": "نوع التقييم"},
+  {"code": "NFD_EXC_STAT", "labelEn": "Excuse Status", "labelAr": "حالة العذر"},
+  {"code": "NFD_EXT_ACT", "labelEn": "Exit Limit Action", "labelAr": "إجراء تجاوز حد الخروج"},
+  {"code": "NFD_FBK_TYPE", "labelEn": "Feedback Type", "labelAr": "نوع التغذية الراجعة"},
+  {"code": "NFD_FIL_TYPE", "labelEn": "File Type", "labelAr": "نوع الملف"},
+  {"code": "NFD_MOD_STAT", "labelEn": "Module Progress Status", "labelAr": "حالة تقدم الوحدة"},
+  {"code": "NFD_MSG_STAT", "labelEn": "Message Status", "labelAr": "حالة الرسالة"},
+  {"code": "NFD_PAY_STAT", "labelEn": "Payment Status", "labelAr": "حالة الدفع"},
+  {"code": "NFD_PJT_ROLE", "labelEn": "Project Member Role", "labelAr": "دور عضو المشروع"},
+  {"code": "NFD_PJT_STAT", "labelEn": "Project Status", "labelAr": "حالة المشروع"},
+  {"code": "NFD_PRG_STAT", "labelEn": "Program Status", "labelAr": "حالة البرنامج"},
+  {"code": "NFD_PYS_STAT", "labelEn": "Payment Schedule Status", "labelAr": "حالة جدول الدفع"},
+  {"code": "NFD_QIZ_STAT", "labelEn": "Quiz Status", "labelAr": "حالة الاختبار"},
+  {"code": "NFD_QUE_DIFF", "labelEn": "Question Difficulty", "labelAr": "صعوبة السؤال"},
+  {"code": "NFD_QUE_TYPE", "labelEn": "Quiz Question Type", "labelAr": "نوع سؤال الاختبار"},
+  {"code": "NFD_REM_STAT", "labelEn": "Remediation Status", "labelAr": "حالة المعالجة"},
+  {"code": "NFD_RPT_TYPE", "labelEn": "Report Type", "labelAr": "نوع التقرير"},
+  {"code": "NFD_SES_STAT", "labelEn": "Session Status", "labelAr": "حالة الجلسة"},
+  {"code": "NFD_SUB_STAT", "labelEn": "Submission Status", "labelAr": "حالة التسليم"},
+  {"code": "NFD_SUP_STAT", "labelEn": "Supervisor Status", "labelAr": "حالة المشرف"},
+  {"code": "NFD_TAT_STAT", "labelEn": "Trainer Attendance Status", "labelAr": "حالة حضور المدرب"},
+  {"code": "NFD_TIC_STAT", "labelEn": "Support Ticket Status", "labelAr": "حالة تذكرة الدعم"},
+  {"code": "NFD_TRE_STAT", "labelEn": "Trainee Status", "labelAr": "حالة المتدرب"},
+  {"code": "NFD_TRK_STAT", "labelEn": "Track Status", "labelAr": "حالة المسار"},
+  {"code": "NFD_TRN_STAT", "labelEn": "Trainer Status", "labelAr": "حالة المدرب"},
+  {"code": "NFD_TSK_PRI", "labelEn": "Task Priority", "labelAr": "أولوية المهمة"},
+  {"code": "NFD_TSK_STAT", "labelEn": "Task Status", "labelAr": "حالة المهمة"},
+  {"code": "NFD_USR_STAT", "labelEn": "User Status", "labelAr": "حالة المستخدم"},
+  {"code": "NFD_VER_STAT", "labelEn": "Verification Status", "labelAr": "حالة التحقق"},
+  {"code": "NFD_WDR_STAT", "labelEn": "Withdrawal Request Status", "labelAr": "حالة طلب الانسحاب"},
+  {"code": "NFD_WRN_LVL", "labelEn": "Warning Level", "labelAr": "مستوى الإنذار"},
+  {"code": "NFD_WRN_SCOPE", "labelEn": "Warning Scope", "labelAr": "نطاق الإنذار"},
+  {"code": "NFD_WRN_STAT", "labelEn": "Warning Status", "labelAr": "حالة الإنذار"},
+  {"code": "NFD_WRN_TYPE", "labelEn": "Warning Type", "labelAr": "نوع الإنذار"},
+];

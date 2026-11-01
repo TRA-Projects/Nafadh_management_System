@@ -1,0 +1,91 @@
+<div class="paged-list-shell">
+  <!-- Mobile / tablet cards -->
+  <div class="paged-list-cards">
+    @if (loadState() === 'loading') {
+      <div class="paged-list-state" role="status" aria-busy="true">
+        <div class="ui-async-spinner" aria-hidden="true">
+          <span class="ui-async-spinner__ring"></span>
+          <span class="ui-async-spinner__ring"></span>
+          <span class="ui-async-spinner__dot"></span>
+        </div>
+        <span class="sr-only">{{ loadingLabel() }}</span>
+      </div>
+    } @else if (loadState() === 'error') {
+      <div class="paged-list-state paged-list-state--error">{{ errorLabel() }}</div>
+    } @else if (empty()) {
+      <div class="paged-list-empty">{{ emptyLabel() }}</div>
+    }
+    <div
+      class="paged-list-cards__grid"
+      [class.paged-list-panel--hidden]="loadState() !== 'ready' || empty()"
+    >
+      <ng-content select="[pagedListCards]" />
+    </div>
+  </div>
+
+  <!-- Desktop: AG Grid (injected cols) or projected HTML table -->
+  <div class="paged-list-table-wrap">
+    @if (loadState() === 'loading') {
+      <div class="paged-list-state" role="status" aria-busy="true">
+        <div class="ui-async-spinner" aria-hidden="true">
+          <span class="ui-async-spinner__ring"></span>
+          <span class="ui-async-spinner__ring"></span>
+          <span class="ui-async-spinner__dot"></span>
+        </div>
+        <span class="sr-only">{{ loadingLabel() }}</span>
+      </div>
+    } @else if (loadState() === 'error') {
+      <div class="paged-list-state paged-list-state--error">{{ errorLabel() }}</div>
+    } @else if (empty()) {
+      <div class="paged-list-empty paged-list-empty--table">{{ emptyLabel() }}</div>
+    }
+
+    <div
+      class="paged-list-desktop-body"
+      [class.paged-list-panel--hidden]="loadState() !== 'ready' || empty()"
+    >
+      @if (useAgGrid()) {
+        <ag-grid-angular
+          class="paged-list-ag-grid"
+          [theme]="theme"
+          [rowData]="rowData()"
+          [columnDefs]="resolvedColumnDefs()"
+          [defaultColDef]="mergedDefaultColDef()"
+          [context]="resolvedContext()"
+          [getRowId]="getRowId() ?? undefined"
+          [enableRtl]="enableRtl()"
+          [localeText]="resolvedLocaleText()"
+          [domLayout]="gridOptions().domLayout ?? 'autoHeight'"
+          [rowHeight]="gridOptions().rowHeight ?? 56"
+          [headerHeight]="gridOptions().headerHeight ?? 48"
+          [floatingFiltersHeight]="gridOptions().floatingFiltersHeight ?? 40"
+          [quickFilterText]="gridOptions().quickFilterText ?? undefined"
+          [suppressCellFocus]="gridOptions().suppressCellFocus ?? true"
+          [animateRows]="gridOptions().animateRows ?? false"
+          [enableCellTextSelection]="gridOptions().enableCellTextSelection ?? true"
+          (gridReady)="onGridReady($event)"
+        />
+      } @else {
+        <div class="table-responsive">
+          <ng-content select="[pagedListTable]" />
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (showPager() && loadState() === 'ready') {
+    <div class="paged-list-pager">
+      <app-table-pager
+        [footerLabel]="footerLabel()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="pageSizeOptions()"
+        [canPrev]="canPrev()"
+        [canNext]="canNext()"
+        [pageNumber]="pageNumber()"
+        (pageSizeChange)="pageSizeChange.emit($event)"
+        (prev)="prev.emit()"
+        (next)="next.emit()"
+      />
+    </div>
+  }
+</div>

@@ -1,0 +1,7 @@
+<div
+  class="html-email-editor"
+  [class.html-email-editor--rtl]="dir() === 'rtl'"
+  (focusin)="focusin.emit()"
+>
+  <div #editorContainer class="html-email-editor__container"></div>
+</div>

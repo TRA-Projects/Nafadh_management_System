@@ -20,11 +20,14 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { NfdIcon } from '../icon/icon';
 import { NotificationSummaryService } from '../../services/notification-summary.service';
 
+
 export interface ShellNavItem {
   path: string;
   label: string;
   icon: string;
+  children?: ShellNavItem[];
 }
+
 
 type BellSource = 'notifications' | 'communication' | 'messages';
 type TextAlign = 'right' | 'center' | 'left';
@@ -66,9 +69,24 @@ const DEFAULT_ACCESSIBILITY: AccessibilityPreferences = {
   styleUrl: './app-shell.scss',
 })
 export class AppShell {
+  
+  expandedMenus = signal<string[]>([
+    'external-system/system-configuration',
+  ]);
+
+  toggleSubmenu(path: string): void {
+    this.expandedMenus.update((menus) =>
+      menus.includes(path)
+        ? menus.filter((menu) => menu !== path)
+        : [...menus, path]
+    );
+  }
+
   portalTitle = input.required<string>();
   accountLabel = input.required<string>();
   navItems = input.required<ShellNavItem[]>();
+
+  readonly openSubMenus = signal<Record<string, boolean>>({ 'الهوية والصلاحيات': true });
 
   dark = signal(false);
   lang = signal<'ar' | 'en'>('ar');
@@ -184,6 +202,16 @@ export class AppShell {
     if (this.notifOpen()) {
       this.notificationSummaryService.refresh();
     }
+  }
+  toggleSubMenu(label: string): void {
+    this.openSubMenus.update((state) => ({
+      ...state,
+      [label]: !state[label],
+    }));
+  }
+
+  isSubMenuOpen(label: string): boolean {
+    return !!this.openSubMenus()[label];
   }
 
   /** Navigate using only routes available in the current portal. */

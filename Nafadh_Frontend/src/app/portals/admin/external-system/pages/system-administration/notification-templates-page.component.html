@@ -1,0 +1,695 @@
+<div class="notification-templates-container" dir="rtl">
+  <!-- Tabs -->
+  <div
+    class="content-tabs"
+    role="tablist"
+    aria-label="إدارة الإشعارات والإعلانات"
+  >
+    <button
+      type="button"
+      class="content-tab"
+      [class.active]="activeTab() === 'templates'"
+      [attr.aria-selected]="activeTab() === 'templates'"
+      role="tab"
+      (click)="setActiveTab('templates')"
+    >
+      <span class="tab-icon">✉</span>
+      قوالب الإشعارات
+      <span class="tab-count">{{ totalCount() }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="content-tab"
+      [class.active]="activeTab() === 'announcements'"
+      [attr.aria-selected]="activeTab() === 'announcements'"
+      role="tab"
+      (click)="setActiveTab('announcements')"
+    >
+      <span class="tab-icon">📢</span>
+      الإعلانات
+      <span class="tab-count">{{ announcementTotalCount() }}</span>
+    </button>
+  </div>
+
+  <!-- Notification Templates -->
+  @if (activeTab() === 'templates') {
+    <section class="tab-content" role="tabpanel">
+      <div class="filters-card">
+        <div class="filter-field search-field">
+          <label for="templateSearch">البحث</label>
+
+          <div class="search-input-wrapper">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input
+              id="templateSearch"
+              type="search"
+              [ngModel]="searchTerm()"
+              (ngModelChange)="onSearchChange($event)"
+              placeholder="ابحث عن اسم القالب أو الرمز..."
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <div class="filter-field">
+          <label for="templateType">نوع الإشعار</label>
+          <select
+            id="templateType"
+            [ngModel]="selectedType()"
+            (ngModelChange)="onTypeChange($event)"
+          >
+            <option value="">جميع الأنواع</option>
+            <option value="Email">البريد الإلكتروني</option>
+            <option value="SMS">الرسائل النصية SMS</option>
+            <option value="Push">الإشعارات الفورية</option>
+          </select>
+        </div>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="clearFilters()"
+        >
+          إعادة تعيين
+        </button>
+      </div>
+
+      @if (loading()) {
+        <div class="state-container" role="status">
+          <span class="loading-spinner" aria-hidden="true"></span>
+          <p>جارٍ تحميل قوالب الإشعارات...</p>
+        </div>
+      }
+
+      @if (!loading() && errorMessage()) {
+        <div class="state-container error-state" role="alert">
+          <p>{{ errorMessage() }}</p>
+
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="retryLoading()"
+          >
+            إعادة المحاولة
+          </button>
+        </div>
+      }
+
+      @if (!loading() && !errorMessage()) {
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">رمز القالب</th>
+                  <th scope="col">اسم القالب</th>
+                  <th scope="col">نوع الإشعار</th>
+                  <th scope="col">البريد الإلكتروني</th>
+                  <th scope="col">الرسائل النصية</th>
+                  <th scope="col">الحالة</th>
+                  <th scope="col">الإجراءات</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (template of paginatedTemplates(); track template.id) {
+                  <tr>
+                    <td>
+                      {{ safePageIndex() * pageSize() + $index + 1 }}
+                    </td>
+
+                    <td>
+                      <span class="template-code">
+                        {{ template.code }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span class="template-name">
+                        {{ template.name }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span
+                        class="type-badge"
+                        [class.email-type]="template.type === 'Email'"
+                        [class.sms-type]="template.type === 'SMS'"
+                        [class.push-type]="template.type === 'Push'"
+                      >
+                        {{
+                          template.type === 'Email'
+                            ? 'البريد الإلكتروني'
+                            : template.type === 'SMS'
+                              ? 'رسائل SMS'
+                              : 'إشعار فوري'
+                        }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span
+                        class="status-badge"
+                        [class.status-enabled]="template.hasEmail"
+                        [class.status-disabled]="!template.hasEmail"
+                      >
+                        {{ template.hasEmail ? 'مفعّل' : 'غير مفعّل' }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span
+                        class="status-badge"
+                        [class.status-enabled]="template.hasSms"
+                        [class.status-disabled]="!template.hasSms"
+                      >
+                        {{ template.hasSms ? 'مفعّل' : 'غير مفعّل' }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span
+                        class="status-badge"
+                        [class.status-enabled]="template.isActive"
+                        [class.status-disabled]="!template.isActive"
+                      >
+                        {{ template.isActive ? 'نشط' : 'غير نشط' }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <div class="actions-cell">
+                        <button
+                          type="button"
+                          class="action-menu-button"
+                          [attr.aria-label]="'إجراءات القالب ' + template.name"
+                          [attr.aria-expanded]="openMenuId === template.id"
+                          (click)="toggleMenu(template.id, $event)"
+                        >
+                          <span aria-hidden="true">⋮</span>
+                        </button>
+
+                        @if (openMenuId === template.id) {
+                          <div
+                            class="action-menu"
+                            (click)="$event.stopPropagation()"
+                          >
+                            <button
+                              type="button"
+                              class="menu-item"
+                              (click)="editTemplate(template)"
+                            >
+                              <span aria-hidden="true">✎</span>
+                              تعديل القالب
+                            </button>
+
+                            <button
+                              type="button"
+                              class="menu-item danger-item"
+                              (click)="deleteTemplate(template.id)"
+                            >
+                              <span aria-hidden="true">⌫</span>
+                              حذف القالب
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="8">
+                      <div class="empty-state">
+                        <span class="empty-icon" aria-hidden="true">⌕</span>
+                        <p>لا توجد قوالب إشعارات مطابقة.</p>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Templates Pagination -->
+          <div class="pagination-footer">
+            <div class="pagination-info">
+              عرض
+              <strong>
+                {{
+                  totalCount() === 0
+                    ? 0
+                    : safePageIndex() * pageSize() + 1
+                }}
+              </strong>
+              إلى <strong>{{ getEndIndex() }}</strong>
+              من <strong>{{ totalCount() }}</strong> قالب
+            </div>
+
+            <div class="pagination-controls">
+              <label for="templatePageSize">عدد العناصر:</label>
+
+              <select
+                id="templatePageSize"
+                [ngModel]="pageSize()"
+                (change)="onPageSizeChange($event)"
+              >
+                @for (size of pageSizeOptions; track size) {
+                  <option [value]="size">{{ size }}</option>
+                }
+              </select>
+
+              <button
+                type="button"
+                class="pagination-button"
+                [disabled]="!canPrev()"
+                (click)="prevPage()"
+                aria-label="الصفحة السابقة"
+              >
+                السابق
+              </button>
+
+              @for (page of pageNumbers(); track page) {
+                <button
+                  type="button"
+                  class="pagination-button page-number"
+                  [class.active]="page === safePageIndex()"
+                  [attr.aria-current]="page === safePageIndex() ? 'page' : null"
+                  (click)="setPage(page)"
+                >
+                  {{ page + 1 }}
+                </button>
+              }
+
+              <button
+                type="button"
+                class="pagination-button"
+                [disabled]="!canNext()"
+                (click)="nextPage()"
+                aria-label="الصفحة التالية"
+              >
+                التالي
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- Announcements -->
+  @if (activeTab() === 'announcements') {
+    <section class="tab-content announcements-content" role="tabpanel">
+
+      <!-- Announcement Filters and Actions -->
+      <div class="filters-card announcement-filters">
+        <div class="filter-field search-field">
+          <label for="announcementSearch">البحث في الإعلانات</label>
+
+          <div class="search-input-wrapper">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input
+              id="announcementSearch"
+              type="search"
+              [ngModel]="announcementSearchTerm()"
+              (ngModelChange)="onAnnouncementSearchChange($event)"
+              placeholder="ابحث في نص الإعلان..."
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="clearAnnouncementSearch()"
+        >
+          إعادة تعيين
+        </button>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="retryAnnouncementsLoading()"
+          [disabled]="announcementsLoading()"
+        >
+          تحديث البيانات
+        </button>
+
+        <button
+          type="button"
+          class="primary-button"
+          (click)="resetAnnouncementForm()"
+          [disabled]="savingAnnouncement()"
+        >
+          <span class="button-icon">+</span>
+          إضافة إعلان
+        </button>
+      </div>
+
+      <!-- Loading -->
+      @if (announcementsLoading()) {
+        <div class="state-container" role="status">
+          <span class="loading-spinner" aria-hidden="true"></span>
+          <p>جارٍ تحميل الإعلانات...</p>
+        </div>
+      }
+
+      <!-- Error -->
+      @if (!announcementsLoading() && announcementsError()) {
+        <div class="state-container error-state" role="alert">
+          <p>{{ announcementsError() }}</p>
+
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="retryAnnouncementsLoading()"
+          >
+            إعادة المحاولة
+          </button>
+        </div>
+      }
+
+      <!-- Announcements Workspace -->
+      <div class="announcements-workspace">
+
+        <!-- Announcements List (same structure as templates table) -->
+        @if (!announcementsLoading() && !announcementsError()) {
+          <div class="table-card">
+            <div class="table-responsive">
+              <table class="data-table announcements-table">
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">نص الإعلان</th>
+                    <th scope="col">النطاق</th>
+                    <th scope="col">رقم النطاق</th>
+                    <th scope="col">تاريخ الإنشاء</th>
+                    <th scope="col">أنشئ بواسطة</th>
+                    <th scope="col">الإجراءات</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  @for (
+                    announcement of paginatedAnnouncements();
+                    track announcement.id
+                  ) {
+                    <tr>
+                      <td>
+                        {{
+                          safeAnnouncementPageIndex() *
+                            announcementPageSize() +
+                            $index +
+                            1
+                        }}
+                      </td>
+
+                      <td>
+                        <div class="announcement-message">
+                          {{ announcement.message }}
+                        </div>
+                      </td>
+
+                      <td>
+                        <span class="type-badge">
+                          {{ getScopeLabel(announcement.scopeType) }}
+                        </span>
+                      </td>
+
+                      <td>
+                        {{
+                          announcement.scopeId === null
+                            ? '—'
+                            : announcement.scopeId
+                        }}
+                      </td>
+
+                      <td>
+                        {{
+                          announcement.date
+                            ? (announcement.date | date: 'yyyy/MM/dd HH:mm')
+                            : '—'
+                        }}
+                      </td>
+
+                      <td>{{ announcement.createdByUserId }}</td>
+
+                      <td>
+                        <div class="actions-cell">
+                          <button
+                            type="button"
+                            class="action-menu-button"
+                            [attr.aria-label]="'إجراءات الإعلان رقم ' + announcement.id"
+                            [attr.aria-expanded]="openMenuId === -announcement.id"
+                            (click)="toggleMenu(-announcement.id, $event)"
+                          >
+                            <span aria-hidden="true">⋮</span>
+                          </button>
+
+                          @if (openMenuId === -announcement.id) {
+                            <div
+                              class="action-menu"
+                              (click)="$event.stopPropagation()"
+                            >
+                              <button
+                                type="button"
+                                class="menu-item"
+                                (click)="editAnnouncement(announcement)"
+                              >
+                                <span aria-hidden="true">✎</span>
+                                تعديل الإعلان
+                              </button>
+
+                              <button
+                                type="button"
+                                class="menu-item danger-item"
+                                (click)="deleteAnnouncement(announcement.id)"
+                              >
+                                <span aria-hidden="true">⌫</span>
+                                حذف الإعلان
+                              </button>
+                            </div>
+                          }
+                        </div>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="7">
+                        <div class="empty-state">
+                          <span class="empty-icon" aria-hidden="true">📢</span>
+                          <p>لا توجد إعلانات لعرضها.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Announcements Pagination -->
+            <div class="pagination-footer">
+              <div class="pagination-info">
+                عرض
+                <strong>
+                  {{
+                    announcementTotalCount() === 0
+                      ? 0
+                      : safeAnnouncementPageIndex() *
+                          announcementPageSize() +
+                          1
+                  }}
+                </strong>
+                إلى <strong>{{ getAnnouncementEndIndex() }}</strong>
+                من <strong>{{ announcementTotalCount() }}</strong> إعلان
+              </div>
+
+              <div class="pagination-controls">
+                <label for="announcementPageSize">عدد العناصر:</label>
+
+                <select
+                  id="announcementPageSize"
+                  [ngModel]="announcementPageSize()"
+                  (change)="onAnnouncementPageSizeChange($event)"
+                >
+                  @for (size of pageSizeOptions; track size) {
+                    <option [value]="size">{{ size }}</option>
+                  }
+                </select>
+
+                <button
+                  type="button"
+                  class="pagination-button"
+                  [disabled]="!canPrevAnnouncements()"
+                  (click)="prevAnnouncementPage()"
+                  aria-label="الصفحة السابقة"
+                >
+                  السابق
+                </button>
+
+                @for (page of announcementPageNumbers(); track page) {
+                  <button
+                    type="button"
+                    class="pagination-button page-number"
+                    [class.active]="page === safeAnnouncementPageIndex()"
+                    [attr.aria-current]="page === safeAnnouncementPageIndex() ? 'page' : null"
+                    (click)="setAnnouncementPage(page)"
+                  >
+                    {{ page + 1 }}
+                  </button>
+                }
+
+                <button
+                  type="button"
+                  class="pagination-button"
+                  [disabled]="!canNextAnnouncements()"
+                  (click)="nextAnnouncementPage()"
+                  aria-label="الصفحة التالية"
+                >
+                  التالي
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Announcement Form: shown below the table only when requested -->
+        @if (announcementFormVisible()) {
+          <section
+            class="announcement-form-card"
+            id="announcementFormCard"
+            aria-label="نموذج الإعلان"
+          >
+            <div class="section-heading">
+              <div>
+                <h2>
+                  {{
+                    editingAnnouncementId() !== null
+                      ? 'تعديل الإعلان'
+                      : 'إضافة إعلان جديد'
+                  }}
+                </h2>
+                <p>أدخل نص الإعلان وحدد نطاق ظهوره للمستفيدين.</p>
+              </div>
+
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="closeAnnouncementForm()"
+                [disabled]="savingAnnouncement()"
+              >
+                إغلاق
+              </button>
+            </div>
+
+            <form class="announcement-form" (ngSubmit)="saveAnnouncement()">
+              <div class="form-field">
+                <label for="announcementMessage">نص الإعلان</label>
+
+                <textarea
+                  id="announcementMessage"
+                  name="announcementMessage"
+                  rows="5"
+                  maxlength="4000"
+                  required
+                  [ngModel]="announcementMessage()"
+                  (ngModelChange)="announcementMessage.set($event)"
+                  placeholder="اكتب نص الإعلان هنا..."
+                ></textarea>
+
+                <div class="field-hint">
+                  {{ announcementMessage().length }} حرف
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="announcementScope">نطاق الإعلان</label>
+
+                <select
+                  id="announcementScope"
+                  name="announcementScope"
+                  required
+                  [ngModel]="announcementScopeType()"
+                  (ngModelChange)="onAnnouncementScopeChange($event)"
+                >
+                  @for (
+                    option of announcementScopeOptions;
+                    track option.value
+                  ) {
+                    <option [ngValue]="option.value">
+                      {{ option.label }}
+                    </option>
+                  }
+                </select>
+              </div>
+
+              @if (
+                announcementScopeType() !== announcementScopeOptions[0].value
+              ) {
+                <div class="form-field">
+                  <label for="announcementScopeId">
+                    {{
+                      announcementScopeType() === announcementScopeOptions[1].value
+                        ? 'رقم الشركة'
+                        : 'رقم الدفعة'
+                    }}
+                  </label>
+
+                  <input
+                    id="announcementScopeId"
+                    name="announcementScopeId"
+                    type="number"
+                    min="1"
+                    required
+                    [ngModel]="announcementScopeId()"
+                    (ngModelChange)="onAnnouncementScopeIdChange($event)"
+                    placeholder="أدخل الرقم"
+                  />
+                </div>
+              }
+
+              @if (announcementFormError()) {
+                <div class="form-message error-message" role="alert">
+                  {{ announcementFormError() }}
+                </div>
+              }
+
+              @if (announcementSuccessMessage()) {
+                <div class="form-message success-message" role="status">
+                  {{ announcementSuccessMessage() }}
+                </div>
+              }
+
+              <div class="form-actions">
+                <button
+                  type="submit"
+                  class="primary-button"
+                  [disabled]="savingAnnouncement()"
+                >
+                  {{
+                    savingAnnouncement()
+                      ? 'جارٍ الحفظ...'
+                      : editingAnnouncementId() !== null
+                        ? 'حفظ التعديلات'
+                        : 'إضافة الإعلان'
+                  }}
+                </button>
+
+                <button
+                  type="button"
+                  class="secondary-button"
+                  (click)="resetAnnouncementForm()"
+                  [disabled]="savingAnnouncement()"
+                >
+                  مسح الحقول
+                </button>
+              </div>
+            </form>
+          </section>
+        }
+      </div>
+    </section>
+  }
+</div>

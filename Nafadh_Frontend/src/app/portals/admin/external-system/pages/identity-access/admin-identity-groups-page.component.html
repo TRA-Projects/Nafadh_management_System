@@ -1,0 +1,341 @@
+<div class="rounded-xl border border-[#ebedf2] bg-white p-3 shadow-sm dark:border-[#191e3a] dark:bg-[#0e1726] sm:p-4 md:p-6">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex min-w-0 flex-wrap items-center gap-3">
+      <app-back-arrow-button
+        class="shrink-0"
+        [to]="homePath"
+        [iconOnly]="true"
+        [ariaLabel]="backToDashboardAria"
+      />
+      <h2 class="min-w-0 text-xl font-bold text-black dark:text-white-light sm:text-2xl" i18n="@@jobseeker.identityAccess.groupsTitle">
+        Groups
+      </h2>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        class="btn btn-outline-primary relative inline-flex h-10 w-10 items-center justify-center px-0"
+        (click)="openDrawer()"
+        [attr.title]="advancedFiltersLabel"
+        [attr.aria-label]="advancedFiltersLabel"
+      >
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+          <path d="M4 6h16M7 12h10M10 18h4" />
+        </svg>
+        @if (advancedFilterCount() > 0) {
+          <span
+            class="absolute -end-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-white"
+          >
+            {{ advancedFilterCount() }}
+          </span>
+        }
+      </button>
+      <button
+        type="button"
+        class="ia-clear-btn"
+        (click)="clearFilters()"
+        [disabled]="!hasActiveFilters()"
+        [attr.title]="clearFiltersAria"
+        [attr.aria-label]="clearFiltersAria"
+      >
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+          <path d="M5 5h14l-5 6.5v4.5L10.5 18v-6.5L5 5Z" stroke-linejoin="round" />
+          <path d="M16 15.5l4 4M20 15.5l-4 4" stroke-linecap="round" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="ia-add-btn inline-flex h-10 shrink-0 items-center gap-2 rounded-md px-4 text-sm font-semibold"
+        (click)="goToCreate()"
+        [attr.title]="createGroupLabel"
+        [attr.aria-label]="createGroupLabel"
+      >
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+        </svg>
+        <span>{{ createGroupLabel }}</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="mt-4 hidden md:block">
+    <div class="rounded-xl border border-[#ebedf2] bg-white p-3 shadow-sm dark:border-[#191e3a] dark:bg-[#0e1726] sm:p-4">
+      <div class="grid grid-cols-1 items-end gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div>
+          <label class="mb-1 block text-sm" for="ia-groups-q">{{ searchLabel }}</label>
+          <input
+            id="ia-groups-q"
+            type="search"
+            class="form-input w-full"
+            [value]="draftQuery()"
+            (input)="onDraftQuery($any($event.target).value)"
+            (keydown.enter)="search()"
+            i18n-placeholder="@@jobseeker.identityAccess.groupsSearchPlaceholder"
+            placeholder="Name or code"
+          />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm" for="ia-groups-type" i18n="@@jobseeker.identityAccess.colType">Type</label>
+          <select id="ia-groups-type" class="form-select w-full" [value]="draftTypeId() ?? ''" (change)="onDraftType($any($event.target).value)">
+            <option value="" i18n="@@jobseeker.common.all">All</option>
+            @for (type of types(); track type.Id) {
+              <option [value]="type.Id">{{ typeLabel(type) }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="mb-1 block text-sm" for="ia-groups-active" i18n="@@jobseeker.identityAccess.colActive">Active</label>
+          <select id="ia-groups-active" class="form-select w-full" [value]="draftActive()" (change)="onDraftActive($any($event.target).value)">
+            <option value="all" i18n="@@jobseeker.common.all">All</option>
+            <option value="active" i18n="@@jobseeker.common.yes">Yes</option>
+            <option value="inactive" i18n="@@jobseeker.common.no">No</option>
+          </select>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" class="btn btn-primary h-10 px-4" (click)="search()">{{ searchLabel }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (loadError()) {
+    <div class="mt-4 rounded border border-danger/40 bg-danger/10 px-3 py-2 text-danger">{{ loadError() }}</div>
+  }
+
+  <div class="mt-4 rounded-xl border border-[#ebedf2] bg-white dark:border-[#191e3a] dark:bg-[#0e1726] md:overflow-hidden">
+    <div class="p-3 lg:hidden">
+      @if (listLoadState() === 'ready' && pagedRows().length === 0) {
+        <div class="py-8 text-center text-sm text-white-dark" i18n="@@jobseeker.common.noRecords">No records</div>
+      }
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        @for (row of pagedRows(); track row.group.Id; let i = $index) {
+          <article class="ia-card">
+            <div class="ia-card__name-row">
+              <span class="ia-card__index">#{{ safePageIndex() * pageSize() + i + 1 }}</span>
+              <div class="ia-card__title-block">
+                <div class="ia-card__label" i18n="@@jobseeker.identityAccess.colGroupName">Group name</div>
+                <span class="ia-card__name">{{ groupLabel(row.group) }}</span>
+                <div class="ia-card__code">{{ row.group.Code }}</div>
+              </div>
+            </div>
+            <div class="ia-card__meta">
+              <div>
+                <div class="ia-card__label" i18n="@@jobseeker.identityAccess.colType">Type</div>
+                <div class="ia-card__value">{{ typeLabel(row.type) }}</div>
+              </div>
+              <div>
+                <div class="ia-card__label" i18n="@@jobseeker.identityAccess.colRole">Role</div>
+                <div class="ia-card__value">{{ templateRoleLabel(row.group) }}</div>
+              </div>
+            </div>
+            <div class="mt-3 flex justify-end">
+              <ng-container *ngTemplateOutlet="rowActionsMenu; context: { $implicit: row }" />
+            </div>
+          </article>
+        }
+      </div>
+    </div>
+
+    <div class="table-responsive hidden lg:block">
+      <table class="ia-table">
+        <thead>
+          <tr>
+            <th title="#">#</th>
+            <th i18n="@@jobseeker.identityAccess.colGroupName">Group name</th>
+            <th i18n="@@jobseeker.identityAccess.colCode">Code</th>
+            <th i18n="@@jobseeker.identityAccess.colType">Type</th>
+            <th i18n="@@jobseeker.identityAccess.colRole">Role</th>
+            <th i18n="@@jobseeker.identityAccess.colActive">Active</th>
+            <th class="ia-actions-cell" i18n="@@jobseeker.identityAccess.colActions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (listLoadState() === 'ready' && pagedRows().length === 0) {
+            <tr>
+              <td colspan="7" class="py-8 text-center text-white-dark" i18n="@@jobseeker.common.noRecords">No records</td>
+            </tr>
+          }
+          @for (row of pagedRows(); track row.group.Id; let i = $index) {
+            <tr>
+              <td>{{ safePageIndex() * pageSize() + i + 1 }}</td>
+              <td>{{ groupLabel(row.group) }}</td>
+              <td class="ia-code-cell">{{ row.group.Code }}</td>
+              <td>{{ typeLabel(row.type) }}</td>
+              <td>{{ templateRoleLabel(row.group) }}</td>
+              <td>
+                @if (row.group.IsActive === false) {
+                  <span i18n="@@jobseeker.common.no">No</span>
+                } @else {
+                  <span i18n="@@jobseeker.common.yes">Yes</span>
+                }
+              </td>
+              <td class="ia-actions-cell">
+                <ng-container *ngTemplateOutlet="rowActionsMenu; context: { $implicit: row }" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (listLoadState() === 'ready') {
+      <div class="ia-pager">
+        <span class="ia-pager__summary">{{ pageFooterLabel() }}</span>
+        <div class="ia-pager__controls">
+          <label class="ia-pager__size">
+            <span i18n="@@jobseeker.jobsList.perPage">Per page</span>
+            <select class="form-select ia-pager__select" [value]="pageSize()" (change)="setPageSize(+$any($event.target).value)">
+              @for (s of pageSizeOptions; track s) {
+                <option [value]="s">{{ s }}</option>
+              }
+            </select>
+          </label>
+          <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="!canPrev()" (click)="prevPage()" i18n-aria-label="@@jobseeker.common.prev" aria-label="Prev">
+            &lt;
+          </button>
+          <span class="ia-pager__page">{{ safePageIndex() + 1 }}</span>
+          <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="!canNext()" (click)="nextPage()" i18n-aria-label="@@jobseeker.common.next" aria-label="Next">
+            &gt;
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+@if (drawerOpen()) {
+  <div class="fixed inset-0 z-[999] flex justify-end bg-[black]/60" (click)="closeDrawer()">
+    <aside
+      role="dialog"
+      aria-modal="true"
+      class="flex h-full w-full max-w-lg flex-col bg-white shadow-2xl dark:bg-[#0e1726]"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="shrink-0 border-b border-white-light px-4 py-4 dark:border-[#191e3a]">
+        <h2 class="text-center text-lg font-bold text-primary" i18n="@@jobseeker.jobSeekerSearch.advancedTitle">
+          Advanced filters
+        </h2>
+      </div>
+
+      <div class="min-h-0 flex-1 space-y-5 overflow-y-auto bg-white p-4 dark:bg-[#0e1726] sm:p-5">
+        <section>
+          <h3 class="ia-adv-section-title">
+            <span class="ia-adv-section-title__bar" aria-hidden="true"></span>
+            <span>{{ searchLabel }}</span>
+          </h3>
+          <label class="mb-1 block text-sm" for="ia-groups-drawer-q">{{ searchLabel }}</label>
+          <input
+            id="ia-groups-drawer-q"
+            type="search"
+            class="form-input w-full"
+            [value]="draftQuery()"
+            (input)="onDraftQuery($any($event.target).value)"
+            (keydown.enter)="applyDrawer()"
+            i18n-placeholder="@@jobseeker.identityAccess.groupsSearchPlaceholder"
+            placeholder="Name or code"
+          />
+        </section>
+        <section>
+          <h3 class="ia-adv-section-title">
+            <span class="ia-adv-section-title__bar" aria-hidden="true"></span>
+            <span i18n="@@jobseeker.identityAccess.colType">Type</span>
+          </h3>
+          <select
+            id="ia-groups-drawer-type"
+            class="form-select w-full"
+            [value]="draftTypeId() ?? ''"
+            (change)="onDraftType($any($event.target).value)"
+          >
+            <option value="" i18n="@@jobseeker.common.all">All</option>
+            @for (type of types(); track type.Id) {
+              <option [value]="type.Id">{{ typeLabel(type) }}</option>
+            }
+          </select>
+        </section>
+        <section>
+          <h3 class="ia-adv-section-title">
+            <span class="ia-adv-section-title__bar" aria-hidden="true"></span>
+            <span i18n="@@jobseeker.identityAccess.colActive">Active</span>
+          </h3>
+          <select
+            id="ia-groups-drawer-active"
+            class="form-select w-full"
+            [value]="draftActive()"
+            (change)="onDraftActive($any($event.target).value)"
+          >
+            <option value="all" i18n="@@jobseeker.common.all">All</option>
+            <option value="active" i18n="@@jobseeker.common.yes">Yes</option>
+            <option value="inactive" i18n="@@jobseeker.common.no">No</option>
+          </select>
+        </section>
+      </div>
+
+      <div
+        class="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-white-light bg-white px-4 py-3 dark:border-[#191e3a] dark:bg-[#0e1726] rtl:flex-row-reverse"
+      >
+        <button type="button" class="btn btn-primary btn-sm" (click)="applyDrawer()" i18n="@@jobseeker.jobSeekerSearch.apply">
+          Apply
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-danger btn-sm px-2.5 py-1 text-xs"
+          (click)="clearDrawerFilters()"
+          i18n="@@jobseeker.jobSeekerSearch.clear"
+        >
+          Clear
+        </button>
+        <button type="button" class="btn btn-outline-primary btn-sm" (click)="closeDrawer()" i18n="@@jobseeker.common.cancel">
+          Cancel
+        </button>
+      </div>
+    </aside>
+  </div>
+}
+
+<ng-template #rowActionsMenu let-row>
+  <div class="ia-actions-menu-wrap" data-row-actions-menu>
+    <button
+      type="button"
+      class="ia-actions-trigger"
+      [attr.aria-label]="rowActionsMenuAria"
+      [attr.title]="rowActionsMenuAria"
+      [attr.aria-expanded]="actionsMenuRowId() === row.group.Id"
+      (click)="toggleRowActionsMenu(row.group.Id, $event)"
+    >
+      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true">
+        <circle cx="12" cy="5" r="1.75" />
+        <circle cx="12" cy="12" r="1.75" />
+        <circle cx="12" cy="19" r="1.75" />
+      </svg>
+    </button>
+    @if (actionsMenuRowId() === row.group.Id) {
+      <div class="ia-actions-menu" role="menu">
+        <button type="button" class="ia-actions-menu__item" role="menuitem" (click)="openPages(row)">
+          <span class="ia-actions-menu__icon" aria-hidden="true">
+            <img [src]="'/images/general/edit.svg' | assetUrl" alt="" class="h-4 w-4" />
+          </span>
+          <span>{{ editPagesLabel }}</span>
+        </button>
+        <button type="button" class="ia-actions-menu__item" role="menuitem" (click)="openEdit(row)">
+          <span class="ia-actions-menu__icon" aria-hidden="true">
+            <img [src]="'/images/general/edit.svg' | assetUrl" alt="" class="h-4 w-4" />
+          </span>
+          <span>{{ editLabel }}</span>
+        </button>
+        @if (row.group.CanDeactivate) {
+          <button
+            type="button"
+            class="ia-actions-menu__item ia-actions-menu__item--danger"
+            role="menuitem"
+            (click)="deactivate(row)"
+          >
+            <span class="ia-actions-menu__icon" aria-hidden="true">
+              <img [src]="'/images/general/delete.svg' | assetUrl" alt="" class="h-4 w-4" />
+            </span>
+            <span>{{ deactivateLabel }}</span>
+          </button>
+        }
+      </div>
+    }
+  </div>
+</ng-template>

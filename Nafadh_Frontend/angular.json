@@ -30,9 +30,10 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.scss"
-            ]
+           "styles": [
+  "src/styles.scss",
+  "public/external-system/css/style.scoped.css"
+]
           },
           "configurations": {
             "production": {
@@ -42,11 +43,11 @@
                   "maximumWarning": "1.5MB",
                   "maximumError": "2MB"
                 },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "20kB",
-                  "maximumError": "100kB"
-                }
+              {
+  "type": "anyComponentStyle",
+  "maximumWarning": "35kB",
+  "maximumError": "50kB"
+}
               ],
               "outputHashing": "all",
               "optimization": {
@@ -63,9 +64,12 @@
           },
           "defaultConfiguration": "production"
         },
-        "serve": {
-          "builder": "@angular/build:dev-server",
-          "configurations": {
+       "serve": {
+  "builder": "@angular/build:dev-server",
+  "options": {
+    "proxyConfig": "proxy.conf.json"
+  },
+  "configurations": {
             "production": {
               "buildTarget": "nafadh-frontend-v2:build:production"
             },

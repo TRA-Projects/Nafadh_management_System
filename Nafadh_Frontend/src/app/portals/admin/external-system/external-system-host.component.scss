@@ -1,0 +1,78 @@
+:host {
+  display: block;
+}
+
+.ui-async-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.ui-async-overlay__message {
+  margin-top: 1.25rem;
+  max-width: 20rem;
+  padding: 0 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.ui-async-spinner {
+  position: relative;
+  width: 3.25rem;
+  height: 3.25rem;
+}
+
+.ui-async-spinner__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  border-top-color: var(--color-primary, #4361ee);
+  animation: ui-async-spin 0.85s linear infinite;
+}
+
+.ui-async-spinner__ring:nth-child(2) {
+  inset: 0.4rem;
+  border-top-color: transparent;
+  border-right-color: rgba(255, 255, 255, 0.85);
+  animation-duration: 1.15s;
+  animation-direction: reverse;
+}
+
+.ui-async-spinner__dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin: -0.275rem 0 0 -0.275rem;
+  border-radius: 9999px;
+  background: var(--color-primary, #4361ee);
+  animation: ui-async-pulse 1s ease-in-out infinite;
+}
+
+@keyframes ui-async-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ui-async-pulse {
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}

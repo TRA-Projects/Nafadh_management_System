@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+.degree-ranks-editor__rank {
+  border: 1px solid #ebedf2;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+
+:host-context(.dark) .degree-ranks-editor__rank {
+  border-color: #191e3a;
+}
+
+.degree-ranks-editor__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 0.25rem 0.5rem 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+:host-context(.dark) .degree-ranks-editor__chip {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: #0e1726;
+  color: #e5e7eb;
+}
+
+.degree-ranks-editor__chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}

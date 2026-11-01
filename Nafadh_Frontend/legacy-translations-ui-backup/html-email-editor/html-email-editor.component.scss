@@ -1,0 +1,89 @@
+.html-email-editor {
+  --editor-border: rgb(224 230 237 / 1);
+  --editor-bg: #fff;
+  --editor-text: #0e1726;
+  --editor-toolbar-bg: #f6f8fa;
+  --editor-muted: #888ea8;
+
+  .html-email-editor--rtl &,
+  &.html-email-editor--rtl {
+    .ql-editor {
+      direction: rtl;
+      text-align: right;
+    }
+  }
+
+  &__container {
+    border: 1px solid var(--editor-border);
+    border-radius: 0.375rem;
+    overflow: hidden;
+    background: var(--editor-bg);
+  }
+
+  .ql-toolbar.ql-snow {
+    border: 0;
+    border-bottom: 1px solid var(--editor-border);
+    background: var(--editor-toolbar-bg);
+    padding: 0.5rem;
+    font-family: inherit;
+  }
+
+  .ql-container.ql-snow {
+    border: 0;
+    font-family: inherit;
+    font-size: 0.875rem;
+  }
+
+  .ql-editor {
+    min-height: 220px;
+    color: var(--editor-text);
+    line-height: 1.6;
+
+    &.ql-blank::before {
+      color: var(--editor-muted);
+      font-style: normal;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 0.25rem;
+    }
+  }
+
+  .ql-snow .ql-picker,
+  .ql-snow .ql-stroke {
+    color: var(--editor-text);
+  }
+
+  .ql-snow .ql-stroke {
+    stroke: currentColor;
+  }
+
+  .ql-snow .ql-fill {
+    fill: currentColor;
+  }
+
+  .ql-snow.ql-toolbar button:hover,
+  .ql-snow .ql-toolbar button:hover,
+  .ql-snow.ql-toolbar button.ql-active,
+  .ql-snow .ql-toolbar button.ql-active {
+    color: var(--color-primary, #4361ee);
+  }
+
+  .ql-snow.ql-toolbar button:hover .ql-stroke,
+  .ql-snow .ql-toolbar button:hover .ql-stroke,
+  .ql-snow.ql-toolbar button.ql-active .ql-stroke,
+  .ql-snow .ql-toolbar button.ql-active .ql-stroke {
+    stroke: var(--color-primary, #4361ee);
+  }
+}
+
+:host-context(.dark) .html-email-editor,
+.dark .html-email-editor {
+  --editor-border: rgb(255 255 255 / 0.1);
+  --editor-bg: #0e1726;
+  --editor-text: #e0e6ed;
+  --editor-toolbar-bg: #1b2e4b;
+  --editor-muted: #888ea8;
+}

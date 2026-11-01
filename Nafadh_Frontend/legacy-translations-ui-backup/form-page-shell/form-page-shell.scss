@@ -1,0 +1,236 @@
+/* Shared wizard/form page shell (interview record, post job, credential new). */
+
+.irf-page {
+  padding: 0.75rem;
+
+  @media (min-width: 640px) {
+    padding: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    padding: 1.5rem;
+  }
+}
+
+.irf-page__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: start;
+}
+
+.irf-page__title {
+  margin: 0;
+  min-width: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #0e1726;
+}
+
+:host-context(.dark) .irf-page__title {
+  color: #e0e6ed;
+}
+
+.irf-card {
+  /* Keep visible so searchable selects / autocomplete panels are not clipped. */
+  overflow: visible;
+  border: 1px solid #ebedf2;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+:host-context(.dark) .irf-card {
+  border-color: #191e3a;
+  background: #0e1726;
+}
+
+.irf-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1.25rem 1.25rem;
+  border-start-start-radius: 0.75rem;
+  border-start-end-radius: 0.75rem;
+  /* Fill comes from global `.bg-navigator` (sidebar token in public/css/style.css). */
+  color: #fff;
+
+  @media (min-width: 640px) {
+    padding: 1.5rem 1.75rem;
+  }
+}
+
+.irf-banner__icon {
+  display: inline-flex;
+  height: 2.75rem;
+  width: 2.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+
+  svg {
+    height: 1.35rem;
+    width: 1.35rem;
+  }
+}
+
+.irf-banner__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.irf-card__body {
+  padding: 1rem;
+
+  @media (min-width: 640px) {
+    padding: 1.25rem 1.5rem 1.5rem;
+  }
+}
+
+.irf-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid #ebedf2;
+}
+
+:host-context(.dark) .irf-tabs {
+  border-bottom-color: #191e3a;
+}
+
+.irf-tabs__btn {
+  margin-bottom: -1px;
+  border: 1px solid transparent;
+  border-bottom-color: transparent;
+  background: transparent;
+  padding: 0.65rem 0.9rem;
+  color: #888ea8;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.irf-tabs__btn:hover {
+  color: #4361ee;
+}
+
+.irf-tabs__btn--active {
+  border-color: #ebedf2;
+  border-bottom-color: #fff;
+  color: #4361ee;
+}
+
+:host-context(.dark) .irf-tabs__btn--active {
+  border-color: #191e3a;
+  border-bottom-color: #0e1726;
+  color: #4361ee;
+}
+
+.irf-tabs__btn:disabled,
+.irf-tabs__btn[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.irf-tabs__btn:disabled:hover,
+.irf-tabs__btn[aria-disabled='true']:hover {
+  color: #888ea8;
+}
+
+.irf-section {
+  padding-bottom: 1.25rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid #ebedf2;
+
+  &:last-of-type {
+    border-bottom: 0;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+}
+
+:host-context(.dark) .irf-section {
+  border-bottom-color: #191e3a;
+}
+
+.irf-section__title {
+  position: relative;
+  margin: 0 0 1rem;
+  padding-inline-start: 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0e1726;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0.15rem;
+    bottom: 0.15rem;
+    width: 3px;
+    border-radius: 9999px;
+    background: #4361ee;
+  }
+}
+
+:host-context(.dark) .irf-section__title {
+  color: #e0e6ed;
+}
+
+.irf-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0e1726;
+}
+
+:host-context(.dark) .irf-label {
+  color: #e0e6ed;
+}
+
+.irf-label--with-badge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.irf-lang-badge {
+  display: inline-flex;
+  min-width: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  background: rgba(67, 97, 238, 0.12);
+  padding: 0.1rem 0.4rem;
+  color: #4361ee;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.irf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid #ebedf2;
+  padding-top: 1.25rem;
+}
+
+:host-context(.dark) .irf-actions {
+  border-top-color: #191e3a;
+}

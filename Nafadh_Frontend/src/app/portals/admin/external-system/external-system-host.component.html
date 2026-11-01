@@ -1,0 +1,15 @@
+<router-outlet />
+<app-ui-async-toast-host />
+
+@if (inProgress()) {
+  <div class="ui-async-overlay" role="alertdialog" aria-busy="true" aria-live="polite">
+    <div class="ui-async-spinner" aria-hidden="true">
+      <span class="ui-async-spinner__ring"></span>
+      <span class="ui-async-spinner__ring"></span>
+      <span class="ui-async-spinner__dot"></span>
+    </div>
+    @if (progressMessage()) {
+      <p class="ui-async-overlay__message">{{ progressMessage() }}</p>
+    }
+  </div>
+}

@@ -1,0 +1,45 @@
+/**
+ * Stable keys on `AbstractControl.errors` for templates and i18n.
+ * Aligns with Freelancer `ERROR_CODES` where applicable (`code` field).
+ */
+export const ValidationErrorKeys = {
+  invalidEmail: 'invalidEmail',
+  invalidName: 'invalidName',
+  passwordMinReq: 'passwordMinReq',
+  invalidPhone: 'invalidPhone',
+  requiredTrimmed: 'requiredTrimmed',
+  checkRequired: 'checkRequired',
+  fileRequired: 'fileRequired',
+  invalidFileType: 'invalidFileType',
+  selectRequired: 'selectRequired',
+  noItemsRequired: 'noItemsRequired',
+  numberBelowRange: 'numberBelowRange',
+  numberAboveSibling: 'numberAboveSibling',
+  numberBelowSibling: 'numberBelowSibling',
+  invalidYear: 'invalidYear',
+  invalidNumberFormat: 'invalidNumberFormat',
+  invalidNumberVal: 'invalidNumberVal',
+  invalidLink: 'invalidLink',
+  earlierDate: 'earlierDate',
+  olderDate: 'olderDate',
+  oneSelected: 'oneSelected',
+  notUnique: 'notUnique',
+  invalidIdNumber: 'invalidIdNumber',
+  richTextRequired: 'richTextRequired',
+  mismatch: 'mismatch',
+  credentialJobSeekersRequired: 'credentialJobSeekersRequired',
+  credentialEnrollmentSchedulesIncomplete: 'credentialEnrollmentSchedulesIncomplete',
+  credentialScheduleNotAllowed: 'credentialScheduleNotAllowed',
+  credentialJobSeekerValidationFailed: 'credentialJobSeekerValidationFailed',
+  invalidCredentialJobSeeker: 'invalidCredentialJobSeeker',
+  credentialSkillRatingsIncomplete: 'credentialSkillRatingsIncomplete',
+  credentialPersonalRatingsIncomplete: 'credentialPersonalRatingsIncomplete',
+  credentialDefinitionTabsIncomplete: 'credentialDefinitionTabsIncomplete',
+  invalidDate: 'invalidDate',
+  duplicateScheduleTime: 'duplicateScheduleTime',
+  notificationChannelRequired: 'notificationChannelRequired',
+  notificationTargetRequired: 'notificationTargetRequired',
+  notificationSchedulePast: 'notificationSchedulePast',
+} as const;
+
+export type ValidationErrorKey = (typeof ValidationErrorKeys)[keyof typeof ValidationErrorKeys];
