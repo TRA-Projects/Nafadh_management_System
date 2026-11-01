@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
@@ -30,5 +31,12 @@ namespace Nafadh_Backend.Repositories
 
         // total modules in the enrollment's program vs. modules the trainee completed
         Task<(int totalModules, int completedModules)?> GetProgressDataAsync(int enrollmentId);
+
+        Task<bool> HasActiveEnrollmentAsync(int traineeId);
+        Task<int> GetActiveEnrollmentCountByBatchAsync(int batchId);
+        Task<NFD_Batch?> GetBatchForEnrollmentAsync(int batchId);
+
+        Task<(NFD_Enrollment? enrollment, string? error)>
+            CreateEnrollmentSafelyAsync(CreateEnrollmentDto dto);
     }
 }

@@ -153,11 +153,26 @@ namespace Nafadh_Backend.Repositories
                     w.Evidence != null &&
                     w.Evidence.StartsWith(marker));
         }
+
+        public async Task<bool> AutoRiskWarningExistsAsync(
+            int enrollmentId,
+            NFD_WarningType type,
+            string marker)
+        {
+            return await _context.NFD_Warnings
+                .AnyAsync(w =>
+                    w.Scope == NFD_WarningScope.Trainee &&
+                    w.EnrollmentId == enrollmentId &&
+                    w.Type == type &&
+                    w.Evidence != null &&
+                    w.Evidence.StartsWith(marker));
+        }
+
         ///************///////
         public async Task ReplyToCompanyWarningAsync(
-    int warningId,
-    int companyId,
-    string reply)
+            int warningId,
+            int companyId,
+            string reply)
         {
             var warning = await _context.NFD_Warnings
                 .FirstOrDefaultAsync(w =>

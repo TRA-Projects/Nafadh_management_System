@@ -592,4 +592,68 @@
 
   }
 
+  <!-- ================================
+       NOTIFICATION DETAILS MODAL
+  ================================= -->
+
+  @if (notificationDetailsModalOpen() && selectedNotificationForDetails(); as detail) {
+
+    <div
+      class="modal-overlay"
+      (click)="closeNotificationDetails()"
+    >
+
+      <div
+        class="delete-modal notification-details-modal"
+        (click)="$event.stopPropagation()"
+        style="max-width: 500px;"
+      >
+
+        <div class="modal-icon" style="background: #e6f7fc; border-color: #cbeaf4; color: #078bc0;">
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+            <path d="M10 21h4" />
+          </svg>
+        </div>
+
+
+        <div class="modal-text">
+
+          <span class="modal-eyebrow">
+            {{ detail.relatedEntity || 'تنبيه إداري' }} • {{ timeAgo(detail.createdAt) }}
+          </span>
+
+          <h3 style="margin-top: 5px; font-size: 18px; color: #173f66;">
+            {{ detail.title }}
+          </h3>
+
+          <div style="margin-top: 15px; padding: 12px; background: #f8fcfe; border: 1px solid #e0edf3; border-radius: 12px; color: #44748e; font-size: 12px; line-height: 1.8; max-height: 250px; overflow-y: auto;">
+            {{ detail.message }}
+          </div>
+
+        </div>
+
+
+        <div class="modal-actions" style="margin-top: 20px; justify-content: flex-end;">
+
+          <button
+            type="button"
+            class="modal-cancel"
+            style="background: #078fc5; color: #fff; border: none; min-width: 100px; cursor: pointer; padding: 8px 16px; border-radius: 8px;"
+            (click)="closeNotificationDetails()"
+          >
+            إغلاق
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
 </section>

@@ -1,27 +1,29 @@
-// العقد (Contract) بين فرونت تسجيل الشركة وباك نورة.
-// أي تغيير هنا لازم يتفق عليه مع نورة أولاً.
+// العقد (Contract) بين فرونت تسجيل الشركة والباك إند (CompanyRegistrationDTO).
+// أسماء الحقول هنا مطابقة تمامًا لما يستقبله الباك إند.
 
 /** شكل طلب التسجيل: POST /api/company-registration (عام، بدون توكن) */
 export interface CompanyRegistrationRequest {
   companyName: string;
   commercialRegister: string;
   workField: string;
-  city: string;
+  /** العنوان (المدينة جزء منه، لا يوجد حقل مدينة منفصل) */
   address: string;
+  /** الطاقة الاستيعابية: عدد المتدربين المتوقع (اختياري، الافتراضي 0) */
+  capacity: number;
   phone: string;
   /** إيميل الشركة، وهو نفسه إيميل دخول مشرف الشركة بعد الاعتماد */
   email: string;
-  /** اسم مشرف الشركة (صاحب الحساب) */
-  supervisorName: string;
+  /** اسم المسؤول (يصبح صاحب حساب الشركة) */
+  contactName: string;
 }
 
 export interface CompanyRegistrationResponse {
   message: string;
   companyId: number;
+  companyName: string;
+  email: string;
   /** PendingApproval دائمًا بعد التسجيل */
   status: 'PendingApproval';
-  /** true لو الإيميل كان لشركة مرفوضة وتم تحديث طلبها بدل إنشاء طلب جديد */
-  resubmitted?: boolean;
 }
 
 /** رموز الأخطاء المتفق عليها مع الباك (الحقل code في جسم الخطأ) */

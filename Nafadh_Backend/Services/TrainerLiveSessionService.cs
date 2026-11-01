@@ -338,10 +338,12 @@ namespace Nafadh_Backend.Services
             if (session == null)
                 return null;
 
-            if (session.Status == NFD_SessionStatus.Completed ||
-                session.Status == NFD_SessionStatus.Cancelled)
+            if (session.Status != NFD_SessionStatus.Scheduled &&
+     session.Status != NFD_SessionStatus.Postponed)
+            {
                 throw new InvalidOperationException(
-                    "Completed or cancelled sessions cannot be edited.");
+                    "Only scheduled or postponed sessions can be edited.");
+            }
             var oldDate = session.SessionDate;
             var oldStartTime = session.StartTime;
             var oldEndTime = session.EndTime;
@@ -444,10 +446,15 @@ namespace Nafadh_Backend.Services
             if (session == null)
                 return null;
 
-            if (session.Status != NFD_SessionStatus.Scheduled &&
-                session.Status != NFD_SessionStatus.Postponed)
+            var canPostpone =
+            session.Status == NFD_SessionStatus.Scheduled ||
+            session.Status == NFD_SessionStatus.Postponed;
+
+            if (!canPostpone)
+            {
                 throw new InvalidOperationException(
-                    "This session cannot be postponed.");
+                    "Only scheduled or postponed sessions can be rescheduled.");
+            }
 
             if (!dto.NewSessionDate.HasValue ||
                 dto.NewSessionDate.Value == default ||
@@ -456,6 +463,21 @@ namespace Nafadh_Backend.Services
                 throw new ArgumentException(
                     "A valid new date and time are required.");
 
+            var newDate = dto.NewSessionDate!.Value.Date;
+
+            if (!TimeOnly.TryParse(dto.NewStartTime, out var newStart))
+            {
+                throw new ArgumentException(
+                    "Invalid new session start time.");
+            }
+
+            var newStartDateTime = newDate.Add(newStart.ToTimeSpan());
+
+            if (newStartDateTime <= DateTime.Now)
+            {
+                throw new ArgumentException(
+                    "The new session date and time must be in the future.");
+            }
 
             if (await HasSessionConflictAsync(
                 trainerId,
@@ -514,29 +536,20 @@ namespace Nafadh_Backend.Services
                 throw new InvalidOperationException(
                     "This session has a final status.");
 
-
-            if (nextStatus != NFD_SessionStatus.InProgress &&
-                nextStatus != NFD_SessionStatus.Completed &&
-                nextStatus != NFD_SessionStatus.Cancelled)
+            if (nextStatus != NFD_SessionStatus.Cancelled)
             {
                 throw new InvalidOperationException(
-                    "Invalid session status transition.");
+                    "Start and end sessions using LiveKit room controls.");
             }
 
             bool validTransition =
-                ((session.Status == NFD_SessionStatus.Scheduled ||
-                  session.Status == NFD_SessionStatus.Postponed) &&
-                 (nextStatus == NFD_SessionStatus.InProgress ||
-                  nextStatus == NFD_SessionStatus.Cancelled))
-                ||
-                (session.Status == NFD_SessionStatus.InProgress &&
-                 (nextStatus == NFD_SessionStatus.Completed ||
-                  nextStatus == NFD_SessionStatus.Cancelled));
+                session.Status == NFD_SessionStatus.Scheduled ||
+                session.Status == NFD_SessionStatus.Postponed;
 
             if (!validTransition)
             {
                 throw new InvalidOperationException(
-                    "This status transition is not allowed.");
+                    "Only scheduled or postponed sessions can be cancelled.");
             }
 
             session.Status = nextStatus;

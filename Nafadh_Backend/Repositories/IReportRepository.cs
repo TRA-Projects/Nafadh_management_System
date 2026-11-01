@@ -18,6 +18,7 @@ namespace Nafadh_Backend.Repositories
 
         // NEW: analytics/aggregation queries — see DTOs/ReportAnalyticsDTOs.cs
         Task<DTOs.DashboardChartsDTO> GetDashboardChartsAsync();
+        Task<AdminDashboardSummaryDTO> GetAdminDashboardSummaryAsync();
         Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(int batchId, int pageNumber, int pageSize);
         Task<DTOs.AttendanceReportDTO?> GetCompanyAttendanceReportAsync(int companyId);
         Task<List<DTOs.ChartPointDTO>> GetCompanyAttendanceChartAsync(int companyId);
@@ -30,7 +31,16 @@ namespace Nafadh_Backend.Repositories
         Task<List<DTOs.TrainerTraineesReportRowDto>> GetTrainerTraineesReportRowsAsync(
     int trainerId, int? batchId, int? traineeId);
 
+        // Admin Reports - Companies Summary
+        Task<AdminCompaniesSummaryDTO> GetAdminCompaniesSummaryAsync();
 
+        // Admin Reports - Company-specific Batch Performance
+        Task<AdminCompanyBatchPerformanceDTO?> GetAdminCompanyBatchPerformanceAsync(
+            int companyId,
+            int batchId,
+            int pageNumber,
+            int pageSize
+        );
 
     }
 }

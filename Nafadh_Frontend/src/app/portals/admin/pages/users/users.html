@@ -91,7 +91,9 @@
     <select class="nfd-filter-select" [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)">
       <option value="ALL">كل الحالات</option>
       <option value="Active">نشط</option>
+      <option value="Inactive">غير نشط</option>
       <option value="Suspended">موقوف</option>
+      <option value="PendingVerification">بانتظار التحقق</option>
     </select>
 
     @if (hasActiveFilters()) {

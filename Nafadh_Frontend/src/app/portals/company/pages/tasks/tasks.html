@@ -1,9 +1,9 @@
 <section class="tasks-page" dir="rtl">
-  <header class="page-head">
+  <header class="page-head" data-guide="company-tasks-header">
     <div>
       <h2>المهام والمشروعات</h2>
       <p>
-        خطّط للكورس ومراحله ومهامه ومشروعاته وأسند كل مرحلة لمدربها، ثم أرسله لاعتماد الهيئة. لا يمكن الشروع في
+        أنشئ خطة ومراحل للبرنامج والدفعة المسندين من الإدارة، ثم أرسلها لاعتماد الهيئة. لا يمكن الشروع في
         التنفيذ قبل الاعتماد، وبعده تتابع حالة التنفيذ ونسبة إنجاز الكورس.
       </p>
     </div>
@@ -11,15 +11,15 @@
     <button
       type="button"
       class="btn primary"
-      (click)="openCreate()"
+      (click)="createNewPlan()"
       [disabled]="loading() || !!error()">
       <i class="fa-solid fa-plus"></i>
-      خطة كورس جديدة
+      إنشاء خطة تدريبية
     </button>
   </header>
 
   @if (!loading() && !error()) {
-    <div class="stats-grid">
+    <div class="stats-grid" data-guide="company-tasks-stats">
       <article class="stat-card">
         <div class="stat-icon bg-blue">
           <i class="fa-solid fa-diagram-project"></i>
@@ -54,7 +54,7 @@
         </div>
 
         <div>
-          <span>الكورسات المعتمدة</span>
+          <span>دفعات مسندة للشركة</span>
           <strong class="ok">
             {{ approvedCourseCount() }}
           </strong>
@@ -106,6 +106,7 @@
     <!-- Filters -->
     <div
       class="chips"
+      data-guide="company-tasks-filters"
       role="group"
       aria-label="تصفية الخطط والكورسات">
 
@@ -126,31 +127,31 @@
         (input)="onSearch($event)" />
     </div>
 
-    <!-- Existing approved company courses -->
+    <!-- Admin-assigned program batches awaiting their company plans -->
     @if (filteredApprovedCourses().length) {
       <section aria-labelledby="approved-courses-title">
         <div class="page-head">
           <div>
             <h3 id="approved-courses-title">
-              الكورسات المعتمدة
+              برامج ودفعات مسندة من الإدارة
             </h3>
 
             <p>
-              الكورسات المعتمدة والمتاحة للشركة.
+              البرامج والدفعات التي اختارت الإدارة شركتك لتنفيذها.
             </p>
           </div>
 
-          <span class="chip ap-approved">
-            {{ filteredApprovedCourses().length }} كورس
+          <span class="chip">
+            {{ filteredApprovedCourses().length }} تكليف
           </span>
         </div>
 
-        <div class="plan-grid">
+        <div class="plan-grid" data-guide="company-tasks-approved">
           @for (
             course of visibleApprovedCourses();
             track trackCourse($index, course)
           ) {
-            <article class="plan-card s-approved">
+            <article class="plan-card">
               <div class="top">
                 <div>
                   <h3>{{ course.title }}</h3>
@@ -163,8 +164,8 @@
                 </div>
 
                 <div class="badges">
-                  <span class="chip ap-approved">
-                    معتمدة
+                  <span class="chip">
+                    مسندة من الإدارة
                   </span>
                 </div>
               </div>
@@ -172,18 +173,9 @@
               <div class="meta">
                 <span>
                   <i class="fa-solid fa-graduation-cap"></i>
-                  برنامج متاح للشركة
+                  {{ course.batchName }} — دفعة {{ course.batchId }}
                 </span>
 
-                @if (
-                  course.price !== null &&
-                  course.price !== undefined
-                ) {
-                  <span>
-                    <i class="fa-solid fa-money-bill"></i>
-                    {{ course.price }}
-                  </span>
-                }
               </div>
 
               @if (course.description) {
@@ -194,15 +186,15 @@
                 <i class="fa-solid fa-circle-check"></i>
 
                 <p>
-                  هذا الكورس معتمد ومتاح للشركة، ويمكن إنشاء خطة
-                  تنفيذ له دون إنشاء برنامج مكرر.
+                  أسندت الإدارة هذا البرنامج والدفعة للشركة. يمكنك الآن إعداد خطة
+                  المراحل الخاصة بهذا التكليف دون إنشاء برنامج جديد.
                 </p>
               </div>
 
               <button
                 type="button"
                 class="btn ghost"
-                (click)="openCreate(course.programId)">
+                (click)="createNewPlan(course.programId)">
                 <i class="fa-solid fa-plus"></i>
                 إنشاء خطة لهذا الكورس
               </button>
@@ -234,7 +226,7 @@
 
     <!-- Course Plans -->
     @if (filtered().length) {
-      <div class="plan-grid">
+      <div class="plan-grid" data-guide="company-tasks-list">
         @for (
           plan of pagedPlans();
           track trackPlan($index, plan)

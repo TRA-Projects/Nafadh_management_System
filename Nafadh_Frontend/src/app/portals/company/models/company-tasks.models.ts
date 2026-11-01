@@ -23,6 +23,7 @@ export interface CoursePlanSummaryDto {
   planId: number;
   companyId: number;
   programId?: number | null;
+  batchId?: number | null;
   companyName: string;
   title: string;
   description?: string | null;
@@ -118,6 +119,10 @@ export interface CoursePlanTrainerOptionDto {
 
 export interface CoursePlanProgramOptionDto {
   programId: number;
+  batchId: number;
+  batchName: string;
+  startDate: string;
+  endDate: string;
   title: string;
   description?: string | null;
   category?: string | null;
@@ -141,6 +146,7 @@ export interface CoursePlanLookupsDto {
 
 export interface SaveCoursePlanRequest {
   programId?: number | null;
+  batchId?: number | null;
   trackId?: number | null;
   price?: number;
   trainerIds: number[];

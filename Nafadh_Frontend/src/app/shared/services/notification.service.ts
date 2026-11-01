@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface NotificationDto {
@@ -23,10 +23,12 @@ export class NotificationService {
   }
 
   markAsRead(notificationId: number): Observable<void> {
-    return this.http.put<void>(`${this.base}/Notification/${notificationId}/read`, {});
+    return this.http.put(`${this.base}/Notification/${notificationId}/read`, {}, { responseType: 'text' })
+      .pipe(map(() => undefined));
   }
 
   markAllAsRead(): Observable<void> {
-    return this.http.put<void>(`${this.base}/Notification/me/read-all`, {});
+    return this.http.put(`${this.base}/Notification/me/read-all`, {}, { responseType: 'text' })
+      .pipe(map(() => undefined));
   }
 }

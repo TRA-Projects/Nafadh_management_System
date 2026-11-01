@@ -1,4 +1,5 @@
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.DTOs.CompanyPayment;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
@@ -90,10 +91,21 @@ namespace Nafadh_Backend.Services
                     conversationId
                 );
 
-            return MapToDetail(
-                conversation,
-                batchId
-            );
+            var detail = MapToDetail(conversation, batchId);
+            detail.BatchName = await _repository.GetBatchNameAsync(conversationId);
+            return detail;
+        }
+
+        public async Task<List<AdminBatchGroupListDTO>> GetAdminBatchGroupsAsync()
+        {
+            return await _repository.GetAdminBatchGroupsAsync();
+        }
+
+        public async Task<List<AdminBatchGroupMessageDTO>?> GetAdminBatchGroupMessagesAsync(
+            int conversationId
+        )
+        {
+            return await _repository.GetAdminBatchGroupMessagesAsync(conversationId);
         }
 
         public async Task<bool> IsBatchGroupMemberAsync(
@@ -336,61 +348,33 @@ namespace Nafadh_Backend.Services
             AddConversationMessageDTO dto
         )
         {
-            int? receiverId =
-    dto.ReceiverUserId;
+            var conversation = await _repository.GetByIdAsync(conversationId);
+            if (conversation == null)
+                throw new KeyNotFoundException("المحادثة غير موجودة.");
+            var content = dto.Content?.Trim() ?? string.Empty;
+            if (dto.SenderId <= 0 || content.Length == 0 || content.Length > (conversation.Type == NFD_ConversationType.CompanyThread ? 5000 : 1000))
+                throw new ArgumentException("معرف المرسل أو طول نص الرسالة غير صالح.");
 
-            if (!receiverId.HasValue)
+            int? receiverId = dto.ReceiverUserId;
+            if (!receiverId.HasValue && conversation.Type == NFD_ConversationType.Other &&
+                conversation.Category == "TrainerTrainee")
             {
-                var conversation =
-                    await _repository.GetByIdAsync(
-                        conversationId
-                    );
-
-                if (conversation == null)
-                {
-                    throw new Exception(
-                        "Conversation not found."
-                    );
-                }
-
-                if (
-                    conversation.Type ==
-                        NFD_ConversationType.Other
-                    &&
-                    conversation.Category ==
-                        "TrainerTrainee"
-                )
-                {
-                    var lastMessage =
-                        conversation.Messages?
-                            .OrderByDescending(
-                                m => m.SentDate
-                            )
-                            .FirstOrDefault();
-
-                    if (
-                        lastMessage != null
-                        &&
-                        lastMessage.SenderId !=
-                            dto.SenderId
-                    )
-                    {
-                        receiverId =
-                            lastMessage.SenderId;
-                    }
-                    else
-                    {
-                        receiverId =
-                            conversation.UserId;
-                    }
-                }
+                // Resolve the other participant even when the sender has sent several consecutive messages.
+                var ordered = conversation.Messages?.OrderByDescending(m => m.SentDate).ThenByDescending(m => m.MessageId);
+                receiverId = ordered?.Where(m => m.SenderId != dto.SenderId)
+                    .Select(m => (int?)m.SenderId).FirstOrDefault();
+                receiverId ??= ordered?.Where(m => m.ReceiverId.HasValue && m.ReceiverId != dto.SenderId)
+                    .Select(m => m.ReceiverId).FirstOrDefault();
+                if (!receiverId.HasValue && conversation.UserId != dto.SenderId)
+                    receiverId = conversation.UserId;
+                if (!receiverId.HasValue)
+                    throw new ArgumentException("تعذر تحديد الطرف الآخر في المحادثة.");
             }
 
             var message =
                 new NFD_Message
                 {
-                    Content =
-                        dto.Content,
+                    Content = content,
 
                     SentDate =
                         DateTime.UtcNow,
@@ -511,7 +495,7 @@ namespace Nafadh_Backend.Services
                 t.Messages?
                     .OrderByDescending(
                         m => m.SentDate
-                    )
+                    ).ThenByDescending(m => m.MessageId)
                     .FirstOrDefault();
 
 
@@ -636,7 +620,7 @@ namespace Nafadh_Backend.Services
 
                         .OrderBy(
                             m => m.SentDate
-                        )
+                        ).ThenBy(m => m.MessageId)
 
                         .Select(
                             m =>

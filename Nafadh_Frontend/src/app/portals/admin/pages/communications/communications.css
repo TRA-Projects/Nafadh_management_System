@@ -1,0 +1,254 @@
+
+/* =========================================
+   1. COLORS - ألوان محادثات المجموعات
+   ========================================= */
+
+:host {
+  /* الألوان الأساسية */
+  --chat-primary: #0d1c8c;
+  --chat-primary-light: #e8eeff;
+
+  /* الخلفيات */
+  --chat-bg: #ffffff;
+  --chat-messages-bg: #f3f6fb;
+  --chat-hover-bg: #f1f5f9;
+
+  /* النصوص */
+  --chat-text: #334155;
+  --chat-text-secondary: #64748b;
+  --chat-text-muted: #94a3b8;
+
+  /* الحدود والظلال */
+  --chat-border: #e2e8f0;
+  --chat-overlay: rgba(15, 23, 42, 0.55);
+  --chat-window-shadow: 0 20px 60px rgba(15, 23, 42, 0.2);
+  --chat-message-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
+}
+
+/* =========================================
+   2. OVERLAY - خلفية النافذة
+   ========================================= */
+
+.batch-chat-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--chat-overlay);
+  backdrop-filter: blur(3px);
+}
+
+/* =========================================
+   3. CHAT WINDOW - نافذة المحادثة
+   ========================================= */
+
+.batch-chat-window {
+  width: 100%;
+  max-width: 820px;
+  height: min(720px, 85vh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--chat-bg);
+  border-radius: 18px;
+  box-shadow: var(--chat-window-shadow);
+}
+
+/* =========================================
+   4. HEADER - رأس المحادثة
+   ========================================= */
+
+.batch-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 22px;
+  background: var(--chat-bg);
+  border-bottom: 1px solid var(--chat-border);
+}
+
+.batch-chat-group-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.batch-chat-avatar {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--chat-primary-light);
+  color: var(--chat-primary);
+}
+
+.batch-chat-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--chat-primary);
+}
+
+.batch-chat-subtitle {
+  margin: 5px 0 0;
+  font-size: 12px;
+  color: var(--chat-text-secondary);
+}
+
+/* =========================================
+   5. CLOSE BUTTON - زر الإغلاق
+   ========================================= */
+
+.batch-chat-close {
+  border: none;
+  background: transparent;
+  color: var(--chat-text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+}
+
+.batch-chat-close:hover {
+  background: var(--chat-hover-bg);
+  color: var(--chat-primary);
+}
+
+/* =========================================
+   6. MESSAGES AREA - منطقة الرسائل
+   ========================================= */
+
+.batch-chat-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  background-color: var(--chat-messages-bg);
+}
+
+/* =========================================
+   7. MESSAGE BUBBLE - فقاعة الرسالة
+   ========================================= */
+
+.batch-chat-message {
+  align-self: flex-start;
+  max-width: 78%;
+  padding: 12px 16px;
+  background: var(--chat-bg);
+  border: 1px solid var(--chat-border);
+  border-radius: 14px 14px 14px 4px;
+  box-shadow: var(--chat-message-shadow);
+  overflow-wrap: anywhere;
+}
+
+.batch-chat-sender {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: var(--chat-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.batch-chat-content {
+  margin: 0;
+  color: var(--chat-text);
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+/* =========================================
+   8. ATTACHMENTS - المرفقات
+   ========================================= */
+
+.batch-chat-attachment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--chat-text-secondary);
+  font-size: 12px;
+}
+
+/* =========================================
+   9. MESSAGE TIME - وقت الرسالة
+   ========================================= */
+
+.batch-chat-time {
+  display: block;
+  margin-top: 8px;
+  color: var(--chat-text-muted);
+  font-size: 11px;
+  text-align: left;
+}
+
+/* =========================================
+   10. FOOTER - شريط الإشراف
+   ========================================= */
+
+.batch-chat-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  background: var(--chat-bg);
+  border-top: 1px solid var(--chat-border);
+  color: var(--chat-text-secondary);
+  font-size: 12px;
+}
+
+/* =========================================
+   11. STATES - التحميل والرسائل الفارغة
+   ========================================= */
+
+.batch-chat-state {
+  margin: auto;
+  text-align: center;
+  color: var(--chat-text-secondary);
+  font-size: 14px;
+}
+
+/* =========================================
+   12. RESPONSIVE - الشاشات الصغيرة
+   ========================================= */
+
+@media (max-width: 600px) {
+  .batch-chat-overlay {
+    padding: 8px;
+  }
+
+  .batch-chat-window {
+    height: 94vh;
+    max-height: 94vh;
+    border-radius: 12px;
+  }
+
+  .batch-chat-header {
+    padding: 14px;
+  }
+
+  .batch-chat-messages {
+    padding: 14px;
+  }
+
+  .batch-chat-message {
+    max-width: 92%;
+  }
+
+  .batch-chat-title {
+    font-size: 14px;
+  }
+}

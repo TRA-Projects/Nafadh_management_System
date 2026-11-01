@@ -4,7 +4,11 @@
     {
         public int ProgressId { get; set; }
 
-        public int TraineeId { get; set; }
+        // Trainee
+        public int? TraineeId { get; set; }
+
+        // Trainer
+        public int? TrainerId { get; set; }
 
         public string GuideKey { get; set; } = string.Empty;
 

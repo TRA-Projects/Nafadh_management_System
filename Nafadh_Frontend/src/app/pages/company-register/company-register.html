@@ -40,17 +40,6 @@
           </div>
 
           <div class="field">
-            <label for="city">المدينة</label>
-            <input id="city" class="nfd-input" type="text" formControlName="city" list="cities"
-                   autocomplete="address-level2" [attr.aria-invalid]="errorOf('city') ? 'true' : null"
-                   aria-describedby="city-err" />
-            <datalist id="cities">
-              @for (c of cities; track c) { <option [value]="c"></option> }
-            </datalist>
-            <span class="field-err" id="city-err" role="alert">{{ errorOf('city') }}</span>
-          </div>
-
-          <div class="field">
             <label for="phone">هاتف الشركة</label>
             <input id="phone" class="nfd-input ltr" type="tel" formControlName="phone" placeholder="+968 24123456"
                    autocomplete="tel" [attr.aria-invalid]="errorOf('phone') ? 'true' : null"
@@ -58,8 +47,16 @@
             <span class="field-err" id="phone-err" role="alert">{{ errorOf('phone') }}</span>
           </div>
 
+          <div class="field">
+            <label for="capacity">الطاقة الاستيعابية (عدد المتدربين المتوقع)</label>
+            <input id="capacity" class="nfd-input ltr" type="number" min="0" max="100000" formControlName="capacity"
+                   inputmode="numeric" [attr.aria-invalid]="errorOf('capacity') ? 'true' : null"
+                   aria-describedby="capacity-err" />
+            <span class="field-err" id="capacity-err" role="alert">{{ errorOf('capacity') }}</span>
+          </div>
+
           <div class="field full">
-            <label for="address">العنوان</label>
+            <label for="address">العنوان (المدينة والمنطقة)</label>
             <input id="address" class="nfd-input" type="text" formControlName="address"
                    autocomplete="street-address" [attr.aria-invalid]="errorOf('address') ? 'true' : null"
                    aria-describedby="address-err" />
@@ -68,15 +65,15 @@
         </fieldset>
 
         <fieldset>
-          <legend>مشرف الشركة</legend>
-          <p class="hint full">بريد المشرف هو بريد الدخول، وتصله عليه كلمة المرور بعد اعتماد الطلب.</p>
+          <legend>مسؤول الشركة</legend>
+          <p class="hint full">بريد المسؤول هو بريد الدخول، وتصله عليه كلمة المرور بعد اعتماد الطلب.</p>
 
           <div class="field">
-            <label for="supervisorName">الاسم الكامل</label>
-            <input id="supervisorName" class="nfd-input" type="text" formControlName="supervisorName"
-                   autocomplete="name" [attr.aria-invalid]="errorOf('supervisorName') ? 'true' : null"
-                   aria-describedby="supervisorName-err" />
-            <span class="field-err" id="supervisorName-err" role="alert">{{ errorOf('supervisorName') }}</span>
+            <label for="contactName">الاسم الكامل</label>
+            <input id="contactName" class="nfd-input" type="text" formControlName="contactName"
+                   autocomplete="name" [attr.aria-invalid]="errorOf('contactName') ? 'true' : null"
+                   aria-describedby="contactName-err" />
+            <span class="field-err" id="contactName-err" role="alert">{{ errorOf('contactName') }}</span>
           </div>
 
           <div class="field">

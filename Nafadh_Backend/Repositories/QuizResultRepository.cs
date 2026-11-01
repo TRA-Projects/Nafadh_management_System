@@ -1,5 +1,9 @@
 ﻿
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -13,7 +17,9 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // عرض نتائج اختبارات المدرب
+        // ==========================================
+        // 1. عرض نتائج اختبارات المدرب
+        // ==========================================
         public async Task<List<NFD_QuizAttempt>> GetTrainerResultsAsync(
             int trainerId,
             int? quizId = null)
@@ -21,7 +27,7 @@ namespace Nafadh_Backend.Repositories
             var query = _context.NFD_QuizAttempts
                 .AsNoTracking()
                 .Include(a => a.Quiz)
-    .ThenInclude(q => q.Batch)
+                    .ThenInclude(q => q.Batch)
                 .Include(a => a.Trainee)
                     .ThenInclude(t => t.User)
                 .Include(a => a.AttemptQuestions)
@@ -43,46 +49,85 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
         }
 
-        // الحفاظ على نتائج المتدرب الحالية
-
+        // ==========================================
+        // 2. نتائج المتدرب لنفسه
+        // الحفاظ على سياسة عرض النتائج الحالية
+        // ==========================================
         public async Task<List<NFD_QuizAttempt>> GetTraineeResultsAsync(
             int traineeId)
         {
             return await _context.NFD_QuizAttempts
                 .AsNoTracking()
                 .Include(a => a.Quiz)
-    .ThenInclude(q => q.Batch)
+                    .ThenInclude(q => q.Batch)
                 .Include(a => a.Trainee)
                     .ThenInclude(t => t.User)
                 .Where(a =>
                     a.TraineeId == traineeId &&
+                    (
+                        a.Status == "Terminated" ||
 
-(
-    // إظهار المحاولات التي انتهت بسبب المخالفات
-    a.Status == "Terminated" ||
+                        (
+                            (
+                                a.Status == "Submitted" ||
+                                a.Status == "Expired"
+                            ) &&
 
-    // إظهار المحاولات المسلّمة أو المنتهية
-    // بعد اكتمال التصحيح اليدوي للأسئلة المقالية
-    (
-        (a.Status == "Submitted" ||
-         a.Status == "Expired") &&
-        !a.AttemptQuestions.Any(aq =>
-            aq.Question.QuestionType ==
-                Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay &&
-            aq.Answers.Any(answer =>
-                !answer.IsManuallyGraded))
-     )
-)
-)
+                            !a.AttemptQuestions.Any(aq =>
+                                aq.Question.QuestionType ==
+                                    NFD_QuizQuestionType.Essay &&
+
+                                aq.Answers.Any(answer =>
+                                    !answer.IsManuallyGraded))
+                        )
+                    ))
                 .OrderByDescending(a => a.SubmittedAt)
                 .ToListAsync();
         }
 
+        // ==========================================
+        // 3. جميع نتائج المتدرب للأدمن
+        // هذه الدالة تحل مشكلة ظهور []
+        // ==========================================
+        public async Task<List<NFD_QuizAttempt>>
+            GetAdminTraineeResultsAsync(int traineeId)
+        {
+            return await _context.NFD_QuizAttempts
+                .AsNoTracking()
 
-        // تفاصيل محاولة المتدرب للمدرب المالك للاختبار
-        public async Task<NFD_QuizAttempt?> GetTrainerAttemptDetailsAsync(
-            int attemptId,
-            int trainerId)
+                // نحدد المتدرب فقط، بدون استبعاد
+                // Graded أو Pending أو باقي الحالات
+                .Where(a => a.TraineeId == traineeId)
+
+                // معلومات الاختبار والدفعة
+                .Include(a => a.Quiz)
+                    .ThenInclude(q => q.Batch)
+
+                // بيانات المتدرب
+                .Include(a => a.Trainee)
+                    .ThenInclude(t => t.User)
+
+                // الأسئلة المطلوبة لحساب اكتمال التصحيح
+                .Include(a => a.AttemptQuestions)
+                    .ThenInclude(aq => aq.Question)
+
+                // الإجابات والتصحيح اليدوي
+                .Include(a => a.AttemptQuestions)
+                    .ThenInclude(aq => aq.Answers)
+
+                .AsSplitQuery()
+                .OrderByDescending(a => a.StartedAt)
+                .ThenByDescending(a => a.AttemptId)
+                .ToListAsync();
+        }
+
+        // ==========================================
+        // 4. تفاصيل محاولة للمدرب
+        // ==========================================
+        public async Task<NFD_QuizAttempt?>
+            GetTrainerAttemptDetailsAsync(
+                int attemptId,
+                int trainerId)
         {
             return await _context.NFD_QuizAttempts
                 .AsNoTracking()

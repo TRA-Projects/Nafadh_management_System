@@ -1,10 +1,22 @@
+
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  inject
+} from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { catchError, forkJoin, of } from 'rxjs';
 
 import * as XLSX from 'xlsx';
 import html2pdf from 'html2pdf.js';
 
+import { CompanyApi } from '../../services/company-api';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 type ReportTab =
   | 'att'
@@ -14,241 +26,1182 @@ type ReportTab =
   | 'tasks'
   | 'compare';
 
+interface AttendanceWeek {
+  label: string;
+  value: number;
+}
+
+interface AttendanceDepartment {
+  department: string;
+  trainees: number;
+  attendance: number;
+  absence: number;
+  late: number;
+  evaluation: string;
+  status: string;
+}
+
+interface AchievementProgram {
+  id: number;
+  name: string;
+  value: number;
+}
+
+interface CapacityProgram {
+  name: string;
+  capacity: number;
+  used: number;
+  remaining: number;
+  percentage: number;
+}
+
+interface EvaluationReport {
+  supervisor: string;
+  department: string;
+  required: number;
+  late: number;
+  lastEvaluation: string;
+  status: string;
+  statusClass: string;
+}
+
+interface TaskReport {
+  id: number;
+  task: string;
+  program: string;
+  due: string;
+  priority: string;
+  status: string;
+  submissionsCount: number;
+}
+
+interface SupervisorReport {
+  id?: number | string;
+  name: string;
+  department: string;
+  trainees: number;
+  attendance: number | null;
+  performance: number | null;
+  pendingEvaluations: number | null;
+  overall: string;
+  statusClass: string;
+}
+
+interface ComparisonDepartment {
+  name: string;
+  value: number;
+}
+
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule
-  ],
+  imports: [CommonModule, FormsModule],
   templateUrl: './reports.html',
   styleUrls: ['./reports.scss']
 })
-export class ReportsComponent {
+export class ReportsComponent implements OnInit {
 
+  private readonly companyApi = inject(CompanyApi);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
+
+  companyId = 0;
+  errorMessage = '';
   activeTab: ReportTab = 'att';
 
-  attendanceWeeks = [
-    { label: 'الأسبوع 27', value: 95.1 },
-    { label: 'الأسبوع 28', value: 93.4 },
-    { label: 'الأسبوع 29', value: 96.8 },
-    { label: 'الأسبوع 30', value: 92.7 },
-    { label: 'الأسبوع 31', value: 94.5 },
-    { label: 'الأسبوع 32', value: 95.6 }
-  ];
+  loading = false;
+  exporting = false;
+  tasksLoading = false;
 
-  attendanceDepartments = [
-    {
-      department: 'تقنية المعلومات',
-      trainees: 46,
-      attendance: 96,
-      absence: 4,
-      late: 8,
-      evaluation: 'ممتاز',
-      status: 'ok'
-    },
-    {
-      department: 'الموارد البشرية',
-      trainees: 12,
-      attendance: 95,
-      absence: 2,
-      late: 3,
-      evaluation: 'ممتاز',
-      status: 'ok'
-    },
-    {
-      department: 'العمليات',
-      trainees: 24,
-      attendance: 91,
-      absence: 5,
-      late: 9,
-      evaluation: 'جيد',
-      status: 'warn'
-    },
-    {
-      department: 'التسويق',
-      trainees: 8,
-      attendance: 78,
-      absence: 6,
-      late: 7,
-      evaluation: 'يحتاج متابعة',
-      status: 'bad'
+  // بيانات التقارير الفعلية
+  topPerformers: any[] = [];
+  atRiskTrainees: any[] = [];
+  programDistribution: any[] = [];
+
+  // =====================================================
+  // 1. الحضور
+  // =====================================================
+
+  attendanceProgramsCards: {
+    name: string;
+    value: number;
+  }[] = [];
+
+  attendanceWeeks: AttendanceWeek[] = [];
+
+  attendanceDepartments: AttendanceDepartment[] = [];
+
+  // =====================================================
+  // 2. الإنجاز
+  // =====================================================
+
+  achievementPrograms: AchievementProgram[] = [];
+
+  // =====================================================
+  // 3. الطاقة الاستيعابية
+  // =====================================================
+
+  capacityPrograms: CapacityProgram[] = [];
+
+  get totalCapacity(): number {
+    return this.capacityPrograms.reduce(
+      (sum, item) => sum + item.capacity,
+      0
+    );
+  }
+
+  get usedCapacity(): number {
+    return this.capacityPrograms.reduce(
+      (sum, item) => sum + item.used,
+      0
+    );
+  }
+
+  get remainingCapacity(): number {
+    return this.capacityPrograms.reduce(
+      (sum, item) => sum + item.remaining,
+      0
+    );
+  }
+
+  get capacityPercentage(): number {
+    return this.totalCapacity > 0
+      ? Math.round(
+          (this.usedCapacity / this.totalCapacity) * 100
+        )
+      : 0;
+  }
+
+  // =====================================================
+  // 4. التقييمات
+  // =====================================================
+
+  evaluations: EvaluationReport[] = [];
+
+  // =====================================================
+  // 5. المهام - بيانات فعلية من API
+  // =====================================================
+
+  tasks: TaskReport[] = [];
+
+  taskStats = {
+    total: 0,
+    completed: 0,
+    pending: 0,
+    review: 0,
+    late: 0,
+    completionRate: 0
+  };
+
+  get taskTotalCount(): number {
+    return this.taskStats.total;
+  }
+
+  get taskPendingCount(): number {
+    return this.taskStats.pending;
+  }
+
+  get taskReviewCount(): number {
+    return this.taskStats.review;
+  }
+
+  get taskLateCount(): number {
+    return this.taskStats.late;
+  }
+
+  get taskCompletedCount(): number {
+    return this.taskStats.completed;
+  }
+
+  // =====================================================
+  // 6. مقارنة المشرفين
+  // =====================================================
+
+  supervisors: SupervisorReport[] = [];
+
+  comparisonDepartments: ComparisonDepartment[] = [];
+
+  // =====================================================
+  // 7. بدء التشغيل
+  // =====================================================
+
+  ngOnInit(): void {
+
+    const id = this.auth.companyId;
+
+    if (id === null || id === undefined || id <= 0) {
+      this.errorMessage =
+        'تعذر تحديد الشركة من جلسة الدخول. يرجى إعادة تسجيل الدخول.';
+      return;
     }
-  ];
 
-  achievementPrograms = [
-    { name: 'تطوير تطبيقات الويب', value: 88 },
-    { name: 'تحليل البيانات', value: 84 },
-    { name: 'الأمن السيبراني', value: 82 },
-    { name: 'الدعم الفني', value: 79 },
-    { name: 'التصميم الجرافيكي', value: 90 }
-  ];
+    this.companyId = id;
+    this.loadAllReportsData();
+  }
 
-  capacityPrograms = [
-    {
-      name: 'تطوير تطبيقات الويب',
-      capacity: 60,
-      used: 54,
-      remaining: 6,
-      percentage: 90
-    },
-    {
-      name: 'تحليل البيانات',
-      capacity: 40,
-      used: 38,
-      remaining: 2,
-      percentage: 95
-    },
-    {
-      name: 'الأمن السيبراني',
-      capacity: 25,
-      used: 24,
-      remaining: 1,
-      percentage: 96
-    },
-    {
-      name: 'الدعم الفني',
-      capacity: 15,
-      used: 8,
-      remaining: 7,
-      percentage: 53
-    },
-    {
-      name: 'التصميم الجرافيكي',
-      capacity: 10,
-      used: 4,
-      remaining: 6,
-      percentage: 40
+  // =====================================================
+  // 8. تحميل جميع التقارير
+  // =====================================================
+
+  loadAllReportsData(): void {
+
+    if (!this.companyId) {
+      return;
     }
-  ];
 
-  evaluations = [
-    {
-      supervisor: 'خالد المعمري',
-      department: 'تقنية المعلومات',
-      required: 3,
-      late: 2,
-      lastEvaluation: '05 أغسطس 2026',
-      status: 'متأخر',
-      statusClass: 'bad'
-    },
-    {
-      supervisor: 'سعاد الشامسية',
-      department: 'الموارد البشرية',
-      required: 2,
-      late: 1,
-      lastEvaluation: '06 أغسطس 2026',
-      status: 'قريب من الموعد',
-      statusClass: 'warn'
-    },
-    {
-      supervisor: 'طارق السالمي',
-      department: 'الأمن السيبراني',
-      required: 4,
-      late: 1,
-      lastEvaluation: '04 أغسطس 2026',
-      status: 'قريب من الموعد',
-      statusClass: 'warn'
+    this.loading = true;
+    this.errorMessage = '';
+
+    // تحميل المهام بشكل مستقل
+    this.loadTasksReport();
+
+    forkJoin({
+
+      capacity: this.companyApi
+        .getCompanyCapacitySummary(this.companyId)
+        .pipe(
+          catchError(error => {
+            console.error('Capacity API:', error);
+            return of(null);
+          })
+        ),
+
+      attendanceChart: this.companyApi
+        .getAttendanceChart(this.companyId)
+        .pipe(
+          catchError(error => {
+            console.error('Attendance chart API:', error);
+            return of(null);
+          })
+        ),
+
+      attendanceReport: this.companyApi
+        .getCompanyAttendanceReport(this.companyId)
+        .pipe(
+          catchError(error => {
+            console.error('Attendance report API:', error);
+            return of(null);
+          })
+        ),
+
+      supervisors: this.companyApi
+        .getSupervisors(this.companyId)
+        .pipe(
+          catchError(error => {
+            console.error('Supervisors API:', error);
+            return of(null);
+          })
+        ),
+
+      enrollments: this.companyApi
+        .getEnrollmentsByCompany(this.companyId)
+        .pipe(
+          catchError(error => {
+            console.error('Enrollments API:', error);
+            return of(null);
+          })
+        ),
+
+      distribution: this.companyApi
+        .getProgramDistribution(this.companyId)
+        .pipe(
+          catchError(error => {
+            console.error('Program distribution API:', error);
+            return of(null);
+          })
+        ),
+
+      topPerformers: this.companyApi
+        .getTopPerformers(this.companyId)
+        .pipe(
+          catchError(error => {
+            console.error('Top performers API:', error);
+            return of(null);
+          })
+        ),
+
+      atRisk: this.companyApi
+        .getAtRiskTrainees(this.companyId)
+        .pipe(
+          catchError(error => {
+            console.error('At risk API:', error);
+            return of(null);
+          })
+        )
+
+    }).subscribe({
+
+      next: result => {
+
+        this.buildCapacity(result.capacity);
+
+        this.buildAttendanceChart(result.attendanceChart);
+
+        const enrollments = this.extractList(result.enrollments);
+
+        this.buildAttendanceByDepartment(
+          enrollments,
+          result.attendanceReport
+        );
+
+        this.buildSupervisors(
+          result.supervisors,
+          enrollments
+        );
+
+        this.programDistribution =
+          this.extractList(result.distribution);
+
+        this.topPerformers =
+          this.extractList(result.topPerformers);
+
+        this.atRiskTrainees =
+          this.extractList(result.atRisk);
+
+        this.loadAchievement(enrollments);
+
+        this.cdr.detectChanges();
+      },
+
+      error: error => {
+
+        console.error('Reports loading error:', error);
+
+        this.errorMessage = 'حدث خطأ أثناء تحميل التقارير.';
+        this.loading = false;
+
+        this.cdr.detectChanges();
+      }
+
+    });
+  }
+
+  // =====================================================
+  // 9. بناء الطاقة الاستيعابية
+  // =====================================================
+
+  private buildCapacity(response: any): void {
+
+    if (!response) {
+      this.capacityPrograms = [];
+      return;
     }
-  ];
 
-  tasks = [
-    {
-      trainee: 'أحمد بن سعيد البلوشي',
-      task: 'تطوير واجهة المستخدم',
-      due: '10 أغسطس 2026',
-      status: 'review'
-    },
-    {
-      trainee: 'سعيد بن محمد البوسعيدي',
-      task: 'تحليل البيانات',
-      due: '12 أغسطس 2026',
-      status: 'pending'
-    },
-    {
-      trainee: 'عمر بن ناصر الفارسي',
-      task: 'اختبار النظام',
-      due: '08 أغسطس 2026',
-      status: 'late'
+    const total = this.toNumber(
+      response.total ?? response.Total
+    );
+
+    const used = this.toNumber(
+      response.used ?? response.Used
+    );
+
+    const remaining = this.toNumber(
+      response.remaining ??
+      response.Remaining ??
+      Math.max(0, total - used)
+    );
+
+    this.capacityPrograms = [{
+      name: 'إجمالي الطاقة الاستيعابية للشركة',
+      capacity: total,
+      used,
+      remaining,
+      percentage: total > 0
+        ? Math.round((used / total) * 100)
+        : 0
+    }];
+  }
+
+  // =====================================================
+  // 10. بناء مخطط الحضور
+  // =====================================================
+
+  private buildAttendanceChart(response: any): void {
+
+    const weeks = Array.isArray(response)
+      ? response
+      : this.extractList(
+          response?.weeks ??
+          response?.Weeks
+        );
+
+    this.attendanceWeeks = weeks.map(
+      (week: any, index: number): AttendanceWeek => ({
+
+        label: String(
+          week?.label ??
+          week?.Label ??
+          week?.week ??
+          week?.Week ??
+          `الأسبوع ${index + 1}`
+        ),
+
+        value: this.clampPercentage(
+          week?.value ??
+          week?.Value ??
+          week?.attendance ??
+          week?.Attendance ??
+          week?.attendanceRate ??
+          week?.AttendanceRate ??
+          0
+        )
+
+      })
+    );
+  }
+
+  // =====================================================
+  // 11. بناء الحضور حسب القسم
+  // =====================================================
+
+  private buildAttendanceByDepartment(
+    enrollments: any[],
+    report: any
+  ): void {
+
+    const rows = this.extractList(
+      report?.rows ??
+      report?.Rows ??
+      report?.trainees ??
+      report?.Trainees ??
+      report?.details ??
+      report?.Details ??
+      report
+    );
+
+    if (!rows.length) {
+      this.attendanceDepartments = [];
+      this.attendanceProgramsCards = [];
+      return;
     }
-  ];
 
-  supervisors = [
-    {
-      name: 'خالد المعمري',
-      department: 'تقنية المعلومات',
-      trainees: 24,
-      attendance: 96,
-      performance: 88,
-      pendingEvaluations: 2,
-      overall: 'ممتاز',
-      statusClass: 'ok'
-    },
-    {
-      name: 'سعاد الشامسية',
-      department: 'الموارد البشرية',
-      trainees: 18,
-      attendance: 95,
-      performance: 90,
-      pendingEvaluations: 1,
-      overall: 'ممتاز',
-      statusClass: 'ok'
-    },
-    {
-      name: 'طارق السالمي',
-      department: 'الأمن السيبراني',
-      trainees: 16,
-      attendance: 92,
-      performance: 84,
-      pendingEvaluations: 4,
-      overall: 'جيد',
-      statusClass: 'warn'
-    },
-    {
-      name: 'ليلى الكيومية',
-      department: 'التسويق',
-      trainees: 8,
-      attendance: 78,
-      performance: 62,
-      pendingEvaluations: 2,
-      overall: 'يحتاج متابعة',
-      statusClass: 'bad'
-    },
-    {
-      name: 'ياسر السالمي',
-      department: 'العمليات',
-      trainees: 6,
-      attendance: 90,
-      performance: 81,
-      pendingEvaluations: 0,
-      overall: 'جيد',
-      statusClass: 'warn'
+    const departmentByTrainee = new Map<number, string>();
+
+    enrollments.forEach(enrollment => {
+
+      const traineeId = this.toNumber(
+        enrollment.traineeId ??
+        enrollment.TraineeId
+      );
+
+      const department = String(
+        enrollment.departmentName ??
+        enrollment.DepartmentName ??
+        enrollment.department?.name ??
+        enrollment.Department?.Name ??
+        'غير محدد'
+      );
+
+      if (traineeId > 0) {
+        departmentByTrainee.set(traineeId, department);
+      }
+    });
+
+    const groups = new Map<string, any[]>();
+
+    rows.forEach(row => {
+
+      const traineeId = this.toNumber(
+        row.traineeId ??
+        row.TraineeId
+      );
+
+      const department =
+        departmentByTrainee.get(traineeId) ??
+        String(
+          row.departmentName ??
+          row.DepartmentName ??
+          'غير محدد'
+        );
+
+      if (!groups.has(department)) {
+        groups.set(department, []);
+      }
+
+      groups.get(department)!.push(row);
+    });
+
+    this.attendanceDepartments =
+      Array.from(groups.entries()).map(
+        ([department, items]): AttendanceDepartment => {
+
+          const totalAttendance = items.reduce(
+            (sum, item) =>
+              sum + this.toNumber(
+                item.attendanceRate ??
+                item.AttendanceRate ??
+                item.attendancePercentage ??
+                item.AttendancePercentage
+              ),
+            0
+          );
+
+          const attendance = items.length
+            ? Math.round(totalAttendance / items.length)
+            : 0;
+
+          const absence = items.reduce(
+            (sum, item) =>
+              sum + this.toNumber(
+                item.absentDays ??
+                item.AbsentDays
+              ),
+            0
+          );
+
+          const late = items.reduce(
+            (sum, item) =>
+              sum + this.toNumber(
+                item.lateDays ??
+                item.LateDays
+              ),
+            0
+          );
+
+          return {
+            department,
+            trainees: items.length,
+            attendance,
+            absence,
+            late,
+
+            evaluation: attendance >= 95
+              ? 'ممتاز'
+              : attendance >= 85
+                ? 'جيد'
+                : 'يحتاج متابعة',
+
+            status: attendance >= 95
+              ? 'ok'
+              : attendance >= 85
+                ? 'warn'
+                : 'bad'
+          };
+        }
+      );
+
+    this.attendanceProgramsCards = [];
+  }
+
+  // =====================================================
+  // 12. بناء إنجاز المتدربين
+  // =====================================================
+
+  private loadAchievement(enrollments: any[]): void {
+
+    const validEnrollments = enrollments.filter(
+      item => this.toNumber(
+        item.enrollmentId ??
+        item.EnrollmentId
+      ) > 0
+    );
+
+    if (!validEnrollments.length) {
+      this.achievementPrograms = [];
+      this.loading = false;
+      this.cdr.detectChanges();
+      return;
     }
-  ];
 
-  comparisonDepartments = [
-    { name: 'تقنية المعلومات', value: 96 },
-    { name: 'الموارد البشرية', value: 95 },
-    { name: 'العمليات', value: 91 },
-    { name: 'التسويق', value: 78 }
-  ];
+    const requests = validEnrollments.map(enrollment => {
+
+      const enrollmentId = this.toNumber(
+        enrollment.enrollmentId ??
+        enrollment.EnrollmentId
+      );
+
+      return this.companyApi
+        .getProgressSummary(enrollmentId)
+        .pipe(
+          catchError(error => {
+            console.error(
+              `Progress API error for enrollment ${enrollmentId}:`,
+              error
+            );
+            return of(null);
+          })
+        );
+    });
+
+    forkJoin(requests).subscribe({
+
+      next: summaries => {
+
+        const programs = new Map<
+          string,
+          { id: number; values: number[] }
+        >();
+
+        validEnrollments.forEach((enrollment, index) => {
+
+          const programName = String(
+            enrollment.programTitle ??
+            enrollment.ProgramTitle ??
+            enrollment.program?.title ??
+            enrollment.Program?.Title ??
+            'برنامج غير محدد'
+          );
+
+          const programId = this.toNumber(
+            enrollment.programId ??
+            enrollment.ProgramId
+          );
+
+          if (!programs.has(programName)) {
+            programs.set(programName, {
+              id: programId,
+              values: []
+            });
+          }
+
+          const summary: any = summaries[index];
+
+          if (!summary) {
+            return;
+          }
+
+          const percentage = this.clampPercentage(
+            summary.progressPercentage ??
+            summary.ProgressPercentage ??
+            summary.completionPercentage ??
+            summary.CompletionPercentage ??
+            0
+          );
+
+          programs.get(programName)!.values.push(percentage);
+        });
+
+        this.achievementPrograms =
+          Array.from(programs.entries()).map(
+            ([name, data]): AchievementProgram => ({
+
+              id: data.id,
+              name,
+
+              value: data.values.length
+                ? Math.round(
+                    data.values.reduce((a, b) => a + b, 0) /
+                    data.values.length
+                  )
+                : 0
+
+            })
+          );
+
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+
+      error: error => {
+
+        console.error('Achievement loading error:', error);
+
+        this.achievementPrograms = [];
+        this.loading = false;
+
+        this.cdr.detectChanges();
+      }
+
+    });
+  }
+
+  // =====================================================
+  // 13. بناء بيانات المشرفين
+  // =====================================================
+
+  private buildSupervisors(
+    response: any,
+    enrollments: any[]
+  ): void {
+
+    const list = this.extractList(response);
+
+    this.supervisors = list.map(
+      (supervisor: any): SupervisorReport => {
+
+        const supervisorId = this.toNumber(
+          supervisor.supervisorId ??
+          supervisor.SupervisorId ??
+          supervisor.id ??
+          supervisor.Id
+        );
+
+        const assignedTrainees = enrollments.filter(
+          enrollment => this.toNumber(
+            enrollment.supervisorId ??
+            enrollment.SupervisorId
+          ) === supervisorId
+        ).length;
+
+        return {
+
+          id: supervisorId,
+
+          name: String(
+            supervisor.fullName ??
+            supervisor.FullName ??
+            supervisor.name ??
+            supervisor.Name ??
+            'مشرف غير محدد'
+          ),
+
+          department: String(
+            supervisor.department ??
+            supervisor.Department ??
+            supervisor.departmentName ??
+            supervisor.DepartmentName ??
+            'غير محدد'
+          ),
+
+          trainees: assignedTrainees,
+
+          attendance: null,
+          performance: null,
+          pendingEvaluations: null,
+
+          overall: 'لا تتوفر بيانات كافية',
+          statusClass: 'muted'
+        };
+      }
+    );
+
+    this.comparisonDepartments = [];
+    this.evaluations = [];
+  }
+
+  // =====================================================
+  // 14. تحميل المهام وتسليماتها
+  // =====================================================
+
+  private loadTasksReport(): void {
+
+    this.tasksLoading = true;
+
+    this.companyApi
+      .getTasksByCompany(this.companyId)
+      .pipe(
+        catchError(error => {
+          console.error('Tasks API Error:', error);
+          return of([]);
+        })
+      )
+      .subscribe({
+
+        next: response => {
+
+          const taskList = this.extractList(response);
+
+          if (!taskList.length) {
+
+            this.tasks = [];
+            this.calculateTaskStats();
+
+            this.tasksLoading = false;
+            this.cdr.detectChanges();
+
+            return;
+          }
+
+          // طلب تسليمات كل مهمة
+          const requests = taskList.map((task: any) => {
+
+            const taskId = this.toNumber(
+              task.taskId ??
+              task.TaskId ??
+              task.id ??
+              task.Id
+            );
+
+            if (taskId <= 0) {
+              return of([]);
+            }
+
+            return this.companyApi
+              .getSubmissionsByTask(taskId)
+              .pipe(
+                catchError(error => {
+
+                  console.error(
+                    `Submissions API Error for task ${taskId}:`,
+                    error
+                  );
+
+                  return of([]);
+                })
+              );
+          });
+
+          forkJoin(requests).subscribe({
+
+            next: allSubmissions => {
+
+              this.tasks = taskList.map(
+                (task: any, index: number): TaskReport => {
+
+                  const taskId = this.toNumber(
+                    task.taskId ??
+                    task.TaskId ??
+                    task.id ??
+                    task.Id
+                  );
+
+                  const submissions = this.extractList(
+                    allSubmissions[index]
+                  );
+
+                  const dueDate =
+                    task.dueDate ??
+                    task.DueDate ??
+                    null;
+
+                  const originalStatus = String(
+                    task.status ??
+                    task.Status ??
+                    ''
+                  ).trim().toLowerCase();
+
+                  const status = this.resolveTaskStatus(
+                    originalStatus,
+                    dueDate
+                  );
+
+                  return {
+
+                    id: taskId,
+
+                    task: String(
+                      task.title ??
+                      task.Title ??
+                      'بدون عنوان'
+                    ),
+
+                    program: String(
+                      task.programName ??
+                      task.ProgramName ??
+                      task.batchName ??
+                      task.BatchName ??
+                      'غير محدد'
+                    ),
+
+                    due: dueDate
+                      ? String(dueDate)
+                      : 'غير محدد',
+
+                    priority: String(
+                      task.priority ??
+                      task.Priority ??
+                      'غير محدد'
+                    ),
+
+                    status,
+
+                    submissionsCount: submissions.length
+                  };
+                }
+              );
+
+              this.calculateTaskStats();
+
+              this.tasksLoading = false;
+              this.cdr.detectChanges();
+            },
+
+            error: error => {
+
+              console.error(
+                'Task submissions loading error:',
+                error
+              );
+
+              this.tasksLoading = false;
+              this.cdr.detectChanges();
+            }
+
+          });
+        },
+
+        error: error => {
+
+          console.error('Tasks loading error:', error);
+
+          this.tasks = [];
+          this.calculateTaskStats();
+
+          this.tasksLoading = false;
+          this.cdr.detectChanges();
+        }
+
+      });
+  }
+
+  // =====================================================
+  // 15. تحديد حالة المهمة
+  // =====================================================
+
+  private resolveTaskStatus(
+    originalStatus: string,
+    dueDate: any
+  ): string {
+
+    // الحالات المكتملة
+    const completedStatuses = [
+      'completed',
+      'complete',
+      'done',
+      'مكتمل',
+      'مكتملة'
+    ];
+
+    if (
+      completedStatuses.some(status =>
+        originalStatus.includes(status)
+      )
+    ) {
+      return 'completed';
+    }
+
+    // حالات المراجعة
+    const reviewStatuses = [
+      'review',
+      'under review',
+      'مراجعة',
+      'قيد المراجعة'
+    ];
+
+    if (
+      reviewStatuses.some(status =>
+        originalStatus.includes(status)
+      )
+    ) {
+      return 'review';
+    }
+
+    // حالات التأخير
+    const lateStatuses = [
+      'late',
+      'overdue',
+      'متأخر',
+      'متأخرة'
+    ];
+
+    if (
+      lateStatuses.some(status =>
+        originalStatus.includes(status)
+      )
+    ) {
+      return 'late';
+    }
+
+    // فحص تاريخ التسليم
+    if (dueDate) {
+
+      const due = new Date(dueDate);
+
+      if (!isNaN(due.getTime())) {
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        due.setHours(0, 0, 0, 0);
+
+        if (due.getTime() < today.getTime()) {
+          return 'late';
+        }
+      }
+    }
+
+    return 'pending';
+  }
+
+  // =====================================================
+  // 16. حساب إحصائيات المهام
+  // =====================================================
+
+  private calculateTaskStats(): void {
+
+    const total = this.tasks.length;
+
+    const completed = this.tasks.filter(
+      task => task.status === 'completed'
+    ).length;
+
+    const pending = this.tasks.filter(
+      task => task.status === 'pending'
+    ).length;
+
+    const review = this.tasks.filter(
+      task => task.status === 'review'
+    ).length;
+
+    const late = this.tasks.filter(
+      task => task.status === 'late'
+    ).length;
+
+    this.taskStats = {
+
+      total,
+      completed,
+      pending,
+      review,
+      late,
+
+      completionRate: total > 0
+        ? Math.round((completed / total) * 100)
+        : 0
+    };
+  }
+
+  // =====================================================
+  // 17. أدوات مساعدة للاستجابات
+  // =====================================================
+
+  private extractList(response: any): any[] {
+
+    if (Array.isArray(response)) {
+      return response;
+    }
+
+    if (Array.isArray(response?.data)) {
+      return response.data;
+    }
+
+    if (Array.isArray(response?.Data)) {
+      return response.Data;
+    }
+
+    if (Array.isArray(response?.items)) {
+      return response.items;
+    }
+
+    if (Array.isArray(response?.Items)) {
+      return response.Items;
+    }
+
+    if (Array.isArray(response?.$values)) {
+      return response.$values;
+    }
+
+    return [];
+  }
+
+  private toNumber(value: unknown): number {
+
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
+      return 0;
+    }
+
+    const result = Number(value);
+
+    return Number.isFinite(result) ? result : 0;
+  }
+
+  private clampPercentage(value: unknown): number {
+
+    return Math.min(
+      100,
+      Math.max(0, this.toNumber(value))
+    );
+  }
+
+  // =====================================================
+  // 18. التبويبات
+  // =====================================================
 
   selectTab(tab: ReportTab): void {
     this.activeTab = tab;
   }
 
-  // =========================================================
-  // تصدير Excel
-  // =========================================================
+  // =====================================================
+  // 19. حالات المهام
+  // =====================================================
+
+  getTaskStatusClass(status: string): string {
+
+    switch (status) {
+
+      case 'review':
+        return 'info';
+
+      case 'pending':
+        return 'warn';
+
+      case 'late':
+        return 'bad';
+
+      case 'completed':
+        return 'ok';
+
+      default:
+        return 'muted';
+    }
+  }
+
+  getTaskStatusText(status: string): string {
+
+    switch (status) {
+
+      case 'review':
+        return 'قيد المراجعة';
+
+      case 'pending':
+        return 'قيد التنفيذ';
+
+      case 'late':
+        return 'متأخرة';
+
+      case 'completed':
+        return 'مكتملة';
+
+      default:
+        return 'غير محددة';
+    }
+  }
+
+  // =====================================================
+  // 20. تفاصيل البرنامج
+  // =====================================================
+
+  viewProgramOrTraineeDetails(
+    program: AchievementProgram,
+    event?: Event
+  ): void {
+
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    if (!program?.id) {
+      alert('لا يتوفر معرّف لهذا البرنامج.');
+      return;
+    }
+
+    this.router.navigate(
+      ['/company/trainees'],
+      {
+        queryParams: {
+          programId: program.id
+        }
+      }
+    );
+  }
+
+  // =====================================================
+  // 21. تصدير Excel
+  // =====================================================
 
   exportExcel(): void {
 
-    let data: any[] = [];
+    let data: Record<string, string | number>[] = [];
     let fileName = 'Nafadh_Report';
 
     switch (this.activeTab) {
 
       case 'att':
+
         data = this.attendanceDepartments.map(item => ({
           'القسم': item.department,
           'عدد المتدربين': item.trainees,
@@ -262,6 +1215,7 @@ export class ReportsComponent {
         break;
 
       case 'achieve':
+
         data = this.achievementPrograms.map(item => ({
           'البرنامج': item.name,
           'نسبة الإنجاز': `${item.value}%`
@@ -271,6 +1225,7 @@ export class ReportsComponent {
         break;
 
       case 'cap':
+
         data = this.capacityPrograms.map(item => ({
           'البرنامج': item.name,
           'الحصة المخصصة': item.capacity,
@@ -283,6 +1238,7 @@ export class ReportsComponent {
         break;
 
       case 'eval':
+
         data = this.evaluations.map(item => ({
           'المشرف': item.supervisor,
           'القسم': item.department,
@@ -296,24 +1252,37 @@ export class ReportsComponent {
         break;
 
       case 'tasks':
+
         data = this.tasks.map(item => ({
-          'المتدرب': item.trainee,
-          'المهمة': item.task,
-          'الموعد': item.due,
-          'الحالة': this.getTaskStatusText(item.status)
+          'اسم المهمة': item.task,
+          'البرنامج أو الدفعة': item.program,
+          'تاريخ التسليم': item.due,
+          'الأولوية': item.priority,
+          'الحالة': this.getTaskStatusText(item.status),
+          'عدد التسليمات': item.submissionsCount
         }));
 
         fileName = 'Nafadh_Tasks_Report';
         break;
 
       case 'compare':
+
         data = this.supervisors.map(item => ({
           'المشرف': item.name,
           'القسم': item.department,
           'المتدربون': item.trainees,
-          'معدل الحضور': `${item.attendance}%`,
-          'متوسط الأداء': `${item.performance}%`,
-          'تقييمات معلقة': item.pendingEvaluations,
+
+          'معدل الحضور': item.attendance === null
+            ? 'غير متاح'
+            : `${item.attendance}%`,
+
+          'متوسط الأداء': item.performance === null
+            ? 'غير متاح'
+            : `${item.performance}%`,
+
+          'تقييمات معلقة':
+            item.pendingEvaluations ?? 'غير متاح',
+
           'الأداء العام': item.overall
         }));
 
@@ -322,236 +1291,197 @@ export class ReportsComponent {
     }
 
     if (!data.length) {
-      alert('لا توجد بيانات لتصديرها.');
+      alert('لا توجد بيانات فعلية متاحة لتصديرها في هذا التقرير.');
       return;
     }
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
+    try {
 
-    // ضبط عرض الأعمدة
-    const columnWidths = Object.keys(data[0]).map(key => {
-      const maxLength = Math.max(
-        key.length,
-        ...data.map(row => String(row[key] ?? '').length)
+      const worksheet = XLSX.utils.json_to_sheet(data);
+
+      worksheet['!cols'] = Object.keys(data[0]).map(key => {
+
+        const lengths = data.map(row =>
+          String(row[key] ?? '').length
+        );
+
+        return {
+          wch: Math.min(
+            Math.max(key.length, ...lengths) + 3,
+            35
+          )
+        };
+      });
+
+      worksheet['!views'] = [
+        { rightToLeft: true }
+      ];
+
+      const workbook = XLSX.utils.book_new();
+
+      XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        'التقرير'
       );
 
-      return {
-        wch: Math.min(Math.max(maxLength + 3, 12), 35)
-      };
+      XLSX.writeFile(
+        workbook,
+        `${fileName}.xlsx`
+      );
+
+    } catch (error) {
+
+      console.error('Excel export error:', error);
+      alert('حدث خطأ أثناء إنشاء ملف Excel.');
+    }
+  }
+
+  // =====================================================
+  // 22. تصدير PDF
+  // =====================================================
+
+  exportPdf(): void {
+
+    const source = document.querySelector(
+      '.reports-page'
+    ) as HTMLElement | null;
+
+    if (!source) {
+      alert('تعذر العثور على محتوى التقرير.');
+      return;
+    }
+
+    const clone = source.cloneNode(true) as HTMLElement;
+
+    clone.querySelector('.page-head')?.remove();
+    clone.querySelector('.tabs')?.remove();
+
+    clone.querySelectorAll('button').forEach(button => {
+      button.remove();
     });
 
-    worksheet['!cols'] = columnWidths;
+    clone.setAttribute('dir', 'rtl');
+    clone.style.direction = 'rtl';
+    clone.style.textAlign = 'right';
+    clone.style.background = '#ffffff';
+    clone.style.color = '#111827';
+    clone.style.width = '1120px';
+    clone.style.padding = '20px';
+    clone.style.boxSizing = 'border-box';
 
-    const workbook = XLSX.utils.book_new();
+    const reportNames: Record<ReportTab, string> = {
 
-    XLSX.utils.book_append_sheet(
-      workbook,
-      worksheet,
-      'التقرير'
-    );
+      att: 'تقرير حضور المتدربين للبرامج',
+      achieve: 'تقرير إنجاز المتدربين',
+      cap: 'تقرير الطاقة الاستيعابية',
+      eval: 'تقرير التقييمات',
+      tasks: 'تقرير المهام',
+      compare: 'تقرير مقارنة الأقسام والمشرفين'
 
-    XLSX.writeFile(
-      workbook,
-      `${fileName}.xlsx`
-    );
-  }
+    };
 
-  // =========================================================
-// تصدير PDF عربي
-// =========================================================
-exportPdf(): void {
-  const source = document.querySelector('.reports-page') as HTMLElement | null;
+    const reportName = reportNames[this.activeTab];
 
-  if (!source) {
-    alert('تعذر العثور على محتوى التقرير.');
-    return;
-  }
+    const title = document.createElement('div');
 
-  const clone = source.cloneNode(true) as HTMLElement;
+    title.style.direction = 'rtl';
+    title.style.textAlign = 'center';
+    title.style.marginBottom = '25px';
+    title.style.paddingBottom = '15px';
+    title.style.borderBottom = '2px solid #00338d';
 
-  // إزالة عناصر الواجهة التي لا نريدها داخل PDF
-  clone.querySelector('.page-head')?.remove();
-  clone.querySelector('.tabs')?.remove();
+    const heading = document.createElement('h1');
 
-  // إزالة جميع الأزرار من التقرير
-  clone.querySelectorAll('button').forEach(button => {
-    button.remove();
-  });
+    heading.textContent = reportName;
+    heading.style.margin = '0 0 8px';
+    heading.style.fontSize = '24px';
+    heading.style.color = '#00338d';
 
-  // إعداد الصفحة للغة العربية
-  clone.setAttribute('dir', 'rtl');
+    const systemName = document.createElement('div');
 
-  clone.style.direction = 'rtl';
-  clone.style.textAlign = 'right';
-  clone.style.background = '#ffffff';
-  clone.style.color = '#111827';
-  clone.style.width = '1120px';
-  clone.style.padding = '20px';
-  clone.style.boxSizing = 'border-box';
+    systemName.textContent = 'نظام نفاذ لإدارة التدريب';
+    systemName.style.fontSize = '13px';
+    systemName.style.color = '#64748b';
 
-  // ضمان اتجاه الجداول
-  clone.querySelectorAll('table').forEach(table => {
-    const element = table as HTMLElement;
-    element.style.direction = 'rtl';
-    element.style.width = '100%';
-  });
+    const reportDate = document.createElement('div');
 
-  // اسم التقرير حسب التبويب الحالي
-  let reportName = 'تقرير نفاذ';
+    reportDate.textContent =
+      `تاريخ التقرير: ${new Date().toLocaleDateString('ar-OM')}`;
 
-  switch (this.activeTab) {
-    case 'att':
-      reportName = 'تقرير حضور الشركة';
-      break;
+    reportDate.style.marginTop = '5px';
+    reportDate.style.fontSize = '12px';
+    reportDate.style.color = '#64748b';
 
-    case 'achieve':
-      reportName = 'تقرير إنجاز المتدربين';
-      break;
+    title.append(heading, systemName, reportDate);
 
-    case 'cap':
-      reportName = 'تقرير الطاقة الاستيعابية';
-      break;
+    clone.insertBefore(title, clone.firstChild);
 
-    case 'eval':
-      reportName = 'تقرير التقييمات';
-      break;
+    clone.querySelectorAll('table').forEach(table => {
 
-    case 'tasks':
-      reportName = 'تقرير المهام';
-      break;
+      table.style.direction = 'rtl';
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
 
-    case 'compare':
-      reportName = 'تقرير مقارنة الأقسام والمشرفين';
-      break;
-  }
-
-  // عنوان التقرير
-  const title = document.createElement('div');
-
-  title.style.direction = 'rtl';
-  title.style.textAlign = 'center';
-  title.style.marginBottom = '25px';
-  title.style.paddingBottom = '15px';
-  title.style.borderBottom = '2px solid #00338d';
-
-  title.innerHTML = `
-    <h1 style="
-      margin: 0 0 8px 0;
-      font-size: 24px;
-      font-weight: 700;
-      color: #00338d;
-    ">
-      ${reportName}
-    </h1>
-
-    <div style="
-      font-size: 13px;
-      color: #64748b;
-    ">
-      نظام نفاذ لإدارة التدريب
-    </div>
-
-    <div style="
-      margin-top: 5px;
-      font-size: 12px;
-      color: #94a3b8;
-    ">
-      تاريخ التقرير: ${new Date().toLocaleDateString('ar-OM')}
-    </div>
-  `;
-
-  clone.insertBefore(title, clone.firstChild);
-
-  // إنشاء حاوية مؤقتة
-  const wrapper = document.createElement('div');
-
-  wrapper.style.position = 'absolute';
-  wrapper.style.left = '-10000px';
-  wrapper.style.top = '0';
-  wrapper.style.width = '1160px';
-  wrapper.style.background = '#ffffff';
-  wrapper.style.padding = '20px';
-  wrapper.style.boxSizing = 'border-box';
-
-  wrapper.appendChild(clone);
-  document.body.appendChild(wrapper);
-
-  const options = {
-    margin: 10,
-
-    filename: `${reportName}.pdf`,
-
-    image: {
-      type: 'jpeg' as const,
-      quality: 0.98
-    },
-
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false
-    },
-
-    jsPDF: {
-      unit: 'mm' as const,
-      format: 'a4' as const,
-      orientation: 'landscape' as const
-    },
-
-    pagebreak: {
-      mode: ['css', 'legacy'] as const
-    }
-  };
-
-  html2pdf()
-    .set(options)
-    .from(clone)
-    .save()
-    .then(() => {
-      wrapper.remove();
-    })
-    .catch((error: unknown) => {
-      console.error('PDF export error:', error);
-
-      wrapper.remove();
-
-      alert('حدث خطأ أثناء إنشاء ملف PDF.');
     });
-}
-  // =========================================================
-  // حالة المهام
-  // =========================================================
 
-  getTaskStatusClass(status: string): string {
-    switch (status) {
-      case 'review':
-        return 'info';
+    const wrapper = document.createElement('div');
 
-      case 'pending':
-        return 'warn';
+    wrapper.style.position = 'fixed';
+    wrapper.style.left = '-15000px';
+    wrapper.style.top = '0';
+    wrapper.style.width = '1160px';
+    wrapper.style.background = '#ffffff';
+    wrapper.style.padding = '20px';
+    wrapper.style.boxSizing = 'border-box';
 
-      case 'late':
-        return 'bad';
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
 
-      default:
-        return 'ok';
-    }
-  }
+    const options = {
 
-  getTaskStatusText(status: string): string {
-    switch (status) {
-      case 'review':
-        return 'قيد المراجعة';
+      margin: 10,
 
-      case 'pending':
-        return 'بانتظار الاستلام';
+      filename: `${reportName}.pdf`,
 
-      case 'late':
-        return 'متأخرة';
+      image: {
+        type: 'jpeg' as const,
+        quality: 0.98
+      },
 
-      default:
-        return 'مكتملة';
-    }
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      },
+
+      jsPDF: {
+        unit: 'mm' as const,
+        format: 'a4' as const,
+        orientation: 'landscape' as const
+      },
+
+      pagebreak: {
+        mode: ['css', 'legacy'] as const
+      }
+
+    };
+
+    html2pdf()
+      .set(options)
+      .from(clone)
+      .save()
+      .then(() => {
+        wrapper.remove();
+      })
+      .catch(error => {
+
+        console.error('PDF export error:', error);
+
+        wrapper.remove();
+
+        alert('حدث خطأ أثناء إنشاء ملف PDF.');
+      });
   }
 }

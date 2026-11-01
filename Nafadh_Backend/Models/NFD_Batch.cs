@@ -29,6 +29,11 @@ namespace Nafadh_Backend.Models
         public int ProgramId { get; set; }
         public NFD_Program Program { get; set; } = null!;
 
+        public int? CompanyId { get; set; }
+
+        public NFD_Company? Company { get; set; }
+
+
         public ICollection<NFD_BatchTrainer> BatchTrainers { get; set; } = new List<NFD_BatchTrainer>();
         public ICollection<NFD_Enrollment> Enrollments { get; set; } = new List<NFD_Enrollment>();
         public ICollection<NFD_Session> Sessions { get; set; } = new List<NFD_Session>();

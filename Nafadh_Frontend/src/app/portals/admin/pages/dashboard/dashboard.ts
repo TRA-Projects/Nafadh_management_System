@@ -22,6 +22,7 @@ export interface AdminDashboardSummary {
     used: number;
     remaining: number;
   };
+
   attendanceWeeks: { label: string; value: number }[];
   companyDistribution: { label: string; value: number }[];
   programDistribution: { label: string; value: number }[];
@@ -64,38 +65,45 @@ export interface AdminDashboardSummary {
 
 export interface SelectedTraineeDetailView {
   traineeId: number;
-  enrollmentId: number;
+  enrollmentId?: number;
   fullName: string;
   initials: string;
   avatarColor: string;
-  age: number;
-  nationalId: string;
-  university: string;
-  major: string;
-  academicLevel: string;
-  email: string;
-  phone: string;
-  trackName: string;
-  programName: string;
-  batchName: string;
-  companyName: string;
-  supervisorName: string;
-  trainerName: string;
-  performancePercent: number;
-  technicalScore: number;
-  behavioralScore: number;
-  moduleProgressPercent: number;
-  attendancePercent: number;
-  presentDays: number;
-  absentDays: number;
-  lateDays: number;
-  excusedDays: number;
-  trainerNotes: string;
-  lastEvaluationDate: string;
-  skills: string[];
-  gitHubUrl: string;
-  linkedInUrl: string;
+
+  age?: number;
+  nationalId?: string;
+  university?: string;
+  major?: string;
+  academicLevel?: string;
+  email?: string;
+  phone?: string;
+
+  trackName?: string;
+  programName?: string;
+  batchName?: string;
+  companyName?: string;
+  supervisorName?: string;
+  trainerName?: string;
+
+  performancePercent?: number;
+  technicalScore?: number;
+  behavioralScore?: number;
+  moduleProgressPercent?: number;
+  attendancePercent?: number;
+
+  presentDays?: number;
+  absentDays?: number;
+  lateDays?: number;
+  excusedDays?: number;
+
+  trainerNotes?: string;
+  lastEvaluationDate?: string;
+  skills?: string[];
+
+  gitHubUrl?: string;
+  linkedInUrl?: string;
   resumeUrl?: string;
+
   warnings: {
     warningId: number;
     type: string;
@@ -142,20 +150,225 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   lastUpdated = signal<Date | null>(new Date());
   showRefreshToast = signal<boolean>(false);
 
-  // حالة عرض صفحة المتدرب التفصيلية الكاملة
-  selectedTraineeProfile = signal<SelectedTraineeDetailView | null>(null);
 
-  // حالة عرض صفحة تفاصيل الإنذار للشركة المستضيفة
+  // --- متغيرات فلترة صفحة المتميزين ---
+  topLimit = signal<number>(0); // 0 تعني عرض الكل
+  topSearchQuery = signal<string>('');
+  topSelectedProgram = signal<string>('all');
+  topSelectedCompany = signal<string>('all');
+  topSortBy = signal<string>('score_desc');
+
+  // استخراج البرامج الفريدة تلقائياً
+  availableTopPrograms = computed(() => {
+    const list = this.allTopPerformers().map(t => t.major).filter(Boolean);
+    return Array.from(new Set(list));
+  });
+
+  // استخراج الشركات الفريدة تلقائياً
+  availableTopCompanies = computed(() => {
+    const list = this.allTopPerformers().map(t => t.companyName).filter(Boolean);
+    return Array.from(new Set(list));
+  });
+
+  // التحقق هل الفلاتر مفعلة
+  hasTopActiveFilters = computed(() => {
+    return (
+      this.topLimit() !== 0 ||
+      this.topSearchQuery().trim() !== '' ||
+      this.topSelectedProgram() !== 'all' ||
+      this.topSelectedCompany() !== 'all' ||
+      this.topSortBy() !== 'score_desc'
+    );
+  });
+
+  // المتدربون المفلترون حسب الاختيارات
+  filteredTopPerformers = computed(() => {
+    let list = [...this.allTopPerformers()];
+
+    // 1. البحث النصي (اسم، برنامج، شركة)
+    const q = this.topSearchQuery().trim().toLowerCase();
+    if (q) {
+      list = list.filter(t =>
+        (t.fullName && t.fullName.toLowerCase().includes(q)) ||
+        (t.major && t.major.toLowerCase().includes(q)) ||
+        (t.companyName && t.companyName.toLowerCase().includes(q))
+      );
+    }
+
+    // 2. فلتر البرنامج
+    if (this.topSelectedProgram() !== 'all') {
+      list = list.filter(t => t.major === this.topSelectedProgram());
+    }
+
+    // 3. فلتر الشركة
+    if (this.topSelectedCompany() !== 'all') {
+      list = list.filter(t => t.companyName === this.topSelectedCompany());
+    }
+
+    // 4. الترتيب
+    const sort = this.topSortBy();
+    list.sort((a, b) => {
+      if (sort === 'score_desc') return (b.performancePercent || 0) - (a.performancePercent || 0);
+      if (sort === 'attendance_desc') return (b.attendancePercent || 0) - (a.attendancePercent || 0);
+      if (sort === 'name_asc') return (a.fullName || '').localeCompare(b.fullName || '', 'ar');
+      return 0;
+    });
+
+    // 5. تطبيق تحديد العدد (3 أو 5 أو 10 أو 20 أو الكل)
+    const limit = this.topLimit();
+    if (limit > 0) {
+      list = list.slice(0, limit);
+    }
+
+    return list;
+  });
+
+  // حساب متوسط الأداء للنتائج المفلترة
+  currentFilteredAvgScore = computed(() => {
+    const list = this.filteredTopPerformers();
+    if (list.length === 0) return 0;
+    const total = list.reduce((sum, item) => sum + (item.performancePercent || 0), 0);
+    return Math.round((total / list.length) * 10) / 10;
+  });
+
+  // دوال التحكم
+  setTopLimit(limit: number) { this.topLimit.set(limit); this.topPage.set(1); }
+  onTopSearchInput(e: Event) { this.topSearchQuery.set((e.target as HTMLInputElement).value); this.topPage.set(1); }
+  clearTopSearch() { this.topSearchQuery.set(''); this.topPage.set(1); }
+  onTopProgramChange(e: Event) { this.topSelectedProgram.set((e.target as HTMLSelectElement).value); this.topPage.set(1); }
+  onTopCompanyChange(e: Event) { this.topSelectedCompany.set((e.target as HTMLSelectElement).value); this.topPage.set(1); }
+  onTopSortChange(e: Event) { this.topSortBy.set((e.target as HTMLSelectElement).value); this.topPage.set(1); }
+  resetTopFilters() {
+    this.topLimit.set(0);
+    this.topSearchQuery.set('');
+    this.topSelectedProgram.set('all');
+    this.topSelectedCompany.set('all');
+    this.topSortBy.set('score_desc');
+    this.topPage.set(1);
+  }
+
+  // --- متغيرات فلترة صفحة المتعثرين ---
+  riskLimit = signal<number>(0); // 0 تعني عرض الكل
+  riskSearchQuery = signal<string>('');
+  riskSelectedProgram = signal<string>('all');
+  riskSelectedCompany = signal<string>('all');
+  riskSeverity = signal<string>('all');
+  riskSortBy = signal<string>('attendance_asc'); // الأكثر حرجاً أولاً
+
+  // استخراج البرامج والشركات الخاصة بالمتعثرين
+  availableRiskPrograms = computed(() => {
+    const list = this.allAtRiskTrainees().map(t => t.major).filter(Boolean);
+    return Array.from(new Set(list));
+  });
+
+  availableRiskCompanies = computed(() => {
+    const list = this.allAtRiskTrainees().map(t => t.companyName).filter(Boolean);
+    return Array.from(new Set(list));
+  });
+
+  // هل توجد فلاتر مفعلة في صفحة المتعثرين؟
+  hasRiskActiveFilters = computed(() => {
+    return (
+      this.riskLimit() !== 0 ||
+      this.riskSearchQuery().trim() !== '' ||
+      this.riskSelectedProgram() !== 'all' ||
+      this.riskSelectedCompany() !== 'all' ||
+      this.riskSeverity() !== 'all' ||
+      this.riskSortBy() !== 'attendance_asc'
+    );
+  });
+
+  // المتعثرون بعد تطبيق الفلترة
+  filteredAtRiskTrainees = computed(() => {
+    let list = [...this.allAtRiskTrainees()];
+
+    // 1. البحث النصي (اسم، تخصص، شركة)
+    const q = this.riskSearchQuery().trim().toLowerCase();
+    if (q) {
+      list = list.filter(t =>
+        (t.fullName && t.fullName.toLowerCase().includes(q)) ||
+        (t.major && t.major.toLowerCase().includes(q)) ||
+        (t.companyName && t.companyName.toLowerCase().includes(q))
+      );
+    }
+
+    // 2. فلتر شدة الخطورة (حضور < 60% أو 60-70% أو 70-79%)
+    if (this.riskSeverity() !== 'all') {
+      if (this.riskSeverity() === 'critical') {
+        list = list.filter(t => (t.attendancePercent || 0) < 60);
+      } else if (this.riskSeverity() === 'moderate') {
+        list = list.filter(t => (t.attendancePercent || 0) >= 60 && (t.attendancePercent || 0) < 70);
+      } else if (this.riskSeverity() === 'warning') {
+        list = list.filter(t => (t.attendancePercent || 0) >= 70 && (t.attendancePercent || 0) < 80);
+      }
+    }
+
+    // 3. فلتر البرنامج
+    if (this.riskSelectedProgram() !== 'all') {
+      list = list.filter(t => t.major === this.riskSelectedProgram());
+    }
+
+    // 4. فلتر الشركة
+    if (this.riskSelectedCompany() !== 'all') {
+      list = list.filter(t => t.companyName === this.riskSelectedCompany());
+    }
+
+    // 5. الترتيب
+    const sort = this.riskSortBy();
+    list.sort((a, b) => {
+      if (sort === 'attendance_asc') return (a.attendancePercent || 0) - (b.attendancePercent || 0);
+      if (sort === 'attendance_desc') return (b.attendancePercent || 0) - (a.attendancePercent || 0);
+      if (sort === 'name_asc') return (a.fullName || '').localeCompare(b.fullName || '', 'ar');
+      return 0;
+    });
+
+    // 6. تطبيق تحديد العدد (أول 3 أو 5 أو 10 أو الكل)
+    const limit = this.riskLimit();
+    if (limit > 0) {
+      list = list.slice(0, limit);
+    }
+
+    return list;
+  });
+
+  // حساب متوسط حضور المتعثرين المفلترين
+  currentFilteredRiskAvgAttendance = computed(() => {
+    const list = this.filteredAtRiskTrainees();
+    if (list.length === 0) return 0;
+    const total = list.reduce((sum, item) => sum + (item.attendancePercent || 0), 0);
+    return Math.round((total / list.length) * 10) / 10;
+  });
+
+  // دوال التحكم بالمتعثرين
+  setRiskLimit(limit: number) { this.riskLimit.set(limit); this.riskPage.set(1); }
+  onRiskSearchInput(e: Event) { this.riskSearchQuery.set((e.target as HTMLInputElement).value); this.riskPage.set(1); }
+  clearRiskSearch() { this.riskSearchQuery.set(''); this.riskPage.set(1); }
+  onRiskSeverityChange(e: Event) { this.riskSeverity.set((e.target as HTMLSelectElement).value); this.riskPage.set(1); }
+  onRiskProgramChange(e: Event) { this.riskSelectedProgram.set((e.target as HTMLSelectElement).value); this.riskPage.set(1); }
+  onRiskCompanyChange(e: Event) { this.riskSelectedCompany.set((e.target as HTMLSelectElement).value); this.riskPage.set(1); }
+  onRiskSortChange(e: Event) { this.riskSortBy.set((e.target as HTMLSelectElement).value); this.riskPage.set(1); }
+  resetRiskFilters() {
+    this.riskLimit.set(0);
+    this.riskSearchQuery.set('');
+    this.riskSeverity.set('all');
+    this.riskSelectedProgram.set('all');
+    this.riskSelectedCompany.set('all');
+    this.riskSortBy.set('attendance_asc');
+    this.riskPage.set(1);
+  }
+
+  // حالة عرض صفحة المتدرب التفصيلية الكاملة
+
+
+  selectedTraineeProfile = signal<SelectedTraineeDetailView | null>(null);
   selectedWarningDetail = signal<SelectedWarningDetailView | null>(null);
 
-  // قوائم المتميزين والمتعثرين الكاملة وحالة فتح صفحاتهم الخاصة
   allTopPerformers = signal<any[]>([]);
   showAllTopPerformersPage = signal<boolean>(false);
   allAtRiskTrainees = signal<any[]>([]);
   showAllAtRiskPage = signal<boolean>(false);
   isProfileLoading = signal<boolean>(false);
 
-  // سجل الأنشطة الأخيرة + نظام الـ Pagination
   recentActivity = signal<AuditLogDto[]>([]);
   allActivity = signal<AuditLogDto[]>([]);
   showAllActivity = signal<boolean>(false);
@@ -166,6 +379,66 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     const total = this.allActivity().length;
     return Math.max(1, Math.ceil(total / this.activityPageSize));
   });
+
+  // Pagination - Top Performers
+  topPage = signal<number>(1);
+  readonly topPageSize = 10;
+
+  totalTopPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredTopPerformers().length / this.topPageSize))
+  );
+
+  paginatedTopPerformers = computed(() => {
+    const start = (this.topPage() - 1) * this.topPageSize;
+    return this.filteredTopPerformers().slice(start, start + this.topPageSize);
+  });
+
+  visibleTopPages = computed(() => {
+    const total = this.totalTopPages();
+    const current = this.topPage();
+    const start = Math.max(1, Math.min(current - 2, total - 4));
+
+    return Array.from(
+      { length: Math.min(5, total) },
+      (_, i) => start + i
+    );
+  });
+
+  goToTopPage(page: number): void {
+    if (page < 1 || page > this.totalTopPages()) return;
+    this.topPage.set(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Pagination - At Risk
+  riskPage = signal<number>(1);
+  readonly riskPageSize = 10;
+
+  totalRiskPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredAtRiskTrainees().length / this.riskPageSize))
+  );
+
+  paginatedAtRiskTrainees = computed(() => {
+    const start = (this.riskPage() - 1) * this.riskPageSize;
+    return this.filteredAtRiskTrainees().slice(start, start + this.riskPageSize);
+  });
+
+  visibleRiskPages = computed(() => {
+    const total = this.totalRiskPages();
+    const current = this.riskPage();
+    const start = Math.max(1, Math.min(current - 2, total - 4));
+
+    return Array.from(
+      { length: Math.min(5, total) },
+      (_, i) => start + i
+    );
+  });
+
+  goToRiskPage(page: number): void {
+    if (page < 1 || page > this.totalRiskPages()) return;
+    this.riskPage.set(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   visibleActivityPages = computed(() => {
     const total = this.totalActivityPages();
@@ -209,7 +482,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private api: AdminApi,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadAllDashboardData();
@@ -233,10 +506,15 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       this.updateDisplayedActivity();
     });
 
-    this.api.getDashboardCharts().pipe(catchError(() => of(null))).subscribe((c: any) => {
+    // Load dashboard charts from backend and update both chart types.
+    this.api.getDashboardCharts().pipe(
+      catchError(() => of(null))
+    ).subscribe((c: any) => {
+      this.charts.set(c);
+
       if (c) {
-        this.charts.set(c);
         this.updateBarChartData(c);
+        this.updateDonutChartData();
       }
     });
 
@@ -245,9 +523,8 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       companies: this.api.getCompanies().pipe(catchError(() => of([]))),
       batches: this.api.getBatches().pipe(catchError(() => of([]))),
       warnings: this.api.getWarnings({ _t: cacheBuster }).pipe(catchError(() => of([]))),
-      adminSummary: (this.api as any).getAdminDashboardSummary
-        ? (this.api as any).getAdminDashboardSummary().pipe(catchError(() => of(null)))
-        : of(null)
+      // ملخص Dashboard مطلوب من Backend؛ لا نستخدم بيانات بديلة عند غياب الدالة أو فشل الطلب.
+      adminSummary: this.api.getAdminDashboardSummary().pipe(catchError(() => of(null)))
     }).subscribe(({ traineesRes, companies, batches, warnings, adminSummary }: any) => {
       const traineesList: any[] = traineesRes?.items || (Array.isArray(traineesRes) ? traineesRes : []);
       const totalTrainees = traineesRes?.totalCount || traineesList.length || 0;
@@ -276,84 +553,22 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         if (!years.includes(this.selectedYear())) {
           this.selectedYear.set(years[0]);
         }
-        this.updateDonutChartData(this.selectedYear());
       }
 
+      // مصدر أرقام ومؤشرات لوحة الإدارة هو ملخص Backend فقط؛ لا نستبدل القيم بحسابات محلية.
       const summaryData = adminSummary as AdminDashboardSummary | null;
-      if (summaryData && summaryData.capacity && summaryData.capacity.total > 0) {
-        if (!summaryData.topPerformersAvgScore || summaryData.topPerformersAvgScore <= 0) {
-          summaryData.topPerformersAvgScore = summaryData.overallAttendanceRate > 0 ? summaryData.overallAttendanceRate : 88.4;
-        }
+      if (summaryData) {
         this.summary.set(summaryData);
         this.allTopPerformers.set(summaryData.topPerformers || []);
         this.allAtRiskTrainees.set(summaryData.atRiskTrainees || []);
-        this.loadFullListsFromBatches(batchesList, traineesList, summaryData.topPerformers || [], summaryData.atRiskTrainees || []);
-        this.finishLoading(isManualRefresh);
-        return;
+      } else {
+        // عند فشل الملخص نعرض حالة بلا بيانات بدل إنشاء أرقام تقديرية.
+        this.summary.set(null);
+        this.allTopPerformers.set([]);
+        this.allAtRiskTrainees.set([]);
       }
 
-      this.buildSummaryFromExistingEndpoints(traineesList, totalTrainees, companiesList, batchesList, warningsList, isManualRefresh);
-    });
-  }
-
-  private loadFullListsFromBatches(batchesList: any[], traineesList: any[], fallbackTop: any[], fallbackRisk: any[]) {
-    const sampleBatches = batchesList.slice(0, 6);
-    if (!sampleBatches.length) return;
-
-    const batchReportCalls = sampleBatches.map((b: any) =>
-      this.api.getBatchPerformanceReport(b.batchId ?? b.id, 1, 60).pipe(catchError(() => of(null)))
-    );
-
-    forkJoin(batchReportCalls).subscribe((reports: any[]) => {
-      const allRows: any[] = [];
-      (reports || []).forEach((r: any, idx: number) => {
-        if (r && Array.isArray(r.rows)) {
-          const batchObj: any = sampleBatches[idx] || {};
-          const progTitle = r.programName || batchObj.programName || batchObj.programTitle || batchObj.trackName || batchObj.batchName || '';
-          r.rows.forEach((row: any) => {
-            allRows.push({ ...row, programName: progTitle });
-          });
-        }
-      });
-
-      const traineeLookup = new Map<number, any>();
-      traineesList.forEach((t: any) => traineeLookup.set(t.traineeId ?? t.id, t));
-
-      const enriched = allRows.map((r: any) => {
-        const tInfo = traineeLookup.get(r.traineeId) || {};
-        const rawScore = Number(r.finalScore) > 0
-          ? Number(r.finalScore)
-          : (Number(r.technicalScore) > 0 ? Number(r.technicalScore) : Number(r.attendanceRate ?? 0));
-        const perf = Math.round(rawScore * 10) / 10;
-        const att = Math.round(Number(r.attendanceRate ?? 0) * 10) / 10;
-        return {
-          traineeId: r.traineeId,
-          enrollmentId: r.enrollmentId ?? 0,
-          fullName: r.traineeName || tInfo.fullName || 'متدرب',
-          major: r.programName || tInfo.programName || r.major || tInfo.major || 'تقنية المعلومات',
-          companyName: tInfo.companyName || '',
-          gitHubUrl: tInfo.gitHubUrl,
-          linkedInUrl: tInfo.linkedInUrl,
-          performancePercent: perf,
-          attendancePercent: att
-        };
-      });
-
-      const fullTop = enriched
-        .filter((x: any) => x.performancePercent >= 80)
-        .sort((a: any, b: any) => b.performancePercent - a.performancePercent);
-
-      if (fullTop.length > fallbackTop.length) {
-        this.allTopPerformers.set(fullTop);
-      }
-
-      const fullRisk = enriched
-        .filter((x: any) => x.attendancePercent > 0 && (x.attendancePercent < 80 || x.performancePercent < 60))
-        .sort((a: any, b: any) => a.attendancePercent - b.attendancePercent);
-
-      if (fullRisk.length > fallbackRisk.length) {
-        this.allAtRiskTrainees.set(fullRisk);
-      }
+      this.finishLoading(isManualRefresh);
     });
   }
 
@@ -366,178 +581,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private buildSummaryFromExistingEndpoints(
-    traineesList: any[],
-    totalTrainees: number,
-    companiesList: any[],
-    batchesList: any[],
-    warningsList: any[],
-    isManualRefresh: boolean
-  ) {
-    const rawTotalCap = companiesList.reduce((acc: number, c: any) => acc + (Number(c.capacity ?? c.Capacity ?? 0) || 0), 0);
-    const usedCap = totalTrainees;
-    const totalCap = rawTotalCap >= usedCap ? rawTotalCap : Math.max(rawTotalCap, Math.ceil(usedCap * 1.25));
-    const remainingCap = Math.max(0, totalCap - usedCap);
-
-    const activeCount = traineesList.filter((t: any) => {
-      const s = String(t.status ?? '').toLowerCase();
-      return s === 'active' || s === '1' || s === 'inprogress' || s.includes('نشط');
-    }).length || Math.round(totalTrainees * 0.85);
-
-    const progMap: Record<string, number> = {};
-    batchesList.forEach((b: any) => {
-      const pName = b.programName || b.programTitle || b.trackName || b.name || 'برنامج تدريبي';
-      const count = Number(b.traineesCount ?? b.enrollmentCount ?? Math.max(5, Math.round(totalTrainees / Math.max(1, batchesList.length))));
-      progMap[pName] = (progMap[pName] || 0) + count;
-    });
-    const programDistribution = Object.entries(progMap)
-      .map(([label, value]) => ({ label, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 6);
-
-    const mappedWarnings = warningsList
-      .sort((a: any, b: any) => new Date(b.issuedDate ?? b.createdAt ?? 0).getTime() - new Date(a.issuedDate ?? a.createdAt ?? 0).getTime())
-      .slice(0, 6)
-      .map((w: any) => ({
-        warningId: w.warningId ?? w.id ?? 0,
-        scope: w.companyId && !w.enrollmentId ? 'Company' : 'Trainee',
-        traineeId: w.traineeId,
-        companyId: w.companyId,
-        targetName: w.traineeName || w.companyName || w.targetName || (w.companyId ? `شركة #${w.companyId}` : `متدرب #${w.enrollmentId || w.warningId}`),
-        gitHubUrl: w.gitHubUrl,
-        linkedInUrl: w.linkedInUrl,
-        type: w.type || 'Performance',
-        level: w.level || 'First',
-        status: w.status || 'Active',
-        issuedDate: w.issuedDate || w.createdAt || new Date().toISOString()
-      }));
-
-    const sampleBatches = batchesList.slice(0, 5);
-    const batchReportCalls = sampleBatches.map((b: any) =>
-      this.api.getBatchPerformanceReport(b.batchId ?? b.id, 1, 50).pipe(catchError(() => of(null)))
-    );
-
-    const certCalls = sampleBatches.slice(0, 3).map((b: any) =>
-      this.api.getBatchCertificatesStatus(b.batchId ?? b.id).pipe(catchError(() => of([])))
-    );
-
-    forkJoin({
-      reports: batchReportCalls.length ? forkJoin(batchReportCalls) : of([]),
-      certs: certCalls.length ? forkJoin(certCalls) : of([])
-    }).subscribe(({ reports, certs }: any) => {
-      const validReports = (reports || []).filter((r: any): r is any => r !== null);
-      const allRows: any[] = [];
-      (reports || []).forEach((r: any, idx: number) => {
-        if (r && Array.isArray(r.rows)) {
-          const batchObj: any = sampleBatches[idx] || {};
-          const progTitle = r.programName || batchObj.programName || batchObj.programTitle || batchObj.trackName || batchObj.batchName || '';
-          r.rows.forEach((row: any) => {
-            allRows.push({ ...row, programName: progTitle });
-          });
-        }
-      });
-
-      const traineeLookup = new Map<number, any>();
-      traineesList.forEach((t: any) => traineeLookup.set(t.traineeId ?? t.id, t));
-
-      let overallAttendance = 0;
-      if (allRows.length > 0) {
-        overallAttendance = Math.round(
-          (allRows.reduce((s: number, r: any) => s + Number(r.attendanceRate ?? 0), 0) / allRows.length) * 10
-        ) / 10;
-      } else if (validReports.length > 0) {
-        overallAttendance = Math.round(
-          (validReports.reduce((s: number, r: any) => s + Number(r.avgAttendance ?? 0), 0) / validReports.length) * 10
-        ) / 10;
-      } else {
-        overallAttendance = 81.2;
-      }
-
-      const enrichedRows = allRows.map((r: any) => {
-        const tInfo = traineeLookup.get(r.traineeId) || {};
-        const rawScore = Number(r.finalScore) > 0
-          ? Number(r.finalScore)
-          : (Number(r.technicalScore) > 0 ? Number(r.technicalScore) : Number(r.attendanceRate ?? 0));
-        const perf = Math.round(rawScore * 10) / 10;
-        const att = Math.round(Number(r.attendanceRate ?? 0) * 10) / 10;
-        return {
-          traineeId: r.traineeId,
-          enrollmentId: r.enrollmentId ?? 0,
-          fullName: r.traineeName || tInfo.fullName || 'متدرب',
-          major: r.programName || tInfo.programName || r.major || tInfo.major || 'تقنية المعلومات',
-          companyName: tInfo.companyName || '',
-          gitHubUrl: tInfo.gitHubUrl,
-          linkedInUrl: tInfo.linkedInUrl,
-          performancePercent: perf,
-          attendancePercent: att
-        };
-      });
-
-      const topList = enrichedRows
-        .filter((x: any) => x.performancePercent >= 80)
-        .sort((a: any, b: any) => b.performancePercent - a.performancePercent);
-
-      const riskList = enrichedRows
-        .filter((x: any) => x.attendancePercent > 0 && (x.attendancePercent < 80 || x.performancePercent < 60))
-        .sort((a: any, b: any) => a.attendancePercent - b.attendancePercent);
-
-      const allTopForMonth = topList.length > 0
-        ? topList
-        : enrichedRows.sort((a: any, b: any) => b.performancePercent - a.performancePercent).slice(0, 10);
-
-      this.allTopPerformers.set(allTopForMonth);
-      this.allAtRiskTrainees.set(riskList);
-
-      const topPerformers = allTopForMonth.slice(0, 5);
-      const atRiskTrainees = riskList.slice(0, 5);
-
-      const calculatedTopAvg = topPerformers.length > 0
-        ? Math.round((topPerformers.reduce((s: number, x: any) => s + x.performancePercent, 0) / topPerformers.length) * 10) / 10
-        : 0;
-      const topAvg = calculatedTopAvg > 0 ? calculatedTopAvg : (overallAttendance > 0 ? Math.min(98, Math.round((overallAttendance + 6.5) * 10) / 10) : 88.4);
-
-      const flatCerts = (certs || []).flat();
-      const issuedCerts = flatCerts.filter((c: any) => c?.isIssued || c?.certificateId).length;
-      const estimatedTotalCerts = issuedCerts > 0
-        ? Math.round(issuedCerts * (batchesList.length / Math.max(1, sampleBatches.slice(0, 3).length)))
-        : Math.round(totalTrainees * 0.35);
-
-      const baseAtt = overallAttendance || 80;
-      const attendanceWeeks = [
-        { label: 'أسبوع 28', value: Math.min(100, Math.max(50, Math.round((baseAtt - 3.2) * 10) / 10)) },
-        { label: 'أسبوع 29', value: Math.min(100, Math.max(50, Math.round((baseAtt + 0.8) * 10) / 10)) },
-        { label: 'أسبوع 30', value: Math.min(100, Math.max(50, Math.round((baseAtt + 3.5) * 10) / 10)) },
-        { label: 'أسبوع 31', value: Math.min(100, Math.max(50, Math.round((baseAtt + 1.1) * 10) / 10)) },
-        { label: 'أسبوع 32', value: Math.min(100, Math.max(50, Math.round((baseAtt + 1.8) * 10) / 10)) },
-        { label: 'أسبوع 33', value: Math.min(100, Math.max(50, Math.round((baseAtt - 1.4) * 10) / 10)) }
-      ];
-
-      this.summary.set({
-        totalTrainees,
-        activeTrainees: activeCount,
-        totalCompanies: companiesList.length,
-        totalBatches: batchesList.length,
-        totalCertificates: estimatedTotalCerts,
-        overallAttendanceRate: overallAttendance,
-        topPerformersCount: allTopForMonth.length,
-        topPerformersAvgScore: topAvg,
-        atRiskCount: riskList.length || atRiskTrainees.length,
-        capacity: {
-          total: totalCap,
-          used: usedCap,
-          remaining: remainingCap
-        },
-        attendanceWeeks,
-        companyDistribution: [],
-        programDistribution,
-        topPerformers,
-        atRiskTrainees,
-        recentWarnings: mappedWarnings
-      });
-
-      this.finishLoading(isManualRefresh);
-    });
-  }
+  // لا تُنشأ مؤشرات Dashboard محلياً؛ مصدرها الوحيد هو Report/dashboard-summary.
 
   onWarningItemPreview(w: any, index: number = 0) {
     const target = String(w?.targetName || '');
@@ -555,69 +599,83 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  openWarningPreview(w: any) {
-    const warningId = w?.warningId ?? w?.id ?? 0;
-    const rawFromCache = this.allWarningsCache().find((item: any) => (item.warningId ?? item.id) === warningId) || w;
-    const targetName = w?.targetName || rawFromCache?.companyName || 'شركة مستضيفة معتمدة';
+  // Load the selected warning details directly from the backend.
+  openWarningPreview(w: any): void {
+    const warningId = Number(w?.warningId ?? w?.id);
 
-    const matchedCompany = this.allCompaniesCache().find((c: any) =>
-      (w?.companyId && (c.companyId ?? c.id) === w.companyId) ||
-      c.companyName === targetName ||
-      c.name === targetName
-    ) || {};
-
-    const countForTarget = this.allWarningsCache().filter((item: any) =>
-      (w?.companyId && item.companyId === w.companyId) ||
-      item.companyName === targetName ||
-      item.targetName === targetName
-    ).length || 1;
-
-    const typeRaw = String(w?.type || rawFromCache?.type || 'Performance');
-    const levelRaw = String(w?.level || rawFromCache?.level || 'First');
-    const statusRaw = String(w?.status || rawFromCache?.status || 'Active');
-
-    const typeArabic = typeRaw.toLowerCase().includes('attend')
-      ? 'التزام الحضور والمتابعة (Attendance)'
-      : typeRaw.toLowerCase().includes('behav')
-        ? 'الانضباط والالتزام التنظيمي (Behavioral)'
-        : 'مستوى الأداء وجودة التدريب (Performance)';
-
-    const levelArabic = levelRaw.toLowerCase().includes('second') || levelRaw === '2'
-      ? 'الإنذار الثاني (Second Warning)'
-      : levelRaw.toLowerCase().includes('final') || levelRaw.toLowerCase().includes('third') || levelRaw === '3'
-        ? 'إنذار نهائي (Final Warning)'
-        : 'الإنذار الأول (First Warning)';
-
-    const statusArabic = statusRaw.toLowerCase().includes('resolv') || statusRaw.toLowerCase().includes('clos')
-      ? 'تمت المعالجة والتسوية (Resolved)'
-      : 'نشط - قيد المتابعة (Active)';
+    if (!warningId) {
+      return;
+    }
 
     this.selectedTraineeProfile.set(null);
     this.showAllTopPerformersPage.set(false);
     this.showAllAtRiskPage.set(false);
 
-    this.selectedWarningDetail.set({
-      warningId,
-      scope: 'Company',
-      targetName,
-      companyId: w?.companyId || matchedCompany?.companyId || matchedCompany?.id,
-      type: typeRaw,
-      typeArabic,
-      level: levelRaw,
-      levelArabic,
-      status: statusRaw,
-      statusArabic,
-      issuedDate: (w?.issuedDate || rawFromCache?.issuedDate || new Date().toISOString()).slice(0, 10),
-      evidence: rawFromCache?.evidence || rawFromCache?.reason || `تم رصد ملاحظة رقابية من فريق الإدارة المركزية بمنظومة نفاذ حول مستوى متابعة التقييمات الدورية أو الالتزام بمعايير الاستضافة التدريبية المعتمدة لدى (${targetName}).`,
-      resolution: rawFromCache?.resolution || 'مطلوب من مشرف الشركة المستضيفة رفع تقرير الإجراءات التصحيحية وتحديث سجلات التقييم والحضور للمتدربين الملتحقين خلال 5 أيام عمل.',
-      companyCapacity: Number(matchedCompany?.capacity ?? matchedCompany?.Capacity ?? 85),
-      companyContact: matchedCompany?.contactPerson || matchedCompany?.supervisorName || 'مسؤول التدريب والاستضافة بالشركة',
-      companyEmail: matchedCompany?.email || matchedCompany?.contactEmail || 'compliance@company.om',
-      companyLocation: matchedCompany?.location || matchedCompany?.city || 'سلطنة عُمان - مسقط',
-      totalWarningsForTarget: countForTarget
-    });
+    this.isProfileLoading.set(true);
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.api.getWarningById(warningId).pipe(
+      catchError(() => of(null))
+    ).subscribe((warning: any) => {
+      this.isProfileLoading.set(false);
+
+      if (!warning) {
+        this.selectedWarningDetail.set(null);
+        return;
+      }
+
+      const typeRaw = String(warning.type ?? '');
+      const levelRaw = String(warning.level ?? '');
+      const statusRaw = String(warning.status ?? '');
+
+      const typeArabic = typeRaw.toLowerCase().includes('attend')
+        ? 'التزام الحضور والمتابعة (Attendance)'
+        : typeRaw.toLowerCase().includes('behav')
+          ? 'الانضباط والالتزام التنظيمي (Behavioral)'
+          : typeRaw.toLowerCase().includes('performance')
+            ? 'مستوى الأداء وجودة التدريب (Performance)'
+            : typeRaw || '—';
+
+      const levelArabic =
+        levelRaw.toLowerCase().includes('low') ? 'منخفض' :
+          levelRaw.toLowerCase().includes('medium') ? 'متوسط' :
+            levelRaw.toLowerCase().includes('high') ? 'مرتفع' :
+              levelRaw.toLowerCase().includes('critical') ? 'حرج' :
+                levelRaw || '—';
+
+      const statusArabic =
+        statusRaw.toLowerCase().includes('resolved') ? 'تمت المعالجة' :
+          statusRaw.toLowerCase().includes('underreview') ? 'قيد المراجعة' :
+            statusRaw.toLowerCase().includes('escalated') ? 'تم التصعيد' :
+              statusRaw.toLowerCase().includes('open') ? 'مفتوح' :
+                statusRaw || '—';
+
+      const targetName = warning.targetName || '—';
+
+      this.selectedWarningDetail.set({
+        warningId: warning.warningId,
+        scope: String(warning.scope ?? ''),
+        targetName,
+        companyId: warning.companyId ?? undefined,
+        type: typeRaw || '—',
+        typeArabic,
+        level: levelRaw || '—',
+        levelArabic,
+        status: statusRaw || '—',
+        statusArabic,
+        issuedDate: warning.issuedDate
+          ? String(warning.issuedDate).slice(0, 10)
+          : '—',
+        evidence: warning.evidence || 'لا توجد تفاصيل مسجلة',
+        resolution: warning.resolution || 'لم يتم تسجيل إجراء المعالجة',
+        companyCapacity: 0,
+        companyContact: '—',
+        companyEmail: '—',
+        companyLocation: '—',
+        totalWarningsForTarget: 0
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   }
 
   closeWarningPreview() {
@@ -635,14 +693,14 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
 
     const traineeId = traineeItem?.traineeId || cachedTrainee?.traineeId || cachedTrainee?.id || 0;
     const fullName = candidateName || cachedTrainee?.fullName || 'متدرب المنظومة';
-    const perf = Number(traineeItem?.performancePercent ?? 82);
-    const att = Number(traineeItem?.attendancePercent ?? 78);
+    // Use only performance and attendance values received from the backend.
+    const perf = traineeItem?.performancePercent != null
+      ? Number(traineeItem.performancePercent)
+      : undefined;
 
-    const defaultAge = 22 + ((traineeId || index + 1) % 4);
-    const totalDays = 60;
-    const estPresent = Math.round((att / 100) * totalDays);
-    const estAbsent = Math.max(0, totalDays - estPresent - 2);
-
+    const att = traineeItem?.attendancePercent != null
+      ? Number(traineeItem.attendancePercent)
+      : undefined;
     const clickedWarningList: {
       warningId: number;
       type: string;
@@ -652,53 +710,51 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       reason: string;
     }[] = [];
 
+    // Add warning details only when they exist in backend data.
     if (traineeItem?.warningId) {
-      const rawWarn = this.allWarningsCache().find((w: any) => (w.warningId ?? w.id) === traineeItem.warningId);
-      clickedWarningList.push({
-        warningId: traineeItem.warningId,
-        type: traineeItem.type || rawWarn?.type || 'Attendance',
-        level: traineeItem.level || rawWarn?.level || 'First',
-        status: traineeItem.status || rawWarn?.status || 'Active',
-        date: (traineeItem.issuedDate || rawWarn?.issuedDate || new Date().toISOString()).slice(0, 10),
-        reason: rawWarn?.evidence || rawWarn?.resolution || `إنذار مسجل بنوع (${traineeItem.type || 'Attendance'}) في منظومة المتابعة والالتزام.`
-      });
+      const rawWarn = this.allWarningsCache().find(
+        (w: any) => Number(w.warningId ?? w.id) === Number(traineeItem.warningId)
+      );
+
+      if (rawWarn) {
+        clickedWarningList.push({
+          warningId: Number(rawWarn.warningId ?? rawWarn.id),
+          type: rawWarn.type ?? '—',
+          level: rawWarn.level ?? '—',
+          status: rawWarn.status ?? '—',
+          date: rawWarn.issuedDate
+            ? String(rawWarn.issuedDate).slice(0, 10)
+            : '—',
+          reason: rawWarn.evidence ?? rawWarn.resolution ?? '—'
+        });
+      }
     }
 
+    // Build trainee profile using only available real data; avoid fabricated defaults.
     const initialView: SelectedTraineeDetailView = {
       traineeId,
-      enrollmentId: traineeItem?.enrollmentId || (traineeId + 100),
+      enrollmentId: traineeItem?.enrollmentId ?? cachedTrainee?.enrollmentId,
       fullName,
       initials: this.getInitials(fullName),
       avatarColor: this.getAvatarColor(index),
-      age: defaultAge,
-      nationalId: String(cachedTrainee?.nationalId || (108000000 + (traineeId || 7) * 137)),
-      university: cachedTrainee?.university || 'جامعة السلطان قابوس',
-      major: traineeItem?.major || cachedTrainee?.major || 'هندسة البرمجيات وتقنية المعلومات',
-      academicLevel: cachedTrainee?.academicLevel || 'بكالوريوس',
-      email: cachedTrainee?.email || `trainee.${traineeId || 10}@nafadh.om`,
-      phone: cachedTrainee?.phone || `+968 9${4000000 + ((traineeId || 5) * 123) % 5000000}`,
-      trackName: cachedTrainee?.trackName || 'Data & AI / Software Track',
-      programName: cachedTrainee?.programName || 'البرنامج الوطني لتأهيل الكوادر التقنية (نفاذ)',
-      batchName: cachedTrainee?.batchName || `دفعة ${this.selectedYear()} التدريبية`,
-      companyName: traineeItem?.companyName || cachedTrainee?.companyName || 'مجموعة أفق التقنية',
-      supervisorName: 'مشرف التدريب الميداني بالشركة',
-      trainerName: 'المدرب المعتمد بالمسار',
+      nationalId: cachedTrainee?.nationalId ?? '',
+      university: cachedTrainee?.university ?? '—',
+      major: traineeItem?.major ?? cachedTrainee?.major ?? '—',
+      academicLevel: cachedTrainee?.academicLevel ?? '—',
+      email: cachedTrainee?.email ?? '—',
+      phone: cachedTrainee?.phone ?? '—',
+      trackName: cachedTrainee?.trackName ?? '—',
+      programName: cachedTrainee?.programName ?? '—',
+      batchName: cachedTrainee?.batchName ?? '—',
+      companyName: traineeItem?.companyName ?? cachedTrainee?.companyName ?? '—',
       performancePercent: perf,
-      technicalScore: Math.min(100, Math.round((perf + 1.5) * 10) / 10),
-      behavioralScore: Math.min(100, Math.round((perf - 1.0) * 10) / 10),
-      moduleProgressPercent: Math.min(100, Math.max(35, Math.round(perf))),
       attendancePercent: att,
-      presentDays: estPresent,
-      absentDays: estAbsent,
-      lateDays: att < 80 ? 5 : 1,
-      excusedDays: 1,
-      trainerNotes: att >= 80
-        ? `المتدرب (${fullName}) يتميز بمستوى عالٍ من الالتزام بالحضور والمشاركة الفعالة في تطبيق المهام العملية والمشاريع التدريبية داخل المسار والشركة المستضيفة.`
-        : `يحتاج المتدرب (${fullName}) إلى متابعة دورية لرفع نسبة الحضور الأسبوعي والالتزام بتسليم التكليفات العملية في مواعيدها المحددة.`,
-      lastEvaluationDate: new Date().toISOString().slice(0, 10),
-      skills: ['C# & .NET', 'Angular', 'SQL Server', 'Git & GitHub', 'تحليل النظم', 'العمل الجماعي'],
-      gitHubUrl: this.getSafeGitHubUrl(traineeItem?.gitHubUrl || cachedTrainee?.gitHubUrl, fullName),
-      linkedInUrl: this.getSafeLinkedInUrl(traineeItem?.linkedInUrl || cachedTrainee?.linkedInUrl, fullName),
+      gitHubUrl: this.getSafeGitHubUrl(
+        traineeItem?.gitHubUrl || cachedTrainee?.gitHubUrl,
+      ),
+      linkedInUrl: this.getSafeLinkedInUrl(
+        traineeItem?.linkedInUrl || cachedTrainee?.linkedInUrl,
+      ),
       resumeUrl: cachedTrainee?.resumeUrl,
       warnings: clickedWarningList
     };
@@ -721,9 +777,13 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       const firstEnr = enrList[0] || {};
       const enrollmentId = firstEnr.enrollmentId || initialView.enrollmentId;
 
+      // Read trainee skills without creating fallback sample data.
       const skillsArr = profile?.skills
-        ? String(profile.skills).split(/[,،|]/).map((s: string) => s.trim()).filter(Boolean)
-        : initialView.skills;
+        ? String(profile.skills)
+          .split(/[,،|]/)
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+        : (initialView.skills ?? []);
 
       const matchedBatch = this.allBatches().find((b: any) => (b.batchId ?? b.id) === firstEnr.batchId);
 
@@ -752,11 +812,13 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
           )
           .map((w: any) => ({
             warningId: w.warningId ?? w.id ?? 0,
-            type: w.type || 'Attendance',
-            level: w.level || 'First',
-            status: w.status || 'Active',
-            date: (w.issuedDate || w.createdAt || new Date().toISOString()).slice(0, 10),
-            reason: w.evidence || w.resolution || 'ملاحظة مسجلة في نظام المتابعة والالتزام.'
+            type: w.type ?? '—',
+            level: w.level ?? '—',
+            status: w.status ?? '—',
+            date: w.issuedDate || w.createdAt
+              ? String(w.issuedDate || w.createdAt).slice(0, 10)
+              : '—',
+            reason: w.evidence ?? w.resolution ?? '—'
           }));
 
         const finalWarnings = [...traineeWarnings];
@@ -788,9 +850,13 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
           lateDays: attList.length > 0 ? lateCount : initialView.lateDays,
           excusedDays: attList.length > 0 ? excusedCount : initialView.excusedDays,
           trainerNotes: evalNotes,
-          skills: skillsArr.length > 0 ? skillsArr : initialView.skills,
-          gitHubUrl: this.getSafeGitHubUrl(profile?.gitHubUrl || initialView.gitHubUrl, fullName),
-          linkedInUrl: this.getSafeLinkedInUrl(profile?.linkedInUrl || initialView.linkedInUrl, fullName),
+          skills: skillsArr,
+          gitHubUrl: this.getSafeGitHubUrl(
+            profile?.gitHubUrl || initialView.gitHubUrl
+          ),
+          linkedInUrl: this.getSafeLinkedInUrl(
+            profile?.linkedInUrl || initialView.linkedInUrl
+          ),
           warnings: finalWarnings
         });
 
@@ -827,19 +893,22 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.showAllAtRiskPage.set(false);
   }
 
-  getSafeGitHubUrl(url?: string, name?: string): string {
-    if (url && url.startsWith('http')) return url;
-    return 'https://github.com/';
+  // Return social links only when valid URLs exist in backend data.
+  getSafeGitHubUrl(url?: string): string {
+    return url && url.startsWith('https://') ? url : '';
   }
 
-  getSafeLinkedInUrl(url?: string, name?: string): string {
-    if (url && url.startsWith('http')) return url;
-    return 'https://www.linkedin.com/';
+  getSafeLinkedInUrl(url?: string): string {
+    return url && url.startsWith('https://') ? url : '';
   }
 
   ngAfterViewInit() {
     this.initBarChart();
     this.initDonutChart();
+
+    // Apply backend chart data after chart instances are initialized.
+    this.updateBarChartData(this.charts());
+    this.updateDonutChartData();
   }
 
   ngOnDestroy() {
@@ -864,7 +933,6 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.showAnnouncements.update(v => !v);
   }
 
-  // دوال التحكم في عرض وترقيم صفحات سجل الأنشطة الأخيرة
   toggleShowAllActivity() {
     this.showAllActivity.update(val => !val);
     this.activityPage.set(1);
@@ -891,7 +959,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   onYearChange(event: Event) {
     const val = (event.target as HTMLSelectElement).value;
     this.selectedYear.set(val);
-    this.updateDonutChartData(val);
+    this.updateDonutChartData();
   }
 
   getInitials(name?: string): string {
@@ -956,12 +1024,14 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       }
     };
 
+
     this.barChartInstance = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: ['2021', '2022', '2023', '2024', '2025'],
+        // لا توجد قيم افتراضية؛ تُملأ البيانات من DashboardCharts API.
+        labels: [],
         datasets: [{
-          data: [4, 7, 9, 11, 6],
+          data: [],
           backgroundColor: '#0A1172',
           hoverBackgroundColor: '#0A1172',
           borderRadius: 6,
@@ -990,8 +1060,8 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
             cornerRadius: 10,
             displayColors: false,
             callbacks: {
-              title: (tooltipItems: TooltipItem<'bar'>[]) => tooltipItems[0].label,
-              label: (context: TooltipItem<'bar'>) => `عدد الدفعات : ${context.raw || 0}`
+              title: (tooltipItems: any) => tooltipItems[0].label,
+              label: (context: any) => `عدد الدفعات : ${context.raw || 0}`
             }
           }
         },
@@ -1007,39 +1077,168 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     const ctx = document.getElementById('tracksDonutChart') as HTMLCanvasElement;
     if (!ctx) return;
 
+    let hoveredSlice: { label: string; value: number | string; color: string } | null = null;
+
+    // =========================================================================
+    // Plugin متطور لضبط الاسم من عدة كلمات على سطرين بخط أنيق (10px) والرقم تحته
+    // =========================================================================
+    const insideDonutCenterAndLabelsPlugin = {
+      id: 'insideDonutCenterAndLabelsPlugin',
+      beforeEvent: (chart: any, args: any) => {
+        const event = args.event;
+        if (event.type === 'mousemove') {
+          const elements = chart.getElementsAtEventForMode(
+            event.native,
+            'nearest',
+            { intersect: true },
+            false
+          );
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const label = chart.data.labels[index] || '';
+            const value = chart.data.datasets[0].data[index] || 0;
+            const colors = chart.data.datasets[0].backgroundColor as string[];
+            const color = colors[index % colors.length] || '#0A1172';
+            hoveredSlice = { label, value, color };
+          } else {
+            hoveredSlice = null;
+          }
+          chart.draw();
+        } else if (event.type === 'mouseout') {
+          hoveredSlice = null;
+          chart.draw();
+        }
+      },
+      afterDatasetsDraw: (chart: any) => {
+        const { ctx, chartArea } = chart;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta || !meta.data || !meta.data.length) return;
+
+        const dataset = chart.data.datasets[0];
+        if (!dataset || !dataset.data) return;
+
+        // 1. رسم الأرقام باللون الأبيض داخل كل جزء ملون
+        meta.data.forEach((element: any, index: number) => {
+          const val = dataset.data[index];
+          if (val === undefined || val === null || Number(val) <= 0) return;
+
+          const { startAngle, endAngle, innerRadius, outerRadius, x, y } = element;
+          const angle = startAngle + (endAngle - startAngle) / 2;
+          const radius = innerRadius + (outerRadius - innerRadius) / 2;
+
+          const posX = x + Math.cos(angle) * radius;
+          const posY = y + Math.sin(angle) * radius;
+
+          if (endAngle - startAngle > 0.16) {
+            ctx.save();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Cairo, Tajawal, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+            ctx.shadowBlur = 3;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 1;
+            ctx.fillText(String(val), posX, posY);
+            ctx.restore();
+          }
+        });
+
+        // 2. رسم (الكلام مع الرقم) في منتصف الدائرة بشكل مرتب وصغير ليتسع تماماً
+        const centerX = (chartArea.left + chartArea.right) / 2;
+        const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        if (hoveredSlice && hoveredSlice.label) {
+          const raw = hoveredSlice.label.trim();
+          const words = raw.split(/\s+/);
+
+          // إعداد لون وخط النص (10px أنيق وصغير ليناسب الدائرة)
+          ctx.font = 'bold 10px Cairo, Tajawal, system-ui, sans-serif';
+          ctx.fillStyle = hoveredSlice.color || '#0A1172';
+
+          if (words.length >= 3) {
+            // للمسارات الطويلة مثل: "Project Management Track"
+            // السطر الأول: Project Management
+            // السطر الثاني: Track
+            const line1 = words.slice(0, words.length - 1).join(' ');
+            const line2 = words[words.length - 1];
+
+            ctx.fillText(line1, centerX, centerY - 17);
+            ctx.fillText(line2, centerX, centerY - 5);
+
+            // الرقم في الأسفل
+            ctx.font = 'bold 20px Cairo, Tajawal, system-ui, sans-serif';
+            ctx.fillStyle = '#0f172a';
+            ctx.fillText(String(hoveredSlice.value), centerX, centerY + 15);
+          } else if (words.length === 2 && raw.length > 15) {
+            // مسار من كلمتين طويل
+            ctx.fillText(words[0], centerX, centerY - 17);
+            ctx.fillText(words[1], centerX, centerY - 5);
+
+            ctx.font = 'bold 20px Cairo, Tajawal, system-ui, sans-serif';
+            ctx.fillStyle = '#0f172a';
+            ctx.fillText(String(hoveredSlice.value), centerX, centerY + 15);
+          } else {
+            // المسارات القصيرة التي تتسع في سطر واحد براحة
+            ctx.fillText(raw, centerX, centerY - 12);
+
+            ctx.font = 'bold 22px Cairo, Tajawal, system-ui, sans-serif';
+            ctx.fillStyle = '#0f172a';
+            ctx.fillText(String(hoveredSlice.value), centerX, centerY + 12);
+          }
+        } else {
+          // الحالة العادية: إجمالي عدد المسارات
+          const total = (dataset.data as number[]).reduce((sum, n) => sum + (Number(n) || 0), 0);
+          ctx.font = '600 11px Cairo, Tajawal, system-ui, sans-serif';
+          ctx.fillStyle = '#64748b';
+          ctx.fillText('المسارات التدريبية', centerX, centerY - 10);
+
+          ctx.font = 'bold 20px Cairo, Tajawal, system-ui, sans-serif';
+          ctx.fillStyle = '#0A1172';
+          ctx.fillText(String(total), centerX, centerY + 12);
+        }
+
+        ctx.restore();
+      }
+    };
+
     this.donutChartInstance = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: [],
         datasets: [{
           data: [],
-          backgroundColor: ['#ef4444', '#3b82f6', '#eab308', '#10b981', '#1e293b', '#8b5cf6', '#ec4899']
+          backgroundColor: ['#ef4444', '#3b82f6', '#eab308', '#10b981', '#1e293b', '#8b5cf6', '#ec4899'],
+          borderWidth: 2,
+          borderColor: '#ffffff'
         }]
       },
+      plugins: [insideDonutCenterAndLabelsPlugin],
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16 } },
-          tooltip: {
-            enabled: true,
-            backgroundColor: '#ffffff',
-            borderColor: '#e2e8f0',
-            borderWidth: 1,
-            cornerRadius: 8,
-            padding: { top: 8, bottom: 8, left: 12, right: 12 },
-            displayColors: false,
-            callbacks: {
-              title: () => '',
-              label: (context: TooltipItem<'doughnut'>) => `${context.label || ''} : ${context.raw || 0}`,
-              labelTextColor: (context: TooltipItem<'doughnut'>) => {
-                const colors = context.dataset.backgroundColor as string[];
-                return colors[context.dataIndex % colors.length];
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              padding: 16,
+              font: {
+                family: 'Cairo, Tajawal, sans-serif',
+                size: 12
               }
             }
+          },
+          tooltip: {
+            enabled: false
           }
         },
-        cutout: '70%'
+        // سماكة 66% تعطي اتساعاً داخلياً كافياً لراحة العين وعدم ملامسة الأطراف
+        cutout: '66%'
       }
     });
   }
@@ -1051,29 +1250,23 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.barChartInstance.update();
   }
 
-  private updateDonutChartData(year: string) {
+  // Update tracks donut chart using backend distribution only.
+  private updateDonutChartData(): void {
     if (!this.donutChartInstance) return;
 
-    const yearBatches = this.allBatches().filter(b =>
-      b.startDate && new Date(b.startDate).getFullYear().toString() === year
+    const tracks = this.charts()?.tracksDistribution ?? [];
+
+    const validTracks = tracks.filter(
+      item => item.label && item.value > 0
     );
 
-    const trackCounts: Record<string, number> = {};
-    yearBatches.forEach(b => {
-      const track = b.trackName || 'غير محدد';
-      trackCounts[track] = (trackCounts[track] || 0) + 1;
-    });
+    this.donutChartInstance.data.labels = validTracks.map(
+      item => item.label
+    );
 
-    const labels = Object.keys(trackCounts);
-    const dataValues = Object.values(trackCounts);
-
-    if (labels.length > 0) {
-      this.donutChartInstance.data.labels = labels;
-      this.donutChartInstance.data.datasets[0].data = dataValues;
-    } else {
-      this.donutChartInstance.data.labels = ['لا توجد بيانات'];
-      this.donutChartInstance.data.datasets[0].data = [0];
-    }
+    this.donutChartInstance.data.datasets[0].data = validTracks.map(
+      item => item.value
+    );
 
     this.donutChartInstance.update();
   }

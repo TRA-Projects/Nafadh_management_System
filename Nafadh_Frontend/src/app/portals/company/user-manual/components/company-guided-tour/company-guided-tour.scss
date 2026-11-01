@@ -1,0 +1,249 @@
+
+:host {
+  display: block;
+}
+
+/* =========================================
+   Guided Tour - Nafadh User Manual Style
+   ========================================= */
+
+body .driver-popover.nafadh-guided-popover {
+  position: fixed !important;
+  z-index: 1000000001 !important;
+
+  box-sizing: border-box;
+  width: min(380px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+
+  padding: 0 !important;
+  overflow: hidden;
+
+  background: #ffffff !important;
+  color: #1e293b !important;
+
+  border: 1px solid #e5e8ee;
+  border-radius: 16px;
+
+  box-shadow:
+    0 24px 60px rgba(10, 17, 114, 0.18),
+    0 6px 18px rgba(10, 17, 114, 0.08);
+
+  font-family: var(--font-arabic, 'Cairo', system-ui, sans-serif);
+  direction: rtl;
+  text-align: right;
+}
+
+/* =========================================
+   Header - Navy
+   ========================================= */
+
+.nafadh-guided-popover .driver-popover-title {
+  display: block;
+
+  margin: 0 !important;
+  padding: 20px 20px 18px 52px;
+
+  background: linear-gradient(
+    135deg,
+    #0a1172 0%,
+    #1a2a9c 100%
+  );
+
+  color: #ffffff !important;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.6;
+  text-align: right;
+}
+
+/* Close button */
+.nafadh-guided-popover .driver-popover-close-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+  padding: 0;
+
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff !important;
+
+  border: none;
+  border-radius: 9px;
+
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.nafadh-guided-popover .driver-popover-close-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff !important;
+}
+
+/* =========================================
+   Description - White Content
+   ========================================= */
+
+.nafadh-guided-popover .driver-popover-description {
+  display: block;
+
+  margin: 0 !important;
+  padding: 20px 20px 12px;
+
+  background: #ffffff;
+  color: #64748b !important;
+
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.8;
+  text-align: right;
+}
+
+/* =========================================
+   Footer
+   ========================================= */
+
+.nafadh-guided-popover .driver-popover-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  margin: 0 !important;
+  padding: 12px 20px 20px;
+
+  background: #ffffff;
+}
+
+/* Progress */
+.nafadh-guided-popover .driver-popover-progress-text {
+  color: #64748b;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+/* Navigation buttons */
+.nafadh-guided-popover .driver-popover-navigation-btns {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* =========================================
+   Buttons
+   ========================================= */
+
+.nafadh-guided-popover button {
+  padding: 8px 13px;
+
+  border: 1px solid #dbe9fb;
+  border-radius: 9px;
+
+  background: #f0f6ff;
+  color: #0a1172;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.nafadh-guided-popover button:hover {
+  background: #dbe9fb;
+}
+
+.nafadh-guided-popover button:focus-visible {
+  outline: 3px solid #00c4cc;
+  outline-offset: 2px;
+}
+
+/* Next / Finish */
+.nafadh-guided-popover .driver-popover-next-btn {
+  background: linear-gradient(135deg, #0a1172, #1a2a9c);
+  color: #ffffff !important;
+  border-color: #1a2a9c;
+}
+
+.nafadh-guided-popover .driver-popover-next-btn:hover {
+  background: #2639b5;
+  color: #ffffff !important;
+}
+
+/* Previous */
+.nafadh-guided-popover .driver-popover-prev-btn {
+  background: #f0f6ff;
+  color: #0a1172;
+  border-color: #dbe9fb;
+}
+
+/* Skip */
+.nafadh-guided-popover .nafadh-tour-skip-btn {
+  background: #ffffff;
+  color: #64748b;
+  border: 1px solid #e5e8ee;
+}
+
+.nafadh-guided-popover .nafadh-tour-skip-btn:hover {
+  background: #f8faff;
+}
+
+/* Disabled buttons */
+.nafadh-guided-popover button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* =========================================
+   Mobile
+   ========================================= */
+
+@media (max-width: 600px) {
+  body .driver-popover.nafadh-guided-popover {
+    width: min(360px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
+  }
+
+  .nafadh-guided-popover .driver-popover-title {
+    padding: 16px 16px 14px 48px;
+    font-size: 15px;
+  }
+
+  .nafadh-guided-popover .driver-popover-description {
+    padding: 16px 16px 10px;
+  }
+
+  .nafadh-guided-popover .driver-popover-footer {
+    padding: 12px 16px 16px;
+  }
+}
+
+
+/* =========================================
+   Guided Tour - Sidebar Popover
+   ========================================= */
+
+.nafadh-guided-popover.driver-popover-side-left,
+.nafadh-guided-popover.driver-popover-side-right {
+  max-width: min(380px, calc(100vw - 32px));
+}
+
+@media (max-width: 600px) {
+  .nafadh-guided-popover.driver-popover-side-left,
+  .nafadh-guided-popover.driver-popover-side-right {
+    max-width: calc(100vw - 24px);
+  }
+}

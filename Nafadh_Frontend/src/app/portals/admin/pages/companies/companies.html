@@ -197,7 +197,25 @@
                 <div style="display: flex; align-items: center; gap: 0.85rem;">
                   <div class="company-logo-avatar">
                     <img *ngIf="c.logo" [src]="c.logo" (error)="c.logo = null" class="company-logo-img" alt="logo" />
-                    <span *ngIf="!c.logo">{{ (c.companyName || 'ش').slice(0, 1) }}</span>
+                    <!-- الأيقونة المؤسسية الاحترافية للشركة بدلاً من الحرف -->
+                    <div class="company-avatar">
+                      <!-- الشعار إن وجد -->
+                      <img *ngIf="c.logo" [src]="c.logo" (error)="c.logo = null" class="company-avatar-img"
+                        alt="logo" />
+
+                      <!-- أيقونة المنشأة والمبنى تظهر تلقائياً إذا لم يكن هناك شعار -->
+                      <svg *ngIf="!c.logo" class="company-avatar-icon" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"></path>
+                        <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"></path>
+                        <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"></path>
+                        <path d="M10 6h4"></path>
+                        <path d="M10 10h4"></path>
+                        <path d="M10 14h4"></path>
+                        <path d="M10 18h4"></path>
+                      </svg>
+                    </div>
                   </div>
                   <div>
                     <strong class="company-title-text">{{ c.companyName }}</strong>
@@ -365,9 +383,19 @@
       <div class="nfd-hero-card" style="margin-top: 1.5rem;">
         <div class="nfd-hero-main">
           <div class="nfd-hero-logo">
-            <img *ngIf="selectedCompanyDetails.logo" [src]="selectedCompanyDetails.logo"
-              (error)="selectedCompanyDetails.logo = null" class="nfd-hero-logo-img" alt="logo" />
-            <span *ngIf="!selectedCompanyDetails.logo">{{ selectedCompanyDetails.companyName.slice(0, 1) }}</span>
+            <img *ngIf="$any(selectedCompanyDetails).logo" [src]="$any(selectedCompanyDetails).logo"
+              (error)="$any(selectedCompanyDetails).logo = null" class="nfd-hero-logo-img" alt="logo" />
+
+            <svg *ngIf="!$any(selectedCompanyDetails).logo" width="36" height="36" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"></path>
+              <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"></path>
+              <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"></path>
+              <path d="M10 6h4"></path>
+              <path d="M10 10h4"></path>
+              <path d="M10 14h4"></path>
+              <path d="M10 18h4"></path>
+            </svg>
           </div>
           <div>
             <div class="nfd-hero-title-row">

@@ -964,3 +964,725 @@
     margin: 10mm;
   }
 }
+/* رأس الكرت */
+.company-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.company-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.company-field {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* المربع النيلي للأيقونة */
+.company-avatar-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background-color: #0D1C8C;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* صف الأعمدة الأربعة السفلية */
+.card-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 14px;
+  text-align: center;
+}
+
+.stat-col .stat-num {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  font-family: monospace;
+}
+
+.stat-col .stat-lbl {
+  display: block;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* لون الإنذارات */
+.stat-num.warning-active {
+  color: #ef4444 !important;
+}
+
+
+/* ==========================================
+   Admin Trainer Attendance Tabs
+   ========================================== */
+
+.trainer-attendance-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  margin: 20px 0;
+  background: #f0f4f9;
+  border-radius: 12px;
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+  direction: rtl;
+}
+
+.trainer-attendance-tabs button {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  padding: 12px 24px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.trainer-attendance-tabs button:hover {
+  background: #e2e8f0;
+  color: #101c88;
+}
+
+.trainer-attendance-tabs button.active {
+  background: #101c88;
+  color: white;
+  box-shadow: 0 3px 8px rgba(16, 28, 136, 0.18);
+}
+
+@media (max-width: 600px) {
+  .trainer-attendance-tabs {
+    width: 100%;
+  }
+
+  .trainer-attendance-tabs button {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}
+
+/* ==========================================
+   Admin Trainer Attendance - Trainer Info
+   ========================================== */
+
+.trainer-attendance-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 170px;
+  direction: rtl;
+}
+
+.trainer-attendance-avatar {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 50%;
+  background: #eef2ff;
+  color: #101c88;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.trainer-attendance-person-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
+
+.trainer-attendance-person-info strong {
+  color: #101c88;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.trainer-attendance-person-info small {
+  color: #64748b;
+  font-size: 11px;
+}
+
+/* ==========================================
+   Admin Trainer Weekly Attendance
+   ========================================== */
+
+.trainer-week-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.trainer-week-table th,
+.trainer-week-table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 14px 10px;
+}
+
+.trainer-week-table th:first-child,
+.trainer-week-table td:first-child {
+  text-align: right;
+  min-width: 180px;
+}
+
+.trainer-week-table th small {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #64748b;
+}
+
+.trainer-week-day-records {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.trainer-week-record {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.trainer-week-record small {
+  color: #64748b;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.trainer-week-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.trainer-week-status.present {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.trainer-week-status.late {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.trainer-week-status.absent {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.trainer-week-status.early {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.trainer-week-empty {
+  color: #94a3b8;
+  font-size: 18px;
+}
+
+.trainer-week-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 12px;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+/* ==========================================
+   Admin Trainer Monthly Attendance
+   ========================================== */
+
+.trainer-monthly-attendance {
+  padding: 22px;
+}
+
+.trainer-month-week {
+  margin-top: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.trainer-month-week details {
+  width: 100%;
+}
+
+.trainer-month-week-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 17px 20px;
+  background: #f8fafc;
+  cursor: pointer;
+  list-style: none;
+  transition:background 0.2s ease;
+}
+
+.trainer-month-week-header::-webkit-details-marker {
+  display: none;
+}
+
+.trainer-month-week-header:hover {
+  background: #eef2ff;
+}
+
+.trainer-month-week-header strong {
+  color: #101c88;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.trainer-month-week-header span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.trainer-month-chevron {
+  font-size: 20px !important;
+  color: #101c88 !important;
+  transition: transform 0.2s ease;
+}
+
+.trainer-month-week details[open] .trainer-month-chevron {
+  transform: rotate(180deg);
+}
+
+.trainer-month-week .trainer-week-table {
+  margin: 0;
+}
+
+.trainer-month-week .trainer-week-table th {
+  background: #f8fafc;
+}
+
+.trainer-month-week .trainer-week-table td {
+  background: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .trainer-monthly-attendance {
+    padding: 14px;
+  }
+
+  .trainer-month-week-header {
+    padding: 14px;
+    gap: 8px;
+  }
+
+  .trainer-month-week-header strong {
+    font-size: 12px;
+  }
+
+  .trainer-month-week-header span {
+    font-size: 11px;
+  }
+}
+
+/* ==========================================
+   Trainer Attendance - Period Navigation
+   ========================================== */
+
+.trainer-attendance-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 14px 20px;
+  margin: 16px 0 20px;
+  background: #f0f4f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  direction: rtl;
+}
+
+.attendance-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #ffffff;
+  color: #0D1C8C;
+  border: 1px solid #d6deeb;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.attendance-nav-btn:hover {
+  background: #0D1C8C;
+  color: #ffffff;
+  border-color: #0D1C8C;
+  box-shadow: 0 4px 12px rgba(13, 28, 140, 0.18);
+}
+
+.attendance-nav-btn:focus-visible {
+  outline: 3px solid #a5b4fc;
+  outline-offset: 2px;
+}
+
+.attendance-period-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 22px;
+  min-width: 260px;
+  background: #ffffff;
+  color: #0D1C8C;
+  border: 1px solid #d6deeb;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.attendance-period-separator {
+  color: #94a3b8;
+  margin: 0 8px;
+  font-weight: 500;
+}
+
+@media (max-width: 650px) {
+  .trainer-attendance-navigation {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .attendance-period-display {
+    order: -1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .attendance-nav-btn {
+    flex: 1;
+  }
+}
+
+/* Trainer Attendance - Improved Tabs */
+
+.trainer-attendance-tabs {
+  margin: 0;
+  padding: 5px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  gap: 4px;
+}
+
+.trainer-attendance-tabs button {
+  padding: 10px 18px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.trainer-attendance-tabs button.active {
+  background: #0D1C8C;
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(13, 28, 140, 0.18);
+}
+
+/* Trainer Attendance - Topbar Layout */
+
+.trainer-attendance-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  direction: rtl;
+  margin: 20px 0;
+}
+
+.trainer-attendance-topbar .trainer-attendance-tabs {
+  margin: 0;
+}
+
+.trainer-attendance-topbar .trainer-attendance-navigation {
+  margin: 0;
+  padding: 5px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.trainer-attendance-topbar .trainer-attendance-period {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0D1C8C;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .trainer-attendance-topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .trainer-attendance-topbar .trainer-attendance-tabs,
+  .trainer-attendance-topbar .trainer-attendance-navigation {
+    width: 100%;
+    justify-content: center;
+  }
+}
+/* Trainer Attendance - Unified Toolbar */
+
+.trainer-attendance-topbar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin: 20px 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.trainer-attendance-topbar .trainer-attendance-navigation {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+/* Trainer Attendance - Filters Inside Topbar */
+
+.trainer-attendance-topbar > .filter-toolbar-card {
+  flex: 0 0 100%;
+  width: 100%;
+  margin: 0;
+  padding: 14px 0 0;
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  justify-content: flex-start;
+}
+
+.trainer-attendance-topbar > .filter-toolbar-card .filters-actions-wrap {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 12px;
+}
+/* ==========================================
+   TRAINER ATTENDANCE - FINAL UI DESIGN
+   ========================================== */
+
+/* Main white toolbar */
+.trainer-attendance-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  direction: rtl;
+  gap: 0;
+  padding: 18px 20px;
+  margin: 20px 0 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+/* Attendance tabs */
+.trainer-attendance-topbar .trainer-attendance-tabs {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px;
+  margin: 0;
+  background: #f1f5f9;
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.trainer-attendance-topbar .trainer-attendance-tabs button {
+  padding: 11px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.trainer-attendance-topbar .trainer-attendance-tabs button.active {
+  background: #0D1C8C;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(13, 28, 140, 0.2);
+}
+
+.trainer-attendance-topbar .trainer-attendance-tabs button:hover:not(.active) {
+  background: #e2e8f0;
+  color: #0D1C8C;
+}
+
+/* Period navigation */
+.trainer-attendance-topbar .trainer-attendance-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 5px;
+  margin: 0;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.trainer-attendance-topbar .trainer-attendance-navigation button {
+  padding: 9px 13px;
+  background: #ffffff;
+  color: #0D1C8C;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.trainer-attendance-topbar .trainer-attendance-navigation button:hover {
+  background: #eef2ff;
+  border-color: #a5b4fc;
+}
+
+.trainer-attendance-topbar .trainer-attendance-period {
+  color: #0D1C8C;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Filter rows inside toolbar */
+.trainer-attendance-topbar > .filter-toolbar-card {
+  flex: 0 0 100%;
+  width: 100%;
+  margin: 14px 0 0;
+  padding: 14px 0 0;
+  background: transparent;
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.trainer-attendance-topbar > .filter-toolbar-card .filters-actions-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+}
+
+.trainer-attendance-topbar .filters-actions-wrap label {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trainer-attendance-topbar .custom-select-filter {
+  min-height: 40px;
+  padding: 9px 12px;
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #dbe3ef;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.trainer-attendance-topbar .custom-select-filter:focus {
+  outline: none;
+  border-color: #0D1C8C;
+  box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.08);
+}
+
+.trainer-attendance-topbar .btn-reset-filters {
+  min-height: 40px;
+  padding: 9px 14px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Responsive design */
+@media (max-width: 900px) {
+  .trainer-attendance-topbar {
+    gap: 14px;
+    padding: 15px;
+  }
+
+  .trainer-attendance-topbar .trainer-attendance-tabs,
+  .trainer-attendance-topbar .trainer-attendance-navigation {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .trainer-attendance-topbar > .filter-toolbar-card {
+    margin-top: 0;
+  }
+
+  .trainer-attendance-topbar > .filter-toolbar-card .filters-actions-wrap {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .trainer-attendance-topbar .trainer-attendance-tabs button {
+    flex: 1;
+    padding: 10px 8px;
+    font-size: 11px;
+  }
+
+  .trainer-attendance-topbar .custom-select-filter {
+    max-width: 100%;
+  }
+}

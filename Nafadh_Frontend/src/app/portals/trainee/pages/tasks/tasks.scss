@@ -1,0 +1,1032 @@
+/* ============================================================
+   TASKS PAGE — BASE
+============================================================ */
+.tasks-page {
+  width: 100%;
+  box-sizing: border-box;
+  direction: rtl;
+}
+
+.tasks-title {
+  font-size: 22px;
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+
+/* ============================================================
+   TABS
+============================================================ */
+.tasks-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--color-tint-indigo);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 18px;
+}
+
+.tasks-tab-btn {
+  font-size: 14px;
+  padding: 9px 18px;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   MESSAGES (Error / Success)
+============================================================ */
+.alert-box {
+  margin-bottom: 14px;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.7;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 16px;
+  border-radius: 10px;
+}
+
+.alert-box.error {
+  background: var(--status-new-bg);
+  color: var(--status-new-fg);
+}
+
+.alert-box.success {
+  background: var(--status-completed-bg);
+  color: var(--status-completed-fg);
+  font-weight: 600;
+}
+
+.alert-icon {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.alert-box.error .alert-icon {
+  background: var(--status-new-fg);
+  color: var(--status-new-bg);
+}
+
+.alert-box.success .alert-icon {
+  background: var(--status-completed-fg);
+  color: var(--status-completed-bg);
+}
+
+/* ============================================================
+   LOADING
+============================================================ */
+.loading-text {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ============================================================
+   TASKS GRID
+============================================================ */
+.tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.task-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 300px;
+  padding: 18px;
+  border-radius: 14px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  direction: rtl;
+  margin-bottom: 12px;
+}
+
+.task-icon {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 12px;
+  background: var(--color-tint-indigo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-status-badge {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 12px;
+  padding: 5px 9px;
+}
+
+.task-title {
+  margin: 0 0 8px;
+  color: var(--color-navy);
+  font-size: 17px;
+  line-height: 1.6;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.task-description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+  min-height: 50px;
+}
+
+.task-divider {
+  height: 1px;
+  background: var(--color-tint-indigo);
+  margin: 14px 0;
+}
+
+.task-due-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  direction: rtl;
+  margin-bottom: 10px;
+}
+
+.task-due-label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.task-due-value {
+  font-size: 13px;
+  color: var(--color-navy);
+  direction: ltr;
+}
+
+/* ============================================================
+   LATE WARNING
+============================================================ */
+.late-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  direction: rtl;
+  background: var(--status-new-bg);
+  color: var(--status-new-fg);
+  border-radius: 9px;
+  padding: 9px 10px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.late-warning.detail {
+  border-radius: 11px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  gap: 8px;
+}
+
+/* ============================================================
+   GRADE BOX
+============================================================ */
+.grade-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  direction: rtl;
+  background: var(--status-active-bg);
+  border-radius: 9px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.grade-box.detail {
+  border-radius: 11px;
+  padding: 14px;
+  margin-bottom: 16px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.grade-box-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.grade-label {
+  font-size: 13px;
+  color: var(--status-active-fg);
+}
+
+.grade-box.detail .grade-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.grade-value {
+  font-size: 15px;
+  color: var(--status-active-fg);
+}
+
+.grade-box.detail .grade-value {
+  font-size: 20px;
+}
+
+.grade-feedback {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--status-active-fg);
+}
+
+/* ============================================================
+   TASK FOOTER / ACTION
+============================================================ */
+.task-footer {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.task-completed-banner {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  background: var(--status-completed-bg);
+  color: var(--status-completed-fg);
+  border-radius: 9px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.task-action-btn {
+  width: 100%;
+  font-size: 13px;
+  padding: 9px;
+}
+
+/* ============================================================
+   EMPTY STATE
+============================================================ */
+.empty-card {
+  text-align: center;
+  padding: 28px;
+  font-size: 14px;
+}
+
+/* ============================================================
+   BACK BUTTON
+============================================================ */
+.back-btn {
+  display: inline-block;
+  margin-bottom: 14px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--color-text-secondary);
+}
+
+/* ============================================================
+   TASK DETAILS
+============================================================ */
+.task-detail-card {
+  overflow: hidden;
+  padding: 20px;
+}
+
+.task-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  direction: rtl;
+  margin-bottom: 16px;
+}
+
+.task-detail-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.task-detail-title {
+  margin: 0 0 8px;
+  color: var(--color-navy);
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+.task-detail-description {
+  font-size: 14px;
+  line-height: 1.8;
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.task-detail-status {
+  font-size: 12px;
+  padding: 6px 10px;
+  flex-shrink: 0;
+}
+
+.task-deadline-box {
+  background: var(--color-tint-indigo);
+  border-radius: 11px;
+  padding: 13px;
+  margin-bottom: 14px;
+}
+
+.task-deadline-label {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 5px;
+}
+
+.task-deadline-value {
+  font-size: 14px;
+  color: var(--color-navy);
+}
+
+/* ============================================================
+   SUBMISSION FORM
+============================================================ */
+.submit-section-title {
+  margin: 0 0 7px;
+  color: var(--color-navy);
+  font-size: 17px;
+}
+
+.submit-section-hint {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+}
+
+.submission-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 14px;
+  padding: 11px;
+}
+
+.url-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 9px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.url-feedback.error {
+  background: var(--status-new-bg);
+  color: var(--status-new-fg);
+}
+
+.url-feedback.valid {
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  background: var(--status-completed-bg);
+  color: var(--status-completed-fg);
+}
+
+.submit-button-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.submit-btn {
+  min-width: 160px;
+  font-size: 13px;
+  padding: 10px 22px;
+}
+
+/* ============================================================
+   PROJECTS LIST
+============================================================ */
+.projects-loading {
+  width: 100%;
+  padding: 30px 0;
+  text-align: center;
+}
+
+.projects-loading p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.projects-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.project-card {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 20px 22px;
+  border-radius: 14px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.project-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  width: 100%;
+  direction: rtl;
+}
+
+.project-icon {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  border-radius: 14px;
+  background: var(--color-tint-indigo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-bottom: 5px;
+}
+
+.project-title {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: 17px;
+  line-height: 1.6;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.project-status-badge {
+  font-size: 11px;
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+
+.project-description {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.project-dates-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
+.project-date-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-text-secondary);
+  opacity: 0.45;
+}
+
+/* ============================================================
+   PROJECT STAGES (in list)
+============================================================ */
+.project-stages {
+  width: 100%;
+  margin-top: 20px;
+  direction: rtl;
+}
+
+.project-stages-row {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.stage-wrapper {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+.stage-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 48px;
+}
+
+.stage-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  box-sizing: border-box;
+}
+
+.stage-label {
+  margin-top: 5px;
+  font-size: 10px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.stage-line {
+  flex: 1;
+  height: 2px;
+  margin-top: 11px;
+  min-width: 10px;
+}
+
+/* ============================================================
+   EMPTY PROJECTS
+============================================================ */
+.empty-projects {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  padding: 35px 20px;
+  font-size: 14px;
+}
+
+.empty-projects p {
+  margin: 0;
+}
+
+/* ============================================================
+   PROJECT DETAILS
+============================================================ */
+.project-detail-card {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 22px;
+}
+
+.project-detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  direction: rtl;
+}
+
+.project-detail-icon {
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  border-radius: 14px;
+  background: var(--color-tint-indigo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-detail-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.project-detail-title {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: 21px;
+  line-height: 1.6;
+}
+
+.project-detail-status-badge {
+  font-size: 11px;
+  padding: 4px 9px;
+}
+
+.project-detail-description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--color-text-secondary);
+}
+
+.project-dates-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.project-date-box {
+  background: var(--color-tint-indigo);
+  border-radius: 10px;
+  padding: 13px;
+}
+
+.project-date-label {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 5px;
+}
+
+.project-date-value {
+  font-size: 13px;
+  color: var(--color-navy);
+}
+
+/* ============================================================
+   PROJECT DETAIL STAGES
+============================================================ */
+.project-detail-stages {
+  margin-top: 28px;
+}
+
+.project-detail-stages-title {
+  display: block;
+  font-size: 15px;
+  color: var(--color-navy);
+  margin-bottom: 16px;
+}
+
+.project-detail-stages-row {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  direction: rtl;
+}
+
+.detail-stage-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.detail-stage-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 55px;
+}
+
+.detail-stage-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.detail-stage-label {
+  font-size: 11px;
+  margin-top: 6px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.detail-stage-line {
+  flex: 1;
+  height: 2px;
+  margin-top: 14px;
+  min-width: 10px;
+}
+
+/* ============================================================
+   RESPONSIVE — TABLET (≤ 1024px)
+============================================================ */
+@media (max-width: 1024px) {
+  .tasks-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — TABLET/MOBILE (≤ 768px)
+============================================================ */
+@media (max-width: 768px) {
+  .tasks-title {
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+
+  .task-card {
+    padding: 16px;
+    min-height: auto;
+  }
+
+  .project-card {
+    padding: 16px 18px;
+  }
+
+  .project-card-top {
+    gap: 14px;
+  }
+
+  .project-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+  }
+
+  .project-detail-header {
+    gap: 14px;
+  }
+
+  .project-detail-icon {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+  }
+
+  .project-detail-title {
+    font-size: 18px;
+  }
+
+  .task-detail-header {
+    gap: 10px;
+  }
+
+  .task-detail-title {
+    font-size: 18px;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — MOBILE (≤ 640px)
+============================================================ */
+@media (max-width: 640px) {
+  .tasks-title {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  /* Tabs */
+  .tasks-tabs {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .tasks-tab-btn {
+    flex: 1;
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+
+  /* Tasks grid → 1 column */
+  .tasks-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .task-card {
+    padding: 14px;
+  }
+
+  .task-title {
+    font-size: 15px;
+  }
+
+  .task-description {
+    font-size: 13px;
+    min-height: auto;
+  }
+
+  /* Task details */
+  .task-detail-card {
+    padding: 16px;
+  }
+
+  .task-detail-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .task-detail-title {
+    font-size: 16px;
+  }
+
+  .task-detail-description {
+    font-size: 13px;
+  }
+
+  .task-detail-status {
+    align-self: flex-start;
+  }
+
+  /* Projects list */
+  .project-card {
+    padding: 14px;
+  }
+
+  .project-card-top {
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .project-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .project-title {
+    font-size: 15px;
+  }
+
+  .project-description {
+    font-size: 12.5px;
+  }
+
+  /* Stages in list */
+  .stage-column {
+    min-width: 40px;
+  }
+
+  .stage-circle {
+    width: 22px;
+    height: 22px;
+    font-size: 8px;
+  }
+
+  .stage-label {
+    font-size: 9px;
+  }
+
+  .stage-line {
+    margin-top: 10px;
+  }
+
+  /* Project details */
+  .project-detail-card {
+    padding: 16px;
+  }
+
+  .project-detail-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .project-detail-icon {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+  }
+
+  .project-detail-title {
+    font-size: 17px;
+  }
+
+  .project-detail-description {
+    font-size: 13px;
+  }
+
+  .project-dates-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .project-date-box {
+    padding: 11px;
+  }
+
+  /* Detail stages */
+  .detail-stage-column {
+    min-width: 45px;
+  }
+
+  .detail-stage-circle {
+    width: 26px;
+    height: 26px;
+    font-size: 10px;
+  }
+
+  .detail-stage-label {
+    font-size: 10px;
+    margin-top: 5px;
+  }
+
+  .detail-stage-line {
+    margin-top: 12px;
+  }
+
+  /* Submission */
+  .submit-btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Alerts */
+  .alert-box {
+    font-size: 13px;
+    padding: 11px 13px;
+  }
+
+  .grade-box.detail .grade-value {
+    font-size: 18px;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — SMALL MOBILE (≤ 420px)
+============================================================ */
+@media (max-width: 420px) {
+  .tasks-title {
+    font-size: 17px;
+  }
+
+  .task-title {
+    font-size: 14px;
+  }
+
+  .project-title {
+    font-size: 14px;
+  }
+
+  .project-detail-title {
+    font-size: 16px;
+  }
+
+  .stage-label {
+    font-size: 8px;
+  }
+
+  .detail-stage-label {
+    font-size: 9px;
+  }
+
+  .submission-input {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .alert-box {
+    font-size: 12px;
+  }
+
+  .grade-feedback {
+    font-size: 12px;
+  }
+}

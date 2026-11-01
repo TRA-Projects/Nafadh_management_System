@@ -27,5 +27,9 @@ namespace Nafadh_Backend.DTOs
         // Updated CV link
         [MaxLength(300, ErrorMessage = "CVUrl cannot exceed 300 characters.")]
         public string? CVUrl { get; set; }
+        // Updated LinkedIn profile URL
+        [MaxLength(300, ErrorMessage = "LinkedInUrl cannot exceed 300 characters.")]
+        [Url(ErrorMessage = "Please enter a valid LinkedIn URL.")]
+        public string? LinkedInUrl { get; set; }
     }
 }

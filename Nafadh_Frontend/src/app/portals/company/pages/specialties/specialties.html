@@ -1,6 +1,6 @@
 <section class="specialties-page" dir="rtl">
   <!-- رأس الصفحة -->
-  <header class="page-head">
+  <header class="page-head" data-guide="company-programs-header">
     <div>
       <h2>التخصصات المعتمدة وخطط التدريب</h2>
       <p>نظرة عامة على البرامج التدريبية المعتمدة وتوزيع الطاقة الاستيعابية ومتابعة مسارات التدريب</p>
@@ -9,37 +9,37 @@
 
   <!-- بطاقات الإحصائيات العلوية -->
   @if (!loading()) {
-    <div class="stats-grid">
+    <div class="stats-grid" data-guide="company-programs-stats">
       <article class="stat-card">
         <div class="stat-icon-box bg-blue-soft"><i class="fa-solid fa-certificate"></i></div>
         <div>
           <span>تخصصات معتمدة</span>
           <strong>{{ approvedCount() }}</strong>
-          <small>متاحة لاستقبال مرشحين</small>
+          <small>مرتبطة بالشركة رسميًا</small>
         </div>
       </article>
       <article class="stat-card">
         <div class="stat-icon-box bg-indigo-soft"><i class="fa-solid fa-users-rectangle"></i></div>
         <div>
           <span>الطاقة الكلية</span>
-          <strong>{{ totalCapacity() }}</strong>
-          <small>مقعد عبر التخصصات</small>
+          <strong>{{ totalCapacity() ?? '—' }}</strong>
+          <small>السقف التعاقدي للشركة</small>
         </div>
       </article>
       <article class="stat-card">
         <div class="stat-icon-box bg-teal-soft"><i class="fa-solid fa-chart-pie"></i></div>
         <div>
           <span>الإشغال الحالي</span>
-          <strong class="success">{{ usedCapacity() }}</strong>
-          <small>{{ occupancyPercent() }}% من الطاقة</small>
+          <strong class="success">{{ usedCapacity() ?? '—' }}</strong>
+          <small>{{ occupancyPercent() === null ? '—' : occupancyPercent() + '%' }} من الطاقة</small>
         </div>
       </article>
       <article class="stat-card">
         <div class="stat-icon-box bg-amber-soft"><i class="fa-solid fa-layer-group"></i></div>
         <div>
           <span>خطط تدريب فعالة</span>
-          <strong>{{ activePlans() }}</strong>
-          <small>مرتبطة بمراحل ومخرجات</small>
+          <strong>{{ activePlans() ?? '—' }}</strong>
+          <small>حسب حالة تنفيذ الخطط</small>
         </div>
       </article>
     </div>
@@ -61,6 +61,12 @@
     </div>
   }
 
+  @if (!loading() && (capacityError() || plansError())) {
+    <div class="state-card error" role="status">
+      <span>تعذّر تحميل بعض الإحصائيات. القيم غير المتاحة تظهر بشرطة.</span>
+      <button type="button" (click)="load()">إعادة المحاولة</button>
+    </div>
+  }
   <!-- التخطيط المتناسق الجديد (الرسم البياني بجانب كروت البرامج) -->
   @if (!loading() && cards().length) {
     <div class="content-split-layout">
@@ -80,7 +86,7 @@
               <div class="chart-center-hole">
                 <span class="total-label">إجمالي البرامج</span>
                 <strong class="total-value">{{ cards().length }}</strong>
-                <span class="sub-label">نشط الآن</span>
+                <span class="sub-label">مرتبط بالشركة</span>
               </div>
             </div>
 
@@ -124,7 +130,7 @@
         </div>
 
         <!-- أدوات البحث والتصفية والترتيب -->
-        <div class="list-toolbar">
+        <div class="list-toolbar" data-guide="company-programs-filters">
           <div class="toolbar-row">
             <input
               type="search"
@@ -176,7 +182,7 @@
           </div>
         }
 
-        <div class="specialty-grid">
+        <div class="specialty-grid" data-guide="company-programs-list">
           @for (card of visibleCards(); track trackByProgramId($index, card)) {
             <article
               class="specialty-card"
@@ -196,8 +202,8 @@
                   <b>{{ card.title }}</b>
                   <span><i class="fa-solid fa-briefcase ml-1"></i> {{ card.department }}</span>
                 </div>
-                <span class="status-chip" [class.pending]="!card.approved">
-                  <i></i>{{ card.approved ? 'معتمد' : 'غير منشور' }}
+                <span class="status-chip">
+                  <i></i>معتمد للشركة
                 </span>
               </div>
 
@@ -220,7 +226,7 @@
                 <span class="dot-sep"></span>
                 <span><i class="fa-solid fa-user-group text-slate-400 ml-1"></i> {{ card.companyUsed }} من شركتكم</span>
                 <span class="dot-sep"></span>
-                <span><i class="fa-regular fa-clock text-slate-400 ml-1"></i> {{ card.duration }} أسبوعًا</span>
+                <span><i class="fa-regular fa-clock text-slate-400 ml-1"></i> {{ card.duration }} ساعة</span>
                 <button type="button" class="details-link" (click)="openDetails(card); $event.stopPropagation()">
                   التفاصيل
                   <i class="fa-solid fa-arrow-left"></i>
@@ -238,8 +244,8 @@
   @if (!loading() && !error() && !cards().length) {
     <div class="empty-state">
       <div class="empty-icon"><i class="fa-solid fa-folder-open"></i></div>
-      <strong>لا توجد برامج معتمدة بعد</strong>
-      <span>ستظهر هنا البرامج التي تم ربط الشركة بها من قبل الهيئة.</span>
+      <strong>لا توجد برامج معتمدة للشركة</strong>
+      <span>ستظهر هنا البرامج المنشورة والمعتمدة للشركة من قبل الهيئة فقط.</span>
     </div>
   }
 

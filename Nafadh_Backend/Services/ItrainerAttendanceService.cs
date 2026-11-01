@@ -9,6 +9,8 @@ namespace Nafadh_Backend.Services
 
         Task<List<TrainerAttendanceDto>> GetRangeAsync(int companyId, DateTime from, DateTime to, int? trainerId);
 
+        // Get trainer attendance records for Admin reports
+        Task<List<AdminTrainerAttendanceDto>> GetAdminRangeAsync(DateTime from, DateTime to, int? trainerId, int? companyId);
         Task<TrainerAttendanceDto> UpsertAsync(TrainerAttendanceUpsertDto dto);
 
         // Returns the public URL of the saved proof, or null when the record does not exist.

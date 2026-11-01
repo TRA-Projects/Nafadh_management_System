@@ -1,5 +1,6 @@
 import {
   Component,
+  ElementRef,
   HostListener,
   computed,
   inject,
@@ -101,6 +102,7 @@ export class AppShell {
 
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly notificationSummaryService = inject(NotificationSummaryService);
 
@@ -181,6 +183,16 @@ export class AppShell {
 
   toggleLang(): void {
     this.lang.update((value) => (value === 'ar' ? 'en' : 'ar'));
+  }
+
+  @HostListener('document:click', ['$event'])
+  closeNotificationsOutside(event: MouseEvent): void {
+    if (!this.notifOpen()) return;
+    const target = event.target as Node | null;
+    const bell = this.hostElement.nativeElement.querySelector('.notif-wrap');
+    if (target && bell && !bell.contains(target)) {
+      this.notifOpen.set(false);
+    }
   }
 
   /** Open/close the bell and refresh its real database counters when opened. */
@@ -327,4 +339,33 @@ export class AppShell {
       JSON.stringify(this.accessibility())
     );
   }
+  // =========================================================
+// 🆕 Sidebar Mobile State
+// =========================================================
+readonly sidebarOpen = signal(false);
+
+toggleSidebar(): void {
+  this.sidebarOpen.update((v) => !v);
+}
+
+closeSidebar(): void {
+  if (this.sidebarOpen()) {
+    this.sidebarOpen.set(false);
+  }
+}
+
+/** إغلاق السايدبار عند الضغط على ESC */
+@HostListener('document:keydown.escape')
+onEscapeKey(): void {
+  this.closeSidebar();
+}
+
+/** إغلاق تلقائي عند تكبير الشاشة فوق 900px */
+@HostListener('window:resize', ['$event'])
+onWindowResize(event: Event): void {
+  const width = (event.target as Window).innerWidth;
+  if (width > 900 && this.sidebarOpen()) {
+    this.sidebarOpen.set(false);
+  }
+}
 }

@@ -1,0 +1,109 @@
+<section class="live-page" dir="rtl">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">متابعة الجلسة</p>
+      <h1>الحضور المباشر</h1>
+      <p class="subtitle">حالة اتصال المتدربين المسجلين في الدفعة</p>
+    </div>
+
+    <span class="live-badge">
+      <span class="live-dot"></span>
+      اتصال مباشر
+    </span>
+  </header>
+
+  @if (loading()) {
+    <p>جاري تحميل بيانات الحضور...</p>
+  } @else if (errorMessage()) {
+    <p role="alert">{{ errorMessage() }}</p>
+  } @else {
+    <section class="summary">
+      <article class="summary-card">
+        <span class="summary-label">إجمالي المتدربين</span>
+        <strong>{{ rows().length }}</strong>
+      </article>
+
+      <article class="summary-card connected-card">
+        <span class="summary-label">متصلون</span>
+        <strong>{{ connectedCount }}</strong>
+      </article>
+
+      <article class="summary-card disconnected-card">
+        <span class="summary-label">غير متصلين حاليًا</span>
+        <strong>{{ disconnectedCount }}</strong>
+      </article>
+    </section>
+
+<section class="table-card">
+      <div class="table-heading">
+        <div>
+          <h2>قائمة المتدربين</h2>
+          <p>المصدر: بيانات التسجيل وحالة غرفة الجلسة في النظام</p>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="search-th">
+                <div class="th-search-horizontal">
+                  <!-- عنوان العمود وزر العدسة التفاعلي -->
+                  <div class="th-title-group">
+                    <span>المتدرب</span>
+                    <button type="button" class="search-toggle-btn" (click)="toggleSearch()" title="بحث بالاسم">
+                      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- حقل البحث الذي يظهر فقط عند الضغط على العدسة -->
+                   @if (isSearchOpen()) {
+                    <input 
+                      type="text" 
+                      class="inline-search-input animate-fade-in" 
+                      placeholder="ابحث باسم المتدرب..." 
+                      [ngModel]="searchQuery()" 
+                      (ngModelChange)="searchQuery.set($event)" 
+                      autofocus
+                    />
+                  }
+                </div>
+              </th>
+              <th>حالة الاتصال</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (row of filteredRows(); track row.traineeId) {
+              <tr>
+                <td class="trainee-name">{{ row.traineeName }}</td>
+                <td>
+                  @if (row.isConnected) {
+                    <span class="status status-connected">متصل</span>
+                  } @else {
+                    <span class="status status-disconnected">
+                      غير متصل حاليًا
+                    </span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="2">
+                  @if (searchQuery()) {
+                    لا يوجد متدرب بهذا الاسم "{{ searchQuery() }}".
+                  } @else {
+                    لا توجد تسجيلات لهذه الدفعة.
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</section>

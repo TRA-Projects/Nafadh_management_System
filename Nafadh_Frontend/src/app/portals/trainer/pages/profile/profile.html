@@ -539,7 +539,29 @@
 
       </div>
 
+<!-- LINKEDIN -->
 
+<div class="form-group">
+  <label>
+    رابط LinkedIn
+  </label>
+
+  <div class="input-wrapper">
+    <span class="input-icon">
+      <i class="fa-brands fa-linkedin"></i>
+    </span>
+
+    <input
+      type="url"
+      class="profile-input text-ltr"
+      [(ngModel)]="t.linkedinUrl"
+      [readonly]="!isEditing()"
+      (ngModelChange)="markProfileChanged()"
+      maxlength="300"
+      placeholder="https://www.linkedin.com/in/username"
+    />
+  </div>
+</div>
       <!-- BIOGRAPHY -->
 
       <div class="form-group full-width">

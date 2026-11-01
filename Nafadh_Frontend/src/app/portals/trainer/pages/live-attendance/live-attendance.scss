@@ -1,0 +1,273 @@
+:host {
+  display: block;
+  color: #172B4D;
+  font-family: inherit;
+}
+
+.live-page {
+  min-height: 100%;
+  padding: 28px;
+  background: #F7F9FC;
+}
+
+.page-header,
+.table-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #16856B;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 8px;
+  font-size: 26px;
+}
+
+.subtitle,
+.table-heading p {
+  margin-bottom: 0;
+  color: #718096;
+  font-size: 14px;
+}
+
+.live-badge,
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.live-badge {
+  padding: 9px 14px;
+  color: #B42318;
+  background: #FFF1F0;
+}
+
+.live-dot,
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.summary-card,
+.table-card {
+  border: 1px solid #E7EDF4;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 14px #172b4d08;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+}
+
+.summary-label {
+  color: #718096;
+  font-size: 14px;
+}
+
+.summary-card strong {
+  font-size: 28px;
+}
+
+.connected-card strong {
+  color: #16856B;
+}
+
+.disconnected-card strong {
+  color: #D97706;
+}
+
+.table-card {
+  overflow: hidden;
+}
+
+.table-heading {
+  padding: 20px 22px;
+}
+
+.table-heading h2 {
+  margin-bottom: 6px;
+  font-size: 18px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+}
+
+th,
+td {
+  padding: 15px 22px;
+  border-top: 1px solid #EDF1F5;
+  white-space: nowrap;
+}
+
+th {
+  color: #718096;
+  background: #FAFBFD;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+td {
+  font-size: 14px;
+}
+
+.trainee-name {
+  font-weight: 700;
+}
+
+.status {
+  padding: 7px 10px;
+}
+
+.status-connected {
+  color: #16856B;
+  background: #EAF7F2;
+}
+
+.status-disconnected {
+  color: #B76E00;
+  background: #FFF6E5;
+}
+
+@media (max-width: 700px) {
+  .live-page {
+    padding: 16px;
+  }
+
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    align-items: flex-start;
+  }
+}
+.table-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  .search-box {
+    .search-input {
+      padding: 0.55rem 1rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      width: 250px;
+      outline: none;
+      transition: all 0.2s ease-in-out;
+
+      &:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      }
+    }
+  }
+}
+.th-search-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+
+  .th-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap; // يمنع نزول الكلمة لسطر جديد
+
+    .search-toggle-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: #f1f5f9;
+      }
+
+      .search-icon {
+        color: #64748b;
+        transition: color 0.2s;
+
+        &:hover {
+          color: #3b82f6;
+        }
+      }
+    }
+  }
+
+  .inline-search-input {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    width: 220px; // عرض مناسب للمستطيل بجانب العدسة
+    outline: none;
+    background-color: #ffffff;
+    transition: all 0.2s ease-in-out;
+    animation: fadeIn 0.2s ease-in-out;
+
+    &:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

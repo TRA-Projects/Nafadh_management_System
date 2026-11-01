@@ -35,7 +35,8 @@
 
 .warnings-page button,
 .warnings-page input,
-.warnings-page select {
+.warnings-page select,
+.warnings-page textarea {
   font: inherit;
 }
 
@@ -48,7 +49,9 @@
   cursor: not-allowed;
 }
 
-/* رأس الصفحة */
+/* =========================================
+   رأس الصفحة
+========================================= */
 
 .page-header {
   display: flex;
@@ -79,9 +82,6 @@
   line-height: 1.8;
 }
 
-/* أيقونة الدرع البيضاء */
-
-
 .warnings-page .header-icon {
   display: flex;
   align-items: center;
@@ -101,7 +101,9 @@
   filter: drop-shadow(0 2px 3px rgb(0 0 0 / 12%));
 }
 
-/* الأزرار */
+/* =========================================
+   الأزرار العامة
+========================================= */
 
 .refresh-button,
 .reset-button,
@@ -140,7 +142,9 @@
   background: #f2f6ff;
 }
 
-/* الإحصائيات */
+/* =========================================
+   بطاقات الإحصائيات
+========================================= */
 
 .stats-grid {
   display: grid;
@@ -249,7 +253,9 @@
   line-height: 1.6;
 }
 
-/* المحتوى الرئيسي */
+/* =========================================
+   المحتوى الرئيسي
+========================================= */
 
 .content-card {
   padding: 25px;
@@ -292,7 +298,9 @@
   white-space: nowrap;
 }
 
-/* البحث والفلاتر */
+/* =========================================
+   البحث والفلاتر
+========================================= */
 
 .filters-area {
   display: grid;
@@ -374,7 +382,9 @@
   white-space: nowrap;
 }
 
-/* الجدول */
+/* =========================================
+   جدول الإنذارات
+========================================= */
 
 .table-wrapper {
   width: 100%;
@@ -462,7 +472,9 @@
   text-align: right;
 }
 
-/* شارات الخطورة والحالة */
+/* =========================================
+   شارات الخطورة والحالة
+========================================= */
 
 .level-badge,
 .status-badge {
@@ -529,7 +541,9 @@
   border-color: #c6d5f4;
 }
 
-/* التحميل والنتائج الفارغة والأخطاء */
+/* =========================================
+   التحميل والنتائج الفارغة والأخطاء
+========================================= */
 
 .loading-state,
 .empty-state {
@@ -616,7 +630,9 @@
   color: #ae3742;
 }
 
-/* نافذة تفاصيل الإنذار */
+/* =========================================
+   نافذة تفاصيل الإنذار
+========================================= */
 
 .details-backdrop {
   position: fixed;
@@ -767,34 +783,212 @@
   color: #98a2b1;
 }
 
-.reply-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  border: 1px solid #dce6fa;
-  border-radius: 12px;
-  background: #f1f5ff;
-  color: #3157a4;
-}
+/* =========================================
+   قسم الرد على الأدمن
+========================================= */
 
-.reply-notice > i {
+.company-reply-section {
   margin-top: 2px;
-  color: #5276b8;
-  font-size: 20px;
+  padding: 20px;
+  border: 1px solid #dce6f6;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #fff 0%, #f6f9ff 100%);
+  box-shadow: 0 5px 18px rgb(37 70 125 / 5%);
 }
 
-.reply-notice strong {
-  font-size: 13px;
+.company-reply-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 0 0 14px;
+  color: #284779;
+  font-size: 15px;
   font-weight: 800;
 }
 
-.reply-notice p {
-  margin: 7px 0 0;
-  color: #61759b;
-  font-size: 12px;
-  line-height: 1.9;
+.company-reply-section h3 i {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #e8efff;
+  color: #3157a4;
+  font-size: 18px;
 }
+
+.reply-description {
+  margin: 0 0 14px !important;
+  color: #738198 !important;
+  font-size: 12px !important;
+  line-height: 1.9 !important;
+}
+
+.company-reply-section label {
+  display: block;
+  margin: 15px 0 8px;
+  color: #344563;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.company-reply-section textarea {
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  padding: 13px 14px;
+  border: 1px solid #d8e1ef;
+  border-radius: 12px;
+  outline: none;
+  background: #fff;
+  color: #25334d;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.9;
+  resize: vertical;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.company-reply-section textarea::placeholder {
+  color: #9aa8bd;
+}
+
+.company-reply-section textarea:hover {
+  border-color: #b7c7e2;
+}
+
+.company-reply-section textarea:focus {
+  border-color: #5279d0;
+  box-shadow: 0 0 0 4px rgb(82 121 208 / 11%);
+}
+
+.company-reply-section textarea:disabled {
+  background: #f1f5f9;
+  cursor: not-allowed;
+}
+
+/* الرد السابق المحفوظ */
+
+.saved-reply {
+  margin: 14px 0 18px;
+  padding: 15px;
+  border: 1px solid #c9ead6;
+  border-right: 4px solid #269568;
+  border-radius: 12px;
+  background: #f0faf4;
+}
+
+.saved-reply-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #238255;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.saved-reply-heading i {
+  font-size: 16px;
+}
+
+.company-reply-section .saved-reply p {
+  margin: 9px 0 0;
+  color: #285d43;
+  font-size: 13px;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* عداد الأحرف وزر الإرسال */
+
+.reply-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 13px;
+}
+
+.reply-footer small {
+  color: #8290a5;
+  font-size: 11px;
+}
+
+.send-reply-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 43px;
+  padding: 10px 19px;
+  border: 0;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #3968c4, #284b99);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 5px 12px rgb(49 91 181 / 18%);
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    background 0.2s ease, opacity 0.2s ease;
+}
+
+.send-reply-button i {
+  font-size: 14px;
+}
+
+.send-reply-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #315bb5, #203f85);
+  box-shadow: 0 8px 17px rgb(49 91 181 / 24%);
+}
+
+.send-reply-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.send-reply-button:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* رسائل نجاح وفشل الإرسال */
+
+.reply-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.reply-message i {
+  margin-top: 2px;
+  font-size: 15px;
+}
+
+.reply-success {
+  border-color: #c9ead6;
+  background: #f0faf4;
+  color: #21734b;
+}
+
+.reply-error {
+  border-color: #f3d0d0;
+  background: #fff5f5;
+  color: #b42332;
+}
+
+/* =========================================
+   أسفل نافذة التفاصيل
+========================================= */
 
 .details-footer {
   padding: 18px 25px;
@@ -814,7 +1008,9 @@
   background: var(--primary-dark);
 }
 
-/* الشاشات المتوسطة */
+/* =========================================
+   الشاشات المتوسطة
+========================================= */
 
 @media (max-width: 1250px) {
   .stats-grid {
@@ -830,7 +1026,9 @@
   }
 }
 
-/* الهواتف */
+/* =========================================
+   الهواتف والأجهزة الصغيرة
+========================================= */
 
 @media (max-width: 768px) {
   .warnings-page {
@@ -861,8 +1059,9 @@
     border-radius: 14px;
   }
 
-  .warnings-page .header-icon i.bi {
-    font-size: 22px;
+  .warnings-page .shield-color-icon {
+    width: 32px;
+    height: 32px;
   }
 
   .refresh-button {
@@ -915,5 +1114,18 @@
 
   .details-footer {
     padding: 15px 16px;
+  }
+
+  .company-reply-section {
+    padding: 15px;
+  }
+
+  .reply-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .send-reply-button {
+    width: 100%;
   }
 }

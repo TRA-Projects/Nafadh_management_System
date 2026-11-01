@@ -14,13 +14,16 @@ namespace Nafadh_Backend.Services
     {
         private readonly IDailyAttendanceRepository _repository;
         private readonly IAbsenceWarningService _absenceWarningService;
+        private readonly IRiskWarningService _riskWarningService;
 
         public DailyAttendanceService(
             IDailyAttendanceRepository repository,
-            IAbsenceWarningService absenceWarningService)
+            IAbsenceWarningService absenceWarningService,
+            IRiskWarningService riskWarningService)
         {
             _repository = repository;
             _absenceWarningService = absenceWarningService;
+            _riskWarningService = riskWarningService;
         }
 
         public async Task<DailyAttendanceReadDto?> GetByIdAsync(int id)
@@ -65,6 +68,10 @@ namespace Nafadh_Backend.Services
             };
 
             NFD_DailyAttendance created = await _repository.AddAsync(entity);
+
+            await _riskWarningService.ProcessEnrollmentRiskAsync(
+                created.EnrollmentId);
+
             return MapToReadDto(created);
         }
 
@@ -96,6 +103,10 @@ namespace Nafadh_Backend.Services
             entity.Note = dto.Note;
 
             await _repository.UpdateAsync(entity);
+
+            await _riskWarningService.ProcessEnrollmentRiskAsync(
+                entity.EnrollmentId);
+
             return true;
         }
 

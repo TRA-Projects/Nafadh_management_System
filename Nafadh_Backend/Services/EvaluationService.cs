@@ -19,15 +19,17 @@ namespace Nafadh_Backend.Services
         // NEW: needed so newly-graded evaluations can trigger badge evaluation
         // (e.g. "HighScoreCount" badges) without the controller knowing about badges.
         private readonly IBadgeEvaluationService _badgeEvaluationService;
-
+        private readonly IRiskWarningService _riskWarningService;
         public EvaluationService(
             IEvaluationRepository repository,
             IEvaluationTemplateRepository templateRepository,
-            IBadgeEvaluationService badgeEvaluationService)
+            IBadgeEvaluationService badgeEvaluationService,
+            IRiskWarningService riskWarningService)
         {
             _repository = repository;
             _templateRepository = templateRepository;
             _badgeEvaluationService = badgeEvaluationService;
+            _riskWarningService = riskWarningService;
         }
 
         public async Task<IEnumerable<EvaluationDTO>> GetEvaluationsByEnrollmentIdAsync(int enrollmentId)
@@ -75,14 +77,18 @@ namespace Nafadh_Backend.Services
 
             var created = await _repository.CreateEvaluationAsync(evaluation);
 
-            // Fire-and-check badge conditions that depend on evaluation scores
-            // (e.g. "score >90% on N assignments"). Never blocks the response.
             if (created.EnrollmentId.HasValue)
             {
-                await _badgeEvaluationService.EvaluateEnrollmentEvaluationAsync(created.EnrollmentId.Value);
+                await _badgeEvaluationService
+                    .EvaluateEnrollmentEvaluationAsync(created.EnrollmentId.Value);
+
+                await _riskWarningService
+                    .ProcessEnrollmentRiskAsync(created.EnrollmentId.Value);
             }
 
-            return MapToDTO(await _repository.GetEvaluationByIdAsync(created.EvaluationId) ?? created);
+            return MapToDTO(
+                await _repository.GetEvaluationByIdAsync(created.EvaluationId)
+                ?? created);
         }
 
         public async Task UpdateEvaluationAsync(int id, UpdateEvaluationDTO updateDto)
@@ -97,20 +103,29 @@ namespace Nafadh_Backend.Services
 
             var computedScore = ComputeWeightedScore(template.EvaluationCriteria, updateDto.CriteriaScores);
 
-            await _repository.ReplaceCriterionScoresAsync(id, updateDto.CriteriaScores.Select(cs => new NFD_EvaluationCriterionScore
-            {
-                EvaluationId = id,
-                CriteriaId = cs.CriteriaId,
-                Score = cs.Score
-            }).ToList());
-
+            // Score, notes and the replacement criterion scores are saved together in a single
+            // SaveChanges (one transaction), so a failure can never leave a new Score next to old scores.
             var updated = new NFD_Evaluation
             {
                 EvaluationId = id,
                 Score = computedScore,
-                Notes = updateDto.Notes
+                Notes = updateDto.Notes,
+                CriterionScores = updateDto.CriteriaScores.Select(cs => new NFD_EvaluationCriterionScore
+                {
+                    EvaluationId = id,
+                    CriteriaId = cs.CriteriaId,
+                    Score = cs.Score
+                }).ToList()
             };
             await _repository.UpdateEvaluationAsync(updated);
+            if (existing.EnrollmentId.HasValue)
+            {
+                await _badgeEvaluationService
+                    .EvaluateEnrollmentEvaluationAsync(existing.EnrollmentId.Value);
+
+                await _riskWarningService
+                    .ProcessEnrollmentRiskAsync(existing.EnrollmentId.Value);
+            }
         }
 
         public async Task<double> GetAverageScoreByEnrollmentIdAsync(int enrollmentId)
@@ -151,13 +166,20 @@ namespace Nafadh_Backend.Services
             ICollection<NFD_EvaluationCriterion> templateCriteria,
             List<CriterionScoreInputDTO> submittedScores)
         {
+            if (submittedScores.GroupBy(s => s.CriteriaId).Any(g => g.Count() > 1))
+                throw new ArgumentException("Each criterion can only be scored once per evaluation.");
+
             decimal total = 0;
 
             foreach (var submitted in submittedScores)
             {
                 var criterion = templateCriteria.FirstOrDefault(c => c.CriteriaId == submitted.CriteriaId);
                 if (criterion == null)
-                    throw new Exception($"Criterion {submitted.CriteriaId} does not belong to the selected template.");
+                    throw new ArgumentException($"Criterion {submitted.CriteriaId} does not belong to the selected template.");
+
+                // A score above the criterion's maximum would push the rolled-up total past 100.
+                if (submitted.Score > criterion.MaxPoints)
+                    throw new ArgumentException($"Score for criterion '{criterion.Name}' cannot exceed its maximum of {criterion.MaxPoints}.");
 
                 if (criterion.MaxPoints > 0)
                 {

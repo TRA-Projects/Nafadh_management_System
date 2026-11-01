@@ -1,4 +1,5 @@
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.DTOs.CompanyPayment;
 using Nafadh_Backend.Enums;
 
 namespace Nafadh_Backend.Services
@@ -14,6 +15,11 @@ namespace Nafadh_Backend.Services
         Task<ConversationDetailDTO?> GetByIdAsync(
             int conversationId
         );
+
+        Task<List<AdminBatchGroupListDTO>> GetAdminBatchGroupsAsync();
+        Task<List<AdminBatchGroupMessageDTO>?> GetAdminBatchGroupMessagesAsync(
+    int conversationId
+);
 
         Task<ConversationDetailDTO> CreateAsync(
             CreateConversationDTO dto

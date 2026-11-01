@@ -24,6 +24,9 @@ namespace Nafadh_Backend.Models
         public string? Biography { get; set; }
         [MaxLength(300)]
         public string? CVUrl { get; set; }
+        // Trainer LinkedIn profile URL
+        [MaxLength(300)]
+        public string? LinkedInUrl { get; set; }
         // =====================================================
         // TRAINER PROFILE IMAGE
         // =====================================================

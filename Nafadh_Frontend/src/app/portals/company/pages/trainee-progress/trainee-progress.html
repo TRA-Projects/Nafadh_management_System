@@ -1,153 +1,341 @@
-<div style="margin-bottom: 20px; display: flex;">
-  <a routerLink="/company/trainees" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 500;">
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M5 12h14M12 5l7 7-7 7"/>
+<nav data-guide="company-trainee-view-back" class="tp-back" aria-label="التنقل">
+  <button type="button" class="tp-back__link" (click)="goBack()">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M5 12h14M12 5l7 7-7 7" />
     </svg>
     العودة إلى قائمة المتدربين
-  </a>
-</div>
+  </button>
+</nav>
 
-@if (enrollment(); as e) {
-  <div class="card card-pad" style="margin-bottom:16px">
-    <div class="prog-hero">
-      
-      <!-- input مخفي لرفع الصورة من الجهاز عند الضغط على الأيقونة -->
-      <input type="file" #fileInput (change)="onFileSelected($event, e.traineeId)" accept="image/*" style="display: none;" />
+@if (toast(); as t) {
+  <div class="tp-toast" [class.tp-toast--error]="t.kind === 'error'" role="status" aria-live="polite">{{ t.text }}</div>
+}
 
-      <!-- المربع الشخصي: بالضغط عليه يفتح استعراض الملفات لتغيير الصورة -->
-      <div (click)="fileInput.click()" style="cursor: pointer; position: relative;" title="اضغط لتغيير الصورة الشخصية">
-        @if (e.profileImageUrl) {
-          <img [src]="e.profileImageUrl" alt="{{ e.traineeName }}" class="pg-avatar" style="object-fit: cover; width: 64px; height: 64px; border-radius: 50%; display: block;" />
-        } @else {
-          <div class="pg-avatar" [style.background]="avatarColor(e.traineeName)">{{ initials(e.traineeName) }}</div>
-        }
-        <!-- أيقونة الكاميرا التوضيحية عند المرور -->
-        <div style="position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px;">
-          📷
-        </div>
-      </div>
-
-      <div style="flex:1;min-width:220px">
-        <h3>{{ e.traineeName }}</h3>
-        <div class="pg-sub">#{{ padId(e.enrollmentId) }} · {{ e.batchName }} · {{ e.programTitle || '—' }}</div>
-        <div class="pg-actions" style="margin-top: 10px;">
-          <span class="chip" [ngClass]="statusChipClass(e.completionStatus)"><span class="dot"></span>{{ statusLabel(e.completionStatus) }}</span>
-          <span class="chip gray">القسم: {{ e.departmentName || 'غير محدد' }}</span>
-          @if (e.supervisorName) { <span class="chip gray">المشرف: {{ e.supervisorName }}</span> }
-        </div>
-      </div>
-      <div class="pg-company">🏢 {{ e.companyName }}</div>
-      <a class="social-icon-btn github" [class.disabled]="!e.traineeGitHubUrl" [href]="ensureUrl(e.traineeGitHubUrl)" target="_blank" rel="noopener noreferrer" title="حساب GitHub">
-        <nfd-icon name="github" size="sm" />
-      </a>
-      <a class="social-icon-btn linkedin" [class.disabled]="!e.traineeLinkedInUrl" [href]="ensureUrl(e.traineeLinkedInUrl)" target="_blank" rel="noopener noreferrer" title="حساب LinkedIn">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14M8.3 18.5v-8.3H5.5v8.3h2.8ZM6.9 9.1a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Zm12.1 9.4v-4.8c0-2.6-1.4-3.8-3.3-3.8-1.5 0-2.2.8-2.6 1.4v-1.1h-2.8v8.3h2.8v-4.6c0-1.2.2-2.3 1.7-2.3 1.5 0 1.5 1.4 1.5 2.4v4.5H19Z"/></svg>
-      </a>
-    </div>
-  </div>
-
-  <div class="stats-4" style="margin-bottom:16px">
-    <div class="stat-box"><span>نسبة الإنجاز</span><b>{{ progressSummary()?.progressPercentage ?? 0 }}%</b></div>
-    <div class="stat-box"><span>متوسط التقييم</span><b>{{ avgScore() }}%</b></div>
-    <div class="stat-box"><span>تقييمات معلقة</span><b>{{ pendingCount() }}</b></div>
-    <div class="stat-box"><span>الفترة الحالية</span><b>{{ currentPhaseLabel() }}</b></div>
-  </div>
-
-  <div class="card card-pad" style="margin-bottom:16px">
-    <div class="card-title">متوسط التقييم عبر فترات التدريب الأربع<span class="hint">{{ phasesDoneCount() }} من 4 فترات مكتملة</span></div>
-    <div class="donut-wrap">
-      <div class="donut">
-        <svg viewBox="0 0 150 150" width="150" height="150">
-          <circle cx="75" cy="75" r="65" fill="none" stroke="#e9eef2" stroke-width="14"/>
-          <circle cx="75" cy="75" r="65" fill="none" stroke="#00338d" stroke-width="14" stroke-linecap="round"
-                [attr.stroke-dasharray]="donutCirc" [attr.stroke-dashoffset]="donutOffset()"/>
-        </svg>
-        <div class="center"><b>{{ avgScore() }}%</b><span>المتوسط العام</span></div>
-      </div>
-      <div class="legend">
-        @for (p of phases(); track p.def.n) {
-          <div class="lg-item">
-            <span class="sw" [style.background]="p.status === 'done' ? '#00338d' : (p.status === 'cur' ? '#efbb20' : '#c3ced8')"></span>
-            الفترة {{ p.def.n }}: {{ p.def.name }} <b>{{ p.ev ? p.ev.score + '%' : '—' }}</b>
-          </div>
-        }
+@switch (state()) {
+  @case ('loading') {
+    <div class="tp-skeleton" aria-busy="true" aria-label="جارٍ تحميل بيانات المتدرب">
+      <div class="tp-skeleton__block tp-skeleton__block--hero"></div>
+      <div class="tp-skeleton__row">
+        <div class="tp-skeleton__block tp-skeleton__block--main"></div>
+        <div class="tp-skeleton__block tp-skeleton__block--side"></div>
       </div>
     </div>
-  </div>
+  }
 
-  <!-- قسم التبويبات الأفقية الحديثة لفترات التدريب -->
-  <div class="card card-pad">
-    <div class="card-title" style="margin-bottom: 16px;">فترات التدريب الأربع</div>
-    
-    <!-- شريط التبويبات (Tabs Header) -->
-    <div style="display: flex; gap: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 20px; overflow-x: auto;">
-      @for (p of phases(); track p.def.n) {
-        <button
-          type="button"
-          (click)="selectPhase(p.def.n)"
-          [style.background]="activeTab === p.def.n ? '#00338d' : '#f8fafc'"
-          [style.color]="activeTab === p.def.n ? '#ffffff' : '#334155'"
-          [style.border-color]="activeTab === p.def.n ? '#00338d' : '#cbd5e1'"
-          style="padding: 10px 16px; border-radius: 8px; border: 1px solid; cursor: pointer; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; white-space: nowrap;">
-          
-          <span style="width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px;"
-                [style.background]="activeTab === p.def.n ? 'rgba(255,255,255,0.2)' : '#e2e8f0'"
-                [style.color]="activeTab === p.def.n ? '#ffffff' : '#475569'">
-            {{ p.status === 'done' ? '✓' : p.def.n }}
-          </span>
-          
-          <span>الفترة {{ p.def.n }}</span>
-          
-          <span style="font-size: 12px; opacity: 0.8;">({{ p.ev ? p.ev.score + '%' : '—' }})</span>
-        </button>
-      }
-    </div>
+  @case ('error') {
+    <section class="tp-card tp-empty" role="alert">
+      <h2 class="tp-empty__title">تعذر تحميل بيانات المتدرب</h2>
+      <p class="tp-empty__text">تأكد من اتصالك بالإنترنت أو من صلاحية رقم التسجيل، ثم أعد المحاولة.</p>
+      <button type="button" class="tp-btn" (click)="retry()">إعادة المحاولة</button>
+    </section>
+  }
 
-    <!-- محتوى التبويب النشط (Active Tab Content) -->
-    @if (getSelectedPhaseData(); as currentP) {
-      <div style="background: #ffffff; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <div>
-            <h4 style="margin: 0; font-size: 16px; color: #1e293b;">الفترة {{ currentP.def.n }}: {{ currentP.def.name }}</h4>
-            <span class="hint" style="font-size: 13px; color: #64748b;">{{ currentP.def.weeks }} · وزنها {{ currentP.def.weight }}% من التقييم</span>
-          </div>
-          <div>
-            @if (currentP.status === 'done') { <span class="chip ok"><span class="dot"></span>مكتملة</span> }
-            @else if (currentP.status === 'cur') { <span class="chip warn"><span class="dot"></span>قيد التنفيذ</span> }
-            @else { <span class="chip gray"><span class="dot"></span>لم تبدأ</span> }
-          </div>
-        </div>
+  @default {
+    @if (enrollment(); as e) {
+      <!-- ============ Profile ============ -->
+      <header class="tp-card tp-profile" data-guide="company-trainee-view-profile">
+        <input #fileInput type="file" hidden accept="image/png,image/jpeg,image/webp"
+               (change)="onFileSelected($event, e.traineeId)" />
 
-        <div class="bar" style="margin-bottom: 20px;"><i [class.amber]="currentP.status === 'cur'" [style.width.%]="currentP.ev.score || 0"></i></div>
+        <div class="tp-identity">
+          <button type="button" class="tp-avatar" (click)="fileInput.click()" [disabled]="uploading()"
+                  aria-label="تغيير الصورة الشخصية" title="تغيير الصورة الشخصية">
+            @if (avatarUrl(); as url) {
+              <img class="tp-avatar__img" [src]="url" [alt]="e.traineeName" (error)="onAvatarError()" />
+            } @else {
+              <span class="tp-avatar__fallback" [style.background]="avatarColor(e.traineeName)">{{ initials(e.traineeName) }}</span>
+            }
+            <span class="tp-avatar__edit" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" />
+              </svg>
+            </span>
+            @if (uploading()) { <span class="tp-avatar__busy" aria-hidden="true"></span> }
+          </button>
 
-        @if (currentP.ev) {
-          <div class="eval-box">
-            <div class="eval-top">
-              <div class="eval-score">{{ currentP.ev.score }}<small>%</small></div>
-              <div><b>تقييم المدرب</b><br><span class="eval-by">بواسطة: {{ currentP.ev.trainerId ? 'مدرب #' + currentP.ev.trainerId : 'الهيئة التدريبية' }}</span></div>
-              <span class="chip ok" style="margin-inline-start:auto"><span class="dot"></span>تم الاعتماد</span>
+          <div class="tp-identity__text">
+            <div class="tp-identity__row">
+              <h1 class="tp-identity__name">{{ e.traineeName }}</h1>
+              <span class="tp-chip" [class]="'tp-chip tp-chip--' + statusTone(e.completionStatus)">
+                <span class="tp-chip__dot"></span>{{ statusLabel(e.completionStatus) }}
+              </span>
             </div>
-            <div class="rubrics">
-              @for (c of currentP.ev.criteriaBreakdown; track c.criteriaId) {
-                <div class="rubric-row">
-                  <span class="r-lbl">{{ c.criterionName }}</span>
-                  <div class="dim-trk"><i [style.width.%]="criterionPct(c.score, c.maxPoints)"></i></div>
-                  <b class="r-val">{{ c.score }}/{{ c.maxPoints }}</b>
+            <div class="tp-identity__ids">
+              <span class="tp-pill"><span class="tp-pill__label">رقم التسجيل</span><span class="tp-num">{{ padId(e.enrollmentId) }}</span></span>
+              @if (e.enrollmentDate) {
+                <span class="tp-pill"><span class="tp-pill__label">تاريخ التسجيل</span>{{ formatDate(e.enrollmentDate) }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="tp-identity__links">
+            @if (ensureUrl(e.traineeGitHubUrl); as gh) {
+              <a class="tp-social tp-social--github" [href]="gh" target="_blank" rel="noopener noreferrer" aria-label="حساب GitHub" title="حساب GitHub">
+                <nfd-icon name="github" size="sm" />
+              </a>
+            }
+            @if (ensureUrl(e.traineeLinkedInUrl); as li) {
+              <a class="tp-social tp-social--linkedin" [href]="li" target="_blank" rel="noopener noreferrer" aria-label="حساب LinkedIn" title="حساب LinkedIn">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14M8.3 18.5v-8.3H5.5v8.3h2.8ZM6.9 9.1a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Zm12.1 9.4v-4.8c0-2.6-1.4-3.8-3.3-3.8-1.5 0-2.2.8-2.6 1.4v-1.1h-2.8v8.3h2.8v-4.6c0-1.2.2-2.3 1.7-2.3 1.5 0 1.5 1.4 1.5 2.4v4.5H19Z" /></svg>
+              </a>
+            }
+          </div>
+        </div>
+
+        <div class="tp-groups" data-guide="company-trainee-view-groups">
+          <section class="tp-group" aria-labelledby="grp-program">
+            <h2 id="grp-program" class="tp-group__title">البرنامج</h2>
+            <div class="tp-field">
+              <span class="tp-field__label">اسم البرنامج</span>
+              <span class="tp-field__value" [class.is-empty]="!e.programTitle">{{ e.programTitle || 'غير محدد' }}</span>
+            </div>
+            <div class="tp-field">
+              <span class="tp-field__label">المسار</span>
+              <span class="tp-field__value" [class.is-empty]="!e.trackName">{{ e.trackName || 'غير محدد' }}</span>
+            </div>
+            <div class="tp-field">
+              <span class="tp-field__label">الدفعة</span>
+              <span class="tp-field__value" [class.is-empty]="!e.batchName">{{ e.batchName || 'غير محددة' }}</span>
+            </div>
+          </section>
+
+          <section class="tp-group tp-group--period" aria-labelledby="grp-period">
+            <h2 id="grp-period" class="tp-group__title">فترة التدريب</h2>
+            @if (period(); as p) {
+              <div class="tp-dates">
+                <div class="tp-field">
+                  <span class="tp-field__label">تاريخ المباشرة</span>
+                  <span class="tp-field__value">{{ p.start }}</span>
+                </div>
+                <div class="tp-field">
+                  <span class="tp-field__label">تاريخ الانتهاء</span>
+                  <span class="tp-field__value">{{ p.end }}</span>
+                </div>
+              </div>
+              <div class="tp-period">
+                <div class="tp-track" role="progressbar" [attr.aria-valuenow]="p.percent" aria-valuemin="0" aria-valuemax="100" aria-label="المدة المنقضية من الدفعة">
+                  <i [style.width.%]="p.percent"></i>
+                </div>
+                <div class="tp-period__meta">
+                  <span>{{ p.label }}</span>
+                  <span class="tp-muted">مدة الدفعة {{ p.totalLabel }}</span>
+                </div>
+              </div>
+            } @else {
+              <div class="tp-field">
+                <span class="tp-field__label">التواريخ</span>
+                <span class="tp-field__value is-empty">لم تُحدَّد تواريخ الدفعة</span>
+              </div>
+            }
+          </section>
+
+          <section class="tp-group" aria-labelledby="grp-placement">
+            <h2 id="grp-placement" class="tp-group__title">جهة التدريب</h2>
+            <div class="tp-field">
+              <span class="tp-field__label">الجهة</span>
+              <span class="tp-field__value" [class.is-empty]="!e.companyName">{{ e.companyName || 'غير محددة' }}</span>
+            </div>
+            <div class="tp-field">
+              <span class="tp-field__label">القسم</span>
+              <span class="tp-field__value" [class.is-empty]="!e.departmentName">{{ e.departmentName || 'غير محدد' }}</span>
+            </div>
+            <div class="tp-field">
+              <span class="tp-field__label">المشرف</span>
+              <span class="tp-field__value" [class.is-empty]="!e.supervisorName">{{ e.supervisorName || 'غير معيّن' }}</span>
+            </div>
+          </section>
+        </div>
+      </header>
+
+      <div class="tp-layout">
+        <!-- ============ Modules + evaluation detail ============ -->
+        <section data-guide="company-trainee-view-modules" class="tp-card tp-modules" aria-labelledby="modules-title">
+          <div class="tp-modules__head">
+            <h2 id="modules-title" class="tp-h2">الوحدات والتقييمات</h2>
+            @if (totalModules() > 0) {
+              <span class="tp-muted">{{ evaluatedCount() }} من {{ totalModules() }} وحدات مقيّمة</span>
+            }
+          </div>
+
+          @if (sections().length === 0) {
+            <div class="tp-empty tp-empty--inline">
+              <h3 class="tp-empty__title">لا توجد وحدات أو تقييمات بعد</h3>
+              <p class="tp-empty__text">ستظهر وحدات البرنامج وتقييمات المدرب هنا فور إضافتها في النظام.</p>
+            </div>
+          } @else {
+            <div class="tp-split">
+              <div class="tp-tabs" role="tablist" aria-orientation="vertical" aria-label="وحدات البرنامج" (keydown)="onTabKeydown($event)">
+                @for (s of sections(); track s.key; let i = $index) {
+                  <button type="button" role="tab" class="tp-tab"
+                          [id]="'tab-' + s.key"
+                          [attr.aria-selected]="activeSection()?.key === s.key"
+                          [attr.aria-controls]="'panel-' + s.key"
+                          [tabindex]="activeSection()?.key === s.key ? 0 : -1"
+                          [class.is-active]="activeSection()?.key === s.key"
+                          [class.is-done]="s.evaluations.length > 0"
+                          (click)="select(s.key)">
+                    <span class="tp-tab__node" aria-hidden="true">
+                      @if (s.evaluations.length) {
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                      } @else {
+                        {{ i + 1 }}
+                      }
+                    </span>
+                    <span class="tp-tab__text">
+                      <span class="tp-tab__title">{{ s.title }}</span>
+                      <span class="tp-tab__sub">{{ s.evaluations.length ? (s.evaluations.length === 1 ? 'تقييم واحد' : s.evaluations.length + ' تقييمات') : 'بانتظار التقييم' }}</span>
+                    </span>
+                    <span class="tp-tab__score" [attr.data-tone]="tone(s.score)">{{ s.score === null ? '—' : formatScore(s.score) + '%' }}</span>
+                  </button>
+                }
+              </div>
+
+              @if (activeSection(); as sec) {
+                <div class="tp-panel" role="tabpanel" [id]="'panel-' + sec.key" [attr.aria-labelledby]="'tab-' + sec.key" tabindex="0">
+                  <div class="tp-panel__head">
+                    <h3 class="tp-h3">{{ sec.title }}</h3>
+                    @if (sec.evaluations.length) {
+                      <span class="tp-chip tp-chip--ok"><span class="tp-chip__dot"></span>مقيّمة</span>
+                    } @else {
+                      <span class="tp-chip tp-chip--gray"><span class="tp-chip__dot"></span>بانتظار التقييم</span>
+                    }
+                  </div>
+
+                  @if (!sec.evaluations.length) {
+                    <div class="tp-pending">
+                      لم يُسجَّل تقييم لهذه الوحدة بعد. سيظهر هنا بمجرد أن يعتمده المدرب.
+                    </div>
+                  }
+
+                  @for (ev of sec.evaluations; track ev.evaluationId) {
+                    <article class="tp-eval">
+                      <header class="tp-eval__head">
+                        <div class="tp-eval__score" [attr.data-tone]="tone(ev.score)">
+                          <b>{{ formatScore(ev.score) }}</b><small>%</small>
+                        </div>
+                        <div class="tp-eval__meta">
+                          <strong>{{ typeLabel(ev.templateType) }}</strong>
+                          <span class="tp-muted">{{ evaluatorOf(ev) }} — {{ formatDate(ev.evaluationDate) }}</span>
+                        </div>
+                        <span class="tp-eval__verdict" [attr.data-tone]="tone(ev.score)">{{ toneLabel(ev.score) }}</span>
+                      </header>
+
+                      @if (ev.criteriaBreakdown.length) {
+                        <ul class="tp-criteria">
+                          @for (c of ev.criteriaBreakdown; track c.criteriaId) {
+                            <li class="tp-criterion">
+                              <div class="tp-criterion__top">
+                                <span class="tp-criterion__name">{{ c.criterionName }}</span>
+                                @if (c.weight) { <span class="tp-criterion__weight">الوزن {{ formatScore(c.weight) }}%</span> }
+                                <span class="tp-criterion__value tp-num">{{ formatScore(c.score) }} / {{ formatScore(c.maxPoints) }}</span>
+                              </div>
+                              <div class="tp-track" role="progressbar" [attr.aria-valuenow]="criterionPct(c.score, c.maxPoints)" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="c.criterionName">
+                                <i [style.width.%]="criterionPct(c.score, c.maxPoints)"></i>
+                              </div>
+                            </li>
+                          }
+                        </ul>
+                      }
+
+                      @if (ev.notes) {
+                        <blockquote class="tp-note"><b>ملاحظة المدرب</b>{{ ev.notes }}</blockquote>
+                      }
+                    </article>
+                  }
                 </div>
               }
             </div>
-            @if (currentP.ev.notes) { <div class="eval-note"><b>ملاحظة المدرب:</b> "{{ currentP.ev.notes }}"</div> }
-          </div>
-        } @else {
-          <div class="eval-pending">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-            تقييم المدرب لهذه الفترة يُحتسب بعد اكتمالها.
-          </div>
-        }
-      </div>
-    }
+          }
+        </section>
 
-  </div>
-} @else {
-  <div class="card card-pad">جارِ التحميل…</div>
+        <!-- ============ Summary ============ -->
+        <aside class="tp-aside" aria-label="ملخص الأداء">
+          <section class="tp-card tp-summary" data-guide="company-trainee-view-summary">
+            <h2 class="tp-h2">متوسط التقييم</h2>
+            <div class="tp-ring">
+              <svg viewBox="0 0 120 120" width="132" height="132" aria-hidden="true">
+                <circle class="tp-ring__bg" cx="60" cy="60" [attr.r]="ringRadius" />
+                <circle class="tp-ring__fg" cx="60" cy="60" [attr.r]="ringRadius"
+                        [attr.stroke-dasharray]="ringCircumference" [attr.stroke-dashoffset]="ringOffset()" />
+              </svg>
+              <div class="tp-ring__label">
+                <b>{{ avgScore() === null ? '—' : formatScore(avgScore()) + '%' }}</b>
+                <span>{{ avgScore() === null ? 'لا توجد تقييمات' : toneLabel(avgScore()) }}</span>
+              </div>
+            </div>
+
+            @if (bucketRows().length) {
+              <ul class="tp-buckets">
+                @for (b of bucketRows(); track b.name) {
+                  <li>
+                    <span>{{ b.label }}</span>
+                    <b class="tp-num">{{ formatScore(b.value) }}%</b>
+                    <div class="tp-track"><i [style.width.%]="b.value"></i></div>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+
+          <section class="tp-card tp-numbers" data-guide="company-trainee-view-status">
+            <h2 class="tp-h2">حالة المتدرب</h2>
+            <dl class="tp-stats">
+              <div>
+                <dt>نسبة الإنجاز</dt>
+                <dd class="tp-num">{{ progressPercent() }}%</dd>
+                <div class="tp-track"><i [style.width.%]="progressPercent()"></i></div>
+              </div>
+              @if (completedModules(); as cm) {
+                <div><dt>وحدات مكتملة</dt><dd class="tp-num">{{ cm.done }} من {{ cm.total }}</dd></div>
+              }
+              <div><dt>وحدات بانتظار التقييم</dt><dd class="tp-num">{{ pendingCount() }}</dd></div>
+              <div><dt>آخر تقييم</dt><dd>{{ lastEvaluationDate() ?? 'لا يوجد' }}</dd></div>
+            </dl>
+          </section>
+        <section data-guide="company-trainee-view-quizzes" class="tp-card tp-quizzes" aria-labelledby="quiz-results-title">
+          <div class="tp-quizzes__head">
+            <h2 id="quiz-results-title" class="tp-h2">نتائج الاختبارات</h2>
+            @if (!quizResultsError() && quizResults().length > 0) {
+              <span class="tp-quizzes__count">{{ quizResults().length }} محاولة</span>
+            }
+          </div>
+          @if (quizResultsError()) {
+            <div class="tp-empty tp-empty--inline" role="alert">
+              <p class="tp-empty__text">تعذر تحميل نتائج الاختبارات.</p>
+              <button type="button" class="tp-btn" (click)="retry()">إعادة المحاولة</button>
+            </div>
+          } @else {
+            @for (result of quizResults(); track result.attemptId) {
+              <article class="tp-eval tp-quizzes__result">
+                <header class="tp-eval__head">
+                  <div class="tp-eval__score" [attr.data-tone]="tone(result.percentage)">
+                    <b>{{ formatScore(result.percentage) }}</b>
+                    <small>%</small>
+                  </div>
+                  <div class="tp-eval__meta">
+                    <strong>{{ result.quizTitle }}</strong>
+                    <span class="tp-muted">المحاولة {{ result.attemptNumber }} — {{ formatDate(result.submittedAt) }}</span>
+                    <span class="tp-muted">الدرجة المسجلة {{ formatScore(result.score) }}</span>
+                  </div>
+                  <span [class]="'tp-chip tp-chip--' + quizTone(result)">{{ quizLabel(result) }}</span>
+                </header>
+              </article>
+            } @empty {
+              <div class="tp-quizzes__empty" role="status">
+                <span class="tp-quizzes__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="5" y="4" width="14" height="17" rx="2" />
+                    <path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3" />
+                  </svg>
+                </span>
+                <p>لم تُسجّل نتائج اختبارات لهذا المتدرب بعد.</p>
+              </div>
+            }
+          }
+        </section>        </aside>
+      </div>
+
+
+    }
+  }
 }

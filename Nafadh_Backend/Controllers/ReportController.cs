@@ -29,7 +29,7 @@ namespace Nafadh_Backend.Controllers
 
         // GET Report
         [HttpGet]
-        public async Task<IActionResult> GetReports([FromQuery] NFD_ReportType? type,[FromQuery] int? userId)
+        public async Task<IActionResult> GetReports([FromQuery] NFD_ReportType? type, [FromQuery] int? userId)
         {
             var reports = await _service.GetReportsAsync(type, userId);
 
@@ -92,10 +92,10 @@ namespace Nafadh_Backend.Controllers
             return Ok(report);
         }
 
- 
-       // GET Report/{id}/download
-       [HttpGet("{id}/download")]
-       public async Task<IActionResult> DownloadReport(int id)
+
+        // GET Report/{id}/download
+        [HttpGet("{id}/download")]
+        public async Task<IActionResult> DownloadReport(int id)
         {
             var fileUrl = await _service.DownloadReportAsync(id);
 
@@ -174,6 +174,15 @@ namespace Nafadh_Backend.Controllers
             return Ok(await _service.GetDashboardChartsAsync());
         }
 
+        // GET: api/Report/dashboard-summary
+        // Returns database-backed summary metrics for the Admin dashboard.
+        [HttpGet("dashboard-summary")]
+        public async Task<IActionResult> GetAdminDashboardSummary()
+        {
+            var summary = await _service.GetAdminDashboardSummaryAsync();
+            return Ok(summary);
+        }
+
         // GET: api/Report/batch-performance/{batchId}?pageNumber=1&pageSize=15 (Admin Reports drill-down)
         [HttpGet("batch-performance/{batchId}")]
         public async Task<IActionResult> GetBatchPerformance(
@@ -184,6 +193,30 @@ namespace Nafadh_Backend.Controllers
             var report = await _service.GetBatchPerformanceAsync(batchId, pageNumber, pageSize);
             if (report == null) return NotFound();
             return Ok(report);
+        }
+
+        // ==========================================================
+        // Admin Reports - Company Batch Performance
+        // GET: api/Report/admin-company-batch-performance/{companyId}/{batchId}
+        // ==========================================================
+        [HttpGet("admin-company-batch-performance/{companyId:int}/{batchId:int}")]
+        public async Task<IActionResult> GetAdminCompanyBatchPerformance(
+            int companyId,
+            int batchId,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 15)
+        {
+            var result = await _service.GetAdminCompanyBatchPerformanceAsync(
+                companyId,
+                batchId,
+                pageNumber,
+                pageSize
+            );
+
+            if (result == null)
+                return NotFound();
+
+            return Ok(result);
         }
 
         // GET: api/Report/company-attendance/{companyId} (Company Reports tab)
@@ -256,6 +289,17 @@ namespace Nafadh_Backend.Controllers
                 });
             }
             return result;
+        }
+
+        // ==========================================================
+        // Admin Reports - Companies Summary
+        // GET: api/Report/admin-companies-summary
+        // ==========================================================
+        [HttpGet("admin-companies-summary")]
+        public async Task<IActionResult> GetAdminCompaniesSummary()
+        {
+            var result = await _service.GetAdminCompaniesSummaryAsync();
+            return Ok(result);
         }
 
     }

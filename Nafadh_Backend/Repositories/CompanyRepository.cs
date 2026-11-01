@@ -111,7 +111,7 @@ namespace Nafadh_Backend.Repositories
             {
                 company.Status = status;
                 company.ApprovalDate = (status == NFD_CompanyStatus.Approved) ? DateTime.UtcNow : company.ApprovalDate;
-                company.RejectionReason = rejectionReason; 
+                company.RejectionReason = rejectionReason;
 
                 _context.Entry(company).Property(c => c.Status).IsModified = true;
                 _context.Entry(company).Property(c => c.ApprovalDate).IsModified = true;
@@ -124,7 +124,11 @@ namespace Nafadh_Backend.Repositories
         public async Task<int> GetEnrollmentCountAsync(int companyId)
         {
             return await _context.NFD_Enrollments
-                .CountAsync(e => e.CompanyId == companyId);
+                .Where(e => e.CompanyId == companyId &&
+                    e.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress)
+                .Select(e => e.TraineeId)
+                .Distinct()
+                .CountAsync();
         }
 
         // Lean projection of all enrollments — used to compute real, per-company

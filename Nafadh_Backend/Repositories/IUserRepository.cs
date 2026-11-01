@@ -24,5 +24,6 @@ namespace Nafadh_Backend.Repositories
 
       
         Task<List<string>> GetPermissionKeysForUserAsync(int userId);
+        Task<bool> IsTraineeWithdrawnAsync(int userId);
     }
 }

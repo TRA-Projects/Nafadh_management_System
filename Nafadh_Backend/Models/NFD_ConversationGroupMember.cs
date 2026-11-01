@@ -9,5 +9,6 @@
         public int UserId { get; set; }
 
         public int BatchId { get; set; }
+        public int? LastReadMessageId { get; set; }
     }
 }

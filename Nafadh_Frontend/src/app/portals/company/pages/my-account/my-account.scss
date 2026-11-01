@@ -568,6 +568,77 @@
               margin-top: 0.2rem;
               display: block;
             }
+            /* تحسين حاوية سجل النشاطات لتكون أكثر أناقة */
+.activities-container, .card-box {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f1f5f9;
+  padding: 1.5rem;
+}
+
+/* تنسيق خط الزمني (Timeline List) */
+.timeline-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+
+  /* خط عمودي يربط العناصر بشكل جمالي */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    right: 15px; /* بما أن الموقع عربي RTL */
+    width: 2px;
+    background: #e2e8f0;
+  }
+
+  li {
+    position: relative;
+    padding-right: 35px; /* مسافة للخط والنقطة */
+    margin-bottom: 1rem;
+    background: #f8fafc;
+    padding: 12px 16px 12px 16px;
+    padding-right: 40px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    /* نقطة التوقيت على الخط */
+    .dot {
+      position: absolute;
+      right: 12px;
+      top: 18px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #2563eb;
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .t-info {
+      strong {
+        font-size: 0.95rem;
+        color: #1e293b;
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      small {
+        font-size: 0.8rem;
+        color: #64748b;
+      }
+    }
+  }
+}
           }
         }
       }

@@ -3,7 +3,7 @@
         <div class="hero-info">
             <span class="hero-eyebrow">إدارة المحتوى التدريبي</span>
             <h1>الجلسات المباشرة</h1>
-            <p>جدولة اجتماعات Webex وإدارة الجلسات وتسجيلات المحاضرات.</p>
+            <p>جدولة المحاضرات المباشرة وإدارتها داخل منصة نفاذ.</p>
         </div>
 
         <button class="back-btn" type="button" (click)="goBack()">
@@ -44,12 +44,15 @@
         </div>
     </div>
 
+    @if (errorMessage() && !showForm()) {
+    <p class="error-message">{{ errorMessage() }}</p>
+    }
+
     @if (successMessage()) {
     <p class="success-message">{{ successMessage() }}</p>
     }
 
     <div class="list-section">
-
         <div class="list-toolbar">
             <div class="tabs">
                 <button type="button" [class.active]="activeTab() === 'upcoming'" (click)="setTab('upcoming')">
@@ -69,22 +72,31 @@
                 (ngModelChange)="searchTerm.set($event)" />
         </div>
 
-        <div class="session-list">
+        <div class="session-list" [class.scrollable]="filteredSessions().length > 5">
             @for (session of filteredSessions(); track session.id) {
             <article class="session-card">
                 <div class="session-details">
                     <h3>{{ session.title }}</h3>
-                    <p>{{ session.description || 'بدون وصف' }}</p>
+
+                    <p>
+                        {{ getSessionDescription(session) }}
+                    </p>
+
+                    @if (session.description) {
+                    <p>{{ session.description }}</p>
+                    }
 
                     <div class="session-meta">
                         <span>
                             <i class="fa-regular fa-calendar"></i>
                             {{ session.startTime | date:'dd/MM/yyyy' }}
                         </span>
+
                         <span>
                             <i class="fa-regular fa-clock"></i>
                             {{ session.startTime | date:'shortTime' }}
                         </span>
+
                         <span>
                             <i class="fa-solid fa-hourglass-half"></i>
                             {{ session.durationMinutes }} دقيقة
@@ -92,34 +104,61 @@
                     </div>
                 </div>
 
-                <div class="session-actions">
-                    @if (
-                    session.status === 'InProgress' ||
-                    session.status === 'Completed'
-                    ) {
-                    <button type="button" (click)="openAttendance(session)">
-                        <i class="fa-solid fa-clipboard-user"></i>
-                        إدارة الحضور
-                    </button>
-                    }
-                    @if (session.status === 'Scheduled') {
-                    <button type="button" (click)="editSession(session)">تعديل</button>
-                    <button type="button" (click)="startSession(session)">بدء الاجتماع</button>
-                    <button type="button" class="danger-btn" (click)="cancelSession(session)">إلغاء</button>
-                    }
 
-                    @if (session.status === 'InProgress') {
-                    <button type="button" (click)="joinMeeting(session)">Join Meeting</button>
-                    <button type="button" (click)="completeSession(session)">إنهاء الجلسة</button>
-                    }
+                <div class="session-actions">
+
+                    <span class="status-label" [class.cancelled]="session.status === 'Cancelled'">
+                        {{ getSessionStatusLabel(session) }}
+                    </span>
 
                     @if (session.status === 'Completed') {
-                    <span class="status-label">منتهية</span>
+                    <button type="button" class="session-report-btn" (click)="openSessionReport(session)">
+                        <i class="fa-solid fa-chart-column"></i>
+                        تقرير الجلسة
+                    </button>
                     }
 
-                    @if (session.status === 'Cancelled') {
-                    <span class="status-label cancelled">ملغية</span>
+                    <!-- إعادة جدولة الجلسات التي فات موعدها -->
+                    @if (isMissedSession(session)) {
+                    <button type="button" class="reschedule-btn" [disabled]="saving()"
+                        (click)="rescheduleSession(session)">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        إعادة جدولة
+                    </button>
                     }
+
+                    <!-- تعديل وإلغاء الجلسات القادمة -->
+                    @if (
+                    (session.status === 'Scheduled' || session.status === 'Postponed') &&
+                    activeTab() === 'upcoming'
+                    ) {
+                    <button type="button" (click)="editSession(session)">
+                        تعديل
+                    </button>
+
+                    <button type="button" class="danger-btn" (click)="cancelSession(session)">
+                        إلغاء
+                    </button>
+                    }
+
+                    <!-- دخول المحاضرة فقط في الجلسات الجارية -->
+                    @if (
+                    activeTab() === 'ongoing' &&
+                    (
+                    session.status === 'Scheduled' ||
+                    session.status === 'Postponed' ||
+                    session.status === 'InProgress'
+                    )
+                    ) {
+                    <button type="button" [disabled]="joiningSessionId() !== null" (click)="startSession(session)">
+                        {{
+                        joiningSessionId() === session.id
+                        ? ' Loading...'
+                        : 'Join Meeting'
+                        }}
+                    </button>
+                    }
+
                 </div>
             </article>
             } @empty {
@@ -139,13 +178,21 @@
 
             <div class="modal-header">
                 <h2 id="session-form-title">
-                    {{ editingId() === null ? 'إنشاء جلسة جديدة' : 'تعديل الجلسة' }}
+                    {{
+                    reschedulingId() !== null
+                    ? 'إعادة جدولة الجلسة'
+                    : editingId() === null
+                    ? 'إنشاء جلسة جديدة'
+                    : 'تعديل الجلسة'
+                    }}
                 </h2>
-                <button type="button" class="close-btn" aria-label="إغلاق" (click)="closeForm()">×</button>
+
+                <button type="button" class="close-btn" aria-label="إغلاق" (click)="closeForm()">
+                    ×
+                </button>
             </div>
 
             <form (ngSubmit)="saveSession()">
-
                 <label for="session-title">عنوان الجلسة *</label>
                 <input id="session-title" type="text" name="title" [(ngModel)]="form.title" required maxlength="150" />
 
@@ -154,7 +201,9 @@
                     rows="3"></textarea>
 
                 <label>الدفعة</label>
-                <div class="readonly-field">الدفعة رقم {{ batchId }}</div>
+                <div class="readonly-field">
+                    الدفعة رقم {{ batchId }}
+                </div>
 
                 <div class="form-row">
                     <div>
@@ -172,21 +221,27 @@
                 <input id="session-duration" type="number" name="duration" [(ngModel)]="form.durationMinutes" min="1"
                     required />
 
-                <label for="session-url">رابط اجتماع Webex *</label>
-                <input id="session-url" type="url" name="meetingUrl" [(ngModel)]="form.meetingUrl"
-                    placeholder="https://..." required />
-
                 @if (errorMessage()) {
-                <p class="error-message">{{ errorMessage() }}</p>
+                <p class="error-message">
+                    {{ errorMessage() }}
+                </p>
                 }
 
                 <div class="form-actions">
-                    <button type="button" class="back-btn" (click)="closeForm()">إلغاء</button>
-                    <button type="submit" class="primary-btn">
-                        حفظ الجلسة
+                    <button type="button" class="back-btn" (click)="closeForm()">
+                        إلغاء
+                    </button>
+
+                    <button type="submit" class="primary-btn" [disabled]="saving()">
+                        {{
+                        saving()
+                        ? 'جاري الحفظ...'
+                        : reschedulingId() !== null
+                        ? 'حفظ الموعد الجديد'
+                        : 'حفظ الجلسة'
+                        }}
                     </button>
                 </div>
-
             </form>
         </div>
     </div>
@@ -213,115 +268,111 @@
             <div class="cancel-modal-actions">
                 <button type="button" class="cancel-modal-confirm" [disabled]="cancelling()"
                     (click)="confirmCancelSession()">
-                    {{ cancelling() ? 'جاري الإلغاء...' : 'نعم، إلغاء الجلسة' }}
+                    {{
+                    cancelling()
+                    ? 'جاري الإلغاء...'
+                    : 'نعم، إلغاء الجلسة'
+                    }}
                 </button>
 
                 <button type="button" class="cancel-modal-back" [disabled]="cancelling()" (click)="closeCancelModal()">
                     العودة
                 </button>
             </div>
-
         </div>
     </div>
     }
 
     @if (showAttendanceModal()) {
-  <div class="modal-overlay" (click)="closeAttendance()">
-    <div
-      class="modal-card attendance-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="attendance-title"
-      (click)="$event.stopPropagation()">
+    <div class="modal-overlay" (click)="closeAttendance()">
 
-      <div class="modal-header">
-        <h2 id="attendance-title">
-          إدارة الحضور - {{ attendanceSession()?.title }}
-        </h2>
+        <div class="modal-card attendance-modal" role="dialog" aria-modal="true" aria-labelledby="attendance-title"
+            (click)="$event.stopPropagation()">
 
-        <button
-          type="button"
-          class="close-btn"
-          (click)="closeAttendance()">
-          ×
-        </button>
-      </div>
+            <div class="modal-header">
+                <h2 id="attendance-title">
+                    إدارة الحضور - {{ attendanceSession()?.title }}
+                </h2>
 
-      @if (attendanceError()) {
-        <p class="error-message">{{ attendanceError() }}</p>
-      }
-
-      @if (attendanceSuccess()) {
-        <p class="success-message">{{ attendanceSuccess() }}</p>
-      }
-
-      @if (attendanceLoading()) {
-        <p>جاري تحميل قائمة المتدربين...</p>
-      } @else {
-        <div class="attendance-list">
-          @for (row of attendanceRows(); track row.traineeId) {
-            <div class="attendance-row">
-
-              <div class="attendance-trainee">
-                <i class="fa-solid fa-user"></i>
-                المتدرب رقم {{ row.traineeId }}
-              </div>
-
-              <div class="attendance-fields">
-                <select
-                  [ngModel]="row.status"
-                  (ngModelChange)="setAttendanceStatus(row.traineeId, $event)">
-
-                  <option [ngValue]="null">
-                    اختر حالة الحضور
-                  </option>
-
-                  @for (option of attendanceOptions; track option.value) {
-                    <option [ngValue]="option.value">
-                      {{ option.label }}
-                    </option>
-                  }
-                </select>
-
-                <input
-                  type="text"
-                  placeholder="ملاحظة (اختياري)"
-                  [ngModel]="row.note ?? ''"
-                  (ngModelChange)="setAttendanceNote(row.traineeId, $event)"
-                />
-
-                <button
-                  type="button"
-                  class="primary-btn"
-                  [disabled]="row.status === null || attendanceSavingId() !== null"
-                  (click)="saveAttendance(row)">
-
-                  {{
-                    attendanceSavingId() === row.traineeId
-                      ? 'جاري الحفظ...'
-                      : 'حفظ'
-                  }}
+                <button type="button" class="close-btn" (click)="closeAttendance()">
+                    ×
                 </button>
-              </div>
-
             </div>
-          } @empty {
-            <p>لا يوجد متدربون مسجلون في هذه الجلسة.</p>
-          }
+
+            @if (attendanceError()) {
+            <p class="error-message">
+                {{ attendanceError() }}
+            </p>
+            }
+
+            @if (attendanceSuccess()) {
+            <p class="success-message">
+                {{ attendanceSuccess() }}
+            </p>
+            }
+
+            @if (attendanceLoading()) {
+            <p>جاري تحميل قائمة المتدربين...</p>
+            } @else {
+            <div class="attendance-list">
+                @for (
+                row of attendanceRows();
+                track row.traineeId
+                ) {
+                <div class="attendance-row">
+                    <div class="attendance-trainee">
+                        <i class="fa-solid fa-user"></i>
+                        المتدرب رقم {{ row.traineeId }}
+                    </div>
+
+                    <div class="attendance-fields">
+                        <select [ngModel]="row.status" (ngModelChange)="setAttendanceStatus(
+                            row.traineeId,
+                            $event
+                          )">
+                            <option [ngValue]="null">
+                                اختر حالة الحضور
+                            </option>
+
+                            @for (
+                            option of attendanceOptions;
+                            track option.value
+                            ) {
+                            <option [ngValue]="option.value">
+                                {{ option.label }}
+                            </option>
+                            }
+                        </select>
+
+                        <input type="text" placeholder="ملاحظة (اختياري)" [ngModel]="row.note ?? ''" (ngModelChange)="setAttendanceNote(
+                           row.traineeId,
+                           $event
+                         )" />
+
+                        <button type="button" class="primary-btn" [disabled]="
+                            row.status === null ||
+                            attendanceSavingId() !== null
+                          " (click)="saveAttendance(row)">
+                            {{
+                            attendanceSavingId() === row.traineeId
+                            ? 'جاري الحفظ...'
+                            : 'حفظ'
+                            }}
+                        </button>
+                    </div>
+                </div>
+                } @empty {
+                <p>لا يوجد متدربون مسجلون في هذه الجلسة.</p>
+                }
+            </div>
+            }
+
+            <div class="form-actions">
+                <button type="button" class="back-btn" (click)="closeAttendance()">
+                    إغلاق
+                </button>
+            </div>
         </div>
-      }
-
-      <div class="form-actions">
-        <button
-          type="button"
-          class="back-btn"
-          (click)="closeAttendance()">
-          إغلاق
-        </button>
-      </div>
-
     </div>
-  </div>
-}
-
+    }
 </section>

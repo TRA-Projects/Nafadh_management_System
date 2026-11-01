@@ -55,7 +55,8 @@ interface TraineeUpdateDto {
 
   imports: [CommonModule, FormsModule],
 
-  templateUrl: './profile.html'
+  templateUrl: './profile.html',
+  styleUrl: './profile.scss',
 
 })
 

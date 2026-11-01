@@ -32,6 +32,8 @@ namespace Nafadh_Backend.Repositories
                 .Include(e => e.Trainer)
                     .ThenInclude(t => t.User)
                 .Where(e => e.EnrollmentId == enrollmentId)
+                .OrderBy(e => e.EvaluationDate)
+                .ThenBy(e => e.EvaluationId)
                 .ToListAsync();
         }
         //get All Admin evaluations of a trainer
@@ -82,7 +84,8 @@ namespace Nafadh_Backend.Repositories
             await _context.SaveChangesAsync();
             return evaluation;
         }
-        //Update score/notes
+        //Update score/notes. When evaluation.CriterionScores is supplied, the per-criterion scores
+        // are replaced in the same SaveChanges, so everything is saved in one transaction.
         public async Task UpdateEvaluationAsync(NFD_Evaluation evaluation)
         {
             var existingEvaluation = await _context.NFD_Evaluations.FindAsync(evaluation.EvaluationId);
@@ -92,6 +95,15 @@ namespace Nafadh_Backend.Repositories
             }
             existingEvaluation.Score = evaluation.Score;
             existingEvaluation.Notes = evaluation.Notes;
+
+            if (evaluation.CriterionScores.Count > 0)
+            {
+                var oldScores = _context.NFD_EvaluationCriterionScores
+                    .Where(s => s.EvaluationId == evaluation.EvaluationId);
+                _context.NFD_EvaluationCriterionScores.RemoveRange(oldScores);
+                await _context.NFD_EvaluationCriterionScores.AddRangeAsync(evaluation.CriterionScores);
+            }
+
             await _context.SaveChangesAsync();
         }
 

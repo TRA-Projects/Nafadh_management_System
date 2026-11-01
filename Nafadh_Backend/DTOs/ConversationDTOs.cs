@@ -32,7 +32,7 @@ namespace Nafadh_Backend.DTOs
         public int UnreadCount { get; set; }
 
         public string? StartedByName { get; set; }
-  
+
     }
 
 
@@ -97,10 +97,10 @@ namespace Nafadh_Backend.DTOs
         [MaxLength(150)]
         public string Subject { get; set; } = string.Empty;
 
-        [Required]
         public int StartedByUserId { get; set; }
 
         [Required]
+        [MaxLength(5000)]
         public string FirstMessage { get; set; } = string.Empty;
 
 
@@ -118,12 +118,11 @@ namespace Nafadh_Backend.DTOs
     // ============================================================
     public class AddConversationMessageDTO
     {
-        [Required]
         public int SenderId { get; set; }
         public int? ReceiverUserId { get; set; }
 
         [Required]
-        [MaxLength(1000)]
+        [MaxLength(5000)]
         public string Content { get; set; } = string.Empty;
     }
 

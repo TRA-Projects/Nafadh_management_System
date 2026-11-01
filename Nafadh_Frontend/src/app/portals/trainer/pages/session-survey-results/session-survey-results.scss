@@ -1,0 +1,126 @@
+:host {
+  display: block;
+}
+
+.survey-page {
+  min-height: 100%;
+  padding: 24px;
+  color: #172b4d;
+  background: #f7f9fc;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: #16856b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  color: #718096;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.summary-card,
+.comments-card {
+  padding: 18px;
+  border: 1px solid #e5ebf2;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summary-card span {
+  color: #718096;
+  font-size: 14px;
+}
+
+.summary-card strong {
+  font-size: 22px;
+}
+
+.rating-card strong {
+  color: #16856b;
+}
+
+.comments-card {
+  margin-top: 18px;
+}
+
+.comments-card h2 {
+  margin: 0 0 14px;
+  font-size: 19px;
+}
+
+.response {
+  padding: 14px 0;
+  border-top: 1px solid #edf1f5;
+}
+
+.response-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.response-heading span {
+  color: #16856b;
+  font-weight: 700;
+}
+
+.comment {
+  margin: 12px 0 8px;
+  white-space: pre-wrap;
+}
+
+.response time {
+  color: #718096;
+  font-size: 12px;
+}
+
+.message,
+.empty-state {
+  padding: 14px;
+  border-radius: 8px;
+  background: #eef4f8;
+}
+
+.message.error {
+  color: #a12828;
+  background: #fff0f0;
+}
+
+.empty-state {
+  color: #718096;
+}
+
+@media (max-width: 700px) {
+  .survey-page {
+    padding: 14px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

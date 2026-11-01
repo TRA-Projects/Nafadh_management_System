@@ -26,6 +26,8 @@ namespace Nafadh_Backend
         {
             var builder = WebApplication.CreateBuilder(args);
             QuestPDF.Settings.License = LicenseType.Community;
+            QuestPDF.Settings.UseSystemFonts = true;
+
 
             // Add services to the container.
             builder.Services.AddControllers(options =>
@@ -196,6 +198,7 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IEvaluationService, EvaluationService>();
             builder.Services.AddScoped<IWarningRepository, WarningRepository>();
             builder.Services.AddScoped<IWarningService, WarningService>();
+            builder.Services.AddScoped<IRiskWarningService, RiskWarningService>();
             builder.Services.AddScoped<ISupportTicketRepository, SupportTicketRepository>();
             builder.Services.AddScoped<ISupportTicketService, SupportTicketService>();
             builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
@@ -211,6 +214,16 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ITrainerCertificateService, TrainerCertificateService>();
             builder.Services.AddScoped<IReportRepository, ReportRepository>();
             builder.Services.AddScoped<IReportService, ReportService>();
+
+            // Admin Supervisor Reports
+            builder.Services.AddScoped<
+                IAdminSupervisorReportsRepository,
+                AdminSupervisorReportsRepository>();
+
+            builder.Services.AddScoped<
+                IAdminSupervisorReportsService,
+                AdminSupervisorReportsService>();
+
             builder.Services.AddScoped<ISystemSettingRepository, SystemSettingRepository>();
             builder.Services.AddScoped<ISystemSettingService, SystemSettingService>();
             builder.Services.AddScoped<ITraineePaymentRepository, TraineePaymentRepository>();
@@ -241,6 +254,8 @@ namespace Nafadh_Backend
 
             builder.Services.AddScoped<IQuizAccessService, QuizAccessService>();
             builder.Services.AddScoped<IQuizProctoringService, QuizProctoringService>();
+            // Trainer Portal - LiveKit automatic attendance tracking.
+            builder.Services.AddScoped<SessionAttendanceTrackingService>();
             builder.Services.AddHostedService<ProctoringCleanupService>();
 
             builder.Services.AddScoped<ITraineeEvaluationRepository, TraineeEvaluationRepository>();

@@ -1289,3 +1289,98 @@ max-height: 600px;
   color: #a0adb7;
   font-size: 8.5px;
 }
+
+/* ==========================================
+   Meeting Details Modal
+   ========================================== */
+
+.meeting-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(10, 30, 65, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.meeting-modal {
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0, 35, 75, 0.2);
+  direction: rtl;
+}
+
+.meeting-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 24px;
+  border-bottom: 1px solid #e5edf5;
+
+  h2 {
+    margin: 0;
+    font-size: 21px;
+    color: #073b78;
+  }
+}
+
+.meeting-modal-close {
+  border: none;
+  background: #eef5fa;
+  color: #45627f;
+  border-radius: 9px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.meeting-modal-body {
+  padding: 24px;
+
+  h3 {
+    margin: 0 0 20px;
+    color: #073b78;
+    font-size: 19px;
+  }
+
+  p {
+    padding: 12px 0;
+    margin: 0;
+    border-bottom: 1px solid #edf2f7;
+    color: #4b647e;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  strong {
+    color: #173e68;
+    margin-left: 8px;
+  }
+}
+
+.meeting-modal-footer {
+  padding: 16px 24px 24px;
+  display: flex;
+  justify-content: flex-end;
+
+  button {
+    background: #087fc2;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 30px;
+    cursor: pointer;
+    font-size: 15px;
+
+    &:hover {
+      background: #066ba5;
+    }
+  }
+}

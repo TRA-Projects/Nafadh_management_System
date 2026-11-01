@@ -35,6 +35,8 @@ export class NotificationSummaryService {
 
   readonly summary = this.summarySignal.asReadonly();
 
+  private requestVersion = 0;
+
   /** Initial load of the authenticated user's shared notification summary. */
   load(): void {
     this.refresh();
@@ -42,10 +44,12 @@ export class NotificationSummaryService {
 
   /** Refresh the shared bell counters from the real backend. */
   refresh(): void {
+    const version = ++this.requestVersion;
     this.http
       .get<NotificationSummary>(`${this.base}/Notification/summary`)
       .subscribe({
         next: (summary) => {
+          if (version !== this.requestVersion) return;
           // Normalize the API response so the shared UI always receives numbers.
           this.summarySignal.set({
             notificationsCount: Number(summary?.notificationsCount ?? 0),
@@ -63,6 +67,7 @@ export class NotificationSummaryService {
 
   /** Reset counters after logout. */
   reset(): void {
+    ++this.requestVersion;
     this.summarySignal.set({
       notificationsCount: 0,
       directMessagesCount: 0,

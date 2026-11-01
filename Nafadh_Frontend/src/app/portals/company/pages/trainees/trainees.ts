@@ -1,701 +1,223 @@
-
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef } from '@angular/core';
+import { catchError, finalize } from 'rxjs/operators';
+import { CompanyApi } from '../../services/company-api';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { EnrollmentDto, CompanyDashboardDto } from '../../../../core/models/dtos';
+import { buildXlsx, downloadBlob } from './xlsx-writer';
 
-type TraineeStatus =
-  | 'active'
-  | 'risk'
-  | 'completed'
-  | 'transferred'
-  | 'suspended';
+type Row = { enrollmentId: number; id: number; name: string; cohort: string; program: string; sup: string; att: number | null; perf: number | null; status: string; start: string; end: string; githubUrl?: string; linkedinUrl?: string; profileImageUrl?: string };
 
-type SocialPlatform = 'github' | 'linkedin';
+// Last loaded list per company, kept in memory so reopening the page shows data instantly
+// while a fresh copy loads in the background.
+const LIST_CACHE = new Map<number, Row[]>();
 
-interface Trainee {
-  enrollmentId?: number;
-
-  id: number;
-  name: string;
-  cohort: string;
-  program: string;
-  dept: string;
-  proj: string;
-  sup: string;
-  att: number;
-  perf: number;
-  status: TraineeStatus;
-  start: string;
-  end: string;
-  pend: number;
-  abs: number;
-  late: number;
-  githubUrl?: string;
-  linkedinUrl?: string;
-}
-
-type Modal = 'add' | 'profile' | 'assign' | 'status' | null;
-
-@Component({
-  selector: 'app-company-trainees',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './trainees.html',
-  styleUrl: './trainees.scss'
-})
-export class CompanyTrainees {
-  constructor(private router: Router) { }
-
-  openTraineeDetails(t: Trainee): void {
-    this.router.navigate([
-      '/company/trainees',
-      t.id,
-      'progress'
-    ]);
-  }
-  // بيانات المتدربين التجريبية
-  trainees: Trainee[] = [
-    {
-      id: 1,
-      name: 'أحمد محمد الزهراني',
-      cohort: 'الدفعة 2026-أ',
-      program: 'تطوير تطبيقات الويب',
-      dept: 'تقنية المعلومات',
-      proj: 'بوابة الطلبات الداخلية',
-      sup: 'خالد بن عبدالله المعمري',
-      att: 98,
-      perf: 92,
-      status: 'active',
-      start: '2026-01-04',
-      end: '2026-06-30',
-      pend: 0,
-      abs: 0,
-      late: 1,
-      githubUrl: 'https://github.com/AhmedSoliman',
-      linkedinUrl: 'https://www.linkedin.com/in/ahmed-al-balushi-1193aaa/'
-    },
-    {
-      id: 2,
-      name: 'فاطمة بنت خميس العبرية',
-      cohort: 'الدفعة 2026-أ',
-      program: 'تطوير تطبيقات الويب',
-      dept: 'تطوير الأعمال',
-      proj: 'لوحة متابعة المبيعات',
-      sup: 'سعاد بنت محمد الشامسية',
-      att: 96,
-      perf: 90,
-      status: 'active',
-      start: '2026-01-04',
-      end: '2026-06-30',
-      pend: 0,
-      abs: 1,
-      late: 0,
-      githubUrl: 'https://github.com/codewithfatima',
-      linkedinUrl: 'https://www.linkedin.com/in/fatima-al-abri-15383a91/'
-    },
-    {
-      id: 3,
-      name: 'يوسف بن سالم الحارثي',
-      cohort: 'الدفعة 2026-ب',
-      program: 'تحليل البيانات',
-      dept: 'العمليات',
-      proj: 'تقرير تحليلي للفروع',
-      sup: 'خالد بن عبدالله المعمري',
-      att: 93,
-      perf: 84,
-      status: 'active',
-      start: '2026-02-01',
-      end: '2026-07-31',
-      pend: 1,
-      abs: 2,
-      late: 2,
-      githubUrl: '',
-      linkedinUrl: ''
-    },
-    {
-      id: 4,
-      name: 'مريم بنت راشد السيابية',
-      cohort: 'الدفعة 2026-ب',
-      program: 'تحليل البيانات',
-      dept: 'الموارد البشرية',
-      proj: 'لوحة مؤشرات الموظفين',
-      sup: 'سعاد بنت محمد الشامسية',
-      att: 89,
-      perf: 81,
-      status: 'active',
-      start: '2026-02-01',
-      end: '2026-07-31',
-      pend: 1,
-      abs: 2,
-      late: 1,
-      githubUrl: '',
-      linkedinUrl: ''
-    },
-    {
-      id: 5,
-      name: 'خالد بن عبدالله العامري',
-      cohort: 'الدفعة 2026-ج',
-      program: 'الأمن السيبراني',
-      dept: 'تقنية المعلومات',
-      proj: 'التدقيق الأمني للأنظمة',
-      sup: 'طارق بن جمعة السالمي',
-      att: 95,
-      perf: 88,
-      status: 'active',
-      start: '2026-03-15',
-      end: '2026-09-15',
-      pend: 0,
-      abs: 1,
-      late: 0,
-      githubUrl: '',
-      linkedinUrl: ''
-    },
-    {
-      id: 6,
-      name: 'نورة بنت حمد الهنائية',
-      cohort: 'الدفعة 2026-ج',
-      program: 'الأمن السيبراني',
-      dept: 'العمليات',
-      proj: 'سياسات الحماية والامتثال',
-      sup: 'طارق بن جمعة السالمي',
-      att: 91,
-      perf: 79,
-      status: 'active',
-      start: '2026-03-15',
-      end: '2026-09-15',
-      pend: 1,
-      abs: 2,
-      late: 2,
-      githubUrl: '',
-      linkedinUrl: ''
-    },
-    {
-      id: 7,
-      name: 'سعيد بن محمد البوسعيدي',
-      cohort: 'الدفعة 2026-أ',
-      program: 'تطوير تطبيقات الويب',
-      dept: 'تقنية المعلومات',
-      proj: 'تطبيق الجوال الداخلي',
-      sup: 'خالد بن عبدالله المعمري',
-      att: 84,
-      perf: 70,
-      status: 'risk',
-      start: '2026-01-04',
-      end: '2026-06-30',
-      pend: 2,
-      abs: 3,
-      late: 6,
-      githubUrl: '',
-      linkedinUrl: ''
-    },
-    {
-      id: 8,
-      name: 'رقية بنت علي الشحية',
-      cohort: 'الدفعة 2026-ب',
-      program: 'تحليل البيانات',
-      dept: 'المبيعات',
-      proj: 'تحليل سلوك العملاء',
-      sup: 'سعاد بنت محمد الشامسية',
-      att: 97,
-      perf: 94,
-      status: 'active',
-      start: '2026-02-01',
-      end: '2026-07-31',
-      pend: 0,
-      abs: 0,
-      late: 0,
-      githubUrl: '',
-      linkedinUrl: ''
-    },
-    {
-      id: 9,
-      name: 'عمر بن ناصر الفارسي',
-      cohort: 'الدفعة 2026-أ',
-      program: 'تطوير تطبيقات الويب',
-      dept: 'تقنية المعلومات',
-      proj: 'بوابة الموظفين',
-      sup: 'خالد بن عبدالله المعمري',
-      att: 88,
-      perf: 76,
-      status: 'risk',
-      start: '2026-01-04',
-      end: '2026-06-30',
-      pend: 1,
-      abs: 2,
-      late: 3,
-      githubUrl: '',
-      linkedinUrl: ''
-    },
-    {
-      id: 10,
-      name: 'شيماء بنت سيف البطاشية',
-      cohort: 'الدفعة 2026-ج',
-      program: 'الأمن السيبراني',
-      dept: 'تقنية المعلومات',
-      proj: 'اختبار اختراق تجريبي',
-      sup: 'طارق بن جمعة السالمي',
-      att: 90,
-      perf: 85,
-      status: 'active',
-      start: '2026-03-15',
-      end: '2026-09-15',
-      pend: 1,
-      abs: 1,
-      late: 1,
-      githubUrl: '',
-      linkedinUrl: ''
-    },
-    {
-      id: 11,
-      name: 'طارق بن سيف الرواحي',
-      cohort: 'الدفعة 2026-ب',
-      program: 'تحليل البيانات',
-      dept: 'التسويق',
-      proj: 'تحليل الحملات التسويقية',
-      sup: 'ليلى بنت ناصر الكيومية',
-      att: 78,
-      perf: 62,
-      status: 'risk',
-      start: '2026-02-01',
-      end: '2026-07-31',
-      pend: 2,
-      abs: 4,
-      late: 2,
-      githubUrl: '',
-      linkedinUrl: ''
-    },
-    {
-      id: 12,
-      name: 'أمل بنت سلطان الزدجالية',
-      cohort: 'الدفعة 2026-أ',
-      program: 'تطوير تطبيقات الويب',
-      dept: 'الموارد البشرية',
-      proj: 'منصة التدريب الداخلي',
-      sup: 'سعاد بنت محمد الشامسية',
-      att: 99,
-      perf: 95,
-      status: 'active',
-      start: '2026-01-04',
-      end: '2026-06-30',
-      pend: 0,
-      abs: 0,
-      late: 0,
-      githubUrl: '',
-      linkedinUrl: ''
-    },
-    {
-      id: 13,
-      name: 'سالم بن حمد الخروصي',
-      cohort: 'الدفعة 2026-ب',
-      program: 'تحليل البيانات',
-      dept: '—',
-      proj: '—',
-      sup: '—',
-      att: 0,
-      perf: 0,
-      status: 'transferred',
-      start: '2026-02-01',
-      end: '2026-04-10',
-      pend: 0,
-      abs: 0,
-      late: 0,
-      githubUrl: '',
-      linkedinUrl: ''
-    },
-    {
-      id: 14,
-      name: 'بدر بن سليمان الحبسي',
-      cohort: 'الدفعة 2026-أ',
-      program: 'تطوير تطبيقات الويب',
-      dept: '—',
-      proj: '—',
-      sup: '—',
-      att: 0,
-      perf: 0,
-      status: 'suspended',
-      start: '2026-01-04',
-      end: '2026-03-20',
-      pend: 0,
-      abs: 7,
-      late: 0,
-      githubUrl: '',
-      linkedinUrl: ''
-    }
+@Component({selector:'app-company-trainees', standalone:true, imports:[CommonModule,FormsModule],templateUrl:'./trainees.html',styleUrl:'./trainees.scss'})
+export class CompanyTrainees implements OnInit {
+  private readonly api = inject(CompanyApi);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+  trainees: Row[] = [];
+  pageSize = 5;
+  currentPage = 1;
+  loading = false;
+  error = '';
+  search = ''; cohort = ''; program = ''; status = ''; supervisor = ''; fromDate = ''; toDate = '';
+  readonly statuses = [
+    {value:'InProgress',label:'قيد التدريب'},
+    {value:'Completed',label:'مكتمل'},
+    {value:'Dropped',label:'موقوف'},
+    {value:'Failed',label:'متعثر'},
+    {value:'AtRisk',label:'يحتاج متابعة'}
   ];
-  openGithub(t: Trainee): void {
-    const url = t.githubUrl?.trim() || 'https://github.com/';
-    window.open(url, '_blank', 'noopener,noreferrer');
+  readonly skeletonRows = [1, 2, 3, 4, 5];
+  private loadToken = 0;
+  private pendingPage: number | null = null;
+  private filterCache: { source: Row[]; key: string; result: Row[] } | null = null;
+  private readonly dateFormatter = new Intl.DateTimeFormat('ar-OM-u-nu-latn', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+
+  ngOnInit(): void { this.restoreFromUrl(); this.load(); }
+
+  /** Filters and page live in the URL so coming back from a trainee keeps the list as it was. */
+  private restoreFromUrl(): void {
+    const q = this.route.snapshot.queryParamMap;
+    this.search = q.get('q') ?? '';
+    this.cohort = q.get('cohort') ?? '';
+    this.program = q.get('program') ?? '';
+    this.status = q.get('status') ?? '';
+    this.supervisor = q.get('supervisor') ?? '';
+    this.fromDate = q.get('from') ?? '';
+    this.toDate = q.get('to') ?? '';
+    const size = Number(q.get('size'));
+    if ([5, 10, 15, 20].includes(size)) this.pageSize = size;
+    const page = Number(q.get('page'));
+    this.pendingPage = Number.isInteger(page) && page > 1 ? page : null;
   }
-
-  openLinkedin(t: Trainee): void {
-    const url = t.linkedinUrl?.trim() || 'https://www.linkedin.com/';
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-
-  // البحث والتصفية
-  search = '';
-  cohort = '';
-  program = '';
-  status = '';
-  supervisor = '';
-
-  // البحث حسب التاريخ
-  fromDate = '';
-  toDate = '';
-
-  // النوافذ المنبثقة
-  modal: Modal = null;
-  selected: Trainee | null = null;
-  draft: Partial<Trainee> = {};
-
-  readonly statuses: { value: TraineeStatus; label: string }[] = [
-    { value: 'active', label: 'نشط' },
-    { value: 'risk', label: 'متعثر' },
-    { value: 'completed', label: 'مكتمل' },
-    { value: 'transferred', label: 'منقول' },
-    { value: 'suspended', label: 'موقوف' }
-  ];
-
-  // قوائم الفلاتر
-  get cohorts(): string[] {
-    return [...new Set(this.trainees.map(t => t.cohort))];
-  }
-
-  get programs(): string[] {
-    return [...new Set(this.trainees.map(t => t.program))];
-  }
-
-  get supervisors(): string[] {
-    return [
-      ...new Set(
-        this.trainees
-          .map(t => t.sup)
-          .filter(s => s !== '—')
-      )
-    ];
-  }
-
-  // تصفية المتدربين
-  get filteredTrainees(): Trainee[] {
-    const q = this.search.trim().toLowerCase();
-
-    return this.trainees.filter(t => {
-      const matchesSearch =
-        !q ||
-        [t.name, t.proj, t.sup, String(t.id)]
-          .some(value => value.toLowerCase().includes(q));
-
-      const matchesCohort =
-        !this.cohort || t.cohort === this.cohort;
-
-      const matchesProgram =
-        !this.program || t.program === this.program;
-
-      const matchesStatus =
-        !this.status || t.status === this.status;
-
-      const matchesSupervisor =
-        !this.supervisor || t.sup === this.supervisor;
-
-      const matchesFromDate =
-        !this.fromDate ||
-        (!!t.start && t.start !== '—' && t.start >= this.fromDate);
-
-      const matchesToDate =
-        !this.toDate ||
-        (!!t.start && t.start !== '—' && t.start <= this.toDate);
-
-      return (
-        matchesSearch &&
-        matchesCohort &&
-        matchesProgram &&
-        matchesStatus &&
-        matchesSupervisor &&
-        matchesFromDate &&
-        matchesToDate
-      );
+  private syncUrl(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      replaceUrl: true,
+      queryParamsHandling: 'merge',
+      queryParams: {
+        q: this.search.trim() || null, cohort: this.cohort || null, program: this.program || null,
+        status: this.status || null, supervisor: this.supervisor || null,
+        from: this.fromDate || null, to: this.toDate || null,
+        page: this.currentPage > 1 ? this.currentPage : null,
+        size: this.pageSize !== 5 ? this.pageSize : null
+      }
     });
   }
+  load(): void {
+    const companyId = this.auth.session()?.companyId;
+    if (!companyId) {
+      this.loading = false;
+      this.error = 'تعذر تحديد الشركة من حساب المستخدم.';
+      return;
+    }
 
-  // اسم الحالة بالعربي
-  statusLabel(s: TraineeStatus): string {
-    return this.statuses.find(x => x.value === s)?.label || s;
-  }
+    const token = ++this.loadToken;
+    const cached = LIST_CACHE.get(companyId);
 
-  // الأحرف الأولى من الاسم
-  initials(name: string): string {
-    return name
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map(part => part[0])
-      .join('');
-  }
+    this.currentPage = this.pendingPage ?? 1;
+    this.pendingPage = null;
+    this.error = '';
+    // Returning visitors see the last list straight away while fresh data loads behind it.
+    this.trainees = cached ?? [];
+    this.loading = !cached;
 
-  // مسح جميع الفلاتر
-  clearFilters(): void {
-    this.search = '';
-    this.cohort = '';
-    this.program = '';
-    this.status = '';
-    this.supervisor = '';
-    this.fromDate = '';
-    this.toDate = '';
-  }
+    let base: Row[] | null = null;
+    let applyExtras: ((rows: Row[]) => Row[]) | null = null;
 
-  // فتح نافذة إضافة متدرب
-  openAdd(): void {
-    this.selected = null;
-
-    this.draft = {
-      name: '',
-      cohort: this.cohorts[0] || '',
-      program: this.programs[0] || '',
-      dept: '',
-      proj: '',
-      sup: '—',
-      start: this.todayLocal(),
-      end: '',
-      githubUrl: '',
-      linkedinUrl: ''
+    const publish = (): void => {
+      if (token !== this.loadToken || !base) return;
+      this.trainees = applyExtras ? applyExtras(base) : base;
+      this.currentPage = Math.min(this.currentPage, this.totalPages);
+      LIST_CACHE.set(companyId, this.trainees);
     };
 
-    this.modal = 'add';
-  }
-
-  // تاريخ اليوم بصيغة YYYY-MM-DD
-  private todayLocal(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-  }
-
-  // عرض الملف المختصر
-  openProfile(t: Trainee): void {
-    this.selected = t;
-    this.modal = 'profile';
-  }
-
-  // تعيين المشرف
-  openAssign(t: Trainee): void {
-    this.selected = t;
-    this.draft = { ...t };
-    this.modal = 'assign';
-  }
-
-  // تغيير الحالة
-  openStatus(t: Trainee): void {
-    this.selected = t;
-    this.draft = { status: t.status };
-    this.modal = 'status';
-  }
-
-  // التحقق من رابط الحساب
-  private isValidSocialUrl(
-    url: string,
-    platform: SocialPlatform
-  ): boolean {
-    try {
-      const parsed = new URL(url.trim());
-
-      const allowedHosts: Record<SocialPlatform, string[]> = {
-        github: ['github.com', 'www.github.com'],
-        linkedin: [
-          'linkedin.com',
-          'www.linkedin.com',
-          'uk.linkedin.com'
-        ]
-      };
-
-      return (
-        parsed.protocol === 'https:' &&
-        allowedHosts[platform].includes(parsed.hostname.toLowerCase()) &&
-        parsed.username === '' &&
-        parsed.password === ''
-      );
-    } catch {
-      return false;
-    }
-  }
-
-  // فتح الحساب في تبويب جديد
-  openSocialLink(
-    url: string | undefined,
-    platform: SocialPlatform
-  ): void {
-    if (!url?.trim()) {
-      alert('رابط الحساب غير متوفر لهذا المتدرب.');
-      return;
-    }
-
-    if (!this.isValidSocialUrl(url, platform)) {
-      alert('الرابط غير صالح. يرجى إدخال رابط HTTPS صحيح للمنصة.');
-      return;
-    }
-
-    window.open(url.trim(), '_blank', 'noopener,noreferrer');
-  }
-
-  // حفظ روابط الحسابات داخل بيانات المتدرب الحالية
-  saveProfileLinks(): void {
-    if (!this.selected) {
-      return;
-    }
-
-    const github = this.selected.githubUrl?.trim() || '';
-    const linkedin = this.selected.linkedinUrl?.trim() || '';
-
-    if (github && !this.isValidSocialUrl(github, 'github')) {
-      alert('رابط GitHub غير صحيح. استخدمي رابطًا يبدأ بـ https://github.com/');
-      return;
-    }
-
-    if (linkedin && !this.isValidSocialUrl(linkedin, 'linkedin')) {
-      alert('رابط LinkedIn غير صحيح.');
-      return;
-    }
-
-    this.selected.githubUrl = github;
-    this.selected.linkedinUrl = linkedin;
-
-    alert('تم حفظ الروابط في بيانات الصفحة الحالية.');
-  }
-
-  // إغلاق النافذة
-  closeModal(): void {
-    this.modal = null;
-    this.selected = null;
-    this.draft = {};
-  }
-
-  // حفظ الإضافة أو التعديل
-  save(): void {
-    if (this.modal === 'add') {
-      if (!this.draft.name?.trim()) {
-        alert('يرجى إدخال اسم المتدرب.');
-        return;
-      }
-
-      const github = this.draft.githubUrl?.trim() || '';
-      const linkedin = this.draft.linkedinUrl?.trim() || '';
-
-      if (github && !this.isValidSocialUrl(github, 'github')) {
-        alert('يرجى إدخال رابط GitHub صحيح.');
-        return;
-      }
-
-      if (linkedin && !this.isValidSocialUrl(linkedin, 'linkedin')) {
-        alert('يرجى إدخال رابط LinkedIn صحيح.');
-        return;
-      }
-
-      const newTrainee: Trainee = {
-        id: Math.max(0, ...this.trainees.map(t => t.id)) + 1,
-        name: this.draft.name.trim(),
-        cohort: this.draft.cohort || '',
-        program: this.draft.program || '',
-        dept: this.draft.dept || '—',
-        proj: this.draft.proj || '—',
-        sup: this.draft.sup || '—',
-        att: 0,
-        perf: 0,
-        status: 'active',
-        start: this.draft.start || '',
-        end: this.draft.end || '—',
-        pend: 0,
-        abs: 0,
-        late: 0,
-        githubUrl: github,
-        linkedinUrl: linkedin
-      };
-
-      this.trainees = [...this.trainees, newTrainee];
-
-    } else if (this.selected && this.modal === 'assign') {
-      Object.assign(this.selected, {
-        sup: this.draft.sup || '—',
-        dept: this.draft.dept || '—',
-        start: this.draft.start || '—',
-        end: this.draft.end || '—'
+    // The three requests start together instead of one after another;
+    // the list appears as soon as the enrollments arrive and gains attendance/status afterwards.
+    this.api.getEnrollmentsByCompany(companyId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => { if (token === this.loadToken) this.loading = false; })
+      )
+      .subscribe({
+        next: (enrollments: EnrollmentDto[]) => {
+          base = enrollments
+            .filter(e => e.companyId === companyId)
+            .map(e => ({
+              enrollmentId: e.enrollmentId,
+              id: e.traineeId,
+              name: e.traineeName || 'غير متوفر',
+              cohort: e.batchName || '—',
+              program: e.programTitle || '—',
+              sup: e.supervisorName || '—',
+              att: null,
+              perf: null,
+              status: e.completionStatus,
+              start: this.dateOnly(e.batchStartDate),
+              end: this.dateOnly(e.batchEndDate),
+              githubUrl: e.traineeGitHubUrl,
+              linkedinUrl: e.traineeLinkedInUrl,
+              profileImageUrl: e.profileImageUrl
+                ? this.api.resolveFileUrl(e.profileImageUrl)
+                : undefined
+            }));
+          publish();
+        },
+        error: () => {
+          if (token === this.loadToken && !cached) {
+            this.error = 'تعذر تحميل المتدربين من الخادم. تأكدي من الاتصال وحاولي مجددًا.';
+          }
+        }
       });
 
-    } else if (
-      this.selected &&
-      this.modal === 'status' &&
-      this.draft.status
-    ) {
-      this.selected.status = this.draft.status;
-    }
+    forkJoin({
+      dashboard: this.api.getDashboard(companyId)
+        .pipe(catchError(() => of(null as CompanyDashboardDto | null))),
+      attendance: this.api.getCompanyAttendanceReport(companyId)
+        .pipe(catchError(() => of(null)))
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ dashboard, attendance }) => {
+        const performers = new Map(
+          (dashboard?.topPerformers ?? []).map(x => [x.enrollmentId, x])
+        );
+        const risk = new Set(
+          (dashboard?.atRiskTrainees ?? []).map(x => x.enrollmentId)
+        );
+        const attendanceByTrainee = new Map(
+          (attendance?.rows ?? []).map(x => [x.traineeId, x.attendanceRate])
+        );
 
-    this.closeModal();
+        applyExtras = rows => rows.map(t => {
+          const performance = performers.get(t.enrollmentId);
+          return {
+            ...t,
+            att: attendanceByTrainee.get(t.id)
+              ?? performance?.attendancePercent ?? null,
+            perf: performance?.performancePercent ?? null,
+            status: risk.has(t.enrollmentId) && t.status === 'InProgress'
+              ? 'AtRisk' : t.status
+          };
+        });
+        publish();
+      });
   }
-
-  // تصدير النتائج الحالية بصيغة CSV المناسبة لبرنامج Excel
-  exportExcel(): void {
-    const headers = [
-      'الرقم',
-      'الاسم',
-      'الدفعة',
-      'البرنامج',
-      'القسم',
-      'المشروع',
-      'المشرف',
-      'الحضور',
-      'الأداء',
-      'الحالة',
-      'المباشرة',
-      'النهاية',
-      'GitHub',
-      'LinkedIn'
-    ];
-
-    const rows = this.filteredTrainees.map(t => [
-      t.id,
-      t.name,
-      t.cohort,
-      t.program,
-      t.dept,
-      t.proj,
-      t.sup,
-      t.att,
-      t.perf,
-      this.statusLabel(t.status),
-      t.start,
-      t.end,
-      t.githubUrl || '',
-      t.linkedinUrl || ''
-    ]);
-
-    const csv = '\uFEFF' +
-      [headers, ...rows]
-        .map(row =>
-          row
-            .map(value =>
-              '"' + String(value ?? '').replace(/"/g, '""') + '"'
-            )
-            .join(',')
-        )
-        .join('\r\n');
-
-    const blob = new Blob(
-      [csv],
-      { type: 'text/csv;charset=utf-8;' }
-    );
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-
-    link.href = url;
-    link.download = 'trainees.csv';
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
+  private dateOnly(date?: string | null): string { return date ? date.substring(0,10) : ''; }
+  get cohorts(): string[] {return [...new Set(this.trainees.map(x=>x.cohort).filter(x=>x!=='—'))];}
+  get programs(): string[] {return [...new Set(this.trainees.map(x=>x.program).filter(x=>x!=='—'))];}
+  get supervisors(): string[] {return [...new Set(this.trainees.map(x=>x.sup).filter(x=>x!=='—'))];}
+  get activeCount(): number {return this.trainees.filter(x=>x.status==='InProgress').length;}
+  get riskCount(): number {return this.trainees.filter(x=>x.status==='AtRisk').length;}
+  get averageAttendance(): number | null {const values=this.trainees.map(x=>x.att).filter((x):x is number=>x!==null);return values.length?Math.round(values.reduce((a,b)=>a+b,0)/values.length):null;}
+  get filteredTrainees(): Row[] {
+    // The template reads this getter many times per change-detection pass, so reuse the last result
+    // until the data or one of the filters actually changes.
+    const key = JSON.stringify([this.search, this.cohort, this.program, this.status, this.supervisor, this.fromDate, this.toDate]);
+    if (this.filterCache && this.filterCache.source === this.trainees && this.filterCache.key === key) {
+      return this.filterCache.result;
+    }
+    const q=this.search.trim().toLowerCase();
+    const result = this.trainees.filter(t=>(!q||[t.name,t.sup,String(t.enrollmentId),this.padId(t.enrollmentId)].some(v=>v.toLowerCase().includes(q)))&&(!this.cohort||t.cohort===this.cohort)&&(!this.program||t.program===this.program)&&(!this.status||t.status===this.status)&&(!this.supervisor||t.sup===this.supervisor)&&(!this.fromDate||!!t.start&&t.start>=this.fromDate)&&(!this.toDate||!!t.end&&t.end<=this.toDate));
+    this.filterCache = { source: this.trainees, key, result };
+    return result;
+  }
+  get totalPages(): number { return Math.max(1, Math.ceil(this.filteredTrainees.length / this.pageSize)); }
+  get pageStart(): number { return (Math.min(this.currentPage, this.totalPages) - 1) * this.pageSize; }
+  get pageEnd(): number { return Math.min(this.pageStart + this.pageSize, this.filteredTrainees.length); }
+  get paginatedTrainees(): Row[] { return this.filteredTrainees.slice(this.pageStart, this.pageEnd); }
+  resetPage(): void { this.currentPage = 1; this.syncUrl(); }
+  changePageSize(value: number): void { this.pageSize = Number(value); this.currentPage = 1; this.syncUrl(); }
+  previousPage(): void { if (this.currentPage > 1) { this.currentPage--; this.syncUrl(); } }
+  nextPage(): void { if (this.currentPage < this.totalPages) { this.currentPage++; this.syncUrl(); } }
+  statusLabel(status:string):string {return ({InProgress:'قيد التدريب',Completed:'مكتمل',Dropped:'موقوف',Failed:'متعثر',AtRisk:'يحتاج متابعة'} as Record<string,string>)[status] ?? status ?? 'غير محدد';}
+  padId(id: number): string { return String(id).padStart(4, '0'); }
+  formatDate(value?: string | null): string {
+    if (!value || value === '—') return '—';
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? '—' : this.dateFormatter.format(d);
+  }
+  initials(name:string):string{return name.split(' ').filter(Boolean).slice(0,2).map(x=>x[0]).join('');}
+  clearFilters():void {this.search='';this.cohort='';this.program='';this.status='';this.supervisor='';this.fromDate='';this.toDate='';this.currentPage=1;this.syncUrl();}
+  openTraineeDetails(t:Row):void {this.router.navigate(['/company/trainees',t.enrollmentId,'progress']);}
+  openSocialLink(url:string|undefined,platform:'github'|'linkedin'):void {
+    if (!url) return;
+    try {const parsed=new URL(url);const allowed=platform==='github'?['github.com','www.github.com']:['linkedin.com','www.linkedin.com'];if(parsed.protocol==='https:'&&allowed.includes(parsed.hostname.toLowerCase())) window.open(parsed.href,'_blank','noopener,noreferrer');}
+    catch { /* Ignore malformed stored links */ }
+  }
+  exportExcel():void {
+    const blank=(v:string)=>v==='—'?'':v;
+    const headers=['رقم التسجيل','الاسم','الدفعة','البرنامج','المشرف','الحضور (%)','الحالة','تاريخ المباشرة','تاريخ الانتهاء','GitHub','LinkedIn'];
+    const rows=this.filteredTrainees.map(t=>[this.padId(t.enrollmentId),t.name,blank(t.cohort),blank(t.program),blank(t.sup),t.att,this.statusLabel(t.status),t.start,t.end,t.githubUrl||'',t.linkedinUrl||'']);
+    downloadBlob(buildXlsx(headers,rows,{sheetName:'المتدربون'}),`trainees-${new Date().toISOString().slice(0,10)}.xlsx`);
   }
 }

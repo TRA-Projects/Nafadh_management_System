@@ -35,6 +35,17 @@ namespace Nafadh_Backend.DTOs
         public List<CompanyDashboardTraineeDTO> TopPerformers { get; set; } = new();
 
         /// <summary>
+        /// Number of ALL active trainees whose performance is 80% or higher.
+        /// </summary>
+        public int TopPerformersCount { get; set; }
+
+        /// <summary>
+        /// Average performance of ALL active trainees whose performance
+        /// is 80% or higher.
+        /// </summary>
+        public double TopPerformersAveragePercent { get; set; }
+
+        /// <summary>
         /// Trainees currently considered at risk according to the
         /// Company Dashboard business rules.
         /// </summary>

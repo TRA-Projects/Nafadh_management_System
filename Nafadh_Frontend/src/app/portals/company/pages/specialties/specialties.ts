@@ -4,6 +4,7 @@ import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 import { catchError, forkJoin, of } from 'rxjs';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { CoursePlansOverviewDto } from '../../models/company-tasks.models';
 import { CompanyProgramSummaryDto } from '../../../../core/models/dtos';
 
 interface SpecialtyCard {
@@ -24,7 +25,7 @@ interface SpecialtyCard {
   soft: string;
 }
 
-type StatusFilter = 'all' | 'available' | 'nearFull' | 'unpublished';
+type StatusFilter = 'all' | 'available' | 'nearFull';
 type SortKey = 'default' | 'occupancy' | 'available' | 'name' | 'duration';
 
 /** A program at or above this occupancy is flagged as nearly full. */
@@ -45,8 +46,11 @@ export class CompanySpecialties implements OnInit {
   readonly loading = signal(true);
   readonly error = signal('');
   readonly cards = signal<SpecialtyCard[]>([]);
-  readonly totalCapacity = signal(0);
-  readonly usedCapacity = signal(0);
+  readonly totalCapacity = signal<number | null>(null);
+  readonly usedCapacity = signal<number | null>(null);
+  readonly plansInProgress = signal<number | null>(null);
+  readonly capacityError = signal(false);
+  readonly plansError = signal(false);
 
   // ── List controls: search / department / status / sort ──
   readonly search = signal('');
@@ -58,7 +62,6 @@ export class CompanySpecialties implements OnInit {
     { key: 'all', label: 'الكل' },
     { key: 'available', label: 'بها مقاعد متاحة' },
     { key: 'nearFull', label: 'قاربت على الامتلاء' },
-    { key: 'unpublished', label: 'غير منشورة' },
   ];
 
   readonly sortOptions: { key: SortKey; label: string }[] = [
@@ -113,7 +116,6 @@ export class CompanySpecialties implements OnInit {
       all: count('all'),
       available: count('available'),
       nearFull: count('nearFull'),
-      unpublished: count('unpublished'),
     } as Record<StatusFilter, number>;
   });
 
@@ -147,6 +149,8 @@ export class CompanySpecialties implements OnInit {
 
     this.loading.set(true);
     this.error.set('');
+    this.capacityError.set(false);
+    this.plansError.set(false);
 
     // Both requests are awaited together and the header totals are set in ONE
     // place. Before, two independent subscriptions wrote the same signals and
@@ -162,11 +166,21 @@ export class CompanySpecialties implements OnInit {
       capacity: this.api.getCompanyCapacitySummary(this.companyId).pipe(
         catchError((error) => {
           console.error('Failed to load company capacity:', error);
+          this.capacityError.set(true);
           return of(null);
         })
       ),
-    }).subscribe(({ summaries, capacity }) => {
-      const cards = summaries.map((program, index) => this.toCard(program, index));
+      plans: this.api.getCoursePlans(this.companyId).pipe(
+        catchError(() => {
+          this.plansError.set(true);
+          return of(null as CoursePlansOverviewDto | null);
+        })
+      ),
+    }).subscribe(({ summaries, capacity, plans }) => {
+      this.plansInProgress.set(plans?.counts.inProgress ?? null);
+      const cards = summaries
+        .filter(program => program.approvedForCompany === true && program.status === 'Published')
+        .map((program, index) => this.toCard(program, index));
       this.cards.set(cards);
 
       if (capacity) {
@@ -174,9 +188,9 @@ export class CompanySpecialties implements OnInit {
         this.totalCapacity.set(Number(capacity.total ?? 0));
         this.usedCapacity.set(Number(capacity.used ?? 0));
       } else {
-        // Fallback: sum of the program cards.
-        this.totalCapacity.set(cards.reduce((sum, item) => sum + item.capacity, 0));
-        this.usedCapacity.set(cards.reduce((sum, item) => sum + item.used, 0));
+        // Company totals must never be substituted with shared batch totals.
+        this.totalCapacity.set(null);
+        this.usedCapacity.set(null);
       }
 
       this.loading.set(false);
@@ -188,13 +202,15 @@ export class CompanySpecialties implements OnInit {
   }
 
   /** Published programs that currently have trainees from this company. */
-  activePlans(): number {
-    return this.cards().filter((x) => x.approved && x.companyUsed > 0).length;
+  activePlans(): number | null {
+    return this.plansInProgress();
   }
 
-  occupancyPercent(): number {
+  occupancyPercent(): number | null {
     const total = this.totalCapacity();
-    return total ? Math.round((this.usedCapacity() / total) * 100) : 0;
+    const used = this.usedCapacity();
+    if (total === null || used === null) return null;
+    return total > 0 ? Math.round((used / total) * 100) : 0;
   }
 
  getDepartmentDistribution(): { name: string; count: number; color: string }[] {
@@ -212,7 +228,7 @@ export class CompanySpecialties implements OnInit {
     }
 //
     return Array.from(counts.entries()).map(([name, count]) => {
-      const assignedColor = this.departmentColors[name] || defaultColors[colorIndex % defaultColors.length];
+      const assignedColor = defaultColors[colorIndex % defaultColors.length];
       colorIndex++;
       return {
         name,
@@ -258,8 +274,6 @@ export class CompanySpecialties implements OnInit {
         return card.available > 0;
       case 'nearFull':
         return this.isNearFull(card);
-      case 'unpublished':
-        return !card.approved;
       default:
         return true;
     }
@@ -296,11 +310,6 @@ export class CompanySpecialties implements OnInit {
     return this.sanitizer.bypassSecurityTrustStyle(gradientString);
   }
 
-  private hoursToWeeks(hours: number): number {
-    if (!hours || hours <= 0) return 0;
-    return Math.ceil(hours / 40);
-  }
-
   private toCard(program: CompanyProgramSummaryDto, index: number): SpecialtyCard {
     const [color, soft] = this.palettes[index % this.palettes.length];
     const department = program.departments?.length
@@ -317,7 +326,7 @@ export class CompanySpecialties implements OnInit {
       description: program.description,
       department,
       departments: program.departments ?? [],
-      duration: this.hoursToWeeks(Number(program.durationHours ?? 0)),
+      duration: Number(program.durationHours ?? 0),
       capacity: Number(hasOpenSeats ? program.openSeatCapacity : program.allocatedCapacity ?? 0),
       used: Number(hasOpenSeats ? program.openSeatOccupied ?? 0 : program.usedCapacity ?? 0),
       companyUsed: Number(program.usedCapacity ?? 0),
@@ -335,18 +344,10 @@ export class CompanySpecialties implements OnInit {
           )
         )
       ),
-      approved: !!program.approvedForCompany && program.status === 'Published',
+      approved: !!program.approvedForCompany,
       color,
       soft,
     };
   }
 
-  private readonly departmentColors: Record<string, string> = {
-    'تقنية المعلومات': '#00338d',
-    'أمن المعلومات': '#007cae',
-    'الذكاء الاصطناعي': '#000692',
-    'التسويق': '#efbb20',
-    'التصميم الرقمي': '#1ebbf0',
-    'العمليات والتحليل': '#5b6fb8',
-  };
 }

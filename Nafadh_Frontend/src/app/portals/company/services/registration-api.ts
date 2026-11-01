@@ -7,10 +7,10 @@ import {
   CompanyRegistrationResponse,
 } from '../models/company-registration.models';
 
-// true = بيانات تجريبية (لين يجهز endpoint نورة). غيّريها إلى false عند الربط.
-// في الوضع التجريبي: إيميل يحتوي dup => تكرار إيميل، cr9999 => تكرار سجل،
+// true = بيانات تجريبية بدون سيرفر. الربط الحقيقي مع الباك إند مفعّل الآن (false).
+// في الوضع التجريبي: إيميل يحتوي dup => تكرار إيميل، سجل 9999 => تكرار سجل،
 // pending => طلب قيد المراجعة، fail => فشل خادم. غير ذلك => نجاح.
-export const REGISTRATION_USE_MOCK = true;
+export const REGISTRATION_USE_MOCK = false;
 
 @Injectable({ providedIn: 'root' })
 export class RegistrationApi {
@@ -34,6 +34,8 @@ export class RegistrationApi {
     return of({
       message: 'تم استلام طلبك',
       companyId: 1,
+      companyName: req.companyName,
+      email: req.email,
       status: 'PendingApproval' as const,
     }).pipe(delay(700));
   }

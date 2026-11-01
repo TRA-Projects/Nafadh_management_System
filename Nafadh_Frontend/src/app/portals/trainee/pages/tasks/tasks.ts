@@ -18,7 +18,8 @@ import {
   selector: 'app-trainee-tasks',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './tasks.html'
+  templateUrl: './tasks.html',
+  styleUrl: './tasks.scss', 
 })
 export class TraineeTasks implements OnInit {
 

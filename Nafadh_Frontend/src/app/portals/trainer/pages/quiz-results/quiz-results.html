@@ -229,7 +229,7 @@
 
         <i class="fa-solid fa-magnifying-glass"></i>
 
-        <input type="search" placeholder="ابحثي باسم المتدرب..." [ngModel]="searchTerm()"
+        <input type="search" placeholder="ابحثي باسم المتدرب أو الدفعة..." [ngModel]="searchTerm()"
           (ngModelChange)="searchTerm.set($event)" />
 
       </label>
@@ -337,6 +337,10 @@
               </th>
 
               <th>
+                الدفعة
+              </th>
+
+              <th>
                 الاختبار
               </th>
 
@@ -391,7 +395,13 @@
                 </div>
 
               </td>
+              <!-- Batch -->
 
+              <td>
+                <span class="batch-name">
+                  {{ result.batchName }}
+                </span>
+              </td>
 
               <!-- Quiz -->
 
@@ -623,7 +633,26 @@
       </strong>
 
     </div>
+    <div class="proctoring-action">
 
+      <div class="proctoring-action-info">
+        <div class="proctoring-action-icon">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+
+        <div>
+          <strong>مراقبة الاختبار</strong>
+          <span>عرض لقطات وأحداث المراقبة الخاصة بهذه المحاولة</span>
+        </div>
+      </div>
+
+      <button type="button" class="proctoring-view-btn" (click)="openProctoringViewer()">
+
+        <i class="fa-solid fa-camera"></i>
+        مراجعة المراقبة
+      </button>
+
+    </div>
 
     <!-- Questions -->
 
@@ -826,4 +855,101 @@
 
   </div>
 
+</div>
+<!-- =========================================
+     PROCTORING VIEWER
+========================================= -->
+
+<div
+  class="proctoring-overlay"
+  *ngIf="showProctoringViewer()"
+  (click)="closeProctoringViewer()"
+>
+  <div
+    class="proctoring-viewer"
+    (click)="$event.stopPropagation()"
+  >
+
+    <!-- Header -->
+    <div class="proctoring-viewer-header">
+
+      <div>
+        <span class="proctoring-viewer-eyebrow">
+          <i class="fa-solid fa-shield-halved"></i>
+          مراقبة الاختبار
+        </span>
+
+        <h2>مراجعة المراقبة</h2>
+
+        <p>
+          مراجعة لقطات وأحداث المراقبة الخاصة بمحاولة المتدرب
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="proctoring-viewer-close"
+        (click)="closeProctoringViewer()"
+        aria-label="إغلاق"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+    </div>
+
+
+    <!-- Summary -->
+    <div class="proctoring-viewer-summary">
+
+      <div class="proctoring-summary-card">
+        <i class="fa-solid fa-camera"></i>
+
+        <div>
+          <span>اللقطات</span>
+          <strong>—</strong>
+        </div>
+      </div>
+
+      <div class="proctoring-summary-card">
+        <i class="fa-solid fa-list-check"></i>
+
+        <div>
+          <span>الأحداث</span>
+          <strong>—</strong>
+        </div>
+      </div>
+
+      <div class="proctoring-summary-card">
+        <i class="fa-solid fa-video"></i>
+
+        <div>
+          <span>حالة الكاميرا</span>
+          <strong>غير متاحة</strong>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- Content -->
+    <div class="proctoring-viewer-body">
+
+      <div class="proctoring-pending">
+
+        <div class="proctoring-pending-icon">
+          <i class="fa-solid fa-camera"></i>
+        </div>
+
+        <h3>بانتظار بيانات المراقبة</h3>
+
+        <p>
+          سيتم عرض لقطات المراقبة وأحداثها هنا عند توفر
+          بيانات الـProctoring من النظام.
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
 </div>

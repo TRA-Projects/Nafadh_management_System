@@ -1,9 +1,13 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { Observable, defer, finalize, timeout } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CompanyBranchDto, CompanyDto, CompanySupervisorDto, EnrollmentDto } from '../../../../core/models/dtos';
+
+type ProfileSection = 'company' | 'branches' | 'supervisors' | 'capacity' | 'trainees' | 'specialties';
 
 type CompanyProfileDto = CompanyDto & {
   taxNumber?: string;
@@ -41,10 +45,15 @@ export interface HostedSpecialtyDto {
 export class CompanyProfile implements OnInit {
   private readonly api = inject(CompanyApi);
   private readonly auth = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly loading = signal<Record<ProfileSection, boolean>>({
+    company: false, branches: false, supervisors: false,
+    capacity: false, trainees: false, specialties: false,
+  });
+  readonly coverFailed = signal(false);
+  readonly branchSaveMessage = signal('');
 
   companyId: number = 0;
-  readonly coverInputId = 'company-cover-upload';
-  readonly logoInputId = 'company-logo-upload';
 
   company = signal<CompanyProfileDto | null>(null);
   branches = signal<CompanyBranchDto[]>([]);
@@ -58,117 +67,150 @@ export class CompanyProfile implements OnInit {
   supervisorsLoadError = signal(false);
   specialtiesLoadError = signal(false);
 
-  editingCapacity = signal(false);
   companyEditOpen = signal(false);
 
-  uploadingCover = signal(false);
-  uploadingLogo = signal(false);
   logoFailed = signal(false);
-  coverUploadError = signal(false);
-  logoUploadError = signal(false);
-  readonly maxImageSizeMb = 5;
   companyEditDraft = {
-    commercialRegister: '',
-    taxNumber: '',
     phone: '',
     email: '',
   };
-  capacityDraft = 0;
-  newFieldDraft = '';
+  savingCompany = signal(false);
+  saveMessage = signal('');
+  saveError = signal('');
+  capacityLoadError = signal(false);
+  capacitySummary = signal<{ total: number; used: number; remaining: number } | null>(null);
 
   branchFormOpen = signal(false);
+  savingBranch = signal(false);
+  branchSaveError = signal('');
   branchDraft = { location: '', phone: '' };
-  supervisorFormOpen = signal(false);
-  supervisorDraft = { name: '', role: '', phone: '', email: '' };
 
   companyInitial = computed(() => this.company()?.companyName?.trim()?.charAt(0)?.toUpperCase() ?? 'ش');
 
-  // حساب عدد المتدربين بناءً على العدد الفعلي من getEnrollmentsByCompany أو قيم Capacity
   approvedSupervisors = computed(() =>
     this.supervisors().filter((person) => this.isApprovedSupervisor(person.status)),
   );
 
-  usedCapacityValue = computed(() => {
-    if (this.trainees().length > 0) {
-      return this.trainees().length;
-    }
-    const c = this.company();
-    return typeof c?.usedCapacity === 'number' ? c.usedCapacity : 0;
-  });
-
+  usedCapacityValue = computed(() => this.capacitySummary()?.used ?? 0);
+  totalCapacityValue = computed(() => this.capacitySummary()?.total ?? this.company()?.capacity ?? 0);
+  remainingCapacityValue = computed(() => Math.max(0, this.totalCapacityValue() - this.usedCapacityValue()));
   capacityPercent = computed(() => {
-    const c = this.company();
-    if (!c || !c.capacity || c.capacity <= 0) return 0;
-    const used = this.usedCapacityValue();
-    return Math.min(100, Math.round((used / c.capacity) * 100));
+    const total = this.totalCapacityValue();
+    return total > 0 ? Math.min(100, Math.round(this.usedCapacityValue() / total * 100)) : 0;
   });
 
   readonly ringCircumference = 2 * Math.PI * 62;
   ringDashoffset = computed(() => this.ringCircumference * (1 - this.capacityPercent() / 100));
 
   ngOnInit() {
-    this.companyId = this.auth.companyId ?? 0;
-    this.api.getCompany(this.companyId).subscribe({
-      next: (response) => {
-        const normalizedCompany = this.normalizeCompany(response);
-        this.company.set(normalizedCompany);
-        this.capacityDraft = normalizedCompany?.capacity ?? 0;
-        this.companyLoadError.set(false);
-      },
-      error: () => this.companyLoadError.set(true),
-    });
+    const id = Number(this.auth.companyId);
+    this.companyId = Number.isSafeInteger(id) && id > 0 ? id : 0;
+    this.retryAll();
+  }
 
-    this.api.getBranches(this.companyId).subscribe({
-      next: (items: CompanyBranchDto[]) => {
-        this.branches.set(items ?? []);
-        this.branchesLoadError.set(false);
-      },
-      error: () => this.branchesLoadError.set(true),
-    });
+  isLoading(section: ProfileSection): boolean { return this.loading()[section]; }
 
-    this.api.getSupervisors(this.companyId).subscribe({
-      next: (items: CompanySupervisorDto[]) => {
-        this.supervisors.set((items ?? []).map((supervisor) => this.normalizeSupervisor(supervisor)));
-        this.supervisorsLoadError.set(false);
-      },
-      error: () => this.supervisorsLoadError.set(true),
-    });
+  retryAll() {
+    if (!this.companyId) {
+      this.companyLoadError.set(true);
+      return;
+    }
+    for (const section of ['company', 'branches', 'supervisors', 'capacity', 'trainees', 'specialties'] as const) {
+      this.retrySection(section);
+    }
+  }
 
-    // جلب الطاقة الاستيعابية وحفظ القيمة القادمة من السيرفر
-    this.api.getCapacity(this.companyId).subscribe({
-      next: (cap) => {
-        const used = Number(cap?.used ?? 0);
-        this.company.update((c) => (c ? { ...c, usedCapacity: used } : c));
-      },
-      error: (err) => console.error('Failed to load capacity:', err),
-    });
+  retrySection(section: ProfileSection) {
+    if (!this.companyId || this.isLoading(section)) return;
+    // Do not replace data underneath an active edit or branch save.
+    if (section === 'company' && (this.companyEditOpen() || this.savingCompany())) return;
+    if (section === 'branches' && (this.branchFormOpen() || this.savingBranch())) return;
+    switch (section) {
+      case 'company':
+        this.load(section, () => this.api.getCompany(this.companyId), response => {
+          const company = this.normalizeCompany(response);
+          if (!company || Number(company.companyId) !== this.companyId) throw new Error('Invalid company response');
+          this.company.set(company);
+          this.logoFailed.set(false);
+          this.coverFailed.set(false);
+        });
+        break;
+      case 'branches':
+        this.load(section, () => this.api.getBranches(this.companyId), items => {
+          if (!Array.isArray(items)) throw new Error('Invalid branches response');
+          if (items.some(item => !item || !Number.isSafeInteger(item.branchId) || item.branchId <= 0))
+            throw new Error('Invalid branch id');
+          this.branches.set([...new Map(items.map(item => [item.branchId, item])).values()]
+            .sort((a, b) => a.branchId - b.branchId));
+        });
+        break;
+      case 'supervisors':
+        this.load(section, () => this.api.getSupervisors(this.companyId), items => {
+          if (!Array.isArray(items)) throw new Error('Invalid supervisors response');
+          const people = items.filter(item => !!item).map(item => this.normalizeSupervisor(item));
+          if (people.some(item => typeof item.supervisorId !== 'number' || !Number.isSafeInteger(item.supervisorId) || item.supervisorId <= 0))
+            throw new Error('Invalid supervisor id');
+          this.supervisors.set([...new Map(people.map(item => [item.supervisorId, item])).values()]);
+        });
+        break;
+      case 'capacity':
+        this.load(section, () => this.api.getCompanyCapacitySummary(this.companyId), cap => {
+          if (cap?.total == null || cap?.used == null || String(cap.total).trim() === '' || String(cap.used).trim() === '')
+            throw new Error('Missing capacity');
+          const total = Number(cap.total), used = Number(cap.used);
+          if (!Number.isFinite(total) || !Number.isSafeInteger(used) || total < 0 || used < 0)
+            throw new Error('Invalid capacity');
+          this.capacitySummary.set({ total, used, remaining: Math.max(0, total - used) });
+        });
+        break;
+      case 'trainees':
+        this.load(section, () => this.api.getEnrollmentsByCompany(this.companyId), items => {
+          if (!Array.isArray(items)) throw new Error('Invalid enrollments response');
+          this.trainees.set(items.filter(item => !!item));
+        });
+        break;
+      case 'specialties':
+        this.load(section, () => this.api.getCompanyProgramSummaries(this.companyId), items => {
+          if (!Array.isArray(items)) throw new Error('Invalid programs response');
+          const programs: HostedSpecialtyDto[] = items.filter(item => !!item).map(item => ({
+            programId: item.programId,
+            name: item.title || 'غير محدد',
+            status: item.approvedForCompany && !/suspended|inactive|rejected/i.test(String(item.status ?? ''))
+              ? 'معتمد' : 'قيد الاعتماد',
+            seatsAllocated: Math.max(0, Number(item.allocatedCapacity) || 0),
+          }));
+          if (programs.some(item => !Number.isSafeInteger(item.programId) || item.programId <= 0))
+            throw new Error('Invalid program id');
+          this.specialties.set([...new Map(programs.map(item => [item.programId, item])).values()]);
+        });
+        break;
+    }
+  }
 
-    // جلب تسجيلات/متدربين الشركة باستخدام الميثود الصحيحة getEnrollmentsByCompany
-    this.api.getEnrollmentsByCompany(this.companyId).subscribe({
-      next: (items: EnrollmentDto[]) => {
-        this.trainees.set(items ?? []);
-        this.traineesLoadError.set(false);
-      },
-      error: () => this.traineesLoadError.set(true),
-    });
+  private sectionError(section: ProfileSection) {
+    switch (section) {
+      case 'company': return this.companyLoadError;
+      case 'branches': return this.branchesLoadError;
+      case 'supervisors': return this.supervisorsLoadError;
+      case 'capacity': return this.capacityLoadError;
+      case 'trainees': return this.traineesLoadError;
+      case 'specialties': return this.specialtiesLoadError;
+    }
+  }
 
-    this.api.getCompanyProgramSummaries(this.companyId).subscribe({
-      next: (items) => {
-        this.specialties.set((items ?? []).map((item) => ({
-          programId: item.programId,
-          name: item.title,
-          status: item.approvedForCompany && !/suspended|inactive|rejected/i.test(item.status)
-            ? 'معتمد'
-            : 'قيد الاعتماد',
-          seatsAllocated: Number(item.allocatedCapacity ?? 0),
-        })));
-        this.specialtiesLoadError.set(false);
+  private load<T>(section: ProfileSection, request: () => Observable<T>, apply: (value: T) => void) {
+    const failed = this.sectionError(section);
+    failed.set(false);
+    this.loading.update(state => ({ ...state, [section]: true }));
+    defer(request).pipe(
+      timeout(20000),
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.loading.update(state => ({ ...state, [section]: false }))),
+    ).subscribe({
+      next: value => {
+        try { apply(value); } catch { failed.set(true); }
       },
-      error: (error) => {
-        console.error('Failed to load company program summaries:', error);
-        this.specialties.set([]);
-        this.specialtiesLoadError.set(true);
-      },
+      error: () => failed.set(true),
     });
   }
 
@@ -196,14 +238,14 @@ export class CompanyProfile implements OnInit {
     const workFields = Array.isArray(dto.workFields) && dto.workFields.length
       ? dto.workFields
       : dto.workField
-      ? dto.workField.split(/[،,]/).map((x) => x.trim()).filter(Boolean)
-      : [];
+        ? dto.workField.split(/[،,]/).map((x) => x.trim()).filter(Boolean)
+        : [];
 
     return {
       ...dto,
       companyName: dto.companyName || 'غير متوفر',
-      workField: dto.workField || workFields[0] || 'غير محدد',
-      workFields,
+      workField: dto.workField || workFields[0] || '',
+      workFields: [...new Set(workFields.map(field => field.trim()).filter(Boolean))],
       logoUrl,
       coverImageUrl,
       usedCapacity: dto.usedCapacity ?? 0,
@@ -228,31 +270,14 @@ export class CompanyProfile implements OnInit {
     } as CompanySupervisorProfileDto;
   }
 
-  saveCapacity() {
-    const c = this.company();
-    if (!c) return;
-
-    const payload = this.buildCompanyUpdatePayload(c, {
-      capacity: Math.max(0, Number(this.capacityDraft ?? 0)),
-    });
-
-    this.api.updateCompany(c.companyId, payload).subscribe({
-      next: (updated) => {
-        const merged = this.normalizeCompany({ ...c, ...(updated as Partial<CompanyProfileDto>), capacity: Number(this.capacityDraft ?? 0) });
-        if (merged) this.company.set(merged);
-        this.editingCapacity.set(false);
-      },
-      error: (error) => console.error('Failed to update company capacity:', error),
-    });
-  }
-
   startCompanyEdit() {
     const c = this.company();
     if (!c) return;
 
+    if (this.savingCompany() || this.savingBranch() || this.branchFormOpen()) return;
+    this.saveError.set('');
+    this.saveMessage.set('');
     this.companyEditDraft = {
-      commercialRegister: c.commercialRegister || '',
-      taxNumber: c.taxNumber || '',
       phone: c.phone || '',
       email: c.email || '',
     };
@@ -261,48 +286,30 @@ export class CompanyProfile implements OnInit {
 
   saveCompanyEdit() {
     const c = this.company();
-    if (!c) return;
-
-    const payload = this.buildCompanyUpdatePayload(c, {
-      commercialRegister: this.companyEditDraft.commercialRegister.trim() || null,
-      phone: this.companyEditDraft.phone.trim() || null,
-      email: this.companyEditDraft.email.trim() || null,
-    });
-
-    this.api.updateCompany(c.companyId, payload).subscribe({
-      next: (updated) => {
-        const merged = this.normalizeCompany({
-          ...c,
-          ...(updated as Partial<CompanyProfileDto>),
-          commercialRegister: this.companyEditDraft.commercialRegister.trim(),
-          phone: this.companyEditDraft.phone.trim(),
-          email: this.companyEditDraft.email.trim(),
-        });
-        if (merged) this.company.set(merged);
-        this.companyEditOpen.set(false);
-      },
-      error: (error) => console.error('Failed to update company profile:', error),
-    });
-  }
-
-  private buildCompanyUpdatePayload(
-    c: CompanyProfileDto,
-    patch: Record<string, unknown> = {},
-  ) {
-    return {
-      companyName: c.companyName,
-      commercialRegister: c.commercialRegister || null,
-      workField: c.workField || null,
-      address: c.address || null,
-      phone: c.phone || null,
-      email: c.email || null,
-      logo: c.logoUrl || c.logo || null,
-      capacity: Number(patch['capacity'] ?? c.capacity ?? 0),
-      status: c.status,
-      approvalDate: c.approvalDate || null,
-      userId: c.userId ?? null,
-      ...patch,
-    };
+    if (!c || !this.companyEditOpen() || this.savingCompany()) return;
+    this.saveError.set('');
+    this.saveMessage.set('');
+    const phone = this.normalizePhone(this.companyEditDraft.phone);
+    const email = this.companyEditDraft.email.trim();
+    if (!/^\+?[0-9]{8,15}$/.test(phone)) {
+      this.saveError.set('أدخل رقم هاتف صحيحًا من 8 إلى 15 رقمًا.');
+      return;
+    }
+    if (email.length > 150 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.saveError.set('أدخل بريدًا إلكترونيًا صحيحًا لا يتجاوز 150 حرفًا.');
+      return;
+    }
+    this.savingCompany.set(true);
+    this.api.updatePortalCompanyContact(c.companyId, { phone, email })
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.savingCompany.set(false)))
+      .subscribe({
+        next: (updated) => {
+          this.company.update(current => current ? { ...current, phone: updated?.phone ?? phone, email: updated?.email ?? email } : current);
+          this.companyEditOpen.set(false);
+          this.saveMessage.set('تم حفظ بيانات التواصل بنجاح.');
+        },
+        error: () => this.saveError.set('تعذر حفظ بيانات التواصل. تحقق من الاتصال وصلاحية الحساب ثم حاول مجددًا.'),
+      });
   }
 
   statusLabel(value?: string | null): string {
@@ -330,40 +337,6 @@ export class CompanyProfile implements OnInit {
     return [];
   }
 
-  addWorkField() {
-    const value = this.newFieldDraft.trim();
-    const c = this.company();
-    if (!value || !c) return;
-
-    const list = Array.from(new Set([...this.workFieldList(c), value]));
-    const workField = list.join('، ');
-
-    this.api.updateCompany(c.companyId, this.buildCompanyUpdatePayload(c, { workField })).subscribe({
-      next: (updated) => {
-        const merged = this.normalizeCompany({ ...c, ...(updated as Partial<CompanyProfileDto>), workField, workFields: list });
-        if (merged) this.company.set(merged);
-        this.newFieldDraft = '';
-      },
-      error: (error) => console.error('Failed to add work field:', error),
-    });
-  }
-
-  removeWorkField(field: string) {
-    const c = this.company();
-    if (!c) return;
-
-    const list = this.workFieldList(c).filter((f) => f !== field);
-    const workField = list.join('، ');
-
-    this.api.updateCompany(c.companyId, this.buildCompanyUpdatePayload(c, { workField })).subscribe({
-      next: (updated) => {
-        const merged = this.normalizeCompany({ ...c, ...(updated as Partial<CompanyProfileDto>), workField, workFields: list });
-        if (merged) this.company.set(merged);
-      },
-      error: (error) => console.error('Failed to remove work field:', error),
-    });
-  }
-
   private isApprovedSupervisor(status: unknown): boolean {
     // NFD_SupervisorStatus: Active = 0, Inactive = 1, Suspended = 2
     if (typeof status === 'number') return status === 0;
@@ -371,160 +344,64 @@ export class CompanyProfile implements OnInit {
     return value === 'active' || value === '0' || value === 'معتمد' || value === 'نشط';
   }
 
-  branchPhoneLabel(value?: string | null): string {
-    const text = (value ?? '').trim();
-    if (!text) return 'لا يوجد هاتف مسجل';
-    return text.startsWith('هاتف الفرع') ? text : `هاتف الفرع: ${text}`;
-  }
-
   addBranch() {
+    if (this.companyEditOpen() || this.savingBranch() || this.branchFormOpen() || this.branchesLoadError() || this.isLoading('branches')) return;
+    this.branchSaveMessage.set('');
+    this.branchSaveError.set('');
+    this.branchDraft = { location: '', phone: '' };
     this.branchFormOpen.set(true);
   }
 
   saveBranch() {
+    if (!this.branchFormOpen() || this.savingBranch()) return;
     const location = this.branchDraft.location.trim();
-    if (!location || !this.companyId) return;
-
-    this.api.addBranch({
-      companyId: this.companyId,
-      location,
-      contactPoint: this.branchDraft.phone.trim() || null,
-    }).subscribe({
-      next: (branch) => {
-        this.branches.update((cur) => [...cur, branch as CompanyBranchDto]);
-        this.branchDraft = { location: '', phone: '' };
-        this.branchFormOpen.set(false);
-      },
-      error: (error) => {
-        console.error('Failed to add company branch:', error);
-      },
-    });
-  }
-
-  addSupervisor() {
-    this.supervisorFormOpen.set(true);
-  }
-
-  saveSupervisor() {
-    const name = this.supervisorDraft.name.trim();
-    if (!name || !this.companyId) return;
-
-    this.api.addSupervisor({
-      name,
-      fullName: name,
-      phone: this.supervisorDraft.phone.trim() || null,
-      email: this.supervisorDraft.email.trim() || null,
-      department: this.supervisorDraft.role.trim() || null,
-      position: this.supervisorDraft.role.trim() || null,
-      companyId: this.companyId,
-    }).subscribe({
-      next: () => {
-        this.supervisorDraft = { name: '', role: '', phone: '', email: '' };
-        this.supervisorFormOpen.set(false);
-        this.api.getSupervisors(this.companyId).subscribe({
-          next: (items: CompanySupervisorDto[]) => this.supervisors.set((items ?? []).map((x) => this.normalizeSupervisor(x))),
-          error: () => undefined,
-        });
-      },
-      error: (error) => {
-        console.error('Failed to add company supervisor:', error);
-      },
-    });
-  }
-
-  onCoverSelected(event: Event) {
-    this.handleImageSelection(event, 'cover');
-  }
-
-  onLogoSelected(event: Event) {
-    this.handleImageSelection(event, 'logo');
-  }
-
-  removeCoverImage() {
-    this.persistImage('cover', '');
-  }
-
-  removeLogoImage() {
-    this.persistImage('logo', '');
-  }
-
-  private handleImageSelection(event: Event, kind: 'cover' | 'logo') {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) return;
-
-    if (!this.isValidImageFile(file)) {
-      (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(true);
+    const phone = this.normalizePhone(this.branchDraft.phone);
+    this.branchSaveError.set('');
+    if (!location || location.length > 250 || !this.companyId) {
+      this.branchSaveError.set('أدخل موقع الفرع بما لا يتجاوز 250 حرفًا.');
       return;
     }
-
-    (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(false);
-
-    const previousUrl = kind === 'cover' ? this.company()?.coverImageUrl : this.company()?.logoUrl;
-    const previewUrl = URL.createObjectURL(file);
-
-    this.applyImageToCompany(kind, previewUrl);
-    (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(true);
-
-    this.readFileAsDataUrl(file)
-      .then((dataUrl) => this.persistImage(kind, dataUrl, previousUrl))
-      .catch(() => {
-        this.revertImage(kind, previousUrl);
-        (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(false);
-        (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(true);
-      })
-      .finally(() => URL.revokeObjectURL(previewUrl));
+    if (!/^\+?[0-9]{8,15}$/.test(phone)) {
+      this.branchSaveError.set('أدخل رقم هاتف صحيحًا من 8 إلى 15 رقمًا.');
+      return;
+    }
+    this.savingBranch.set(true);
+    this.api.addBranch({ companyId: this.companyId, location, contactPoint: phone })
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.savingBranch.set(false)))
+      .subscribe({
+        next: (branch) => {
+          const saved = branch as CompanyBranchDto | null;
+          if (saved && Number.isSafeInteger(saved.branchId) && saved.branchId > 0) {
+            this.branches.update(current => [...current.filter(item => item.branchId !== saved.branchId), saved]
+              .sort((a, b) => a.branchId - b.branchId));
+          } else {
+            this.branchSaveMessage.set('تم الحفظ، لكن لم تصل بيانات الفرع. اضغط إعادة تحميل الفروع للتأكد قبل إضافة الفرع مجددًا.');
+            this.branchesLoadError.set(true);
+          }
+          if (saved && saved.branchId > 0) this.branchSaveMessage.set('تم حفظ الفرع بنجاح.');
+          this.branchDraft = { location: '', phone: '' };
+          this.branchFormOpen.set(false);
+        },
+        error: () => this.branchSaveError.set('تعذر حفظ الفرع. تحقق من الاتصال ثم حاول مجددًا.'),
+      });
   }
 
-  private persistImage(kind: 'cover' | 'logo', value: string, fallbackUrl?: string) {
-    const c = this.company();
-    if (!c) return;
-
-    const uploadingSignal = kind === 'cover' ? this.uploadingCover : this.uploadingLogo;
-    const errorSignal = kind === 'cover' ? this.coverUploadError : this.logoUploadError;
-
-    uploadingSignal.set(true);
-    errorSignal.set(false);
-
-    const patch = kind === 'cover' ? { coverImage: value || null } : { logo: value || null };
-
-    this.api.updateCompany(c.companyId, this.buildCompanyUpdatePayload(c, patch)).subscribe({
-      next: () => {
-        this.applyImageToCompany(kind, value);
-        uploadingSignal.set(false);
-      },
-      error: (error) => {
-        console.error(`Failed to save company ${kind}:`, error);
-        this.revertImage(kind, fallbackUrl);
-        errorSignal.set(true);
-        uploadingSignal.set(false);
-      },
-    });
+  cancelCompanyEdit() {
+    if (this.savingCompany()) return;
+    this.companyEditOpen.set(false);
+    this.saveError.set('');
   }
 
-  private applyImageToCompany(kind: 'cover' | 'logo', value: string) {
-    this.company.update((cur) =>
-      cur ? (kind === 'cover' ? { ...cur, coverImageUrl: value } : { ...cur, logoUrl: value }) : cur
-    );
+  cancelBranch() {
+    if (this.savingBranch()) return;
+    this.branchFormOpen.set(false);
+    this.branchSaveError.set('');
   }
 
-  private revertImage(kind: 'cover' | 'logo', fallbackUrl?: string) {
-    this.applyImageToCompany(kind, fallbackUrl || '');
-  }
-
-  private isValidImageFile(file: File): boolean {
-    const isImage = file.type.startsWith('image/');
-    const withinSize = file.size <= this.maxImageSizeMb * 1024 * 1024;
-    return isImage && withinSize;
-  }
-
-  private readFileAsDataUrl(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
+  private normalizePhone(value: string): string {
+    return value.trim().replace(/[٠-٩۰-۹]/g, digit => {
+      const code = digit.charCodeAt(0);
+      return String(code >= 0x06f0 ? code - 0x06f0 : code - 0x0660);
+    }).replace(/[\s()-]/g, '');
   }
 }

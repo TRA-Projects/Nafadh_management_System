@@ -26,6 +26,8 @@ namespace Nafadh_Backend.DTOs
 
         // Link to the trainer's CV file
         public string? CVUrl { get; set; }
+        // Trainer's LinkedIn profile URL
+        public string? LinkedInUrl { get; set; }
         // =====================================================
         // TRAINER PROFILE IMAGE
         // =====================================================

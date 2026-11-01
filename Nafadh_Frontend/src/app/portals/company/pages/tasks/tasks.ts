@@ -167,9 +167,8 @@ export class CompanyTasks implements OnInit {
   });
 
   /**
-   * Existing company programs are visible only for:
-   * - All
-   * - Approved
+   * Admin-assigned batches are shown only in the All filter;
+   * assignment is not the same as Authority approval of the training plan.
    *
    * They must not appear in Draft, Pending, Rejected,
    * InProgress or Completed.
@@ -177,7 +176,7 @@ export class CompanyTasks implements OnInit {
   readonly filteredApprovedCourses = computed(() => {
     const f = this.filter();
 
-    if (f !== 'all' && f !== 'Approved') {
+    if (f !== 'all') {
       return [];
     }
 
@@ -402,6 +401,14 @@ export class CompanyTasks implements OnInit {
 
   // ── Create ──
 
+  createNewPlan(programId: number | null = null): void {
+    this.router.navigate(['/company/tasks/new'], {
+      queryParams: programId ? { programId } : {},
+    });
+  }
+
+  // Legacy creation dialog kept temporarily for rollback, but no longer opened
+  // by the UI. New drafts are created on the full plan page from Admin assignments.
   openCreate(programId: number | null = null): void {
     this.form = this.emptyForm();
     this.formError.set('');

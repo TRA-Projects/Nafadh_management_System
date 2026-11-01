@@ -1081,11 +1081,14 @@ getCertificateFileUrl(fileUrl: string): string {
 
       experienceYears,
 
-      biography:
-        trainer.biography?.trim() ?? '',
+   biography:
+  trainer.biography?.trim() ?? '',
 
-      cvUrl:
-        trainer.cvUrl?.trim() ?? ''
+cvUrl:
+  trainer.cvUrl?.trim() ?? '',
+
+linkedinUrl:
+  trainer.linkedinUrl?.trim() || null
 
     };
 

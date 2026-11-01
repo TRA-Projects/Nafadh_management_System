@@ -66,6 +66,7 @@ namespace Nafadh_Backend.Services
                 Biography = t.Biography,
 
                 CVUrl = t.CVUrl,
+                LinkedInUrl = t.LinkedInUrl,
 
                 // Public URL of the trainer profile image.
                 ProfileImageUrl = t.ProfileImageUrl,
@@ -92,6 +93,7 @@ namespace Nafadh_Backend.Services
                 ExperienceYears = t.ExperienceYears,
                 Biography = t.Biography,
                 CVUrl = t.CVUrl,
+                LinkedInUrl = t.LinkedInUrl,
 
                 // Public URL of the trainer profile image.
                 ProfileImageUrl = t.ProfileImageUrl,
@@ -138,6 +140,9 @@ namespace Nafadh_Backend.Services
             existing.ExperienceYears = dto.ExperienceYears;
             existing.Biography = dto.Biography;
             existing.CVUrl = dto.CVUrl;
+            existing.LinkedInUrl = string.IsNullOrWhiteSpace(dto.LinkedInUrl)
+    ? null
+    : dto.LinkedInUrl.Trim();
 
             // تحديث بيانات المستخدم المرتبط بالمدرب
             if (existing.User != null)

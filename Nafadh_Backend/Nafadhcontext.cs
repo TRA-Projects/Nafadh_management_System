@@ -48,10 +48,16 @@ namespace Nafadh_Backend
         public DbSet<NFD_TraineeModuleProgress> NFD_TraineeModuleProgresses { get; set; }
         public DbSet<NFD_Session> NFD_Sessions { get; set; }
         public DbSet<NFD_SessionAttendance> NFD_SessionAttendances { get; set; }
+        // Trainer Portal - LiveKit automatic attendance periods.
+        public DbSet<NFD_SessionAttendancePeriod> NFD_SessionAttendancePeriods { get; set; }
 
         // Trainer Portal - Post-session surveys and trainee responses.
         public DbSet<NFD_SessionSurvey> NFD_SessionSurveys { get; set; }
         public DbSet<NFD_SessionSurveyResponse> NFD_SessionSurveyResponses { get; set; }
+
+        public DbSet<NFD_LivePoll> NFD_LivePolls { get; set; }
+        public DbSet<NFD_LivePollOption> NFD_LivePollOptions { get; set; }
+        public DbSet<NFD_LivePollVote> NFD_LivePollVotes { get; set; }
 
         public DbSet<NFD_DailyAttendance> NFD_DailyAttendances { get; set; }
         public DbSet<NFD_TrainerAttendance> NFD_TrainerAttendances { get; set; }
@@ -105,12 +111,19 @@ namespace Nafadh_Backend
         public DbSet<NFD_TraineeSkill> NFD_TraineeSkills { get; set; }
         public DbSet<NFD_WithdrawalRequest> NFD_WithdrawalRequests { get; set; }
 
+        public DbSet<NFD_CompanySupervisorTrainer>
+    NFD_CompanySupervisorTrainers
+        { get; set; }
 
+        public DbSet<NFD_CompanyTrainerEvaluation>
+            NFD_CompanyTrainerEvaluations
+        { get; set; }
         // Remediation Request Entity
         public DbSet<RemediationRequest> RemediationRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
             base.OnModelCreating(modelBuilder);
 
             // ---- NFD_User ----
@@ -123,6 +136,12 @@ namespace Nafadh_Backend
                     .HasForeignKey(e => e.RoleId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+            modelBuilder.Entity<NFD_Batch>()
+                .HasOne(b => b.Company)
+                .WithMany()
+                .HasForeignKey(b => b.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // ---- NFD_Role ----
             modelBuilder.Entity<NFD_Role>(entity =>
@@ -281,7 +300,6 @@ namespace Nafadh_Backend
             });
 
             // ---- NFD_UserGuideProgress ----
-            // NEW: Configuration for the approved User Guide Progress table.
             modelBuilder.Entity<NFD_UserGuideProgress>(entity =>
             {
                 entity.ToTable("NFD_UserGuideProgress");
@@ -299,13 +317,32 @@ namespace Nafadh_Backend
                 entity.Property(e => e.UpdatedAt)
                     .IsRequired();
 
+                // Trainee progress
                 entity.HasIndex(e => new { e.TraineeId, e.GuideKey })
-                    .IsUnique();
+                    .IsUnique()
+                    .HasFilter("[TraineeId] IS NOT NULL");
 
                 entity.HasOne<NFD_Trainee>()
                     .WithMany()
                     .HasForeignKey(e => e.TraineeId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                // Trainer progress
+                entity.HasIndex(e => new { e.TrainerId, e.GuideKey })
+                    .IsUnique()
+                    .HasFilter("[TrainerId] IS NOT NULL");
+
+                entity.HasOne<NFD_Trainer>()
+                    .WithMany()
+                    .HasForeignKey(e => e.TrainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Each record belongs to either a trainee or a trainer
+                entity.ToTable(t => t.HasCheckConstraint(
+                    "CK_UserGuideProgress_Owner",
+                    "([TraineeId] IS NOT NULL AND [TrainerId] IS NULL) OR " +
+                    "([TraineeId] IS NULL AND [TrainerId] IS NOT NULL)"
+                ));
             });
 
             // ---- NFD_Track ----
@@ -499,12 +536,37 @@ namespace Nafadh_Backend
             modelBuilder.Entity<NFD_SessionAttendance>(entity =>
             {
                 entity.ToTable("NFD_SessionAttendances");
+                // Trainer Portal - Prevent duplicate attendance per trainee and session.
+                entity.HasIndex(e => new { e.SessionId, e.TraineeId })
+                    .IsUnique();
                 entity.HasOne(e => e.Session)
                     .WithMany(p => p.SessionAttendances)
                     .HasForeignKey(e => e.SessionId)
                     .OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(e => e.Trainee)
                     .WithMany(p => p.SessionAttendances)
+                    .HasForeignKey(e => e.TraineeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Trainer Portal - LiveKit attendance periods.
+            // Each LiveKit participant connection is stored once.
+            modelBuilder.Entity<NFD_SessionAttendancePeriod>(entity =>
+            {
+                entity.ToTable("NFD_SessionAttendancePeriods");
+
+                entity.HasIndex(e => e.ParticipantSid)
+                    .IsUnique();
+
+                entity.HasIndex(e => new { e.SessionId, e.TraineeId });
+
+                entity.HasOne(e => e.Session)
+                    .WithMany()
+                    .HasForeignKey(e => e.SessionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Trainee)
+                    .WithMany()
                     .HasForeignKey(e => e.TraineeId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
@@ -541,6 +603,81 @@ namespace Nafadh_Backend
                     .HasForeignKey(x => x.TraineeId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+            // =====================================================
+            // Trainer Portal - Live Polls
+            // Polls during LiveKit classroom sessions.
+            // Separate from post-session surveys.
+            // =====================================================
+
+            // Live poll linked to a classroom session.
+            modelBuilder.Entity<NFD_LivePoll>(entity =>
+            {
+                entity.ToTable("NFD_LivePolls");
+
+                entity.HasKey(p => p.PollId);
+
+                entity.Property(p => p.Question)
+                    .HasMaxLength(300)
+                    .IsRequired();
+
+                entity.HasIndex(p => p.SessionId);
+
+                entity.HasOne(p => p.Session)
+                    .WithMany()
+                    .HasForeignKey(p => p.SessionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Options belonging to a live poll.
+            modelBuilder.Entity<NFD_LivePollOption>(entity =>
+            {
+                entity.ToTable("NFD_LivePollOptions");
+
+                entity.HasKey(o => o.OptionId);
+
+                entity.Property(o => o.OptionText)
+                    .HasMaxLength(200)
+                    .IsRequired();
+
+                entity.HasOne(o => o.Poll)
+                    .WithMany(p => p.Options)
+                    .HasForeignKey(o => o.PollId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Trainee votes for live polls.
+            modelBuilder.Entity<NFD_LivePollVote>(entity =>
+            {
+                entity.ToTable("NFD_LivePollVotes");
+
+                entity.HasKey(v => v.VoteId);
+
+                // Prevent a trainee from voting twice
+                // in the same live poll.
+                entity.HasIndex(v => new
+                {
+                    v.PollId,
+                    v.TraineeId
+                })
+                .IsUnique();
+
+                entity.HasOne(v => v.Poll)
+                    .WithMany(p => p.Votes)
+                    .HasForeignKey(v => v.PollId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(v => v.Option)
+                    .WithMany(o => o.Votes)
+                    .HasForeignKey(v => v.OptionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(v => v.Trainee)
+                    .WithMany()
+                    .HasForeignKey(v => v.TraineeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
 
             // ---- NFD_DailyAttendance ----
             modelBuilder.Entity<NFD_DailyAttendance>(entity =>
@@ -1058,13 +1195,77 @@ namespace Nafadh_Backend
             // ---- Company Portal course plans ----
             modelBuilder.ConfigureCoursePlans();
 
+
             // ---- NFD_TraineeSkill ----
             modelBuilder.Entity<NFD_TraineeSkill>()
-            .HasOne(ts => ts.Trainee)
-            .WithMany(t => t.TraineeSkills)
-            .HasForeignKey(ts => ts.TraineeId)
-            .OnDelete(DeleteBehavior.Cascade);
+                .HasOne(ts => ts.Trainee)
+                .WithMany(t => t.TraineeSkills)
+                .HasForeignKey(ts => ts.TraineeId)
+                .OnDelete(DeleteBehavior.Cascade);
 
+            // =====================================================
+            // Company Supervisor - Trainer Assignment
+            // =====================================================
+            modelBuilder.Entity<NFD_CompanySupervisorTrainer>(entity =>
+            {
+                entity.ToTable("NFD_CompanySupervisorTrainers");
+
+                entity.HasKey(x => new
+                {
+                    x.SupervisorId,
+                    x.TrainerId
+                });
+
+                entity.HasOne(x => x.Supervisor)
+                    .WithMany()
+                    .HasForeignKey(x => x.SupervisorId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Trainer)
+                    .WithMany()
+                    .HasForeignKey(x => x.TrainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // =====================================================
+            // Company Supervisor - Trainer Evaluation
+            // =====================================================
+            modelBuilder.Entity<NFD_CompanyTrainerEvaluation>(entity =>
+            {
+                entity.ToTable("NFD_CompanyTrainerEvaluations");
+
+                entity.HasKey(x => x.EvaluationId);
+
+                // منع تكرار سجل التقييم نفسه للمشرف والمدرب
+                entity.HasIndex(x => new
+                {
+                    x.SupervisorId,
+                    x.TrainerId
+                }).IsUnique();
+
+                entity.Property(x => x.Rating)
+                    .IsRequired();
+
+                entity.Property(x => x.Comment)
+                    .HasMaxLength(2000);
+
+                entity.Property(x => x.CreatedAt)
+                    .IsRequired();
+
+                entity.Property(x => x.UpdatedAt)
+                    .IsRequired();
+
+                entity.HasOne(x => x.Supervisor)
+                    .WithMany()
+                    .HasForeignKey(x => x.SupervisorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Trainer)
+                    .WithMany()
+                    .HasForeignKey(x => x.TrainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
         }
+
     }
 }

@@ -25,31 +25,93 @@ export class GuidedTour implements OnDestroy {
   private tour?: Driver;
   private isStoppingProgrammatically = false;
 
+  private startTimer?: ReturnType<typeof setTimeout>;
+  private readonly retryDelay = 300;
+  private readonly maxAttempts = 12;
+  private attempts = 0;
+
   constructor() {
     effect(() => {
       const isActive = this.guideService.isTourActive();
       const guide = this.guideService.currentGuide();
+
+      this.clearPendingStart();
 
       if (!isActive) {
         this.stopDriver();
         return;
       }
 
-      this.startDriver(guide?.steps ?? []);
+      if (!guide?.steps?.length) {
+        this.stopDriver();
+        return;
+      }
+
+      this.attempts = 0;
+      this.scheduleStart(guide.steps);
     });
   }
 
-  // إضافة جديدة: تحديد عناصر الجولة بدون تعديل ملفات الصفحات
-  private findTourElement(target: string): Element | undefined {
-    try {
-      // البحث أولاً عن Selector القادم من guide-content.ts
-      const element = document.querySelector(target);
+  private clearPendingStart(): void {
+    if (this.startTimer !== undefined) {
+      clearTimeout(this.startTimer);
+      this.startTimer = undefined;
+    }
+  }
 
-      if (element) {
-        return element;
+  private scheduleStart(steps: GuideStep[]): void {
+    this.clearPendingStart();
+
+    this.startTimer = setTimeout(() => {
+      this.startTimer = undefined;
+
+      if (!this.guideService.isTourActive()) {
+        return;
       }
 
-      // بدائل لعناصر Dashboard الموجودة في HTML
+      const orderedSteps = [...steps].sort(
+        (a, b) => a.order - b.order
+      );
+
+      const availableSteps = orderedSteps.filter(
+        step => !!this.findTourElement(step.target)
+      );
+
+      if (
+        availableSteps.length === 0 &&
+        this.attempts < this.maxAttempts
+      ) {
+        this.attempts++;
+        this.scheduleStart(steps);
+        return;
+      }
+
+      if (!availableSteps.length) {
+        console.warn(
+          'Guided Tour: No matching elements found.'
+        );
+        this.guideService.stopTour();
+        return;
+      }
+
+      this.startDriver(availableSteps);
+    }, this.retryDelay);
+  }
+
+  private findTourElement(
+    target: string
+  ): Element | undefined {
+    if (!target) return undefined;
+
+    try {
+      // أولاً: استخدام Selector القادم من منار
+      const directElement = document.querySelector(target);
+
+      if (directElement) {
+        return directElement;
+      }
+
+      // Dashboard: الحفاظ على التحديد الأصلي
       if (target === '[data-guide="dashboard-summary"]') {
         return (
           document.querySelector(
@@ -67,14 +129,12 @@ export class GuidedTour implements OnDestroy {
           el.textContent?.includes('التنبيهات الأخيرة')
         );
 
-        // تحديد بطاقة التنبيهات كاملة بدلاً من العنوان فقط
         return (
           heading?.parentElement?.parentElement?.parentElement ??
           undefined
         );
       }
 
-      // تحديد القائمة الجانبية في AppShell
       if (target === '[data-guide="dashboard-menu"]') {
         return (
           document.querySelector(
@@ -82,6 +142,97 @@ export class GuidedTour implements OnDestroy {
           ) ?? undefined
         );
       }
+
+      // بدائل الصفحات الأخرى
+      const fallbackSelectors: Record<string, string[]> = {
+
+        // Profile
+        '[data-guide="profile-info"]': [
+          '.nfd-card:has(h3)',
+          '.nfd-card:has(input[readonly])'
+        ],
+
+        '[data-guide="profile-edit"]': [
+          '.nfd-card button.nfd-btn',
+          'button.nfd-btn'
+        ],
+
+        // Training Program
+        '[data-guide="training-program"]': [
+          '.program-container .program-header',
+          '.program-container .modules-container'
+        ],
+
+        '[data-guide="program-progress"]': [
+          '.program-container .progress-wrapper',
+          '.program-container .progress-circle'
+        ],
+
+        // Tasks
+        '[data-guide="tasks-list"]': [
+          '[dir="rtl"] .nfd-card',
+          '.nfd-card'
+        ],
+
+        '[data-guide="tasks-filter"]': [
+          '[dir="rtl"] button.nfd-btn',
+          'button.nfd-btn'
+        ],
+
+        // Attendance
+        '[data-guide="attendance-records"]': [
+          '.attendance-page .attendance-record-card',
+          '.attendance-page .attendance-list'
+        ],
+
+        '[data-guide="attendance-summary"]': [
+          '.attendance-page .top-dashboard',
+          '.attendance-page .stats-grid'
+        ],
+
+        // Notifications
+        '[data-guide="notifications-list"]': [
+          '.page .notification-list',
+          '.page .filters-row'
+        ],
+
+        // Support
+        '[data-guide="support-options"]': [
+          '.support-page .support-card',
+          '.support-page .receiver-form-group'
+        ],
+
+        '[data-guide="support-messages"]': [
+          '.support-page .conversation-list',
+          '.support-page .conversation-detail'
+        ],
+
+        // Achievements
+        '[data-guide="achievements-list"]': [
+          '.achievements-page .badges-card',
+          '.achievements-page .badges-grid'
+        ],
+
+        '[data-guide="achievements-certificates"]': [
+          '.achievements-page .certificate-card',
+          '.achievements-page .certificate-preview'
+        ],
+      };
+
+      const selectors = fallbackSelectors[target] ?? [];
+
+      for (const selector of selectors) {
+        const element = document.querySelector(selector);
+
+        if (element) {
+          return element;
+        }
+      }
+
+      console.warn(
+        'Guided Tour: Element not found:',
+        target
+      );
 
       return undefined;
     } catch {
@@ -99,34 +250,42 @@ export class GuidedTour implements OnDestroy {
 
     this.stopDriver();
 
-    const validSteps: DriveStep[] = [...steps]
-      .sort((a, b) => a.order - b.order)
-      .map(step => {
-        // استخدام الدالة الجديدة للعثور على العنصر
-        const element = step.target
-          ? this.findTourElement(step.target)
-          : undefined;
+    const validSteps: DriveStep[] = [];
 
-        // إذا العنصر غير موجود، تظهر نافذة الشرح بدون تحديد عنصر
-        return {
-          ...(element ? { element } : {}),
-          popover: {
-            title: step.title,
-            description: step.description,
+    const orderedSteps = [...steps].sort(
+      (a, b) => a.order - b.order
+    );
 
-            // عرض نافذة شرح القائمة الجانبية على يسار القائمة
-            ...(step.target === '[data-guide="dashboard-menu"]'
-              ? {
-                  side: 'left' as const,
-                  align: 'start' as const,
-                }
-              : {}),
-          },
-        };
-      });
+    for (const step of orderedSteps) {
+      const element = this.findTourElement(step.target);
+
+      // لا نعرض خطوة بدون عنصر
+      if (!element) {
+        continue;
+      }
+
+      const driveStep: DriveStep = {
+        element,
+        popover: {
+          title: step.title,
+          description: step.description,
+
+          ...(step.target === '[data-guide="dashboard-menu"]'
+            ? {
+                side: 'left' as const,
+                align: 'start' as const,
+              }
+            : {}),
+        },
+      };
+
+      validSteps.push(driveStep);
+    }
 
     if (!validSteps.length) {
-      console.warn('Guided Tour: No steps available.');
+      console.warn(
+        'Guided Tour: No matching steps available.'
+      );
       this.guideService.stopTour();
       return;
     }
@@ -144,7 +303,6 @@ export class GuidedTour implements OnDestroy {
 
       popoverClass: 'nafadh-guided-popover',
 
-      // إضافة زر تخطي مستقل
       onPopoverRender: (popover, { driver: tourDriver }) => {
         const skipButton = document.createElement('button');
 
@@ -173,7 +331,7 @@ export class GuidedTour implements OnDestroy {
     });
 
     this.tour = newTour;
-    this.tour.drive();
+    newTour.drive();
   }
 
   private stopDriver(): void {
@@ -192,6 +350,7 @@ export class GuidedTour implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.clearPendingStart();
     this.stopDriver();
   }
 }

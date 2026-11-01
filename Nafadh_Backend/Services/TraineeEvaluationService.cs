@@ -1,11 +1,15 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Nafadh_Backend.Services
 {
+
     public interface ITraineeEvaluationService
     {
         Task SaveEvaluationAsync(
@@ -16,7 +20,11 @@ namespace Nafadh_Backend.Services
         Task<TraineeEvaluationDto?> GetTraineeEvaluationAsync(
             int attemptId,
             int traineeId);
+
+        // الدالة الجديدة لملف الإنجاز (التقييم الكلي)
+        Task<TraineeOverallEvaluationDTO> GetTraineeOverallEvaluationAsync(int enrollmentId);
     }
+
 
     public class TraineeEvaluationService : ITraineeEvaluationService
     {
@@ -141,6 +149,92 @@ namespace Nafadh_Backend.Services
                 IsCompleted = evaluation.IsCompleted,
                 CompletedAt = evaluation.CompletedAt
             };
+        }
+
+        // ==========================================
+        // 3. التقييم الكلي للمتدرب (ملف الإنجاز - الدرجة النهائية)
+        // ==========================================
+        public async Task<TraineeOverallEvaluationDTO> GetTraineeOverallEvaluationAsync(int enrollmentId)
+        {
+            var enrollment = await _context.NFD_Enrollments
+                .Include(e => e.Trainee)
+                .FirstOrDefaultAsync(e => e.EnrollmentId == enrollmentId);
+
+            if (enrollment == null)
+                throw new KeyNotFoundException("التسجيل غير موجود.");
+
+            int traineeId = enrollment.TraineeId;
+            int batchId = enrollment.BatchId;
+
+            var result = new TraineeOverallEvaluationDTO
+            {
+                EnrollmentId = enrollmentId,
+                TraineeId = traineeId
+            };
+
+            // 1. حساب نسبة الحضور (وزن 30%)
+            var attendances = await _context.NFD_DailyAttendances
+                .Where(a => a.EnrollmentId == enrollmentId)
+                .ToListAsync();
+
+            int totalDays = attendances.Count;
+            int presentDays = attendances.Count(a => a.Status == Nafadh_Backend.Enums.NFD_AttendanceStatus.Present);
+
+            result.AttendancePercentage = totalDays > 0
+                ? Math.Round((double)presentDays / totalDays * 100, 2)
+                : 0;
+
+            // 2. حساب نسبة درجات المهام (وزن 50%)
+            var submissions = await _context.NFD_Submissions
+                .Where(s => s.TraineeId == traineeId && s.Task.BatchId == batchId)
+                .ToListAsync();
+
+            double totalEarnedGrades = 0;
+            double maxPossibleGrades = 0;
+
+            foreach (var sub in submissions)
+            {
+                if (!string.IsNullOrEmpty(sub.Grade) && double.TryParse(sub.Grade, out double grade))
+                {
+                    totalEarnedGrades += grade;
+                    maxPossibleGrades += 100;
+                }
+            }
+
+            result.TasksPercentage = maxPossibleGrades > 0
+                ? Math.Round(totalEarnedGrades / maxPossibleGrades * 100, 2)
+                : 0;
+
+            // 3. حساب نسبة الاختبارات (وزن 20%)
+            var quizAttempts = await _context.NFD_QuizAttempts
+                .Where(q => q.TraineeId == traineeId)
+                .ToListAsync();
+
+            result.QuizzesPercentage = quizAttempts.Any()
+                ? (double)quizAttempts.Max(q => q.Percentage)
+                : 0;
+
+            // 4. الحساب النهائي والتصنيف
+            result.FinalScore = Math.Round(
+                (result.AttendancePercentage * 0.30) +
+                (result.TasksPercentage * 0.50) +
+                (result.QuizzesPercentage * 0.20), 2);
+
+            // التصنيف لـ 3 حالات 
+            if (result.FinalScore >= 80)
+            {
+                result.FinalGrade = "ممتاز";
+            }
+            else if (result.FinalScore >= 60)
+            {
+                result.FinalGrade = "جيد";
+            }
+            else
+            {
+                result.FinalGrade = "يحتاج إلى تحسين";
+            }
+
+            return result;
         }
     }
 }

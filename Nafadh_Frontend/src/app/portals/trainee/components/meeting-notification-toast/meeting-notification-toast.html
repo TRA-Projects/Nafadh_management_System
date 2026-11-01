@@ -1,0 +1,31 @@
+
+@if (visible) {
+  <div class="meeting-toast" role="alert">
+    <div class="toast-header">
+      <span class="toast-icon">🔔</span>
+      <strong>إشعار حصة مباشرة</strong>
+
+      <button
+        type="button"
+        class="close-btn"
+        aria-label="إغلاق الإشعار"
+        (click)="closeNotification()">
+        ×
+      </button>
+    </div>
+
+    <div class="toast-body">
+      <h3>{{ title }}</h3>
+      <p>{{ message }}</p>
+
+      @if (meetingLink) {
+        <button
+          type="button"
+          class="join-btn"
+          (click)="joinMeeting()">
+          الانضمام للحصة
+        </button>
+      }
+    </div>
+  </div>
+}

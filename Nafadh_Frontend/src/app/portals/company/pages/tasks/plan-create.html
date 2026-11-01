@@ -1,0 +1,81 @@
+<section class="plan-create" dir="rtl">
+  <header class="heading">
+    <div>
+      <h1>إعداد الخطة التدريبية</h1>
+      <p>اختاري البرنامج والدفعة المسندين من الإدارة، وحددي مراحل التنفيذ داخل الفترة المعتمدة. يمكن تعيين المدربين لاحقًا.</p>
+    </div>
+    <a routerLink="/company/tasks" class="back-link">العودة إلى الخطط</a>
+  </header>
+
+  @if (loading()) {
+    <div class="state">جارٍ تحميل التكليفات...</div>
+  } @else {
+    <form (ngSubmit)="save()" #planForm="ngForm">
+      <section class="panel">
+        <h2>1. تكليف الإدارة</h2>
+        <label class="field">
+          <span>البرنامج والدفعة <em>*</em></span>
+          <select name="assignedProgram" [ngModel]="selectedBatchId()" (ngModelChange)="selectProgram($event)" [disabled]="saving() || !!partialPlanId()">
+            <option [ngValue]="null">اختاري البرنامج المسند إلى شركتك</option>
+            @for (p of programs(); track p.batchId) {
+              <option [ngValue]="p.batchId">{{ p.title }} — {{ p.batchName }} ({{ p.batchId }})</option>
+            }
+          </select>
+        </label>
+        @if (selected(); as p) {
+          <div class="info-grid">
+            <div><small>اسم البرنامج</small><strong>{{ p.title }}</strong></div>
+            <div><small>اسم الدفعة</small><strong>{{ p.batchName }}</strong></div>
+            <div><small>بداية التدريب</small><strong>{{ dateOnly(p.startDate) }}</strong></div>
+            <div><small>نهاية التدريب</small><strong>{{ dateOnly(p.endDate) }}</strong></div>
+            <div><small>الساعات المعتمدة</small><strong>{{ p.durationHours }}</strong></div>
+            <div><small>رقم الدفعة</small><strong>{{ p.batchId }}</strong></div>
+          </div>
+          <p class="hint">هذه البيانات يحددها Admin ولا يمكن تغييرها من بوابة الشركة.</p>
+        } @else if (!programs().length) {
+          <p class="hint">لا توجد دفعات مسندة لهذه الشركة حاليًا. يتم الإسناد من Admin Portal.</p>
+        }
+      </section>
+
+      @if (selected(); as program) {
+        <section class="panel">
+          <h2>2. وصف الخطة وأهدافها</h2>
+          <label class="field">
+            <span>وصف الخطة ومخرجات التدريب <em>*</em></span>
+            <textarea name="description" rows="5" [(ngModel)]="description" maxlength="4000" [disabled]="saving() || !!partialPlanId()" placeholder="اكتبي أهداف الخطة ومخرجات المراحل التدريبية"></textarea>
+          </label>
+        </section>
+        <section class="panel">
+          <div class="section-heading">
+            <h2>3. مراحل الخطة</h2>
+            <button class="secondary" type="button" (click)="addStage()" [disabled]="saving() || !!partialPlanId()">+ إضافة مرحلة</button>
+          </div>
+          <p class="hint">تعيين مدرب أو أكثر لكل مرحلة اختياري، ولا يشترط عند إرسال الخطة للاعتماد.</p>
+          @for (stage of stages; track $index; let i = $index) {
+            <div class="stage-card">
+              <div class="section-heading"><h3>المرحلة {{ i + 1 }}</h3><button type="button" class="text-danger" (click)="removeStage(i)" [disabled]="saving() || !!partialPlanId()">حذف المرحلة</button></div>
+              <label class="field"><span>عنوان المرحلة <em>*</em></span><input [name]="'stageTitle' + i" [(ngModel)]="stage.title" maxlength="150" [disabled]="saving() || !!partialPlanId()" /></label>
+              <label class="field"><span>أهداف ومحتوى المرحلة</span><textarea [name]="'stageDescription' + i" [(ngModel)]="stage.description" rows="3" [disabled]="saving() || !!partialPlanId()"></textarea></label>
+              <div class="info-grid dates">
+                <label class="field"><span>تاريخ البداية</span><input type="date" [name]="'stageStart' + i" [(ngModel)]="stage.startDate" [min]="dateOnly(program.startDate)" [max]="dateOnly(program.endDate)" [disabled]="saving() || !!partialPlanId()" /></label>
+                <label class="field"><span>تاريخ النهاية</span><input type="date" [name]="'stageEnd' + i" [(ngModel)]="stage.endDate" [min]="stage.startDate" [max]="dateOnly(program.endDate)" [disabled]="saving() || !!partialPlanId()" /></label>
+              </div>
+            </div>
+          } @empty {
+            <div class="state">ابدئي بإضافة مرحلة أو أكثر للخطة التدريبية.</div>
+          }
+        </section>
+      }
+
+      @if (error()) { <div class="error" role="alert">{{ error() }}</div> }
+      <footer class="actions">
+        <a routerLink="/company/tasks" class="back-link">إلغاء</a>
+        @if (partialPlanId(); as id) {
+          <a class="primary" [routerLink]="['/company/tasks', id]">متابعة المسودة المحفوظة</a>
+        } @else {
+          <button type="submit" class="primary" [disabled]="saving() || !selected()">{{ saving() ? 'جارٍ حفظ الخطة ومراحلها...' : 'حفظ الخطة ومراحلها كمسودة' }}</button>
+        }
+      </footer>
+    </form>
+  }
+</section>

@@ -6,6 +6,9 @@
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
+using Nafadh_Backend.DTOs;
+using System.Data;
+
 
 namespace Nafadh_Backend.Repositories
 {
@@ -30,7 +33,10 @@ namespace Nafadh_Backend.Repositories
 
         public async Task<IEnumerable<NFD_Enrollment>> GetAllAsync(int? batchId, int? traineeId, int? companyId, NFD_EnrollmentCompletionStatus? status)
         {
-            var query = Query();
+            
+            IQueryable<NFD_Enrollment> query = Query()
+                .Include(e => e.Trainee)
+                    .ThenInclude(t => t.User);
 
             if (batchId.HasValue)
                 query = query.Where(e => e.BatchId == batchId.Value);
@@ -46,7 +52,6 @@ namespace Nafadh_Backend.Repositories
 
             return await query.ToListAsync();
         }
-
         public async Task<NFD_Enrollment?> GetByIdAsync(int id)
         {
             return await Query().FirstOrDefaultAsync(e => e.EnrollmentId == id);
@@ -57,6 +62,101 @@ namespace Nafadh_Backend.Repositories
             _context.NFD_Enrollments.Add(enrollment);
             await _context.SaveChangesAsync();
             return enrollment;
+        }
+
+        public async Task<(NFD_Enrollment? enrollment, string? error)>
+    CreateEnrollmentSafelyAsync(CreateEnrollmentDto dto)
+        {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable);
+
+            var batch = await _context.NFD_Batches
+                .FirstOrDefaultAsync(b => b.BatchId == dto.BatchId);
+
+            if (batch is null)
+                return (null, $"Batch with ID {dto.BatchId} was not found.");
+
+            if (!await _context.NFD_Trainees
+                .AnyAsync(t => t.TraineeId == dto.TraineeId))
+            {
+                return (null, $"Trainee with ID {dto.TraineeId} was not found.");
+            }
+
+            var hasActiveEnrollment = await _context.NFD_Enrollments
+                .AnyAsync(e =>
+                    e.TraineeId == dto.TraineeId &&
+                    e.CompletionStatus ==
+                        NFD_EnrollmentCompletionStatus.InProgress);
+
+            if (hasActiveEnrollment)
+            {
+                return (null,
+                    "This trainee is already enrolled in an active batch.");
+            }
+
+            var activeCount = await _context.NFD_Enrollments
+                .CountAsync(e =>
+                    e.BatchId == dto.BatchId &&
+                    e.CompletionStatus ==
+                        NFD_EnrollmentCompletionStatus.InProgress);
+
+            if (activeCount >= batch.Capacity)
+            {
+                return (null,
+                    "The batch has reached its maximum capacity.");
+            }
+
+            if (!await _context.NFD_Companies
+                .AnyAsync(c => c.CompanyId == dto.CompanyId))
+            {
+                return (null, $"Company with ID {dto.CompanyId} was not found.");
+            }
+
+            if (dto.DepartmentId.HasValue &&
+                !await _context.NFD_Departments
+                    .AnyAsync(d => d.DepartmentId == dto.DepartmentId.Value))
+            {
+                return (null,
+                    $"Department with ID {dto.DepartmentId.Value} was not found.");
+            }
+
+            if (dto.SupervisorId.HasValue &&
+                !await _context.NFD_CompanySupervisors
+                    .AnyAsync(s => s.SupervisorId == dto.SupervisorId.Value))
+            {
+                return (null,
+                    $"Supervisor with ID {dto.SupervisorId.Value} was not found.");
+            }
+
+            var enrollment = new NFD_Enrollment
+            {
+                BatchId = dto.BatchId,
+                TraineeId = dto.TraineeId,
+                CompanyId = dto.CompanyId,
+                DepartmentId = dto.DepartmentId,
+                SupervisorId = dto.SupervisorId,
+                EnrollmentDate = DateTime.UtcNow,
+                CompletionStatus = NFD_EnrollmentCompletionStatus.InProgress
+            };
+
+            _context.NFD_Enrollments.Add(enrollment);
+
+            await _context.SaveChangesAsync();
+
+            var full = await Query()
+                .FirstOrDefaultAsync(e =>
+                    e.EnrollmentId == enrollment.EnrollmentId);
+
+            if (full is null)
+            {
+                return (null,
+                    "Enrollment was created, but could not be reloaded.");
+            }
+
+            await transaction.CommitAsync();
+
+            return (full, null);
         }
 
         public async Task UpdateAsync(NFD_Enrollment enrollment)
@@ -84,6 +184,21 @@ namespace Nafadh_Backend.Repositories
 
         public async Task<bool> SupervisorExistsAsync(int supervisorId) =>
             await _context.NFD_CompanySupervisors.AnyAsync(s => s.SupervisorId == supervisorId);
+
+        public async Task<bool> HasActiveEnrollmentAsync(int traineeId)
+        {
+            return await _context.NFD_Enrollments.AnyAsync(e =>
+                e.TraineeId == traineeId &&
+                e.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress);
+        }
+
+        public async Task<int> GetActiveEnrollmentCountByBatchAsync(int batchId)
+        {
+            return await _context.NFD_Enrollments.CountAsync(e =>
+                e.BatchId == batchId &&
+                e.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress);
+        }
+
 
         public async Task<IEnumerable<NFD_Enrollment>> GetByTraineeIdAsync(int traineeId)
         {
@@ -123,6 +238,12 @@ namespace Nafadh_Backend.Repositories
         {
             return await _context.NFD_Enrollments
                 .FirstOrDefaultAsync(e => e.EnrollmentId == id);
+        }
+        public async Task<NFD_Batch?> GetBatchForEnrollmentAsync(int batchId)
+        {
+            return await _context.NFD_Batches
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.BatchId == batchId);
         }
     }
 }

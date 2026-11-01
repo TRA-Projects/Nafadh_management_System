@@ -60,11 +60,11 @@ namespace Nafadh_Backend.Services
                 else if (existingUser.Status == NFD_UserStatus.PendingVerification
                     && rejectedSupervisor?.Company.Status == NFD_CompanyStatus.PendingApproval)
                 {
-                    throw new ConflictException("A registration request for this email is already waiting for approval.");
+                    throw new ConflictException("A registration request for this email is already waiting for approval.", "COMPANY_PENDING_APPROVAL");
                 }
                 else
                 {
-                    throw new ConflictException($"An account with email '{dto.Email.Trim()}' already exists.");
+                    throw new ConflictException($"An account with email '{dto.Email.Trim()}' already exists.", "DUPLICATE_EMAIL");
                 }
             }
 
@@ -75,7 +75,7 @@ namespace Nafadh_Backend.Services
                 && (rejectedCompany == null || c.CompanyId != rejectedCompany.CompanyId));
             if (crTaken)
             {
-                throw new ConflictException("A company with this commercial register is already registered.");
+                throw new ConflictException("A company with this commercial register is already registered.", "DUPLICATE_COMMERCIAL_REGISTER");
             }
 
             await using var tx = await _context.Database.BeginTransactionAsync();

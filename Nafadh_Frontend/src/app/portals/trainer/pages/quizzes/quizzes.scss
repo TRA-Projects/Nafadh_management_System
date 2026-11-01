@@ -1844,3 +1844,41 @@
   background: #f3f4f6;
   color: #4b5563;
 }
+
+.publish-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 10px 16px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #0f9f8f;
+  color: #fff;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.publish-btn:hover:not(:disabled) {
+  background: #0b897b;
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 5px 12px rgba(15, 159, 143, 0.2);
+}
+
+.publish-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

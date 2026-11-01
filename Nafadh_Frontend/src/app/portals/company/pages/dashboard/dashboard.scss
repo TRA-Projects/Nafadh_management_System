@@ -817,9 +817,15 @@
 .list-card {
   min-width: 0;
   padding: 0;
+  /* Fixed card height: it never grows with the number of rows,
+     the list inside scrolls instead. */
+  display: flex;
+  flex-direction: column;
+  height: 385px;
 }
 
 .list-card .card-title {
+  flex: 0 0 auto;
   padding: 12px 14px;
   border-bottom: 1px solid #edf2f7;
   font-size: 13.5px;
@@ -853,6 +859,35 @@
   color: var(--nfd-red);
 }
 
+.limit-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.limit-select {
+  min-width: 56px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid #d7e0ee;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--nfd-navy);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.limit-select:focus-visible {
+  outline: 2px solid var(--nfd-navy);
+  outline-offset: 2px;
+}
+
 .list-count {
   min-width: 22px;
   height: 22px;
@@ -871,6 +906,20 @@
   display: flex;
   flex-direction: column;
   padding: 4px 0;
+  /* Fills the rest of the fixed-height card; extra rows scroll here. */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #c3cfdd transparent;
+}
+
+/* Rows keep their natural height (they must not shrink and overlap);
+   the list scrolls instead. */
+.lower-list > *,
+.trainee-list > * {
+  flex-shrink: 0;
 }
 
 .top-row,

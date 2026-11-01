@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core'; // 1. استيراد ChangeDetectorRef
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { CompanyApi } from '../../services/company-api';
@@ -14,7 +14,7 @@ import { WarningDto } from '../../../../core/models/dtos';
 })
 export class WarningsComponent implements OnInit {
   private readonly companyApi = inject(CompanyApi);
-  private readonly cdr = inject(ChangeDetectorRef); // 2. حقن ChangeDetectorRef
+  private readonly cdr = inject(ChangeDetectorRef);
 
   warnings: WarningDto[] = [];
   selectedWarning: WarningDto | null = null;
@@ -27,28 +27,42 @@ export class WarningsComponent implements OnInit {
   selectedLevel = '';
   selectedStatus = '';
 
+  companyId: number | null = null;
+  companyReply = '';
+  sendingReply = false;
+  replyError = '';
+  replySuccess = '';
+
   ngOnInit(): void {
     this.loadCompanyWarnings();
   }
 
+  /**
+   * جلب بيانات الشركة الحالية ثم إنذاراتها فقط.
+   */
   loadCompanyWarnings(): void {
     this.loading = true;
     this.errorMessage = '';
 
     this.companyApi.getCurrentAccount().subscribe({
       next: (account) => {
-        if (!account?.companyId) {
+        if (account?.companyId == null) {
           this.loading = false;
           this.errorMessage = 'تعذر تحديد الشركة المرتبطة بالحساب الحالي.';
-          this.cdr.detectChanges(); // تحديث الواجهة عند الخطأ
+          this.cdr.detectChanges();
           return;
         }
 
-        this.companyApi.getCompanyWarnings(account.companyId).subscribe({
+        // حفظ رقم الشركة بعد استلام بيانات الحساب.
+        this.companyId = account.companyId;
+
+        this.companyApi.getCompanyWarnings(this.companyId).subscribe({
           next: (data) => {
             this.warnings = data ?? [];
-            console.log('Company warnings:', data);
+
+            console.log('Company warnings:', this.warnings);
             console.log('Warnings count:', this.warnings.length);
+
             this.loading = false;
 
             if (this.selectedWarning) {
@@ -60,24 +74,85 @@ export class WarningsComponent implements OnInit {
                 ) ?? null;
             }
 
-            this.cdr.detectChanges(); // 3. إجبار Angular على تحديث الواجهة فور وصول البيانات
+            this.cdr.detectChanges();
           },
           error: () => {
             this.loading = false;
-            this.errorMessage = 'تعذر تحميل الإنذارات. تحققي من اتصال الـ Backend ثم حاولي مجددًا.';
-            this.cdr.detectChanges(); // تحديث الواجهة عند الخطأ
+            this.errorMessage =
+              'تعذر تحميل الإنذارات. تحققي من اتصال Backend ثم حاولي مجددًا.';
+            this.cdr.detectChanges();
           }
         });
       },
       error: () => {
         this.loading = false;
         this.errorMessage = 'تعذر تحميل بيانات الحساب الحالي. يرجى تسجيل الدخول مجددًا إذا استمرت المشكلة.';
-        this.cdr.detectChanges(); // تحديث الواجهة عند الخطأ
+        this.cdr.detectChanges();
       }
     });
   }
 
-  // باقي الدوال تبقى كما هي...
+  /**
+   * إرسال رد الشركة على الإنذار المحدد.
+   */
+  sendReply(): void {
+    const reply = this.companyReply.trim();
+
+    this.replyError = '';
+    this.replySuccess = '';
+
+    if (!this.selectedWarning) {
+      this.replyError = 'يرجى اختيار إنذار أولًا.';
+      return;
+    }
+
+    if (this.companyId === null) {
+      this.replyError = 'تعذر تحديد الشركة الحالية.';
+      return;
+    }
+
+    if (!reply) {
+      this.replyError = 'يرجى كتابة الرد قبل الإرسال.';
+      return;
+    }
+
+    if (reply.length > 500) {
+      this.replyError = 'الرد يجب ألا يتجاوز 500 حرف.';
+      return;
+    }
+
+    const warningId = this.selectedWarning.warningId;
+
+    this.sendingReply = true;
+
+    this.companyApi
+      .replyToCompanyWarning(warningId, this.companyId, reply)
+      .subscribe({
+        next: () => {
+          this.warnings = this.warnings.map(warning =>
+            warning.warningId === warningId
+              ? { ...warning, companyReply: reply }
+              : warning
+          );
+
+          this.selectedWarning = {
+            ...this.selectedWarning!,
+            companyReply: reply
+          };
+
+          this.companyReply = '';
+          this.replySuccess = 'تم إرسال الرد وحفظه بنجاح.';
+          this.sendingReply = false;
+        },
+        error: (error) => {
+          console.error('Failed to send company warning reply:', error);
+          this.replyError =
+            'تعذر إرسال الرد. يرجى المحاولة مرة أخرى.';
+          this.sendingReply = false;
+        }
+      });
+  }
+
   get filteredWarnings(): WarningDto[] {
     const query = this.searchText.trim().toLowerCase();
 
@@ -126,10 +201,16 @@ export class WarningsComponent implements OnInit {
 
   selectWarning(warning: WarningDto): void {
     this.selectedWarning = warning;
+    this.companyReply = '';
+    this.replyError = '';
+    this.replySuccess = '';
   }
 
   closeDetails(): void {
     this.selectedWarning = null;
+    this.companyReply = '';
+    this.replyError = '';
+    this.replySuccess = '';
   }
 
   resetFilters(): void {
@@ -193,4 +274,5 @@ export class WarningsComponent implements OnInit {
     return warning.warningId;
   }
 }
+
 export const warningsModuleCheck = true;

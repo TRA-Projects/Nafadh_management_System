@@ -1,0 +1,12 @@
+.plan-create{direction:rtl;max-width:1120px;margin:0 auto;padding:24px 20px 40px;color:var(--text-primary,#15243b)}
+.heading,.section-heading,.actions{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.heading{margin-bottom:24px}.heading h1{font-size:1.7rem;margin:0 0 8px}.heading p{margin:0;color:var(--text-secondary,#64748b);line-height:1.8}
+.panel{background:var(--surface,#fff);border:1px solid var(--border,#e2e8f0);border-radius:14px;padding:24px;margin-bottom:18px}
+.panel h2{font-size:1.18rem;margin:0 0 18px}.field{display:flex;flex-direction:column;gap:7px;margin-bottom:15px;font-weight:500}.field em{color:#b91c1c}
+.field input,.field textarea,.field select{border:1px solid #cbd5e1;background:#fff;color:#1e293b;border-radius:8px;padding:11px 12px;font:inherit;width:100%;box-sizing:border-box}
+.field input:focus,.field textarea:focus,.field select:focus{outline:2px solid #0284c7;outline-offset:1px}
+.info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.info-grid>div{background:#f8fafc;border-radius:9px;padding:14px;display:flex;flex-direction:column;gap:7px}.info-grid small,.hint{color:#64748b}.info-grid strong{font-weight:600}
+.hint{font-size:.9rem;line-height:1.7;margin:12px 0}.stage-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin:14px 0}.stage-card h3{margin:0 0 12px}.dates{grid-template-columns:repeat(2,minmax(0,1fr))}.dates .field{margin:0}
+button,.primary,.back-link{font:inherit;border-radius:8px;padding:10px 18px;cursor:pointer;text-decoration:none;display:inline-block}.primary{background:#176a9e;color:white;border:1px solid #176a9e}.secondary,.back-link{background:#fff;color:#176a9e;border:1px solid #b9cbd8}.text-danger{border:0;background:transparent;color:#b91c1c;padding:7px}
+button:disabled{opacity:.5;cursor:not-allowed}.state{padding:22px;border:1px dashed #cbd5e1;border-radius:9px;text-align:center;color:#64748b}.error{border:1px solid #fca5a5;background:#fef2f2;color:#991b1b;padding:12px 16px;margin-bottom:12px;border-radius:8px}.actions{padding:16px 0 30px}
+@media(max-width:720px){.plan-create{padding:16px}.info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:16px}.dates{grid-template-columns:1fr}}

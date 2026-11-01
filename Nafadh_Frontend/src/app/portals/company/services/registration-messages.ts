@@ -1,5 +1,8 @@
 import { ApiErrorBody } from '../models/company-registration.models';
 
+// الباك يرجع سبب الرفض في reason (و rejectionReason للتوافق).
+type BackendErrorBody = ApiErrorBody & { reason?: string; detail?: string };
+
 export type NoticeKind = 'pending' | 'rejected' | 'suspended' | 'error';
 
 export interface LoginNotice {
@@ -12,13 +15,31 @@ export interface LoginNotice {
 
 const GENERIC_LOGIN_ERROR = 'تعذّر تسجيل الدخول، تأكد من البريد الإلكتروني وكلمة المرور.';
 
-/**
- * يحوّل خطأ تسجيل الدخول القادم من الباك إلى رسالة واضحة.
- * لو الباك ما أرسل code (السلوك القديم) نرجع للرسالة العامة.
- */
 export function describeLoginError(err: unknown): LoginNotice {
-  const body = ((err as { error?: ApiErrorBody } | null)?.error ?? {}) as ApiErrorBody;
+  const errorObj = err as { error?: BackendErrorBody | string } | null;
+  const rawError = errorObj?.error;
+  // الاستجابة قد تكون كائن خطأ من API أو نصًا مباشرًا.
+  const body: BackendErrorBody = rawError && typeof rawError === 'object' ? rawError : {};
+  const rejectionReason = body.rejectionReason ?? body.reason;
 
+  // ASP.NET ProblemDetails يرسل بعض رسائل الخطأ داخل detail.
+  let errorMessage = body.message || body.detail || (typeof rawError === 'string' ? rawError : '');
+
+  // ترجمة رسالة الباك اند الإنجليزية إلى العربية (عند إدخال كلمة مرور خاطئة)
+  if (errorMessage && (errorMessage.includes('Invalid email or password') || errorMessage.includes('Authentication failed'))) {
+    errorMessage = GENERIC_LOGIN_ERROR;
+  }
+
+  // التحقق من رسالة الانسحاب
+  if (errorMessage && (errorMessage.includes('انسحاب') || errorMessage.includes('الانسحاب'))) {
+    return {
+      kind: 'rejected',
+      title: 'تم إلغاء الحساب',
+      text: errorMessage
+    };
+  }
+
+  // التحقق من بقية أخطاء الشركات
   switch (body.code) {
     case 'COMPANY_PENDING_APPROVAL':
       return {
@@ -30,8 +51,8 @@ export function describeLoginError(err: unknown): LoginNotice {
       return {
         kind: 'rejected',
         title: 'تم رفض طلب تسجيل شركتك',
-        text: body.rejectionReason
-          ? `سبب الرفض: ${body.rejectionReason}`
+        text: rejectionReason
+          ? `سبب الرفض: ${rejectionReason}`
           : 'يمكنك تعديل بيانات الطلب وإعادة تقديمه.',
         canReapply: true,
       };
@@ -42,15 +63,19 @@ export function describeLoginError(err: unknown): LoginNotice {
         text: 'تم إيقاف حساب الشركة مؤقتًا. للاستفسار تواصل مع إدارة نفاذ.',
       };
     default:
-      return { kind: 'error', title: '', text: body.message || GENERIC_LOGIN_ERROR };
+      // إرجاع الرسالة القادمة من الباك اند
+      return { 
+        kind: 'error', 
+        title: '', 
+        text: errorMessage || GENERIC_LOGIN_ERROR 
+      };
   }
 }
-
 
 /** رسالة عامة لفشل تسجيل الشركة (غير أخطاء الحقول) */
 export function describeRegistrationError(err: unknown): { text: string; fieldErrors: Record<string, string> } {
   const status = (err as { status?: number } | null)?.status;
-  const body = ((err as { error?: ApiErrorBody } | null)?.error ?? {}) as ApiErrorBody;
+  const body = ((err as { error?: BackendErrorBody } | null)?.error ?? {}) as BackendErrorBody;
 
   switch (body.code) {
     case 'DUPLICATE_EMAIL':
@@ -61,6 +86,15 @@ export function describeRegistrationError(err: unknown): { text: string; fieldEr
       return { text: 'لديك طلب سابق ما زال قيد المراجعة، لا حاجة لتقديم طلب جديد.', fieldErrors: {} };
     case 'VALIDATION_FAILED':
       return { text: 'بعض البيانات غير صحيحة، راجع الحقول المحددة.', fieldErrors: body.errors ?? {} };
+  }
+  // أخطاء التحقق الافتراضية من ASP.NET: { errors: { ContactName: ['..'] } }
+  if (status === 400 && body.errors && typeof body.errors === 'object') {
+    const fieldErrors: Record<string, string> = {};
+    for (const [key, val] of Object.entries(body.errors as Record<string, string | string[]>)) {
+      const field = key.charAt(0).toLowerCase() + key.slice(1);
+      fieldErrors[field] = Array.isArray(val) ? val[0] : val;
+    }
+    return { text: 'بعض البيانات غير صحيحة، راجع الحقول المحددة.', fieldErrors };
   }
   if (status === 0) return { text: 'تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مرة أخرى.', fieldErrors: {} };
   return { text: body.message || 'حدث خطأ أثناء إرسال الطلب. حاول مرة أخرى.', fieldErrors: {} };

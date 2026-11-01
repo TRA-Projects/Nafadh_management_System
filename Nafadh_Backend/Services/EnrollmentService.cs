@@ -1,5 +1,6 @@
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
+using System.Data;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 using Microsoft.AspNetCore.Http;
@@ -36,50 +37,24 @@ namespace Nafadh_Backend.Services
                 : MapToDto(enrollment);
         }
 
+
+
         public async Task<(EnrollmentDTO? result, string? error)> CreateEnrollmentAsync(
             CreateEnrollmentDto dto)
         {
-            if (!await _repository.BatchExistsAsync(dto.BatchId))
-                return (null, $"Batch with ID {dto.BatchId} was not found.");
+            var (enrollment, error) =
+                await _repository.CreateEnrollmentSafelyAsync(dto);
 
-            if (!await _repository.TraineeExistsAsync(dto.TraineeId))
-                return (null, $"Trainee with ID {dto.TraineeId} was not found.");
+            if (error is not null)
+                return (null, error);
 
-            if (!await _repository.CompanyExistsAsync(dto.CompanyId))
-                return (null, $"Company with ID {dto.CompanyId} was not found.");
+            if (enrollment is null)
+                return (null, "Enrollment could not be created.");
 
-            if (dto.DepartmentId.HasValue &&
-                !await _repository.DepartmentExistsAsync(dto.DepartmentId.Value))
-            {
-                return (null,
-                    $"Department with ID {dto.DepartmentId} was not found.");
-            }
-
-            if (dto.SupervisorId.HasValue &&
-                !await _repository.SupervisorExistsAsync(dto.SupervisorId.Value))
-            {
-                return (null,
-                    $"Supervisor with ID {dto.SupervisorId} was not found.");
-            }
-
-            var enrollment = new NFD_Enrollment
-            {
-                BatchId = dto.BatchId,
-                TraineeId = dto.TraineeId,
-                CompanyId = dto.CompanyId,
-                DepartmentId = dto.DepartmentId,
-                SupervisorId = dto.SupervisorId,
-                EnrollmentDate = DateTime.UtcNow,
-                CompletionStatus = NFD_EnrollmentCompletionStatus.InProgress
-            };
-
-            var created = await _repository.AddAsync(enrollment);
-
-            var full = await _repository.GetByIdAsync(
-                created.EnrollmentId);
-
-            return (MapToDto(full!), null);
+            return (MapToDto(enrollment), null);
         }
+
+
 
         public async Task<(EnrollmentDTO? result, string? error)> UpdateAssignmentAsync(
             int id,

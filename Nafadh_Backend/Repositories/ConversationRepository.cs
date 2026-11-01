@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.DTOs.CompanyPayment;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
@@ -15,6 +16,7 @@ namespace Nafadh_Backend.Repositories
         {
             _context = context;
         }
+
 
 
         // ============================================================
@@ -76,6 +78,86 @@ namespace Nafadh_Backend.Repositories
                             )
                             : t.CreatedAt
                 )
+                .ToListAsync();
+        }
+
+        // ============================================================
+        // Get batch group conversations for admin
+        // ============================================================
+        public async Task<List<AdminBatchGroupListDTO>> GetAdminBatchGroupsAsync()
+        {
+            var groups = await _context.NFD_SupportTickets
+                .AsNoTracking()
+                .Where(c => c.Category == "BatchGroup")
+                .Select(c => new AdminBatchGroupListDTO
+                {
+                    ConversationId = c.TicketId,
+                    GroupName = c.Subject,
+
+                    BatchId = _context.NFD_ConversationGroupMembers
+                        .Where(m => m.ConversationId == c.TicketId)
+                        .Select(m => m.BatchId)
+                        .FirstOrDefault(),
+
+                    BatchName = (
+                        from member in _context.NFD_ConversationGroupMembers
+                        join batch in _context.NFD_Batches
+                            on member.BatchId equals batch.BatchId
+                        where member.ConversationId == c.TicketId
+                        select batch.BatchName
+                    ).FirstOrDefault() ?? string.Empty,
+
+                    TrainerUserId = c.UserId,
+                    TrainerName = c.User.FullName,
+
+                    MembersCount = _context.NFD_ConversationGroupMembers
+                        .Count(m => m.ConversationId == c.TicketId),
+
+                    Status = c.Status.ToString(),
+                    CreatedAt = c.CreatedAt
+                })
+                .OrderByDescending(g => g.CreatedAt)
+                .ToListAsync();
+
+            return groups;
+        }
+
+        // ============================================================
+        // Get batch group messages for admin
+        // ============================================================
+
+        public async Task<List<AdminBatchGroupMessageDTO>?>
+    GetAdminBatchGroupMessagesAsync(int conversationId)
+        {
+            // Verify this conversation is a training batch group
+            bool groupExists = await _context.NFD_SupportTickets
+                .AnyAsync(c =>
+                    c.TicketId == conversationId &&
+                    c.Category == "BatchGroup");
+
+            if (!groupExists)
+            {
+                return null;
+            }
+
+            // Retrieve messages belonging to this group
+            return await _context.NFD_Messages
+                .AsNoTracking()
+                .Where(m => m.TicketId == conversationId)
+                .OrderBy(m => m.SentDate)
+                .ThenBy(m => m.MessageId)
+                .Select(m => new AdminBatchGroupMessageDTO
+                {
+                    MessageId = m.MessageId,
+                    ConversationId = conversationId,
+                    SenderId = m.SenderId,
+                    SenderName = m.Sender.FullName,
+                    Content = m.Content,
+                    SentDate = m.SentDate,
+                    Status = m.Status.ToString(),
+                    AttachmentUrl = m.AttachmentUrl,
+                    AttachmentFileName = m.AttachmentFileName
+                })
                 .ToListAsync();
         }
 
@@ -186,27 +268,50 @@ namespace Nafadh_Backend.Repositories
 
             if (existingGroupId != 0)
             {
-                var isMember = await _context.NFD_ConversationGroupMembers
-                    .AnyAsync(gm =>
-                        gm.ConversationId == existingGroupId &&
-                        gm.UserId == dto.TrainerUserId);
+                // جلب المتدربين المسجلين حاليًا في الدفعة
+                var existingGroupTraineeUserIds = await _context.NFD_Enrollments
+                     .Where(e => e.BatchId == dto.BatchId)
+                    .Select(e => e.Trainee.User.UserId)
+                    .ToListAsync();
 
-                if (!isMember)
+                // إضافة المدرب إلى قائمة الأعضاء المطلوبين
+                var requiredUserIds = existingGroupTraineeUserIds
+                     .Append(dto.TrainerUserId)
+                    .Distinct()
+                    .ToList();
+
+                // جلب الأعضاء الموجودين بالفعل في الجروب
+                var existingMemberIds = await _context.NFD_ConversationGroupMembers
+                    .Where(gm => gm.ConversationId == existingGroupId)
+                    .Select(gm => gm.UserId)
+                    .ToListAsync();
+
+                // تحديد الأعضاء الجدد فقط
+                var newMemberIds = requiredUserIds
+                    .Except(existingMemberIds)
+                    .ToList();
+
+                if (newMemberIds.Any())
                 {
-                    _context.NFD_ConversationGroupMembers.Add(
+                    var newMembers = newMemberIds.Select(userId =>
                         new NFD_ConversationGroupMember
                         {
                             ConversationId = existingGroupId,
-                            UserId = dto.TrainerUserId,
+                            UserId = userId,
                             BatchId = dto.BatchId
                         }
                     );
 
+                    await _context.NFD_ConversationGroupMembers
+                        .AddRangeAsync(newMembers);
+
                     await _context.SaveChangesAsync();
                 }
 
+                // إرجاع نفس الجروب دون إنشاء جروب جديد
                 return existingGroupId;
             }
+
 
             var conversation =
                 new NFD_SupportTicket
@@ -369,20 +474,69 @@ namespace Nafadh_Backend.Repositories
         // Mark conversation messages as read
         // ============================================================
 
+        public async Task<Dictionary<int, int>> GetGroupUnreadCountsAsync(
+            int userId,
+            List<int> conversationIds
+        )
+        {
+            if (conversationIds.Count == 0)
+                return new Dictionary<int, int>();
+
+            var counts = await (
+                from member in _context.NFD_ConversationGroupMembers
+                where member.UserId == userId
+                      && conversationIds.Contains(member.ConversationId)
+                select new
+                {
+                    member.ConversationId,
+                    UnreadCount = _context.NFD_Messages.Count(m =>
+                        m.TicketId == member.ConversationId &&
+                        m.SenderId != userId &&
+                        (!member.LastReadMessageId.HasValue ||
+                         m.MessageId > member.LastReadMessageId.Value))
+                }
+            ).ToListAsync();
+
+            return counts
+                .GroupBy(x => x.ConversationId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.First().UnreadCount
+                );
+        }
+
+
         public async Task<int> GetUnreadConversationCountAsync(
             int userId,
             bool includeAllConversations
         )
         {
-            // Count distinct threads, not every unread reply, because the bell
-            // represents new conversations in the Communication area.
-            return await _context.NFD_SupportTickets
+            // المحادثات الفردية: نحتفظ بطريقة الحساب السابقة
+            var individualCount = await _context.NFD_SupportTickets
                 .Where(t =>
+                    t.Category != "BatchGroup" &&
                     (includeAllConversations || t.UserId == userId) &&
                     t.Messages.Any(m =>
                         m.SenderId != userId &&
                         m.Status != NFD_MessageStatus.Read))
                 .CountAsync();
+
+            // جروبات الدفعات: كل عضو له حالة قراءة مستقلة
+            var groupCount = await _context.NFD_ConversationGroupMembers
+                .Where(gm => gm.UserId == userId)
+                .Where(gm => _context.NFD_SupportTickets.Any(t =>
+                    t.TicketId == gm.ConversationId &&
+                    t.Category == "BatchGroup"))
+                .Where(gm => _context.NFD_Messages.Any(m =>
+                    m.TicketId == gm.ConversationId &&
+                    m.SenderId != userId &&
+                    (!gm.LastReadMessageId.HasValue ||
+                     m.MessageId > gm.LastReadMessageId.Value)))
+                .Select(gm => gm.ConversationId)
+                .Distinct()
+                .CountAsync();
+
+            return individualCount + groupCount;
         }
 
 
@@ -391,35 +545,71 @@ namespace Nafadh_Backend.Repositories
             int readerUserId
         )
         {
-            var messages =
-                await _context.NFD_Messages
+            // تحديد نوع المحادثة
+            var conversation = await _context.NFD_SupportTickets
+                .FirstOrDefaultAsync(t => t.TicketId == conversationId);
 
-                    .Where(
-                        m =>
-                            m.TicketId == conversationId
-                            &&
-                            m.SenderId != readerUserId
-                            &&
-                            m.Status != NFD_MessageStatus.Read
-                    )
+            if (conversation == null)
+            {
+                throw new InvalidOperationException(
+                    "Conversation not found."
+                );
+            }
 
-                    .ToListAsync();
+            // جروبات الدفعات: قراءة مستقلة لكل عضو
+            if (conversation.Category == "BatchGroup")
+            {
+                var member = await _context.NFD_ConversationGroupMembers
+                    .FirstOrDefaultAsync(gm =>
+                        gm.ConversationId == conversationId &&
+                        gm.UserId == readerUserId
+                    );
 
+                if (member == null)
+                {
+                    throw new InvalidOperationException(
+                        "User is not a member of this batch group."
+                    );
+                }
+
+                // آخر رسالة موجودة في الجروب
+                var lastMessageId = await _context.NFD_Messages
+                    .Where(m => m.TicketId == conversationId)
+                    .MaxAsync(m => (int?)m.MessageId);
+
+                if (lastMessageId.HasValue &&
+                    (!member.LastReadMessageId.HasValue ||
+                     lastMessageId.Value > member.LastReadMessageId.Value))
+                {
+                    member.LastReadMessageId = lastMessageId.Value;
+                    await _context.SaveChangesAsync();
+                }
+
+                return;
+            }
+
+            // المحادثات الفردية: الاحتفاظ بالنظام الحالي
+            var messages = await _context.NFD_Messages
+                .Where(m =>
+                    m.TicketId == conversationId &&
+                    m.SenderId != readerUserId &&
+                    m.Status != NFD_MessageStatus.Read
+                )
+                .ToListAsync();
 
             if (messages.Count == 0)
             {
                 return;
             }
 
-
             foreach (var message in messages)
             {
-                message.Status =
-                    NFD_MessageStatus.Read;
+                message.Status = NFD_MessageStatus.Read;
             }
-
 
             await _context.SaveChangesAsync();
         }
+
+       
     }
 }

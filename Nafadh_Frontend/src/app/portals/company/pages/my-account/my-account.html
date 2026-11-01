@@ -1,36 +1,28 @@
+
 <div class="account-page" dir="rtl" id="account-pdf-content">
 
   <!-- =========================================================
        Page Header
        ========================================================= -->
 
-  <header class="page-top-header">
+  <header class="page-top-header" data-guide="company-account-header">
     <div class="header-content">
-
 
       <div class="header-icon-box">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2">
-          </path>
-
-          <circle cx="12" cy="7" r="4">
-          </circle>
-
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
         </svg>
       </div>
 
       <div class="header-text">
         <h2>الملف الشخصي</h2>
-
         <p>
           إدارة البيانات الشخصية والصلاحيات وسجل النشاطات للمستخدم
         </p>
       </div>
 
     </div>
-    
-
   </header>
 
   <!-- =========================================================
@@ -39,34 +31,21 @@
 
   <div class="profile-banner">
 
-
     <div class="banner-gradient"></div>
 
-    <div class="banner-actions">
-
-      
+    <div class="banner-actions" data-guide="company-account-export">
 
       <!-- PDF -->
       <button type="button" class="btn btn-glass-primary" (click)="exportToPdf()">
-
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4">
-          </path>
-
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
           <polyline points="7 10 12 15 17 10"></polyline>
-
-          <line x1="12" y1="15" x2="12" y2="3">
-          </line>
-
+          <line x1="12" y1="15" x2="12" y2="3"></line>
         </svg>
-
         تصدير PDF
-
       </button>
 
     </div>
-
 
   </div>
 
@@ -76,11 +55,9 @@
 
   @if (loading()) {
 
-
-  <div class="account-state">
-    جارٍ تحميل بيانات الحساب...
-  </div>
-
+    <div class="account-state">
+      جارٍ تحميل بيانات الحساب...
+    </div>
 
   }
 
@@ -90,21 +67,15 @@
 
   @if (!loading() && loadError()) {
 
-  ```
-  <div class="account-state error">
+    <div class="account-state error">
+      <span>
+        تعذر تحميل بيانات الحساب من الخادم.
+      </span>
 
-    <span>
-      تعذر تحميل بيانات الحساب من الخادم.
-    </span>
-
-    <button type="button" class="btn btn-outline" (click)="loadAccount()">
-
-      إعادة المحاولة
-
-    </button>
-
-  </div>
-
+      <button type="button" class="btn btn-outline" (click)="loadAccount()">
+        إعادة المحاولة
+      </button>
+    </div>
 
   }
 
@@ -114,607 +85,575 @@
 
   @if (!loading() && !loadError() && profile(); as account) {
 
+    <div class="main-dashboard-grid">
 
-  <div class="main-dashboard-grid">
+      <!-- =======================================================
+           Profile Sidebar
+           ======================================================= -->
 
+      <aside class="profile-sidebar" data-guide="company-account-profile">
 
-    <!-- =======================================================
-       Profile Sidebar
-       ======================================================= -->
-    <aside class="profile-sidebar">
+        <div class="avatar-box">
 
-      <div class="avatar-box">
-
-        <div class="avatar-circle">
-          {{ account.fullName.charAt(0) || 'م' }}
-        </div>
-
-        <span class="online-status"></span>
-
-      </div>
-
-
-      <div class="sidebar-user-info">
-
-        <h3 class="user-name">
-
-          {{ account.fullName || 'غير متوفر' }}
-
-          <svg class="verified-icon" width="18" height="18" viewBox="0 0 24 24" fill="#2563eb">
-
-            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z">
-            </path>
-
-          </svg>
-
-        </h3>
-
-
-        <p class="user-role">
-          {{ account.position || 'غير محدد' }}
-        </p>
-
-
-        <span class="company-badge">
-          {{ account.companyName || 'غير محدد' }}
-        </span>
-
-      </div>
-
-
-      <!-- =====================================================
-         Account Summary
-         ===================================================== -->
-      <div class="sidebar-actions">
-
-        <div class="badge-box badge-blue">
-
-          رقم المشرف:
-          {{ account.supervisorId }}
-
-        </div>
-
-
-        <div class="badge-box badge-green">
-
-
-
-          {{
-          account.userStatus === 'Active'
-          ? 'نشط'
-          : account.userStatus || 'غير محدد'
-          }}
-
-        </div>
-
-      </div>
-
-
-      <div class="sidebar-divider"></div>
-
-
-      <!-- =====================================================
-         Main Permissions
-         ===================================================== -->
-      <div class="expert-tags">
-
-        <span class="tag-title">
-          الصلاحيات الرئيسية
-        </span>
-
-        @if (account.permissions.length > 0) {
-
-        @for (
-        perm of account.permissions;
-        track perm.permissionKey
-        ) {
-
-        <div class="tag-chip">
-          {{ perm.permissionKey }}
-        </div>
-
-        }
-
-        } @else {
-
-        <div class="tag-chip">
-          لا توجد صلاحيات مسجلة
-        </div>
-
-        }
-
-      </div>
-
-    </aside>
-
-
-    <!-- =======================================================
-       Main Content
-       ======================================================= -->
-    <main class="content-area">
-
-
-      <!-- =====================================================
-         Navigation Tabs
-         ===================================================== -->
-      <nav class="nav-tabs">
-
-
-        <!-- Personal Information -->
-        <button type="button" class="tab-item" [class.active]="activeTab() === 'info'" (click)="setActiveTab('info')">
-
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2">
-            </path>
-
-            <circle cx="12" cy="7" r="4">
-            </circle>
-
-          </svg>
-
-          البيانات الشخصية
-
-        </button>
-
-
-        <!-- Permissions -->
-        <button type="button" class="tab-item" [class.active]="activeTab() === 'permissions'"
-          (click)="setActiveTab('permissions')">
-
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z">
-            </path>
-
-          </svg>
-
-          الصلاحيات الممنوحة
-
-        </button>
-
-
-        <!-- Activities -->
-        <button type="button" class="tab-item" [class.active]="activeTab() === 'activities'"
-          (click)="setActiveTab('activities')">
-
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12">
-            </polyline>
-
-          </svg>
-
-          سجل النشاطات
-
-        </button>
-
-      </nav>
-
-
-      <!-- =====================================================
-         Dashboard Body
-         ===================================================== -->
-      <div class="dashboard-body">
-
-
-        <!-- ===================================================
-           TAB 1 — Personal Information
-           =================================================== -->
-        @if (activeTab() === 'info') {
-
-        <section class="card-box full-width">
-
-          <div class="card-title-bar">
-
-            <h4>
-              البيانات الشخصية
-            </h4>
-
+          <div class="avatar-circle">
+            {{ account.fullName.charAt(0) || 'م' }}
           </div>
 
+          <span class="online-status"></span>
 
-          <!-- Personal Information Grid -->
-          <div class="info-grid">
+        </div>
 
+        <div class="sidebar-user-info">
 
-            <!-- Full Name - Read Only -->
-            <div class="info-cell">
+          <h3 class="user-name">
+            {{ account.fullName || 'غير متوفر' }}
 
-              <label>
-                الاسم الكامل
-              </label>
+            <svg class="verified-icon" width="18" height="18" viewBox="0 0 24 24" fill="#2563eb">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path>
+            </svg>
+          </h3>
 
-              <span class="val">
-                {{ account.fullName || 'غير متوفر' }}
-              </span>
+          <p class="user-role">
+            {{ account.position || 'غير محدد' }}
+          </p>
 
-            </div>
+          <span class="company-badge">
+            {{ account.companyName || 'غير محدد' }}
+          </span>
 
+        </div>
 
-            <!-- Email - Read Only -->
-            <div class="info-cell">
+        <!-- =====================================================
+             Account Summary
+             ===================================================== -->
 
-              <label>
-                البريد الإلكتروني
-              </label>
+        <div class="sidebar-actions">
 
-              <span class="val ltr">
-                {{ account.email || 'غير متوفر' }}
-              </span>
-
-            </div>
-
-
-           <!-- Phone - Editable -->
-<div class="info-cell">
-
-  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
-    <label style="margin: 0;">
-      رقم الجوال
-    </label>
-
-    <!-- زر تعديل البيانات الصغير بجانب العنوان -->
-    @if (!editingAccount()) {
-      <button type="button" 
-              style="background: #e0e7ff; color: #1d4ed8; border: none; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer;"
-              (click)="startEditAccount()">
-        تعديل
-      </button>
-    }
-  </div>
-
-  @if (editingAccount()) {
-
-    <div style="display: flex; gap: 0.5rem; align-items: center;">
-      <input type="tel" class="form-control account-edit-input ltr" [(ngModel)]="editPhone" placeholder="أدخل رقم الجوال">
-
-      <!-- زر حفظ -->
-      <button type="button" 
-              style="background: #2563eb; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap;"
-              [disabled]="savingAccount()" 
-              (click)="saveAccount()">
-        {{ savingAccount() ? 'حفظ...' : 'حفظ' }}
-      </button>
-
-      <!-- زر إلغاء -->
-      <button type="button" 
-              style="background: #ef4444; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap;"
-              [disabled]="savingAccount()" 
-              (click)="cancelEditAccount()">
-        إلغاء
-      </button>
-    </div>
-
-  } @else {
-
-    <span class="val ltr">
-      {{ account.phone || 'غير متوفر' }}
-    </span>
-
-  }
-
-</div>
-
-
-            <!-- Position - Read Only -->
-            <div class="info-cell">
-
-              <label>
-                المسمى الوظيفي
-              </label>
-
-              <span class="val">
-                {{ account.position || 'غير محدد' }}
-              </span>
-
-            </div>
-
-
-            <!-- Department - Read Only -->
-            <div class="info-cell">
-
-              <label>
-                القسم
-              </label>
-
-              <span class="val">
-                {{ account.department || 'غير محدد' }}
-              </span>
-
-            </div>
-
-
-            <!-- Company - Read Only -->
-            <div class="info-cell">
-
-              <label>
-                الجهة / الشركة
-              </label>
-
-              <span class="val">
-                {{ account.companyName || 'غير محدد' }}
-              </span>
-
-            </div>
-
-
-            <!-- Role - Read Only -->
-            <div class="info-cell">
-
-              <label>
-                الدور الوظيفي
-              </label>
-
-              <span class="val">
-                {{ account.roleName || 'غير محدد' }}
-              </span>
-
-            </div>
-
-
-            <!-- User Status - Read Only -->
-            <div class="info-cell">
-
-              <label>
-                حالة الحساب
-              </label>
-
-              <span class="val">
-                {{ account.userStatus || 'غير محدد' }}
-              </span>
-
-            </div>
-
-
-            <!-- Supervisor Status - Read Only -->
-            <div class="info-cell">
-
-              <label>
-                حالة المشرف
-              </label>
-
-              <span class="val">
-                {{ account.supervisorStatus || 'غير محدد' }}
-              </span>
-
-            </div>
-
-
-            <!-- Company Status - Read Only -->
-            <div class="info-cell">
-
-              <label>
-                حالة الشركة
-              </label>
-
-              <span class="val">
-                {{ account.companyStatus || 'غير محدد' }}
-              </span>
-
-            </div>
-
-
-            <!-- Account Created At - Read Only -->
-            <div class="info-cell">
-
-              <label>
-                تاريخ إنشاء الحساب
-              </label>
-
-              <span class="val">
-
-                {{
-                account.createdAt
-                ? (account.createdAt | date:'yyyy-MM-dd HH:mm')
-                : 'غير متوفر'
-                }}
-
-              </span>
-
-            </div>
-
-
-            <!-- Last Activity - Read Only -->
-            <div class="info-cell">
-
-              <label>
-                آخر نشاط مسجل
-              </label>
-
-              <span class="val">
-
-                {{
-                account.lastActivityAt
-                ? (account.lastActivityAt | date:'yyyy-MM-dd HH:mm')
-                : 'غير متوفر'
-                }}
-
-              </span>
-
-            </div>
-
+          <div class="badge-box badge-blue">
+            رقم المشرف:
+            {{ account.supervisorId }}
           </div>
 
-        </section>
-
-        }
-
-
-        <!-- ===================================================
-           TAB 2 — Permissions
-           =================================================== -->
-        @if (activeTab() === 'permissions') {
-
-        <section class="card-box full-width">
-
-          <div class="card-title-bar">
-
-            <h4>
-              الصلاحيات الممنوحة
-            </h4>
-
-            <span class="badge-count">
-
-              {{ account.permissions.length }}
-
-              مفعّلة
-
-            </span>
-
+          <div class="badge-box badge-green">
+            {{
+              account.userStatus === 'Active'
+              ? 'نشط'
+              : account.userStatus || 'غير محدد'
+            }}
           </div>
 
+        </div>
 
-          <div class="mini-perm-list">
+        <div class="sidebar-divider"></div>
 
-            @if (account.permissions.length > 0) {
+        <!-- =====================================================
+             Main Permissions
+             ===================================================== -->
 
-            @for (
-            perm of account.permissions;
-            track perm.permissionKey
-            ) {
+        <div class="expert-tags">
 
-            <div class="perm-card">
+          <span class="tag-title">
+            الصلاحيات الرئيسية
+          </span>
 
-              <div class="perm-icon">
+          @if (account.permissions.length > 0) {
 
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            @for (perm of account.permissions; track perm.permissionKey) {
 
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z">
-                  </path>
-
-                </svg>
-
+              <div class="tag-chip">
+                {{ perm.permissionKey }}
               </div>
 
-
-              <div>
-
-                <strong>
-                  {{ perm.permissionKey }}
-                </strong>
-
-                <p>
-
-                  {{
-                  perm.description ||
-                  'لا يوجد وصف للصلاحية'
-                  }}
-
-                </p>
-
-              </div>
-
-            </div>
-
             }
-
-            } @else {
-
-            <div class="empty-state">
-              لا توجد صلاحيات مسجلة لهذا الحساب.
-            </div>
-
-            }
-
-          </div>
-
-        </section>
-
-        }
-
-
-        <!-- ===================================================
-           TAB 3 — Activities
-           =================================================== -->
-        @if (activeTab() === 'activities') {
-
-        <section class="card-box full-width">
-
-          <div class="card-title-bar">
-
-            <h4>
-              سجل النشاطات
-            </h4>
-
-          </div>
-
-
-          @if (account.recentActivities.length > 0) {
-
-          <ul class="timeline-list">
-
-            @for (
-            activity of account.recentActivities;
-            track activity.entityId + activity.action + activity.timestamp
-            ) {
-
-            <li>
-
-              <span class="dot"></span>
-
-
-              <div class="t-info">
-
-                <strong>
-                  {{ activity.action }}
-                </strong>
-
-
-                <small>
-
-                  {{ activity.entityName }}
-
-                  @if (activity.entityId) {
-
-                  — رقم:
-                  {{ activity.entityId }}
-
-                  }
-
-
-                  @if (activity.details) {
-
-                  —
-                  {{ activity.details }}
-
-                  }
-
-                  —
-
-                  {{
-                  activity.timestamp
-                  | date:'yyyy-MM-dd HH:mm'
-                  }}
-
-                </small>
-
-              </div>
-
-            </li>
-
-            }
-
-          </ul>
 
           } @else {
 
-          <div class="empty-state">
-            لا توجد نشاطات مسجلة لهذا الحساب.
-          </div>
+            <div class="tag-chip">
+              لا توجد صلاحيات مسجلة
+            </div>
 
           }
 
-        </section>
+        </div>
 
-        }
+      </aside>
 
-      </div>
+      <!-- =======================================================
+           Main Content
+           ======================================================= -->
 
-    </main>
+      <main class="content-area">
 
-  </div>
-  
+        <!-- =====================================================
+             Navigation Tabs
+             ===================================================== -->
+
+        <nav class="nav-tabs" data-guide="company-account-tabs">
+
+          <!-- Personal Information -->
+          <button
+            type="button"
+            class="tab-item"
+            [class.active]="activeTab() === 'info'"
+            (click)="setActiveTab('info')"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            البيانات الشخصية
+          </button>
+
+          <!-- Permissions -->
+          <button
+            type="button"
+            class="tab-item"
+            [class.active]="activeTab() === 'permissions'"
+            (click)="setActiveTab('permissions')"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            الصلاحيات الممنوحة
+          </button>
+
+          <!-- Activities -->
+          <button
+            type="button"
+            class="tab-item"
+            [class.active]="activeTab() === 'activities'"
+            (click)="setActiveTab('activities')"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            سجل النشاطات
+          </button>
+
+        </nav>
+
+        <!-- =====================================================
+             Dashboard Body
+             ===================================================== -->
+
+        <div class="dashboard-body">
+
+          <!-- ===================================================
+               TAB 1 — Personal Information
+               =================================================== -->
+
+          @if (activeTab() === 'info') {
+
+            <section class="card-box full-width" data-guide="company-account-info">
+
+              <div class="card-title-bar">
+                <h4>
+                  البيانات الشخصية
+                </h4>
+              </div>
+
+              <!-- Personal Information Grid -->
+
+              <div class="info-grid">
+
+                <!-- Full Name - Read Only -->
+                <div class="info-cell">
+                  <label>الاسم الكامل</label>
+                  <span class="val">
+                    {{ account.fullName || 'غير متوفر' }}
+                  </span>
+                </div>
+
+                <!-- Email - Read Only -->
+                <div class="info-cell">
+                  <label>البريد الإلكتروني</label>
+                  <span class="val ltr">
+                    {{ account.email || 'غير متوفر' }}
+                  </span>
+                </div>
+
+                <!-- Phone - Editable -->
+                <div class="info-cell">
+
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+                    <label style="margin: 0;">
+                      رقم الجوال
+                    </label>
+
+                    <!-- زر تعديل البيانات الصغير بجانب العنوان -->
+                    @if (!editingAccount()) {
+                      <button
+                        type="button"
+                        style="background: #e0e7ff; color: #1d4ed8; border: none; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer;"
+                        (click)="startEditAccount()"
+                      >
+                        تعديل
+                      </button>
+                    }
+                  </div>
+
+                  @if (editingAccount()) {
+
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+
+                      <input
+                        type="tel"
+                        class="form-control account-edit-input ltr"
+                        [(ngModel)]="editPhone"
+                        placeholder="أدخل رقم الجوال"
+                      >
+
+                      <!-- زر حفظ -->
+                      <button
+                        type="button"
+                        style="background: #2563eb; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap;"
+                        [disabled]="savingAccount()"
+                        (click)="saveAccount()"
+                      >
+                        {{ savingAccount() ? 'حفظ...' : 'حفظ' }}
+                      </button>
+
+                      <!-- زر إلغاء -->
+                      <button
+                        type="button"
+                        style="background: #ef4444; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap;"
+                        [disabled]="savingAccount()"
+                        (click)="cancelEditAccount()"
+                      >
+                        إلغاء
+                      </button>
+
+                    </div>
+
+                  } @else {
+
+                    <span class="val ltr">
+                      {{ account.phone || 'غير متوفر' }}
+                    </span>
+
+                  }
+
+                </div>
+
+                <!-- Position - Read Only -->
+                <div class="info-cell">
+                  <label>المسمى الوظيفي</label>
+                  <span class="val">
+                    {{ account.position || 'غير محدد' }}
+                  </span>
+                </div>
+
+                <!-- Department - Read Only -->
+                <div class="info-cell">
+                  <label>القسم</label>
+                  <span class="val">
+                    {{ account.department || 'غير محدد' }}
+                  </span>
+                </div>
+
+                <!-- Company - Read Only -->
+                <div class="info-cell">
+                  <label>الجهة / الشركة</label>
+                  <span class="val">
+                    {{ account.companyName || 'غير محدد' }}
+                  </span>
+                </div>
+
+                <!-- Role - Read Only -->
+                <div class="info-cell">
+                  <label>الدور الوظيفي</label>
+                  <span class="val">
+                    {{ account.roleName || 'غير محدد' }}
+                  </span>
+                </div>
+
+                <!-- User Status - Read Only -->
+                <div class="info-cell">
+                  <label>حالة الحساب</label>
+                  <span class="val">
+                    {{ account.userStatus || 'غير محدد' }}
+                  </span>
+                </div>
+
+                <!-- Supervisor Status - Read Only -->
+                <div class="info-cell">
+                  <label>حالة المشرف</label>
+                  <span class="val">
+                    {{ account.supervisorStatus || 'غير محدد' }}
+                  </span>
+                </div>
+
+                <!-- Company Status - Read Only -->
+                <div class="info-cell">
+                  <label>حالة الشركة</label>
+                  <span class="val">
+                    {{ account.companyStatus || 'غير محدد' }}
+                  </span>
+                </div>
+
+                <!-- Account Created At - Read Only -->
+                <div class="info-cell">
+                  <label>تاريخ إنشاء الحساب</label>
+                  <span class="val">
+                    {{
+                      account.createdAt
+                      ? (account.createdAt | date:'yyyy-MM-dd HH:mm')
+                      : 'غير متوفر'
+                    }}
+                  </span>
+                </div>
+
+                <!-- Last Activity - Read Only -->
+                <div class="info-cell">
+                  <label>آخر نشاط مسجل</label>
+                  <span class="val">
+                    {{
+                      account.lastActivityAt
+                      ? (account.lastActivityAt | date:'yyyy-MM-dd HH:mm')
+                      : 'غير متوفر'
+                    }}
+                  </span>
+                </div>
+
+              </div>
+
+            </section>
+
+          }
+
+          <!-- ===================================================
+               TAB 2 — Permissions
+               =================================================== -->
+
+          @if (activeTab() === 'permissions') {
+
+            <section class="card-box full-width" data-guide="company-account-permissions">
+
+              <div class="card-title-bar">
+                <h4>
+                  الصلاحيات الممنوحة
+                </h4>
+
+                <span class="badge-count">
+                  {{ account.permissions.length }}
+                  مفعّلة
+                </span>
+              </div>
+
+              <div class="mini-perm-list">
+
+                @if (account.permissions.length > 0) {
+
+                  @for (perm of account.permissions; track perm.permissionKey) {
+
+                    <div class="perm-card">
+
+                      <div class="perm-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                      </div>
+
+                      <div>
+                        <strong>
+                          {{ perm.permissionKey }}
+                        </strong>
+
+                        <p>
+                          {{
+                            perm.description ||
+                            'لا يوجد وصف للصلاحية'
+                          }}
+                        </p>
+                      </div>
+
+                    </div>
+
+                  }
+
+                } @else {
+
+                  <div class="empty-state">
+                    لا توجد صلاحيات مسجلة لهذا الحساب.
+                  </div>
+
+                }
+
+              </div>
+
+            </section>
+
+          }
+
+          <!-- ===================================================
+               TAB 3 — Activities
+               =================================================== -->
+
+          @if (activeTab() === 'activities') {
+
+            <section class="card-box full-width" data-guide="company-account-activities">
+
+              <div class="card-title-bar" style="display: flex; justify-content: space-between; align-items: center;">
+
+                <h4 style="margin: 0;">
+                  سجل النشاطات والتقييمات
+                </h4>
+
+                <!-- زر مسح التقييمات المحلية دفعة واحدة -->
+                @if (localActivities().length > 0) {
+
+                  <button
+                    type="button"
+                    style="background: #fee2e2; color: #dc2626; border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer;"
+                    (click)="clearLocalActivities()"
+                  >
+                    مسح التقييمات الأخيرة
+                  </button>
+
+                }
+
+              </div>
+
+              <div style="margin-top: 1rem;"></div>
+
+              <!-- عرض النشاطات المحلية (تقييمات المدربين المضافة حديثاً) -->
+              @if (localActivities().length > 0) {
+
+                <div style="margin-bottom: 1.5rem;">
+
+                  <h5 style="font-size: 0.9rem; color: #2563eb; margin-bottom: 0.8rem; font-weight: 700;">
+                    التقييمات والأنشطة الأخيرة:
+                  </h5>
+
+                  <ul class="timeline-list">
+
+                    @for (localAct of localActivities(); track $index) {
+
+                      <li style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+
+                        <div style="display: flex; gap: 10px; align-items: flex-start; flex: 1;">
+
+                          <span class="dot" style="background-color: #2563eb; margin-top: 6px;"></span>
+
+                          <div class="t-info" style="flex: 1;">
+                            <strong style="color: #1e293b;">
+                              {{ localAct.message }}
+                            </strong>
+
+                            <small style="color: #64748b; display: block; margin-top: 4px;">
+                              {{ localAct.date }}
+                            </small>
+                          </div>
+
+                        </div>
+
+                        <!-- زر حذف عنصر محدد من التقييمات المحلية -->
+                        <button
+                          type="button"
+                          style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 0 6px; font-size: 1.2rem; font-weight: bold; line-height: 1;"
+                          title="حذف النشاط"
+                          (click)="removeLocalActivity($index)"
+                        >
+                          ×
+                        </button>
+
+                      </li>
+
+                    }
+
+                  </ul>
+
+                </div>
+
+              }
+
+              <!-- نشاطات الخادم الأساسية -->
+              @if (account.recentActivities.length > 0) {
+
+                <h5 style="font-size: 0.9rem; color: #475569; margin-bottom: 0.8rem; font-weight: 700;">
+                  سجل النظام:
+                </h5>
+
+                <ul class="timeline-list">
+
+                  @for (
+                    activity of account.recentActivities;
+                    track activity.entityId + activity.action + activity.timestamp
+                  ) {
+
+                    <li style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+
+                      <div style="display: flex; gap: 10px; align-items: flex-start; flex: 1;">
+
+                        <span class="dot" style="margin-top: 6px;"></span>
+
+                        <div class="t-info" style="flex: 1;">
+
+                          <strong>
+                            {{ activity.action }}
+                          </strong>
+
+                          <small style="display: block; margin-top: 4px;">
+
+                            {{ activity.entityName }}
+
+                            @if (activity.entityId) {
+                              — رقم:
+                              {{ activity.entityId }}
+                            }
+
+                            @if (activity.details) {
+                              —
+                              {{ activity.details }}
+                            }
+
+                            —
+                            {{
+                              activity.timestamp
+                              | date:'yyyy-MM-dd HH:mm'
+                            }}
+
+                          </small>
+
+                        </div>
+
+                      </div>
+
+                      <!-- زر حذف نشاط الخادم محلياً من الواجهة -->
+                      <button
+                        type="button"
+                        style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 0 6px; font-size: 1.2rem; font-weight: bold; line-height: 1;"
+                        title="حذف النشاط"
+                        (click)="removeServerActivity(activity)"
+                      >
+                        ×
+                      </button>
+
+                    </li>
+
+                  }
+
+                </ul>
+
+              }
+
+              @if (localActivities().length === 0 && account.recentActivities.length === 0) {
+
+                <div class="empty-state">
+                  لا توجد نشاطات مسجلة لهذا الحساب.
+                </div>
+
+              }
+
+            </section>
+
+          }
+
+        </div>
+
+      </main>
+
+    </div>
 
   }
 

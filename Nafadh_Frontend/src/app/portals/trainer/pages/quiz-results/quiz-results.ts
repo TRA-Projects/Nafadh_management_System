@@ -29,62 +29,65 @@ export class QuizResults implements OnInit {
   results = signal<QuizResultDto[]>([]);
   searchTerm = signal('');
 
-statusFilter = signal('all');
+  statusFilter = signal('all');
 
-filteredResults = computed(() => {
+  filteredResults = computed(() => {
 
-  const search = this.searchTerm()
-    .trim()
-    .toLowerCase();
+    const search = this.searchTerm()
+      .trim()
+      .toLowerCase();
 
-  const status = this.statusFilter();
+    const status = this.statusFilter();
 
-  return this.results().filter(result => {
+    return this.results().filter(result => {
 
-    const matchesSearch =
-      !search ||
-      String(result.traineeName ?? '')
-        .toLowerCase()
-        .includes(search);
+      const matchesSearch =
+        !search ||
+        String(result.traineeName ?? '')
+          .toLowerCase()
+          .includes(search) ||
+        String(result.batchName ?? '')
+          .toLowerCase()
+          .includes(search);
 
-    let matchesStatus = true;
+      let matchesStatus = true;
 
-    if (status === 'pending') {
+      if (status === 'pending') {
 
-      matchesStatus =
-        result.status?.toLowerCase() === 'submitted' &&
-        !result.isGradingCompleted;
+        matchesStatus =
+          result.status?.toLowerCase() === 'submitted' &&
+          !result.isGradingCompleted;
 
-    }
+      }
 
-    else if (status === 'passed') {
+      else if (status === 'passed') {
 
-      matchesStatus =
-        result.isGradingCompleted &&
-        result.isPassed === true;
+        matchesStatus =
+          result.isGradingCompleted &&
+          result.isPassed === true;
 
-    }
+      }
 
-    else if (status === 'failed') {
+      else if (status === 'failed') {
 
-      matchesStatus =
-        result.isGradingCompleted &&
-        result.isPassed === false;
+        matchesStatus =
+          result.isGradingCompleted &&
+          result.isPassed === false;
 
-    }
+      }
 
-    else if (status === 'submitted') {
+      else if (status === 'submitted') {
 
-      matchesStatus =
-        result.status?.toLowerCase() === 'submitted';
+        matchesStatus =
+          result.status?.toLowerCase() === 'submitted';
 
-    }
+      }
 
-    return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus;
+
+    });
 
   });
-
-});
 
   loading = signal(false);
 
@@ -94,6 +97,126 @@ filteredResults = computed(() => {
   attemptDetails = signal<QuizAttemptDetailsDto | null>(null);
   detailsLoading = signal(false);
 
+ // =========================================
+// PROCTORING
+// =========================================
+
+proctoringEvents = signal<any[]>([]);
+proctoringLoading = signal(false);
+proctoringError = signal('');
+selectedSnapshot = signal<any | null>(null);
+showProctoringViewer = signal(false);
+
+proctoringSnapshots = signal<any[]>([]);
+
+openProctoringViewer(): void {
+  const attempt = this.attemptDetails();
+
+  if (!attempt?.attemptId) {
+    this.proctoringError.set('تعذر تحديد محاولة الاختبار.');
+    return;
+  }
+
+  this.showProctoringViewer.set(true);
+  this.proctoringLoading.set(true);
+  this.proctoringError.set('');
+  this.proctoringEvents.set([]);
+  this.proctoringSnapshots.set([]);
+
+  this.api.getQuizAttemptProctoring(attempt.attemptId).subscribe({
+    next: report => {
+      console.log('Proctoring report:', report);
+
+      const events = report?.events ?? [];
+
+      this.proctoringEvents.set(events);
+
+      const snapshotEvents = events.filter(
+        (event: any) =>
+          event.hasSnapshot === true &&
+          event.eventId
+      );
+
+      if (snapshotEvents.length === 0) {
+        this.proctoringLoading.set(false);
+        return;
+      }
+
+      let loaded = 0;
+      const snapshots: any[] = [];
+
+      snapshotEvents.forEach((event: any) => {
+        this.api.getProctoringSnapshot(event.eventId).subscribe({
+          next: (blob: Blob) => {
+            const imageUrl = URL.createObjectURL(blob);
+
+            snapshots.push({
+              eventId: event.eventId,
+              eventType: event.eventType,
+              createdAt: event.createdAt,
+              imageUrl
+            });
+
+            loaded++;
+
+            if (loaded === snapshotEvents.length) {
+              snapshots.sort(
+                (a, b) =>
+                  new Date(a.createdAt).getTime() -
+                  new Date(b.createdAt).getTime()
+              );
+
+              this.proctoringSnapshots.set(snapshots);
+              this.proctoringLoading.set(false);
+            }
+          },
+
+          error: error => {
+            console.error(
+              `Snapshot ${event.eventId} error:`,
+              error
+            );
+
+            loaded++;
+
+            if (loaded === snapshotEvents.length) {
+              this.proctoringSnapshots.set(snapshots);
+              this.proctoringLoading.set(false);
+            }
+          }
+        });
+      });
+    },
+
+    error: error => {
+      console.error('Proctoring API Error:', error);
+
+      this.proctoringError.set(
+        error?.error?.message ||
+        'تعذر تحميل بيانات المراقبة.'
+      );
+
+      this.proctoringLoading.set(false);
+    }
+  });
+}
+
+closeProctoringViewer(): void {
+  this.proctoringSnapshots().forEach(snapshot => {
+    if (snapshot.imageUrl) {
+      URL.revokeObjectURL(snapshot.imageUrl);
+    }
+  });
+
+  this.proctoringSnapshots.set([]);
+  this.proctoringEvents.set([]);
+  this.proctoringError.set('');
+  this.showProctoringViewer.set(false);
+}
+
+closeSnapshot(): void {
+  this.selectedSnapshot.set(null);
+}
   gradingPoints: { [answerId: number]: number } = {};
   gradingSaving = signal(false);
 
@@ -314,180 +437,180 @@ filteredResults = computed(() => {
 
   exportResults(): void {
 
-  const data = this.filteredResults();
+    const data = this.filteredResults();
 
-  if (data.length === 0) {
-    this.errorMessage.set(
-      'لا توجد نتائج متاحة للتصدير.'
-    );
+    if (data.length === 0) {
+      this.errorMessage.set(
+        'لا توجد نتائج متاحة للتصدير.'
+      );
 
-    return;
-  }
-
-  const headers = [
-    'اسم المتدرب',
-    'الاختبار',
-    'المحاولة',
-    'الدرجة',
-    'النسبة',
-    'الحالة',
-    'تاريخ التسليم'
-  ];
-
-  const rows = data.map(result => [
-    result.traineeName ?? '',
-    result.quizTitle ?? '',
-    result.attemptNumber ?? '',
-    result.score ?? '',
-    `${result.percentage ?? 0}%`,
-    this.getResultStatusLabel(result),
-    result.submittedAt
-      ? new Date(result.submittedAt).toLocaleString('ar-OM')
-      : 'لم يُسلّم'
-  ]);
-
-  const csv = [
-    headers,
-    ...rows
-  ]
-    .map(row =>
-      row
-        .map(value =>
-          `"${String(value).replace(/"/g, '""')}"`
-        )
-        .join(',')
-    )
-    .join('\n');
-
-  const blob = new Blob(
-    ['\uFEFF' + csv],
-    {
-      type: 'text/csv;charset=utf-8;'
+      return;
     }
-  );
 
-  const url =
-    window.URL.createObjectURL(blob);
+    const headers = [
+      'اسم المتدرب',
+      'الاختبار',
+      'المحاولة',
+      'الدرجة',
+      'النسبة',
+      'الحالة',
+      'تاريخ التسليم'
+    ];
 
-  const link =
-    document.createElement('a');
+    const rows = data.map(result => [
+      result.traineeName ?? '',
+      result.quizTitle ?? '',
+      result.attemptNumber ?? '',
+      result.score ?? '',
+      `${result.percentage ?? 0}%`,
+      this.getResultStatusLabel(result),
+      result.submittedAt
+        ? new Date(result.submittedAt).toLocaleString('ar-OM')
+        : 'لم يُسلّم'
+    ]);
 
-  link.href = url;
+    const csv = [
+      headers,
+      ...rows
+    ]
+      .map(row =>
+        row
+          .map(value =>
+            `"${String(value).replace(/"/g, '""')}"`
+          )
+          .join(',')
+      )
+      .join('\n');
 
-  link.download =
-    `quiz-results-${this.quizId ?? 'export'}.csv`;
+    const blob = new Blob(
+      ['\uFEFF' + csv],
+      {
+        type: 'text/csv;charset=utf-8;'
+      }
+    );
 
-  link.click();
+    const url =
+      window.URL.createObjectURL(blob);
 
-  window.URL.revokeObjectURL(url);
-}
+    const link =
+      document.createElement('a');
+
+    link.href = url;
+
+    link.download =
+      `quiz-results-${this.quizId ?? 'export'}.csv`;
+
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+  }
   // =========================================
-// MANUAL ESSAY GRADING
-// =========================================
+  // MANUAL ESSAY GRADING
+  // =========================================
 
-gradeEssayAnswer(answer: any): void {
+  gradeEssayAnswer(answer: any): void {
 
-  if (!this.trainerId) {
-
-    this.errorMessage.set(
-      'تعذر تحديد المدرب الحالي.'
-    );
-
-    return;
-
-  }
-
-  const awardedPoints =
-    Number(this.gradingPoints[answer.answerId]);
-
-  if (
-    isNaN(awardedPoints) ||
-    awardedPoints < 0 ||
-    awardedPoints > Number(answer.maxPoints)
-  ) {
-
-    this.errorMessage.set(
-      `الدرجة يجب أن تكون بين 0 و ${answer.maxPoints}.`
-    );
-
-    return;
-
-  }
-
-  this.gradingSaving.set(true);
-
-  this.errorMessage.set('');
-  this.successMessage.set('');
-
-  this.api.gradeEssayAnswer({
-
-    answerId: answer.answerId,
-
-    trainerId: this.trainerId,
-
-    awardedPoints: awardedPoints
-
-  }).subscribe({
-
-    next: response => {
-
-      console.log(
-        'Essay grading success:',
-        response
-      );
-
-      this.successMessage.set(
-        'تم تصحيح الإجابة المقالية بنجاح.'
-      );
-
-      // إعادة تحميل تفاصيل المحاولة
-      this.api.getQuizAttemptDetails(
-        this.trainerId!,
-        this.attemptDetails()!.attemptId
-      ).subscribe({
-
-        next: details => {
-
-          this.attemptDetails.set(details);
-
-          this.gradingSaving.set(false);
-
-        },
-
-        error: error => {
-
-          console.error(
-            'Reload attempt details error:',
-            error
-          );
-
-          this.gradingSaving.set(false);
-
-        }
-
-      });
-
-    },
-
-    error: error => {
-
-      console.error(
-        'Essay grading error:',
-        error
-      );
+    if (!this.trainerId) {
 
       this.errorMessage.set(
-        error?.error?.message ||
-        'تعذر حفظ تصحيح الإجابة.'
+        'تعذر تحديد المدرب الحالي.'
       );
 
-      this.gradingSaving.set(false);
+      return;
 
     }
 
-  });
+    const awardedPoints =
+      Number(this.gradingPoints[answer.answerId]);
 
-}
+    if (
+      isNaN(awardedPoints) ||
+      awardedPoints < 0 ||
+      awardedPoints > Number(answer.maxPoints)
+    ) {
+
+      this.errorMessage.set(
+        `الدرجة يجب أن تكون بين 0 و ${answer.maxPoints}.`
+      );
+
+      return;
+
+    }
+
+    this.gradingSaving.set(true);
+
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    this.api.gradeEssayAnswer({
+
+      answerId: answer.answerId,
+
+      trainerId: this.trainerId,
+
+      awardedPoints: awardedPoints
+
+    }).subscribe({
+
+      next: response => {
+
+        console.log(
+          'Essay grading success:',
+          response
+        );
+
+        this.successMessage.set(
+          'تم تصحيح الإجابة المقالية بنجاح.'
+        );
+
+        // إعادة تحميل تفاصيل المحاولة
+        this.api.getQuizAttemptDetails(
+          this.trainerId!,
+          this.attemptDetails()!.attemptId
+        ).subscribe({
+
+          next: details => {
+
+            this.attemptDetails.set(details);
+
+            this.gradingSaving.set(false);
+
+          },
+
+          error: error => {
+
+            console.error(
+              'Reload attempt details error:',
+              error
+            );
+
+            this.gradingSaving.set(false);
+
+          }
+
+        });
+
+      },
+
+      error: error => {
+
+        console.error(
+          'Essay grading error:',
+          error
+        );
+
+        this.errorMessage.set(
+          error?.error?.message ||
+          'تعذر حفظ تصحيح الإجابة.'
+        );
+
+        this.gradingSaving.set(false);
+
+      }
+
+    });
+
+  }
   // =========================================
   // STATISTICS
   // =========================================

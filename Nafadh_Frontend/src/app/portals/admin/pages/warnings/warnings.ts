@@ -21,6 +21,10 @@ export class AdminWarnings implements OnInit {
   // شريط البحث
   searchTerm = '';
 
+  // 🟢 إعدادات الصفحات والتنقل
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10); // 10 إنذارات في كل صفحة
+
   // التحكم باللوحة المدمجة للفلترة
   isFilterDropdownOpen = false;
   activeFilterTab: 'PRESETS' | 'YEAR' | 'MONTH' | 'STATUS' | 'LEVEL' = 'PRESETS';
@@ -55,15 +59,17 @@ export class AdminWarnings implements OnInit {
   touchedFields = signal<{ [key: string]: boolean }>({});
   newWarning = { companyId: null as number | null, type: 'Performance', level: 'Medium', evidence: '' };
 
-  // قائمة أسباب ومخالفات البلاغ الجاهزة
+  // =========================================================================
+  // 🌟 قائمة أسباب ومخالفات الشركات المعتمدة والمطابقة تماماً لقاعدة البيانات SQL
+  // =========================================================================
   violationReasons: string[] = [
-    'عدم الالتزام بالحضور',
-    'التأخر المتكرر',
-    'عدم الالتزام بمتطلبات التدريب',
-    'ضعف الأداء التدريبي',
-    'مخالفة السلوك والانضباط',
-    'عدم تسليم المهام',
-    'مخالفة أنظمة الجهة',
+    'تجاوز الطاقة الاستيعابية المعتمدة',
+    'عدم توفير بيئة تدريب مناسبة',
+    'تأخر تسليم تقارير المتدربين الشهرية',
+    'عدم الالتزام بخطة التدريب المعتمدة',
+    'التقصير في توفير مشرف تدريب مؤهل',
+    'عدم تزويد المتدربين بالأدوات والتجهيزات اللازمة',
+    'مخالفة الضوابط التنظيمية للمنصة',
     'مخالفة أخرى'
   ];
 
@@ -128,6 +134,9 @@ export class AdminWarnings implements OnInit {
     if (type === 'MONTH') this.selectedMonth = value;
     if (type === 'STATUS') this.selectedStatus = value;
     if (type === 'LEVEL') this.selectedLevel = value;
+    
+    // تصفير الصفحة للبداية عند تطبيق فلتر جديد
+    this.currentPage.set(1);
   }
 
   applyPreset(preset: 'THIS_MONTH' | 'CURRENT_QUARTER' | 'THIS_YEAR'): void {
@@ -145,6 +154,7 @@ export class AdminWarnings implements OnInit {
     } else if (preset === 'CURRENT_QUARTER') {
       this.selectedYear = currentYear;
     }
+    this.currentPage.set(1);
   }
 
   resetAllFilters(): void {
@@ -153,6 +163,11 @@ export class AdminWarnings implements OnInit {
     this.selectedStatus = 'ALL';
     this.selectedLevel = 'ALL';
     this.searchTerm = '';
+    this.currentPage.set(1);
+  }
+
+  onSearchChange(): void {
+    this.currentPage.set(1);
   }
 
   hasActiveFilters(): boolean {
@@ -209,7 +224,7 @@ export class AdminWarnings implements OnInit {
       if (this.selectedStatus === 'Open') matchesStatus = st === '0' || st === 'Open';
       else if (this.selectedStatus === 'UnderReview') matchesStatus = st === '1' || st === 'UnderReview';
       else if (this.selectedStatus === 'Resolved') matchesStatus = st === '2' || st === 'Resolved';
-      else if (this.selectedStatus === 'Escalated') matchesStatus = st === '3' || st === 'Escalated'; // 👈 دعم حالة التصعيد
+      else if (this.selectedStatus === 'Escalated') matchesStatus = st === '3' || st === 'Escalated';
 
       const lvl = String(w.level);
       let matchesLevel = true;
@@ -231,6 +246,38 @@ export class AdminWarnings implements OnInit {
 
       return matchesSearch && matchesStatus && matchesLevel && matchesYear && matchesMonth;
     });
+  }
+
+  // =========================================================================
+  // 🟢 دوال الترقيم والتنقل بين الصفحات (Pagination)
+  // =========================================================================
+  totalPages(): number {
+    const total = this.filteredWarnings().length;
+    return Math.max(1, Math.ceil(total / this.pageSize()));
+  }
+
+  pagedWarnings(): WarningDto[] {
+    const all = this.filteredWarnings();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return all.slice(start, start + this.pageSize());
+  }
+
+  nextPage(): void {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(p => p + 1);
+      this.scrollToTop();
+    }
+  }
+
+  prevPage(): void {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(p => p - 1);
+      this.scrollToTop();
+    }
+  }
+
+  scrollToTop(): void {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   load(): void {
@@ -282,7 +329,7 @@ export class AdminWarnings implements OnInit {
     }
 
     if (this.selectedReasons().length === 0) {
-      errors['evidence'] = 'يرجى تحديد سبب واحد على الأقل لإصدار البلاغ من الخيارات الجاهزة.';
+      errors['evidence'] = 'يرجى تحديد سبب واحد على الأقل لإصدار البلاغ من الخيارات المعتمدة.';
     } else if (this.selectedReasons().includes('مخالفة أخرى') && this.selectedReasons().length === 1 && !this.otherReasonText.trim()) {
       errors['evidence'] = 'يرجى كتابة تفاصيل المخالفة الأخرى.';
     }
@@ -388,14 +435,13 @@ export class AdminWarnings implements OnInit {
     window.print();
   }
 
-  // 👈 تحديث الدالة لتشمل الحالات الأربعة للباك إند
   getCountByStatus(statusKey: string): number {
     return this.warnings().filter(w => {
       const st = String(w.status);
       if (statusKey === 'Open') return st === '0' || st === 'Open';
       if (statusKey === 'UnderReview') return st === '1' || st === 'UnderReview';
       if (statusKey === 'Resolved') return st === '2' || st === 'Resolved';
-      if (statusKey === 'Escalated') return st === '3' || st === 'Escalated'; // 👈 حالة التصعيد
+      if (statusKey === 'Escalated') return st === '3' || st === 'Escalated';
       return false;
     }).length;
   }
@@ -449,23 +495,21 @@ export class AdminWarnings implements OnInit {
     return 'lvl-medium';
   }
 
-  // 👈 تسمية الكروت بالعربي
   getStatusLabel(status?: any): string {
     const val = String(status);
     if (val === '0' || val === 'Open') return 'نشط';
     if (val === '1' || val === 'UnderReview') return 'قيد المراجعة';
     if (val === '2' || val === 'Resolved') return 'مكتمل';
-    if (val === '3' || val === 'Escalated') return 'مُصعّد'; // 👈 الحالة الرابعة
+    if (val === '3' || val === 'Escalated') return 'مُصعّد';
     return status ?? 'نشط';
   }
 
-  // 👈 كلاسات التنسيق المحدثة
   getStatusClass(status?: any): string {
     const val = String(status);
     if (val === '0' || val === 'Open') return 'st-open';
     if (val === '1' || val === 'UnderReview') return 'st-review';
     if (val === '2' || val === 'Resolved') return 'st-resolved';
-    if (val === '3' || val === 'Escalated') return 'st-escalated'; // 👈 كلاس حالة التصعيد
+    if (val === '3' || val === 'Escalated') return 'st-escalated';
     return 'st-open';
   }
 }

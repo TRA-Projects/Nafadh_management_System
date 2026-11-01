@@ -4,6 +4,7 @@ using Nafadh_Backend;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
+using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -12,10 +13,12 @@ namespace Nafadh_Backend.Controllers
     public class WithdrawalRequestsController : ControllerBase
     {
         private readonly Nafadhcontext _context;
+        private readonly IEmailService _emailService;
 
-        public WithdrawalRequestsController(Nafadhcontext context)
+        public WithdrawalRequestsController(Nafadhcontext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         // 1. جلب كل طلبات الانسحاب (للأدمن) مع الفلترة الاختيارية بالحالة
@@ -151,7 +154,7 @@ namespace Nafadh_Backend.Controllers
             });
         }
 
-        // 5. مراجعة الأدمن لطلب الانسحاب (قبول أو رفض) وتحديث حالة المتدرب تلقائياً
+        // 5. مراجعة الأدمن لطلب الانسحاب (قبول أو رفض) وتحديث حالة المتدرب وإرسال الإيميل
         // PUT: api/WithdrawalRequests/5/review
         [HttpPut("{id}/review")]
         public async Task<IActionResult> ReviewRequest(int id, [FromBody] ReviewWithdrawalRequestDto dto)
@@ -180,6 +183,11 @@ namespace Nafadh_Backend.Controllers
                 return BadRequest(new { message = "تمت مراجعة هذا الطلب مسبقاً ولا يمكن تعديله مرة أخرى." });
             }
 
+            // جلب المتدرب مع بيانات حسابه (Include User مهم جداً لقراءة الإيميل والاسم)
+            var trainee = await _context.NFD_Trainees
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.TraineeId == request.TraineeId);
+
             // تحديث بيانات الطلب
             request.Status = dto.Status;
             request.AdminNotes = dto.AdminNotes;
@@ -188,15 +196,11 @@ namespace Nafadh_Backend.Controllers
             // في حال الموافقة (Approved) -> تحديث حالة المتدرب والتسجيل
             if (dto.Status == NFD_WithdrawalRequestStatus.Approved)
             {
-                var trainee = await _context.NFD_Trainees
-                    .FirstOrDefaultAsync(t => t.TraineeId == request.TraineeId);
-
                 if (trainee != null)
                 {
                     trainee.Status = NFD_TraineeStatus.NotAssigned;
                 }
 
-                // تحديث حالة التدريب الحالي إلى Dropped
                 var activeEnrollment = await _context.NFD_Enrollments
                     .Where(e => e.TraineeId == request.TraineeId && e.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress)
                     .FirstOrDefaultAsync();
@@ -207,13 +211,43 @@ namespace Nafadh_Backend.Controllers
                 }
             }
 
+            // حفظ التعديلات في قاعدة البيانات أولاً
             await _context.SaveChangesAsync();
+
+            // إرسال البريد الإلكتروني للمتدرب حسب قرار الأدمن (اعتماد أو رفض)
+            bool emailSent = false;
+            if (trainee?.User != null && !string.IsNullOrWhiteSpace(trainee.User.Email))
+            {
+                string recipientEmail = trainee.User.Email;
+                string recipientName = trainee.User.FullName ?? "المتدرب";
+
+                try
+                {
+                    if (dto.Status == NFD_WithdrawalRequestStatus.Approved)
+                    {
+                        await _emailService.SendWithdrawalApprovedAsync(recipientEmail, recipientName);
+                    }
+                    else if (dto.Status == NFD_WithdrawalRequestStatus.Rejected)
+                    {
+                        await _emailService.SendWithdrawalRejectedAsync(recipientEmail, recipientName, dto.AdminNotes);
+                    }
+
+                    emailSent = true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to send withdrawal decision email: {ex.Message}");
+                }
+            }
 
             return Ok(new
             {
-                message = "تم تحديث حالة طلب الانسحاب بنجاح وتحديث بيانات المتدرب.",
+                message = emailSent
+                    ? "تم تحديث حالة طلب الانسحاب وإرسال البريد الإلكتروني للمتدرب بنجاح."
+                    : "تم تحديث حالة طلب الانسحاب بنجاح، ولكن لم يتم إرسال البريد الإلكتروني (تأكد من وجود بريد للمتدرب وإعدادات SMTP).",
                 requestId = request.Id,
-                newStatus = request.Status.ToString()
+                newStatus = request.Status.ToString(),
+                emailSent
             });
         }
     }

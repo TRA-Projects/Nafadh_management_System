@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminApi } from '../../services/admin-api';
 import { HttpClient } from '@angular/common/http';
+import { catchError } from 'rxjs/operators';
 
 export interface HostCompany {
   companyId: string | number;
@@ -14,14 +15,19 @@ export interface HostCompany {
   address: string;
   capacity: number;
   programsCount?: number;
+  batchesCount?: number;
   activeTraineesCount?: number;
   contactName: string;
   email: string;
   phone: string;
-  status: any; // 1=Approved, 0=Pending, 2=Rejected, 3=Suspended
+  status: any; // 1=Approved, 0=PendingApproval, 2=Rejected, 3=Suspended
   rejectionReason?: string;
   createdAt?: string;
   logo?: string | null;
+  supervisors?: any[];
+  branches?: any[];
+  programs?: any[];
+  departments?: any[];
 }
 
 function normalizeArabic(text: string): string {
@@ -35,7 +41,6 @@ function normalizeArabic(text: string): string {
     .trim();
 }
 
-// تحويل الأرقام المكتوبة بالكيبورد العربي إلى أرقام قياسية
 function convertArabicDigits(str: string): string {
   if (!str) return '';
   const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -52,6 +57,8 @@ function convertArabicDigits(str: string): string {
 export class AdminCompanies implements OnInit {
   private api = inject(AdminApi);
   private http = inject(HttpClient);
+
+  private readonly companyApiUrl = 'https://localhost:7082/api/Company';
 
   Math = Math;
 
@@ -99,16 +106,21 @@ export class AdminCompanies implements OnInit {
   touchedFields: { [key: string]: boolean } = {};
 
   ngOnInit(): void {
+    // تنظيف أي بيانات قديمة مخزنة محلياً كانت تحجب بيانات السيرفر الحقيقية
+    try {
+      localStorage.removeItem('nfd_company_status_overrides');
+      localStorage.removeItem('nfd_local_companies');
+    } catch { }
+
     this.loadCompaniesFromDatabase();
   }
 
-  // دوال فحص الحالة لتعمل مع الأرقام والنصوص بدقة 100%
   isApproved(status: any): boolean {
     return status === 1 || status === '1' || status === 'Approved' || status === 'approved';
   }
 
   isPending(status: any): boolean {
-    return status === 0 || status === '0' || status === 'PendingApproval' || status === 'pending';
+    return status === 0 || status === '0' || status === 'PendingApproval' || status === 'pending' || status === 'Pending';
   }
 
   isRejected(status: any): boolean {
@@ -144,78 +156,94 @@ export class AdminCompanies implements OnInit {
   }
 
   // =========================================================================
-  // جلب الشركات مع دمج تعديلات الـ LocalStorage للحفاظ على البيانات عند الـ Refresh
+  // جلب الشركات مباشرة من الباك إند الحقيقي (بورت 7082)
   // =========================================================================
   loadCompaniesFromDatabase(): void {
     this.isLoading.set(true);
 
-    this.api.getCompanies().subscribe({
+    this.http.get<any>(this.companyApiUrl).pipe(
+      catchError(() => this.api.getCompanies())
+    ).subscribe({
       next: (res: any) => {
         let rawList: any[] = [];
         if (Array.isArray(res)) rawList = res;
         else if (res && Array.isArray(res.data)) rawList = res.data;
         else if (res && Array.isArray(res.result)) rawList = res.result;
 
-        // قراءة التعديلات المحفوظة محلياً لضمان عدم اختفائها عند الـ Refresh
-        let overrides: any = {};
-        let localCompanies: HostCompany[] = [];
-        try {
-          overrides = JSON.parse(localStorage.getItem('nfd_company_status_overrides') || '{}');
-          localCompanies = JSON.parse(localStorage.getItem('nfd_local_companies') || '[]');
-        } catch (e) {
-          console.warn('LocalStorage parse error:', e);
-        }
-
         const mapped: HostCompany[] = rawList.map((item: any) => {
           const compId = Number(item.companyId ?? item.CompanyId ?? item.id ?? item.Id ?? 0);
+          const supervisors = item.supervisors ?? item.Supervisors ?? [];
+          const branches = item.branches ?? item.Branches ?? [];
+          const programs = item.programs ?? item.Programs ?? [];
+          const departments = item.departments ?? item.Departments ?? [];
 
-          // إذا عدل المستخدم هذه الشركة سابقاً، يتم الحفاظ على حالتها المحدثة
-          const hasOverride = overrides[compId] || overrides[String(compId)];
-          const finalStatus = hasOverride ? hasOverride.status : (item.status ?? item.Status ?? 0);
-          const finalReason = hasOverride ? hasOverride.reason : (item.rejectionReason ?? item.RejectionReason ?? '');
+          const firstSup = Array.isArray(supervisors) && supervisors.length > 0 ? supervisors[0] : null;
+          const firstBranch = Array.isArray(branches) && branches.length > 0 ? branches[0] : null;
 
           const cr = item.commercialRegister ?? item.CommercialRegister ?? item.crNumber ?? item.CrNumber ?? '—';
-          const cityName = item.city ?? item.City ?? item.address ?? item.Address ?? 'مسقط';
-
-          // قراءة الشعار (logo) سواء أرجعه الـ API بحرف صغير أو كبير
+          const branchLoc = firstBranch ? (firstBranch.location ?? firstBranch.Location ?? null) : null;
+          const cityName = item.city ?? item.City ?? item.address ?? item.Address ?? branchLoc ?? 'مسقط';
           const companyLogo = item.logo ?? item.Logo ?? null;
+
+          const contactPerson =
+            item.contactName ??
+            item.ContactName ??
+            item.contactPerson ??
+            firstSup?.fullName ??
+            firstSup?.FullName ??
+            'مسؤول الشركة';
+
+          const contactEmail =
+            item.email ??
+            item.Email ??
+            firstSup?.email ??
+            firstSup?.Email ??
+            '';
+
+          const contactPhone =
+            item.phone ??
+            item.Phone ??
+            firstSup?.phone ??
+            firstSup?.Phone ??
+            '';
 
           return {
             companyId: compId,
             companyName: item.companyName ?? item.CompanyName ?? 'شركة بدون اسم',
-            commercialRegister: cr,
-            crNumber: cr,
-            workField: item.workField ?? item.WorkField ?? 'تقنية المعلومات',
+            commercialRegister: cr || '—',
+            crNumber: cr || '—',
+            workField: item.workField ?? item.WorkField ?? 'غير محدد',
             city: cityName,
             address: item.address ?? item.Address ?? cityName,
-            capacity: Number(item.capacity ?? item.Capacity ?? 10),
-            contactName: item.contactName ?? item.ContactName ?? item.contactPerson ?? '',
-            email: item.email ?? item.Email ?? '',
-            phone: item.phone ?? item.Phone ?? '',
-            logo: companyLogo, // 👈 تمت إضافة اللوجو هنا
-            status: finalStatus,
-            rejectionReason: finalReason,
-            programsCount: Number(item.programsCount ?? item.ProgramsCount ?? 2),
-            activeTraineesCount: Number(item.activeTraineesCount ?? item.ActiveTraineesCount ?? 0),
-            createdAt: item.createdAt ?? item.CreatedAt ?? ''
+            capacity: Number(item.capacity ?? item.Capacity ?? 0),
+            contactName: contactPerson,
+            email: contactEmail,
+            phone: contactPhone,
+            logo: companyLogo,
+            status: item.status ?? item.Status ?? 0,
+            rejectionReason: item.rejectionReason ?? item.RejectionReason ?? '',
+            programsCount: Number(item.programsCount ?? item.ProgramsCount ?? programs.length ?? 0),
+            batchesCount: Number(item.batchesCount ?? item.BatchesCount ?? 0),
+            activeTraineesCount: Number(
+              item.traineesCount ??
+              item.TraineesCount ??
+              item.activeTraineesCount ??
+              item.ActiveTraineesCount ??
+              0
+            ),
+            createdAt: item.createdAt ?? item.CreatedAt ?? item.approvalDate ?? item.ApprovalDate ?? '',
+            supervisors,
+            branches,
+            programs,
+            departments
           };
         });
 
-        // دمج الشركات المضافة محلياً في حال عدم مزامنتها مع الـ API
-        const existingIds = new Set(mapped.map(c => Number(c.companyId)));
-        const extraLocal = localCompanies.filter(c => !existingIds.has(Number(c.companyId)));
-
-        this.companies.set([...extraLocal, ...mapped]);
+        this.companies.set(mapped);
         this.isLoading.set(false);
       },
       error: (err: any) => {
-        console.warn('تعذر جلب البيانات من الـ API، جاري تحميل النسخة المحفوظة محلياً:', err);
-        try {
-          const localList = JSON.parse(localStorage.getItem('nfd_local_companies') || '[]');
-          if (localList.length > 0) {
-            this.companies.set(localList);
-          }
-        } catch (e) { }
+        console.error('❌ تعذر جلب الشركات من السيرفر:', err);
         this.isLoading.set(false);
       }
     });
@@ -242,7 +270,7 @@ export class AdminCompanies implements OnInit {
     this.companies().forEach(c => {
       const loc = c.city || c.address;
       if (loc && loc.trim()) {
-        const city = loc.split('/')[0].split('،')[0].trim();
+        const city = loc.split('/')[0].split('،')[0].split(',')[0].trim();
         if (city) set.add(city);
       }
     });
@@ -284,7 +312,15 @@ export class AdminCompanies implements OnInit {
         const contact = normalizeArabic(c.contactName || '');
         const city = normalizeArabic(c.city || c.address || '');
         const cr = (c.commercialRegister || '').toLowerCase();
-        return name.includes(query) || field.includes(query) || contact.includes(query) || city.includes(query) || cr.includes(query);
+        const email = (c.email || '').toLowerCase();
+        return (
+          name.includes(query) ||
+          field.includes(query) ||
+          contact.includes(query) ||
+          city.includes(query) ||
+          cr.includes(query) ||
+          email.includes(query)
+        );
       });
     }
 
@@ -300,6 +336,14 @@ export class AdminCompanies implements OnInit {
       list.sort((a, b) => (Number(b.capacity) || 0) - (Number(a.capacity) || 0));
     } else if (this.capacitySortFilter === 'LOW_CAPACITY') {
       list.sort((a, b) => (Number(a.capacity) || 0) - (Number(b.capacity) || 0));
+    } else {
+      // الترتيب الافتراضي: الشركات الجديدة قيد المراجعة أولاً، ثم الأحدث تسجيلاً (أعلى CompanyId)
+      list.sort((a, b) => {
+        const aPending = this.isPending(a.status) ? 1 : 0;
+        const bPending = this.isPending(b.status) ? 1 : 0;
+        if (aPending !== bPending) return bPending - aPending;
+        return Number(b.companyId) - Number(a.companyId);
+      });
     }
 
     return list;
@@ -335,7 +379,12 @@ export class AdminCompanies implements OnInit {
   }
 
   isAnyFilterActive(): boolean {
-    return Boolean(this.searchTerm.trim().length > 0 || this.cityFilter !== 'ALL' || this.workFieldFilter !== 'ALL' || this.capacitySortFilter !== 'DEFAULT');
+    return Boolean(
+      this.searchTerm.trim().length > 0 ||
+      this.cityFilter !== 'ALL' ||
+      this.workFieldFilter !== 'ALL' ||
+      this.capacitySortFilter !== 'DEFAULT'
+    );
   }
 
   resetAllFilters(): void {
@@ -363,8 +412,8 @@ export class AdminCompanies implements OnInit {
     const total = this.totalPages();
     const current = this.currentPage();
     const pages: number[] = [];
-    let start = Math.max(1, current - 2);
-    let end = Math.min(total, start + 4);
+    const start = Math.max(1, current - 2);
+    const end = Math.min(total, start + 4);
     for (let i = start; i <= end; i++) pages.push(i);
     return pages;
   }
@@ -382,82 +431,72 @@ export class AdminCompanies implements OnInit {
   }
 
   // ============================================================
-  // دالة التحديث الدائم لحالة الشركة وحفظها من الضياع بعد الـ Refresh
+  // تحديث حالة الشركة فعلياً في SQL Server (اعتماد / رفض / إيقاف)
   // ============================================================
-  updateCompanyStatus(company: HostCompany | null | undefined, newStatusText: 'Approved' | 'Suspended' | 'Rejected', reason: string = ''): void {
+  updateCompanyStatus(
+    company: HostCompany | null | undefined,
+    newStatusText: 'Approved' | 'Suspended' | 'Rejected',
+    reason: string = ''
+  ): void {
     if (!company) return;
 
     this.isSaving.set(true);
 
     const numericId = Number(company.companyId);
-    const statusCode = newStatusText === 'Approved' ? 1 : newStatusText === 'Suspended' ? 3 : 2;
+    const previousStatus = company.status;
+    const previousReason = company.rejectionReason;
 
-    console.log(`[Nafath] جاري حفظ الحالة نهائياً للشركة رقم (${numericId}):`, newStatusText);
-
-    // 1. تحديث الحالة في الواجهة فوراً
+    // تحديث فوري في الواجهة
     this.companies.update(list =>
-      list.map(c => Number(c.companyId) === numericId
-        ? { ...c, status: statusCode, rejectionReason: reason || undefined }
-        : c
+      list.map(c =>
+        Number(c.companyId) === numericId
+          ? { ...c, status: newStatusText, rejectionReason: reason || undefined }
+          : c
       )
     );
 
     if (this.selectedCompanyDetails && Number(this.selectedCompanyDetails.companyId) === numericId) {
       this.selectedCompanyDetails = {
         ...this.selectedCompanyDetails,
-        status: statusCode,
+        status: newStatusText,
         rejectionReason: reason || undefined
       };
     }
     this.filterVersion.update(v => v + 1);
 
-    // 2. حفظ التعديل في LocalStorage لضمان بقائه ثابتاً بعد Refresh المتصفح
-    this.saveStatusToLocalStorage(numericId, statusCode, reason);
+    const statusPayload = {
+      status: newStatusText,
+      rejectionReason: reason || null
+    };
 
-    // 3. استدعاء API الباك إند
-    const baseUrl = 'https://localhost:7082/api/Company';
-    let request$;
+    const fallbackPut$ =
+      newStatusText === 'Approved'
+        ? this.http.put(`${this.companyApiUrl}/${numericId}/approve`, {})
+        : newStatusText === 'Suspended'
+          ? this.http.put(`${this.companyApiUrl}/${numericId}/suspend`, {})
+          : this.http.put(`${this.companyApiUrl}/${numericId}/reject`, { rejectionReason: reason });
 
-    if (newStatusText === 'Approved') {
-      request$ = this.http.put(`${baseUrl}/${numericId}/approve`, {});
-    } else if (newStatusText === 'Suspended') {
-      request$ = this.http.put(`${baseUrl}/${numericId}/suspend`, {});
-    } else {
-      request$ = this.http.put(`${baseUrl}/${numericId}/reject`, { rejectionReason: reason });
-    }
-
-    request$.subscribe({
-      next: (res: any) => {
-        console.log(`✅ [Nafath] تم الحفظ بنجاح في قاعدة البيانات:`, res);
+    this.http.patch(`${this.companyApiUrl}/${numericId}/status`, statusPayload).pipe(
+      catchError(() => fallbackPut$)
+    ).subscribe({
+      next: () => {
         this.isSaving.set(false);
+        this.loadCompaniesFromDatabase();
       },
       error: (err: any) => {
-        console.warn(`⚠️ [Nafath] تم حفظ التعديل محلياً نظراً لتعذر الاتصال بالـ API:`, err);
+        console.error('❌ تعذر تحديث حالة الشركة في قاعدة البيانات:', err);
+        // التراجع عن التغيير المؤقت في حال فشل السيرفر
+        this.companies.update(list =>
+          list.map(c =>
+            Number(c.companyId) === numericId
+              ? { ...c, status: previousStatus, rejectionReason: previousReason }
+              : c
+          )
+        );
+        this.filterVersion.update(v => v + 1);
         this.isSaving.set(false);
       }
     });
-  }
-
-  // حفظ التعديلات محلياً لتظل ثابتة دائماً
-  private saveStatusToLocalStorage(id: number, status: number, reason: string): void {
-    try {
-      const saved = JSON.parse(localStorage.getItem('nfd_company_status_overrides') || '{}');
-      saved[id] = { status, reason, updatedAt: new Date().toISOString() };
-      saved[String(id)] = { status, reason, updatedAt: new Date().toISOString() };
-      localStorage.setItem('nfd_company_status_overrides', JSON.stringify(saved));
-    } catch (e) {
-      console.warn('LocalStorage save error:', e);
-    }
-  }
-
-  private saveNewCompanyToLocalStorage(company: HostCompany): void {
-    try {
-      const list: HostCompany[] = JSON.parse(localStorage.getItem('nfd_local_companies') || '[]');
-      list.unshift(company);
-      localStorage.setItem('nfd_local_companies', JSON.stringify(list));
-    } catch (e) {
-      console.warn('LocalStorage save company error:', e);
-    }
   }
 
   openRejectModal(company: HostCompany): void {
@@ -518,11 +557,6 @@ export class AdminCompanies implements OnInit {
     return !!this.touchedFields[field];
   }
 
-  // =========================================================================
-  // ⭐ دوال الـ Validation المحدثة والمشددة
-  // =========================================================================
-
-  // 1. اسم الشركة: لا يقل عن 3 أحرف، ويمنع الأرقام البحتة
   companyNameError(): string | null {
     const val = (this.newCompany.companyName || '').trim();
     if (!val) return 'اسم المنشأة أو الشركة مطلوب.';
@@ -534,7 +568,6 @@ export class AdminCompanies implements OnInit {
     return null;
   }
 
-  // 2. رقم السجل التجاري: صيغة السجل العماني المعتمدة (5-10 أرقام أو بادئة CR-)
   commercialRegisterError(): string | null {
     const val = (this.newCompany.commercialRegister || '').trim();
     if (!val) return 'رقم السجل التجاري مطلوب.';
@@ -544,7 +577,6 @@ export class AdminCompanies implements OnInit {
     return null;
   }
 
-  // 3. مجال العمل: أحرف فقط لا تقل عن 3 أحرف
   workFieldError(): string | null {
     const val = (this.newCompany.workField || '').trim();
     if (!val) return 'مجال عمل الشركة مطلوب.';
@@ -555,7 +587,6 @@ export class AdminCompanies implements OnInit {
     return null;
   }
 
-  // 4. المحافظة / المقر الرئيسي
   addressError(): string | null {
     const val = (this.newCompany.city || this.newCompany.address || '').trim();
     if (!val) return 'المقر أو المحافظة مطلوب.';
@@ -563,7 +594,6 @@ export class AdminCompanies implements OnInit {
     return null;
   }
 
-  // 5. اسم مسؤول الاتصال: اسم ثنائي وأحرف فقط بدون أرقام
   contactNameError(): string | null {
     const val = (this.newCompany.contactName || '').trim();
     if (!val) return 'اسم مسؤول الاتصال والتنسيق مطلوب.';
@@ -577,7 +607,6 @@ export class AdminCompanies implements OnInit {
     return null;
   }
 
-  // 6. البريد الإلكتروني الرسمي
   emailError(): string | null {
     const val = (this.newCompany.email || '').trim();
     if (!val) return 'البريد الإلكتروني مطلوب.';
@@ -588,17 +617,14 @@ export class AdminCompanies implements OnInit {
     return null;
   }
 
-  // 7. فحص رقم الهاتف العماني وفق المعايير الرسمية لهيئة تنظيم الاتصالات (TRA)
   phoneError(): string | null {
     const rawVal = (this.newCompany.phone || '').toString().trim();
     if (!rawVal) {
       return 'رقم الهاتف الرسمي مطلوب إجبارياً.';
     }
 
-    // 1. تحويل الأرقام العربية إلى إنجليزية وتنظيف المسافات والرموز
     let cleaned = convertArabicDigits(rawVal).replace(/[\s\-\(\)\.]/g, '');
 
-    // 2. إزالة المفتاح الدولي (+968 أو 00968 أو 968)
     if (cleaned.startsWith('+968')) {
       cleaned = cleaned.substring(4);
     } else if (cleaned.startsWith('00968')) {
@@ -607,17 +633,14 @@ export class AdminCompanies implements OnInit {
       cleaned = cleaned.substring(3);
     }
 
-    // 3. التحقق من احتوائه على أرقام فقط
     if (!/^\d+$/.test(cleaned)) {
       return 'رقم الهاتف غير صالح. يجب أن يحتوي على أرقام فقط.';
     }
 
-    // 4. فحص الطول (8 أرقام للمحلي)
     if (cleaned.length !== 8) {
       return `طول الرقم غير صحيح. يجب أن يتكون الرقم المحلي من 8 أرقام تماماً (أدخلت ${cleaned.length} من 8).`;
     }
 
-    // 5. فحص البادئة الرسمية (المتنقل: 7 أو 8 أو 9 | الثابت: 2)
     const prefix = cleaned.charAt(0);
     if (!['2', '7', '8', '9'].includes(prefix)) {
       return 'بداية الرقم غير صحيحة. الأرقام العمانية المعتمدة تبدأ بـ (9 أو 7 أو 8 للمتنقل) أو (2 للهاتف الثابت).';
@@ -626,7 +649,6 @@ export class AdminCompanies implements OnInit {
     return null;
   }
 
-  // 8. الطاقة الاستيعابية: رقم صحيح موجب
   capacityError(): string | null {
     const val = Number(this.newCompany.capacity);
     if (!val || isNaN(val) || val <= 0) {
@@ -671,10 +693,11 @@ export class AdminCompanies implements OnInit {
   }
 
   // =========================================================================
-  // حفظ وإرسال الشركة لقاعدة البيانات والباك إند (محدث ومضمون 100%)
+  // حفظ وإرسال الشركة لقاعدة البيانات
   // =========================================================================
   submitAddCompany(): void {
-    ['companyName', 'commercialRegister', 'workField', 'city', 'address', 'capacity', 'contactName', 'email', 'phone'].forEach(f => this.markTouched(f));
+    ['companyName', 'commercialRegister', 'workField', 'city', 'address', 'capacity', 'contactName', 'email', 'phone']
+      .forEach(f => this.markTouched(f));
 
     if (!this.isFormValid()) {
       this.addError.set('يرجى تصحيح الحقول المحددة باللون الأحمر قبل الحفظ.');
@@ -687,14 +710,14 @@ export class AdminCompanies implements OnInit {
     const cityVal = (this.newCompany.city || this.newCompany.address || 'مسقط').trim();
     const crVal = this.newCompany.commercialRegister.trim();
     const phoneVal = (this.newCompany.phone || '').toString().trim();
+    const emailVal = this.newCompany.email.trim();
+    const contactVal = (this.newCompany.contactName || '').trim();
 
-    // إنشاء رابط الشعار إن وُجد
     const cleanName = compName.replace(/\s+/g, '_');
     const autoLogo = (this.newCompany.logo && this.newCompany.logo.trim())
       ? this.newCompany.logo.trim()
       : `https://cdn.nafadh.test/logos/${cleanName}.png`;
 
-    // 🟢 تجهيز كائن البيانات مع userId: null لتخطي شرط UserExists في C#
     const payload: any = {
       companyName: compName,
       commercialRegister: crVal,
@@ -703,33 +726,28 @@ export class AdminCompanies implements OnInit {
       city: cityVal,
       address: cityVal,
       capacity: Number(this.newCompany.capacity) || 10,
-      contactName: (this.newCompany.contactName || '').trim(),
-      email: this.newCompany.email.trim(),
+      contactName: contactVal,
+      supervisorEmail: emailVal,
+      supervisorPhone: phoneVal,
+      email: emailVal,
       phone: phoneVal,
       logo: autoLogo,
-      status: 1, // معتمدة
+      status: 'Approved',
       approvalDate: new Date().toISOString(),
-      userId: null, // 👈 تركه null ضروري جداً لكي لا يرفض السيرفر العملية بـ User Not Found
+      userId: null,
       rejectionReason: null
     };
 
-    const baseUrl = 'https://localhost:7082/api/Company';
-
-    console.log('[Nafath] 🚀 جاري إرسال الشركة الجديدة إلى:', baseUrl, payload);
-
-    // استخدام http.post المباشر على بورت 7082
-    this.http.post(baseUrl, payload).subscribe({
-      next: (created: any) => {
-        console.log('✅ [Nafath Success] تم حفظ الشركة في قاعدة بيانات SQL Server بنجاح:', created);
+    this.http.post(this.companyApiUrl, payload).subscribe({
+      next: () => {
         this.loadCompaniesFromDatabase();
         this.isSaving.set(false);
         this.closeAddModal();
-        alert('✅ تم تسجيل الشركة بنجاح وحفظها في قاعدة البيانات!');
       },
       error: (err: any) => {
-        console.error('❌ [Nafath Error] فشل الحفظ في السيرفر:', err);
+        console.error('❌ فشل الحفظ في السيرفر:', err);
         const errMsg = err.error?.message || err.message || 'خطأ غير معروف';
-        alert(`❌ تعذر حفظ الشركة في الداتابيز: ${errMsg}`);
+        this.addError.set(`تعذر حفظ الشركة في قاعدة البيانات: ${errMsg}`);
         this.isSaving.set(false);
       }
     });
@@ -750,5 +768,4 @@ export class AdminCompanies implements OnInit {
   }
 }
 
-// تصدير الاسم البديل لضمان التوافق التام مع الـ Routes
 export { AdminCompanies as HostCompaniesComponent };

@@ -6,6 +6,8 @@ import {
   signal,
 } from '@angular/core';
 
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -34,6 +36,8 @@ import {
 })
 export class CompanyDashboard implements OnInit {
   private readonly api = inject(CompanyApi);
+  private readonly http = inject(HttpClient);
+  readonly announcementsError = signal(false);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
@@ -83,8 +87,40 @@ export class CompanyDashboard implements OnInit {
 
   averageAttendancePercent = signal(0);
 
+  topPerformersCount = signal(0);
+  topPerformersAveragePercent = signal(0);
+
   topPerformers =
     signal<CompanyDashboardTraineeDto[]>([]);
+
+  // How many rows each bottom card shows (user picks 5 / 10 / 15 / all).
+  // 0 means "all".
+  readonly limitOptions = [5, 10, 15, 0];
+  topLimit = signal(5);
+  riskLimit = signal(5);
+  warnLimit = signal(5);
+
+  setTopLimit(value: string | number): void {
+    this.topLimit.set(this.toLimit(value));
+  }
+
+  setRiskLimit(value: string | number): void {
+    this.riskLimit.set(this.toLimit(value));
+  }
+
+  setWarnLimit(value: string | number): void {
+    this.warnLimit.set(this.toLimit(value));
+  }
+
+  /** Returns the first n items, or every item when n is 0 ("all"). */
+  limited<T>(items: T[], n: number): T[] {
+    return n === 0 ? items : items.slice(0, n);
+  }
+
+  private toLimit(value: string | number): number {
+    const n = Number(value);
+    return this.limitOptions.includes(n) ? n : 5;
+  }
 
   atRisk =
     signal<CompanyDashboardTraineeDto[]>([]);
@@ -192,24 +228,17 @@ export class CompanyDashboard implements OnInit {
    * This remains a presentation-only calculation.
    * It is NOT used to determine who is a top performer.
    */
-  topPerformersAverage = computed(() => {
-    const trainees = this.topPerformers();
+  // The KPI cards keep counting the first 5 only, so changing a card's
+  // dropdown never changes the KPI numbers or the average.
+  kpiTopPerformersCount = computed(() => this.topPerformersCount());
+  // Real count of at-risk trainees (the lists are no longer capped).
+  kpiAtRisk = computed(() => this.atRisk());
 
-    if (!trainees.length) {
-      return 0;
-    }
-
-    return Math.round(
-      trainees.reduce(
-        (sum, trainee) =>
-          sum +
-          Number(
-            trainee.performancePercent || 0
-          ),
-        0
-      ) / trainees.length
-    );
-  });
+  // Average performance of ALL active trainees with performance >= 80%
+  // (calculated by the backend, not from the displayed rows).
+  topPerformersAverage = computed(() =>
+    Math.round(Number(this.topPerformersAveragePercent() || 0))
+  );
 
   // ============================================================
   // Lifecycle
@@ -224,6 +253,7 @@ export class CompanyDashboard implements OnInit {
   // ============================================================
 
   refreshData(): void {
+    if (this.loading()) return;
     const companyId = this.companyId();
 
     /**
@@ -250,6 +280,9 @@ export class CompanyDashboard implements OnInit {
 
     this.loading.set(true);
     this.loadError.set(false);
+    this.announcementsError.set(false);
+    this.announcementsDismissed.set(false);
+    this.selectedOpportunity.set(null);
     this.barsAnimating.set(false);
 
     /**
@@ -268,9 +301,12 @@ export class CompanyDashboard implements OnInit {
       // Announcements are secondary content: if they fail, the dashboard
       // must still render its company statistics.
       announcements:
-        this.api.getPlatformAnnouncements().pipe(
+        this.http.get<AnnouncementDto[]>(
+          `${environment.apiBaseUrl}/CompanyDashboard/${companyId}/announcements`
+        ).pipe(
           catchError((error) => {
-            console.warn('Platform announcements failed to load:', error);
+            console.warn('Company announcements failed to load:', error);
+            this.announcementsError.set(true);
             return of([] as AnnouncementDto[]);
           })
         ),
@@ -387,6 +423,14 @@ export class CompanyDashboard implements OnInit {
       dashboard.topPerformers ?? []
     );
 
+    this.topPerformersCount.set(
+      Number(dashboard.topPerformersCount || 0)
+    );
+
+    this.topPerformersAveragePercent.set(
+      Number(dashboard.topPerformersAveragePercent || 0)
+    );
+
     // ------------------------------------------------------------
     // At-risk trainees
     //
@@ -442,6 +486,8 @@ export class CompanyDashboard implements OnInit {
     this.capacity.set(null);
 
     this.topPerformers.set([]);
+    this.topPerformersCount.set(0);
+    this.topPerformersAveragePercent.set(0);
 
     this.atRisk.set([]);
 

@@ -50,18 +50,21 @@ namespace Nafadh_Backend.Controllers
             if (!companyExists)
                 return NotFound(new { message = "Company not found." });
 
-            var programIds = await _context.NFD_CompanyPrograms
+            var approvedProgramIds = await _context.NFD_CompanyPrograms
                 .AsNoTracking()
                 .Where(cp => cp.CompanyId == companyId)
                 .Select(cp => cp.ProgramId)
                 .ToListAsync();
+
+            var programIds = approvedProgramIds.Distinct().ToList();
 
             if (programIds.Count == 0)
                 return Ok(Array.Empty<CompanyProgramSummaryDTO>());
 
             var programs = await _context.NFD_Programs
                 .AsNoTracking()
-                .Where(p => programIds.Contains(p.ProgramId))
+                .Where(p => programIds.Contains(p.ProgramId)
+                    && p.Status == Nafadh_Backend.Enums.NFD_ProgramStatus.Published)
                 .OrderBy(p => p.Title)
                 .Select(p => new CompanyProgramSummaryDTO
                 {
@@ -72,7 +75,7 @@ namespace Nafadh_Backend.Controllers
                     DurationHours = p.DurationHours,
                     Price = p.Price,
                     Status = p.Status.ToString(),
-                    ApprovedForCompany = true,
+                    ApprovedForCompany = approvedProgramIds.Contains(p.ProgramId),
                     BatchCount = p.Batches.Count,
                     EnrollmentCount = p.Batches
                         .SelectMany(b => b.Enrollments)
@@ -125,11 +128,12 @@ namespace Nafadh_Backend.Controllers
                 .FirstOrDefaultAsync(cp => cp.CompanyId == companyId && cp.ProgramId == programId);
 
             if (companyProgram is null)
-                return NotFound(new { message = "This program is not linked to the company." });
+                return NotFound(new { message = "This program is not approved for the company." });
 
             var program = await _context.NFD_Programs
                 .AsNoTracking()
-                .Where(p => p.ProgramId == programId)
+                .Where(p => p.ProgramId == programId
+                    && p.Status == Nafadh_Backend.Enums.NFD_ProgramStatus.Published)
                 .Select(p => new
                 {
                     p.ProgramId,
@@ -233,7 +237,7 @@ namespace Nafadh_Backend.Controllers
                 DurationHours = program.DurationHours,
                 Price = program.Price,
                 Status = program.Status,
-                ApprovedForCompany = true,
+                ApprovedForCompany = companyProgram is not null,
                 BatchCount = batches.Count,
                 EnrollmentCount = enrollments.Count,
                 CurrentTraineeCount = activeCount,
@@ -317,6 +321,7 @@ namespace Nafadh_Backend.Controllers
         // POST: api/CompanyProgram
         // Qualify a company for a program.
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Add([FromBody] NFD_CompanyProgramInputDTO dto)
         {
             var (result, error) = await _service.AddAsync(dto);
@@ -328,6 +333,7 @@ namespace Nafadh_Backend.Controllers
         // DELETE: api/CompanyProgram?companyId=1&programId=2
         // Remove a company's eligibility for a program.
         [HttpDelete]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete([FromQuery] int companyId, [FromQuery] int programId)
         {
             var deleted = await _service.DeleteAsync(companyId, programId);

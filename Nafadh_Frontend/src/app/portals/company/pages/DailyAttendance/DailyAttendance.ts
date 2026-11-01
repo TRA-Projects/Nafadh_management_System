@@ -211,7 +211,29 @@ export class CompanyDailyAttendance implements OnInit {
     );
   });
 
+  selectedDaySpecialty = signal<string | null>(null);
+  specialtySearch = signal('');
+  filteredSpecialtyOptions = computed(() => {
+    const query = this.specialtySearch().trim().toLocaleLowerCase();
+    const specialties = [...new Set(this.trainers().map(trainer =>
+      trainer.specialty?.trim() || '—'
+    ))].sort((a, b) => a.localeCompare(b, 'ar'));
+    return specialties.filter(specialty => !query || specialty.toLocaleLowerCase().includes(query));
+  });
+
   trainers = signal<CompanyTrainerDto[]>([]);
+
+  failedTrainerImages = signal<number[]>([]);
+
+  trainerImageUrl(trainer: CompanyTrainerDto): string {
+    const path = trainer.profileImageUrl?.trim();
+    return path ? this.api.resolveFileUrl(path) : '';
+  }
+
+  markTrainerImageFailed(trainerId: number): void {
+    this.failedTrainerImages.update(ids => ids.includes(trainerId) ? ids : [...ids, trainerId]);
+  }
+
 
   records = signal<TrainerAttendanceDto[]>([]);
 
@@ -585,7 +607,8 @@ export class CompanyDailyAttendance implements OnInit {
 
 
   dayRows = computed(() => this.rows().filter(row =>
-    this.selectedDayTrainerId() === null || row.trainer.trainerId === this.selectedDayTrainerId()
+    (this.selectedDayTrainerId() === null || row.trainer.trainerId === this.selectedDayTrainerId()) &&
+    (this.selectedDaySpecialty() === null || (row.trainer.specialty?.trim() || '—') === this.selectedDaySpecialty())
   ));
 
   counts = computed(() => {
@@ -829,7 +852,12 @@ ngOnInit(): void {
 
       next: ({ trainers, records }) => {
 
-        this.trainers.set(trainers ?? []);
+        this.failedTrainerImages.set([]);
+        this.trainers.set((trainers ?? []).map(trainer => ({
+          ...trainer,
+          profileImageUrl: trainer.profileImageUrl ??
+            (trainer as CompanyTrainerDto & { ProfileImageUrl?: string | null }).ProfileImageUrl ?? null,
+        })));
 
         this.records.set(records ?? []);
 

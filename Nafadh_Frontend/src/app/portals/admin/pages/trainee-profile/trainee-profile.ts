@@ -59,7 +59,7 @@ export class AdminTraineeProfile implements OnInit {
   enrollment = signal<EnrollmentDto | null>(null);
   avatarBroken = signal<boolean>(false);
 
-  // النوافذ المنبثقة داخل البروفايل (المراسلة + السيرة الذاتية + الانسحاب)
+  // النوافذ المنبثقة داخل البروفايل
   showMessageModal = signal<boolean>(false);
   messageBody = signal<string>('');
   messageHistory = signal<{ sender: string; text: string; date: string; isAdmin: boolean }[]>([]);
@@ -72,6 +72,88 @@ export class AdminTraineeProfile implements OnInit {
   withdrawalNotes = signal<string>('');
   withdrawalStatus = signal<'None' | 'Pending' | 'Approved' | 'Rejected'>('None');
   isProcessingWithdrawal = signal<boolean>(false);
+
+  // إشارات (Signals) نظام سجل ونتائج الاختبارات الديناميكي
+  showExamResultsModal = signal<boolean>(false);
+  showExamDetailsModal = signal<boolean>(false);
+  selectedExam = signal<any | null>(null);
+
+  examFilter = signal<string>('ALL');
+  examSearchQuery = signal<string>('');
+
+  // 🔴 تبدأ بمصفوفة فارغة ويتم تعبئتها ديناميكياً من الباك إند
+  traineeExams = signal<any[]>([]);
+
+  // تصنيف نتيجة الاختبار وفق حالات الـ API الفعلية
+  private isExamCompleted(exam: any): boolean {
+    return ['Graded', 'Completed', 'مكتمل'].includes(String(exam.status ?? ''));
+  }
+
+  private isExamPending(exam: any): boolean {
+    return ['Pending', 'Submitted', 'Expired', 'قيد التصحيح'].includes(String(exam.status ?? ''));
+  }
+
+  private isExamFailed(exam: any): boolean {
+    // لا نستنتج الرسوب من الدرجة إن لم يكن اعتماد النتيجة مؤكداً
+    return exam.isPassed === false || ['Failed', 'لم يجتز'].includes(String(exam.status ?? ''));
+  }
+
+  // البحث والفلترة باستخدام حقول QuizResultDto
+  filteredExams = computed(() => {
+    const query = this.examSearchQuery().toLowerCase().trim();
+    const filter = this.examFilter();
+    return this.traineeExams().filter((exam) => {
+      const title = String(exam.quizTitle || exam.examTitle || exam.title || '').toLowerCase();
+      const batch = String(exam.moduleName || exam.moduleTitle || exam.batchName || '').toLowerCase();
+      const matchesSearch = !query || title.includes(query) || batch.includes(query);
+      const matchesFilter =
+        filter === 'ALL' ||
+        (filter === 'COMPLETED' && this.isExamCompleted(exam)) ||
+        (filter === 'PENDING' && this.isExamPending(exam)) ||
+        (filter === 'FAILED' && this.isExamFailed(exam));
+      return matchesSearch && matchesFilter;
+    });
+  });
+
+  completedExamsCount = computed(() =>
+    this.traineeExams().filter((exam) => this.isExamCompleted(exam)).length
+  );
+
+  pendingExamsCount = computed(() =>
+    this.traineeExams().filter((exam) => this.isExamPending(exam)).length
+  );
+
+  failedExamsCount = computed(() =>
+    this.traineeExams().filter((exam) => this.isExamFailed(exam)).length
+  );
+
+  // متوسط النسب للاختبارات المصححة فقط؛ Pending لا تدخل في المتوسط
+  examAverageScore = computed<number | null>(() => {
+    const graded = this.traineeExams().filter((exam) =>
+      this.isExamCompleted(exam) &&
+      exam.percentage !== null && exam.percentage !== undefined &&
+      Number.isFinite(Number(exam.percentage))
+    );
+    if (!graded.length) return null;
+    const sum = graded.reduce((total, exam) => total + Number(exam.percentage), 0);
+    return Math.round(sum / graded.length);
+  });
+
+  examStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      Graded: 'تم التصحيح',
+      Completed: 'مكتمل',
+      Pending: 'قيد التصحيح',
+      Submitted: 'تم التسليم',
+      Expired: 'انتهى الوقت',
+      Terminated: 'تم إنهاؤه',
+      Failed: 'لم يجتز',
+      'مكتمل': 'مكتمل',
+      'قيد التصحيح': 'قيد التصحيح',
+      'لم يجتز': 'لم يجتز'
+    };
+    return labels[status] || status || 'غير محدد';
+  }
 
   // أسباب مقنعة جاهزة لرفض طلب الانسحاب
   presetRejectionReasons: string[] = [
@@ -232,8 +314,22 @@ export class AdminTraineeProfile implements OnInit {
     this.openExternalUrl(this.linkedInUrl());
   }
 
+  // دوال التحكم بنوافذ وسجل الاختبارات
+  openExamResultsModal(): void {
+    this.showExamResultsModal.set(true);
+  }
+
+  openExamDetails(exam: any): void {
+    this.selectedExam.set(exam);
+    this.showExamDetailsModal.set(true);
+  }
+
+  printExamStatement(): void {
+    window.print();
+  }
+
   /**
-   * تنزيل السيرة الذاتية (CV) للمتدرب على الجهاز مباشرة
+   * تنزيل السيرة الذاتية (CV) للمتدرب
    */
   downloadProfileCv(): void {
     const safeName = (this.fullName() || 'Trainee').replace(/\s+/g, '_');
@@ -338,7 +434,6 @@ export class AdminTraineeProfile implements OnInit {
     return (this.evaluationTypeLabels as Record<string, string>)[type] ?? type;
   }
 
-  // -------------------- دوال مساعدة لمزامنة الرسائل مع صفحة الجدول --------------------
   private getUnifiedStorageMessages(traineeId: number): { sender: string; text: string; date: string; isAdmin: boolean }[] {
     try {
       const raw1 = localStorage.getItem(`nfd_dm_trainee_${traineeId}`);
@@ -378,7 +473,6 @@ export class AdminTraineeProfile implements OnInit {
     } catch {}
   }
 
-  // -------------------- المراسلة المباشرة من داخل البروفايل --------------------
   openDirectMessageModal(): void {
     const id = this.trainee()?.traineeId || this.trainee()?.id;
     const name = this.fullName();
@@ -503,7 +597,6 @@ export class AdminTraineeProfile implements OnInit {
       });
   }
 
-  // -------------------- اعتماد أو رفض الانسحاب من داخل البروفايل --------------------
   openWithdrawalModal(): void {
     this.showWithdrawalModal.set(true);
   }
@@ -598,7 +691,6 @@ export class AdminTraineeProfile implements OnInit {
       next: (profile) => {
         this.trainee.set(profile);
 
-        // فحص التذاكر المفتوحة لمعرفة إن كان المتدرب قد رفع طلب انسحاب من بورتل المتدربين
         this.api
           .getOpenSupportTickets()
           .pipe(catchError(() => of([])))
@@ -676,8 +768,10 @@ export class AdminTraineeProfile implements OnInit {
       evaluations: enrollmentId
         ? this.api.getEvaluationsForEnrollment(enrollmentId).pipe(catchError(() => of([])))
         : of([]),
+      // 🟢 استدعاء نتائج الاختبارات ديناميكياً من قاعدة البيانات
+      exams: this.api.getTraineeExams(traineeId).pipe(catchError(() => of([])))
     }).subscribe({
-      next: ({ attendance, progress, warnings, modules, moduleProgress, evaluations }: any) => {
+      next: ({ attendance, progress, warnings, modules, moduleProgress, evaluations, exams }: any) => {
         this.processAttendance(attendance as RawAttendanceRow[]);
         this.completionPercentage.set(Math.round(progress?.percentage ?? 0));
         this.warnings.set(warnings ?? []);
@@ -686,6 +780,10 @@ export class AdminTraineeProfile implements OnInit {
           moduleProgress as RawModuleProgressRow[],
           evaluations as EvaluationDto[]
         );
+
+        // تعبئة نتائج الاختبارات القادمة من الباك إند
+        this.traineeExams.set(exams ?? []);
+
         this.isLoading.set(false);
       },
       error: (err) => {

@@ -1,15 +1,16 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router'; // 👈 1. أضفنا Router هنا
 import { AdminApi } from '../../services/admin-api';
-import { ConversationDetailDto, ConversationListItemDto, WarningDto } from '../../../../core/models/dtos';
+import { ConversationDetailDto, ConversationListItemDto, WarningDto, AdminBatchGroupDto,AdminBatchGroupMessageDto} from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-admin-communications',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './communications.html',
+  styleUrl: './communications.css'
 })
 export class AdminCommunications implements OnInit {
   private api = inject(AdminApi);
@@ -19,10 +20,42 @@ export class AdminCommunications implements OnInit {
   // 🌟 متغير لمعرفة هل أتينا من صفحة البرامج (لكي يظهر الزر فقط عند الحاجة)
   fromPrograms = signal<boolean>(false);
 
-  tab = signal<'company' | 'complaints' | 'warnings'>('company');
+  tab = signal<'company' | 'complaints' | 'warnings' | 'groups'>('company');
   companyThreads = signal<ConversationListItemDto[]>([]);
   complaintThreads = signal<ConversationListItemDto[]>([]);
   traineeWarnings = signal<WarningDto[]>([]);
+  batchGroups = signal<AdminBatchGroupDto[]>([]);
+  selectedBatchGroup = signal<AdminBatchGroupDto | null>(null);
+
+ batchGroupMessages = signal<AdminBatchGroupMessageDto[]>([]);
+
+ groupMessagesLoading = signal(false);
+
+ groupMessagesError = signal(false);
+  groupSearch = signal('');
+
+ filteredBatchGroups = computed(() => {
+  const search = this.groupSearch().trim().toLowerCase();
+
+  return this.batchGroups().filter(group =>
+    group.groupName.toLowerCase().includes(search) ||
+    group.batchName.toLowerCase().includes(search) ||
+    group.trainerName.toLowerCase().includes(search) ||
+    group.conversationId.toString().includes(search)
+  );
+});
+
+totalGroups = computed(() => this.batchGroups().length);
+
+openGroups = computed(() =>
+  this.batchGroups().filter(group => group.status === 'Open').length
+);
+
+totalMembers = computed(() =>
+  this.batchGroups().reduce((sum, group) => sum + group.membersCount, 0)
+);
+  groupsLoading = signal(false);
+  groupsError = signal(false);
   activeConversation = signal<ConversationDetailDto | null>(null);
   replyText = '';
   
@@ -83,6 +116,28 @@ export class AdminCommunications implements OnInit {
     this.router.navigate(['/admin/programs']);
   }
 
+  loadBatchGroups(): void {
+  this.groupsLoading.set(true);
+  this.groupsError.set(false);
+
+  this.api.getAdminBatchGroups().subscribe({
+    next: (groups) => {
+      this.batchGroups.set(groups || []);
+      this.groupsLoading.set(false);
+    },
+    error: (err) => {
+      console.error('Failed to load batch groups:', err);
+      this.groupsError.set(true);
+      this.groupsLoading.set(false);
+    }
+  });
+}
+
+showGroups(): void {
+  this.tab.set('groups');
+  this.loadBatchGroups();
+}
+
   open(id: number) {
     if (!id) return;
     this.api.getConversation(id).subscribe((c) => this.activeConversation.set(c));
@@ -112,4 +167,37 @@ export class AdminCommunications implements OnInit {
       this.replyText = '';
     }
   }
+
+  openBatchGroup(group: AdminBatchGroupDto): void {
+  this.selectedBatchGroup.set(group);
+  this.batchGroupMessages.set([]);
+  this.groupMessagesLoading.set(true);
+  this.groupMessagesError.set(false);
+
+  this.api.getAdminBatchGroupMessages(group.conversationId).subscribe({
+    next: (messages) => {
+      if (this.selectedBatchGroup()?.conversationId !== group.conversationId) {
+        return;
+      }
+
+      this.batchGroupMessages.set(messages);
+      this.groupMessagesLoading.set(false);
+    },
+    error: () => {
+      if (this.selectedBatchGroup()?.conversationId !== group.conversationId) {
+        return;
+      }
+
+      this.groupMessagesError.set(true);
+      this.groupMessagesLoading.set(false);
+    }
+  });
+}
+
+closeBatchGroup(): void {
+  this.selectedBatchGroup.set(null);
+  this.batchGroupMessages.set([]);
+  this.groupMessagesLoading.set(false);
+  this.groupMessagesError.set(false);
+}
 }

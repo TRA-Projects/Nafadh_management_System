@@ -845,3 +845,66 @@ textarea:focus-visible {
     }
   }
 }
+
+.reschedule-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: transparent;
+  color: #2563eb;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(37, 99, 235, 0.08);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+/* Scroll when live sessions exceed 5 */
+.session-list.scrollable {
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-inline-end: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #b8cde8 transparent;
+}
+
+.session-list.scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.session-list.scrollable::-webkit-scrollbar-thumb {
+  background: #b8cde8;
+  border-radius: 10px;
+}
+
+.session-list.scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+.session-actions .session-report-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 15px;
+  border: 1px solid #b9d9f4;
+  border-radius: 10px;
+  background: #eff7ff;
+  color: #0754ac;
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    background: #dceeff;
+  }
+}

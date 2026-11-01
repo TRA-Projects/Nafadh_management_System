@@ -11,6 +11,9 @@
   position: relative;
 }
 
+/* =========================================================
+   TOPBAR
+========================================================= */
 .topbar {
   position: fixed;
   top: 0;
@@ -28,23 +31,19 @@
   gap: 16px;
 }
 
-.logo {
+/* تجميع زر القائمة مع الشعار لضمان ترتيبهم في اليمين */
+.topbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
-  cursor: pointer;
+  gap: 12px;
   flex-shrink: 0;
+}
 
-  .logo-img {
-    height: 30px;
-    width: auto;
-    display: block;
-  }
-
-  .logo-sub {
-    font-size: 12px;
-    color: var(--color-text-tertiary);
-  }
+.logo {
+  display: flex; align-items: center; gap: 10px; cursor: pointer; flex-shrink: 0;
+  
+  .logo-img { height: 30px; width: auto; display: block; }
+  .logo-sub { font-size: 12px; color: var(--color-text-tertiary); font-weight: 700; }
 }
 
 .search-wrap {
@@ -95,6 +94,9 @@
   justify-content: center;
   color: var(--color-text-secondary);
   position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
 
   &:hover {
     background: rgba(0, 0, 0, 0.05);
@@ -109,11 +111,16 @@
   font-size: 12px;
   font-weight: 500;
   color: var(--color-text-secondary);
+  cursor: pointer;
 
   &:hover {
     background: #fff;
   }
 }
+
+/* =========================================================
+   NOTIFICATIONS
+========================================================= */
 
 .notif-wrap {
   position: relative;
@@ -156,6 +163,9 @@
   }
 }
 
+/* =========================================================
+   PROFILE
+========================================================= */
 .profile-chip {
   display: flex;
   align-items: center;
@@ -196,8 +206,15 @@
     font-size: 11px;
     color: var(--color-text-tertiary);
   }
+  
+  .who { text-align: right; }
+  .name { font-size: 12px; font-weight: 600; color: var(--color-text); }
+  .role { font-size: 11px; color: var(--color-text-tertiary); }
 }
 
+/* =========================================================
+   SIDEBAR
+========================================================= */
 // Sidebar sits on the physical RIGHT (matching the reference exactly), with
 // the logo directly above it — content flows to its left.
 .sidebar {
@@ -228,6 +245,7 @@ nav {
 }
 
 .nav-item {
+
   display: flex;
   align-items: center;
   gap: 12px;
@@ -238,6 +256,10 @@ nav {
   font-weight: 500;
   color: rgba(255, 255, 255, 0.65);
   text-align: right;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
 
   nfd-icon {
     color: rgba(255, 255, 255, 0.5);
@@ -273,6 +295,9 @@ nav {
   }
 }
 
+/* =========================================================
+   CONTENT
+========================================================= */
 .content {
   margin-top: var(--header-height);
   margin-right: var(--sidebar-width);
@@ -292,6 +317,9 @@ nav {
   }
 }
 
+/* =========================================================
+   ACCESSIBILITY & BACK-TO-TOP
+========================================================= */
 .accessibility-trigger {
   overflow: hidden;
 
@@ -349,6 +377,7 @@ nav {
   }
 }
 
+
 @media (max-width: 900px) {
   .search-wrap {
     display: none;
@@ -360,7 +389,10 @@ nav {
   }
 }
 
-// Shared notification summary styling.
+/* =========================================================
+   NOTIFICATION STYLING (DETAILS)
+========================================================= */
+
 .notif-badge {
   position: absolute;
   top: -2px;
@@ -470,7 +502,10 @@ nav {
 }
 
 
-/* --- تصميم الهوية والصلاحيات --- */
+/* ============================================================
+   IAM — الهوية والصلاحيات
+============================================================ */
+
 .custom-iam-group {
   margin: 6px 0;
   direction: rtl;
@@ -563,7 +598,10 @@ nav {
   }
 }
 
-/* Submenu navigation */
+/* ============================================================
+   SUBMENU NAVIGATION
+============================================================ */
+
 .nav-submenu {
   display: flex;
   flex-direction: column;
@@ -576,7 +614,6 @@ nav {
   padding: 8px 12px;
 }
 
-/* Submenu expand/collapse button */
 .nav-submenu-toggle {
   display: flex;
   align-items: center;
@@ -603,4 +640,157 @@ nav {
   &.is-open {
     transform: rotate(180deg);
   }
+}
+
+/* ============================================================
+   MOBILE SIDEBAR — X BUTTON, HAMBURGER & OVERLAY
+============================================================ */
+
+.sidebar-close-btn {
+  display: none;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  cursor: pointer;
+  z-index: 5;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 2px;
+  }
+}
+
+.menu-toggle {
+  display: none;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 39;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+
+  &.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — TABLET & MOBILE
+============================================================ */
+
+@media (max-width: 900px) {
+  .search-wrap {
+    display: none;
+  }
+
+  .back-to-top {
+    left: 16px;
+    bottom: 16px;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  .sidebar-overlay {
+    display: block;
+  }
+
+  .sidebar-close-btn {
+    display: flex;
+  }
+
+  .sidebar {
+    transform: translateX(100%);
+    transition: transform 0.28s ease;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.18);
+    padding-top: 56px;
+
+    &.is-open {
+      transform: translateX(0);
+    }
+  }
+
+  .content {
+    margin-right: 0;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .logo-sub {
+    display: none;
+  }
+
+  .profile-chip .who {
+    display: none;
+  }
+
+  .profile-chip {
+    padding: 0;
+
+    &:hover {
+      background: transparent;
+    }
+  }
+
+  .actions {
+    gap: 4px;
+  }
+}
+
+@media (max-width: 600px) {
+  .topbar {
+    padding: 0 14px;
+    gap: 8px;
+  }
+
+  .logo-img {
+    height: 26px;
+  }
+
+  .content {
+    padding: 12px;
+  }
+
+  .sidebar {
+    width: 260px;
+    max-width: 85vw;
+  }
+
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* ============================================================
+   NOTIFICATIONS — EMPTY STATE
+============================================================ */
+
+.notif-panel .notif-empty {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin: 10px;
+  box-sizing: border-box;
 }

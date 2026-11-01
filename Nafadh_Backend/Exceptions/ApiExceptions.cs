@@ -21,7 +21,13 @@ namespace Nafadh_Backend.Exceptions
    
     public class ConflictException : Exception
     {
-        public ConflictException(string message) : base(message) { }
+        // Optional stable code the frontend can switch on (e.g. DUPLICATE_EMAIL).
+        public string? Code { get; }
+
+        public ConflictException(string message, string? code = null) : base(message)
+        {
+            Code = code;
+        }
     }
 
     
