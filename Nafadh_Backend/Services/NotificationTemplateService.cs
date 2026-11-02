@@ -1,12 +1,10 @@
-﻿
-using Nafadh_Backend.DTOs;
+﻿using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
 namespace Nafadh_Backend.Services
 {
-    public class NotificationTemplateService
-        : INotificationTemplateService
+    public class NotificationTemplateService : INotificationTemplateService
     {
         private readonly INotificationTemplateRepository _repository;
 
@@ -47,6 +45,40 @@ namespace Nafadh_Backend.Services
             var template = await _repository.GetByIdAsync(id);
 
             return template == null ? null : MapToDTO(template);
+        }
+
+        // Get an active Email template by its unique code.
+        public async Task<NotificationTemplateDTO?> GetActiveByCodeAsync(
+            string code)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return null;
+            }
+
+            var template = await _repository.GetByCodeAsync(code.Trim());
+
+            if (template == null)
+            {
+                return null;
+            }
+
+            // Do not use inactive templates.
+            if (!template.IsActive)
+            {
+                return null;
+            }
+
+            // This method is specifically for email sending.
+            if (!string.Equals(
+                template.Type,
+                "Email",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return MapToDTO(template);
         }
 
         public async Task<NotificationTemplateDTO> CreateAsync(
@@ -151,23 +183,31 @@ namespace Nafadh_Backend.Services
             string body)
         {
             if (string.IsNullOrWhiteSpace(code))
+            {
                 throw new ArgumentException("Template code is required.");
+            }
 
             if (string.IsNullOrWhiteSpace(name))
+            {
                 throw new ArgumentException("Template name is required.");
+            }
 
             if (string.IsNullOrWhiteSpace(body))
+            {
                 throw new ArgumentException("Template body is required.");
+            }
 
             if (!AllowedPortals.Any(x =>
-                x.Equals(portalCode.Trim(),
+                x.Equals(
+                    portalCode.Trim(),
                     StringComparison.OrdinalIgnoreCase)))
             {
                 throw new ArgumentException("Invalid portal code.");
             }
 
             if (!AllowedTypes.Any(x =>
-                x.Equals(type.Trim(),
+                x.Equals(
+                    type.Trim(),
                     StringComparison.OrdinalIgnoreCase)))
             {
                 throw new ArgumentException("Invalid template type.");
@@ -177,14 +217,16 @@ namespace Nafadh_Backend.Services
         private static string NormalizePortal(string value)
         {
             return AllowedPortals.First(x =>
-                x.Equals(value.Trim(),
+                x.Equals(
+                    value.Trim(),
                     StringComparison.OrdinalIgnoreCase));
         }
 
         private static string NormalizeType(string value)
         {
             return AllowedTypes.First(x =>
-                x.Equals(value.Trim(),
+                x.Equals(
+                    value.Trim(),
                     StringComparison.OrdinalIgnoreCase));
         }
 
@@ -204,30 +246,6 @@ namespace Nafadh_Backend.Services
                 CreatedAt = template.CreatedAt,
                 UpdatedAt = template.UpdatedAt
             };
-        }
-
-
-        public async Task<NotificationTemplateDTO?> GetActiveByCodeAsync(
-    string code,
-    string type = "Email")
-        {
-            if (string.IsNullOrWhiteSpace(code))
-                return null;
-
-            var template = await _repository.GetByCodeAsync(code.Trim());
-
-            if (template == null || !template.IsActive)
-                return null;
-
-            if (!string.Equals(
-                template.Type,
-                type,
-                StringComparison.OrdinalIgnoreCase))
-            {
-                return null;
-            }
-
-            return MapToDTO(template);
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿
-using Nafadh_Backend.DTOs;
+﻿using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Services
 {
@@ -11,6 +10,9 @@ namespace Nafadh_Backend.Services
 
         Task<NotificationTemplateDTO?> GetByIdAsync(int id);
 
+        // Get an active Email template using its unique code.
+        Task<NotificationTemplateDTO?> GetActiveByCodeAsync(string code);
+
         Task<NotificationTemplateDTO> CreateAsync(
             CreateNotificationTemplateDTO dto);
 
@@ -21,9 +23,5 @@ namespace Nafadh_Backend.Services
         Task<bool> UpdateStatusAsync(
             int id,
             bool isActive);
-
-        Task<NotificationTemplateDTO?> GetActiveByCodeAsync(
-    string code,
-    string type = "Email");
     }
 }
