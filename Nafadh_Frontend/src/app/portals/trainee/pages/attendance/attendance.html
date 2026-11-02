@@ -645,9 +645,15 @@
                     {{ selectedFileName() || 'اختر ملف الإرفاق' }}
                   </strong>
 
-                  <span>
-                    PDF أو صورة
-                  </span>
+                <span>
+  @if (attachmentSettingsLoaded()) {
+    الامتدادات المسموحة:
+    {{ allowedExtensions().join('، ').toUpperCase() }}
+    — الحد الأقصى: {{ maxAttachmentSizeMb() }} MB
+  } @else {
+    جاري تحميل إعدادات المرفقات...
+  }
+</span>
 
                 </div>
 
