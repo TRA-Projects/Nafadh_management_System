@@ -11,7 +11,9 @@ namespace Nafadh_Backend.Services
         Task<NotificationTemplateDTO?> GetByIdAsync(int id);
 
         // Get an active Email template using its unique code.
-        Task<NotificationTemplateDTO?> GetActiveByCodeAsync(string code);
+        Task<NotificationTemplateDTO?> GetActiveByCodeAsync(
+            string code,
+            string? portalCode = null);
 
         Task<NotificationTemplateDTO> CreateAsync(
             CreateNotificationTemplateDTO dto);

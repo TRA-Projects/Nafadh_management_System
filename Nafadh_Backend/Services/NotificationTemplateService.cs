@@ -1,4 +1,5 @@
-﻿using Nafadh_Backend.DTOs;
+﻿
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -48,8 +49,10 @@ namespace Nafadh_Backend.Services
         }
 
         // Get an active Email template by its unique code.
+        // Optionally validate the portal to prevent cross-portal usage.
         public async Task<NotificationTemplateDTO?> GetActiveByCodeAsync(
-            string code)
+            string code,
+            string? portalCode = null)
         {
             if (string.IsNullOrWhiteSpace(code))
             {
@@ -58,22 +61,26 @@ namespace Nafadh_Backend.Services
 
             var template = await _repository.GetByCodeAsync(code.Trim());
 
-            if (template == null)
+            if (template == null || !template.IsActive)
             {
                 return null;
             }
 
-            // Do not use inactive templates.
-            if (!template.IsActive)
-            {
-                return null;
-            }
-
-            // This method is specifically for email sending.
+            // Only active Email templates can be used by EmailService.
             if (!string.Equals(
                 template.Type,
                 "Email",
                 StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            // Validate the portal when portalCode is provided.
+            if (!string.IsNullOrWhiteSpace(portalCode) &&
+                !string.Equals(
+                    template.PortalCode,
+                    portalCode.Trim(),
+                    StringComparison.OrdinalIgnoreCase))
             {
                 return null;
             }
@@ -197,18 +204,20 @@ namespace Nafadh_Backend.Services
                 throw new ArgumentException("Template body is required.");
             }
 
-            if (!AllowedPortals.Any(x =>
-                x.Equals(
-                    portalCode.Trim(),
-                    StringComparison.OrdinalIgnoreCase)))
+            if (string.IsNullOrWhiteSpace(portalCode) ||
+                !AllowedPortals.Any(x =>
+                    x.Equals(
+                        portalCode.Trim(),
+                        StringComparison.OrdinalIgnoreCase)))
             {
                 throw new ArgumentException("Invalid portal code.");
             }
 
-            if (!AllowedTypes.Any(x =>
-                x.Equals(
-                    type.Trim(),
-                    StringComparison.OrdinalIgnoreCase)))
+            if (string.IsNullOrWhiteSpace(type) ||
+                !AllowedTypes.Any(x =>
+                    x.Equals(
+                        type.Trim(),
+                        StringComparison.OrdinalIgnoreCase)))
             {
                 throw new ArgumentException("Invalid template type.");
             }

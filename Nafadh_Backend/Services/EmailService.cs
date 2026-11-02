@@ -5,6 +5,8 @@ using Microsoft.Extensions.Options;
 using MimeKit;
 using Nafadh_Backend.Settings;
 using System.Net;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Nafadh_Backend.Services
 {
@@ -24,6 +26,7 @@ namespace Nafadh_Backend.Services
         // ==========================================
         // First Absence Warning
         // ==========================================
+
         public async Task SendFirstAbsenceWarningAsync(
             string email,
             string traineeName)
@@ -59,11 +62,13 @@ namespace Nafadh_Backend.Services
                     مع التحية،<br/>
                     نظام نفاذ
                 </p>
+
             </div>";
 
             await SendUsingTemplateAsync(
                 email,
                 "TRAINEE_FIRST_ABSENCE_WARNING",
+                "Trainee",
                 new Dictionary<string, string?>
                 {
                     ["TraineeName"] = traineeName
@@ -75,6 +80,7 @@ namespace Nafadh_Backend.Services
         // ==========================================
         // Second Absence Warning
         // ==========================================
+
         public async Task SendSecondAbsenceWarningAsync(
             string email,
             string traineeName)
@@ -114,11 +120,13 @@ namespace Nafadh_Backend.Services
                     مع التحية،<br/>
                     نظام نفاذ
                 </p>
+
             </div>";
 
             await SendUsingTemplateAsync(
                 email,
                 "TRAINEE_SECOND_ABSENCE_WARNING",
+                "Trainee",
                 new Dictionary<string, string?>
                 {
                     ["TraineeName"] = traineeName
@@ -130,6 +138,7 @@ namespace Nafadh_Backend.Services
         // ==========================================
         // Company Approved
         // ==========================================
+
         public async Task SendCompanyApprovedAsync(
             string email,
             string companyName,
@@ -188,11 +197,13 @@ namespace Nafadh_Backend.Services
                     مع التحية،<br/>
                     نظام نفاذ
                 </p>
+
             </div>";
 
             await SendUsingTemplateAsync(
                 email,
                 "COMPANY_APPROVED",
+                "Company",
                 new Dictionary<string, string?>
                 {
                     ["CompanyName"] = companyName,
@@ -207,6 +218,7 @@ namespace Nafadh_Backend.Services
         // ==========================================
         // Company Rejected
         // ==========================================
+
         public async Task SendCompanyRejectedAsync(
             string email,
             string companyName,
@@ -251,18 +263,18 @@ namespace Nafadh_Backend.Services
                     مع التحية،<br/>
                     نظام نفاذ
                 </p>
+
             </div>";
 
             await SendUsingTemplateAsync(
                 email,
                 "COMPANY_REJECTED",
+                "Company",
                 new Dictionary<string, string?>
                 {
                     ["CompanyName"] = companyName,
                     ["ContactName"] = contactName,
-                    ["Reason"] = string.IsNullOrWhiteSpace(reason)
-                        ? "لم يتم تحديد سبب."
-                        : reason
+                    ["Reason"] = reason
                 },
                 subject,
                 body);
@@ -271,6 +283,7 @@ namespace Nafadh_Backend.Services
         // ==========================================
         // Withdrawal Submitted
         // ==========================================
+
         public async Task SendWithdrawalSubmittedAsync(
             string email,
             string traineeName)
@@ -294,8 +307,8 @@ namespace Nafadh_Backend.Services
 
                 <p>
                     نود إبلاغك بأنه تم استلام طلب الانسحاب الخاص بك في
-                    <strong>نظام نفاذ</strong> بنجاح،
-                    وهو الآن <strong>قيد المراجعة</strong> من قبل الإدارة.
+                    <strong>نظام نفاذ</strong> بنجاح، وهو الآن
+                    <strong>قيد المراجعة</strong> من قبل الإدارة.
                 </p>
 
                 <p>
@@ -306,11 +319,13 @@ namespace Nafadh_Backend.Services
                     مع التحية،<br/>
                     نظام نفاذ
                 </p>
+
             </div>";
 
             await SendUsingTemplateAsync(
                 email,
                 "TRAINEE_WITHDRAWAL_SUBMITTED",
+                "Trainee",
                 new Dictionary<string, string?>
                 {
                     ["TraineeName"] = traineeName
@@ -322,6 +337,7 @@ namespace Nafadh_Backend.Services
         // ==========================================
         // Withdrawal Approved
         // ==========================================
+
         public async Task SendWithdrawalApprovedAsync(
             string email,
             string traineeName)
@@ -361,11 +377,13 @@ namespace Nafadh_Backend.Services
                     مع التحية،<br/>
                     نظام نفاذ
                 </p>
+
             </div>";
 
             await SendUsingTemplateAsync(
                 email,
                 "TRAINEE_WITHDRAWAL_APPROVED",
+                "Trainee",
                 new Dictionary<string, string?>
                 {
                     ["TraineeName"] = traineeName
@@ -377,6 +395,7 @@ namespace Nafadh_Backend.Services
         // ==========================================
         // Withdrawal Rejected
         // ==========================================
+
         public async Task SendWithdrawalRejectedAsync(
             string email,
             string traineeName,
@@ -408,7 +427,9 @@ namespace Nafadh_Backend.Services
                     <strong>نظام نفاذ</strong>.
                 </p>
 
-                <p><strong>سبب الرفض / ملاحظات الإدارة:</strong> {safeReason}</p>
+                <p>
+                    <strong>سبب الرفض / ملاحظات الإدارة:</strong> {safeReason}
+                </p>
 
                 <p>
                     يرجى الاستمرار في الالتزام بالحضور في البرنامج التدريبي المخصص لك.
@@ -418,17 +439,17 @@ namespace Nafadh_Backend.Services
                     مع التحية،<br/>
                     نظام نفاذ
                 </p>
+
             </div>";
 
             await SendUsingTemplateAsync(
                 email,
                 "TRAINEE_WITHDRAWAL_REJECTED",
+                "Trainee",
                 new Dictionary<string, string?>
                 {
                     ["TraineeName"] = traineeName,
-                    ["Reason"] = string.IsNullOrWhiteSpace(reason)
-                        ? "لم يتم تحديد سبب."
-                        : reason
+                    ["Reason"] = reason
                 },
                 subject,
                 body);
@@ -437,6 +458,7 @@ namespace Nafadh_Backend.Services
         // ==========================================
         // Trainee Enrolled
         // ==========================================
+
         public async Task SendTraineeEnrolledAsync(
             string email,
             string traineeName,
@@ -457,6 +479,7 @@ namespace Nafadh_Backend.Services
 
                 credentialsSection = $@"
                 <p>بيانات الدخول الخاصة بك:</p>
+
                 <table style='border-collapse: collapse;'>
                     <tr>
                         <td style='padding: 4px 12px;'>البريد الإلكتروني</td>
@@ -471,6 +494,7 @@ namespace Nafadh_Backend.Services
                         </td>
                     </tr>
                 </table>
+
                 <p style='font-weight: bold;'>
                     يرجى الاحتفاظ بكلمة المرور في مكان آمن وعدم مشاركتها مع أي شخص.
                 </p>";
@@ -521,18 +545,20 @@ namespace Nafadh_Backend.Services
                     مع التحية،<br/>
                     نظام نفاذ
                 </p>
+
             </div>";
 
             await SendUsingTemplateAsync(
                 email,
                 "TRAINEE_PROGRAM_START",
+                "Trainee",
                 new Dictionary<string, string?>
                 {
                     ["TraineeName"] = traineeName,
                     ["BatchName"] = batchName,
                     ["ProgramName"] = programName,
                     ["Email"] = email,
-                    ["TemporaryPassword"] = temporaryPassword ?? string.Empty
+                    ["TemporaryPassword"] = temporaryPassword
                 },
                 subject,
                 body);
@@ -541,6 +567,7 @@ namespace Nafadh_Backend.Services
         // ==========================================
         // Certificate Issued
         // ==========================================
+
         public async Task SendCertificateIssuedAsync(
             string email,
             string traineeName,
@@ -593,24 +620,27 @@ namespace Nafadh_Backend.Services
                     مع التحية،<br/>
                     نظام نفاذ
                 </p>
+
             </div>";
 
             await SendUsingTemplateAsync(
                 email,
                 "TRAINEE_CERTIFICATE_ISSUED",
+                "Trainee",
                 new Dictionary<string, string?>
                 {
                     ["TraineeName"] = traineeName,
-                    ["ProgramName"] = programName ?? string.Empty,
-                    ["CertificateUrl"] = certificateUrl ?? string.Empty
+                    ["ProgramName"] = programName,
+                    ["CertificateUrl"] = certificateUrl
                 },
                 subject,
                 body);
         }
 
         // ==========================================
-        // Announcement
+        // Announcement Email
         // ==========================================
+
         public async Task SendAnnouncementAsync(
             string email,
             string recipientName,
@@ -650,11 +680,13 @@ namespace Nafadh_Backend.Services
                     مع التحية،<br/>
                     إدارة نظام نفاذ
                 </p>
+
             </div>";
 
             await SendUsingTemplateAsync(
                 email,
-                "ANNOUNCEMENT",
+                "ANNOUNCEMENT_PUBLISHED",
+                null,
                 new Dictionary<string, string?>
                 {
                     ["RecipientName"] = recipientName,
@@ -666,23 +698,23 @@ namespace Nafadh_Backend.Services
         }
 
         // ==========================================
-        // Company Warning
+        // Company Warning Email
         // ==========================================
+
         public async Task SendCompanyWarningAsync(
             string email,
             string companyName,
             string reason,
             string? warningLevel = null)
         {
-            var levelBadge = string.IsNullOrWhiteSpace(warningLevel)
-                ? "إنذار إداري"
-                : $"المستوى: {warningLevel}";
-
-            var subject = "إنذار رسمي من إدارة منصة نفاذ";
-
             var safeCompany = WebUtility.HtmlEncode(companyName);
             var safeReason = WebUtility.HtmlEncode(reason);
-            var safeLevelBadge = WebUtility.HtmlEncode(levelBadge);
+
+            var levelBadge = string.IsNullOrWhiteSpace(warningLevel)
+                ? "إنذار إداري"
+                : $"المستوى: {WebUtility.HtmlEncode(warningLevel)}";
+
+            var subject = "إنذار رسمي من إدارة منصة نفاذ";
 
             var body = $@"
             <div dir='rtl'
@@ -724,17 +756,18 @@ namespace Nafadh_Backend.Services
                         <p style='margin: 0 0 8px 0;
                                   color: #991b1b;
                                   font-weight: bold;'>
-                            {safeLevelBadge}
+                            {levelBadge}
                         </p>
 
                         <p style='margin: 0; color: #374151;'>
-                            <strong>التفاصيل / السبب:</strong> {safeReason}
+                            <strong>التفاصيل / السبب:</strong>
+                            {safeReason}
                         </p>
                     </div>
 
                     <p>
-                        يرجى الدخول إلى حساب الشركة في منصة نفاذ للاطلاع على
-                        تفاصيل الإنذار وتقديم الرد أو المعالجة اللازمة.
+                        يرجى الدخول إلى حساب الشركة في منصة نفاذ للاطلاع
+                        على تفاصيل الإنذار وتقديم الرد أو المعالجة اللازمة.
                     </p>
 
                     <hr style='border: none;
@@ -747,25 +780,28 @@ namespace Nafadh_Backend.Services
                         مع تحيات،<br/>
                         إدارة منصة نفاذ
                     </p>
+
                 </div>
             </div>";
 
             await SendUsingTemplateAsync(
                 email,
                 "COMPANY_WARNING",
+                "Company",
                 new Dictionary<string, string?>
                 {
                     ["CompanyName"] = companyName,
                     ["Reason"] = reason,
-                    ["WarningLevel"] = levelBadge
+                    ["WarningLevel"] = warningLevel
                 },
                 subject,
                 body);
         }
 
         // ==========================================
-        // Course Plan Submitted
+        // Course Plan Submitted Email
         // ==========================================
+
         public async Task SendCoursePlanSubmittedAsync(
             string email,
             string companyName,
@@ -776,7 +812,9 @@ namespace Nafadh_Backend.Services
             var safeCompany = WebUtility.HtmlEncode(companyName);
             var safePlan = WebUtility.HtmlEncode(planTitle);
 
-            var statusText = resubmitted ? "إعادة تقديم" : "تقديم";
+            var statusText = resubmitted
+                ? "إعادة تقديم"
+                : "تقديم";
 
             var subject =
                 $"{statusText} خطة تدريبية لاعتماد الهيئة - منصة نفاذ (#{planId})";
@@ -797,7 +835,9 @@ namespace Nafadh_Backend.Services
                     الخطة <strong>«{safePlan}»</strong> إلى قائمة المراجعة.
                 </p>
 
-                <p>رقم الخطة: <strong>{planId}</strong></p>
+                <p>
+                    رقم الخطة: <strong>{planId}</strong>
+                </p>
 
                 <p>
                     يرجى الدخول إلى بوابة الإدارة لمراجعة المراحل
@@ -808,25 +848,28 @@ namespace Nafadh_Backend.Services
                     هذه رسالة آلية من نظام نفاذ نيابة عن الشركة.
                     لا يُعتمد على الرد على هذا البريد لاتخاذ قرار.
                 </p>
+
             </div>";
 
             await SendUsingTemplateAsync(
                 email,
-                "ADMIN_COURSE_PLAN_SUBMITTED",
+                "COURSE_PLAN_SUBMITTED",
+                "Admin",
                 new Dictionary<string, string?>
                 {
                     ["CompanyName"] = companyName,
                     ["PlanTitle"] = planTitle,
                     ["PlanId"] = planId.ToString(),
-                    ["SubmissionType"] = statusText
+                    ["Resubmitted"] = resubmitted.ToString()
                 },
                 subject,
                 body);
         }
 
         // ==========================================
-        // Course Plan Decision
+        // Course Plan Decision Email
         // ==========================================
+
         public async Task SendCoursePlanDecisionAsync(
             string email,
             string companyName,
@@ -843,7 +886,9 @@ namespace Nafadh_Backend.Services
                     .Replace("\r\n", "<br/>")
                     .Replace("\n", "<br/>");
 
-            string headerColor = approved ? "#16a34a" : "#dc2626";
+            string headerColor = approved
+                ? "#16a34a"
+                : "#dc2626";
 
             string headerTitle = approved
                 ? "✅ إشعار اعتماد الخطة التدريبية / الدراسية"
@@ -865,10 +910,14 @@ namespace Nafadh_Backend.Services
                             padding: 14px 16px;
                             margin: 18px 0;
                             border-radius: 6px;'>
+
                     <p style='margin: 0; color: #1f2937;'>
                         <strong>
-                            {(approved ? "ملاحظات الهيئة:" : "سبب الرفض / ملاحظات الهيئة:")}
-                        </strong><br/>
+                            {(approved
+                                ? "ملاحظات الهيئة:"
+                                : "سبب الرفض / ملاحظات الهيئة:")}
+                        </strong>
+                        <br/>
                         {safeNote}
                     </p>
                 </div>";
@@ -886,6 +935,7 @@ namespace Nafadh_Backend.Services
                 <div style='background-color: {headerColor};
                             color: #ffffff;
                             padding: 18px 24px;'>
+
                     <h2 style='margin: 0; font-size: 20px;'>
                         {headerTitle}
                     </h2>
@@ -918,21 +968,25 @@ namespace Nafadh_Backend.Services
 
             await SendUsingTemplateAsync(
                 email,
-                "COMPANY_COURSE_PLAN_DECISION",
+                approved
+                    ? "COURSE_PLAN_APPROVED"
+                    : "COURSE_PLAN_REJECTED",
+                "Company",
                 new Dictionary<string, string?>
                 {
                     ["CompanyName"] = companyName,
                     ["PlanTitle"] = planTitle,
-                    ["Decision"] = approved ? "معتمدة" : "مرفوضة",
-                    ["Note"] = note ?? string.Empty
+                    ["Approved"] = approved.ToString(),
+                    ["Note"] = note
                 },
                 subject,
                 body);
         }
 
         // ==========================================
-        // Batch Assigned To Company
+        // Batch Assigned To Company Email
         // ==========================================
+
         public async Task SendBatchAssignedToCompanyAsync(
             string email,
             string companyName,
@@ -965,6 +1019,7 @@ namespace Nafadh_Backend.Services
                 <div style='background-color: #1e3a8a;
                             color: #ffffff;
                             padding: 18px 24px;'>
+
                     <h2 style='margin: 0; font-size: 20px;'>
                         📋 إشعار إسناد دفعة تدريبية جديدة
                     </h2>
@@ -979,8 +1034,8 @@ namespace Nafadh_Backend.Services
                     </p>
 
                     <p>
-                        نود إبلاغكم بأنه قد تم تسجيل وإسناد دفعة تدريبية
-                        جديدة لشركتكم عبر منصة <strong>نفاذ</strong>
+                        نود إبلاغكم بأنه قد تم تسجيل وإسناد دفعة تدريبية جديدة
+                        لشركتكم عبر منصة <strong>نفاذ</strong>
                         وفق التفاصيل التالية:
                     </p>
 
@@ -1011,8 +1066,8 @@ namespace Nafadh_Backend.Services
                     </div>
 
                     <p>
-                        يرجى الدخول إلى حساب الشركة في منصة نفاذ لمتابعة
-                        تفاصيل الدفعة واستكمال الإجراءات والخطط التدريبية اللازمة.
+                        يرجى الدخول إلى حساب الشركة في منصة نفاذ لمتابعة تفاصيل
+                        الدفعة واستكمال الإجراءات والخطط التدريبية اللازمة.
                     </p>
 
                     <hr style='border: none;
@@ -1031,6 +1086,7 @@ namespace Nafadh_Backend.Services
             await SendUsingTemplateAsync(
                 email,
                 "COMPANY_BATCH_ASSIGNED",
+                "Company",
                 new Dictionary<string, string?>
                 {
                     ["CompanyName"] = companyName,
@@ -1038,25 +1094,27 @@ namespace Nafadh_Backend.Services
                     ["ProgramName"] = programName,
                     ["StartDate"] = startStr,
                     ["EndDate"] = endStr,
-                    ["Capacity"] = capacity.ToString("0.##")
+                    ["Capacity"] = capacity.ToString()
                 },
                 subject,
                 body);
         }
 
         // ==========================================
-        // Database Template Helper
+        // Dynamic Email Template Integration
         // ==========================================
+
         private async Task SendUsingTemplateAsync(
             string email,
             string code,
+            string? portalCode,
             Dictionary<string, string?> values,
             string fallbackSubject,
             string fallbackBody)
         {
             var template = await _templateService.GetActiveByCodeAsync(
                 code,
-                "Email");
+                portalCode);
 
             if (template == null)
             {
@@ -1069,33 +1127,23 @@ namespace Nafadh_Backend.Services
                 : ReplaceTemplateVariables(
                     template.Subject,
                     values,
-                    false);
+                    encodeHtml: false);
 
             var body = ReplaceTemplateVariables(
                 template.Body,
                 values,
-                true);
-
-            body = $@"
-            <div dir='rtl'
-                 style='font-family: Arial, Tahoma, sans-serif;
-                        line-height: 1.8;
-                        max-width: 650px;
-                        margin: auto;'>
-                {body}
-            </div>";
+                encodeHtml: true);
 
             await SendAsync(email, subject, body);
         }
 
-        // ==========================================
-        // Template Variable Replacement
-        // ==========================================
         private static string ReplaceTemplateVariables(
-            string content,
+            string template,
             Dictionary<string, string?> values,
             bool encodeHtml)
         {
+            var result = template ?? string.Empty;
+
             foreach (var item in values)
             {
                 var value = item.Value ?? string.Empty;
@@ -1105,18 +1153,20 @@ namespace Nafadh_Backend.Services
                     value = WebUtility.HtmlEncode(value);
                 }
 
-                content = content.Replace(
-                    "{{" + item.Key + "}}",
-                    value,
-                    StringComparison.OrdinalIgnoreCase);
+                result = Regex.Replace(
+                    result,
+                    "{{\\s*" + Regex.Escape(item.Key) + "\\s*}}",
+                    _ => value,
+                    RegexOptions.IgnoreCase);
             }
 
-            return content;
+            return result;
         }
 
         // ==========================================
-        // SMTP Sending
+        // SMTP Email Sending
         // ==========================================
+
         private async Task SendAsync(
             string toEmail,
             string subject,
@@ -1125,7 +1175,7 @@ namespace Nafadh_Backend.Services
             if (string.IsNullOrWhiteSpace(toEmail))
             {
                 throw new InvalidOperationException(
-                    "Recipient email address is missing.");
+                    "Trainee email address is missing.");
             }
 
             var message = new MimeMessage();
