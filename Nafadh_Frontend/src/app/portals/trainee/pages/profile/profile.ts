@@ -7,7 +7,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TraineeApi } from '../../services/trainee-api';
-
+import { SystemVariablesService } from '../../../../services/system-variables.service';
+import { firstValueFrom } from 'rxjs';
 import {
   TraineeProfileDto,
   TraineeSkillDto
@@ -99,6 +100,12 @@ export class TraineeProfile implements OnInit {
   gitHubError = signal<string | null>(null);
 
   linkedInError = signal<string | null>(null);
+  // إعدادات المرفقات من قاعدة البيانات
+allowedExtensions = signal<string[]>([]);
+
+maxAttachmentSizeMb = signal<number>(0);
+
+attachmentSettingsLoaded = signal(false);
 
 
   // =========================================================
@@ -156,22 +163,66 @@ export class TraineeProfile implements OnInit {
   // CONSTRUCTOR
   // =========================================================
 
-  constructor(
-    private api: TraineeApi
-  ) {}
+constructor(
+  private api: TraineeApi,
+  private systemVariablesService: SystemVariablesService
+) {}
 
 
   // =========================================================
   // ON INIT
   // =========================================================
 
-  ngOnInit(): void {
+ ngOnInit(): void {
 
-    this.getLoggedInUserId();
+  this.getLoggedInUserId();
 
-    this.loadTraineeData();
+  this.loadTraineeData();
+
+  this.loadAttachmentSettings();
+
+}
+
+private async loadAttachmentSettings(): Promise<void> {
+
+  this.attachmentSettingsLoaded.set(false);
+
+  try {
+
+    const [extensions, maxSize] = await Promise.all([
+      firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
+      firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb())
+    ]);
+
+    if (extensions.length === 0) {
+      throw new Error('No allowed attachment extensions configured');
+    }
+
+    this.allowedExtensions.set(extensions);
+
+    this.maxAttachmentSizeMb.set(maxSize);
+
+    this.attachmentSettingsLoaded.set(true);
+
+  } catch (error) {
+
+    console.error('فشل تحميل إعدادات المرفقات:', error);
+
+    this.allowedExtensions.set([]);
+
+    this.maxAttachmentSizeMb.set(0);
+
+    this.attachmentSettingsLoaded.set(false);
+
+    this.openPopup(
+      'تعذر تحميل إعدادات المرفقات. يرجى تحديث الصفحة والمحاولة مجددًا.',
+      'error',
+      'خطأ في الإعدادات'
+    );
 
   }
+
+}
 
 
   // =========================================================
@@ -1223,7 +1274,73 @@ export class TraineeProfile implements OnInit {
 
   }
 
+// =========================================================
+// ATTACHMENT VALIDATION
+// =========================================================
 
+private validateAttachment(
+  file: File,
+  imageOnly = false
+): boolean {
+
+  if (!this.attachmentSettingsLoaded()) {
+
+    this.openPopup(
+      'إعدادات المرفقات غير جاهزة. يرجى المحاولة لاحقًا.',
+      'error',
+      'تعذر رفع الملف'
+    );
+
+    return false;
+  }
+
+  const maxSize = this.maxAttachmentSizeMb();
+
+  const allowedExtensions = this.allowedExtensions();
+
+  const extension = file.name
+    .split('.')
+    .pop()
+    ?.toLowerCase() ?? '';
+
+  if (file.size > maxSize * 1024 * 1024) {
+
+    this.openPopup(
+      `حجم الملف يتجاوز الحد المسموح (${maxSize} MB).`,
+      'error',
+      'حجم الملف غير مسموح'
+    );
+
+    return false;
+  }
+
+  if (!allowedExtensions.includes(extension)) {
+
+    this.openPopup(
+      `امتداد الملف غير مسموح. الامتدادات المسموحة: ${allowedExtensions.join('، ')}`,
+      'error',
+      'امتداد غير مسموح'
+    );
+
+    return false;
+  }
+
+  if (
+    imageOnly &&
+    !['jpg', 'jpeg', 'png'].includes(extension)
+  ) {
+
+    this.openPopup(
+      'الصورة الشخصية يجب أن تكون بصيغة JPG أو JPEG أو PNG.',
+      'error',
+      'نوع الصورة غير مسموح'
+    );
+
+    return false;
+  }
+
+  return true;
+}
   // =========================================================
   // AVATAR UPLOAD
   // =========================================================
@@ -1246,12 +1363,17 @@ export class TraineeProfile implements OnInit {
     }
 
 
-    const file =
-      input.files[0];
+   const file =
+  input.files[0];
 
+// التحقق من الحجم والامتداد قبل عرض الصورة أو رفعها
+if (!this.validateAttachment(file, true)) {
+  input.value = '';
+  return;
+}
 
-    this.selectedProfileImage =
-      file;
+this.selectedProfileImage =
+  file;
 
 
     // -------------------------------------------------------
@@ -1532,11 +1654,38 @@ export class TraineeProfile implements OnInit {
 
 
     const file =
-      input.files[0];
+  input.files[0];
 
+// التحقق من الحجم والامتداد حسب إعدادات النظام
+const cvExtensions = ['pdf', 'doc', 'docx'];
 
-    const traineeId =
-      this.trainee()?.traineeId;
+const extension = file.name
+  .split('.')
+  .pop()
+  ?.toLowerCase() ?? '';
+
+if (
+  !this.validateAttachment(file) ||
+  !cvExtensions.includes(extension)
+) {
+  if (
+    this.attachmentSettingsLoaded() &&
+    this.allowedExtensions().includes(extension) &&
+    !cvExtensions.includes(extension)
+  ) {
+    this.openPopup(
+      'السيرة الذاتية يجب أن تكون بصيغة PDF أو DOC أو DOCX.',
+      'error',
+      'نوع الملف غير مسموح'
+    );
+  }
+
+  input.value = '';
+  return;
+}
+
+const traineeId =
+  this.trainee()?.traineeId;
 
 
     if (!traineeId) {
@@ -1841,7 +1990,30 @@ export class TraineeProfile implements OnInit {
 
         : null;
 
+// التحقق مرة أخيرة قبل إرسال الشهادة للسيرفر
+if (certificateFile) {
 
+  const extension = certificateFile.name
+    .split('.')
+    .pop()
+    ?.toLowerCase() ?? '';
+
+  const certificateExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
+
+  if (!this.validateAttachment(certificateFile)) {
+    return;
+  }
+
+  if (!certificateExtensions.includes(extension)) {
+    this.openPopup(
+      'شهادة إثبات المهارة يجب أن تكون PDF أو JPG أو JPEG أو PNG.',
+      'error',
+      'نوع الملف غير مسموح'
+    );
+
+    return;
+  }
+}
     // -------------------------------------------------------
     // Send to Backend
     // -------------------------------------------------------
@@ -2090,13 +2262,42 @@ removeSkill(
     }
 
 
-    const file =
-      input.files[0];
+  const file =
+  input.files[0];
 
+// التحقق من الحجم والامتداد حسب إعدادات النظام
+const certificateExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
 
-    this.certificateFile.set(
-      file
+const extension = file.name
+  .split('.')
+  .pop()
+  ?.toLowerCase() ?? '';
+
+if (
+  !this.validateAttachment(file) ||
+  !certificateExtensions.includes(extension)
+) {
+  if (
+    this.attachmentSettingsLoaded() &&
+    this.allowedExtensions().includes(extension) &&
+    !certificateExtensions.includes(extension)
+  ) {
+    this.openPopup(
+      'شهادة إثبات المهارة يجب أن تكون PDF أو JPG أو JPEG أو PNG.',
+      'error',
+      'نوع الملف غير مسموح'
     );
+  }
+
+  input.value = '';
+  this.certificateFile.set(null);
+  this.certificateFileName.set('');
+  return;
+}
+
+this.certificateFile.set(
+  file
+);
 
 
     this.certificateFileName.set(
