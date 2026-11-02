@@ -8,7 +8,7 @@ namespace Nafadh_Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class NotificationTemplateController : ControllerBase
     {
         private readonly INotificationTemplateService _service;

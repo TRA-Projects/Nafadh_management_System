@@ -205,5 +205,29 @@ namespace Nafadh_Backend.Services
                 UpdatedAt = template.UpdatedAt
             };
         }
+
+
+        public async Task<NotificationTemplateDTO?> GetActiveByCodeAsync(
+    string code,
+    string type = "Email")
+        {
+            if (string.IsNullOrWhiteSpace(code))
+                return null;
+
+            var template = await _repository.GetByCodeAsync(code.Trim());
+
+            if (template == null || !template.IsActive)
+                return null;
+
+            if (!string.Equals(
+                template.Type,
+                type,
+                StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return MapToDTO(template);
+        }
     }
 }

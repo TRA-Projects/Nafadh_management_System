@@ -21,5 +21,9 @@ namespace Nafadh_Backend.Services
         Task<bool> UpdateStatusAsync(
             int id,
             bool isActive);
+
+        Task<NotificationTemplateDTO?> GetActiveByCodeAsync(
+    string code,
+    string type = "Email");
     }
 }
