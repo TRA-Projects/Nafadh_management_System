@@ -554,9 +554,13 @@
             انقر للاختيار
           </span>
 
-          <small class="cv-upload-hint">
-            PDF, DOCX — الحجم الأقصى 10 ميغا
-          </small>
+        <small class="cv-upload-hint">
+  @if (attachmentSettingsLoaded()) {
+    PDF, DOC, DOCX — الحجم الأقصى {{ maxAttachmentSizeMb() }} ميغا
+  } @else {
+    جاري تحميل إعدادات المرفقات...
+  }
+</small>
 
           <input
             type="file"
