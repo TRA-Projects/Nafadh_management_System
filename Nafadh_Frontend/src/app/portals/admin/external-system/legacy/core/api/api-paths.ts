@@ -16,6 +16,13 @@ const NAFADH_EVALUATION_TEMPLATE =
 export const API_ROOT = '/api/jobseekers';
 
 export const ApiPaths = {
+  
+  // Unified database - System Variables
+  systemVariables: '/api/system-variables',
+
+  systemVariableByKey: (key: string) =>
+    `/api/system-variables/${encodeURIComponent(key)}`,
+
   health: '/api/jobseekers/health',
   jobseekerProfile: '/api/jobseekers/jobseeker/profile',
   /** Operator/admin: read another job seeker’s general profile (same `MeResponse` shape as `auth/me`). */
