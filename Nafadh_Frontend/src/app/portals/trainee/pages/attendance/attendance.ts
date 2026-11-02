@@ -5,6 +5,7 @@ import { firstValueFrom, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { TraineeApi } from '../../services/trainee-api';
+import { SystemVariablesService } from '../../../../services/system-variables.service';
 import { ATTENDANCE_STATUS_LABELS } from '../../../../core/models/enums';
 import { ExcuseDto } from '../../../../core/models/dtos';
 
@@ -51,6 +52,10 @@ export class TraineeAttendance implements OnInit {
 
   selectedFileName = signal<string>('');
   selectedFile = signal<File | null>(null);
+  // Attachment settings from SystemVariables
+allowedExtensions = signal<string[]>([]);
+maxAttachmentSizeMb = signal<number>(0);
+attachmentSettingsLoaded = signal(false);
 
   // =========================================================
   // EXCUSES CACHE
@@ -72,18 +77,46 @@ export class TraineeAttendance implements OnInit {
 
   private popupTimer: any;
 
-  constructor(
-    private api: TraineeApi
-  ) {}
+ constructor(
+  private api: TraineeApi,
+  private systemVariablesService: SystemVariablesService
+) {}
 
   // =========================================================
   // INIT
   // =========================================================
 
   ngOnInit(): void {
-    this.getLoggedInUserId();
-    this.loadTraineeData();
+  this.getLoggedInUserId();
+  this.loadTraineeData();
+  this.loadAttachmentSettings();
+}
+
+private async loadAttachmentSettings(): Promise<void> {
+  this.attachmentSettingsLoaded.set(false);
+
+  try {
+    const [extensions, maxSize] = await Promise.all([
+      firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
+      firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb())
+    ]);
+
+    if (extensions.length === 0) {
+      throw new Error('No allowed attachment extensions configured');
+    }
+
+    this.allowedExtensions.set(extensions);
+    this.maxAttachmentSizeMb.set(maxSize);
+    this.attachmentSettingsLoaded.set(true);
+
+  } catch (error) {
+    console.error('خطأ في تحميل إعدادات المرفقات:', error);
+
+    this.allowedExtensions.set([]);
+    this.maxAttachmentSizeMb.set(0);
+    this.attachmentSettingsLoaded.set(false);
   }
+}
 
   // =========================================================
   // ATTENDANCE FILTER FUNCTIONS
@@ -589,76 +622,67 @@ export class TraineeAttendance implements OnInit {
   // FILE
   // =========================================================
 
-  onFileSelected(
-    event: Event
-  ): void {
-    const input =
-      event.target as HTMLInputElement;
+onFileSelected(event: Event): void {
+  const input = event.target as HTMLInputElement;
 
-    if (
-      !input.files ||
-      input.files.length === 0
-    ) {
-      return;
-    }
-
-    const file =
-      input.files[0];
-
-    // Maximum file size: 5 MB
-    const maxFileSize =
-      5 * 1024 * 1024;
-
-    if (
-      file.size >
-      maxFileSize
-    ) {
-      this.openPopup(
-        'حجم المرفق يجب ألا يتجاوز 5 MB',
-        'error',
-        'تنبيه'
-      );
-
-      input.value = '';
-      this.selectedFileName.set('');
-      this.selectedFile.set(null);
-
-      return;
-    }
-
-    const allowedTypes = [
-      'application/pdf',
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-    ];
-
-    if (
-      !allowedTypes.includes(
-        file.type
-      )
-    ) {
-      this.openPopup(
-        'يسمح فقط بملفات PDF أو صور JPG و PNG و WEBP',
-        'error',
-        'تنبيه'
-      );
-
-      input.value = '';
-      this.selectedFileName.set('');
-      this.selectedFile.set(null);
-
-      return;
-    }
-
-    this.selectedFileName.set(
-      file.name
-    );
-
-    this.selectedFile.set(
-      file
-    );
+  if (!input.files || input.files.length === 0) {
+    return;
   }
+
+  // Clear the previous selected file
+  this.selectedFileName.set('');
+  this.selectedFile.set(null);
+
+  // Check whether system settings are available
+  if (!this.attachmentSettingsLoaded()) {
+    this.openPopup(
+      'تعذر تحميل إعدادات المرفقات، يرجى تحديث الصفحة والمحاولة مرة أخرى',
+      'error',
+      'تنبيه'
+    );
+
+    input.value = '';
+    return;
+  }
+
+  const file = input.files[0];
+
+  // Read maximum size from SystemVariables
+  const maxSizeMb = this.maxAttachmentSizeMb();
+  const maxFileSize = maxSizeMb * 1024 * 1024;
+
+  if (file.size > maxFileSize) {
+    this.openPopup(
+      `حجم المرفق يجب ألا يتجاوز ${maxSizeMb} MB`,
+      'error',
+      'تنبيه'
+    );
+
+    input.value = '';
+    return;
+  }
+
+  // Read allowed extensions from SystemVariables
+  const allowedExtensions = this.allowedExtensions();
+  const fileExtension = file.name
+    .split('.')
+    .pop()
+    ?.toLowerCase() ?? '';
+
+  if (!allowedExtensions.includes(fileExtension)) {
+    this.openPopup(
+      `الامتدادات المسموحة: ${allowedExtensions.map(ext => ext.toUpperCase()).join('، ')}`,
+      'error',
+      'تنبيه'
+    );
+
+    input.value = '';
+    return;
+  }
+
+  this.selectedFileName.set(file.name);
+  this.selectedFile.set(file);
+}
 
   // =========================================================
   // RESET EXCUSE FORM
@@ -721,6 +745,30 @@ export class TraineeAttendance implements OnInit {
 
     const proofFile =
       this.selectedFile();
+      if (proofFile) {
+  if (!this.attachmentSettingsLoaded()) {
+    this.openPopup(
+      'إعدادات المرفقات غير متاحة حالياً، يرجى المحاولة مرة أخرى',
+      'error',
+      'تنبيه'
+    );
+    return;
+  }
+
+  const extension = proofFile.name.split('.').pop()?.toLowerCase() ?? '';
+
+  if (
+    proofFile.size > this.maxAttachmentSizeMb() * 1024 * 1024 ||
+    !this.allowedExtensions().includes(extension)
+  ) {
+    this.openPopup(
+      'المرفق لا يتوافق مع إعدادات النظام، يرجى اختيار ملف آخر',
+      'error',
+      'تنبيه'
+    );
+    return;
+  }
+}
 
     const currentDailyAttendanceId =
       row.dailyAttendanceId;
