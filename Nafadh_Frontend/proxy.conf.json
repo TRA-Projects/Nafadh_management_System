@@ -1,6 +1,12 @@
+
 {
   "/api/jobseekers": {
     "target": "http://localhost:58888",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/api/system-variables": {
+    "target": "https://localhost:7082",
     "secure": false,
     "changeOrigin": true
   }
