@@ -16,7 +16,6 @@
   --nt-danger-bg: #fee2e2;
   --nt-radius: 12px;
 }
-
 .notification-templates-container {
   width: 100%;
   min-width: 0;
@@ -30,6 +29,8 @@
 .notification-templates-container *,
 .notification-templates-container *::before,
 .notification-templates-container *::after {
+
+
   box-sizing: border-box;
 }
 
@@ -115,6 +116,7 @@
 .content-tab.active .tab-count {
   background: rgb(37 99 235 / 12%);
 }
+
 
 /* Content */
 .tab-content {
@@ -269,7 +271,6 @@
   background: var(--nt-primary-hover);
   border-color: var(--nt-primary-hover);
 }
-
 .secondary-button {
   color: var(--nt-text);
   background: var(--nt-surface);
@@ -296,6 +297,42 @@
   border: 1px solid var(--nt-border);
   border-radius: var(--nt-radius);
   background: var(--nt-surface);
+}
+.table-responsive {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  border-radius: var(--nt-radius) var(--nt-radius) 0 0;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.table-responsive::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: #cbd5e1;
+}
+
+.data-table {
+  width: 100%;
+  min-width: 850px;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: right;
+  font-size: 13px;
+}
+
+.data-table thead {
+  background: var(--nt-hover);
 }
 
 .table-responsive {
@@ -334,7 +371,6 @@
 .data-table thead {
   background: var(--nt-hover);
 }
-
 .data-table th {
   padding: 13px 12px;
   border-bottom: 1px solid var(--nt-border);
@@ -352,7 +388,6 @@
   vertical-align: middle;
   line-height: 1.6;
 }
-
 .data-table tbody tr {
   transition: background-color 140ms ease;
 }
@@ -620,7 +655,6 @@
   border-radius: 50%;
   animation: nt-spin 700ms linear infinite;
 }
-
 @keyframes nt-spin {
   to {
     transform: rotate(360deg);
@@ -742,7 +776,6 @@
   gap: 8px;
   padding-top: 3px;
 }
-
 .form-actions button {
   flex: 1 1 auto;
 }
@@ -796,6 +829,7 @@
   background: #172f50;
   border-color: #264b78;
 }
+
 
 :host-context(.dark) .type-badge.sms-type,
 :host-context([data-theme='dark']) .type-badge.sms-type {
@@ -919,6 +953,8 @@
     flex-direction: column;
   }
 }
+
+
 
 @media (max-width: 480px) {
   .notification-templates-container {
