@@ -534,6 +534,9 @@ namespace Nafadh_Backend
             app.UseCors("AllowAll");
             app.UseStaticFiles();
             app.UseAuthentication();
+
+            app.UseMiddleware<Nafadh_Backend.Middleware.MaintenanceModeMiddleware>();
+
             app.UseAuthorization();
 
             app.MapControllers();
