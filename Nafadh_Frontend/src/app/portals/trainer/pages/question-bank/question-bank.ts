@@ -1,6 +1,7 @@
-import { constantEditKey } from '../../../../core/models/administrative-constants';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { administrativeValue, constantEditKey } from '../../../../core/models/administrative-constants';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { inject, Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -61,6 +62,7 @@ interface QuestionForm {
     styleUrl: './question-bank.scss'
 })
 export class QuestionBank implements OnInit {
+    readonly constants = inject(NafadhConstantsService);
 
     trainer = signal<TrainerDto | null>(null);
 
@@ -217,6 +219,7 @@ export class QuestionBank implements OnInit {
     ) { }
 
     ngOnInit(): void {
+        this.constants.ensure('NFD_QUE_TYPE');
         this.loadDifficultyOptions();
 
         const quizId = Number(
@@ -517,8 +520,6 @@ export class QuestionBank implements OnInit {
     }
 
     openEditQuestion(question: QuestionBankDto): void {
-        this.editingQuestionId.set(question.questionId);
-
         const questionTypeMap: Record<string, number> = {
             MultipleChoice: 0,
             TrueFalse: 1,
@@ -534,11 +535,14 @@ export class QuestionBank implements OnInit {
         const rawQuestionType = question.questionType as number | string;
         const rawDifficulty = question.difficulty as number | string;
 
-        const questionType =
-            typeof rawQuestionType === 'string'
-                ? questionTypeMap[rawQuestionType] ?? 0
-                : Number(rawQuestionType);
+        const typeKey = administrativeValue('NFD_QUE_TYPE', rawQuestionType)?.key;
+        if (!typeKey) {
+            this.questionError.set('تعذر تحديد نوع السؤال المحفوظ.');
+            return;
+        }
 
+        const questionType = questionTypeMap[typeKey];
+        this.editingQuestionId.set(question.questionId);
         const difficulty =
             typeof rawDifficulty === 'string'
                 ? difficultyMap[rawDifficulty] ?? 0
@@ -961,27 +965,7 @@ export class QuestionBank implements OnInit {
     }
 
     getQuestionTypeLabel(type: number | string): string {
-        const value =
-            typeof type === 'string'
-                ? type
-                : Number(type);
-
-        switch (value) {
-            case 0:
-            case 'MultipleChoice':
-                return 'اختيار متعدد';
-
-            case 1:
-            case 'TrueFalse':
-                return 'صح أو خطأ';
-
-            case 2:
-            case 'Essay':
-                return 'سؤال مقالي';
-
-            default:
-                return 'سؤال';
-        }
+        return this.constants.administrativeLabel('NFD_QUE_TYPE', type);
     }
 
     getDifficultyLabel(difficulty: number | string): string {
