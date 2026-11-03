@@ -245,7 +245,7 @@
               @for (w of tp.warnings; track w.warningId) {
               <div class="tp-warn-item">
                 <div>
-                  <div class="tp-warn-title">{{ warningTypes.label(w.type) }} · المستوى: {{ w.level }}</div>
+                  <div class="tp-warn-title">{{ warningTypes.label(w.type) }} · المستوى: {{ constants.administrativeLabel('NFD_WRN_LVL', w.level) }}</div>
                   <div class="tp-warn-reason">{{ w.reason }}</div>
                 </div>
                 <div class="tp-warn-date">
@@ -310,7 +310,7 @@
               <span>·</span>
               <span>تصنيف الإنذار: <strong>{{ warningTypes.label(wd.type) }}</strong></span>
               <span>·</span>
-              <span>درجة الإنذار: <strong>{{ wd.levelArabic }}</strong></span>
+              <span>درجة الإنذار: <strong>{{ constants.administrativeLabel('NFD_WRN_LVL', wd.level) }}</strong></span>
             </div>
             <div class="tp-info-line">
               <span>✉️ {{ wd.companyEmail }}</span>
@@ -337,7 +337,7 @@
         <div class="stat-info">
           <div class="stat-label">نوع ومجال الإنذار</div>
           <div class="stat-value" style="font-size: 20px;">{{ warningTypes.label(wd.type) }}</div>
-          <div class="stat-subtext">{{ warningTypes.label(wd.type) }}</div>
+          <div class="stat-subtext">{{ constants.administrativeLabel('NFD_WRN_SCOPE', wd.scope) }}</div>
         </div>
       </div>
 
@@ -345,8 +345,7 @@
         <div class="stat-icon icon-purple">📌</div>
         <div class="stat-info">
           <div class="stat-label">مستوى الإنذار</div>
-          <div class="stat-value" style="font-size: 20px;">{{ wd.level }}</div>
-          <div class="stat-subtext">{{ wd.levelArabic }}</div>
+          <div class="stat-value" style="font-size: 20px;">{{ constants.administrativeLabel('NFD_WRN_LVL', wd.level) }}</div>
         </div>
       </div>
 
