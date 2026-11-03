@@ -31,6 +31,7 @@ import {
 } from '../../../core/models/dtos';
 
 export interface TraineeCertificateStatusDto {
+  type?: string | number | null;
   traineeId: number;
   enrollmentId: number;
   fullName: string;
