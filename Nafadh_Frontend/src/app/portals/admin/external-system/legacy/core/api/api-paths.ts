@@ -210,8 +210,11 @@ announcementById: (id: number) => `/api/Announcement/${id}`,
     `/api/jobseekers/jobs/${jobId}/applications/${applicationId}`,
 
   /** System administration (admin API; mock-backed in dev). */
-  adminSystemVariables: '/api/jobseekers/admin/system-variables',
-  adminSystemVariable: (variableKey: string) => `/api/jobseekers/admin/system-variables/${encodeURIComponent(variableKey)}`,
+
+adminSystemVariables: '/api/system-variables',
+adminSystemVariable: (variableKey: string) =>
+  `/api/system-variables/${encodeURIComponent(variableKey)}`,
+
   adminSystemConfigGroups: `${MANAGEMENT_REFERENCE_CONSTANTS}/groups`,
   adminSystemConfigValues: (code: string) => `${MANAGEMENT_REFERENCE_CONSTANTS}/values/${encodeURIComponent(code)}`,
   adminSystemConfigValuesSearch: (code: string) =>
