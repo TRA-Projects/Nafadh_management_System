@@ -3,13 +3,16 @@ import '@angular/localize/init';
 import { FormBuilder } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Injector, runInInjectionContext, signal } from '@angular/core';
-import { EMPTY, firstValueFrom, of } from 'rxjs';
+import { EMPTY, firstValueFrom, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { administrativeValue, AdministrativeGroup, constantPolicyHint } from '../models/administrative-constants';
 import { NafadhConstantsService } from './nafadh-constants.service';
 import { NafadhEvaluationTypesService } from './nafadh-evaluation-types.service';
 import { NafadhWarningTypesService } from './nafadh-warning-types.service';
 import { TrainerApi } from '../../portals/trainer/services/trainer-api';
+import { CompanyTasks } from '../../portals/company/pages/tasks/tasks';
+import { CompanyPlanWorkspace } from '../../portals/company/pages/tasks/plan-workspace';
+import { CompanyApi } from '../../portals/company/services/company-api';
 import { AdminWarnings } from '../../portals/admin/pages/warnings/warnings';
 import { QuestionBank } from '../../portals/trainer/pages/question-bank/question-bank';
 import { AdminNotifications } from '../../portals/admin/pages/notifications/notifications';
@@ -18,6 +21,7 @@ import { AdminCommunications } from '../../portals/admin/pages/communications/co
 import { AdminTrainees, EnrichedTraineeItem } from '../../portals/admin/pages/trainees/trainees';
 import { TrainerReports } from '../../portals/trainer/pages/reports/reports';
 import { TraineeSupport } from '../../portals/trainee/pages/support/support';
+import { TraineeAchievements } from '../../portals/trainee/pages/achievements/achievements';
 import { DomSanitizer } from '@angular/platform-browser';
 import { AuthService } from '../auth/auth.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -66,6 +70,15 @@ describe('Editing fixed values', () => {
   });
   it.each([
     ['NFD_TIC_STAT', 'Open'], ['NFD_WDR_STAT', 'Pending'], ['NFD_RPT_TYPE', 'Performance'],
+    ['NFD_CPE_STAT', 'NotStarted'],
+    ['NFD_CPI_TYPE', 'Task'],
+    ['NFD_CPP_STAT', 'NotStarted'],
+    ['NFD_FBK_TYPE', 'TrainerRating'],
+    ['NFD_BDG_COND', 'ModulesCompletedInPeriod'],
+    ['NFD_PJT_ROLE', 'Lead'],
+    ['NFD_MSG_STAT', 'Sent'],
+    ['NFD_TRK_STAT', 'Archived'],
+    ['NFD_VER_STAT', 'Pending'],
     ['NFD_QUE_TYPE', 'MultipleChoice'],
     ['NFD_WRN_LVL', 'Low'],
     ['NFD_WRN_SCOPE', 'Company'],
@@ -113,6 +126,15 @@ describe('Administrative constant identities and labels', () => {
     ['NFD_ANN_SCOPE', ['Platform', 'Company', 'Batch', 'Trainee', 'Trainer', 'Admin']],
     ['NFD_CMP_STAT', ['PendingApproval', 'Approved', 'Suspended', 'Rejected']],
     ['NFD_CPA_STAT', ['Draft', 'PendingApproval', 'Approved', 'Rejected']],
+    ['NFD_CPE_STAT', ['NotStarted', 'InProgress', 'OnHold', 'Completed']],
+    ['NFD_CPI_TYPE', ['Task', 'Project']],
+    ['NFD_CPP_STAT', ['NotStarted', 'InProgress', 'Completed']],
+    ['NFD_FBK_TYPE', ['TrainerRating', 'BatchExperienceRating']],
+    ['NFD_BDG_COND', ['ModulesCompletedInPeriod', 'AttendanceStreak', 'HighScoreCount', 'ProjectCompletion', 'ProgramCompletion']],
+    ['NFD_PJT_ROLE', ['Lead', 'Contributor']],
+    ['NFD_MSG_STAT', ['Sent', 'Delivered', 'Read']],
+    ['NFD_TRK_STAT', ['Active', 'Archived']],
+    ['NFD_VER_STAT', ['Pending', 'Verified', 'Rejected']],
     ['NFD_QUE_TYPE', ['MultipleChoice', 'TrueFalse', 'Essay']],
     ['NFD_WRN_LVL', ['Low', 'Medium', 'High', 'Critical']],
     ['NFD_WRN_SCOPE', ['Company', 'Trainee']],
@@ -158,6 +180,82 @@ describe('Administrative constant identities and labels', () => {
         page.openEditQuestion(page.filteredQuestions()[0]);
         expect(page.questionForm.questionType).toBe(i);
       });
+    }
+  });
+
+  it('keeps execution filtering separate from approval even when two labels coincide', () => {
+    const { get, injector } = mockLookups();
+    const constants = runInInjectionContext(injector, () => new NafadhConstantsService());
+    const pages = Injector.create({ providers: [
+      { provide: NafadhConstantsService, useValue: constants }, { provide: CompanyApi, useValue: {} },
+      { provide: AuthService, useValue: {} }, { provide: Router, useValue: {} }
+    ] });
+    const page = runInInjectionContext(pages, () => new CompanyTasks());
+    const plans = ['InProgress', 'OnHold'].map((executionStatus, i) => ({
+      planId: i + 1, approvalStatus: 'Approved', executionStatus
+    })) as ReturnType<typeof page.plans>;
+    page.plans.set(plans);
+    get.mockReturnValue(of(plans.map(p => ({ ValueKey: p.executionStatus, label_ar: 'تسمية مشتركة', IsActive: false }))));
+    constants.refresh('NFD_CPE_STAT');
+    page.filter.set('OnHold');
+    expect(page.filterLabel('OnHold', '')).toBe('تسمية مشتركة');
+    expect(page.executionLabel(plans[0])).toBe('تسمية مشتركة');
+    expect(page.filtered().map(p => p.planId)).toEqual([2]);
+    expect(page.executionLabel({ ...plans[0], approvalStatus: 'Draft' })).toBeNull();
+  });
+
+  it('refreshes execution step labels without changing step identity or item progress', () => {
+    const { get, injector } = mockLookups();
+    const constants = runInInjectionContext(injector, () => new NafadhConstantsService());
+    const pages = Injector.create({ providers: [
+      { provide: NafadhConstantsService, useValue: constants }, { provide: CompanyApi, useValue: {} },
+      { provide: AuthService, useValue: {} }, { provide: Router, useValue: {} }, { provide: ActivatedRoute, useValue: {} }
+    ] });
+    const page = runInInjectionContext(pages, () => new CompanyPlanWorkspace());
+    const plan = { approvalStatus: 'Approved', executionStatus: 'InProgress', progressPercentage: 50 } as NonNullable<ReturnType<typeof page.plan>>;
+    page.plan.set(plan);
+    get.mockReturnValue(throwError(() => new Error('offline')));
+    constants.ensure('NFD_CPE_STAT');
+    expect(page.steps().slice(3).map(s => s.label)).toEqual(['قيد التنفيذ', 'مكتمل']);
+    const approvalSteps = page.steps().slice(0, 3);
+    get.mockReturnValue(of([{ ValueKey: 'InProgress', label_ar: 'تقدم العنصر' }]));
+    constants.refresh('NFD_CPP_STAT');
+    for (const labels of [['تنفيذ جديد', 'إكمال جديد'], ['مشترك', 'مشترك']]) {
+      get.mockReturnValue(of(['InProgress', 'Completed'].map((ValueKey, i) => ({ ValueKey, label_ar: labels[i] }))));
+      constants.refresh('NFD_CPE_STAT');
+      page.ask('resume');
+      expect(page.confirm()?.text).toContain(`«${labels[0]}»`);
+      for (const executionStatus of ['InProgress', 'Completed', 'OnHold'] as const) {
+        page.plan.set({ ...plan, executionStatus });
+        const steps = page.steps();
+        expect(steps.slice(0, 3)).toEqual(approvalSteps);
+        expect(steps.map(s => s.id)).toEqual(['preparation', 'PendingApproval', 'Approved', 'InProgress', 'Completed']);
+        expect(steps.slice(3).map(s => s.label)).toEqual(labels);
+        const current = steps.find(s => s.state === 'current');
+        expect(current?.id).toBe(executionStatus === 'OnHold' ? 'InProgress' : executionStatus);
+        if (executionStatus !== 'OnHold') expect(current?.label).toBe(page.executionLabel(executionStatus));
+        expect(page.progressLabel('InProgress')).toBe('تقدم العنصر');
+        expect(page.plan()?.progressPercentage).toBe(50);
+      }
+    }
+  });
+
+  it('uses the historical feedback label when an incomplete program blocks submission', () => {
+    const { get, injector } = mockLookups();
+    const constants = runInInjectionContext(injector, () => new NafadhConstantsService());
+    get.mockReturnValue(of([{ ValueKey: 'BatchExperienceRating', label_ar: 'رأي الدفعة', IsActive: false }]));
+    constants.refresh('NFD_FBK_TYPE');
+    const page = Object.assign(Object.create(TraineeAchievements.prototype), {
+      constants, feedbackType: () => 'BatchExperienceRating', canSubmitProgramFeedback: () => false,
+      showSuccessToast: signal(false), successMessage: signal('')
+    });
+    vi.useFakeTimers();
+    try {
+      page.submitFeedback();
+      expect(page.successMessage()).toContain('رأي الدفعة');
+      vi.runAllTimers();
+    } finally {
+      vi.useRealTimers();
     }
   });
 
