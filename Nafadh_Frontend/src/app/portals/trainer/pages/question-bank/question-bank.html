@@ -148,9 +148,9 @@
             </select>
 
 
-            <select [ngModel]="difficultyFilter()" (ngModelChange)="difficultyFilter.set($event)" [disabled]="difficultyOptions().length === 0">
+            <select [ngModel]="difficultyFilter()" (ngModelChange)="difficultyFilter.set($event)" [disabled]="historicalDifficulties().length === 0">
                 <option value="all">كل المستويات</option>
-                <option *ngFor="let option of difficultyOptions()" [value]="option.value">{{ option.label }}</option>
+                <option *ngFor="let option of historicalDifficulties()" [value]="option.value">{{ option.label }}</option>
             </select>
 
 
