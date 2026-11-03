@@ -1,3 +1,4 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, AfterViewInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -123,7 +124,6 @@ export interface SelectedWarningDetailView {
   type: string;
   typeArabic: string;
   level: string;
-  levelArabic: string;
   status: string;
   statusArabic: string;
   issuedDate: string;
@@ -144,6 +144,7 @@ export interface SelectedWarningDetailView {
   styleUrls: ['./dashboard.css']
 })
 export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
+  readonly constants = inject(NafadhConstantsService);
   readonly warningTypes = inject(NafadhWarningTypesService);
   summary = signal<AdminDashboardSummary | null>(null);
   announcements = signal<any[]>([]);
@@ -487,6 +488,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   ) { }
 
   ngOnInit() {
+    this.constants.ensure('NFD_WRN_SCOPE', 'NFD_WRN_LVL');
     this.warningTypes.refresh();
     this.loadAllDashboardData();
   }
@@ -632,13 +634,6 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
 
       const typeArabic = this.warningTypes.label(typeRaw);
 
-      const levelArabic =
-        levelRaw.toLowerCase().includes('low') ? 'منخفض' :
-          levelRaw.toLowerCase().includes('medium') ? 'متوسط' :
-            levelRaw.toLowerCase().includes('high') ? 'مرتفع' :
-              levelRaw.toLowerCase().includes('critical') ? 'حرج' :
-                levelRaw || '—';
-
       const statusArabic =
         statusRaw.toLowerCase().includes('resolved') ? 'تمت المعالجة' :
           statusRaw.toLowerCase().includes('underreview') ? 'قيد المراجعة' :
@@ -656,7 +651,6 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         type: typeRaw || '—',
         typeArabic,
         level: levelRaw || '—',
-        levelArabic,
         status: statusRaw || '—',
         statusArabic,
         issuedDate: warning.issuedDate
