@@ -2,6 +2,29 @@ import { EVALUATION_TYPE_LABELS, WARNING_TYPE_LABELS } from './enums';
 
 // The array positions match the persisted Nafadh enum ordinals.
 const values = {
+  NFD_EXT_ACT: [
+    { key: 'Warn', label: 'تنبيه' },
+    { key: 'Terminate', label: 'إنهاء' },
+    { key: 'FlagForReview', label: 'إحالة للمراجعة' },
+  ],
+  NFD_FIL_TYPE: [
+    { key: 'Pdf', label: 'PDF' },
+    { key: 'Video', label: 'فيديو' },
+    { key: 'Image', label: 'صورة' },
+    { key: 'Document', label: 'مستند' },
+    { key: 'Link', label: 'رابط' },
+    { key: 'Other', label: 'أخرى' },
+  ],
+  NFD_PRG_STAT: [
+    { key: 'Draft', label: 'مسودة' },
+    { key: 'Published', label: 'منشور' },
+    { key: 'Archived', label: 'مؤرشف' },
+  ],
+  NFD_PYS_STAT: [
+    { key: 'Pending', label: 'قيد الانتظار' },
+    { key: 'Paid', label: 'مدفوع' },
+    { key: 'Overdue', label: 'متأخر عن الموعد' },
+  ],
   NFD_TIC_STAT: [
     { key: 'Open', label: 'مفتوح' },
     { key: 'InProgress', label: 'قيد المعالجة' },
