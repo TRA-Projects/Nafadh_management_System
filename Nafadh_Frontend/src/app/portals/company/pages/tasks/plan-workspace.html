@@ -274,7 +274,7 @@
                         {{ formatDate(item.dueDate) }}
                         @if (item.isOverdue) { <span class="chip late">متأخرة</span> }
                       </td>
-                      <td><span [class]="'chip pr-' + item.priority.toLowerCase()">{{ priorityLabel(item.priority) }}</span></td>
+                      <td><span [class]="'chip pr-' + ('' + item.priority).toLowerCase()">{{ priorityLabel(item.priority) }}</span></td>
                       <td>
                         @if (p.canTrack) {
                           <select class="mini-select" [value]="item.status" (change)="onItemStatus(item, $event)" [disabled]="busy()" aria-label="حالة التنفيذ">
