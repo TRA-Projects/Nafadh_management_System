@@ -16,7 +16,6 @@ import {
 } from '../../../../core/models/dtos';
 import {
   TRAINEE_STATUS_LABELS,
-  WARNING_LEVEL_LABELS,
   MODULE_PROGRESS_LABELS,
   ENROLLMENT_STATUS_LABELS,
   AttendanceStatus,
@@ -186,7 +185,6 @@ export class AdminTraineeProfile implements OnInit {
   statusLabels = TRAINEE_STATUS_LABELS;
   readonly warningTypes = inject(NafadhWarningTypesService);
   readonly evaluationTypes = inject(NafadhEvaluationTypesService);
-  warningLevelLabels = WARNING_LEVEL_LABELS;
   enrollmentStatusLabels = ENROLLMENT_STATUS_LABELS;
 
   // قيم محسوبة (computed)
@@ -266,7 +264,7 @@ export class AdminTraineeProfile implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.constants.ensure('NFD_WDR_STAT');
+    this.constants.ensure('NFD_WDR_STAT', 'NFD_WRN_LVL');
     this.warningTypes.refresh();
     this.evaluationTypes.refresh();
     const id = Number(this.route.snapshot.paramMap.get('id'));
