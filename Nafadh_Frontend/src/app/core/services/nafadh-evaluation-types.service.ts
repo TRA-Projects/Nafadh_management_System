@@ -1,4 +1,4 @@
-import { lookupValueKey } from '../models/administrative-constants';
+import { lookupLabel, lookupValueKey } from '../models/administrative-constants';
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
@@ -32,8 +32,7 @@ export class NafadhEvaluationTypesService {
             const data = item as Record<string, unknown>;
             const key = this.key(lookupValueKey(data));
             if (!EVALUATION_KEYS.includes(key as typeof EVALUATION_KEYS[number])) continue;
-            labels[key] = String(data['label_ar'] ?? data['labelAr'] ?? data['LabelAr'] ??
-              data['label_en'] ?? data['labelEn'] ?? FALLBACK[key]).trim() || FALLBACK[key];
+            labels[key] = lookupLabel(data) || FALLBACK[key];
           }
           this.labels.set(labels);
           this.loaded.set(true);
@@ -55,7 +54,7 @@ export class NafadhEvaluationTypesService {
           const data = item as Record<string, unknown>;
           const key = this.key(lookupValueKey(data));
           if (!EVALUATION_KEYS.includes(key as typeof EVALUATION_KEYS[number])) continue;
-          const active = data['IsActive'] ?? data['isActive'] ?? data['active'];
+          const active = data['IsActive'] ?? data['isActive'] ?? data['is_active'] ?? data['active'];
           if (active === true || active === 1 || String(active).toLowerCase() === 'true') {
             result.add(key);
           }
