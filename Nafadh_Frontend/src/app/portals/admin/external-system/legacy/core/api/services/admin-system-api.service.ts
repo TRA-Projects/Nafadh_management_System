@@ -8,6 +8,9 @@ import { map, tap } from 'rxjs/operators';
 import { ApiPaths } from '../api-paths';
 import { unwrapData, type ApiData } from '../../profile/jobseeker-profile-api';
 import { adminSystemActions } from '../../store/admin-system/admin-system.actions';
+
+import { SystemVariablesService } from '../../../../../../../services/system-variables.service';
+
 import type {
   PagedListResponse,
   PagedQueryParams,
@@ -97,63 +100,98 @@ export interface EvaluationTemplateInputDto {
 export class AdminSystemApiService {
   private readonly http = inject(HttpClient);
   private readonly store = inject(Store);
+  
+private readonly systemVariablesService = inject(SystemVariablesService);
+
 
   // ── System Variables ──────────────────────────────────────────────────────
 
-  getSystemVariablesPage(params: PagedQueryParams & { q?: string }) {
-    let hp = this.pageParams(params);
+ 
+getSystemVariablesPage(params: PagedQueryParams & { q?: string }) {
+  return this.systemVariablesService.getAllVariables().pipe(
 
-    if (params.q?.trim()) {
-      hp = hp.set('q', params.q.trim());
-    }
+map(dbRows => {
+  const rows: SystemVariableDto[] = dbRows.map(v => ({
+    Code: v.variableKey,
+    VariableKey: v.variableKey,
+    VariableName: v.variableName,
+    VariableNameEn: v.variableName,
+    VariableNameAr: v.variableName,
+    ValueType: v.valueType as SystemVariableDto['ValueType'],
+    Value: v.value,
+    Description: v.description ?? ''
+  }));
 
-    return this.http
-      .get<
-        ApiData<PagedListResponse<SystemVariableDto>> |
-        { Data: PagedListResponse<SystemVariableDto> }
-      >(ApiPaths.adminSystemVariables, { params: hp })
-      .pipe(
-        map(unwrapData),
-        tap((page) =>
-          this.store.dispatch(
-            adminSystemActions.cacheSystemVariablesPage({ page })
-          )
+  const q = params.q?.trim().toLowerCase() ?? '';
+
+
+    
+const filtered = rows.filter(row =>
+  !q ||
+  row.VariableKey.toLowerCase().includes(q) ||
+  row.VariableName.toLowerCase().includes(q) ||
+  (row.Description ?? '').toLowerCase().includes(q)
+);
+
+
+      const pageIndex = params.pageIndex ?? 0;
+      const pageSize = params.pageSize ?? filtered.length;
+      const start = pageIndex * pageSize;
+
+      return {
+        rows: pageSize > 0
+          ? filtered.slice(start, start + pageSize)
+          : filtered,
+        total: filtered.length,
+        pageIndex,
+        pageSize
+      } as PagedListResponse<SystemVariableDto>;
+    }),
+    tap(page =>
+      this.store.dispatch(
+        adminSystemActions.cacheSystemVariablesPage({ page })
+      )
+    )
+  );
+}
+
+
+getSystemVariables() {
+  return this.getSystemVariablesPage({
+    pageIndex: 0,
+    pageSize: 0
+  }).pipe(
+    map(page => page.rows)
+  );
+}
+
+
+ 
+updateSystemVariable(
+  variableKey: string,
+  value: string | number | boolean
+) {
+  return this.systemVariablesService
+    .updateVariable(variableKey, String(value))
+    .pipe(
+      map(response => ({
+        Code: response.variable.variableKey,
+        VariableKey: response.variable.variableKey,
+        VariableName: response.variable.variableName,
+        VariableNameEn: response.variable.variableName,
+        VariableNameAr: response.variable.variableName,
+        ValueType: response.variable.valueType as SystemVariableDto['ValueType'],
+        Value: response.variable.value,
+        Description: response.variable.description ?? ''
+      } as SystemVariableDto)),
+      tap(row =>
+        this.store.dispatch(
+          adminSystemActions.systemVariableUpdated({ row })
         )
-      );
-  }
+      )
+    );
+}
 
-  getSystemVariables() {
-    return this.http
-      .get<
-        ApiData<PagedListResponse<SystemVariableDto>> |
-        { Data: PagedListResponse<SystemVariableDto> }
-      >(ApiPaths.adminSystemVariables)
-      .pipe(
-        map(unwrapData),
-        map((page) => page.rows)
-      );
-  }
-
-  updateSystemVariable(
-    variableKey: string,
-    value: string | number | boolean
-  ) {
-    return this.http
-      .put<
-        ApiData<SystemVariableDto> |
-        { Data: SystemVariableDto }
-      >(ApiPaths.adminSystemVariable(variableKey), {
-        Value: value,
-      })
-      .pipe(
-        map(unwrapData),
-        tap((row) =>
-          this.store.dispatch(
-            adminSystemActions.systemVariableUpdated({ row })
-          )
-        )
-      );
-  }
 
   // ── System Config Values ──────────────────────────────────────────────────
 
