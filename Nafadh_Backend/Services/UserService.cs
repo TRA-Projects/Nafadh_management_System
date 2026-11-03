@@ -96,7 +96,7 @@ namespace Nafadh_Backend.Services
                     }
                 }
 
-                var (token, expiresAtUtc) = _jwtTokenService.GenerateToken(user);
+                var (token, expiresAtUtc) = await _jwtTokenService.GenerateTokenAsync(user);
 
                 int? companyId = null;
                 int? supervisorId = null;
