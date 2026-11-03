@@ -1,11 +1,10 @@
-
-// Implemented by Noura
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
+using Nafadh_Backend.Filters;
 using Nafadh_Backend.Services;
+using System.Security.Claims;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -40,33 +39,41 @@ namespace Nafadh_Backend.Controllers
             return Ok(result);
         }
 
-
         //Get user profile.
         [HttpGet("{id:int}")]
         [Authorize]
+        [RequirePagePermission(new[] { "nf.admin.users-permissions", "nf.company.account", "nf.trainer.profile", "nf.trainee.profile" }, "View")]
         [ProducesResponseType(typeof(UserResponseDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<UserResponseDTO>> GetById(int id)
         {
+            if (IsMineScopeOnly() && TryGetCurrentUserId(out var currentUserId) && currentUserId != id)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "لا يمكنك عرض حساب مستخدم آخر." });
+            }
+
             var user = await _service.GetByIdAsync(id);
             return user is null ? NotFound() : Ok(user);
         }
 
-
         //Update profile.
         [HttpPut("{id:int}")]
-        //[Authorize]
+        [RequirePagePermission(new[] { "nf.admin.users-permissions", "nf.company.account", "nf.trainer.profile", "nf.trainee.profile" }, "Edit")]
         [ProducesResponseType(typeof(UserResponseDTO), StatusCodes.Status200OK)]
         public async Task<ActionResult<UserResponseDTO>> Update(int id, [FromBody] UserUpdateDTO dto)
         {
+            if (IsMineScopeOnly() && TryGetCurrentUserId(out var currentUserId) && currentUserId != id)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "لا يمكنك تعديل حساب مستخدم آخر." });
+            }
+
             var updated = await _service.UpdateAsync(id, dto);
             return Ok(updated);
         }
 
-
         //Activate/suspend/deactivate a user.
         [HttpPut("{id:int}/status")]
-        //[Authorize(Roles = "Admin")]
+        [RequirePagePermission("nf.admin.users-permissions", "Approve")]
         [ProducesResponseType(typeof(UserResponseDTO), StatusCodes.Status200OK)]
         public async Task<ActionResult<UserResponseDTO>> UpdateStatus(int id, [FromBody] UserStatusUpdateDTO dto)
         {
@@ -76,7 +83,7 @@ namespace Nafadh_Backend.Controllers
 
         //Admin-triggered password reset.
         [HttpPut("{id:int}/reset-password")]
-       // [Authorize(Roles = "Admin")]
+        [RequirePagePermission("nf.admin.users-permissions", "Edit")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> ResetPassword(int id, [FromBody] AdminResetPasswordDTO dto)
         {
@@ -84,10 +91,9 @@ namespace Nafadh_Backend.Controllers
             return NoContent();
         }
 
-
         //>List/search users (filter by role/status).
         [HttpGet]
-        //[Authorize(Roles = "Admin")]
+        [RequirePagePermission("nf.admin.users-permissions", "View")]
         public async Task<IActionResult> Search(
             [FromQuery] int? roleId,
             [FromQuery] NFD_UserStatus? status,
@@ -99,20 +105,24 @@ namespace Nafadh_Backend.Controllers
             return Ok(result);
         }
 
-
         // Effective permissions for a user (via role).
         [HttpGet("{id:int}/permissions")]
-      //  [Authorize]
+        [RequirePagePermission(new[] { "nf.admin.users-permissions", "nf.company.account", "nf.trainer.profile", "nf.trainee.profile" }, "View")]
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         public async Task<ActionResult<List<string>>> GetPermissions(int id)
         {
+            if (IsMineScopeOnly() && TryGetCurrentUserId(out var currentUserId) && currentUserId != id)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "لا يمكنك عرض صلاحيات مستخدم آخر." });
+            }
+
             var permissions = await _service.GetEffectivePermissionsAsync(id);
             return Ok(permissions);
         }
 
         //Deactivate an account (soft-delete).
         [HttpDelete("{id:int}")]
-       // [Authorize(Roles = "Admin")]
+        [RequirePagePermission("nf.admin.users-permissions", "Approve")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> Deactivate(int id)
         {
@@ -120,5 +130,19 @@ namespace Nafadh_Backend.Controllers
             return NoContent();
         }
 
+        private bool IsMineScopeOnly()
+        {
+            var scope = HttpContext.Items["PageDataScope"] as string;
+            return string.Equals(scope, "mine", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool TryGetCurrentUserId(out int userId)
+        {
+            var idStr = User.FindFirstValue("userId")
+                     ?? User.FindFirstValue("UserId")
+                     ?? User.FindFirstValue("sub")
+                     ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(idStr, out userId);
+        }
     }
 }
