@@ -33,24 +33,43 @@ namespace Nafadh_Backend.Controllers
         }
 
         // GET: api/system-variables/{key}
+       
+
         [HttpGet("{key}")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<IActionResult> GetByKey(string key)
         {
-            var allowedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-{
-    "ATTACHMENT_ALLOWED_EXTENSIONS",
-    "ATTACHMENT_MAX_SIZE_MB",
-    "ATTACHMENT_SIZE_ERROR",
-    "ATTACHMENT_TYPE_ERROR",
-    "CV_TYPE_ERROR",
-    "CERTIFICATE_TYPE_ERROR"
-};
+            // اسم النظام متاح للجميع
+            bool isPublicSetting = string.Equals(
+                key,
+                "SiteName",
+                StringComparison.OrdinalIgnoreCase
+            );
 
-            if (!User.IsInRole("Admin") && !allowedKeys.Contains(key))
+            var allowedKeys = new HashSet<string>(
+                StringComparer.OrdinalIgnoreCase)
+    {
+        "ATTACHMENT_ALLOWED_EXTENSIONS",
+        "ATTACHMENT_MAX_SIZE_MB",
+        "ATTACHMENT_SIZE_ERROR",
+        "ATTACHMENT_TYPE_ERROR",
+        "CV_TYPE_ERROR",
+        "CERTIFICATE_TYPE_ERROR"
+    };
+
+            // بقية الإعدادات المسموحة تتطلب تسجيل الدخول
+            if (!isPublicSetting)
             {
-                return Forbid();
+                if (User.Identity?.IsAuthenticated != true)
+                    return Unauthorized();
+
+                if (!User.IsInRole("Admin") &&
+                    !allowedKeys.Contains(key))
+                {
+                    return Forbid();
+                }
             }
+
             var variable = await _context.SystemVariables
                 .AsNoTracking()
                 .FirstOrDefaultAsync(v => v.VariableKey == key);
@@ -60,6 +79,7 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(variable);
         }
+
 
         // PUT: api/system-variables/{key}
         [HttpPut("{key}")]
