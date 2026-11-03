@@ -1,7 +1,10 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warning-types.service';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { AdminApi } from '../../services/admin-api';
 
 export type RemediationActionType =
@@ -16,7 +19,18 @@ export type RemediationRequestStatus =
   | 'Pending'
   | 'Approved'
   | 'Rejected'
-  | 'NeedsModification';
+  | 'NeedsRevision';
+
+export function remediationReadKey(value: unknown): string {
+  const key = String(value ?? '').trim();
+  switch (key.toLowerCase()) {
+    case '0': case 'pending': return 'Pending';
+    case '1': case 'approved': return 'Approved';
+    case '2': case 'needsrevision': case 'needsmodification': return 'NeedsRevision';
+    case 'rejected': return 'Rejected';
+    default: return key || '—';
+  }
+}
 
 export interface RemediationRequestDto {
   requestId: number;
@@ -47,6 +61,9 @@ export interface RemediationRequestDto {
 })
 export class AdminRemediationRequests implements OnInit {
 
+  private readonly auth = inject(AuthService);
+  readonly constants = inject(NafadhConstantsService);
+  readonly warningTypes = inject(NafadhWarningTypesService);
   requests = signal<RemediationRequestDto[]>([]);
 
   selectedRequest = signal<RemediationRequestDto | null>(null);
@@ -67,6 +84,8 @@ export class AdminRemediationRequests implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_REM_STAT');
+    this.warningTypes.refresh();
     this.loadRequests();
   }
 
@@ -96,6 +115,7 @@ export class AdminRemediationRequests implements OnInit {
           // مطابقة أسماء الباك إند مع أسماء الـ HTML والواجهة تلقائياً
           const list = rawList.map((item: any) => ({
             ...item,
+            status: remediationReadKey(item.status),
             actionType: item.requestedAction || 'طلب إصلاح المخالفة',
             requestDate: item.submissionDate,
             violationReasons: [item.originalViolationType || 'مخالفة عامة'],
@@ -166,10 +186,10 @@ export class AdminRemediationRequests implements OnInit {
   // DECISION
   // ================================
 
-  applyDecision(status: RemediationRequestStatus): void {
+  applyDecision(status: 'Approved' | 'NeedsRevision'): void {
     const request = this.selectedRequest();
 
-    if (!request) {
+    if (!request || (status !== 'Approved' && status !== 'NeedsRevision')) {
       return;
     }
 
@@ -178,65 +198,33 @@ export class AdminRemediationRequests implements OnInit {
       return;
     }
 
+    const reviewer = this.auth.userId;
+    if (!reviewer || this.isProcessing()) return;
+
     this.isProcessing.set(true);
-
-    const updatePayload = {
-      status: status,
+    this.api.reviewRemediationRequest(request.requestId, {
+      status: status === 'Approved' ? 1 : 2,
       reviewNotes: this.adminNote.trim() || 'تمت الموافقة على الطلب واعتماد الإجراء المقترح.',
-      reviewedByUserId: 1
-    };
-
-    const apiAny = this.api as any;
-
-    if (
-      apiAny.updateRemediationStatus &&
-      typeof apiAny.updateRemediationStatus === 'function'
-    ) {
-      apiAny
-        .updateRemediationStatus(
-          request.requestId,
-          updatePayload
-        )
-        .subscribe({
-          next: () => {
-            this.isProcessing.set(false);
-            request.status = status;
-            request.adminDecision = updatePayload.reviewNotes;
-            this.closeModal();
-            this.loadRequests();
-          },
-          error: (error: any) => {
-            console.error('Error updating request:', error);
-            this.isProcessing.set(false);
-            alert('حدث خطأ أثناء تحديث حالة الطلب.');
-          }
-        });
-    } else {
-      console.warn('updateRemediationStatus() is not implemented in AdminApi.');
-      request.status = status;
-      request.adminDecision = updatePayload.reviewNotes;
-      this.isProcessing.set(false);
-      this.closeModal();
-    }
+      reviewedByUserId: reviewer
+    }).subscribe({
+      next: () => {
+        this.isProcessing.set(false);
+        this.closeModal();
+        this.loadRequests();
+      },
+      error: () => {
+        this.isProcessing.set(false);
+        alert('تعذر حفظ القرار. لم تتغير حالة الطلب.');
+      }
+    });
   }
 
   // ================================
   // STATUS
   // ================================
 
-  getStatusLabel(status: RemediationRequestStatus): string {
-    switch (status) {
-      case 'Pending':
-        return 'قيد المراجعة';
-      case 'Approved':
-        return 'مقبول';
-      case 'Rejected':
-        return 'مرفوض';
-      case 'NeedsModification':
-        return 'يحتاج إلى تعديل';
-      default:
-        return status;
-    }
+  getStatusLabel(status: string): string {
+    return status === 'Rejected' ? 'مرفوض' : this.constants.administrativeLabel('NFD_REM_STAT', status);
   }
 
   getStatusClass(status: RemediationRequestStatus): string {
@@ -247,7 +235,7 @@ export class AdminRemediationRequests implements OnInit {
         return 'st-approved';
       case 'Rejected':
         return 'st-rejected';
-      case 'NeedsModification':
+      case 'NeedsRevision':
         return 'st-modify';
       default:
         return '';
