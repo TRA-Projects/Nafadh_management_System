@@ -8,12 +8,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, firstValueFrom } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { TraineeApi } from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
-
+import { SystemVariablesService } from '../../../../services/system-variables.service';
 import {
   ConversationDetailDto,
   ConversationListItemDto,
@@ -136,7 +136,11 @@ export class TraineeSupport implements OnInit {
   // =========================================================
 
   selectedFile: File | null = null;
-
+  allowedExtensions = signal<string[]>([]);
+maxAttachmentSizeMb = signal<number>(0);
+attachmentSettingsLoaded = signal(false);
+attachmentSizeError = signal('');
+attachmentTypeError = signal('');
 
   // =========================================================
   // Authority Subjects
@@ -211,15 +215,51 @@ export class TraineeSupport implements OnInit {
   // Constructor & Init
   // =========================================================
 
-  constructor(
-    private api: TraineeApi,
-    public auth: AuthService
-  ) {}
+ constructor(
+  private api: TraineeApi,
+  public auth: AuthService,
+  private systemVariablesService: SystemVariablesService
+) {}
 
-  ngOnInit(): void {
-    this.loadConversations();
-    this.loadCurrentTraineeData();
+ ngOnInit(): void {
+  this.loadConversations();
+  this.loadCurrentTraineeData();
+  this.loadAttachmentSettings();
+}
+private async loadAttachmentSettings(): Promise<void> {
+  this.attachmentSettingsLoaded.set(false);
+
+  try {
+    const [extensions, maxSize, sizeError, typeError] =
+      await Promise.all([
+        firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
+        firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb()),
+        firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_SIZE_ERROR')),
+        firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_TYPE_ERROR'))
+      ]);
+
+    if (extensions.length === 0 || maxSize <= 0) {
+      throw new Error('Invalid attachment settings');
+    }
+
+    this.allowedExtensions.set(extensions);
+    this.maxAttachmentSizeMb.set(maxSize);
+    this.attachmentSizeError.set(sizeError);
+    this.attachmentTypeError.set(typeError);
+    this.attachmentSettingsLoaded.set(true);
+
+  } catch (error) {
+    console.error('فشل تحميل إعدادات المرفقات:', error);
+
+    this.allowedExtensions.set([]);
+    this.maxAttachmentSizeMb.set(0);
+    this.attachmentSettingsLoaded.set(false);
+
+    this.errorMessage.set(
+      'تعذر تحميل إعدادات المرفقات، يرجى تحديث الصفحة والمحاولة مجددًا'
+    );
   }
+}
 
 
   // =========================================================
@@ -946,98 +986,47 @@ export class TraineeSupport implements OnInit {
   // =========================================================
 
   onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
+  const input = event.target as HTMLInputElement;
+  if (!input.files || input.files.length === 0) return;
 
-    const file = input.files[0];
-    const maxSize = 10 * 1024 * 1024;
+  this.selectedFile = null;
 
-    if (file.size > maxSize) {
-      this.errorMessage.set('حجم الملف يجب ألا يتجاوز 10MB');
-      this.selectedFile = null;
-      input.value = '';
-      return;
-    }
-
-    const allowedTypes = [
-      'application/pdf',
-      'image/png',
-      'image/jpeg'
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-      this.errorMessage.set('يسمح فقط بصورة PNG أو JPG أو JPEG أو ملف PDF');
-      this.selectedFile = null;
-      input.value = '';
-      return;
-    }
-
-    this.errorMessage.set('');
-    this.selectedFile = file;
+  if (!this.attachmentSettingsLoaded()) {
+    this.errorMessage.set('إعدادات المرفقات غير متاحة حاليًا');
+    input.value = '';
+    return;
   }
 
+  const file = input.files[0];
+  const maxSizeMb = this.maxAttachmentSizeMb();
+  const maxSize = maxSizeMb * 1024 * 1024;
 
-  removeFile(event?: Event): void {
-    if (event) event.stopPropagation();
-    this.selectedFile = null;
-  }
-
-
-  formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 KB';
-    const kb = bytes / 1024;
-    if (kb < 1024) return `${kb.toFixed(1)} KB`;
-    return `${(kb / 1024).toFixed(2)} MB`;
-  }
-
-  onReceiverChange(): void {
-    this.newConv.subject = '';
-    this.newConv.note = '';
-    this.newConv.firstMessage = '';
-    this.newConv.trainerId = null;
-    this.selectedFile = null;
-    this.errorMessage.set('');
-  }
-
-
-  private getSelectedTrainer(): TrainerDto | undefined {
-    const trainerId = this.newConv.trainerId;
-    if (!trainerId) return undefined;
-    return this.trainers().find(
-      t => Number(t.trainerId) === Number(trainerId)
+  if (file.size > maxSize) {
+    this.errorMessage.set(
+      this.attachmentSizeError()
+        .replace('{maxSize}', String(maxSizeMb))
     );
+    input.value = '';
+    return;
   }
 
+  const extension = file.name
+    .split('.')
+    .pop()
+    ?.toLowerCase() ?? '';
 
-  getReceiverLabel(conversation: any): string {
-    if (!conversation) return '';
-    const raw =
-      conversation?.receiverType ??
-      conversation?.recipientType ??
-      conversation?.targetType ??
-      '';
-    const receiverType = String(raw).trim().toLowerCase();
+  const allowed = this.allowedExtensions()
+    .map(ext => ext.replace(/^\./, '').toLowerCase());
 
-    if (receiverType.includes('authority') || receiverType.includes('هيئة')) {
-      return 'هيئة تنظيم الاتصالات';
-    }
-    if (receiverType.includes('trainer') || receiverType.includes('مدرب')) {
-      const name =
-        conversation?.receiverTrainerName ??
-        conversation?.trainerName ??
-        '';
-      return name ? String(name) : 'المدرب';
-    }
-    if (receiverType.includes('company') || receiverType.includes('شركة')) {
-      const name =
-        conversation?.receiverCompanyName ??
-        conversation?.companyName ??
-        this.companyName();
-      return name ? `الشركة - ${name}` : 'الشركة';
-    }
-    return '';
+  if (!allowed.includes(extension)) {
+    this.errorMessage.set(this.attachmentTypeError());
+    input.value = '';
+    return;
   }
 
+  this.errorMessage.set('');
+  this.selectedFile = file;
+}
 
   // =========================================================
   // Validate
@@ -1112,6 +1101,15 @@ export class TraineeSupport implements OnInit {
   // Submit Logic
   // =========================================================
 
+  private getSelectedTrainer(): TrainerDto | undefined {
+  const trainerId = this.newConv.trainerId;
+
+  if (!trainerId) return undefined;
+
+  return this.trainers().find(
+    t => Number(t.trainerId) === Number(trainerId)
+  );
+}
   startConversation(): void {
     if (this.isSubmitting()) return;
 
@@ -1175,6 +1173,10 @@ export class TraineeSupport implements OnInit {
         ? this.newConv.note.trim()
         : this.newConv.firstMessage.trim();
 
+        if (this.selectedFile && !this.attachmentSettingsLoaded()) {
+  this.errorMessage.set('إعدادات المرفقات غير متاحة حاليًا');
+  return;
+}
     const payload = {
       type: 'TraineeComplaint',
       receiverType: this.newConv.receiverType,
