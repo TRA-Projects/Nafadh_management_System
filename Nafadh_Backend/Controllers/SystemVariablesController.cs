@@ -47,16 +47,17 @@ namespace Nafadh_Backend.Controllers
             );
 
             var allowedKeys = new HashSet<string>(
-                StringComparer.OrdinalIgnoreCase)
-    {
-        "ATTACHMENT_ALLOWED_EXTENSIONS",
-        "ATTACHMENT_MAX_SIZE_MB",
-        "ATTACHMENT_SIZE_ERROR",
-        "ATTACHMENT_TYPE_ERROR",
-        "CV_TYPE_ERROR",
-        "CERTIFICATE_TYPE_ERROR"
-    };
-
+     StringComparer.OrdinalIgnoreCase)
+{
+    "ATTACHMENT_ALLOWED_EXTENSIONS",
+    "ATTACHMENT_MAX_SIZE_MB",
+    "ATTACHMENT_SIZE_ERROR",
+    "ATTACHMENT_TYPE_ERROR",
+    "CV_TYPE_ERROR",
+    "CERTIFICATE_TYPE_ERROR",
+    "TRAINING_MATERIAL_MAX_SIZE_MB",
+    "TRAINING_MATERIAL_ALLOWED_EXTENSIONS"
+};
             // بقية الإعدادات المسموحة تتطلب تسجيل الدخول
             if (!isPublicSetting)
             {
