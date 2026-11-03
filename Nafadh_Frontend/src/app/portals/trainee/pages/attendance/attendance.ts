@@ -56,6 +56,8 @@ export class TraineeAttendance implements OnInit {
 allowedExtensions = signal<string[]>([]);
 maxAttachmentSizeMb = signal<number>(0);
 attachmentSettingsLoaded = signal(false);
+attachmentSizeError = signal('');
+attachmentTypeError = signal('');
 
   // =========================================================
   // EXCUSES CACHE
@@ -96,10 +98,20 @@ private async loadAttachmentSettings(): Promise<void> {
   this.attachmentSettingsLoaded.set(false);
 
   try {
-    const [extensions, maxSize] = await Promise.all([
-      firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
-      firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb())
-    ]);
+ const [
+  extensions,
+  maxSize,
+  sizeError,
+  typeError
+] = await Promise.all([
+  firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
+  firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb()),
+  firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_SIZE_ERROR')),
+  firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_TYPE_ERROR'))
+]);
+
+this.attachmentSizeError.set(sizeError);
+this.attachmentTypeError.set(typeError);
 
     if (extensions.length === 0) {
       throw new Error('No allowed attachment extensions configured');
@@ -651,16 +663,19 @@ onFileSelected(event: Event): void {
   const maxSizeMb = this.maxAttachmentSizeMb();
   const maxFileSize = maxSizeMb * 1024 * 1024;
 
-  if (file.size > maxFileSize) {
-    this.openPopup(
-      `حجم المرفق يجب ألا يتجاوز ${maxSizeMb} MB`,
-      'error',
-      'تنبيه'
-    );
+if (file.size > maxFileSize) {
+  this.openPopup(
+    this.attachmentSizeError().replace(
+      '{maxSize}',
+      String(maxSizeMb)
+    ),
+    'error',
+    'تنبيه'
+  );
 
-    input.value = '';
-    return;
-  }
+  input.value = '';
+  return;
+}
 
   // Read allowed extensions from SystemVariables
   const allowedExtensions = this.allowedExtensions();
@@ -669,16 +684,16 @@ onFileSelected(event: Event): void {
     .pop()
     ?.toLowerCase() ?? '';
 
-  if (!allowedExtensions.includes(fileExtension)) {
-    this.openPopup(
-      `الامتدادات المسموحة: ${allowedExtensions.map(ext => ext.toUpperCase()).join('، ')}`,
-      'error',
-      'تنبيه'
-    );
+if (!allowedExtensions.includes(fileExtension)) {
+  this.openPopup(
+    this.attachmentTypeError(),
+    'error',
+    'تنبيه'
+  );
 
-    input.value = '';
-    return;
-  }
+  input.value = '';
+  return;
+}
 
   this.selectedFileName.set(file.name);
   this.selectedFile.set(file);
@@ -757,17 +772,26 @@ onFileSelected(event: Event): void {
 
   const extension = proofFile.name.split('.').pop()?.toLowerCase() ?? '';
 
-  if (
-    proofFile.size > this.maxAttachmentSizeMb() * 1024 * 1024 ||
-    !this.allowedExtensions().includes(extension)
-  ) {
-    this.openPopup(
-      'المرفق لا يتوافق مع إعدادات النظام، يرجى اختيار ملف آخر',
-      'error',
-      'تنبيه'
-    );
-    return;
-  }
+ if (proofFile.size > this.maxAttachmentSizeMb() * 1024 * 1024) {
+  this.openPopup(
+    this.attachmentSizeError().replace(
+      '{maxSize}',
+      String(this.maxAttachmentSizeMb())
+    ),
+    'error',
+    'تنبيه'
+  );
+  return;
+}
+
+if (!this.allowedExtensions().includes(extension)) {
+  this.openPopup(
+    this.attachmentTypeError(),
+    'error',
+    'تنبيه'
+  );
+  return;
+}
 }
 
     const currentDailyAttendanceId =

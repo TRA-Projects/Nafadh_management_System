@@ -47,4 +47,10 @@ export class SystemVariablesService {
       })
     );
   }
+  // جلب رسالة الخطأ من قاعدة البيانات
+getErrorMessage(key: string): Observable<string> {
+  return this.getVariable(key).pipe(
+    map(variable => variable.value)
+  );
+}
 }

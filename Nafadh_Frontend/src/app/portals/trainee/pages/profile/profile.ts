@@ -106,6 +106,11 @@ allowedExtensions = signal<string[]>([]);
 maxAttachmentSizeMb = signal<number>(0);
 
 attachmentSettingsLoaded = signal(false);
+// رسائل المرفقات القادمة من قاعدة البيانات
+attachmentSizeError = signal('');
+attachmentTypeError = signal('');
+cvTypeError = signal('');
+certificateTypeError = signal('');
 
 
   // =========================================================
@@ -189,10 +194,26 @@ private async loadAttachmentSettings(): Promise<void> {
 
   try {
 
-    const [extensions, maxSize] = await Promise.all([
-      firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
-      firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb())
-    ]);
+    const [
+  extensions,
+  maxSize,
+  sizeError,
+  typeError,
+  cvError,
+  certificateError
+] = await Promise.all([
+  firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
+  firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb()),
+  firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_SIZE_ERROR')),
+  firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_TYPE_ERROR')),
+  firstValueFrom(this.systemVariablesService.getErrorMessage('CV_TYPE_ERROR')),
+  firstValueFrom(this.systemVariablesService.getErrorMessage('CERTIFICATE_TYPE_ERROR'))
+]);
+
+this.attachmentSizeError.set(sizeError);
+this.attachmentTypeError.set(typeError);
+this.cvTypeError.set(cvError);
+this.certificateTypeError.set(certificateError);
 
     if (extensions.length === 0) {
       throw new Error('No allowed attachment extensions configured');
@@ -1305,11 +1326,14 @@ private validateAttachment(
 
   if (file.size > maxSize * 1024 * 1024) {
 
-    this.openPopup(
-      `حجم الملف يتجاوز الحد المسموح (${maxSize} MB).`,
-      'error',
-      'حجم الملف غير مسموح'
-    );
+  this.openPopup(
+  this.attachmentSizeError().replace(
+    '{maxSize}',
+    String(maxSize)
+  ),
+  'error',
+  'حجم الملف غير مسموح'
+);
 
     return false;
   }
@@ -1317,10 +1341,10 @@ private validateAttachment(
   if (!allowedExtensions.includes(extension)) {
 
     this.openPopup(
-      `امتداد الملف غير مسموح. الامتدادات المسموحة: ${allowedExtensions.join('، ')}`,
-      'error',
-      'امتداد غير مسموح'
-    );
+  this.attachmentTypeError(),
+  'error',
+  'امتداد غير مسموح'
+);
 
     return false;
   }
@@ -1673,11 +1697,11 @@ if (
     this.allowedExtensions().includes(extension) &&
     !cvExtensions.includes(extension)
   ) {
-    this.openPopup(
-      'السيرة الذاتية يجب أن تكون بصيغة PDF أو DOC أو DOCX.',
-      'error',
-      'نوع الملف غير مسموح'
-    );
+   this.openPopup(
+  this.cvTypeError(),
+  'error',
+  'نوع الملف غير مسموح'
+);
   }
 
   input.value = '';
@@ -2005,11 +2029,11 @@ if (certificateFile) {
   }
 
   if (!certificateExtensions.includes(extension)) {
-    this.openPopup(
-      'شهادة إثبات المهارة يجب أن تكون PDF أو JPG أو JPEG أو PNG.',
-      'error',
-      'نوع الملف غير مسموح'
-    );
+  this.openPopup(
+  this.certificateTypeError(),
+  'error',
+  'نوع الملف غير مسموح'
+);
 
     return;
   }
@@ -2283,7 +2307,7 @@ if (
     !certificateExtensions.includes(extension)
   ) {
     this.openPopup(
-      'شهادة إثبات المهارة يجب أن تكون PDF أو JPG أو JPEG أو PNG.',
+      this.certificateTypeError(),
       'error',
       'نوع الملف غير مسموح'
     );
