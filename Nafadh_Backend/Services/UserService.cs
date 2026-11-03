@@ -1,5 +1,6 @@
 // Implemented by Noura
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Common;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
@@ -17,23 +18,43 @@ namespace Nafadh_Backend.Services
         private readonly IJwtTokenService _jwtTokenService;
         private readonly ICompanySupervisorRepository _supervisorRepository;
         private readonly ICompanyRegistrationService _companyRegistrationService;
-
+        private readonly Nafadhcontext _context;
         public UserService(
-            IUserRepository repository,
-            IRoleRepository roleRepository,
-            IJwtTokenService jwtTokenService,
-            ICompanySupervisorRepository supervisorRepository,
-            ICompanyRegistrationService companyRegistrationService)
+      IUserRepository repository,
+      IRoleRepository roleRepository,
+      IJwtTokenService jwtTokenService,
+      ICompanySupervisorRepository supervisorRepository,
+      ICompanyRegistrationService companyRegistrationService,
+      Nafadhcontext context)
         {
             _companyRegistrationService = companyRegistrationService;
             _repository = repository;
             _roleRepository = roleRepository;
             _jwtTokenService = jwtTokenService;
             _supervisorRepository = supervisorRepository;
+            _context = context;
         }
 
         public async Task<UserResponseDTO> RegisterAsync(UserRegisterationDTO dto)
         {
+            var passwordSetting = await _context.SystemVariables
+    .AsNoTracking()
+    .FirstOrDefaultAsync(v =>
+        v.VariableKey == "MinPasswordLength");
+
+            if (passwordSetting == null ||
+                !int.TryParse(passwordSetting.Value, out int minPasswordLength) ||
+                minPasswordLength <= 0)
+            {
+                throw new InvalidOperationException(
+                    "Minimum password length setting is missing or invalid.");
+            }
+
+            if (dto.Password.Length < minPasswordLength)
+            {
+                throw new ValidationException(
+                    $"Password must be at least {minPasswordLength} characters long.");
+            }
             var role = await _roleRepository.GetByIdAsync(dto.RoleId)
                 ?? throw new ValidationException($"RoleId {dto.RoleId} does not exist.");
 
@@ -59,6 +80,7 @@ namespace Nafadh_Backend.Services
             created.Role = role;
             return MapToResponseDTO(created);
         }
+
 
         public async Task<UserLoginResponseDTO> LoginAsync(UserLoginDTO dto)
         {
@@ -188,10 +210,30 @@ namespace Nafadh_Backend.Services
 
         public async Task ResetPasswordAsync(int userId, AdminResetPasswordDTO dto)
         {
+            var passwordSetting = await _context.SystemVariables
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v =>
+                    v.VariableKey == "MinPasswordLength");
+
+            if (passwordSetting == null ||
+                !int.TryParse(passwordSetting.Value, out int minPasswordLength) ||
+                minPasswordLength <= 0)
+            {
+                throw new InvalidOperationException(
+                    "Minimum password length setting is missing or invalid.");
+            }
+
+            if (dto.NewPassword.Length < minPasswordLength)
+            {
+                throw new ValidationException(
+                    $"Password must be at least {minPasswordLength} characters long.");
+            }
+
             var user = await _repository.GetByIdAsync(userId)
                 ?? throw new NotFoundException($"User {userId} was not found.");
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+
             await _repository.UpdateAsync(user);
         }
 
