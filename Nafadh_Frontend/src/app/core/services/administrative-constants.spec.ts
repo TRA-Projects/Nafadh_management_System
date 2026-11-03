@@ -10,6 +10,7 @@ import { NafadhConstantsService } from './nafadh-constants.service';
 import { NafadhEvaluationTypesService } from './nafadh-evaluation-types.service';
 import { NafadhWarningTypesService } from './nafadh-warning-types.service';
 import { TrainerApi } from '../../portals/trainer/services/trainer-api';
+import { AdminWarnings } from '../../portals/admin/pages/warnings/warnings';
 import { QuestionBank } from '../../portals/trainer/pages/question-bank/question-bank';
 import { AdminNotifications } from '../../portals/admin/pages/notifications/notifications';
 import { AdminPrograms } from '../../portals/admin/pages/programs/programs';
@@ -65,6 +66,10 @@ describe('Editing fixed values', () => {
   });
   it.each([
     ['NFD_TIC_STAT', 'Open'], ['NFD_WDR_STAT', 'Pending'], ['NFD_RPT_TYPE', 'Performance'],
+    ['NFD_QUE_TYPE', 'MultipleChoice'],
+    ['NFD_WRN_LVL', 'Low'],
+    ['NFD_WRN_SCOPE', 'Company'],
+    ['NFD_TSK_PRI', 'Low'],
     ['NFD_PAY_STAT', 'PartiallyPaid']
   ])('%s submits only labels even if its hidden activation control is dirty', async (group, key) => {
     const page = editor(group);
@@ -108,6 +113,10 @@ describe('Administrative constant identities and labels', () => {
     ['NFD_ANN_SCOPE', ['Platform', 'Company', 'Batch', 'Trainee', 'Trainer', 'Admin']],
     ['NFD_CMP_STAT', ['PendingApproval', 'Approved', 'Suspended', 'Rejected']],
     ['NFD_CPA_STAT', ['Draft', 'PendingApproval', 'Approved', 'Rejected']],
+    ['NFD_QUE_TYPE', ['MultipleChoice', 'TrueFalse', 'Essay']],
+    ['NFD_WRN_LVL', ['Low', 'Medium', 'High', 'Critical']],
+    ['NFD_WRN_SCOPE', ['Company', 'Trainee']],
+    ['NFD_TSK_PRI', ['Low', 'Medium', 'High', 'Critical']],
     ['NFD_USR_STAT', ['Active', 'Inactive', 'Suspended', 'PendingVerification']],
   ];
   it.each(groups)('%s preserves ordinals, filter keys and inactive records after a rename', (group, keys) => {
@@ -127,6 +136,45 @@ describe('Administrative constant identities and labels', () => {
     expect(service.options(group)).toEqual([]);
     expect(service.all(group).map(row => row.key)).toEqual(keys);
     expect(service.administrativeLabel(group, 'unknown')).toBe('unknown');
+  });
+
+  it('keeps question-bank filters and edit ordinals stable after renaming historical types', () => {
+    const { get, injector } = mockLookups();
+    const constants = runInInjectionContext(injector, () => new NafadhConstantsService());
+    const pages = Injector.create({ providers: [{ provide: NafadhConstantsService, useValue: constants }] });
+    const page = runInInjectionContext(pages, () => new QuestionBank({} as TrainerApi, {} as AuthService, {} as ActivatedRoute, {} as Router));
+    const keys = ['MultipleChoice', 'TrueFalse', 'Essay'];
+    page.questions.set([0, 'TrueFalse', '2'].map((questionType, i) => ({
+      questionType, questionId: i + 1, questionText: 'سؤال', isActive: true, difficulty: 0,
+      points: 1, createdAt: '', options: []
+    })));
+    for (const label of ['أول', 'محدث']) {
+      get.mockReturnValue(of(keys.map(ValueKey => ({ ValueKey, label_ar: label, IsActive: false }))));
+      constants.refresh('NFD_QUE_TYPE');
+      keys.forEach((key, i) => {
+        page.typeFilter.set(String(i));
+        expect(page.getQuestionTypeLabel(key)).toBe(label);
+        expect(page.filteredQuestions().map(q => q.questionId)).toEqual([i + 1]);
+        page.openEditQuestion(page.filteredQuestions()[0]);
+        expect(page.questionForm.questionType).toBe(i);
+      });
+    }
+  });
+
+  it('filters historical warning levels by identity when two labels are identical', () => {
+    const { get, injector } = mockLookups();
+    const constants = runInInjectionContext(injector, () => new NafadhConstantsService());
+    const page = Object.assign(Object.create(AdminWarnings.prototype), {
+      constants, searchTerm: '', selectedLevel: 'Low', selectedStatus: 'ALL',
+      warnings: () => [{ level: 0 }, { level: 'High' }, { level: 'Low' }]
+    });
+    for (const label of ['أول', 'محدث']) {
+      get.mockReturnValue(of(['Low', 'High'].map(ValueKey => ({ ValueKey, label_ar: label, IsActive: false }))));
+      constants.refresh('NFD_WRN_LVL');
+      expect(page.getLevelLabel(0)).toBe(label);
+      expect(page.getLevelLabel('High')).toBe(label);
+      expect(page.filteredWarnings()).toEqual([{ level: 0 }, { level: 'Low' }]);
+    }
   });
 
   it('keeps company recipients, scope and channels in the announcement request', () => {
