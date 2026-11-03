@@ -64,7 +64,7 @@ totalMembers = computed(() =>
   replyText = '';
   
   ngOnInit() {
-    this.constants.ensure('NFD_TIC_STAT');
+    this.constants.ensure('NFD_TIC_STAT', 'NFD_WRN_LVL');
     this.warningTypes.refresh();
     // 1. جلب البيانات العادية
     this.api.getConversations('CompanyThread').subscribe((d) => this.companyThreads.set(d || []));
