@@ -1,8 +1,8 @@
 ﻿
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -12,11 +12,17 @@ namespace Nafadh_Backend.Controllers
     public class NotificationTemplateController : ControllerBase
     {
         private readonly INotificationTemplateService _service;
+        private readonly IEmailService _emailService;
+        private readonly IWebHostEnvironment _environment;
 
         public NotificationTemplateController(
-            INotificationTemplateService service)
+            INotificationTemplateService service,
+            IEmailService emailService,
+            IWebHostEnvironment environment)
         {
             _service = service;
+            _emailService = emailService;
+            _environment = environment;
         }
 
         // GET: api/NotificationTemplate
@@ -28,14 +34,21 @@ namespace Nafadh_Backend.Controllers
         {
             try
             {
-                var templates = await _service.GetAllAsync(portalCode, type);
+                var templates = await _service.GetAllAsync(
+                    portalCode,
+                    type);
+
                 return Ok(templates);
             }
             catch (Exception ex)
             {
                 return StatusCode(
                     StatusCodes.Status500InternalServerError,
-                    new { message = "حدث خطأ أثناء جلب قوالب الإشعارات.", error = ex.Message });
+                    new
+                    {
+                        message = "حدث خطأ أثناء جلب قوالب الإشعارات.",
+                        error = ex.Message
+                    });
             }
         }
 
@@ -48,7 +61,12 @@ namespace Nafadh_Backend.Controllers
                 var template = await _service.GetByIdAsync(id);
 
                 if (template == null)
-                    return NotFound(new { message = "قالب الإشعار غير موجود." });
+                {
+                    return NotFound(new
+                    {
+                        message = "قالب الإشعار غير موجود."
+                    });
+                }
 
                 return Ok(template);
             }
@@ -56,7 +74,11 @@ namespace Nafadh_Backend.Controllers
             {
                 return StatusCode(
                     StatusCodes.Status500InternalServerError,
-                    new { message = "حدث خطأ أثناء جلب قالب الإشعار.", error = ex.Message });
+                    new
+                    {
+                        message = "حدث خطأ أثناء جلب قالب الإشعار.",
+                        error = ex.Message
+                    });
             }
         }
 
@@ -89,7 +111,11 @@ namespace Nafadh_Backend.Controllers
             {
                 return StatusCode(
                     StatusCodes.Status500InternalServerError,
-                    new { message = "حدث خطأ أثناء إنشاء قالب الإشعار.", error = ex.Message });
+                    new
+                    {
+                        message = "حدث خطأ أثناء إنشاء قالب الإشعار.",
+                        error = ex.Message
+                    });
             }
         }
 
@@ -107,7 +133,12 @@ namespace Nafadh_Backend.Controllers
                 var result = await _service.UpdateAsync(id, dto);
 
                 if (result == null)
-                    return NotFound(new { message = "قالب الإشعار غير موجود." });
+                {
+                    return NotFound(new
+                    {
+                        message = "قالب الإشعار غير موجود."
+                    });
+                }
 
                 return Ok(result);
             }
@@ -123,7 +154,11 @@ namespace Nafadh_Backend.Controllers
             {
                 return StatusCode(
                     StatusCodes.Status500InternalServerError,
-                    new { message = "حدث خطأ أثناء تحديث قالب الإشعار.", error = ex.Message });
+                    new
+                    {
+                        message = "حدث خطأ أثناء تحديث قالب الإشعار.",
+                        error = ex.Message
+                    });
             }
         }
 
@@ -138,10 +173,17 @@ namespace Nafadh_Backend.Controllers
 
             try
             {
-                var result = await _service.UpdateStatusAsync(id, dto.IsActive);
+                var result = await _service.UpdateStatusAsync(
+                    id,
+                    dto.IsActive);
 
                 if (!result)
-                    return NotFound(new { message = "قالب الإشعار غير موجود." });
+                {
+                    return NotFound(new
+                    {
+                        message = "قالب الإشعار غير موجود."
+                    });
+                }
 
                 return Ok(new
                 {
@@ -153,8 +195,68 @@ namespace Nafadh_Backend.Controllers
             {
                 return StatusCode(
                     StatusCodes.Status500InternalServerError,
-                    new { message = "حدث خطأ أثناء تحديث حالة القالب.", error = ex.Message });
+                    new
+                    {
+                        message = "حدث خطأ أثناء تحديث حالة القالب.",
+                        error = ex.Message
+                    });
             }
         }
+
+        // POST: api/NotificationTemplate/test-email
+        // Development only - sends a real test email.
+        [HttpPost("test-email")]
+        public async Task<IActionResult> TestEmail(
+            [FromBody] TestNotificationEmailRequest request)
+        {
+            if (!_environment.IsDevelopment())
+            {
+                return NotFound();
+            }
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                await _emailService.SendTraineeEnrolledAsync(
+                    request.Email,
+                    request.TraineeName,
+                    request.BatchName,
+                    request.ProgramName);
+
+                return Ok(new
+                {
+                    message = "تم تنفيذ طلب إرسال البريد الإلكتروني بنجاح.",
+                    email = request.Email
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new
+                    {
+                        message = "حدث خطأ أثناء إرسال البريد الإلكتروني.",
+                        error = ex.Message
+                    });
+            }
+        }
+    }
+
+    public class TestNotificationEmailRequest
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        public string TraineeName { get; set; } = string.Empty;
+
+        [Required]
+        public string BatchName { get; set; } = string.Empty;
+
+        [Required]
+        public string ProgramName { get; set; } = string.Empty;
     }
 }
