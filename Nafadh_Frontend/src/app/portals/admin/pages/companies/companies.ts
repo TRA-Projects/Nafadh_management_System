@@ -1,3 +1,4 @@
+import { csvCell } from '../../../../core/models/csv-cell';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { administrativeValue } from '../../../../core/models/administrative-constants';
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
@@ -32,11 +33,7 @@ export interface HostCompany {
   departments?: any[];
 }
 
-export function companyCsvCell(value: unknown): string {
-  const text = String(value ?? '');
-  const safe = /^[\t\r\n]|^\s*[=+@\-＝＋＠－]/u.test(text) ? "'" + text : text;
-  return '"' + safe.replace(/"/g, '""') + '"';
-}
+export { csvCell as companyCsvCell } from '../../../../core/models/csv-cell';
 
 function normalizeArabic(text: string): string {
   if (!text) return '';
@@ -764,7 +761,7 @@ export class AdminCompanies implements OnInit {
     let csv = '\uFEFFمعرف الشركة,اسم الشركة,السجل التجاري,القطاع,المحافظة,مسؤول التواصل,الطاقة,الحالة\n';
     data.forEach(c => {
       csv += [c.companyId, c.companyName, c.commercialRegister, c.workField, c.city || c.address,
-        c.contactName, c.capacity, this.statusLabel(c.status)].map(companyCsvCell).join(',') + '\r\n';
+        c.contactName, c.capacity, this.statusLabel(c.status)].map(csvCell).join(',') + '\r\n';
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
