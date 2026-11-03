@@ -59,8 +59,8 @@
             {{ approvedCourseCount() }}
           </strong>
           <small>
-            {{ counts().inProgress }} قيد التنفيذ ·
-            {{ counts().completed }} مكتملة
+            {{ counts().inProgress }} {{ constants.administrativeLabel('NFD_CPE_STAT', 'InProgress') }} ·
+            {{ counts().completed }} {{ constants.administrativeLabel('NFD_CPE_STAT', 'Completed') }}
           </small>
         </div>
       </article>
@@ -115,7 +115,7 @@
           type="button"
           [class.active]="filter() === f.key"
           (click)="setFilter(f.key)">
-          {{ constants.administrativeLabel('NFD_CPA_STAT', f.key, f.label) }}
+          {{ filterLabel(f.key, f.label) }}
         </button>
       }
 
@@ -263,7 +263,7 @@
                   <span
                     [class]="
                       'chip ex-' +
-                      plan.executionStatus.toLowerCase()
+                      ('' + plan.executionStatus).toLowerCase()
                     ">
                     {{ ex }}
                   </span>
