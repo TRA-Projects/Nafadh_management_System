@@ -1,4 +1,5 @@
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { traineeAttendanceKey } from '../../../../core/models/enums';
 import { Component, OnInit, AfterViewInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -785,10 +786,11 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         const attList: any[] = Array.isArray(dailyAtt) ? dailyAtt : [];
         const evalList: any[] = Array.isArray(evals) ? evals : [];
 
-        const presentCount = attList.filter(a => String(a.status).toLowerCase().includes('present') || a.status === 1).length;
-        const absentCount = attList.filter(a => String(a.status).toLowerCase().includes('absent') || a.status === 2).length;
-        const lateCount = attList.filter(a => String(a.status).toLowerCase().includes('late') || a.status === 3).length;
-        const excusedCount = attList.filter(a => String(a.status).toLowerCase().includes('excus') || a.status === 4).length;
+        const statuses = attList.map(a => traineeAttendanceKey(a.status));
+        const presentCount = statuses.filter(s => s === 'Present').length;
+        const absentCount = statuses.filter(s => s === 'Absent').length;
+        const lateCount = statuses.filter(s => s === 'Late').length;
+        const excusedCount = statuses.filter(s => s === 'Excused').length;
 
         const latestEval = evalList[0];
         const evalNotes = latestEval?.feedback || latestEval?.notes || latestEval?.comment || initialView.trainerNotes;
