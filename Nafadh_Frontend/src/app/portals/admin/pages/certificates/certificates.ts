@@ -71,6 +71,21 @@ export class AdminCertificates implements OnInit {
   private static cachedTraineesByBatch = new Map<number, TraineeDto[]>();
 
   readonly batches = signal<BatchCertificateCardDto[]>([]);
+  readonly weeklyTrainingHours = signal<number>(40);
+  readonly certificateTexts = signal<Record<string, string>>({});
+
+getCertificateText(
+  key: string,
+  params: Record<string, string | number> = {}
+): string {
+  let message = this.certificateTexts()[key] ?? '';
+
+  for (const [name, value] of Object.entries(params)) {
+    message = message.replaceAll(`{${name}}`, String(value));
+  }
+
+  return message;
+}
   readonly selectedBatch = signal<BatchCertificateCardDto | null>(null);
   readonly selectedBatchTrainees = signal<TraineeDto[]>([]);
 
@@ -133,9 +148,42 @@ export class AdminCertificates implements OnInit {
 
   constructor(private readonly api: AdminApi) {}
 
-  ngOnInit(): void {
-    this.fetchBatches();
-  }
+ ngOnInit(): void {
+  this.loadCertificateSettings();
+  this.fetchBatches();
+}
+private loadCertificateSettings(): void {
+  this.api.getSystemVariables().subscribe({
+    next: (rows: any[]) => {
+
+      // تحميل جميع النصوص والإعدادات من قاعدة البيانات
+      const settings: Record<string, string> = {};
+
+      for (const row of rows) {
+        const key = row.variableKey ?? row.VariableKey;
+        const value = row.value ?? row.Value;
+
+        if (key && value != null) {
+          settings[String(key)] = String(value);
+        }
+      }
+
+      // تخزين النصوص لاستخدامها في صفحة الشهادات
+      this.certificateTexts.set(settings);
+
+      // ساعات التدريب الأسبوعية من قاعدة البيانات
+      const hours = Number(settings['PROGRAM_WEEKLY_HOURS']);
+
+      if (Number.isFinite(hours) && hours > 0) {
+        this.weeklyTrainingHours.set(hours);
+      }
+    },
+
+    error: (err) => {
+      console.error('Failed to load certificate settings:', err);
+    }
+  });
+}
 
   private showCertificateMessage(
     type: 'error' | 'warning' | 'success',
@@ -185,27 +233,50 @@ export class AdminCertificates implements OnInit {
   }
 
   // حساب عدد الساعات تلقائياً من تاريخ بداية ونهاية الدفعة (بمعدل 7 ساعات يومياً / 5 أيام في الأسبوع)
-  calculateTrainingHours(startDate?: string | Date, endDate?: string | Date): {
-    totalHours: number;
-    techHours: number;
-    practicalHours: number;
-  } {
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const diffMs = end.getTime() - start.getTime();
-      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+  calculateTrainingHours(
+  startDate?: string | Date,
+  endDate?: string | Date
+): {
+  totalHours: number;
+  techHours: number;
+  practicalHours: number;
+} {
+  const weeklyHours = this.weeklyTrainingHours();
 
-      if (!isNaN(diffDays) && diffDays > 0) {
-        const workingDays = Math.max(1, Math.round((diffDays / 7) * 5));
-        const totalHours = Math.round((workingDays * 7) / 10) * 10 || 1260;
-        const techHours = Math.round((totalHours * 2) / 3);
-        const practicalHours = totalHours - techHours;
-        return { totalHours, techHours, practicalHours };
-      }
-    }
-    return { totalHours: 1260, techHours: 840, practicalHours: 420 };
+  if (!startDate || !endDate) {
+    return {
+      totalHours: 0,
+      techHours: 0,
+      practicalHours: 0
+    };
   }
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  const diffDays =
+    (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+
+  if (!Number.isFinite(diffDays) || diffDays < 0) {
+    return {
+      totalHours: 0,
+      techHours: 0,
+      practicalHours: 0
+    };
+  }
+
+  const weeks = diffDays / 7;
+  const totalHours = Math.round(weeks * weeklyHours);
+
+  const techHours = Math.round((totalHours * 2) / 3);
+  const practicalHours = totalHours - techHours;
+
+  return {
+    totalHours,
+    techHours,
+    practicalHours
+  };
+}
 
   getGradeLabel(gradeStr?: string): string {
     if (!gradeStr) return 'اجتياز بنجاح';
@@ -573,17 +644,20 @@ export class AdminCertificates implements OnInit {
 
   onViewTrainees(batch: BatchCertificateCardDto): void {
     if (!this.isBatchCompleted(batch)) {
-      const msg = this.isBatchOngoing(batch)
-        ? `الدفعة "${batch.batchName}" لا تزال جارية حالياً. لا يمكن إصدار الشهادات إلا بعد اكتمال الدفعة التدريبية.`
-        : `الدفعة "${batch.batchName}" لم تبدأ بعد. إصدار الشهادات متاح فقط للدفعات المكتملة.`;
+  const messageKey = this.isBatchOngoing(batch)
+    ? 'CERT_BATCH_ONGOING_MESSAGE'
+    : 'CERT_BATCH_NOT_STARTED_MESSAGE';
 
-      this.showCertificateMessage(
-        'warning',
-        'إصدار الشهادات غير متاح لهذه الدفعة',
-        msg
-      );
-      return;
-    }
+  this.showCertificateMessage(
+    'warning',
+    this.getCertificateText('CERT_BATCH_NOT_COMPLETED_TITLE'),
+    this.getCertificateText(messageKey, {
+      batchName: batch.batchName
+    })
+  );
+
+  return;
+}
 
     this.selectedBatch.set(batch);
     this.traineeSearchTerm.set('');
@@ -784,47 +858,52 @@ export class AdminCertificates implements OnInit {
   issueSingleCertificate(trainee: TraineeDto, autoOpenModal: boolean = true): void {
     const batch = this.selectedBatch();
 
-    if (!this.isBatchCompleted(batch)) {
-      this.showCertificateMessage(
-        'error',
-        'غير مسموح بإصدار الشهادة',
-        'لا يمكن إصدار الشهادات إلا للدفعات المكتملة فقط.'
-      );
-      return;
-    }
+  if (!this.isBatchCompleted(batch)) {
+  this.showCertificateMessage(
+    'error',
+    this.getCertificateText('CERT_BATCH_REQUIRED_TITLE'),
+    this.getCertificateText('CERT_BATCH_REQUIRED_MESSAGE')
+  );
+  return;
+}
 
     const eId = this.cleanId(trainee.enrollmentId);
-    if (!eId) {
-      this.showCertificateMessage(
-        'error',
-        'تعذر إصدار الشهادة',
-        'لم يتم العثور على رقم التسجيل (Enrollment ID) الخاص بالمتدرب.'
-      );
-      return;
-    }
+ if (!eId) {
+  this.showCertificateMessage(
+    'error',
+    this.getCertificateText('CERT_ENROLLMENT_MISSING_TITLE'),
+    this.getCertificateText('CERT_ENROLLMENT_MISSING_MESSAGE')
+  );
+  return;
+}
 
     const grade =
       trainee.grade != null
         ? Number(String(trainee.grade).replace('%', '').trim())
         : NaN;
 
-    if (isNaN(grade)) {
-      this.showCertificateMessage(
-        'warning',
-        'لا يمكن إصدار الشهادة',
-        `لم يتم العثور على درجة مرصودة للمتدرب ${trainee.fullName}.`
-      );
-      return;
-    }
-
-    if (grade < 50) {
-      this.showCertificateMessage(
-        'error',
-        'لا يمكن إصدار الشهادة',
-        `درجة ${trainee.fullName} الحالية هي ${grade.toFixed(2)}%، والحد الأدنى للاجتياز وإصدار الشهادة هو 50%.`
-      );
-      return;
-    }
+   if (isNaN(grade)) {
+  this.showCertificateMessage(
+    'warning',
+    this.getCertificateText('CERT_GRADE_MISSING_TITLE'),
+    this.getCertificateText('CERT_GRADE_MISSING_MESSAGE', {
+      traineeName: trainee.fullName
+    })
+  );
+  return;
+}
+   if (grade < 50) {
+  this.showCertificateMessage(
+    'error',
+    this.getCertificateText('CERT_GRADE_MISSING_TITLE'),
+    this.getCertificateText('CERT_GRADE_BELOW_MIN_MESSAGE', {
+      traineeName: trainee.fullName,
+      grade: grade.toFixed(2),
+      minGrade: 50
+    })
+  );
+  return;
+}
 
     const payload = {
       enrollmentId: eId,
@@ -842,12 +921,14 @@ export class AdminCertificates implements OnInit {
           this.refreshBatchStatus(batch.batchId || batch.id);
         }
 
-        this.showCertificateMessage(
-          'success',
-          'تم إصدار الشهادة وتوليد السيريال بنجاح',
-          `تم إصدار شهادة ${trainee.fullName} برقم تسلسلي (${trainee.serialNumber}).`
-        );
-
+    this.showCertificateMessage(
+  'success',
+  this.getCertificateText('CERT_ISSUE_SUCCESS_TITLE'),
+  this.getCertificateText('CERT_ISSUE_SUCCESS_MESSAGE', {
+    traineeName: trainee.fullName,
+    serialNumber: certObj?.serialNumber ?? trainee.serialNumber
+  })
+);
         if (autoOpenModal) {
           this.viewSingleCertificate({
             ...trainee,
@@ -856,14 +937,18 @@ export class AdminCertificates implements OnInit {
           });
         }
       },
-      error: (err) => {
-        const message = err?.error?.message || 'حدث خطأ أثناء إصدار الشهادة.';
-        this.showCertificateMessage(
-          'error',
-          'فشل إصدار الشهادة',
-          `${trainee.fullName}: ${message}`
-        );
-      }
+   error: (err) => {
+  const backendMessage = err?.error?.message ?? '';
+
+  this.showCertificateMessage(
+    'error',
+    this.getCertificateText('CERT_ISSUE_FAILED_TITLE'),
+    this.getCertificateText('CERT_ISSUE_FAILED_MESSAGE', {
+      traineeName: trainee.fullName,
+      error: backendMessage
+    })
+  );
+}
     });
   }
 
