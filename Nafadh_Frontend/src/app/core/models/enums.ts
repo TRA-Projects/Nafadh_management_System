@@ -70,12 +70,33 @@ export const TRAINEE_STATUS_LABELS: Record<TraineeStatus, string> = {
   Completed: 'مكتمل',
 };
 
+export function certificateDocument(value: unknown) {
+  switch (String(value ?? '').trim().toLowerCase()) {
+    case '0': case 'completion':
+      return { ar: 'شهادة إتمام التدريب', en: 'CERTIFICATE OF COMPLETION', completion: true };
+    case '1': case 'recommendation':
+      return { ar: 'شهادة توصية', en: 'CERTIFICATE OF RECOMMENDATION', completion: false };
+    case '2': case 'excellence':
+      return { ar: 'شهادة تميز', en: 'CERTIFICATE OF EXCELLENCE', completion: false };
+    default:
+      return { ar: 'شهادة تدريب', en: 'TRAINING CERTIFICATE', completion: false };
+  }
+}
+
 export const ATTENDANCE_STATUS_LABELS: Record<AttendanceStatus, string> = {
   Present: 'حاضر',
   Late: 'متأخر',
   Absent: 'غائب',
   Excused: 'معذور',
 };
+
+// Trainee attendance ordinals differ from trainer attendance ordinals.
+const traineeAttendanceKeys: readonly AttendanceStatus[] = ['Present', 'Absent', 'Late', 'Excused'];
+export function traineeAttendanceKey(value: unknown): AttendanceStatus | undefined {
+  const raw = String(value ?? '').trim();
+  return /^\d+$/.test(raw) ? traineeAttendanceKeys[Number(raw)] :
+    traineeAttendanceKeys.find(key => key.toLowerCase() === raw.toLowerCase());
+}
 
 export const WARNING_LEVEL_LABELS: Record<WarningLevel, string> = {
   Low: 'منخفض',
