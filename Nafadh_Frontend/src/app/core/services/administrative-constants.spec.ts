@@ -5,8 +5,12 @@ import { HttpClient } from '@angular/common/http';
 import { Injector, runInInjectionContext, signal } from '@angular/core';
 import { EMPTY, firstValueFrom, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
-import { administrativeValue, AdministrativeGroup, constantPolicyHint } from '../models/administrative-constants';
+import { administrativeValue, AdministrativeGroup, constantPolicyHint, moduleProgressKey } from '../models/administrative-constants';
 import { NafadhConstantsService } from './nafadh-constants.service';
+import { jsPDF } from 'jspdf';
+import { AdminRemediationRequests, remediationReadKey } from '../../portals/admin/pages/remediation-requests/remediation-requests';
+import { AdminCertificates } from '../../portals/admin/pages/certificates/certificates';
+import { certificateDocument, traineeAttendanceKey } from '../models/enums';
 import { NafadhEvaluationTypesService } from './nafadh-evaluation-types.service';
 import { NafadhWarningTypesService } from './nafadh-warning-types.service';
 import { TrainerApi } from '../../portals/trainer/services/trainer-api';
@@ -31,7 +35,69 @@ import { AdminApi } from '../../portals/admin/services/admin-api';
 import { ConstantsManagePageComponent } from '../../portals/admin/external-system/pages/system-administration/constants-manage-page.component';
 import { companyCsvCell } from '../../portals/admin/pages/companies/companies';
 
+describe('Historical documents and remediation statuses', () => {
+  it.each([
+    [0, 'Completion', 'CERTIFICATE OF COMPLETION'], [1, 'Recommendation', 'CERTIFICATE OF RECOMMENDATION'],
+    [2, 'Excellence', 'CERTIFICATE OF EXCELLENCE'], [99, 'unknown', 'TRAINING CERTIFICATE']
+  ])('renders the actual PDF and admin preview for certificate type %s', (ordinal, key, title) => {
+    const admin = Object.create(AdminCertificates.prototype);
+    const [trainee] = admin.mapTraineesList([{ traineeId: 6, enrollmentId: 3, type: ordinal, isIssued: true }], 1);
+    expect(admin.buildModalData(trainee).document).toEqual(certificateDocument(key));
+    let pdf = '', filename = '';
+    const event: [string, (this: jsPDF) => void] = ['initialized', function () {
+      this.save = ((name: string) => { filename = name; pdf = this.output(); return this; }) as typeof this.save;
+    }];
+    const events = jsPDF.API.events;
+    events.push(event);
+    try {
+      const page = Object.create(TraineeAchievements.prototype);
+      page.generateCertificatePdf({ type: key, traineeName: 'Example', programTitle: 'Example program' });
+      expect(pdf).toContain('/Title (' + title + ')');
+      expect(pdf).toContain('(' + title + ') Tj');
+      expect(pdf.includes('for successfully completing')).toBe(ordinal === 0);
+      expect(filename.startsWith(trainee.type === 99 ? 'شهادة تدريب' : certificateDocument(ordinal).ar)).toBe(true);
+    } finally {
+      events.splice(events.indexOf(event), 1);
+    }
+  });
+
+  it('reads numeric and historical remediation requests without interpreting rejection as revision', () => {
+    const page = Object.assign(Object.create(AdminRemediationRequests.prototype), {
+      api: { getRemediationRequests: () => of([0, '1', 2, 'NeedsRevision', 'NeedsModification', 'Rejected', 'Unknown']
+        .map((status, i) => ({ requestId: i, status }))) }, requests: signal([]),
+      searchTerm: '', selectedActionType: 'ALL', selectedStatus: 'NeedsRevision'
+    });
+    page.loadRequests();
+    expect(page.getCountByStatus('NeedsRevision')).toBe(3);
+    expect(page.filteredRequests().map((r: {requestId: number}) => r.requestId)).toEqual([2, 3, 4]);
+    expect(page.getStatusLabel(remediationReadKey('Rejected'))).toBe('مرفوض');
+    page.constants = { administrativeLabel: (_: string, key: string) => ['NeedsRevision', 'Approved'].includes(key) ? 'مشترك' : key };
+    expect(page.getStatusLabel('Approved')).toBe(page.getStatusLabel('NeedsRevision'));
+    expect(page.filteredRequests()).toHaveLength(3);
+    expect(page.getStatusLabel(remediationReadKey('unknown'))).toBe('unknown');
+  });
+
+  it.each([['Approved', 1], ['NeedsRevision', 2]])('uses the persisted key for %s and reloads after save', (status, ordinal) => {
+    const review = vi.fn(() => of({}));
+    const page = Object.assign(Object.create(AdminRemediationRequests.prototype), {
+      api: { reviewRemediationRequest: review }, auth: { userId: 9 }, selectedRequest: signal({requestId: 4}),
+      isProcessing: signal(false), adminNote: 'note', closeModal: vi.fn(), loadRequests: vi.fn()
+    });
+    page.applyDecision(status);
+    expect(review).toHaveBeenCalledWith(4, {status: ordinal, reviewedByUserId: 9, reviewNotes: 'note'});
+    expect(page.loadRequests).toHaveBeenCalledOnce();
+  });
+});
+
 describe('Editing fixed values', () => {
+  it('keeps module progress identifiers stable for numeric and legacy data', () => {
+    expect([0, '1', 2, 'in_progress', 'Completed', 'Unknown'].map(moduleProgressKey))
+      .toEqual(['NotStarted', 'InProgress', 'Completed', 'InProgress', 'Completed', 'Unknown']);
+  });
+  it('counts historic numeric trainee attendance in enum order, independent of trainer attendance and display labels', () => {
+    expect([0, '1', 2, '3', 'absent', 'Late', 4, '', 'EarlyLeave'].map(traineeAttendanceKey))
+      .toEqual(['Present', 'Absent', 'Late', 'Excused', 'Absent', 'Late', undefined, undefined, undefined]);
+  });
   it('shows the selected Nafadh policy even when optional catalog flags are absent', () => {
     for (const code of ['QUE_DIFF', 'EVL_TYPE', 'WRN_TYPE'])
       expect(constantPolicyHint('NFD_' + code, false, false, true)).toBe('labelsAndActivation');
@@ -73,6 +139,7 @@ describe('Editing fixed values', () => {
   it.each([
     ['NFD_TIC_STAT', 'Open'], ['NFD_WDR_STAT', 'Pending'], ['NFD_RPT_TYPE', 'Performance'],
     ['NFD_EXT_ACT', 'Warn'],
+    ['NFD_REM_STAT', 'NeedsRevision'], ['NFD_EVL_PER', 'Monthly'], ['NFD_MOD_STAT', 'InProgress'],
     ['NFD_FIL_TYPE', 'Pdf'],
     ['NFD_PRG_STAT', 'Draft'],
     ['NFD_PYS_STAT', 'Pending'],
@@ -126,6 +193,9 @@ function mockLookups() {
 describe('Administrative constant identities and labels', () => {
   const groups: Array<[AdministrativeGroup, string[]]> = [
     ['NFD_EXT_ACT', ['Warn', 'Terminate', 'FlagForReview']],
+    ['NFD_REM_STAT', ['Pending', 'Approved', 'NeedsRevision']],
+    ['NFD_EVL_PER', ['Weekly', 'Monthly', 'Midterm', 'Final', 'AdHoc']],
+    ['NFD_MOD_STAT', ['NotStarted', 'InProgress', 'Completed']],
     ['NFD_FIL_TYPE', ['Pdf', 'Video', 'Image', 'Document', 'Link', 'Other']],
     ['NFD_PRG_STAT', ['Draft', 'Published', 'Archived']],
     ['NFD_PYS_STAT', ['Pending', 'Paid', 'Overdue']],
@@ -172,6 +242,7 @@ describe('Administrative constant identities and labels', () => {
 
   it.each([
     ['NFD_PYS_STAT', 'Paid', 'مدفوع'], ['NFD_EXT_ACT', 'Terminate', 'إنهاء'],
+    ['NFD_EVL_PER', 'Monthly', 'شهري'], ['NFD_MOD_STAT', 'InProgress', 'قيد التنفيذ'],
     ['NFD_PRG_STAT', 'Published', 'منشور'], ['NFD_FIL_TYPE', 'Video', 'فيديو'],
   ] as const)('%s retries an unavailable catalog and preserves inactive English-only history', (group, key, fallback) => {
     const { get, injector } = mockLookups();
@@ -179,7 +250,9 @@ describe('Administrative constant identities and labels', () => {
     get.mockReturnValue(throwError(() => new Error('offline')));
     service.ensure(group);
     expect(service.administrativeLabel(group, 1)).toBe(fallback);
-    get.mockReturnValue(of([{ ValueKey: key, LabelEn: 'Historical', IsActive: false }]));
+    get.mockReturnValue(of({ unexpected: 'invalid response' }));
+    service.ensure(group);
+    get.mockReturnValue(of([{ ValueKey: key, LabelAr: ' ', LabelEn: 'Historical', is_active: false }]));
     service.ensure(group);
     expect(service.administrativeLabel(group, 1)).toBe('Historical');
     expect(service.options(group)).toEqual([]);
@@ -476,6 +549,19 @@ describe('Existing Nafadh lookups', () => {
     expect(page.difficultyOptions()).toEqual([{ value: 0, label: 'سهل' }, { value: 2, label: 'صعب' }]);
   });
 
+  it('displays an inactive difficulty under its saved name while retaining the numeric filter', () => {
+    const { get, injector } = mockLookups();
+    const constants = runInInjectionContext(injector, () => new NafadhConstantsService());
+    get.mockReturnValue(of([{ ValueKey: 'Easy', LabelAr: 'مشترك', IsActive: true },
+      { ValueKey: 'Hard', LabelAr: 'مشترك', IsActive: false }]));
+    constants.refresh('NFD_QUE_DIFF');
+    const page = Object.assign(Object.create(QuestionBank.prototype), { constants, difficultyOptions: signal([]) });
+    expect(page.getDifficultyLabel(0)).toBe('مشترك');
+    expect(page.getDifficultyLabel('2')).toBe('مشترك');
+    expect(page.getDifficultyLabel('hard')).toBe('مشترك');
+    expect(constants.options('NFD_QUE_DIFF').map(o => o.key)).toEqual(['Easy']);
+  });
+
   it('uses explicit keys in the dedicated evaluation and warning readers', async () => {
     const { get, injector } = mockLookups();
     const evaluation = runInInjectionContext(injector, () => new NafadhEvaluationTypesService());
@@ -501,7 +587,7 @@ describe('Existing Nafadh lookups', () => {
 
   it('NFD_EVL_TYPE keeps inactive historical names out of new choices', async () => {
     const { get, injector } = mockLookups();
-    get.mockReturnValue(of([{ id: 'Technical', label_ar: 'اسم تاريخي', IsActive: false }]));
+    get.mockReturnValue(of([{ id: 'Technical', LabelAr: ' ', LabelEn: 'اسم تاريخي', is_active: false }]));
     const service = runInInjectionContext(injector, () => new NafadhEvaluationTypesService());
     service.refresh();
     expect(service.label(0)).toBe('اسم تاريخي');
@@ -510,7 +596,7 @@ describe('Existing Nafadh lookups', () => {
 
   it('NFD_WRN_TYPE preserves warning labels and activation', () => {
     const { get, injector } = mockLookups();
-    get.mockReturnValue(of([{ id: 'Attendance', label_ar: 'اسم تاريخي', IsActive: false }]));
+    get.mockReturnValue(of([{ id: 'Attendance', LabelAr: '', LabelEn: 'اسم تاريخي', is_active: false }]));
     const service = runInInjectionContext(injector, () => new NafadhWarningTypesService());
     service.refresh();
     expect(service.label(0)).toBe('اسم تاريخي');
