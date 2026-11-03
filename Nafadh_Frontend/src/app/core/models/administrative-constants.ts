@@ -20,6 +20,50 @@ const values = {
     { key: 'Enrollment', label: 'تقرير التسجيل' },
     { key: 'Custom', label: 'التقرير الشامل للأداء التدريبي' },
   ],
+  NFD_CPE_STAT: [
+    { key: 'NotStarted', label: 'لم يبدأ' },
+    { key: 'InProgress', label: 'قيد التنفيذ' },
+    { key: 'OnHold', label: 'متوقف مؤقتًا' },
+    { key: 'Completed', label: 'مكتمل' },
+  ],
+  NFD_CPI_TYPE: [
+    { key: 'Task', label: 'مهمة' },
+    { key: 'Project', label: 'مشروع' },
+  ],
+  NFD_CPP_STAT: [
+    { key: 'NotStarted', label: 'لم يبدأ' },
+    { key: 'InProgress', label: 'قيد التنفيذ' },
+    { key: 'Completed', label: 'مكتمل' },
+  ],
+  NFD_FBK_TYPE: [
+    { key: 'TrainerRating', label: 'تقييم المدرب' },
+    { key: 'BatchExperienceRating', label: 'تقييم تجربة الدفعة' },
+  ],
+  NFD_BDG_COND: [
+    { key: 'ModulesCompletedInPeriod', label: 'وحدات مكتملة خلال فترة' },
+    { key: 'AttendanceStreak', label: 'سلسلة حضور متواصل' },
+    { key: 'HighScoreCount', label: 'عدد درجات مرتفعة' },
+    { key: 'ProjectCompletion', label: 'إنجاز المشروع' },
+    { key: 'ProgramCompletion', label: 'إكمال البرنامج' },
+  ],
+  NFD_PJT_ROLE: [
+    { key: 'Lead', label: 'قائد' },
+    { key: 'Contributor', label: 'مساهم' },
+  ],
+  NFD_MSG_STAT: [
+    { key: 'Sent', label: 'مرسل' },
+    { key: 'Delivered', label: 'تم التسليم' },
+    { key: 'Read', label: 'مقروء' },
+  ],
+  NFD_TRK_STAT: [
+    { key: 'Active', label: 'نشط' },
+    { key: 'Archived', label: 'مؤرشف' },
+  ],
+  NFD_VER_STAT: [
+    { key: 'Pending', label: 'قيد الانتظار' },
+    { key: 'Verified', label: 'تم التحقق' },
+    { key: 'Rejected', label: 'مرفوض' },
+  ],
   NFD_QUE_TYPE: [
     { key: 'MultipleChoice', label: 'اختيار من متعدد' },
     { key: 'TrueFalse', label: 'صح أو خطأ' },
