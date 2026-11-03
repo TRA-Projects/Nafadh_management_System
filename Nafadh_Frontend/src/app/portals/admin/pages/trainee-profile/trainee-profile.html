@@ -314,7 +314,7 @@
                   <span class="stage-name">الوحدة {{ s.orderIndex }}: {{ s.module.title }}</span>
                 </div>
                 <span class="pill" [class.pill-done]="s.statusRaw === 'Completed'" [class.pill-progress]="s.statusRaw === 'InProgress'" [class.pill-muted]="s.statusRaw === 'NotStarted'">
-                  {{ s.statusLabel }}
+                  {{ constants.administrativeLabel('NFD_MOD_STAT', s.statusRaw) }}
                 </span>
               </div>
               <div class="stage-progress-track">
