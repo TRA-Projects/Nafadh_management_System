@@ -750,7 +750,7 @@
             <div *ngFor="let itm of stage.items" class="stage-item-row">
               <i class="fa-regular fa-circle-check text-emerald"></i>
               <span class="item-title">{{ itm.title || itm.name }}</span>
-              <span class="item-type-badge">{{ itm.itemType === 0 || itm.itemType === 'Task' ? 'مهمة' : itm.itemType === 1 || itm.itemType === 'Project' ? 'مشروع' : 'عنصر تدريبي' }}</span>
+              <span class="item-type-badge">{{ constants.administrativeLabel('NFD_CPI_TYPE', itm.itemType) }}</span>
             </div>
           </div>
         </div>
