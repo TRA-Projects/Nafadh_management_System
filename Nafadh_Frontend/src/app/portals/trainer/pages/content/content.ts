@@ -285,23 +285,45 @@ attachmentTypeError = signal('نوع الملف غير مسموح.');
   }
 private loadAttachmentSettings(): void {
   forkJoin({
-    maxSize: this.systemVariables.getMaxAttachmentSizeMb(),
-    extensions: this.systemVariables.getAllowedExtensions(),
-    sizeError: this.systemVariables.getErrorMessage('ATTACHMENT_SIZE_ERROR'),
-    typeError: this.systemVariables.getErrorMessage('ATTACHMENT_TYPE_ERROR')
+    maxSize: this.systemVariables.getVariable(
+      'TRAINING_MATERIAL_MAX_SIZE_MB'
+    ),
+    extensions: this.systemVariables.getVariable(
+      'TRAINING_MATERIAL_ALLOWED_EXTENSIONS'
+    ),
+    sizeError: this.systemVariables.getErrorMessage(
+      'ATTACHMENT_SIZE_ERROR'
+    ),
+    typeError: this.systemVariables.getErrorMessage(
+      'ATTACHMENT_TYPE_ERROR'
+    )
   }).subscribe({
     next: (settings) => {
-      this.maxAttachmentSizeMb.set(settings.maxSize);
-      this.allowedExtensions.set(settings.extensions);
+      const maxSize = Number(settings.maxSize.value);
+
+      if (!Number.isFinite(maxSize) || maxSize <= 0) {
+        this.errorMessage.set('إعداد حجم مواد التدريب غير صالح.');
+        return;
+      }
+
+      this.maxAttachmentSizeMb.set(maxSize);
+
+      this.allowedExtensions.set(
+        settings.extensions.value
+          .split(',')
+          .map(ext => ext.trim().replace(/^\./, '').toLowerCase())
+          .filter(Boolean)
+      );
+
       this.attachmentSizeError.set(settings.sizeError);
       this.attachmentTypeError.set(settings.typeError);
     },
     error: (error) => {
-      console.error('تعذر تحميل إعدادات المرفقات:', error);
+      console.error('تعذر تحميل إعدادات مواد التدريب:', error);
+      this.errorMessage.set('تعذر تحميل إعدادات رفع مواد التدريب.');
     }
   });
 }
-
   // =====================================================
   // LOAD CURRENT TRAINER
   // =====================================================
