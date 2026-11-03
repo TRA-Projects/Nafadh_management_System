@@ -1,3 +1,4 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +15,7 @@ import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warn
   styleUrls: ['./warnings.scss']
 })
 export class WarningsComponent implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private readonly companyApi = inject(CompanyApi);
   private readonly cdr = inject(ChangeDetectorRef);
   readonly warningTypes = inject(NafadhWarningTypesService);
@@ -39,6 +41,7 @@ export class WarningsComponent implements OnInit {
   replySuccess = '';
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_WRN_LVL');
     this.loadCompanyWarnings();
     this.warningTypes.refresh();
   }
@@ -231,13 +234,7 @@ export class WarningsComponent implements OnInit {
   }
 
   levelLabel(level: string): string {
-    const labels: Record<string, string> = {
-      Low: 'منخفض',
-      Medium: 'متوسط',
-      High: 'مرتفع',
-      Critical: 'حرج'
-    };
-    return labels[level] ?? level;
+    return this.constants.administrativeLabel('NFD_WRN_LVL', level);
   }
 
   statusLabel(status: string): string {
