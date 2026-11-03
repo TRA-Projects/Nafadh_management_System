@@ -32,6 +32,7 @@ setting(key: string): number {
   return this.systemSettings()[key];
 }
 programMinDurationErrorMessage = signal<string>('');
+
 private loadSystemSettings(): void {
   this.adminApi.getSystemVariables().subscribe({
     next: (rows) => {
@@ -41,7 +42,6 @@ private loadSystemSettings(): void {
         const key = row.variableKey ?? row.VariableKey;
         const rawValue = row.value ?? row.Value;
 
-        // قراءة رسالة الخطأ النصية من قاعدة البيانات
         if (key === 'PROGRAM_MIN_DURATION_ERROR_MESSAGE') {
           this.programMinDurationErrorMessage.set(
             String(rawValue ?? '')
@@ -49,14 +49,18 @@ private loadSystemSettings(): void {
           continue;
         }
 
-        // قراءة بقية الإعدادات الرقمية
+        if (
+          !Object.prototype.hasOwnProperty.call(values, key) ||
+          rawValue === null ||
+          rawValue === undefined ||
+          String(rawValue).trim() === ''
+        ) {
+          continue;
+        }
+
         const value = Number(rawValue);
 
-        if (
-          Object.prototype.hasOwnProperty.call(values, key) &&
-          Number.isInteger(value) &&
-          value >= 0
-        ) {
+        if (Number.isInteger(value) && value >= 0) {
           values[key] = value;
         }
       }
@@ -65,7 +69,7 @@ private loadSystemSettings(): void {
       this.applySystemSettings();
     },
     error: (err) => {
-      console.error('تعذر تحميل إعدادات البرامج:', err);
+      console.error('تعذر تحميل إعدادات النظام:', err);
       this.showToast(
         'تعذر تحميل إعدادات النظام؛ سيتم استخدام القيم الافتراضية.',
         'warning'
@@ -75,24 +79,31 @@ private loadSystemSettings(): void {
 }
 
 private applySystemSettings(): void {
-  const minWeeks = Math.max(1, this.setting('PROGRAM_MIN_DURATION_WEEKS'));
+  const minWeeks = Math.max(
+    1,
+    this.setting('PROGRAM_MIN_DURATION_WEEKS')
+  );
+
   const defaultWeeks = Math.max(
     minWeeks,
     this.setting('PROGRAM_DEFAULT_DURATION_WEEKS')
   );
 
-  this.programForm.get('durationWeeks')?.setValidators([
+  const durationControl = this.programForm.get('durationWeeks');
+
+  durationControl?.setValidators([
     Validators.required,
     Validators.min(minWeeks)
   ]);
 
-  this.programForm.get('durationWeeks')?.setValue(defaultWeeks);
-  this.programForm.get('durationWeeks')?.updateValueAndValidity();
+  durationControl?.setValue(defaultWeeks);
+  durationControl?.updateValueAndValidity();
 
   this.batchForm.get('capacity')?.setValue(
     Math.max(1, this.setting('BATCH_DEFAULT_CAPACITY'))
   );
 }
+
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private notificationPlanId: number | null = null;
@@ -266,24 +277,49 @@ private applySystemSettings(): void {
   selectedNoteRow: any = null;
 
   // المحاولات المفلترة بحسب التبويب المحدد
-  filteredQuizAttempts = computed(() => {
-    const list = this.activeQuizAttempts();
-    const f = this.auditFilter;
-    if (f === 'all') return list;
-    if (f === 'passed') return list.filter(a => a.status === 'Passed');
-    if (f === 'failed') return list.filter(a => a.status === 'Failed');
-    if (f === 'absent') return list.filter(a => a.status === 'Absent' || a.status === 'NotAttempted' || !a.submittedAt || a.excuseStatus);
-  if (f === 'cheating') {
-  return list.filter(a =>
-    (a.cheatingRiskPercentage || 0) >
+
+private isSuspiciousQuizAttempt(a: any): boolean {
+  return (
+    Number(a.cheatingRiskPercentage ?? 0) >
       this.setting('QUIZ_CHEATING_RISK_PERCENT') ||
-    (a.tabSwitchCount || 0) >
+
+    Number(a.tabSwitchCount ?? 0) >
       this.setting('QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT') ||
-    (a.cameraDisconnectionsCount || 0) > 0
+
+    Number(a.cameraDisconnectionsCount ?? 0) > 0
   );
 }
-    return list;
-  });
+
+filteredQuizAttempts = computed(() => {
+  const list = this.activeQuizAttempts();
+  const filter = this.auditFilter;
+
+  if (filter === 'all') return list;
+
+  if (filter === 'passed') {
+    return list.filter(a => a.status === 'Passed');
+  }
+
+  if (filter === 'failed') {
+    return list.filter(a => a.status === 'Failed');
+  }
+
+  if (filter === 'absent') {
+    return list.filter(a =>
+      a.status === 'Absent' ||
+      a.status === 'NotAttempted' ||
+      !a.submittedAt ||
+      a.excuseStatus
+    );
+  }
+
+  if (filter === 'cheating') {
+    return list.filter(a => this.isSuspiciousQuizAttempt(a));
+  }
+
+  return list;
+});
+
 
   // ==========================================================
   // 5.1 سجل مشاريع GitHub وتسليمات الكود والواجبات (Project Dossier)
@@ -833,15 +869,13 @@ private applySystemSettings(): void {
     return this.activeQuizAttempts().filter(a => a.status === 'Absent' || a.status === 'NotAttempted' || !a.submittedAt).length;
   }
 
+
 getCheatingSuspectsCount(): number {
   return this.activeQuizAttempts().filter(a =>
-    (a.cheatingRiskPercentage || 0) >
-      this.setting('QUIZ_CHEATING_RISK_PERCENT') ||
-    (a.tabSwitchCount || 0) >
-      this.setting('QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT') ||
-    (a.cameraDisconnectionsCount || 0) > 0
+    this.isSuspiciousQuizAttempt(a)
   ).length;
 }
+
   // ==========================================================
   // 12. استعراض الأعذار الطبية (للاطلاع فقط للأدمن)
   // ==========================================================
@@ -916,16 +950,40 @@ getCheatingSuspectsCount(): number {
   // ==========================================================
   // 13.1 سجل ومحضر مشاريع GitHub والواجبات (Full-Page Dossier)
   // ==========================================================
-  openProjectDossier(event: any): void {
-    this.activeProjectEvent = event;
-    this.projectFilter.set('all');
-    this.projectSubmissions.set(this.generateSampleProjectSubmissions(event));
-    this.isProjectAuditFullPageOpen.set(true);
-    this.isProjectDossierOpen.set(true);
-    this.isQuizAuditFullPageOpen.set(false);
-    this.isDetailsPageOpen.set(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+
+openProjectDossier(event: any): void {
+  this.activeProjectEvent = event;
+  this.projectFilter.set('all');
+
+  const submissions =
+    this.generateSampleProjectSubmissions(event);
+
+  const passPercent =
+    this.setting('PROJECT_PASS_PERCENT');
+
+  const updatedSubmissions = submissions.map(sub => {
+    if (sub.score === null || sub.score === undefined) {
+      return sub;
+    }
+
+    return {
+      ...sub,
+      status: Number(sub.score) >= passPercent
+        ? 'مكتمل ومعتمد'
+        : 'يتطلب تحسينات'
+    };
+  });
+
+  this.projectSubmissions.set(updatedSubmissions);
+
+  this.isProjectAuditFullPageOpen.set(true);
+  this.isProjectDossierOpen.set(true);
+  this.isQuizAuditFullPageOpen.set(false);
+  this.isDetailsPageOpen.set(false);
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 
   closeProjectAuditFullPage(): void {
     this.isProjectAuditFullPageOpen.set(false);
@@ -2033,12 +2091,30 @@ addManualTrainee(): void {
   }
 
 
-  onCreateProgram(): void {
-    this.programForm.reset({ durationWeeks: this.setting('PROGRAM_DEFAULT_DURATION_WEEKS'), trackId: null });
-    this.programFormSubmitted = false;
-    this.programErrorMessage = null;
-    this.isProgramModalOpen = true;
-  }
+  
+onCreateProgram(): void {
+  const minWeeks = Math.max(
+    1,
+    this.setting('PROGRAM_MIN_DURATION_WEEKS')
+  );
+
+  const defaultWeeks = Math.max(
+    minWeeks,
+    this.setting('PROGRAM_DEFAULT_DURATION_WEEKS')
+  );
+
+  this.programForm.reset({
+    title: '',
+    trackId: null,
+    durationWeeks: defaultWeeks,
+    description: ''
+  });
+
+  this.programFormSubmitted = false;
+  this.programErrorMessage = null;
+  this.isProgramModalOpen = true;
+}
+
 
   onCloseProgramModal(): void {
     this.isProgramModalOpen = false;
