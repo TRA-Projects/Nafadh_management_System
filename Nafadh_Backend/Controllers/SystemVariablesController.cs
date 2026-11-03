@@ -9,7 +9,7 @@ namespace Nafadh_Backend.Controllers
 {
     [ApiController]
     [Route("api/system-variables")]
-    [Authorize(Roles = "Admin")]
+   
     public class SystemVariablesController : ControllerBase
     {
         private readonly Nafadhcontext _context;
@@ -21,6 +21,7 @@ namespace Nafadh_Backend.Controllers
 
         // GET: api/system-variables
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
             var variables = await _context.SystemVariables
@@ -33,8 +34,23 @@ namespace Nafadh_Backend.Controllers
 
         // GET: api/system-variables/{key}
         [HttpGet("{key}")]
+        [Authorize]
         public async Task<IActionResult> GetByKey(string key)
         {
+            var allowedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+{
+    "ATTACHMENT_ALLOWED_EXTENSIONS",
+    "ATTACHMENT_MAX_SIZE_MB",
+    "ATTACHMENT_SIZE_ERROR",
+    "ATTACHMENT_TYPE_ERROR",
+    "CV_TYPE_ERROR",
+    "CERTIFICATE_TYPE_ERROR"
+};
+
+            if (!User.IsInRole("Admin") && !allowedKeys.Contains(key))
+            {
+                return Forbid();
+            }
             var variable = await _context.SystemVariables
                 .AsNoTracking()
                 .FirstOrDefaultAsync(v => v.VariableKey == key);
@@ -47,6 +63,7 @@ namespace Nafadh_Backend.Controllers
 
         // PUT: api/system-variables/{key}
         [HttpPut("{key}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(
             string key,
             [FromBody] UpdateSystemVariableRequest request)
@@ -105,7 +122,7 @@ namespace Nafadh_Backend.Controllers
             });
         }
     }
-
+   
     public class UpdateSystemVariableRequest
     {
         [Required]
