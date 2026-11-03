@@ -598,7 +598,7 @@
                 </div>
 
                 <div class="cert-crest-center">
-                  <span class="cert-title-banner" style="margin: 0;">شهادة إتمام تدريب معتمدة</span>
+                  <span class="cert-title-banner" style="margin: 0;">{{ cert.document.ar }}</span>
                 </div>
 
                 <div class="cert-brand-side">
@@ -617,7 +617,7 @@
                 <h1 class="cert-trainee-full-name">{{ cert.traineeName }}</h1>
 
                 <p class="cert-completion-paragraph">
-                  قد أتمّ بنجاح متطلبات البرنامج التدريبي التخصصي في مسار
+                  {{ cert.document.completion ? 'قد أتمّ بنجاح متطلبات البرنامج التدريبي التخصصي في مسار' : 'تُمنح له هذه الشهادة في مسار' }}
                   <strong class="text-navy">«{{ cert.trackName }}»</strong>
                   ضمن <strong>({{ cert.batchName }})</strong>، والمنعقد خلال الفترة من
                   <strong>{{ cert.startDate | date:'dd/MM/yyyy' }}</strong> إلى
