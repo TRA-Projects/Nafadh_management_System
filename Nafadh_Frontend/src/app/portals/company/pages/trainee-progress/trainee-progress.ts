@@ -442,46 +442,62 @@ export class CompanyTraineeProgress {
     queueMicrotask(() => document.getElementById('tab-' + next.key)?.focus());
   }
 
-  onFileSelected(event: Event, traineeId: number): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
+onFileSelected(event: Event, traineeId: number): void {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
 
-    if (!file) return;
+  if (!file) return;
 
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      this.showToast('error', 'الصيغة غير مدعومة. اختر صورة بصيغة JPG أو PNG أو WebP.');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      this.showToast('error', 'حجم الصورة أكبر من 5 ميجابايت. اختر صورة أصغر.');
-      return;
-    }
-
-    this.uploading.set(true);
-
-    this.api
-      .uploadTraineeImage(traineeId, file)
-      .pipe(
-        switchMap(() => this.api.getEnrollment(this.currentEnrollmentId)),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: (enrollment) => {
-          this.enrollment.set(enrollment);
-          this.imageStage.set(0);
-          this.imageVersion.set(Date.now());
-          this.uploading.set(false);
-          this.showToast('ok', 'تم حفظ الصورة الشخصية.');
-        },
-        error: (error) => {
-          console.error('Image upload failed', error);
-          this.uploading.set(false);
-          this.showToast('error', 'تعذر رفع الصورة. حاول مرة أخرى.');
-        }
-      });
+  // Profile images only
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    this.showToast('error', 'الصيغة غير مدعومة. اختر صورة بصيغة JPG أو PNG أو WebP.');
+    return;
   }
+
+  this.api.getAttachmentSettings()
+    .pipe(
+      switchMap((settings) => {
+        const maxSizeMB = settings.maxSizeMB;
+
+        if (!Number.isFinite(maxSizeMB) || maxSizeMB <= 0) {
+          throw new Error('Invalid attachment size setting');
+        }
+
+        if (file.size > maxSizeMB * 1024 * 1024) {
+          this.showToast(
+            'error',
+            `حجم الصورة أكبر من ${maxSizeMB} ميجابايت. اختر صورة أصغر.`
+          );
+          return of(null);
+        }
+
+        this.uploading.set(true);
+
+        return this.api.uploadTraineeImage(traineeId, file).pipe(
+          switchMap(() => this.api.getEnrollment(this.currentEnrollmentId))
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    )
+    .subscribe({
+      next: (enrollment) => {
+        if (!enrollment) return;
+
+        this.enrollment.set(enrollment);
+        this.imageStage.set(0);
+        this.imageVersion.set(Date.now());
+        this.uploading.set(false);
+        this.showToast('ok', 'تم حفظ الصورة الشخصية.');
+      },
+      error: (error) => {
+        console.error('Image upload failed', error);
+        this.uploading.set(false);
+        this.showToast('error', 'تعذر قراءة إعدادات النظام أو رفع الصورة.');
+      }
+    });
+}
+
 
   private showToast(kind: 'ok' | 'error', text: string): void {
     if (this.toastTimer) clearTimeout(this.toastTimer);
