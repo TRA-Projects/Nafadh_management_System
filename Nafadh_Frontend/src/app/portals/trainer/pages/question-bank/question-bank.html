@@ -134,15 +134,15 @@
                 </option>
 
                 <option value="1">
-                    صح أو خطأ
+                    {{ getQuestionTypeLabel(1) }}
+                </option>
+
+                <option value="0">
+                    {{ getQuestionTypeLabel(0) }}
                 </option>
 
                 <option value="2">
-                    اختيار متعدد
-                </option>
-
-                <option value="3">
-                    مقالي
+                    {{ getQuestionTypeLabel(2) }}
                 </option>
 
             </select>
@@ -490,15 +490,15 @@
                                 (ngModelChange)="questionTypeChanged()">
 
                                 <option [ngValue]="0">
-                                    اختيار من متعدد
+                                    {{ getQuestionTypeLabel(0) }}
                                 </option>
 
                                 <option [ngValue]="1">
-                                    صح أو خطأ
+                                    {{ getQuestionTypeLabel(1) }}
                                 </option>
 
                                 <option [ngValue]="2">
-                                    مقالي
+                                    {{ getQuestionTypeLabel(2) }}
                                 </option>
 
                             </select>
