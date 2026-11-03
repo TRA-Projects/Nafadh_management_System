@@ -12,9 +12,7 @@ import {
   CoursePlanNoteDto,
   CoursePlanStageDto,
   CoursePlanTrainerOptionDto,
-  EXECUTION_LABELS,
-  ITEM_TYPE_LABELS,
-  PROGRESS_LABELS,
+  PlanExecutionStatus,
   PlanItemType,
   PlanPriority,
   PlanProgressStatus,
@@ -139,9 +137,15 @@ export class CompanyPlanWorkspace implements OnInit {
       if (p.executionStatus === 'Completed') current = 4;
     }
 
-    const labels = [this.approvalLabel(p.approvalStatus === 'Rejected' ? 'Rejected' : 'Draft'), this.approvalLabel('PendingApproval'), this.approvalLabel('Approved'), 'قيد التنفيذ', 'مكتمل'];
-    return labels.map((label, i) => ({
-      label,
+    const steps = [
+      { id: 'preparation', label: this.approvalLabel(p.approvalStatus === 'Rejected' ? 'Rejected' : 'Draft') },
+      { id: 'PendingApproval', label: this.approvalLabel('PendingApproval') },
+      { id: 'Approved', label: this.approvalLabel('Approved') },
+      { id: 'InProgress', label: this.executionLabel('InProgress') },
+      { id: 'Completed', label: this.executionLabel('Completed') },
+    ];
+    return steps.map((step, i) => ({
+      ...step,
       state: i < current ? 'done' : i === current ? 'current' : 'todo',
       rejected: i === 0 && p.approvalStatus === 'Rejected',
     }));
@@ -205,7 +209,7 @@ export class CompanyPlanWorkspace implements OnInit {
     for (const stage of p.stages) {
       list.push({ value: `s:${stage.stageId}`, label: `مرحلة: ${stage.title}` });
       for (const item of stage.items) {
-        list.push({ value: `i:${item.itemId}`, label: `${ITEM_TYPE_LABELS[item.itemType]}: ${item.title}` });
+        list.push({ value: `i:${item.itemId}`, label: `${this.typeLabel(item.itemType)}: ${item.title}` });
       }
     }
     return list;
@@ -215,7 +219,7 @@ export class CompanyPlanWorkspace implements OnInit {
 
   // ── lifecycle ──
   ngOnInit(): void {
-    this.constants.ensure('NFD_TSK_PRI');
+    this.constants.ensure('NFD_TSK_PRI', 'NFD_CPE_STAT', 'NFD_CPI_TYPE', 'NFD_CPP_STAT');
     this.planId = Number(this.route.snapshot.paramMap.get('id'));
     this.load();
 
@@ -306,7 +310,7 @@ export class CompanyPlanWorkspace implements OnInit {
       },
       resume: {
         title: 'استئناف الكورس',
-        text: 'سيعود الكورس إلى حالة قيد التنفيذ.',
+        text: `سيعود الكورس إلى حالة «${this.executionLabel('InProgress')}».`,
         danger: false,
         confirmLabel: 'استئناف',
       },
@@ -565,7 +569,7 @@ export class CompanyPlanWorkspace implements OnInit {
       trainerId: f.trainerId,
     };
 
-    const label = ITEM_TYPE_LABELS[f.itemType];
+    const label = this.typeLabel(f.itemType);
 
     this.submitForm(
       f.itemId
@@ -669,10 +673,10 @@ export class CompanyPlanWorkspace implements OnInit {
   // ============================================================
 
   approvalLabel = (s: keyof typeof APPROVAL_LABELS) => this.constants.administrativeLabel('NFD_CPA_STAT', s);
-  executionLabel = (s: keyof typeof EXECUTION_LABELS) => EXECUTION_LABELS[s];
-  progressLabel = (s: PlanProgressStatus) => PROGRESS_LABELS[s];
+  executionLabel = (s: PlanExecutionStatus) => this.constants.administrativeLabel('NFD_CPE_STAT', s);
+  progressLabel = (s: PlanProgressStatus) => this.constants.administrativeLabel('NFD_CPP_STAT', s);
   priorityLabel = (s: PlanPriority) => this.constants.administrativeLabel('NFD_TSK_PRI', s);
-  typeLabel = (s: PlanItemType) => ITEM_TYPE_LABELS[s];
+  typeLabel = (s: PlanItemType) => this.constants.administrativeLabel('NFD_CPI_TYPE', s);
 
   trackStage(_: number, s: CoursePlanStageDto): number {
     return s.stageId;
