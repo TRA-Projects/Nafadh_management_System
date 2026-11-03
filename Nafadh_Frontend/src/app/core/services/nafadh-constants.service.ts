@@ -1,4 +1,4 @@
-import { AdministrativeGroup, administrativeValue, constantEditKey, isAdministrativeGroup, lookupValueKey } from '../models/administrative-constants';
+import { AdministrativeGroup, administrativeValue, constantEditKey, isAdministrativeGroup, lookupLabel, lookupValueKey } from '../models/administrative-constants';
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -109,6 +109,7 @@ export class NafadhConstantsService {
         next: payload => {
           const source = this.extractRows(payload);
           if (!source) {
+            this.requested.delete(code);
             console.warn(`Nafadh constants ${code}: unsupported response shape; keeping previous labels`);
             return;
           }
@@ -119,11 +120,8 @@ export class NafadhConstantsService {
             const key = isAdministrativeGroup(code) ? constantEditKey(code, data)
               : lookupValueKey(data);
             if (!key || rows.some(row => row.key.toLowerCase() === key.toLowerCase())) continue;
-            const label = String(
-              data['label_ar'] ?? data['labelAr'] ?? data['LabelAr'] ??
-              data['label_en'] ?? data['labelEn'] ?? data['LabelEn'] ?? ''
-            ).trim();
-            const active = data['IsActive'] ?? data['isActive'] ?? data['active'] ?? true;
+            const label = lookupLabel(data);
+            const active = data['IsActive'] ?? data['isActive'] ?? data['is_active'] ?? data['active'] ?? true;
             rows.push({
               key,
               label,
