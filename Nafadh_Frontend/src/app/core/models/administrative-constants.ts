@@ -2,6 +2,23 @@ import { EVALUATION_TYPE_LABELS, WARNING_TYPE_LABELS } from './enums';
 
 // The array positions match the persisted Nafadh enum ordinals.
 const values = {
+  NFD_REM_STAT: [
+    { key: 'Pending', label: 'قيد الانتظار' },
+    { key: 'Approved', label: 'معتمد' },
+    { key: 'NeedsRevision', label: 'يتطلب تعديلًا' },
+  ],
+  NFD_EVL_PER: [
+    { key: 'Weekly', label: 'أسبوعي' },
+    { key: 'Monthly', label: 'شهري' },
+    { key: 'Midterm', label: 'منتصف المدة' },
+    { key: 'Final', label: 'نهائي' },
+    { key: 'AdHoc', label: 'حسب الحاجة' },
+  ],
+  NFD_MOD_STAT: [
+    { key: 'NotStarted', label: 'لم يبدأ' },
+    { key: 'InProgress', label: 'قيد التنفيذ' },
+    { key: 'Completed', label: 'مكتمل' },
+  ],
   NFD_EXT_ACT: [
     { key: 'Warn', label: 'تنبيه' },
     { key: 'Terminate', label: 'إنهاء' },
@@ -172,6 +189,14 @@ function explicitValueKeys(row: object) {
 }
 
 /** Read old id-based responses only when the explicit key is absent. */
+export function lookupLabel(row: Record<string, unknown>): string {
+  for (const name of ['label_ar', 'labelAr', 'LabelAr', 'label_en', 'labelEn', 'LabelEn']) {
+    const value = row[name];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return '';
+}
+
 export function lookupValueKey(row: Record<string, unknown>): string {
   const explicit = explicitValueKeys(row);
   if (!explicit.length) return String(row['id'] ?? row['Id'] ?? '').trim();
@@ -203,4 +228,10 @@ export function administrativeValue(group: AdministrativeGroup, value: unknown) 
   if (/^\d+$/.test(raw)) return rows[Number(raw)];
   const key = group === 'NFD_CMP_STAT' && raw.toLowerCase() === 'pending' ? 'pendingapproval' : raw.toLowerCase();
   return rows.find(row => row.key.toLowerCase() === key);
+}
+
+export function moduleProgressKey(value: unknown): string {
+  const raw = String(value ?? '').trim();
+  return raw.toLowerCase() === 'in_progress' ? 'InProgress' :
+    administrativeValue('NFD_MOD_STAT', raw)?.key ?? raw;
 }
