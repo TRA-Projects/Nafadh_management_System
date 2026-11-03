@@ -183,7 +183,7 @@
 
         <div>
           <h3>
-            شهادة إتمام التدريب
+            {{ certificateDocument(certificates()[0]?.type).ar }}
           </h3>
 
           <p>
@@ -232,7 +232,7 @@
 
       <div class="certificate-text">
         <span>
-          شهادة إتمام التدريب
+          {{ certificateDocument(certificates()[0]?.type).ar }}
         </span>
 
         <strong>
@@ -240,7 +240,7 @@
         </strong>
 
         <small>
-          أتم برنامج {{ programTitle() }}
+          {{ certificateDocument(certificates()[0]?.type).completion ? 'أتم برنامج' : 'البرنامج' }} {{ programTitle() }}
         </small>
       </div>
     </div>
