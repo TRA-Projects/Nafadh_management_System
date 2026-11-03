@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { inject, Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
@@ -25,6 +26,7 @@ import { TaskPriority, TaskStatus } from '../../../../core/models/enums';
   styleUrl: './tasks.scss',
 })
 export class TrainerTasks implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
 
   // =====================================================
   // TRAINER
@@ -101,12 +103,7 @@ export class TrainerTasks implements OnInit {
   // OPTIONS
   // =====================================================
 
-  priorityOptions: { value: TaskPriority; label: string }[] = [
-    { value: 'Low', label: 'منخفضة' },
-    { value: 'Medium', label: 'متوسطة' },
-    { value: 'High', label: 'عالية' },
-    { value: 'Critical', label: 'حرجة' }
-  ];
+  readonly priorityOptions: TaskPriority[] = ['Low', 'Medium', 'High', 'Critical'];
 
 
   // =====================================================
@@ -125,6 +122,7 @@ export class TrainerTasks implements OnInit {
   // =====================================================
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_TSK_PRI');
     const batchIdParam = this.route.snapshot.queryParamMap.get('batchId');
 
     if (batchIdParam) {
