@@ -1,3 +1,4 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -869,6 +870,7 @@ export interface TrainerOptionDto {
   ],
 })
 export class TraineeAchievements implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
 
   private api = inject(TraineeApi);
   public auth = inject(AuthService);
@@ -1075,6 +1077,7 @@ export class TraineeAchievements implements OnInit {
 
 
   ngOnInit() {
+    this.constants.ensure('NFD_FBK_TYPE');
 
     const session =
       this.auth.session?.();
@@ -2537,7 +2540,7 @@ export class TraineeAchievements implements OnInit {
         this.showSuccessToast.set(true);
 
         this.successMessage.set(
-          '⚠️ تقييم البرنامج التدريبي متاح بعد إكمال البرنامج بالكامل 100%'
+          `⚠️ ${this.constants.administrativeLabel('NFD_FBK_TYPE', 'BatchExperienceRating')} متاح بعد إكمال البرنامج بالكامل 100%`
         );
 
         setTimeout(
