@@ -93,6 +93,12 @@ export class QuestionBank implements OnInit {
 
     // Stable enum values must be preserved: Easy=0, Medium=1, Hard=2.
     readonly difficultyOptions = signal<Array<{ value: number; label: string }>>([]);
+    readonly historicalDifficulties = computed(() => {
+        const rows = this.constants.all('NFD_QUE_DIFF');
+        return rows.length ? ['Easy', 'Medium', 'Hard'].flatMap((key, value) =>
+            rows.some(row => row.key.toLowerCase() === key.toLowerCase()) ? [{ value, label: this.getDifficultyLabel(value) }] : [])
+            : this.difficultyOptions();
+    });
     readonly difficultyOptionsError = signal(false);
 
     private loadDifficultyOptions(): void {
@@ -219,7 +225,7 @@ export class QuestionBank implements OnInit {
     ) { }
 
     ngOnInit(): void {
-        this.constants.ensure('NFD_QUE_TYPE');
+        this.constants.ensure('NFD_QUE_TYPE', 'NFD_QUE_DIFF');
         this.loadDifficultyOptions();
 
         const quizId = Number(
@@ -969,26 +975,11 @@ export class QuestionBank implements OnInit {
     }
 
     getDifficultyLabel(difficulty: number | string): string {
-        const value =
-            typeof difficulty === 'string'
-                ? difficulty
-                : Number(difficulty);
-
-        switch (value) {
-            case 0:
-            case 'Easy':
-                return 'سهل';
-
-            case 1:
-            case 'Medium':
-                return 'متوسط';
-
-            case 2:
-            case 'Hard':
-                return 'صعب';
-
-            default:
-                return 'غير محدد';
-        }
+        const keys = ['Easy', 'Medium', 'Hard'];
+        const raw = String(difficulty).trim();
+        const index = /^[0-2]$/.test(raw) ? Number(raw) : keys.findIndex(k => k.toLowerCase() === raw.toLowerCase());
+        if (index < 0) return raw || 'غير محدد';
+        const fallback = this.difficultyOptions().find(row => row.value === index)?.label ?? ['سهل', 'متوسط', 'صعب'][index];
+        return this.constants.label('NFD_QUE_DIFF', keys[index], fallback);
     }
 }
