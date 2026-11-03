@@ -1,3 +1,6 @@
+import { csvCell } from '../../../../core/models/csv-cell';
+import { administrativeValue } from '../../../../core/models/administrative-constants';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +17,7 @@ import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warn
   styleUrls: ['./warnings.css']
 })
 export class AdminWarnings implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   readonly warningTypes = inject(NafadhWarningTypesService);
   warnings = signal<WarningDto[]>([]);
   companies = signal<any[]>([]);
@@ -84,6 +88,7 @@ export class AdminWarnings implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_WRN_LVL');
     this.warningTypes.refresh();
     this.load();
     this.loadCompanies();
@@ -232,7 +237,7 @@ export class AdminWarnings implements OnInit {
       const lvl = String(w.level);
       let matchesLevel = true;
       if (this.selectedLevel !== 'ALL') {
-        matchesLevel = lvl === this.selectedLevel || this.getLevelLabel(lvl) === this.getLevelLabel(this.selectedLevel);
+        matchesLevel = lvl === this.selectedLevel || administrativeValue('NFD_WRN_LVL', lvl)?.key === this.selectedLevel;
       }
 
       let matchesYear = true;
@@ -388,7 +393,7 @@ export class AdminWarnings implements OnInit {
       const status = this.getStatusLabel(w.status);
       const date = w.issuedDate ? new Date(w.issuedDate).toLocaleDateString('en-GB') : '-';
 
-      csvContent += `${code},${company},${type},${level},${status},${date}\n`;
+      csvContent += [code, company, type, level, status, date].map(csvCell).join(',') + '\n';
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -476,12 +481,7 @@ export class AdminWarnings implements OnInit {
   }
 
   getLevelLabel(level?: any): string {
-    const val = String(level);
-    if (val === '0' || val === 'Low') return 'منخفض';
-    if (val === '1' || val === 'Medium') return 'متوسط';
-    if (val === '2' || val === 'High') return 'مرتفع';
-    if (val === '3' || val === 'Critical') return 'حرج جداً';
-    return level ?? 'متوسط';
+    return this.constants.administrativeLabel('NFD_WRN_LVL', level);
   }
 
   getLevelClass(level?: any): string {
