@@ -20,6 +20,27 @@ const values = {
     { key: 'Enrollment', label: 'تقرير التسجيل' },
     { key: 'Custom', label: 'التقرير الشامل للأداء التدريبي' },
   ],
+  NFD_QUE_TYPE: [
+    { key: 'MultipleChoice', label: 'اختيار من متعدد' },
+    { key: 'TrueFalse', label: 'صح أو خطأ' },
+    { key: 'Essay', label: 'سؤال مقالي' },
+  ],
+  NFD_WRN_LVL: [
+    { key: 'Low', label: 'منخفض' },
+    { key: 'Medium', label: 'متوسط' },
+    { key: 'High', label: 'مرتفع' },
+    { key: 'Critical', label: 'حرج' },
+  ],
+  NFD_WRN_SCOPE: [
+    { key: 'Company', label: 'الشركة' },
+    { key: 'Trainee', label: 'المتدرب' },
+  ],
+  NFD_TSK_PRI: [
+    { key: 'Low', label: 'منخفضة' },
+    { key: 'Medium', label: 'متوسطة' },
+    { key: 'High', label: 'عالية' },
+    { key: 'Critical', label: 'حرجة' },
+  ],
   NFD_PAY_STAT: [
     { key: 'Pending', label: 'قيد الانتظار' },
     { key: 'PartiallyPaid', label: 'مدفوع جزئيًا' },
