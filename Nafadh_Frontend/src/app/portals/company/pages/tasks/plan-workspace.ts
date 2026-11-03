@@ -14,7 +14,6 @@ import {
   CoursePlanTrainerOptionDto,
   EXECUTION_LABELS,
   ITEM_TYPE_LABELS,
-  PRIORITY_LABELS,
   PROGRESS_LABELS,
   PlanItemType,
   PlanPriority,
@@ -216,6 +215,7 @@ export class CompanyPlanWorkspace implements OnInit {
 
   // ── lifecycle ──
   ngOnInit(): void {
+    this.constants.ensure('NFD_TSK_PRI');
     this.planId = Number(this.route.snapshot.paramMap.get('id'));
     this.load();
 
@@ -671,7 +671,7 @@ export class CompanyPlanWorkspace implements OnInit {
   approvalLabel = (s: keyof typeof APPROVAL_LABELS) => this.constants.administrativeLabel('NFD_CPA_STAT', s);
   executionLabel = (s: keyof typeof EXECUTION_LABELS) => EXECUTION_LABELS[s];
   progressLabel = (s: PlanProgressStatus) => PROGRESS_LABELS[s];
-  priorityLabel = (s: PlanPriority) => PRIORITY_LABELS[s];
+  priorityLabel = (s: PlanPriority) => this.constants.administrativeLabel('NFD_TSK_PRI', s);
   typeLabel = (s: PlanItemType) => ITEM_TYPE_LABELS[s];
 
   trackStage(_: number, s: CoursePlanStageDto): number {
