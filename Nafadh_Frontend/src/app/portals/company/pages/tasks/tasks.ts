@@ -7,7 +7,6 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import {
   CoursePlanSummaryDto,
   CoursePlansCountsDto,
-  EXECUTION_LABELS,
   PlanApprovalStatus,
   CoursePlanProgramOptionDto,
   CoursePlanLookupsDto,
@@ -306,6 +305,12 @@ export class CompanyTasks implements OnInit {
 
   readonly today = toInputDate(new Date());
 
+  filterLabel(key: PlanFilter, fallback: string): string {
+    const group = key === 'InProgress' || key === 'OnHold' || key === 'Completed'
+      ? 'NFD_CPE_STAT' : 'NFD_CPA_STAT';
+    return this.constants.administrativeLabel(group, key, fallback);
+  }
+
   readonly filters: {
     key: PlanFilter;
     label: string;
@@ -321,6 +326,7 @@ export class CompanyTasks implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_CPE_STAT');
     this.load();
   }
 
@@ -577,7 +583,7 @@ export class CompanyTasks implements OnInit {
     plan: CoursePlanSummaryDto
   ): string | null {
     return plan.approvalStatus === 'Approved'
-      ? EXECUTION_LABELS[plan.executionStatus]
+      ? this.constants.administrativeLabel('NFD_CPE_STAT', plan.executionStatus)
       : null;
   }
 
