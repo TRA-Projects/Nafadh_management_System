@@ -81,9 +81,24 @@ export interface EvaluationTemplateDto {
   createdByUserId: number;
 }
 
+export interface EvaluationCriterionDto {
+  criteriaId: number;
+  templateId: number;
+  name: string;
+  weight: number;
+  maxPoints: number;
+}
+
+export interface EvaluationCriterionInputDto {
+  templateId: number;
+  name: string;
+  weight: number;
+  maxPoints: number;
+}
+
 export interface EvaluationTemplateDetailsDto
   extends EvaluationTemplateDto {
-  criteria: unknown[];
+  criteria: EvaluationCriterionDto[];
 }
 
 export interface EvaluationTemplateInputDto {
@@ -750,7 +765,59 @@ deleteEvaluationTemplate(
     { responseType: 'text' }
   );
 }
+// Get criteria by template
+getEvaluationCriteria(
+  templateId: number
+): Observable<EvaluationCriterionDto[]> {
+  return this.http.get<EvaluationCriterionDto[]>(
+    `https://localhost:7082/api/EvaluationCriterion/GetCriteriaByTemplate/${templateId}`
+  );
+}
 
+// Create criterion
+createEvaluationCriterion(
+  payload: EvaluationCriterionInputDto
+): Observable<string> {
+  return this.http.post(
+    'https://localhost:7082/api/EvaluationCriterion/CreateCriterion',
+    payload,
+    { responseType: 'text' }
+  );
+}
+
+// Update criterion
+updateEvaluationCriterion(
+  criteriaId: number,
+  payload: EvaluationCriterionInputDto
+): Observable<string> {
+  return this.http.put(
+    `https://localhost:7082/api/EvaluationCriterion/UpdateCriterion/${criteriaId}`,
+    payload,
+    { responseType: 'text' }
+  );
+}
+
+// Delete criterion
+deleteEvaluationCriterion(
+  criteriaId: number
+): Observable<string> {
+  return this.http.delete(
+    `https://localhost:7082/api/EvaluationCriterion/DeleteCriterion/${criteriaId}`,
+    { responseType: 'text' }
+  );
+}
+
+// Check criteria weights
+checkEvaluationWeights(
+  templateId: number
+): Observable<{ templateId: number; isValid: boolean }> {
+  return this.http.get<{
+    templateId: number;
+    isValid: boolean;
+  }>(
+    `https://localhost:7082/api/EvaluationCriterion/CheckWeights/${templateId}`
+  );
+}
 
   // ── Shared Helpers ────────────────────────────────────────────────────────
 
