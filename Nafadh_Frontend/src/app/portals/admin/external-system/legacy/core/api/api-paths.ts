@@ -5,9 +5,10 @@ import { environment as managementEnvironment } from '../../../../../../../envir
 const MANAGEMENT_REFERENCE_CONSTANTS = `${managementEnvironment.apiBaseUrl.replace(/\/api\/?$/, '')}/api/management/reference-constants`;
 
 /** Evaluation Templates belong to Nafadh_Backend, not Bidding_API. */
-const NAFADH_EVALUATION_TEMPLATE =
-  'https://localhost:7082/api/EvaluationTemplate';
+const NAFADH_API_BASE_URL = 'https://localhost:7082';
 
+const NAFADH_EVALUATION_TEMPLATE =
+  `${NAFADH_API_BASE_URL}/api/EvaluationTemplate`;
 /**
  * Single place for relative API paths. Use these everywhere so mock + real use identical calls.
  * Host/origin is applied once in `apiBaseUrlInterceptor` via runtime config / `environment.apiBaseUrl`

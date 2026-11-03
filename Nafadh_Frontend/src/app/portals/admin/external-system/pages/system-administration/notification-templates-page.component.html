@@ -1,11 +1,5 @@
-
 <div class="notification-templates-container" dir="rtl">
-  <!-- Tabs -->
-  <div
-    class="content-tabs"
-    role="tablist"
-    aria-label="إدارة الإشعارات والإعلانات"
-  >
+  <div class="content-tabs" role="tablist" aria-label="إدارة الإشعارات والإعلانات">
     <button
       type="button"
       class="content-tab"
@@ -33,7 +27,6 @@
     </button>
   </div>
 
-  <!-- Notification Templates -->
   @if (activeTab() === 'templates') {
     <section class="tab-content" role="tabpanel">
       <div class="filters-card">
@@ -67,11 +60,19 @@
           </select>
         </div>
 
-        <button type="button" class="secondary-button" (click)="clearFilters()">
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="clearFilters()"
+        >
           إعادة تعيين
         </button>
 
-        <button type="button" class="primary-button" (click)="createTemplate()">
+        <button
+          type="button"
+          class="primary-button"
+          (click)="createTemplate()"
+        >
           + إضافة قالب
         </button>
       </div>
@@ -86,7 +87,6 @@
       @if (!loading() && errorMessage()) {
         <div class="state-container error-state" role="alert">
           <p>{{ errorMessage() }}</p>
-
           <button
             type="button"
             class="secondary-button"
@@ -121,15 +121,11 @@
                     </td>
 
                     <td>
-                      <span class="template-code">
-                        {{ template.code }}
-                      </span>
+                      <span class="template-code">{{ template.code }}</span>
                     </td>
 
                     <td>
-                      <span class="template-name">
-                        {{ template.name }}
-                      </span>
+                      <span class="template-name">{{ template.name }}</span>
                     </td>
 
                     <td>{{ template.portalCode }}</td>
@@ -203,7 +199,6 @@
             </table>
           </div>
 
-          <!-- Templates Pagination -->
           <div class="pagination-footer">
             <div class="pagination-info">
               عرض
@@ -269,11 +264,8 @@
     </section>
   }
 
-  <!-- Announcements -->
   @if (activeTab() === 'announcements') {
     <section class="tab-content announcements-content" role="tabpanel">
-
-      <!-- Announcement Filters and Actions -->
       <div class="filters-card announcement-filters">
         <div class="filter-field search-field">
           <label for="announcementSearch">البحث في الإعلانات</label>
@@ -319,7 +311,6 @@
         </button>
       </div>
 
-      <!-- Loading -->
       @if (announcementsLoading()) {
         <div class="state-container" role="status">
           <span class="loading-spinner" aria-hidden="true"></span>
@@ -327,11 +318,9 @@
         </div>
       }
 
-      <!-- Error -->
       @if (!announcementsLoading() && announcementsError()) {
         <div class="state-container error-state" role="alert">
           <p>{{ announcementsError() }}</p>
-
           <button
             type="button"
             class="secondary-button"
@@ -342,10 +331,7 @@
         </div>
       }
 
-      <!-- Announcements Workspace -->
       <div class="announcements-workspace">
-
-        <!-- Announcements List -->
         @if (!announcementsLoading() && !announcementsError()) {
           <div class="table-card">
             <div class="table-responsive">
@@ -460,7 +446,6 @@
               </table>
             </div>
 
-            <!-- Announcements Pagination -->
             <div class="pagination-footer">
               <div class="pagination-info">
                 عرض
@@ -526,7 +511,6 @@
           </div>
         }
 
-        <!-- Announcement Form -->
         @if (announcementFormVisible()) {
           <section
             class="announcement-form-card"
