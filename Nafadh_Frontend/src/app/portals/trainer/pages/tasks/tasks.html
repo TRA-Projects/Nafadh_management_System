@@ -773,8 +773,8 @@
                 [(ngModel)]="newTaskPriority"
                 class="tasks-inline-058"
               >
-                @for (option of priorityOptions; track option.value) {
-                  <option [ngValue]="option.value">{{ option.label }}</option>
+                @for (option of priorityOptions; track option) {
+                  <option [ngValue]="option">{{ constants.administrativeLabel('NFD_TSK_PRI', option) }}</option>
                 }
               </select>
             </div>
