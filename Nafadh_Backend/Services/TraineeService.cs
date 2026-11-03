@@ -106,14 +106,26 @@ namespace Nafadh_Backend.Services
                 throw new ArgumentException(
                     "Profile image is required.");
             }
+            // Read maximum attachment size from system settings
+            var setting = await _context.SystemVariables
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v =>
+                    v.VariableKey == "ATTACHMENT_MAX_SIZE_MB");
 
-            // Profile image limit remains 5 MB
-            const long maxFileSize = 5 * 1024 * 1024;
+            if (setting == null ||
+                !int.TryParse(setting.Value, out int maxSizeMB) ||
+                maxSizeMB <= 0)
+            {
+                throw new InvalidOperationException(
+                    "Attachment size setting is missing or invalid.");
+            }
+
+            long maxFileSize = (long)maxSizeMB * 1024 * 1024;
 
             if (file.Length > maxFileSize)
             {
                 throw new ArgumentException(
-                    "Profile image cannot exceed 5 MB.");
+                   $"Profile image cannot exceed {maxSizeMB} MB.");
             }
 
             // Validate extension
