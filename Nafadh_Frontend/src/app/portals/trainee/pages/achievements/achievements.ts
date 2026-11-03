@@ -1,4 +1,6 @@
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { certificateDocument } from '../../../../core/models/enums';
+import { moduleProgressKey } from '../../../../core/models/administrative-constants';
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -892,6 +894,7 @@ export class TraineeAchievements implements OnInit {
 
   allBadges = signal<BadgeDto[]>([]);
   myBadges = signal<TraineeBadgeDto[]>([]);
+  readonly certificateDocument = certificateDocument;
   certificates = signal<CertificateDto[]>([]);
 
   showFeedback = signal(false);
@@ -1813,20 +1816,16 @@ export class TraineeAchievements implements OnInit {
 
           if (progress) {
 
-            const status =
-              String(
-                progress.status ?? ''
-              ).toLowerCase();
+            const status = moduleProgressKey(progress.status);
 
             if (
-              status === 'completed'
+              status === 'Completed'
             ) {
 
               percentage = 100;
 
             } else if (
-              status === 'inprogress' ||
-              status === 'in_progress'
+              status === 'InProgress'
             ) {
 
               percentage = 50;
@@ -3179,7 +3178,7 @@ downloadCertificate() {
               a.href = url;
 
               a.download =
-                `شهادة_إتمام_التدريب_${Date.now()}.pdf`;
+                `${certificateDocument(cert.type).ar}_${Date.now()}.pdf`;
 
               document.body.appendChild(a);
 
@@ -3279,6 +3278,8 @@ private generateCertificatePdf(
         format: 'a4'
       });
 
+    const documentType = certificateDocument(cert.type);
+    doc.setProperties({ title: documentType.en });
     const pageWidth =
       doc.internal.pageSize.getWidth();
 
@@ -3455,7 +3456,7 @@ private generateCertificatePdf(
     doc.setFontSize(25);
 
     doc.text(
-      'CERTIFICATE OF COMPLETION',
+      documentType.en,
       pageWidth / 2,
       66,
       {
@@ -3553,7 +3554,7 @@ private generateCertificatePdf(
     doc.setFontSize(12);
 
     doc.text(
-      'for successfully completing the training program',
+      documentType.completion ? 'for successfully completing the training program' : 'for the training program',
       pageWidth / 2,
       116,
       {
@@ -3695,7 +3696,7 @@ private generateCertificatePdf(
     // ========================================================
 
     doc.save(
-      `شهادة_إتمام_التدريب_${Date.now()}.pdf`
+      `${certificateDocument(cert.type).ar}_${Date.now()}.pdf`
     );
 
   } catch (error) {
