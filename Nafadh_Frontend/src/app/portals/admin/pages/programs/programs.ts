@@ -31,7 +31,7 @@ systemSettings = signal<Record<string, number>>({
 setting(key: string): number {
   return this.systemSettings()[key];
 }
-
+programMinDurationErrorMessage = signal<string>('');
 private loadSystemSettings(): void {
   this.adminApi.getSystemVariables().subscribe({
     next: (rows) => {
@@ -39,7 +39,18 @@ private loadSystemSettings(): void {
 
       for (const row of rows) {
         const key = row.variableKey ?? row.VariableKey;
-        const value = Number(row.value ?? row.Value);
+        const rawValue = row.value ?? row.Value;
+
+        // قراءة رسالة الخطأ النصية من قاعدة البيانات
+        if (key === 'PROGRAM_MIN_DURATION_ERROR_MESSAGE') {
+          this.programMinDurationErrorMessage.set(
+            String(rawValue ?? '')
+          );
+          continue;
+        }
+
+        // قراءة بقية الإعدادات الرقمية
+        const value = Number(rawValue);
 
         if (
           Object.prototype.hasOwnProperty.call(values, key) &&
@@ -55,7 +66,10 @@ private loadSystemSettings(): void {
     },
     error: (err) => {
       console.error('تعذر تحميل إعدادات البرامج:', err);
-      this.showToast('تعذر تحميل إعدادات النظام؛ سيتم استخدام القيم الافتراضية.', 'warning');
+      this.showToast(
+        'تعذر تحميل إعدادات النظام؛ سيتم استخدام القيم الافتراضية.',
+        'warning'
+      );
     }
   });
 }
@@ -259,12 +273,13 @@ private applySystemSettings(): void {
     if (f === 'passed') return list.filter(a => a.status === 'Passed');
     if (f === 'failed') return list.filter(a => a.status === 'Failed');
     if (f === 'absent') return list.filter(a => a.status === 'Absent' || a.status === 'NotAttempted' || !a.submittedAt || a.excuseStatus);
-   if (f === 'cheating') {
+  if (f === 'cheating') {
   return list.filter(a =>
     (a.cheatingRiskPercentage || 0) >
       this.setting('QUIZ_CHEATING_RISK_PERCENT') ||
     (a.tabSwitchCount || 0) >
-      this.setting('QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT')
+      this.setting('QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT') ||
+    (a.cameraDisconnectionsCount || 0) > 0
   );
 }
     return list;
@@ -818,12 +833,13 @@ private applySystemSettings(): void {
     return this.activeQuizAttempts().filter(a => a.status === 'Absent' || a.status === 'NotAttempted' || !a.submittedAt).length;
   }
 
- getCheatingSuspectsCount(): number {
+getCheatingSuspectsCount(): number {
   return this.activeQuizAttempts().filter(a =>
     (a.cheatingRiskPercentage || 0) >
       this.setting('QUIZ_CHEATING_RISK_PERCENT') ||
     (a.tabSwitchCount || 0) >
-      this.setting('QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT')
+      this.setting('QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT') ||
+    (a.cameraDisconnectionsCount || 0) > 0
   ).length;
 }
   // ==========================================================

@@ -2284,6 +2284,34 @@
           </option>
         </select>
       </div>
+ <div class="form-group">
+  <label class="form-label">
+    مدة البرنامج (بالأسابيع)
+    <span class="required-star">*</span>
+  </label>
+
+  <input
+    type="number"
+    formControlName="durationWeeks"
+    class="form-input text-right"
+    [min]="setting('PROGRAM_MIN_DURATION_WEEKS')"
+  >
+
+ <small
+  class="text-danger"
+  *ngIf="
+    programForm.get('durationWeeks')?.hasError('min') &&
+    programForm.get('durationWeeks')?.touched
+  "
+>
+  {{
+    programMinDurationErrorMessage().replace(
+      '{min}',
+      setting('PROGRAM_MIN_DURATION_WEEKS').toString()
+    )
+  }}
+</small>
+</div>
       <div class="modal-footer-buttons-program">
         <button type="submit" [disabled]="isSubmittingProgram" class="btn-submit-program">إنشاء البرنامج</button>
         <button type="button" (click)="onCloseProgramModal()" class="btn-cancel-program">إلغاء</button>
