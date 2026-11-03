@@ -240,6 +240,7 @@ export class AdminPrograms implements OnInit {
   // 6. Lifecycle Hook
   // ==========================================================
   ngOnInit(): void {
+    this.constants.ensure('NFD_CPI_TYPE');
     const incomingId = Number(this.route.snapshot.queryParamMap.get('coursePlanId'));
     this.notificationPlanId = Number.isInteger(incomingId) && incomingId > 0 ? incomingId : null;
     this.initBatchForm();
