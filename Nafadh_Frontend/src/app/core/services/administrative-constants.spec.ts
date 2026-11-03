@@ -12,6 +12,8 @@ import { NafadhWarningTypesService } from './nafadh-warning-types.service';
 import { TrainerApi } from '../../portals/trainer/services/trainer-api';
 import { CompanyTasks } from '../../portals/company/pages/tasks/tasks';
 import { CompanyPlanWorkspace } from '../../portals/company/pages/tasks/plan-workspace';
+import { CompanyProgramDetails } from '../../portals/company/pages/program-details/program-details';
+import { TrainerContent } from '../../portals/trainer/pages/content/content';
 import { CompanyApi } from '../../portals/company/services/company-api';
 import { AdminWarnings } from '../../portals/admin/pages/warnings/warnings';
 import { QuestionBank } from '../../portals/trainer/pages/question-bank/question-bank';
@@ -70,6 +72,10 @@ describe('Editing fixed values', () => {
   });
   it.each([
     ['NFD_TIC_STAT', 'Open'], ['NFD_WDR_STAT', 'Pending'], ['NFD_RPT_TYPE', 'Performance'],
+    ['NFD_EXT_ACT', 'Warn'],
+    ['NFD_FIL_TYPE', 'Pdf'],
+    ['NFD_PRG_STAT', 'Draft'],
+    ['NFD_PYS_STAT', 'Pending'],
     ['NFD_CPE_STAT', 'NotStarted'],
     ['NFD_CPI_TYPE', 'Task'],
     ['NFD_CPP_STAT', 'NotStarted'],
@@ -119,6 +125,10 @@ function mockLookups() {
 
 describe('Administrative constant identities and labels', () => {
   const groups: Array<[AdministrativeGroup, string[]]> = [
+    ['NFD_EXT_ACT', ['Warn', 'Terminate', 'FlagForReview']],
+    ['NFD_FIL_TYPE', ['Pdf', 'Video', 'Image', 'Document', 'Link', 'Other']],
+    ['NFD_PRG_STAT', ['Draft', 'Published', 'Archived']],
+    ['NFD_PYS_STAT', ['Pending', 'Paid', 'Overdue']],
     ['NFD_TIC_STAT', ['Open', 'InProgress', 'Resolved', 'Closed']],
     ['NFD_WDR_STAT', ['Pending', 'Approved', 'Rejected']],
     ['NFD_RPT_TYPE', ['Attendance', 'Performance', 'Financial', 'Enrollment', 'Custom']],
@@ -158,6 +168,58 @@ describe('Administrative constant identities and labels', () => {
     expect(service.options(group)).toEqual([]);
     expect(service.all(group).map(row => row.key)).toEqual(keys);
     expect(service.administrativeLabel(group, 'unknown')).toBe('unknown');
+  });
+
+  it.each([
+    ['NFD_PYS_STAT', 'Paid', 'مدفوع'], ['NFD_EXT_ACT', 'Terminate', 'إنهاء'],
+    ['NFD_PRG_STAT', 'Published', 'منشور'], ['NFD_FIL_TYPE', 'Video', 'فيديو'],
+  ] as const)('%s retries an unavailable catalog and preserves inactive English-only history', (group, key, fallback) => {
+    const { get, injector } = mockLookups();
+    const service = runInInjectionContext(injector, () => new NafadhConstantsService());
+    get.mockReturnValue(throwError(() => new Error('offline')));
+    service.ensure(group);
+    expect(service.administrativeLabel(group, 1)).toBe(fallback);
+    get.mockReturnValue(of([{ ValueKey: key, LabelEn: 'Historical', IsActive: false }]));
+    service.ensure(group);
+    expect(service.administrativeLabel(group, 1)).toBe('Historical');
+    expect(service.options(group)).toEqual([]);
+    get.mockReturnValue(throwError(() => new Error('offline')));
+    service.refresh(group);
+    expect(service.administrativeLabel(group, key)).toBe('Historical');
+  });
+
+  it('changes only the escaped status text in the company program report after a rename', () => {
+    const { get, injector } = mockLookups();
+    const constants = runInInjectionContext(injector, () => new NafadhConstantsService());
+    const page = Object.assign(Object.create(CompanyProgramDetails.prototype), { constants });
+    Object.assign(page, { program: signal(null), modules: signal([]), finishRows: vi.fn() });
+    page.applyDetails({ status: 0, title: 'برنامج تاريخي' });
+    expect(page.programStatusLabel(page.program().status)).toBe('مسودة');
+    const model = {
+      p: { status: 'Published', percent: 75, capacity: 4, occupied: 3, available: 1 },
+      averageProgress: 25, trainees: [], modules: [], batches: [], exportedAt: new Date('2026-01-02')
+    };
+    const before = page.buildReportHtml(model);
+    expect(before).toContain('منشور');
+    get.mockReturnValue(of(['Published', 'Archived'].map(ValueKey => ({ ValueKey, LabelAr: '<تسمية>', IsActive: false }))));
+    constants.refresh('NFD_PRG_STAT');
+    expect(page.programStatusLabel('2')).toBe('<تسمية>');
+    expect(page.buildReportHtml(model)).toBe(before.replace('منشور', '&lt;تسمية&gt;'));
+    expect(model.p.status).toBe('Published');
+  });
+
+  it('retains the detected material key and icon when file types share a label', () => {
+    const { get, injector } = mockLookups();
+    const constants = runInInjectionContext(injector, () => new NafadhConstantsService());
+    const page = Object.assign(Object.create(TrainerContent.prototype), { constants });
+    get.mockReturnValue(of(['Pdf', 'Video'].map(ValueKey => ({ ValueKey, LabelAr: 'مشترك' }))));
+    constants.refresh('NFD_FIL_TYPE');
+    for (const [name, key, icon] of [['a.PDF', 'Pdf', 'fa-file-pdf'], ['b.mp4', 'Video', 'fa-file-video']]) {
+      page.onFileSelected({ target: { files: [{ name }] } });
+      expect(page.selectedFileType).toBe(key);
+      expect(constants.administrativeLabel('NFD_FIL_TYPE', page.selectedFileType)).toBe('مشترك');
+      expect(page.getMaterialIcon(page.selectedFileType)).toContain(icon);
+    }
   });
 
   it('keeps question-bank filters and edit ordinals stable after renaming historical types', () => {
