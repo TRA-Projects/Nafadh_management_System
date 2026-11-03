@@ -69,7 +69,7 @@
     <div class="stat-card border-amber">
 
       <div class="stat-title">
-        قيد المراجعة
+        {{ getStatusLabel('Pending') }}
       </div>
 
       <div class="stat-value text-amber">
@@ -84,7 +84,7 @@
     <div class="stat-card border-green">
 
       <div class="stat-title">
-        طلبات مقبولة
+        {{ getStatusLabel('Approved') }}
       </div>
 
       <div class="stat-value text-green">
@@ -99,11 +99,11 @@
     <div class="stat-card border-purple">
 
       <div class="stat-title">
-        تحتاج إلى تعديل / إفادة
+        {{ getStatusLabel('NeedsRevision') }}
       </div>
 
       <div class="stat-value text-purple">
-        {{ getCountByStatus('NeedsModification') }}
+        {{ getCountByStatus('NeedsRevision') }}
       </div>
 
     </div>
@@ -167,19 +167,19 @@
         </option>
 
         <option value="Pending">
-          قيد المراجعة
+          {{ getStatusLabel('Pending') }}
         </option>
 
         <option value="Approved">
-          مقبول
+          {{ getStatusLabel('Approved') }}
         </option>
 
         <option value="Rejected">
           مرفوض
         </option>
 
-        <option value="NeedsModification">
-          يحتاج إلى تعديل
+        <option value="NeedsRevision">
+          {{ getStatusLabel('NeedsRevision') }}
         </option>
 
       </select>
@@ -325,7 +325,7 @@
                   *ngFor="let reason of req.violationReasons"
                 >
 
-                  {{ reason }}
+                  {{ warningTypes.label(reason) }}
 
                 </span>
 
@@ -552,7 +552,7 @@
               *ngFor="let reason of selectedRequest()?.violationReasons"
             >
 
-              {{ reason }}
+              {{ warningTypes.label(reason) }}
 
             </span>
 
@@ -639,27 +639,13 @@
           </button>
 
 
-          <!-- Reject -->
-
-          <button
-            type="button"
-            class="btn-decision reject"
-            [disabled]="isProcessing()"
-            (click)="applyDecision('Rejected')"
-          >
-
-            رفض الطلب ❌
-
-          </button>
-
-
           <!-- Modify -->
 
           <button
             type="button"
             class="btn-decision modify"
             [disabled]="isProcessing()"
-            (click)="applyDecision('NeedsModification')"
+            (click)="applyDecision('NeedsRevision')"
           >
 
             طلب تعديل / معلومات إضافية 🔄
