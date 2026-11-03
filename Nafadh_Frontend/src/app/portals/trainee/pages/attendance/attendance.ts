@@ -1,3 +1,4 @@
+import { traineeAttendanceKey } from '../../../../core/models/enums';
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -284,7 +285,7 @@ export class TraineeAttendance implements OnInit {
         date: item.date || item.attendanceDate,
         checkInTime: item.checkInTime || item.checkIn || item.clockIn,
         checkOutTime: item.checkOutTime || item.checkOut || item.clockOut,
-        status: item.status || item.attendanceStatus || 'Present',
+        status: traineeAttendanceKey(item.status ?? item.attendanceStatus) ?? (item.status ?? item.attendanceStatus ?? 'Present'),
         note: item.note || item.notes || item.remarks || '',
       }));
 
