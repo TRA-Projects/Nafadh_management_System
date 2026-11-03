@@ -375,7 +375,7 @@
             <div class="warning-item" [attr.data-level]="w.level">
               <div class="warning-main">
                 <span class="warning-type">{{ warningTypes.label(w.type) }}</span>
-                <span class="warning-level" [attr.data-level]="w.level">{{ warningLevelLabels[w.level] }}</span>
+                <span class="warning-level" [attr.data-level]="w.level">{{ constants.administrativeLabel('NFD_WRN_LVL', w.level) }}</span>
               </div>
               @if (w.evidence) {
                 <p class="warning-evidence">{{ w.evidence }}</p>
