@@ -1,4 +1,4 @@
-import { lookupValueKey } from '../models/administrative-constants';
+import { lookupLabel, lookupValueKey } from '../models/administrative-constants';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -38,9 +38,8 @@ export class NafadhWarningTypesService {
             const v = item as Record<string, unknown>;
             const key = this.key(lookupValueKey(v));
             if (!WARNING_KEYS.includes(key as typeof WARNING_KEYS[number])) continue;
-            const label = String(v['label_ar'] ?? v['labelAr'] ?? v['LabelAr'] ??
-              v['label_en'] ?? v['labelEn'] ?? FALLBACK_LABELS[key]).trim();
-            const active = v['isActive'] ?? v['IsActive'] ?? true;
+            const label = lookupLabel(v);
+            const active = v['isActive'] ?? v['IsActive'] ?? v['is_active'] ?? true;
             if (rows.some(row => row.value === key)) continue;
             rows.push({ value: key, label: label || FALLBACK_LABELS[key],
               isActive: active === true || active === 1 || active === 'true' || active === 'True' });
