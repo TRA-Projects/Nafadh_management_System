@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
 import * as XLSX from 'xlsx';
 
+
 @Component({
   selector: 'app-admin-programs',
   standalone: true,
@@ -15,6 +16,69 @@ import * as XLSX from 'xlsx';
 export class AdminPrograms implements OnInit {
   private fb = inject(FormBuilder);
   private adminApi = inject(AdminApi);
+
+
+systemSettings = signal<Record<string, number>>({
+  PROGRAM_DEFAULT_DURATION_WEEKS: 10,
+  PROGRAM_WEEKLY_HOURS: 40,
+  PROGRAM_MIN_DURATION_WEEKS: 1,
+  BATCH_DEFAULT_CAPACITY: 15,
+  PROJECT_PASS_PERCENT: 60,
+  QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT: 2,
+  QUIZ_CHEATING_RISK_PERCENT: 20
+});
+
+setting(key: string): number {
+  return this.systemSettings()[key];
+}
+
+private loadSystemSettings(): void {
+  this.adminApi.getSystemVariables().subscribe({
+    next: (rows) => {
+      const values = { ...this.systemSettings() };
+
+      for (const row of rows) {
+        const key = row.variableKey ?? row.VariableKey;
+        const value = Number(row.value ?? row.Value);
+
+        if (
+          Object.prototype.hasOwnProperty.call(values, key) &&
+          Number.isInteger(value) &&
+          value >= 0
+        ) {
+          values[key] = value;
+        }
+      }
+
+      this.systemSettings.set(values);
+      this.applySystemSettings();
+    },
+    error: (err) => {
+      console.error('تعذر تحميل إعدادات البرامج:', err);
+      this.showToast('تعذر تحميل إعدادات النظام؛ سيتم استخدام القيم الافتراضية.', 'warning');
+    }
+  });
+}
+
+private applySystemSettings(): void {
+  const minWeeks = Math.max(1, this.setting('PROGRAM_MIN_DURATION_WEEKS'));
+  const defaultWeeks = Math.max(
+    minWeeks,
+    this.setting('PROGRAM_DEFAULT_DURATION_WEEKS')
+  );
+
+  this.programForm.get('durationWeeks')?.setValidators([
+    Validators.required,
+    Validators.min(minWeeks)
+  ]);
+
+  this.programForm.get('durationWeeks')?.setValue(defaultWeeks);
+  this.programForm.get('durationWeeks')?.updateValueAndValidity();
+
+  this.batchForm.get('capacity')?.setValue(
+    Math.max(1, this.setting('BATCH_DEFAULT_CAPACITY'))
+  );
+}
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private notificationPlanId: number | null = null;
@@ -195,7 +259,14 @@ export class AdminPrograms implements OnInit {
     if (f === 'passed') return list.filter(a => a.status === 'Passed');
     if (f === 'failed') return list.filter(a => a.status === 'Failed');
     if (f === 'absent') return list.filter(a => a.status === 'Absent' || a.status === 'NotAttempted' || !a.submittedAt || a.excuseStatus);
-    if (f === 'cheating') return list.filter(a => (a.cheatingRiskPercentage || 0) > 0 || (a.tabSwitchCount || 0) > 0 || (a.cameraDisconnectionsCount || 0) > 0);
+   if (f === 'cheating') {
+  return list.filter(a =>
+    (a.cheatingRiskPercentage || 0) >
+      this.setting('QUIZ_CHEATING_RISK_PERCENT') ||
+    (a.tabSwitchCount || 0) >
+      this.setting('QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT')
+  );
+}
     return list;
   });
 
@@ -232,6 +303,7 @@ export class AdminPrograms implements OnInit {
     this.initBatchForm();
     this.initEditBatchForm();
     this.initProgramForm();
+    this.loadSystemSettings();
     this.loadInitialData();
     this.buildMonthlyCalendarGrid();
   }
@@ -746,10 +818,14 @@ export class AdminPrograms implements OnInit {
     return this.activeQuizAttempts().filter(a => a.status === 'Absent' || a.status === 'NotAttempted' || !a.submittedAt).length;
   }
 
-  getCheatingSuspectsCount(): number {
-    return this.activeQuizAttempts().filter(a => (a.cheatingRiskPercentage || 0) > 20 || (a.tabSwitchCount || 0) > 2).length;
-  }
-
+ getCheatingSuspectsCount(): number {
+  return this.activeQuizAttempts().filter(a =>
+    (a.cheatingRiskPercentage || 0) >
+      this.setting('QUIZ_CHEATING_RISK_PERCENT') ||
+    (a.tabSwitchCount || 0) >
+      this.setting('QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT')
+  ).length;
+}
   // ==========================================================
   // 12. استعراض الأعذار الطبية (للاطلاع فقط للأدمن)
   // ==========================================================
@@ -882,7 +958,7 @@ export class AdminPrograms implements OnInit {
       if (target) {
         target.score = Number(newScore);
         target.reviewerFeedback = feedback || '';
-        target.status = target.score >= 60 ? 'مكتمل ومعتمد' : 'يتطلب تحسينات';
+        target.status = target.score >= this.setting('PROJECT_PASS_PERCENT') ? 'مكتمل ومعتمد' : 'يتطلب تحسينات';
         target.gradedAt = new Date().toISOString();
         this.projectSubmissions.set([...list]);
       }
@@ -897,7 +973,7 @@ export class AdminPrograms implements OnInit {
     if (target) {
       target.score = Number(this.gradingScoreInput);
       target.reviewerFeedback = this.gradingFeedbackInput;
-      target.status = target.score >= 60 ? 'مكتمل ومعتمد' : 'يتطلب تحسينات';
+      target.status = target.score >= this.setting('PROJECT_PASS_PERCENT') ? 'مكتمل ومعتمد' : 'يتطلب تحسينات';
       target.gradedAt = new Date().toISOString();
       this.projectSubmissions.set([...list]);
     }
@@ -1495,7 +1571,7 @@ export class AdminPrograms implements OnInit {
       companyId: [null],
       startDate: ['', [Validators.required]],
       endDate: ['', [Validators.required]],
-      capacity: [15, [Validators.required, Validators.min(1)]],
+      capacity: [this.setting('BATCH_DEFAULT_CAPACITY'), [Validators.required, Validators.min(1)]],
       status: [null, [Validators.required]]
     }, { validators: this.dateRangeValidator });
   }
@@ -1505,7 +1581,13 @@ export class AdminPrograms implements OnInit {
     this.programForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(2)]],
       trackId: [null, [Validators.required]],
-      durationWeeks: [10, [Validators.required, Validators.min(1)]],
+     durationWeeks: [
+  this.setting('PROGRAM_DEFAULT_DURATION_WEEKS'),
+  [
+    Validators.required,
+    Validators.min(Math.max(1, this.setting('PROGRAM_MIN_DURATION_WEEKS')))
+  ]
+],
       description: ['']
     });
   }
@@ -1522,7 +1604,7 @@ export class AdminPrograms implements OnInit {
       companyId: '',
       startDate: '',
       endDate: '',
-      capacity: null
+      capacity: this.setting('BATCH_DEFAULT_CAPACITY')
     });
 
     this.batchFormSubmitted = false;
@@ -1936,7 +2018,7 @@ addManualTrainee(): void {
 
 
   onCreateProgram(): void {
-    this.programForm.reset({ durationWeeks: 10, trackId: null });
+    this.programForm.reset({ durationWeeks: this.setting('PROGRAM_DEFAULT_DURATION_WEEKS'), trackId: null });
     this.programFormSubmitted = false;
     this.programErrorMessage = null;
     this.isProgramModalOpen = true;
@@ -1959,7 +2041,7 @@ addManualTrainee(): void {
       companyId: batch.companyId ?? null,
       startDate: batch.startDate ? batch.startDate.split('T')[0] : '',
       endDate: batch.endDate ? batch.endDate.split('T')[0] : '',
-      capacity: batch.capacity ?? 15,
+     capacity: batch.capacity ?? this.setting('BATCH_DEFAULT_CAPACITY'),
       status: this.getBatchStatusValue(batch.status)
     });
 
@@ -2200,7 +2282,7 @@ addManualTrainee(): void {
     const payload = {
       title: val.title,
       trackId: Number(val.trackId),
-      durationHours: Number(val.durationWeeks || 10) * 40,
+   durationHours: Number(val.durationWeeks || this.setting('PROGRAM_DEFAULT_DURATION_WEEKS')) * this.setting('PROGRAM_WEEKLY_HOURS'),
       description: val.description || '',
       category: 'تقنية المعلومات'
     };

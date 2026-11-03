@@ -45,6 +45,12 @@ export class AdminApi {
   private base = environment.apiBaseUrl;
 
   constructor(private http: HttpClient) {}
+  // جلب إعدادات النظام للأدمن
+getSystemVariables(): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.base}/system-variables`
+  );
+}
 
   // ==========================================================
   // 1. Helper Methods
