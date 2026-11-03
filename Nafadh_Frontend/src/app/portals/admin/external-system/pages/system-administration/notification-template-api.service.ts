@@ -1,4 +1,3 @@
-
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
@@ -26,10 +25,7 @@ export interface NotificationTemplateRequest {
   isActive: boolean;
 }
 
-type ApiEnvelope<T> = T | {
-  data?: T;
-  Data?: T;
-};
+type ApiEnvelope<T> = T | { data?: T; Data?: T };
 
 function unwrap<T>(response: ApiEnvelope<T>): T {
   if (
@@ -47,71 +43,68 @@ function unwrap<T>(response: ApiEnvelope<T>): T {
 }
 
 function normalizeTemplate(
-  raw: Record<string, unknown>
+  raw: Record<string, unknown>,
 ): NotificationTemplateDto {
   return {
     id: Number(raw['id'] ?? raw['Id']),
     code: String(raw['code'] ?? raw['Code'] ?? ''),
     name: String(raw['name'] ?? raw['Name'] ?? ''),
     portalCode: String(
-      raw['portalCode'] ?? raw['PortalCode'] ?? ''
+      raw['portalCode'] ?? raw['PortalCode'] ?? '',
     ),
     type: 'Email',
-    subject: String(
-      raw['subject'] ?? raw['Subject'] ?? ''
-    ),
+    subject: String(raw['subject'] ?? raw['Subject'] ?? ''),
     body: String(raw['body'] ?? raw['Body'] ?? ''),
-    isActive: Boolean(
-      raw['isActive'] ?? raw['IsActive']
-    ),
-    createdAt: (
-      raw['createdAt'] ?? raw['CreatedAt']
-    ) as string | undefined,
-    updatedAt: (
-      raw['updatedAt'] ?? raw['UpdatedAt'] ?? null
-    ) as string | null,
+    isActive: Boolean(raw['isActive'] ?? raw['IsActive']),
+    createdAt: (raw['createdAt'] ?? raw['CreatedAt']) as
+      | string
+      | undefined,
+    updatedAt: (raw['updatedAt'] ?? raw['UpdatedAt'] ?? null) as
+      | string
+      | null,
   };
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable()
 export class NotificationTemplateApiService {
   private readonly http = inject(HttpClient);
 
+  // apiBaseUrlInterceptor adds the Backend origin automatically.
   private readonly baseUrl = '/api/NotificationTemplate';
 
+  // GET: /api/NotificationTemplate
   getAll(): Observable<NotificationTemplateDto[]> {
     return this.http
-      .get<ApiEnvelope<Record<string, unknown>[]>>(
-        this.baseUrl
-      )
+      .get<ApiEnvelope<Record<string, unknown>[]>>(this.baseUrl)
       .pipe(
-        map(response =>
-          (unwrap(response) ?? []).map(normalizeTemplate)
-        )
+        map((response) =>
+          (unwrap(response) ?? []).map(normalizeTemplate),
+        ),
       );
   }
 
+  // GET: /api/NotificationTemplate/{id}
   getById(id: number): Observable<NotificationTemplateDto> {
     return this.http
       .get<ApiEnvelope<Record<string, unknown>>>(
-        `${this.baseUrl}/${id}`
+        `${this.baseUrl}/${id}`,
       )
       .pipe(
-        map(response => normalizeTemplate(unwrap(response)))
+        map((response) => normalizeTemplate(unwrap(response))),
       );
   }
 
+  // POST: /api/NotificationTemplate
   create(
-    request: NotificationTemplateRequest
+    request: NotificationTemplateRequest,
   ): Observable<unknown> {
     return this.http.post(this.baseUrl, request);
   }
 
+  // PUT: /api/NotificationTemplate/{id}
   update(
     id: number,
-    request: NotificationTemplateRequest
+    request: NotificationTemplateRequest,
   ): Observable<unknown> {
     return this.http.put(`${this.baseUrl}/${id}`, request);
   }

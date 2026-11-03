@@ -29,7 +29,6 @@ export class NotificationTemplateEditPageComponent
   private readonly api = inject(NotificationTemplateApiService);
 
   templateId: number | null = null;
-
   templateName = 'قالب إشعار';
 
   isLoading = false;
@@ -51,7 +50,6 @@ export class NotificationTemplateEditPageComponent
         Validators.maxLength(100),
       ],
     ],
-
     name: [
       '',
       [
@@ -59,9 +57,7 @@ export class NotificationTemplateEditPageComponent
         Validators.maxLength(200),
       ],
     ],
-
     portalCode: ['', Validators.required],
-
     subject: [
       '',
       [
@@ -69,9 +65,7 @@ export class NotificationTemplateEditPageComponent
         Validators.maxLength(500),
       ],
     ],
-
     body: ['', Validators.required],
-
     isActive: [true],
   });
 
@@ -79,10 +73,7 @@ export class NotificationTemplateEditPageComponent
     this.isLoading = true;
 
     const idParam = this.route.snapshot.paramMap.get('id');
-
-    this.templateId = idParam
-      ? Number(idParam)
-      : null;
+    this.templateId = idParam ? Number(idParam) : null;
 
     this.api.getAll().subscribe({
       next: (templates) => {
@@ -111,7 +102,6 @@ export class NotificationTemplateEditPageComponent
 
         this.loadTemplate(this.templateId);
       },
-
       error: (error: unknown) => {
         console.error(
           'Failed to load notification template options:',
@@ -130,13 +120,10 @@ export class NotificationTemplateEditPageComponent
     this.api.getById(id).subscribe({
       next: (template) => {
         this.patchForm(template);
-
         this.templateName =
           template.name || 'تعديل قالب إشعار';
-
         this.isLoading = false;
       },
-
       error: (error: unknown) => {
         console.error(
           'Failed to load notification template:',
@@ -151,9 +138,7 @@ export class NotificationTemplateEditPageComponent
     });
   }
 
-  private patchForm(
-    template: NotificationTemplateDto,
-  ): void {
+  private patchForm(template: NotificationTemplateDto): void {
     this.editForm.patchValue({
       code: template.code,
       name: template.name,
@@ -205,10 +190,8 @@ export class NotificationTemplateEditPageComponent
 
     if (!operation) {
       this.isSaving = false;
-
       this.errorMessage =
         'تعذر تحديد عملية الحفظ المطلوبة.';
-
       return;
     }
 
@@ -224,7 +207,6 @@ export class NotificationTemplateEditPageComponent
           '/admin/external-system/notification-templates',
         ]);
       },
-
       error: (error: unknown) => {
         console.error(
           'Failed to save notification template:',
