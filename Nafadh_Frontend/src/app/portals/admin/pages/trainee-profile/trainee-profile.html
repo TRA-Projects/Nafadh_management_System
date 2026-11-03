@@ -125,9 +125,12 @@
           @if (enrollment()?.departmentName) {
             <span class="pill pill-muted">القسم: {{ enrollment()?.departmentName }}</span>
           }
-          <span class="pill pill-status" [class.pill-withdrawn]="withdrawalStatus() === 'Approved'">
+          <span class="pill pill-status" [class.pill-withdrawn]="enrollment()?.completionStatus === 'Dropped'">
             <span class="status-dot"></span>{{ enrollmentStatusLabel() }}
           </span>
+          @if (latestRequestStatus() !== null) {
+            <span class="pill">طلب الانسحاب · {{ constants.administrativeLabel('NFD_WDR_STAT', latestRequestStatus()) }}</span>
+          }
 
         </div>
 
@@ -512,6 +515,9 @@
           <button class="prof-close-btn" (click)="showWithdrawalModal.set(false)">×</button>
         </div>
         <div class="prof-modal-body" style="direction: rtl; text-align: right;">
+          @if (latestRequestStatus() !== null) {
+            <p>حالة طلب الانسحاب · {{ constants.administrativeLabel('NFD_WDR_STAT', latestRequestStatus()) }}</p>
+          }
           <label class="prof-label">سبب الانسحاب (المقدم من المتدرب أو المسجل) *</label>
           <textarea
             rows="2"

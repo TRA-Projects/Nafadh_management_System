@@ -23,6 +23,14 @@ public sealed class ReferenceConstantGroupDto
 
     [JsonPropertyName("IsReadOnly")]
     public bool IsReadOnly { get; set; }
+
+    /// <summary>True for Nafadh enum groups: labels editable, key/activation locked.</summary>
+    [JsonPropertyName("IsLabelsOnly")]
+    public bool IsLabelsOnly { get; set; }
+
+    /// <summary>True when values can be added (never for Nafadh enum groups).</summary>
+    [JsonPropertyName("IsFixedKeys")]
+    public bool IsFixedKeys { get; set; }
 }
 
 public sealed class ReferenceConstantGroupsResponseDto

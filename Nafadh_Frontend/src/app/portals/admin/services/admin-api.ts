@@ -578,6 +578,12 @@ getWarningById(id: number): Observable<any> {
     return this.http.put<any>(`${this.base}/Trainee/${cleanId}/withdrawal-decision`, dto);
   }
 
+  getTraineeWithdrawalRequests(traineeId: number): Observable<Array<{ status: string | number }>> {
+    return this.http.get<Array<{ status: string | number }>>(
+      this.base + '/WithdrawalRequests/trainee/' + this.sanitizeId(traineeId)
+    );
+  }
+
   getWithdrawalRequests(status?: string): Observable<any[]> {
     const params: any = status ? { status } : {};
     return this.http.get<any[]>(`${this.base}/WithdrawalRequests`, { params });

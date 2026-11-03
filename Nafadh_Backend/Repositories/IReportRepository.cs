@@ -14,6 +14,7 @@ namespace Nafadh_Backend.Repositories
         // TODO: define data-access contract methods for this entity
         Task<List<NFD_Report>> GetReportsAsync(NFD_ReportType? type, int? userId);
         Task AddReportAsync(NFD_Report report);
+        Task<string?> GetReportTypeLabelAsync(NFD_ReportType type);
         Task<NFD_Report?> GetReportByIdAsync(int reportId);
 
         // NEW: analytics/aggregation queries — see DTOs/ReportAnalyticsDTOs.cs

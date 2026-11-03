@@ -1,3 +1,5 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { administrativeValue } from '../../../../core/models/administrative-constants';
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -20,7 +22,7 @@ export interface HostCompany {
   contactName: string;
   email: string;
   phone: string;
-  status: any; // 1=Approved, 0=PendingApproval, 2=Rejected, 3=Suspended
+  status: any; // 1=Approved, 0=PendingApproval, 2=Suspended, 3=Rejected
   rejectionReason?: string;
   createdAt?: string;
   logo?: string | null;
@@ -28,6 +30,12 @@ export interface HostCompany {
   branches?: any[];
   programs?: any[];
   departments?: any[];
+}
+
+export function companyCsvCell(value: unknown): string {
+  const text = String(value ?? '');
+  const safe = /^[\t\r\n]|^\s*[=+@\-＝＋＠－]/u.test(text) ? "'" + text : text;
+  return '"' + safe.replace(/"/g, '""') + '"';
 }
 
 function normalizeArabic(text: string): string {
@@ -55,6 +63,7 @@ function convertArabicDigits(str: string): string {
   styleUrls: ['./companies.css']
 })
 export class AdminCompanies implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private api = inject(AdminApi);
   private http = inject(HttpClient);
 
@@ -116,19 +125,19 @@ export class AdminCompanies implements OnInit {
   }
 
   isApproved(status: any): boolean {
-    return status === 1 || status === '1' || status === 'Approved' || status === 'approved';
+    return administrativeValue('NFD_CMP_STAT', status)?.key === 'Approved';
   }
 
   isPending(status: any): boolean {
-    return status === 0 || status === '0' || status === 'PendingApproval' || status === 'pending' || status === 'Pending';
+    return administrativeValue('NFD_CMP_STAT', status)?.key === 'PendingApproval';
   }
 
   isRejected(status: any): boolean {
-    return status === 2 || status === '2' || status === 'Rejected' || status === 'rejected';
+    return administrativeValue('NFD_CMP_STAT', status)?.key === 'Rejected';
   }
 
   isSuspended(status: any): boolean {
-    return status === 3 || status === '3' || status === 'Suspended' || status === 'suspended';
+    return administrativeValue('NFD_CMP_STAT', status)?.key === 'Suspended';
   }
 
   getStatusColor(status: any): string {
@@ -148,11 +157,7 @@ export class AdminCompanies implements OnInit {
   }
 
   statusLabel(status?: any): string {
-    if (this.isApproved(status)) return 'معتمدة ومفعلة';
-    if (this.isPending(status)) return 'قيد المراجعة والاعتماد';
-    if (this.isRejected(status)) return 'مرفوضة';
-    if (this.isSuspended(status)) return 'موقوفة مؤقتاً';
-    return 'غير محدد';
+    return this.constants.administrativeLabel('NFD_CMP_STAT', status);
   }
 
   // =========================================================================
@@ -758,7 +763,8 @@ export class AdminCompanies implements OnInit {
     if (data.length === 0) return;
     let csv = '\uFEFFمعرف الشركة,اسم الشركة,السجل التجاري,القطاع,المحافظة,مسؤول التواصل,الطاقة,الحالة\n';
     data.forEach(c => {
-      csv += `${c.companyId},"${c.companyName}","${c.commercialRegister || ''}","${c.workField}","${c.city || c.address}","${c.contactName}",${c.capacity},"${this.statusLabel(c.status)}"\n`;
+      csv += [c.companyId, c.companyName, c.commercialRegister, c.workField, c.city || c.address,
+        c.contactName, c.capacity, this.statusLabel(c.status)].map(companyCsvCell).join(',') + '\r\n';
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');

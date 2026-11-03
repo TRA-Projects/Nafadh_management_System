@@ -1,3 +1,4 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -55,6 +56,7 @@ export function normalizeCategory(item: any): 'announcement' | 'alert' | 'compan
   styleUrl: './notifications.css',
 })
 export class AdminNotifications implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private readonly api = inject(AdminApi);
   private readonly auth = inject(AuthService);
   private readonly notificationsApi = inject(NotificationService);
@@ -626,14 +628,6 @@ export class AdminNotifications implements OnInit {
     }
   }
 
-  getScopeLabel(scope?: string): string {
-    switch (scope) {
-      case 'companies': return 'الشركات المستضيفة';
-      case 'trainers': return 'المدربين';
-      case 'trainees': return 'المتدربين';
-      default: return 'كافة المستخدمين';
-    }
-  }
 
   trackById(_: number, item: NotificationViewModel): number { return item.notificationId; }
 

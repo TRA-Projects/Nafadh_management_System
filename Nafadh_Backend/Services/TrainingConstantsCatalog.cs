@@ -8,7 +8,10 @@ namespace Nafadh_Backend.Services;
 /// </summary>
 public static class TrainingConstantsCatalog
 {
-    public sealed record Group(string Code, string LabelEn, string LabelAr, bool ReadOnly);
+    /// <param name="ReadOnly">No writes at all (Training/legacy catalogs outside Nafadh stay as before).</param>
+    /// <param name="LabelsOnly">Nafadh enum groups where only the display labels may change.
+    /// Their stored activation flag is preserved, including for inactive historical values.</param>
+    public sealed record Group(string Code, string LabelEn, string LabelAr, bool ReadOnly, bool LabelsOnly = false);
 
     public static readonly IReadOnlyList<Group> Groups = new List<Group>
     {
@@ -49,13 +52,13 @@ public static class TrainingConstantsCatalog
         new("WD_RSN", "Withdrawal reason category", "فئة سبب الانسحاب", false),
         new("BEHV", "Behavior", "السلوك", false),
         new("ATA_RJCT", "Ask-to-apply rejection reason", "سبب رفض طلب التقديم", false),
-        new("NFD_ANN_SCOPE", "Announcement Scope Type", "نطاق الإعلان", true),
+        new("NFD_ANN_SCOPE", "Announcement Scope Type", "نطاق الإعلان", false, true),
         new("NFD_ATT_STAT", "Attendance Status", "حالة الحضور", true),
         new("NFD_BAT_STAT", "Batch Status", "حالة الدفعة", true),
         new("NFD_BDG_COND", "Badge Condition Type", "شرط منح الشارة", true),
-        new("NFD_CMP_STAT", "Company Status", "حالة الشركة", true),
+        new("NFD_CMP_STAT", "Company Status", "حالة الشركة", false, true),
         new("NFD_CNV_TYPE", "Conversation Type", "نوع المحادثة", true),
-        new("NFD_CPA_STAT", "Course Plan Approval Status", "حالة اعتماد خطة الدورة", true),
+        new("NFD_CPA_STAT", "Course Plan Approval Status", "حالة اعتماد خطة الدورة", false, true),
         new("NFD_CPE_STAT", "Course Plan Execution Status", "حالة تنفيذ خطة الدورة", true),
         new("NFD_CPI_TYPE", "Course Plan Item Type", "نوع عنصر خطة الدورة", true),
         new("NFD_CPP_STAT", "Course Plan Progress Status", "حالة تقدم خطة الدورة", true),
@@ -69,7 +72,7 @@ public static class TrainingConstantsCatalog
         new("NFD_FIL_TYPE", "File Type", "نوع الملف", true),
         new("NFD_MOD_STAT", "Module Progress Status", "حالة تقدم الوحدة", true),
         new("NFD_MSG_STAT", "Message Status", "حالة الرسالة", true),
-        new("NFD_PAY_STAT", "Payment Status", "حالة الدفع", true),
+        new("NFD_PAY_STAT", "Payment Status", "حالة الدفع", false, true),
         new("NFD_PJT_ROLE", "Project Member Role", "دور عضو المشروع", true),
         new("NFD_PJT_STAT", "Project Status", "حالة المشروع", true),
         new("NFD_PRG_STAT", "Program Status", "حالة البرنامج", true),
@@ -78,20 +81,20 @@ public static class TrainingConstantsCatalog
         new("NFD_QUE_DIFF", "Question Difficulty", "صعوبة السؤال", false),
         new("NFD_QUE_TYPE", "Quiz Question Type", "نوع سؤال الاختبار", true),
         new("NFD_REM_STAT", "Remediation Status", "حالة المعالجة", true),
-        new("NFD_RPT_TYPE", "Report Type", "نوع التقرير", true),
+        new("NFD_RPT_TYPE", "Report Type", "نوع التقرير", false, true),
         new("NFD_SES_STAT", "Session Status", "حالة الجلسة", true),
         new("NFD_SUB_STAT", "Submission Status", "حالة التسليم", true),
         new("NFD_SUP_STAT", "Supervisor Status", "حالة المشرف", true),
         new("NFD_TAT_STAT", "Trainer Attendance Status", "حالة حضور المدرب", true),
-        new("NFD_TIC_STAT", "Support Ticket Status", "حالة تذكرة الدعم", true),
+        new("NFD_TIC_STAT", "Support Ticket Status", "حالة تذكرة الدعم", false, true),
         new("NFD_TRE_STAT", "Trainee Status", "حالة المتدرب", true),
         new("NFD_TRK_STAT", "Track Status", "حالة المسار", true),
         new("NFD_TRN_STAT", "Trainer Status", "حالة المدرب", true),
         new("NFD_TSK_PRI", "Task Priority", "أولوية المهمة", true),
         new("NFD_TSK_STAT", "Task Status", "حالة المهمة", true),
-        new("NFD_USR_STAT", "User Status", "حالة المستخدم", true),
+        new("NFD_USR_STAT", "User Status", "حالة المستخدم", false, true),
         new("NFD_VER_STAT", "Verification Status", "حالة التحقق", true),
-        new("NFD_WDR_STAT", "Withdrawal Request Status", "حالة طلب الانسحاب", true),
+        new("NFD_WDR_STAT", "Withdrawal Request Status", "حالة طلب الانسحاب", false, true),
         new("NFD_WRN_LVL", "Warning Level", "مستوى الإنذار", true),
         new("NFD_WRN_SCOPE", "Warning Scope", "نطاق الإنذار", true),
         new("NFD_WRN_STAT", "Warning Status", "حالة الإنذار", true),
@@ -102,6 +105,13 @@ public static class TrainingConstantsCatalog
         Groups.ToDictionary(x => x.Code, StringComparer.OrdinalIgnoreCase);
 
     public static bool IsKnown(string code) => ByCode.ContainsKey(code ?? string.Empty);
+
+    /// <summary>Nafadh enum-backed groups: keys are fixed by C# enums, labels are editable.</summary>
+    public static bool IsManagedNafadh(string code) =>
+        (code ?? string.Empty).StartsWith("NFD_", StringComparison.OrdinalIgnoreCase) && IsKnown(code);
+
+    public static bool IsLabelsOnly(string code) =>
+        ByCode.TryGetValue(code ?? string.Empty, out var group) && group.LabelsOnly;
 
     public static bool IsReadOnly(string code) =>
         ByCode.TryGetValue(code ?? string.Empty, out var group) && group.ReadOnly;

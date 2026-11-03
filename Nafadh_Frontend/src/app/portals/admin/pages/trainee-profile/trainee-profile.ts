@@ -1,3 +1,4 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -52,6 +53,7 @@ interface StageCard {
   styleUrls: ['./trainee-profile.css'],
 })
 export class AdminTraineeProfile implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   isLoading = signal<boolean>(true);
   loadError = signal<string | null>(null);
 
@@ -222,16 +224,9 @@ export class AdminTraineeProfile implements OnInit {
     return id ? `#${String(id).padStart(4, '0')}` : '';
   });
 
+  readonly latestRequestStatus = signal<string | number | null>(null);
+
   enrollmentStatusLabel = computed(() => {
-    if (this.withdrawalStatus() === 'Approved' || this.enrollment()?.completionStatus === 'Dropped') {
-      return 'منسحب (معتمد من الهيئة - الحساب موقوف)';
-    }
-    if (this.withdrawalStatus() === 'Pending') {
-      return 'طلب انسحاب قيد المراجعة';
-    }
-    if (this.withdrawalStatus() === 'Rejected') {
-      return 'قيد التدريب (تم رفض الانسحاب)';
-    }
     const s = this.enrollment()?.completionStatus as EnrollmentCompletionStatus | undefined;
     return s ? (this.enrollmentStatusLabels[s] ?? s) : 'قيد التدريب';
   });
@@ -271,10 +266,14 @@ export class AdminTraineeProfile implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_WDR_STAT');
     this.warningTypes.refresh();
     this.evaluationTypes.refresh();
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
+      this.api.getTraineeWithdrawalRequests(id).pipe(catchError(() => of([]))).subscribe(requests => {
+        this.latestRequestStatus.set(requests[0]?.status ?? null);
+      });
       this.loadProfileData(id);
     } else {
       this.isLoading.set(false);

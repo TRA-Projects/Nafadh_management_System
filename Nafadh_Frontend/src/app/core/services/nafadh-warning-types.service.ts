@@ -1,3 +1,4 @@
+import { lookupValueKey } from '../models/administrative-constants';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -35,8 +36,7 @@ export class NafadhWarningTypesService {
           for (const item of source) {
             if (!item || typeof item !== 'object') continue;
             const v = item as Record<string, unknown>;
-            const rawKey = String(v['id'] ?? v['Id'] ?? v['valueKey'] ?? v['ValueKey'] ?? '').trim();
-            const key = this.key(rawKey);
+            const key = this.key(lookupValueKey(v));
             if (!WARNING_KEYS.includes(key as typeof WARNING_KEYS[number])) continue;
             const label = String(v['label_ar'] ?? v['labelAr'] ?? v['LabelAr'] ??
               v['label_en'] ?? v['labelEn'] ?? FALLBACK_LABELS[key]).trim();

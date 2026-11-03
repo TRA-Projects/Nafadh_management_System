@@ -1,4 +1,5 @@
-import {
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { inject,
   Component,
   OnDestroy,
   OnInit,
@@ -69,6 +70,7 @@ type TrainerReportHistoryItem = {
 })
 export class TrainerReports
   implements OnInit, OnDestroy {
+  readonly constants = inject(NafadhConstantsService);
 
   // =====================================================
   // CURRENT TRAINER / USER
@@ -197,6 +199,7 @@ selectedBatchId =
   // =====================================================
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_RPT_TYPE');
 
     this.loadCurrentTrainer();
 
@@ -1198,26 +1201,8 @@ resetReportFilters(): void {
 // REPORT HISTORY TITLE
 // =====================================================
 
-getHistoryReportTitle(
-  type: string
-): string {
-
-  switch (type) {
-
-    case 'Attendance':
-      return 'تقرير الحضور والغياب';
-
-    case 'Performance':
-      return 'تقرير أداء الدفعات والمهام';
-
-    case 'Custom':
-      return 'التقرير الشامل للأداء التدريبي';
-
-    default:
-      return 'تقرير';
-
-  }
-
+getHistoryReportTitle(type: string): string {
+  return this.constants.administrativeLabel('NFD_RPT_TYPE', type);
 }
 
 
@@ -1226,23 +1211,7 @@ getHistoryReportTitle(
 // =====================================================
 
 getReportTitle(): string {
-
-  switch (
-    this.previewReportType()
-  ) {
-
-    case 'Attendance':
-      return 'تقرير الحضور والغياب';
-
-    case 'Performance':
-      return 'تقرير أداء الدفعات والمهام';
-
-    case 'Custom':
-      return 'التقرير الشامل للأداء التدريبي';
-
-    default:
-      return 'معاينة التقرير';
-
-  }
-
-}}
+  const type = this.previewReportType();
+  return type ? this.getHistoryReportTitle(type) : 'معاينة التقرير';
+}
+}

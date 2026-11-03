@@ -77,6 +77,7 @@
 
             <small class="nfd-muted">
               {{ c.startedByName }}
+              · {{ constants.administrativeLabel('NFD_TIC_STAT', c.status) }}
             </small>
 
             <p
@@ -114,6 +115,9 @@
 
               <small class="nfd-muted" style="display:block;margin-top:2px">
                 {{ conv.category }}
+                @if (conv.conversationId) {
+                  · {{ constants.administrativeLabel('NFD_TIC_STAT', conv.status) }}
+                }
               </small>
             </div>
 
@@ -303,7 +307,7 @@
             style="background:#f0fdf4;padding:18px;border-radius:12px">
 
             <p class="nfd-muted">
-              المجموعات المفتوحة
+              المجموعات · {{ constants.administrativeLabel('NFD_TIC_STAT', 'Open') }}
             </p>
 
             <h2 style="color:#166534">
@@ -393,7 +397,7 @@
 
                 <td>
                   <span class="nfd-badge">
-                    {{ group.status === 'Open' ? 'مفتوح' : group.status }}
+                    {{ constants.administrativeLabel('NFD_TIC_STAT', group.status) }}
                   </span>
                 </td>
 
@@ -470,6 +474,7 @@
               {{ group.membersCount }} أعضاء
               • {{ group.batchName }}
               • {{ group.trainerName }}
+              • {{ constants.administrativeLabel('NFD_TIC_STAT', group.status) }}
             </p>
           </div>
 

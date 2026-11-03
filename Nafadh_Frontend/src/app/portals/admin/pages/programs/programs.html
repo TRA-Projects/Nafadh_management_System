@@ -136,7 +136,7 @@
       </div>
       <div class="org-item-box">
         <span class="org-label"><i class="fa-solid fa-file-shield"></i> حالة خطة التدريب:</span>
-        <span class="org-value">{{ getBatchPlanStatus(selectedBatch) }}</span>
+        <span class="org-value">{{ batchPlanLabel(getBatchPlanStatus(selectedBatch)) }}</span>
       </div>
       <div class="org-item-box">
         <span class="org-label"><i class="fa-regular fa-calendar"></i> تاريخ البداية:</span>
@@ -541,9 +541,9 @@
           <select [value]="planFilter()" (change)="planFilter.set($any($event.target).value); currentPage.set(1)"
             class="filter-select-ctrl filter-plan-select">
             <option value="الكل">كل الحالات</option>
-            <option value="بانتظار الاعتماد">بانتظار الاعتماد ⏳</option>
-            <option value="معتمدة">معتمدة رسمياً ✔️</option>
-            <option value="مرفوضة">مرفوضة / تتطلب تعديل ⚠️</option>
+            @for (option of planFilterOptions(); track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
             <option value="لم تُرفع بعد">لم تُرفع بعد</option>
           </select>
           <i class="fa-solid fa-chevron-down filter-icon-left select-chevron"></i>
@@ -614,7 +614,7 @@
                 'plan-rejected': getBatchPlanStatus(batch) === 'مرفوضة',
                 'plan-empty': getBatchPlanStatus(batch) === 'لم تُرفع بعد'
               }">
-                {{ getBatchPlanStatus(batch) }}
+                {{ batchPlanLabel(getBatchPlanStatus(batch)) }}
               </span>
             </td>
 
@@ -700,9 +700,7 @@
           البرنامج: <strong>{{ getProgramName(selectedPlanBatch()) }}</strong></p>
         <p class="plan-sub" *ngIf="selectedPlan() as plan">
           رقم الخطة: <strong>{{ plan.planId }}</strong> ·
-          حالة الخطة: <strong>{{ plan.approvalStatus === 1 ? 'بانتظار الاعتماد' :
-            plan.approvalStatus === 2 ? 'معتمدة' :
-            plan.approvalStatus === 3 ? 'مرفوضة' : 'مسودة' }}</strong>
+          حالة الخطة: <strong>{{ constants.administrativeLabel('NFD_CPA_STAT', plan.approvalStatus ?? plan.ApprovalStatus) }}</strong>
         </p>
       </div>
       <button type="button" (click)="closePlanModal()" class="modal-close-btn">&times;</button>

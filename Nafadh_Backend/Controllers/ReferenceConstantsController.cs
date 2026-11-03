@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
 using Nafadh_Backend.DTOs;
 
@@ -17,11 +19,13 @@ namespace Nafadh_Backend.Controllers;
 [Authorize(Roles = "Admin,SuperAdmin")]
 public sealed class ReferenceConstantsController : ControllerBase
 {
+    private readonly Nafadhcontext _db;
     private readonly ITrainingConstantsService _service;
     private readonly ILogger<ReferenceConstantsController> _logger;
 
-    public ReferenceConstantsController(ITrainingConstantsService service, ILogger<ReferenceConstantsController> logger)
+    public ReferenceConstantsController(Nafadhcontext db, ITrainingConstantsService service, ILogger<ReferenceConstantsController> logger)
     {
+        _db = db;
         _service = service;
         _logger = logger;
     }
@@ -38,7 +42,9 @@ public sealed class ReferenceConstantsController : ControllerBase
                 LabelEn = group.LabelEn,
                 LabelAr = group.LabelAr,
                 IsActive = true,
-                IsReadOnly = group.ReadOnly
+                IsReadOnly = group.ReadOnly,
+                IsLabelsOnly = group.LabelsOnly,
+                IsFixedKeys = TrainingConstantsCatalog.IsManagedNafadh(group.Code)
             }).ToList();
 
         var json = JsonSerializer.Serialize(
@@ -58,10 +64,10 @@ public sealed class ReferenceConstantsController : ControllerBase
     public Task<IActionResult> SearchValues(string code, CancellationToken cancellationToken) =>
         Forward(code, "search", null, HttpMethod.Get, cancellationToken);
 
+    // Every Nafadh enum-backed group has fixed keys (backend business logic switches on them),
+    // so new values can never be added through this gateway.
     private static bool IsRestrictedNafadhGroup(string code) =>
-        string.Equals(code, "NFD_QUE_DIFF", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(code, "NFD_EVL_TYPE", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(code, "NFD_WRN_TYPE", StringComparison.OrdinalIgnoreCase);
+        TrainingConstantsCatalog.IsManagedNafadh(code) && !TrainingConstantsCatalog.IsReadOnly(code);
 
     [HttpPost("values/{code}/ensure")]
     public Task<IActionResult> EnsureValue(string code, [FromBody] JsonElement payload, CancellationToken cancellationToken) =>
@@ -80,8 +86,87 @@ public sealed class ReferenceConstantsController : ControllerBase
             : Forward(code, null, payload, HttpMethod.Post, cancellationToken);
 
     [HttpPut("values/{code}/{id}")]
-    public Task<IActionResult> UpdateValue(string code, string id, [FromBody] JsonElement payload, CancellationToken cancellationToken) =>
-        Forward(code, id, payload, HttpMethod.Put, cancellationToken);
+    public Task<IActionResult> UpdateValue(string code, string id, [FromBody] JsonElement payload, CancellationToken cancellationToken)
+    {
+        if (!TrainingConstantsCatalog.IsManagedNafadh(code) || TrainingConstantsCatalog.IsReadOnly(code))
+            return Forward(code, id, payload, HttpMethod.Put, cancellationToken);
+
+        // Nafadh enum groups: only the two labels (and, where allowed, IsActive) may change.
+        // Code, ValueKey, parent/sub-reason fields are dropped so the enum identity can never drift.
+        if (payload.ValueKind != JsonValueKind.Object)
+            return Task.FromResult<IActionResult>(BadRequest(new { Code = "InvalidBody" }));
+
+        string? Read(string name) =>
+            payload.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()?.Trim() : null;
+
+        var en = Read("label_en");
+        var ar = Read("label_ar");
+        if (string.IsNullOrWhiteSpace(en) || string.IsNullOrWhiteSpace(ar))
+            return Task.FromResult<IActionResult>(BadRequest(new { Code = "LabelsRequired", Message = "Both Arabic and English labels are required." }));
+        if (en.Length > 200 || ar.Length > 200)
+            return Task.FromResult<IActionResult>(BadRequest(new { Code = "LabelTooLong", Message = "Label is too long." }));
+
+        var group = code.ToUpperInvariant();
+        Type? enumType = group switch
+        {
+            "NFD_TIC_STAT" => typeof(NFD_SupportTicketStatus),
+            "NFD_WDR_STAT" => typeof(NFD_WithdrawalRequestStatus),
+            "NFD_RPT_TYPE" => typeof(NFD_ReportType),
+            "NFD_PAY_STAT" => typeof(NFD_PaymentStatus),
+            "NFD_ANN_SCOPE" => typeof(NFD_AnnouncementScopeType),
+            "NFD_CMP_STAT" => typeof(NFD_CompanyStatus),
+            "NFD_CPA_STAT" => typeof(NFD_CoursePlanApprovalStatus),
+            "NFD_USR_STAT" => typeof(NFD_UserStatus),
+            "NFD_QUE_DIFF" => typeof(NFD_QuestionDifficulty),
+            "NFD_EVL_TYPE" => typeof(NFD_EvaluationType),
+            "NFD_WRN_TYPE" => typeof(NFD_WarningType),
+            _ => null
+        };
+        if (enumType == null)
+            return Task.FromResult<IActionResult>(StatusCode(StatusCodes.Status403Forbidden, new { Code = "ReadOnlyGroup" }));
+
+        if (!Enum.IsDefined(enumType, id))
+            return Task.FromResult<IActionResult>(BadRequest(new { Code = "InvalidValueKey" }));
+        bool? requestedActive = null;
+        foreach (var field in payload.EnumerateObject())
+        {
+            if (field.Name.Replace("_", "").Equals("ValueKey", StringComparison.OrdinalIgnoreCase)
+                && (field.Value.ValueKind != JsonValueKind.String || field.Value.GetString() != id))
+                return Task.FromResult<IActionResult>(BadRequest(new { Code = "InvalidValueKey" }));
+            if (!field.Name.Replace("_", "").Equals("IsActive", StringComparison.OrdinalIgnoreCase)) continue;
+            if (TrainingConstantsCatalog.IsLabelsOnly(group))
+                return Task.FromResult<IActionResult>(BadRequest(new { Code = "ActivationLocked" }));
+            if (requestedActive.HasValue || field.Value.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+                return Task.FromResult<IActionResult>(BadRequest(new { Code = "InvalidActivation" }));
+            requestedActive = field.Value.GetBoolean();
+        }
+        if (!requestedActive.HasValue)
+            return UpdateLabelsOnly(group, id, ar, en, cancellationToken);
+
+        var update = JsonSerializer.SerializeToElement(new { label_en = en, label_ar = ar, IsActive = requestedActive.Value });
+        return Forward(group, id, update, HttpMethod.Put, cancellationToken);
+    }
+
+    private async Task<IActionResult> UpdateLabelsOnly(string group, string id, string ar, string en, CancellationToken ct)
+    {
+        // Update by stable key, and return the persisted activation flag in the same transaction.
+        await using var transaction = await _db.Database.BeginTransactionAsync(ct);
+        var flags = await _db.Database.SqlQuery<bool>($@"
+            DECLARE @updated TABLE (Active bit);
+            UPDATE v SET LabelAr = {ar}, LabelEn = {en}, UpdatedAt = SYSUTCDATETIME()
+            OUTPUT INSERTED.IsActive INTO @updated
+            FROM dbo.SystemConfigValues v
+            JOIN dbo.SystemConfigGroups g ON g.Id = v.ConfigGroupId
+            WHERE g.Code = {group} AND v.ValueKey = {id};
+            SELECT Active AS Value FROM @updated;").ToListAsync(ct);
+        if (flags.Count == 0) return NotFound(new { Code = "UnknownValue" });
+        if (flags.Count != 1) return Conflict(new { Code = "DuplicateValueKey" });
+        await transaction.CommitAsync(ct);
+        return Ok(new { data = new Dictionary<string, object>
+        {
+            ["id"] = id, ["label_ar"] = ar, ["label_en"] = en, ["IsActive"] = flags[0]
+        } });
+    }
 
     private async Task<IActionResult> Forward(
         string code,

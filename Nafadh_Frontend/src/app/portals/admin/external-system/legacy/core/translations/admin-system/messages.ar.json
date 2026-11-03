@@ -196,6 +196,8 @@
     "jobseeker.admin.notificationTransactions.resending": "جارٍ إعادة الإرسال…",
     "jobseeker.admin.notificationTransactions.resendSuccess": "تمت إعادة إرسال الإشعار.",
     "jobseeker.admin.notificationTransactions.failureDetails": "تفاصيل الفشل",
-    "jobseeker.admin.constants.managementReferenceNote": "هذه القيم مرجعية وتُقرأ من قاعدة تدريب نفاذ؛ لا يمكن تغيير مفاتيح حالات سير العمل من شاشة الثوابت."
+    "jobseeker.admin.constants.labelsOnlyNote": "يمكنك تعديل الاسم العربي والاسم الإنجليزي للقيم الموجودة فقط. يبقى المفتاح وحالة التفعيل كما هما.",
+    "jobseeker.admin.constants.fixedKeysNote": "يمكنك تعديل الاسم العربي والاسم الإنجليزي للقيم الموجودة. تتغير حالة التفعيل فقط إذا فعّلت القيمة أو عطّلتها صراحةً.",
+    "jobseeker.admin.constants.managementReferenceNote": "هذه المجموعة للقراءة فقط. يمكنك الاطّلاع على قيمها."
   }
 }

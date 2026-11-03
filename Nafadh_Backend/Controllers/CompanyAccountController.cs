@@ -285,6 +285,14 @@ namespace Nafadh_Backend.Controllers
                 // QuestPDF
                 // =====================================================
 
+                var statusLabels = await _context.Database.SqlQuery<AccountStatusLabel>($@"
+                    SELECT g.Code, COALESCE(NULLIF(v.LabelAr, ''), NULLIF(v.LabelEn, ''), v.ValueKey) AS Label
+                    FROM dbo.SystemConfigValues v
+                    JOIN dbo.SystemConfigGroups g ON g.Id = v.ConfigGroupId
+                    WHERE (g.Code = 'NFD_USR_STAT' AND v.ValueKey = {account.UserStatus})
+                       OR (g.Code = 'NFD_CMP_STAT' AND v.ValueKey = {account.CompanyStatus})")
+                    .ToListAsync(HttpContext.RequestAborted);
+
                 QuestPDF.Settings.UseSystemFonts = true;
 
                 var document = Document.Create(container =>
@@ -542,7 +550,7 @@ namespace Nafadh_Backend.Controllers
                                         AddStatusCard(
                                             row,
                                             "حالة الحساب",
-                                            account.UserStatus,
+                                            statusLabels.Find(row => row.Code == "NFD_USR_STAT")?.Label ?? account.UserStatus,
                                             GetStatusColor(account.UserStatus)
                                         );
 
@@ -556,7 +564,7 @@ namespace Nafadh_Backend.Controllers
                                         AddStatusCard(
                                             row,
                                             "حالة الشركة",
-                                            account.CompanyStatus,
+                                            statusLabels.Find(row => row.Code == "NFD_CMP_STAT")?.Label ?? account.CompanyStatus,
                                             GetStatusColor(account.CompanyStatus)
                                         );
                                     });
@@ -957,6 +965,8 @@ namespace Nafadh_Backend.Controllers
         // Helper: Status Color
         // =========================================================
 
+        private sealed record AccountStatusLabel(string Code, string Label);
+
         private static string GetStatusColor(string? status)
         {
             if (string.IsNullOrWhiteSpace(status))
@@ -964,7 +974,7 @@ namespace Nafadh_Backend.Controllers
 
             var value = status.Trim().ToLowerInvariant();
 
-            if (value.Contains("active") ||
+            if (value == "active" ||
                 value.Contains("approved") ||
                 value.Contains("مفعل") ||
                 value.Contains("نشط") ||

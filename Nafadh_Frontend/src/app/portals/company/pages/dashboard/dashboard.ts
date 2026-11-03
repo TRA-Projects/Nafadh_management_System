@@ -1,3 +1,4 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import {
   Component,
   OnInit,
@@ -36,6 +37,7 @@ import {
   styleUrls: ['./dashboard.scss'],
 })
 export class CompanyDashboard implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private readonly api = inject(CompanyApi);
   private readonly http = inject(HttpClient);
   readonly warningTypes = inject(NafadhWarningTypesService);

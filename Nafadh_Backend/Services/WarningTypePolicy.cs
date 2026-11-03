@@ -43,7 +43,7 @@ public static class WarningTypePolicy
         var key = type.ToString();
         foreach (var item in EnumerateItems(document.RootElement))
         {
-            var valueKey = ReadString(item, "id") ?? ReadString(item, "valueKey");
+            var valueKey = TrainingConstantsService.ReadValueKey(item);
             if (!string.Equals(valueKey, key, StringComparison.OrdinalIgnoreCase))
                 continue;
 
@@ -71,7 +71,7 @@ public static class WarningTypePolicy
             yield break;
         }
         if (root.ValueKind != JsonValueKind.Object) yield break;
-        if (ReadString(root, "id") is not null || ReadString(root, "valueKey") is not null)
+        if (TrainingConstantsService.ReadValueKey(root) is not null)
         {
             yield return root;
             yield break;

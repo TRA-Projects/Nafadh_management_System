@@ -1,3 +1,4 @@
+import { constantEditKey } from '../../../../core/models/administrative-constants';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -97,8 +98,12 @@ export class QuestionBank implements OnInit {
         this.api.getQuestionDifficultyConstants().subscribe({
             next: response => {
                 const mapped = (response.Data?.rows ?? [])
-                    .filter(row => row.IsActive && Object.prototype.hasOwnProperty.call(valueKeys, row.id))
-                    .map(row => ({ value: valueKeys[row.id], label: row.label_ar || row.label_en || row.id }));
+                    .flatMap(row => {
+                        const key = constantEditKey('NFD_QUE_DIFF', row);
+                        return row.IsActive && key
+                            ? [{ value: valueKeys[key], label: row.label_ar || row.label_en || key }]
+                            : [];
+                    });
                 this.difficultyOptions.set(mapped);
                 this.difficultyOptionsError.set(mapped.length === 0);
             },

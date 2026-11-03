@@ -1,9 +1,18 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
 import * as XLSX from 'xlsx';
+
+// These are existing filter values, also used for counts and badge styles.
+const approvalKeyByBatchStatus = new Map([
+  ['بانتظار الاعتماد', 'PendingApproval'],
+  ['معتمدة', 'Approved'],
+  ['مرفوضة', 'Rejected'],
+  ['مسودة', 'Draft'],
+]);
 
 @Component({
   selector: 'app-admin-programs',
@@ -13,6 +22,7 @@ import * as XLSX from 'xlsx';
   styleUrls: ['./programs.css']
 })
 export class AdminPrograms implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private fb = inject(FormBuilder);
   private adminApi = inject(AdminApi);
   private router = inject(Router);
@@ -69,6 +79,9 @@ export class AdminPrograms implements OnInit {
 
   statusFilter = signal<string>('الكل');
   planFilter = signal<string>('الكل');
+  readonly planFilterOptions = computed(() =>
+    ['بانتظار الاعتماد', 'معتمدة', 'مرفوضة'].map(value => ({ value, label: this.batchPlanLabel(value) }))
+  );
   batchesError = signal<string | null>(null);
 
   currentPage = signal<number>(1);
@@ -1312,6 +1325,11 @@ export class AdminPrograms implements OnInit {
     return s === 'الربط يحتاج مراجعة' ? s : 'لم تُرفع بعد';
   }
 
+  batchPlanLabel(status: string): string {
+    const key = approvalKeyByBatchStatus.get(status);
+    return key ? this.constants.administrativeLabel('NFD_CPA_STAT', key, status) : status;
+  }
+
   onViewPlan(batch: any): void {
     if (!batch) return;
 
@@ -2466,6 +2484,11 @@ addManualTrainee(): void {
     const data = this.filteredBatches();
     if (!data.length) return;
     const headers = ['الدفعة', 'البرنامج', 'الشركة', 'البداية', 'النهاية', 'المسجلين', 'السعة', 'حالة الدفعة', 'حالة الخطة'];
+    const planCell = (batch: any) => {
+      const label = this.batchPlanLabel(this.getBatchPlanStatus(batch));
+      const safe = /^[\t\r\n]|^\s*[=+@\-＝＋＠－]/u.test(label) ? "'" + label : label;
+      return '"' + safe.replace(/"/g, '""') + '"';
+    };
     const rows = data.map(b => [
       `"${b.batchName}"`,
       `"${this.getProgramName(b)}"`,
@@ -2475,11 +2498,11 @@ addManualTrainee(): void {
       b.totalTraineesCount || 0,
       b.capacity || 0,
       `"${this.getStatusLabel(b.status)}"`,
-      `"${this.getBatchPlanStatus(b)}"`
+      planCell(b)
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const link = document.createElement('a');
-    link.href = encodeURI(csvContent);
+    link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
     link.download = `batches_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
   }

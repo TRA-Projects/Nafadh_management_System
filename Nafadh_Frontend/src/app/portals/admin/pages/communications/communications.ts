@@ -1,3 +1,4 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, signal, inject, computed} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +15,7 @@ import { ConversationDetailDto, ConversationListItemDto, WarningDto, AdminBatchG
   styleUrl: './communications.css'
 })
 export class AdminCommunications implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private api = inject(AdminApi);
   readonly warningTypes = inject(NafadhWarningTypesService);
   private route = inject(ActivatedRoute);
@@ -62,6 +64,7 @@ totalMembers = computed(() =>
   replyText = '';
   
   ngOnInit() {
+    this.constants.ensure('NFD_TIC_STAT');
     this.warningTypes.refresh();
     // 1. جلب البيانات العادية
     this.api.getConversations('CompanyThread').subscribe((d) => this.companyThreads.set(d || []));

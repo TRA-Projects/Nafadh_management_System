@@ -1,3 +1,4 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -83,6 +84,7 @@ interface ReadinessCheck {
   styleUrl: './tasks.scss',
 })
 export class CompanyPlanWorkspace implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private readonly api = inject(CompanyApi);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
@@ -138,7 +140,7 @@ export class CompanyPlanWorkspace implements OnInit {
       if (p.executionStatus === 'Completed') current = 4;
     }
 
-    const labels = ['مسودة', 'اعتماد الهيئة', 'معتمدة', 'قيد التنفيذ', 'مكتمل'];
+    const labels = [this.approvalLabel(p.approvalStatus === 'Rejected' ? 'Rejected' : 'Draft'), this.approvalLabel('PendingApproval'), this.approvalLabel('Approved'), 'قيد التنفيذ', 'مكتمل'];
     return labels.map((label, i) => ({
       label,
       state: i < current ? 'done' : i === current ? 'current' : 'todo',
@@ -666,7 +668,7 @@ export class CompanyPlanWorkspace implements OnInit {
   // Presentation helpers
   // ============================================================
 
-  approvalLabel = (s: keyof typeof APPROVAL_LABELS) => APPROVAL_LABELS[s];
+  approvalLabel = (s: keyof typeof APPROVAL_LABELS) => this.constants.administrativeLabel('NFD_CPA_STAT', s);
   executionLabel = (s: keyof typeof EXECUTION_LABELS) => EXECUTION_LABELS[s];
   progressLabel = (s: PlanProgressStatus) => PROGRESS_LABELS[s];
   priorityLabel = (s: PlanPriority) => PRIORITY_LABELS[s];

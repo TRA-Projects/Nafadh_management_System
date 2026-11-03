@@ -39,4 +39,24 @@ public sealed class NafadhLookupsController : ControllerBase
         catch (HttpRequestException) { return StatusCode(502, new { message = "Constants endpoint unavailable" }); }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested) { return StatusCode(504); }
     }
+
+    /// <summary>
+    /// Generic read-only lookup for any Nafadh enum-backed group (e.g. NFD_TSK_PRI).
+    /// Includes inactive values so historical records keep their current labels; the
+    /// consumer uses IsActive to decide which options are offered for new records.
+    /// </summary>
+    [HttpGet("groups/{code}")]
+    public async Task<IActionResult> Group(string code, CancellationToken ct)
+    {
+        if (!TrainingConstantsCatalog.IsManagedNafadh(code))
+            return NotFound(new { message = "Unknown Nafadh constants group." });
+        try
+        {
+            var result = await _constants.ForwardAsync(code.ToUpperInvariant(), null, HttpMethod.Get, "?includeInactive=true", null, ct);
+            return new ContentResult { StatusCode = result.Status, ContentType = result.ContentType, Content = result.Body };
+        }
+        catch (InvalidOperationException) { return StatusCode(503, new { message = "Constants endpoint not configured" }); }
+        catch (HttpRequestException) { return StatusCode(502, new { message = "Constants endpoint unavailable" }); }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested) { return StatusCode(504); }
+    }
 }

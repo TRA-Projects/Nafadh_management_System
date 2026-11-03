@@ -47,7 +47,7 @@ public static class EvaluationTypePolicy
             using var document = JsonDocument.Parse(upstream.Body);
             foreach (var row in Rows(document.RootElement))
             {
-                var key = GetString(row, "id") ?? GetString(row, "valueKey");
+                var key = TrainingConstantsService.ReadValueKey(row);
                 if (!string.Equals(key, type.ToString(), StringComparison.OrdinalIgnoreCase))
                     continue;
                 var active = GetActive(row);
@@ -76,7 +76,7 @@ public static class EvaluationTypePolicy
             yield break;
         }
         if (root.ValueKind != JsonValueKind.Object) yield break;
-        if (GetString(root, "id") is not null || GetString(root, "valueKey") is not null)
+        if (TrainingConstantsService.ReadValueKey(root) is not null)
         {
             yield return root;
             yield break;
@@ -87,9 +87,6 @@ public static class EvaluationTypePolicy
                 foreach (var nested in Rows(property.Value, depth + 1))
                     yield return nested;
     }
-
-    private static string? GetString(JsonElement row, string name) =>
-        Get(row, name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
     private static bool? GetActive(JsonElement row)
     {

@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 
 namespace Nafadh_Backend.Services;
 
@@ -12,6 +13,27 @@ public sealed class TrainingConstantsService : ITrainingConstantsService
     {
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
+    }
+
+    internal static string? ReadValueKey(JsonElement row)
+    {
+        string? legacyId = null;
+        string? explicitKey = null;
+        foreach (var property in row.EnumerateObject())
+        {
+            if (property.Name.Replace("_", "").Equals("ValueKey", StringComparison.OrdinalIgnoreCase))
+            {
+                if (property.Value.ValueKind != JsonValueKind.String) return null;
+                var key = property.Value.GetString()?.Trim();
+                if (string.IsNullOrEmpty(key) || (explicitKey != null &&
+                    !string.Equals(key, explicitKey, StringComparison.OrdinalIgnoreCase))) return null;
+                explicitKey = key;
+            }
+            else if (property.Name.Equals("id", StringComparison.OrdinalIgnoreCase) &&
+                property.Value.ValueKind == JsonValueKind.String)
+                legacyId = property.Value.GetString()?.Trim();
+        }
+        return explicitKey ?? legacyId;
     }
 
     public async Task<(int Status, string ContentType, string Body)> ForwardAsync(

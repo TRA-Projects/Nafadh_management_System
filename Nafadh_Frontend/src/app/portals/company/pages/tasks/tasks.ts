@@ -1,10 +1,10 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {
-  APPROVAL_LABELS,
   CoursePlanSummaryDto,
   CoursePlansCountsDto,
   EXECUTION_LABELS,
@@ -45,6 +45,7 @@ interface PlanForm {
   styleUrl: './tasks.scss',
 })
 export class CompanyTasks implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private readonly api = inject(CompanyApi);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -568,7 +569,7 @@ export class CompanyTasks implements OnInit {
   approvalLabel(
     status: PlanApprovalStatus
   ): string {
-    return APPROVAL_LABELS[status];
+    return this.constants.administrativeLabel('NFD_CPA_STAT', status);
   }
 
   /** Badge text for the execution phase; only relevant after approval. */

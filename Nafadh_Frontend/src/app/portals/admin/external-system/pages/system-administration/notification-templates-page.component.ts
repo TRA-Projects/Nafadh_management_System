@@ -1,3 +1,4 @@
+import { NafadhConstantsService } from '../../../../../core/services/nafadh-constants.service';
 
 import {
   Component,
@@ -102,6 +103,7 @@ interface AnnouncementViewModel {
   styleUrl: './notification-templates-page.component.css',
 })
 export class NotificationTemplatesPageComponent {
+  readonly constants = inject(NafadhConstantsService);
   private readonly api = inject(AdminSystemApiService);
   private readonly announcementApi = inject(AnnouncementApiService);
   private readonly authService = inject(AuthService);
@@ -560,16 +562,7 @@ export class NotificationTemplatesPageComponent {
   }
 
   getScopeLabel(scopeType: ScopeName | null): string {
-    switch (scopeType) {
-      case ANNOUNCEMENT_SCOPE.Platform:
-        return 'المنصة';
-      case ANNOUNCEMENT_SCOPE.Company:
-        return 'الشركة';
-      case ANNOUNCEMENT_SCOPE.Batch:
-        return 'الدفعة';
-      default:
-        return 'غير محدد';
-    }
+    return this.constants.administrativeLabel('NFD_ANN_SCOPE', scopeType);
   }
 
   // Opens the form in Add mode and resets its values.

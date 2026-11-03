@@ -619,7 +619,7 @@
                     track option.value
                   ) {
                     <option [ngValue]="option.value">
-                      {{ option.label }}
+                      {{ getScopeLabel(option.value) }}
                     </option>
                   }
                 </select>

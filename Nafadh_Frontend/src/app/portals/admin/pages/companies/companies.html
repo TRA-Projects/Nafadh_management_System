@@ -50,7 +50,7 @@
         <div class="stat-icon-wrap orange">⏳</div>
         <div class="stat-data">
           <span class="stat-number">{{ pendingRequestsCount() }}</span>
-          <span class="stat-text">طلبات قيد المراجعة</span>
+          <span class="stat-text">{{ statusLabel('PendingApproval') }}</span>
         </div>
       </div>
 
@@ -59,7 +59,7 @@
         <div class="stat-icon-wrap green">✓</div>
         <div class="stat-data">
           <span class="stat-number">{{ approvedCompaniesCount() }}</span>
-          <span class="stat-text">الشركات المعتمدة والمفعلة</span>
+          <span class="stat-text">{{ statusLabel('Approved') }}</span>
         </div>
       </div>
 
@@ -83,21 +83,21 @@
           </button>
           <button type="button" class="filter-btn" [class.active]="statusFilter() === 'Approved'"
             (click)="setFilter('Approved')">
-            معتمدة فقط
+            {{ statusLabel('Approved') }}
           </button>
           <button type="button" class="filter-btn" [class.active]="statusFilter() === 'PendingApproval'"
             (click)="setFilter('PendingApproval')">
-            قيد الانتظار
+            {{ statusLabel('PendingApproval') }}
           </button>
           <button type="button" class="filter-btn" [class.active]="statusFilter() === 'Suspended'"
             (click)="setFilter('Suspended')">
-            موقوفة مؤقتاً
+            {{ statusLabel('Suspended') }}
           </button>
           <!-- 🚫 زر الطلبات المرفوضة مع العداد التفاعلي -->
           <button type="button" class="btn-outline-red" [class.active]="statusFilter() === 'Rejected'"
             (click)="setFilter('Rejected')">
             <span class="btn-icon">✕</span>
-            <span>الطلبات المرفوضة</span>
+            <span>{{ statusLabel('Rejected') }}</span>
             <span class="rejected-counter-badge" *ngIf="rejectedCompaniesCount() > 0">
               {{ rejectedCompaniesCount() }}
             </span>

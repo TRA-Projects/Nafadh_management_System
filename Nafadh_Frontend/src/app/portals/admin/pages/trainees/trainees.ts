@@ -1,4 +1,5 @@
-import { Component, OnInit, signal, computed, ViewEncapsulation } from '@angular/core';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { inject, Component, OnInit, signal, computed, ViewEncapsulation } from '@angular/core';
 import { CommonModule, NgClass, NgStyle } from '@angular/common';
 import { Router } from '@angular/router'; // 👈 تم استيراد الراوتر للتنقل للبروفايل
 import { FormsModule } from '@angular/forms';
@@ -76,6 +77,7 @@ export interface TraineeAttendanceRecord {
   encapsulation: ViewEncapsulation.None
 })
 export class AdminTrainees implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   trainees = signal<EnrichedTraineeItem[]>([]);
   allDbTrainees = signal<EnrichedTraineeItem[]>([]);
 
@@ -424,6 +426,7 @@ export class AdminTrainees implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.constants.ensure('NFD_WDR_STAT');
     this.loadSavedUnreadReplies();
     this.loadTrainers();
     this.loadDatabaseStats();
@@ -1446,6 +1449,7 @@ export class AdminTrainees implements OnInit {
         'الدفعة': t.batchName || '—',
         'المسار التدريبي': t.trackName || '—',
         'الحالة': this.labelFor(t),
+        'حالة طلب الانسحاب': t.withdrawalRequestId ? this.constants.administrativeLabel('NFD_WDR_STAT', t.withdrawalStatus) : '',
         'نسبة الإنجاز (%)': `${this.getProgressValue(t)}%`,
         'رابط LinkedIn': t.linkedInUrl || '—',
         'رابط GitHub': t.gitHubUrl || '—',
@@ -1636,11 +1640,8 @@ export class AdminTrainees implements OnInit {
   }
 
   labelFor(item: EnrichedTraineeItem): string {
-    if (item.withdrawalStatus === 'Approved' || item.completionStatus === 'Dropped') {
-      return 'منسحب (معتمد)';
-    }
-    if (item.withdrawalStatus === 'Pending') {
-      return 'طلب انسحاب معلق';
+    if (item.completionStatus === 'Dropped') {
+      return 'منسحب';
     }
     return this.statusLabels[item.status] ?? String(item.status);
   }
@@ -1653,11 +1654,8 @@ export class AdminTrainees implements OnInit {
   }
 
   getStatusStyle(item: EnrichedTraineeItem) {
-    if (item.withdrawalStatus === 'Approved' || item.completionStatus === 'Dropped') {
+    if (item.completionStatus === 'Dropped') {
       return { background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' };
-    }
-    if (item.withdrawalStatus === 'Pending') {
-      return { background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a' };
     }
     switch (item.status) {
       case 2:

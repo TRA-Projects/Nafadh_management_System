@@ -28,7 +28,7 @@
         <div>
           <span>إجمالي الخطط</span>
           <strong>{{ counts().total }}</strong>
-          <small>{{ counts().draft }} مسودة</small>
+          <small>{{ counts().draft }} {{ approvalLabel('Draft') }}</small>
         </div>
       </article>
 
@@ -38,12 +38,12 @@
         </div>
 
         <div>
-          <span>بانتظار اعتماد الهيئة</span>
+          <span>{{ approvalLabel('PendingApproval') }}</span>
           <strong class="warn">
             {{ counts().pendingApproval }}
           </strong>
           <small>
-            {{ counts().rejected }} مرفوضة تحتاج تعديلاً
+            {{ counts().rejected }} {{ approvalLabel('Rejected') }}
           </small>
         </div>
       </article>
@@ -115,7 +115,7 @@
           type="button"
           [class.active]="filter() === f.key"
           (click)="setFilter(f.key)">
-          {{ f.label }}
+          {{ constants.administrativeLabel('NFD_CPA_STAT', f.key, f.label) }}
         </button>
       }
 
