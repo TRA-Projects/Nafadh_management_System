@@ -162,6 +162,8 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ITrainingMaterialService, TrainingMaterialService>();
             builder.Services.AddScoped<ITraineeModuleProgressRepository, TraineeModuleProgressRepository>();
             builder.Services.AddScoped<ITraineeModuleProgressService, TraineeModuleProgressService>();
+            builder.Services.AddScoped<IPagePermissionRepository, PagePermissionRepository>();
+            builder.Services.AddScoped<IPagePermissionService, PagePermissionService>();
 
             // User Guide Progress
             builder.Services.AddScoped<IUserGuideProgressRepository, UserGuideProgressRepository>();
