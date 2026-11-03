@@ -15,6 +15,7 @@ import { catchError, forkJoin, of } from 'rxjs';
 
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warning-types.service';
 
 import {
   CoursePlanSummaryDto,
@@ -37,6 +38,7 @@ import {
 export class CompanyDashboard implements OnInit {
   private readonly api = inject(CompanyApi);
   private readonly http = inject(HttpClient);
+  readonly warningTypes = inject(NafadhWarningTypesService);
   readonly announcementsError = signal(false);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -245,6 +247,7 @@ export class CompanyDashboard implements OnInit {
   // ============================================================
 
   ngOnInit(): void {
+    this.warningTypes.refresh();
     this.refreshData();
   }
 

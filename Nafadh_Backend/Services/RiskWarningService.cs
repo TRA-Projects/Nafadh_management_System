@@ -14,6 +14,7 @@ namespace Nafadh_Backend.Services
         private readonly IWarningRepository _warningRepository;
         private readonly AbsenceWarningSettings _settings;
         private readonly IEnrollmentRepository _enrollmentRepository;
+        private readonly ITrainingConstantsService _trainingConstants;
 
         private const string AttendanceRiskMarker =
             "[AUTO-RISK-ATTENDANCE-80]";
@@ -26,13 +27,14 @@ namespace Nafadh_Backend.Services
             IEvaluationRepository evaluationRepository,
             IWarningRepository warningRepository,
             IEnrollmentRepository enrollmentRepository,
-
+            ITrainingConstantsService trainingConstants,
             IOptions<AbsenceWarningSettings> settings)
         {
             _attendanceRepository = attendanceRepository;
             _evaluationRepository = evaluationRepository;
             _warningRepository = warningRepository;
             _enrollmentRepository = enrollmentRepository;
+            _trainingConstants = trainingConstants;
 
             _settings = settings.Value;
         }
@@ -64,7 +66,9 @@ namespace Nafadh_Backend.Services
                         a.Status == NFD_AttendanceStatus.Present)
                     * 100.0 / attendances.Count;
 
-                if (attendancePercentage < 80)
+                if (attendancePercentage < 80 &&
+                    await WarningTypePolicy.IsActiveAsync(
+                        _trainingConstants, NFD_WarningType.Attendance))
                 {
                     bool warningExists =
                         await _warningRepository.AutoRiskWarningExistsAsync(
@@ -131,7 +135,9 @@ namespace Nafadh_Backend.Services
                 double performancePercentage =
                     (double)validEvaluations.Average(e => e.Score);
 
-                if (performancePercentage < 60)
+                if (performancePercentage < 60 &&
+                    await WarningTypePolicy.IsActiveAsync(
+                        _trainingConstants, NFD_WarningType.Performance))
                 {
                     bool warningExists =
                         await _warningRepository.AutoRiskWarningExistsAsync(

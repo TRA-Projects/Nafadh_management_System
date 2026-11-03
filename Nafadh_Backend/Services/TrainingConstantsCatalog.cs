@@ -62,7 +62,7 @@ public static class TrainingConstantsCatalog
         new("NFD_CRT_TYPE", "Certificate Type", "نوع الشهادة", true),
         new("NFD_ENR_STAT", "Enrollment Completion Status", "حالة إكمال الالتحاق", true),
         new("NFD_EVL_PER", "Evaluation Period", "فترة التقييم", true),
-        new("NFD_EVL_TYPE", "Evaluation Type", "نوع التقييم", true),
+        new("NFD_EVL_TYPE", "Evaluation Type", "نوع التقييم", false),
         new("NFD_EXC_STAT", "Excuse Status", "حالة العذر", true),
         new("NFD_EXT_ACT", "Exit Limit Action", "إجراء تجاوز حد الخروج", true),
         new("NFD_FBK_TYPE", "Feedback Type", "نوع التغذية الراجعة", true),
@@ -75,7 +75,7 @@ public static class TrainingConstantsCatalog
         new("NFD_PRG_STAT", "Program Status", "حالة البرنامج", true),
         new("NFD_PYS_STAT", "Payment Schedule Status", "حالة جدول الدفع", true),
         new("NFD_QIZ_STAT", "Quiz Status", "حالة الاختبار", true),
-        new("NFD_QUE_DIFF", "Question Difficulty", "صعوبة السؤال", true),
+        new("NFD_QUE_DIFF", "Question Difficulty", "صعوبة السؤال", false),
         new("NFD_QUE_TYPE", "Quiz Question Type", "نوع سؤال الاختبار", true),
         new("NFD_REM_STAT", "Remediation Status", "حالة المعالجة", true),
         new("NFD_RPT_TYPE", "Report Type", "نوع التقرير", true),
@@ -95,7 +95,7 @@ public static class TrainingConstantsCatalog
         new("NFD_WRN_LVL", "Warning Level", "مستوى الإنذار", true),
         new("NFD_WRN_SCOPE", "Warning Scope", "نطاق الإنذار", true),
         new("NFD_WRN_STAT", "Warning Status", "حالة الإنذار", true),
-        new("NFD_WRN_TYPE", "Warning Type", "نوع الإنذار", true),
+        new("NFD_WRN_TYPE", "Warning Type", "نوع الإنذار", false),
     };
 
     private static readonly IReadOnlyDictionary<string, Group> ByCode =

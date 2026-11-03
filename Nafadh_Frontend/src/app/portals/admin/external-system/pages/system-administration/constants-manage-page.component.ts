@@ -236,7 +236,7 @@ export class ConstantsManagePageComponent {
   // UI guard mirrors the Training Backend's NFD_* write protection.
   readonly isReadOnlyManagementGroup = computed(() => {
     const code = this.selectedLookupCode();
-    return code.startsWith('NFD_') || this.catalogGroups().some((group) => group.code === code && group.IsReadOnly);
+    return (code.startsWith('NFD_') && !['NFD_QUE_DIFF', 'NFD_EVL_TYPE', 'NFD_WRN_TYPE'].includes(code)) || this.catalogGroups().some((group) => group.code === code && group.IsReadOnly);
   });
 
   readonly canEditSelectedGroup = computed(() =>
@@ -508,6 +508,7 @@ export class ConstantsManagePageComponent {
   }
 
   openAdd(): void {
+    if (['NFD_QUE_DIFF', 'NFD_EVL_TYPE', 'NFD_WRN_TYPE'].includes(this.selectedLookupCode())) return;
     if (!this.canManageSubRows()) {
       return;
     }

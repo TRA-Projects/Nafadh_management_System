@@ -88,6 +88,28 @@ export class QuestionBank implements OnInit {
 
     questionForm: QuestionForm = this.emptyQuestionForm();
 
+    // Stable enum values must be preserved: Easy=0, Medium=1, Hard=2.
+    readonly difficultyOptions = signal<Array<{ value: number; label: string }>>([]);
+    readonly difficultyOptionsError = signal(false);
+
+    private loadDifficultyOptions(): void {
+        const valueKeys: Record<string, number> = { Easy: 0, Medium: 1, Hard: 2 };
+        this.api.getQuestionDifficultyConstants().subscribe({
+            next: response => {
+                const mapped = (response.Data?.rows ?? [])
+                    .filter(row => row.IsActive && Object.prototype.hasOwnProperty.call(valueKeys, row.id))
+                    .map(row => ({ value: valueKeys[row.id], label: row.label_ar || row.label_en || row.id }));
+                this.difficultyOptions.set(mapped);
+                this.difficultyOptionsError.set(mapped.length === 0);
+            },
+            error: () => {
+                this.difficultyOptions.set([]);
+                this.difficultyOptionsError.set(true);
+            }
+        });
+    }
+
+
     errorMessage = signal('');
 
     successMessage = signal('');
@@ -190,6 +212,7 @@ export class QuestionBank implements OnInit {
     ) { }
 
     ngOnInit(): void {
+        this.loadDifficultyOptions();
 
         const quizId = Number(
             this.route.snapshot.paramMap.get('quizId')
@@ -657,6 +680,10 @@ export class QuestionBank implements OnInit {
     }
 
     saveQuestion(): void {
+        if (!this.difficultyOptions().some(option => option.value === this.questionForm.difficulty)) {
+            this.questionError.set('مستوى الصعوبة غير متاح في الثوابت الحالية.');
+            return;
+        }
         const trainerId = this.trainer()?.trainerId;
 
         if (!trainerId) {

@@ -58,13 +58,26 @@ public sealed class ReferenceConstantsController : ControllerBase
     public Task<IActionResult> SearchValues(string code, CancellationToken cancellationToken) =>
         Forward(code, "search", null, HttpMethod.Get, cancellationToken);
 
+    private static bool IsRestrictedNafadhGroup(string code) =>
+        string.Equals(code, "NFD_QUE_DIFF", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(code, "NFD_EVL_TYPE", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(code, "NFD_WRN_TYPE", StringComparison.OrdinalIgnoreCase);
+
     [HttpPost("values/{code}/ensure")]
     public Task<IActionResult> EnsureValue(string code, [FromBody] JsonElement payload, CancellationToken cancellationToken) =>
-        Forward(code, "ensure", payload, HttpMethod.Post, cancellationToken);
+        IsRestrictedNafadhGroup(code)
+            ? Task.FromResult<IActionResult>(BadRequest(new { Code = "RestrictedGroup", Message = "Adding values to this group is not supported." }))
+            : Forward(code, "ensure", payload, HttpMethod.Post, cancellationToken);
 
     [HttpPost("values/{code}")]
     public Task<IActionResult> CreateValue(string code, [FromBody] JsonElement payload, CancellationToken cancellationToken) =>
-        Forward(code, null, payload, HttpMethod.Post, cancellationToken);
+        IsRestrictedNafadhGroup(code)
+            ? Task.FromResult<IActionResult>(BadRequest(new
+            {
+                Code = "NewDifficultyNotSupportedYet",
+                Message = "Adding values to these Nafadh groups is restricted because backend business logic uses predefined enum values."
+            }))
+            : Forward(code, null, payload, HttpMethod.Post, cancellationToken);
 
     [HttpPut("values/{code}/{id}")]
     public Task<IActionResult> UpdateValue(string code, string id, [FromBody] JsonElement payload, CancellationToken cancellationToken) =>

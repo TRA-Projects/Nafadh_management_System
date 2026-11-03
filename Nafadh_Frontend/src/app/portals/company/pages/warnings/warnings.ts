@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 import { CompanyApi } from '../../services/company-api';
 import { WarningDto } from '../../../../core/models/dtos';
+import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warning-types.service';
 
 @Component({
   selector: 'app-company-warnings',
@@ -15,6 +16,10 @@ import { WarningDto } from '../../../../core/models/dtos';
 export class WarningsComponent implements OnInit {
   private readonly companyApi = inject(CompanyApi);
   private readonly cdr = inject(ChangeDetectorRef);
+  readonly warningTypes = inject(NafadhWarningTypesService);
+  get warningTypeOptions(): { value: string; label: string }[] {
+    return this.warningTypes.activeOptions();
+  }
 
   warnings: WarningDto[] = [];
   selectedWarning: WarningDto | null = null;
@@ -35,6 +40,7 @@ export class WarningsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCompanyWarnings();
+    this.warningTypes.refresh();
   }
 
   /**
@@ -221,13 +227,7 @@ export class WarningsComponent implements OnInit {
   }
 
   typeLabel(type: string): string {
-    const labels: Record<string, string> = {
-      Attendance: 'حضور وانضباط',
-      Performance: 'الأداء',
-      Behavioral: 'السلوك',
-      Other: 'أخرى'
-    };
-    return labels[type] ?? type;
+    return this.warningTypes.label(type);
   }
 
   levelLabel(level: string): string {

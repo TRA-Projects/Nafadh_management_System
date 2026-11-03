@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -22,16 +22,19 @@ namespace Nafadh_Backend.Controllers
         private readonly INotificationService _notificationService;
         private readonly IEmailService _emailService;
         private readonly Nafadhcontext _context;
+        private readonly ITrainingConstantsService _trainingConstants;
 
         public WarningController(
             IWarningService service,
             INotificationService notificationService,
             IEmailService emailService,
+            ITrainingConstantsService trainingConstants,
             Nafadhcontext context)
         {
             _service = service;
             _notificationService = notificationService;
             _emailService = emailService;
+            _trainingConstants = trainingConstants;
             _context = context;
         }
 
@@ -80,6 +83,12 @@ namespace Nafadh_Backend.Controllers
         public async Task<IActionResult> CreateWarning(
             [FromBody] WarningInputDTO dto)
         {
+            // Resolve the admin-controlled label BEFORE the warning is persisted.
+            // This prevents a lookup failure from being reported after saving a warning.
+            var warningType = await WarningTypePolicy.GetAsync(_trainingConstants, dto.Type);
+            if (!warningType.IsActive)
+                return BadRequest(new { Code = "WarningTypeInactive", Message = "This warning type is inactive." });
+
             // التأكد من صحة معرف المستخدم الرافع للإنذار لتفادي خطأ Foreign Key
             bool raiserExists = dto.RaisedByUserId > 0 &&
                 await _context.NFD_Users.AnyAsync(u => u.UserId == dto.RaisedByUserId);
@@ -92,7 +101,15 @@ namespace Nafadh_Backend.Controllers
                     .FirstOrDefaultAsync();
             }
 
-            await _service.CreateWarningAsync(dto);
+            try
+            {
+                await _service.CreateWarningAsync(dto);
+            }
+            catch (WarningTypePolicy.DisabledWarningTypeException ex)
+            {
+                return BadRequest(new { Code = "WarningTypeInactive", Message = ex.Message });
+            }
+
 
             bool notificationSent = false;
             bool emailSent = false;
@@ -108,7 +125,8 @@ namespace Nafadh_Backend.Controllers
                 if (company != null)
                 {
                     string levelLabel = MapLevelToArabic(dto.Level.ToString());
-                    string typeLabel = MapTypeToArabic(dto.Type.ToString());
+                    // Use the same admin-maintained label resolved before persistence.
+                    string typeLabel = warningType.LabelAr;
 
                     string detailsText = string.IsNullOrWhiteSpace(dto.Evidence)
                         ? $"نوع المخالفة: {typeLabel}"

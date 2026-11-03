@@ -244,10 +244,8 @@
           <div class="form-group">
             <label class="required">تصنيف المخالفة</label>
             <select [(ngModel)]="newWarning.type" (change)="markFieldTouched('type')">
-              <option value="Performance">بيئة الأداء والتدريب</option>
-              <option value="Attendance">التزامات الحضور</option>
-              <option value="Behavioral">الضوابط السلوكية</option>
-              <option value="Other">تنظيمي آخر</option>
+              <option value="" disabled>اختر نوع الإنذار...</option>
+              <option *ngFor="let option of warningTypes.activeOptions()" [value]="option.value">{{ option.label }}</option>
             </select>
           </div>
 

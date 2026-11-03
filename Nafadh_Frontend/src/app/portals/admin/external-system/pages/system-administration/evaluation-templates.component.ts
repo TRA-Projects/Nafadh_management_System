@@ -28,17 +28,63 @@ interface EvaluationTemplateForm {
 export class EvaluationTemplatesComponent implements OnInit {
   private readonly api = inject(AdminSystemApiService);
 
-  readonly types: {
-    value: EvaluationTemplateType;
-    label: string;
-  }[] = [
-    { value: 'Technical', label: 'تقييم فني' },
-    { value: 'Behavioral', label: 'تقييم سلوكي' },
-    { value: 'CompanyEvaluation', label: 'تقييم الشركة' },
-    { value: 'Final', label: 'التقييم النهائي' },
-    { value: 'TrainerPerformance', label: 'تقييم أداء المدرب' },
-    { value: 'TraineePerformance', label: 'تقييم أداء المتدرب' },
+  // Only values supported by the current Management Backend enum may be submitted.
+  private readonly supportedTypes: EvaluationTemplateType[] = [
+    'Technical', 'Behavioral', 'CompanyEvaluation', 'Final', 'TrainerPerformance'
   ];
+  private readonly historicalLabels: Record<string, string> = {
+    Technical: 'تقييم فني', Behavioral: 'تقييم سلوكي',
+    CompanyEvaluation: 'تقييم الشركة', Final: 'التقييم النهائي',
+    TrainerPerformance: 'تقييم أداء المدرب', TraineePerformance: 'تقييم أداء المتدرب'
+  };
+  types: { value: EvaluationTemplateType; label: string }[] = [];
+  // Filters also include historical/inactive types; creating new templates only uses active types.
+  filterTypes: { value: EvaluationTemplateType; label: string }[] = [];
+  private originalEditType: EvaluationTemplateType | null = null;
+  typesLoading = true;
+  typesError = '';
+
+  private loadEvaluationTypes(): void {
+    this.typesLoading = true;
+    this.typesError = '';
+    // Read ALL rows (including inactive) for labels on existing templates and filtering.
+    // Read active rows separately for new-template choices and validation.
+    this.api.getValues('NFD_EVL_TYPE', true).subscribe({
+      next: (rows) => {
+        const historical = rows
+          .filter((row) => this.supportedTypes.includes(String(row.id) as EvaluationTemplateType))
+          .map((row) => ({
+            value: String(row.id) as EvaluationTemplateType,
+            label: row.label_ar || row.label_en || String(row.id)
+          }));
+        for (const row of historical) this.historicalLabels[row.value] = row.label;
+        this.filterTypes = historical;
+      },
+      error: () => {
+        // Keep active-only options working even if the historical list is temporarily unavailable.
+        this.filterTypes = [];
+      }
+    });
+    this.api.getValues('NFD_EVL_TYPE').subscribe({
+      next: (rows) => {
+        this.types = rows
+          .filter((row) => this.supportedTypes.includes(String(row.id) as EvaluationTemplateType))
+          .map((row) => ({
+            value: String(row.id) as EvaluationTemplateType,
+            label: row.label_ar || row.label_en || String(row.id)
+          }));
+        this.typesLoading = false;
+        if (this.types.length === 0) {
+          this.typesError = 'لا توجد أنواع تقييم مفعّلة ومتوافقة مع النظام.';
+        }
+      },
+      error: () => {
+        this.types = [];
+        this.typesLoading = false;
+        this.typesError = 'تعذّر تحميل أنواع التقييم من قاعدة الثوابت.';
+      }
+    });
+  }
 
   templates: EvaluationTemplateDto[] = [];
   details: EvaluationTemplateDetailsDto | null = null;
@@ -65,6 +111,7 @@ export class EvaluationTemplatesComponent implements OnInit {
   form: EvaluationTemplateForm = this.emptyForm();
 
   ngOnInit(): void {
+    this.loadEvaluationTypes();
     this.loadTemplates();
   }
 
@@ -191,7 +238,12 @@ export class EvaluationTemplatesComponent implements OnInit {
 
   openCreateForm(): void {
     this.editingId = null;
-    this.form = this.emptyForm();
+    this.originalEditType = null;
+    if (this.typesLoading || this.types.length === 0) {
+      this.errorMessage = this.typesError || 'أنواع التقييم غير جاهزة.';
+      return;
+    }
+    this.form = { ...this.emptyForm(), type: this.types[0].value };
     this.formVisible = true;
     this.details = null;
     this.errorMessage = '';
@@ -200,6 +252,7 @@ export class EvaluationTemplatesComponent implements OnInit {
 
   openEditForm(template: EvaluationTemplateDto): void {
     this.editingId = template.templateId;
+    this.originalEditType = template.type;
 
     this.form = {
       type: template.type,
@@ -217,9 +270,22 @@ export class EvaluationTemplatesComponent implements OnInit {
   cancelForm(): void {
     this.formVisible = false;
     this.editingId = null;
+    this.originalEditType = null;
+  }
+
+  isEditingInactiveOriginalType(): boolean {
+    return this.editingId !== null && this.form.type === this.originalEditType &&
+      !this.types.some(item => item.value === this.form.type);
   }
 
   saveTemplate(): void {
+    // Updating non-type fields on a historical template is allowed by the Backend.
+    // Switching to an inactive type or creating one is not.
+    if (!this.types.some((item) => item.value === this.form.type) &&
+        !this.isEditingInactiveOriginalType()) {
+      this.errorMessage = 'نوع التقييم غير مفعّل أو غير مدعوم حاليًا.';
+      return;
+    }
     const createdByUserId = this.form.createdByUserId;
 
     if (
@@ -254,6 +320,7 @@ export class EvaluationTemplatesComponent implements OnInit {
         this.saving = false;
         this.formVisible = false;
         this.editingId = null;
+        this.originalEditType = null;
 
         this.successMessage = editingId == null
           ? 'تم إنشاء القالب بنجاح.'
@@ -284,7 +351,8 @@ export class EvaluationTemplatesComponent implements OnInit {
   }
 
   typeLabel(type: EvaluationTemplateType | string): string {
-    return this.types.find((item) => item.value === type)?.label ?? type;
+    // The admin-edited label is authoritative even if the type is now inactive.
+    return this.historicalLabels[type] ?? this.types.find((item) => item.value === type)?.label ?? type;
   }
 
   private emptyForm(): EvaluationTemplateForm {

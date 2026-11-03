@@ -148,24 +148,9 @@
             </select>
 
 
-            <select [ngModel]="difficultyFilter()" (ngModelChange)="difficultyFilter.set($event)">
-
-                <option value="all">
-                    كل المستويات
-                </option>
-
-                <option value="1">
-                    سهل
-                </option>
-
-                <option value="2">
-                    متوسط
-                </option>
-
-                <option value="3">
-                    صعب
-                </option>
-
+            <select [ngModel]="difficultyFilter()" (ngModelChange)="difficultyFilter.set($event)" [disabled]="difficultyOptions().length === 0">
+                <option value="all">كل المستويات</option>
+                <option *ngFor="let option of difficultyOptions()" [value]="option.value">{{ option.label }}</option>
             </select>
 
 
@@ -527,21 +512,10 @@
                                 مستوى الصعوبة
                             </label>
 
-                            <select id="difficulty" name="difficulty" [(ngModel)]="questionForm.difficulty">
-
-                                <option [ngValue]="0">
-                                    سهل
-                                </option>
-
-                                <option [ngValue]="1">
-                                    متوسط
-                                </option>
-
-                                <option [ngValue]="2">
-                                    صعب
-                                </option>
-
+                            <select id="difficulty" name="difficulty" [(ngModel)]="questionForm.difficulty" [disabled]="difficultyOptions().length === 0">
+                                <option *ngFor="let option of difficultyOptions()" [ngValue]="option.value">{{ option.label }}</option>
                             </select>
+                            <small *ngIf="difficultyOptionsError()">تعذر تحميل مستويات الصعوبة من الثوابت؛ لا يمكن اختيار مستوى حتى يعود الاتصال.</small>
 
                         </div>
 

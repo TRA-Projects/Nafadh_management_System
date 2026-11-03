@@ -1,9 +1,10 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AdminApi } from '../../services/admin-api';
+import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warning-types.service';
 import { AuditLogDto, DashboardChartsDto, BatchDto, AnnouncementDto } from '../../../../core/models/dtos';
 import Chart, { TooltipItem } from 'chart.js/auto';
 
@@ -143,6 +144,7 @@ export interface SelectedWarningDetailView {
   styleUrls: ['./dashboard.css']
 })
 export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
+  readonly warningTypes = inject(NafadhWarningTypesService);
   summary = signal<AdminDashboardSummary | null>(null);
   announcements = signal<any[]>([]);
   showAnnouncements = signal<boolean>(true);
@@ -485,6 +487,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   ) { }
 
   ngOnInit() {
+    this.warningTypes.refresh();
     this.loadAllDashboardData();
   }
 
@@ -627,13 +630,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       const levelRaw = String(warning.level ?? '');
       const statusRaw = String(warning.status ?? '');
 
-      const typeArabic = typeRaw.toLowerCase().includes('attend')
-        ? 'التزام الحضور والمتابعة (Attendance)'
-        : typeRaw.toLowerCase().includes('behav')
-          ? 'الانضباط والالتزام التنظيمي (Behavioral)'
-          : typeRaw.toLowerCase().includes('performance')
-            ? 'مستوى الأداء وجودة التدريب (Performance)'
-            : typeRaw || '—';
+      const typeArabic = this.warningTypes.label(typeRaw);
 
       const levelArabic =
         levelRaw.toLowerCase().includes('low') ? 'منخفض' :

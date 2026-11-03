@@ -1,10 +1,12 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AdminApi } from '../../services/admin-api';
+import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warning-types.service';
+import { NafadhEvaluationTypesService } from '../../../../core/services/nafadh-evaluation-types.service';
 import {
   WarningDto,
   EnrollmentDto,
@@ -13,10 +15,8 @@ import {
 } from '../../../../core/models/dtos';
 import {
   TRAINEE_STATUS_LABELS,
-  WARNING_TYPE_LABELS,
   WARNING_LEVEL_LABELS,
   MODULE_PROGRESS_LABELS,
-  EVALUATION_TYPE_LABELS,
   ENROLLMENT_STATUS_LABELS,
   AttendanceStatus,
   ModuleProgressStatus,
@@ -182,9 +182,9 @@ export class AdminTraineeProfile implements OnInit {
 
   // خرائط الترجمة
   statusLabels = TRAINEE_STATUS_LABELS;
-  warningTypeLabels = WARNING_TYPE_LABELS;
+  readonly warningTypes = inject(NafadhWarningTypesService);
+  readonly evaluationTypes = inject(NafadhEvaluationTypesService);
   warningLevelLabels = WARNING_LEVEL_LABELS;
-  evaluationTypeLabels = EVALUATION_TYPE_LABELS;
   enrollmentStatusLabels = ENROLLMENT_STATUS_LABELS;
 
   // قيم محسوبة (computed)
@@ -271,6 +271,8 @@ export class AdminTraineeProfile implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.warningTypes.refresh();
+    this.evaluationTypes.refresh();
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
       this.loadProfileData(id);
@@ -431,7 +433,7 @@ export class AdminTraineeProfile implements OnInit {
 
   evalTypeLabel(type: string | undefined | null): string {
     if (!type) return 'تقييم';
-    return (this.evaluationTypeLabels as Record<string, string>)[type] ?? type;
+    return this.evaluationTypes.label(type);
   }
 
   private getUnifiedStorageMessages(traineeId: number): { sender: string; text: string; date: string; isAdmin: boolean }[] {

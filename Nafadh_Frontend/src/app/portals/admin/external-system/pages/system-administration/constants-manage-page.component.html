@@ -51,7 +51,7 @@
       </div>
     }
 
-    @if (canManageSubRows()) {
+    @if (canManageSubRows() && !['NFD_QUE_DIFF', 'NFD_EVL_TYPE', 'NFD_WRN_TYPE'].includes(selectedLookupCode())) {
       <button
         type="button"
         class="btn btn-gradient inline-flex h-10 shrink-0 items-center gap-1 px-4 py-0 leading-none"

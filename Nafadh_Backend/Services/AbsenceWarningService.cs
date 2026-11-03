@@ -12,16 +12,19 @@ namespace Nafadh_Backend.Services
         private readonly IWarningRepository _warningRepository;
         private readonly IEmailService _emailService;
         private readonly AbsenceWarningSettings _settings;
+        private readonly ITrainingConstantsService _trainingConstants;
 
         public AbsenceWarningService(
             IDailyAttendanceRepository attendanceRepository,
             IWarningRepository warningRepository,
             IEmailService emailService,
+            ITrainingConstantsService trainingConstants,
             IOptions<AbsenceWarningSettings> settings)
         {
             _attendanceRepository = attendanceRepository;
             _warningRepository = warningRepository;
             _emailService = emailService;
+            _trainingConstants = trainingConstants;
             _settings = settings.Value;
         }
 
@@ -132,6 +135,12 @@ namespace Nafadh_Backend.Services
                 throw new InvalidOperationException(
                     "Trainee user information could not be loaded.");
             }
+
+            // A disabled Attendance type cannot issue new absence warnings or warning emails.
+            // Existing attendance records and historical warnings remain unchanged.
+            if (!await WarningTypePolicy.IsActiveAsync(
+                    _trainingConstants, NFD_WarningType.Attendance))
+                return;
 
             switch (absenceNumber)
             {

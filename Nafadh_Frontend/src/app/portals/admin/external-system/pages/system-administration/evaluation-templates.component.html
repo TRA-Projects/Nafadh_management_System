@@ -10,12 +10,15 @@
     <button
       type="button"
       class="primary-button"
+      [disabled]="typesLoading || types.length === 0"
       (click)="openCreateForm()"
     >
       <span class="button-icon">+</span>
       إضافة قالب
     </button>
   </div>
+
+  <p *ngIf="typesError" role="alert">{{ typesError }}</p>
 
   <!-- Filters -->
   <section class="filter-card">
@@ -28,7 +31,7 @@
           [(ngModel)]="filterType"
         >
           <option value="">جميع الأنواع</option>
-          <option *ngFor="let item of types" [value]="item.value">
+          <option *ngFor="let item of (filterTypes.length ? filterTypes : types)" [value]="item.value">
             {{ item.label }}
           </option>
         </select>
@@ -236,6 +239,9 @@
             [(ngModel)]="form.type"
             required
           >
+            <option *ngIf="isEditingInactiveOriginalType()" [value]="form.type">
+              {{ typeLabel(form.type) }} (غير نشط — قالب محفوظ)
+            </option>
             <option *ngFor="let item of types" [value]="item.value">
               {{ item.label }}
             </option>

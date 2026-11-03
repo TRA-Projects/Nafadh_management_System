@@ -371,7 +371,7 @@
           @for (w of warnings(); track w.warningId) {
             <div class="warning-item" [attr.data-level]="w.level">
               <div class="warning-main">
-                <span class="warning-type">{{ warningTypeLabels[w.type] }}</span>
+                <span class="warning-type">{{ warningTypes.label(w.type) }}</span>
                 <span class="warning-level" [attr.data-level]="w.level">{{ warningLevelLabels[w.level] }}</span>
               </div>
               @if (w.evidence) {

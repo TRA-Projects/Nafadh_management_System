@@ -157,10 +157,7 @@
         <label for="warningType">نوع الإنذار</label>
         <select id="warningType" [(ngModel)]="selectedType">
           <option value="">جميع الأنواع</option>
-          <option value="Attendance">حضور وانضباط</option>
-          <option value="Performance">الأداء</option>
-          <option value="Behavioral">السلوك</option>
-          <option value="Other">أخرى</option>
+          <option *ngFor="let item of warningTypeOptions" [value]="item.value">{{ item.label }}</option>
         </select>
       </div>
 
