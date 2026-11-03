@@ -1,4 +1,5 @@
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { moduleProgressKey } from '../../../../core/models/administrative-constants';
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -16,9 +17,9 @@ import {
 } from '../../../../core/models/dtos';
 import {
   TRAINEE_STATUS_LABELS,
-  MODULE_PROGRESS_LABELS,
   ENROLLMENT_STATUS_LABELS,
   AttendanceStatus,
+  traineeAttendanceKey,
   ModuleProgressStatus,
   EnrollmentCompletionStatus,
 } from '../../../../core/models/enums';
@@ -38,7 +39,6 @@ interface StageCard {
   module: ModuleDto;
   orderIndex: number;
   statusRaw: string;
-  statusLabel: string;
   progressPercent: number;
   evaluations: EvaluationDto[];
   averageScore: number | null;
@@ -264,7 +264,7 @@ export class AdminTraineeProfile implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.constants.ensure('NFD_WDR_STAT', 'NFD_WRN_LVL');
+    this.constants.ensure('NFD_WDR_STAT', 'NFD_WRN_LVL', 'NFD_MOD_STAT');
     this.warningTypes.refresh();
     this.evaluationTypes.refresh();
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -794,8 +794,8 @@ export class AdminTraineeProfile implements OnInit {
 
   private processAttendance(rows: RawAttendanceRow[]): void {
     const list = rows || [];
-    const present = list.filter((r) => String(r.status) === 'Present').length;
-    const absent = list.filter((r) => String(r.status) === 'Absent').length;
+    const present = list.filter((r) => traineeAttendanceKey(r.status) === 'Present').length;
+    const absent = list.filter((r) => traineeAttendanceKey(r.status) === 'Absent').length;
     const late = list.filter((r) => !!r.isLate).length;
     const total = list.length;
 
@@ -827,7 +827,7 @@ export class AdminTraineeProfile implements OnInit {
 
     const cards: StageCard[] = sortedModules.map((m) => {
       const progress = progressByModule.get(m.moduleId);
-      const statusRaw = String(progress?.status ?? 'NotStarted');
+      const statusRaw = moduleProgressKey(progress?.status ?? 'NotStarted');
       const moduleEvals = (evalsByModule.get(m.moduleId) ?? []).sort(
         (a, b) => new Date(b.evaluationDate).getTime() - new Date(a.evaluationDate).getTime()
       );
@@ -846,7 +846,6 @@ export class AdminTraineeProfile implements OnInit {
         module: m,
         orderIndex: m.orderIndex,
         statusRaw,
-        statusLabel: MODULE_PROGRESS_LABELS[statusRaw as ModuleProgressStatus] ?? statusRaw,
         progressPercent,
         evaluations: moduleEvals,
         averageScore: avg,
