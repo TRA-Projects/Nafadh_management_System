@@ -14,6 +14,7 @@ export class App implements OnInit {
   private readonly title = inject(Title);
 
   ngOnInit(): void {
+    
     this.systemVariables.getVariable('SiteName').subscribe({
       next: (variable) => {
         const siteName = variable.value?.trim();
