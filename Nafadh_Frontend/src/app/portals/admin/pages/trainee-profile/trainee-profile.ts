@@ -1,10 +1,14 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { moduleProgressKey } from '../../../../core/models/administrative-constants';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AdminApi } from '../../services/admin-api';
+import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warning-types.service';
+import { NafadhEvaluationTypesService } from '../../../../core/services/nafadh-evaluation-types.service';
 import {
   WarningDto,
   EnrollmentDto,
@@ -13,12 +17,9 @@ import {
 } from '../../../../core/models/dtos';
 import {
   TRAINEE_STATUS_LABELS,
-  WARNING_TYPE_LABELS,
-  WARNING_LEVEL_LABELS,
-  MODULE_PROGRESS_LABELS,
-  EVALUATION_TYPE_LABELS,
   ENROLLMENT_STATUS_LABELS,
   AttendanceStatus,
+  traineeAttendanceKey,
   ModuleProgressStatus,
   EnrollmentCompletionStatus,
 } from '../../../../core/models/enums';
@@ -38,7 +39,6 @@ interface StageCard {
   module: ModuleDto;
   orderIndex: number;
   statusRaw: string;
-  statusLabel: string;
   progressPercent: number;
   evaluations: EvaluationDto[];
   averageScore: number | null;
@@ -52,6 +52,7 @@ interface StageCard {
   styleUrls: ['./trainee-profile.css'],
 })
 export class AdminTraineeProfile implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   isLoading = signal<boolean>(true);
   loadError = signal<string | null>(null);
 
@@ -182,9 +183,8 @@ export class AdminTraineeProfile implements OnInit {
 
   // خرائط الترجمة
   statusLabels = TRAINEE_STATUS_LABELS;
-  warningTypeLabels = WARNING_TYPE_LABELS;
-  warningLevelLabels = WARNING_LEVEL_LABELS;
-  evaluationTypeLabels = EVALUATION_TYPE_LABELS;
+  readonly warningTypes = inject(NafadhWarningTypesService);
+  readonly evaluationTypes = inject(NafadhEvaluationTypesService);
   enrollmentStatusLabels = ENROLLMENT_STATUS_LABELS;
 
   // قيم محسوبة (computed)
@@ -222,16 +222,9 @@ export class AdminTraineeProfile implements OnInit {
     return id ? `#${String(id).padStart(4, '0')}` : '';
   });
 
+  readonly latestRequestStatus = signal<string | number | null>(null);
+
   enrollmentStatusLabel = computed(() => {
-    if (this.withdrawalStatus() === 'Approved' || this.enrollment()?.completionStatus === 'Dropped') {
-      return 'منسحب (معتمد من الهيئة - الحساب موقوف)';
-    }
-    if (this.withdrawalStatus() === 'Pending') {
-      return 'طلب انسحاب قيد المراجعة';
-    }
-    if (this.withdrawalStatus() === 'Rejected') {
-      return 'قيد التدريب (تم رفض الانسحاب)';
-    }
     const s = this.enrollment()?.completionStatus as EnrollmentCompletionStatus | undefined;
     return s ? (this.enrollmentStatusLabels[s] ?? s) : 'قيد التدريب';
   });
@@ -271,8 +264,14 @@ export class AdminTraineeProfile implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_WDR_STAT', 'NFD_WRN_LVL', 'NFD_MOD_STAT');
+    this.warningTypes.refresh();
+    this.evaluationTypes.refresh();
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
+      this.api.getTraineeWithdrawalRequests(id).pipe(catchError(() => of([]))).subscribe(requests => {
+        this.latestRequestStatus.set(requests[0]?.status ?? null);
+      });
       this.loadProfileData(id);
     } else {
       this.isLoading.set(false);
@@ -431,7 +430,7 @@ export class AdminTraineeProfile implements OnInit {
 
   evalTypeLabel(type: string | undefined | null): string {
     if (!type) return 'تقييم';
-    return (this.evaluationTypeLabels as Record<string, string>)[type] ?? type;
+    return this.evaluationTypes.label(type);
   }
 
   private getUnifiedStorageMessages(traineeId: number): { sender: string; text: string; date: string; isAdmin: boolean }[] {
@@ -795,8 +794,8 @@ export class AdminTraineeProfile implements OnInit {
 
   private processAttendance(rows: RawAttendanceRow[]): void {
     const list = rows || [];
-    const present = list.filter((r) => String(r.status) === 'Present').length;
-    const absent = list.filter((r) => String(r.status) === 'Absent').length;
+    const present = list.filter((r) => traineeAttendanceKey(r.status) === 'Present').length;
+    const absent = list.filter((r) => traineeAttendanceKey(r.status) === 'Absent').length;
     const late = list.filter((r) => !!r.isLate).length;
     const total = list.length;
 
@@ -828,7 +827,7 @@ export class AdminTraineeProfile implements OnInit {
 
     const cards: StageCard[] = sortedModules.map((m) => {
       const progress = progressByModule.get(m.moduleId);
-      const statusRaw = String(progress?.status ?? 'NotStarted');
+      const statusRaw = moduleProgressKey(progress?.status ?? 'NotStarted');
       const moduleEvals = (evalsByModule.get(m.moduleId) ?? []).sort(
         (a, b) => new Date(b.evaluationDate).getTime() - new Date(a.evaluationDate).getTime()
       );
@@ -847,7 +846,6 @@ export class AdminTraineeProfile implements OnInit {
         module: m,
         orderIndex: m.orderIndex,
         statusRaw,
-        statusLabel: MODULE_PROGRESS_LABELS[statusRaw as ModuleProgressStatus] ?? statusRaw,
         progressPercent,
         evaluations: moduleEvals,
         averageScore: avg,

@@ -333,6 +333,16 @@ export class TrainerApi {
 
   constructor(private http: HttpClient) { }
 
+  /** Active question-difficulty labels from Training via Nafadh's read-only gateway. */
+  getQuestionDifficultyConstants(): Observable<{
+    Data: { rows: Array<{ id: string; label_ar: string; label_en: string; IsActive: boolean }> };
+  }> {
+    return this.http.get<{
+      Data: { rows: Array<{ id: string; label_ar: string; label_en: string; IsActive: boolean }> };
+    }>(`${this.base}/management/lookups/question-difficulties`);
+  }
+
+
   // =====================================================
   // Dashboard / Batches
   // =====================================================

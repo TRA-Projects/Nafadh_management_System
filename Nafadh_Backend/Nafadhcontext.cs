@@ -82,6 +82,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_TrainerCertificate> NFD_TrainerCertificates { get; set; }
         public DbSet<NFD_Report> NFD_Reports { get; set; }
         public DbSet<NFD_SystemSetting> NFD_SystemSettings { get; set; }
+        public virtual DbSet<SystemVariable> SystemVariables { get; set; }
         public DbSet<NFD_TraineePayment> NFD_TraineePayments { get; set; }
         public DbSet<NFD_QuizQuestion> NFD_QuizQuestions { get; set; }
 
@@ -127,6 +128,52 @@ namespace Nafadh_Backend
         {
 
             base.OnModelCreating(modelBuilder);
+
+            // ---- SystemVariables ----
+            modelBuilder.Entity<SystemVariable>(entity =>
+            {
+                entity.ToTable("SystemVariables", "dbo");
+
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.VariableKey)
+                    .HasMaxLength(64)
+                    .IsRequired();
+
+                entity.Property(e => e.VariableName)
+                    .HasMaxLength(256)
+                    .IsRequired();
+
+                entity.Property(e => e.ValueType)
+                    .HasMaxLength(32)
+                    .IsRequired();
+
+                entity.Property(e => e.Value)
+                    .IsRequired();
+
+                entity.Property(e => e.Description)
+                    .HasMaxLength(512);
+
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnType("datetime2")
+                    .IsRequired();
+
+                entity.Property(e => e.UpdatedAt)
+                    .HasColumnType("datetime2")
+                    .IsRequired();
+
+                entity.Property(e => e.DescriptionAr)
+                    .HasMaxLength(512);
+
+                entity.Property(e => e.DescriptionEn)
+                    .HasMaxLength(512);
+
+                entity.Property(e => e.VariableNameAr)
+                    .HasMaxLength(256);
+
+                entity.Property(e => e.VariableNameEn)
+                    .HasMaxLength(256);
+            });
 
             // ---- NFD_User ----
             modelBuilder.Entity<NFD_User>(entity =>

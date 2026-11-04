@@ -1,4 +1,6 @@
-import {
+import { administrativeValue } from '../../../../core/models/administrative-constants';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { inject,
   Component,
   OnInit,
   signal,
@@ -8,12 +10,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, firstValueFrom } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { TraineeApi } from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
-
+import { SystemVariablesService } from '../../../../services/system-variables.service';
 import {
   ConversationDetailDto,
   ConversationListItemDto,
@@ -41,6 +43,7 @@ type SupportTab = 'messages' | 'batch';
   styleUrl: './support.scss'
 })
 export class TraineeSupport implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
 
   // =========================================================
   // Active Tab
@@ -136,7 +139,11 @@ export class TraineeSupport implements OnInit {
   // =========================================================
 
   selectedFile: File | null = null;
-
+  allowedExtensions = signal<string[]>([]);
+maxAttachmentSizeMb = signal<number>(0);
+attachmentSettingsLoaded = signal(false);
+attachmentSizeError = signal('');
+attachmentTypeError = signal('');
 
   // =========================================================
   // Authority Subjects
@@ -211,15 +218,51 @@ export class TraineeSupport implements OnInit {
   // Constructor & Init
   // =========================================================
 
-  constructor(
-    private api: TraineeApi,
-    public auth: AuthService
-  ) {}
+ constructor(
+  private api: TraineeApi,
+  public auth: AuthService,
+  private systemVariablesService: SystemVariablesService
+) {}
+ngOnInit(): void {
+  this.constants.ensure('NFD_WDR_STAT', 'NFD_TIC_STAT');
+  this.loadConversations();
+  this.loadCurrentTraineeData();
+  this.loadAttachmentSettings();
+}
+private async loadAttachmentSettings(): Promise<void> {
+  this.attachmentSettingsLoaded.set(false);
 
-  ngOnInit(): void {
-    this.loadConversations();
-    this.loadCurrentTraineeData();
+  try {
+    const [extensions, maxSize, sizeError, typeError] =
+      await Promise.all([
+        firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
+        firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb()),
+        firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_SIZE_ERROR')),
+        firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_TYPE_ERROR'))
+      ]);
+
+    if (extensions.length === 0 || maxSize <= 0) {
+      throw new Error('Invalid attachment settings');
+    }
+
+    this.allowedExtensions.set(extensions);
+    this.maxAttachmentSizeMb.set(maxSize);
+    this.attachmentSizeError.set(sizeError);
+    this.attachmentTypeError.set(typeError);
+    this.attachmentSettingsLoaded.set(true);
+
+  } catch (error) {
+    console.error('فشل تحميل إعدادات المرفقات:', error);
+
+    this.allowedExtensions.set([]);
+    this.maxAttachmentSizeMb.set(0);
+    this.attachmentSettingsLoaded.set(false);
+
+    this.errorMessage.set(
+      'تعذر تحميل إعدادات المرفقات، يرجى تحديث الصفحة والمحاولة مجددًا'
+    );
   }
+}
 
 
   // =========================================================
@@ -243,8 +286,7 @@ export class TraineeSupport implements OnInit {
   // =========================================================
 
   isWithdrawalRequest(conversation: any): boolean {
-    if (!conversation) return false;
-    return String(conversation?.subject ?? '').trim() === 'طلب انسحاب';
+    return conversation?.isWithdrawal === true && conversation.originalRequest != null;
   }
 
   getWithdrawalStatus(
@@ -252,21 +294,13 @@ export class TraineeSupport implements OnInit {
   ): 'pending' | 'approved' | 'rejected' | null {
     if (!this.isWithdrawalRequest(conversation)) return null;
 
-    let req: any = conversation.originalRequest;
-
-    if (!req) {
-      const requests = this.withdrawalRequests();
-      req = requests && requests.length > 0 ? requests[0] : null;
-    }
-
-    if (!req) return 'pending';
-
-    const statusStr = String(req.status).toLowerCase();
-
-    if (statusStr === '1' || statusStr === 'approved') return 'approved';
-    if (statusStr === '2' || statusStr === 'rejected') return 'rejected';
-
-    return 'pending';
+    const req = conversation.originalRequest;
+    if (!req) return null;
+    const key = administrativeValue('NFD_WDR_STAT', req.status)?.key;
+    if (key === 'Pending') return 'pending';
+    if (key === 'Approved') return 'approved';
+    if (key === 'Rejected') return 'rejected';
+    return null;
   }
 
   // =========================================================
@@ -521,7 +555,7 @@ export class TraineeSupport implements OnInit {
           subject: 'طلب انسحاب',
           receiverType: 'Authority',
           messages: messages,
-          withdrawalStatus: this.getWithdrawalStatus({ originalRequest: req }),
+          originalRequest: req,
           isWithdrawal: true
         } as any);
       }
@@ -944,100 +978,76 @@ export class TraineeSupport implements OnInit {
   // =========================================================
   // File & Form Helpers
   // =========================================================
+onReceiverChange(): void {
+  this.newConv.trainerId = null;
+  this.newConv.subject = '';
+  this.newConv.note = '';
+  this.newConv.firstMessage = '';
+  this.selectedFile = null;
+  this.errorMessage.set('');
+}
 
+formatFileSize(bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+removeFile(event: Event): void {
+  event.preventDefault();
+  event.stopPropagation();
+
+  this.selectedFile = null;
+  this.errorMessage.set('');
+}
   onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
+  const input = event.target as HTMLInputElement;
+  if (!input.files || input.files.length === 0) return;
 
-    const file = input.files[0];
-    const maxSize = 10 * 1024 * 1024;
+  this.selectedFile = null;
 
-    if (file.size > maxSize) {
-      this.errorMessage.set('حجم الملف يجب ألا يتجاوز 10MB');
-      this.selectedFile = null;
-      input.value = '';
-      return;
-    }
-
-    const allowedTypes = [
-      'application/pdf',
-      'image/png',
-      'image/jpeg'
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-      this.errorMessage.set('يسمح فقط بصورة PNG أو JPG أو JPEG أو ملف PDF');
-      this.selectedFile = null;
-      input.value = '';
-      return;
-    }
-
-    this.errorMessage.set('');
-    this.selectedFile = file;
+  if (!this.attachmentSettingsLoaded()) {
+    this.errorMessage.set('إعدادات المرفقات غير متاحة حاليًا');
+    input.value = '';
+    return;
   }
 
+  const file = input.files[0];
+  const maxSizeMb = this.maxAttachmentSizeMb();
+  const maxSize = maxSizeMb * 1024 * 1024;
 
-  removeFile(event?: Event): void {
-    if (event) event.stopPropagation();
-    this.selectedFile = null;
-  }
-
-
-  formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 KB';
-    const kb = bytes / 1024;
-    if (kb < 1024) return `${kb.toFixed(1)} KB`;
-    return `${(kb / 1024).toFixed(2)} MB`;
-  }
-
-  onReceiverChange(): void {
-    this.newConv.subject = '';
-    this.newConv.note = '';
-    this.newConv.firstMessage = '';
-    this.newConv.trainerId = null;
-    this.selectedFile = null;
-    this.errorMessage.set('');
-  }
-
-
-  private getSelectedTrainer(): TrainerDto | undefined {
-    const trainerId = this.newConv.trainerId;
-    if (!trainerId) return undefined;
-    return this.trainers().find(
-      t => Number(t.trainerId) === Number(trainerId)
+  if (file.size > maxSize) {
+    this.errorMessage.set(
+      this.attachmentSizeError()
+        .replace('{maxSize}', String(maxSizeMb))
     );
+    input.value = '';
+    return;
   }
 
+  const extension = file.name
+    .split('.')
+    .pop()
+    ?.toLowerCase() ?? '';
 
-  getReceiverLabel(conversation: any): string {
-    if (!conversation) return '';
-    const raw =
-      conversation?.receiverType ??
-      conversation?.recipientType ??
-      conversation?.targetType ??
-      '';
-    const receiverType = String(raw).trim().toLowerCase();
+  const allowed = this.allowedExtensions()
+    .map(ext => ext.replace(/^\./, '').toLowerCase());
 
-    if (receiverType.includes('authority') || receiverType.includes('هيئة')) {
-      return 'هيئة تنظيم الاتصالات';
-    }
-    if (receiverType.includes('trainer') || receiverType.includes('مدرب')) {
-      const name =
-        conversation?.receiverTrainerName ??
-        conversation?.trainerName ??
-        '';
-      return name ? String(name) : 'المدرب';
-    }
-    if (receiverType.includes('company') || receiverType.includes('شركة')) {
-      const name =
-        conversation?.receiverCompanyName ??
-        conversation?.companyName ??
-        this.companyName();
-      return name ? `الشركة - ${name}` : 'الشركة';
-    }
-    return '';
+  if (!allowed.includes(extension)) {
+    this.errorMessage.set(this.attachmentTypeError());
+    input.value = '';
+    return;
   }
 
+  this.errorMessage.set('');
+  this.selectedFile = file;
+}
 
   // =========================================================
   // Validate
@@ -1112,6 +1122,15 @@ export class TraineeSupport implements OnInit {
   // Submit Logic
   // =========================================================
 
+  private getSelectedTrainer(): TrainerDto | undefined {
+  const trainerId = this.newConv.trainerId;
+
+  if (!trainerId) return undefined;
+
+  return this.trainers().find(
+    t => Number(t.trainerId) === Number(trainerId)
+  );
+}
   startConversation(): void {
     if (this.isSubmitting()) return;
 
@@ -1175,6 +1194,10 @@ export class TraineeSupport implements OnInit {
         ? this.newConv.note.trim()
         : this.newConv.firstMessage.trim();
 
+        if (this.selectedFile && !this.attachmentSettingsLoaded()) {
+  this.errorMessage.set('إعدادات المرفقات غير متاحة حاليًا');
+  return;
+}
     const payload = {
       type: 'TraineeComplaint',
       receiverType: this.newConv.receiverType,

@@ -4,19 +4,24 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Nafadh_Backend.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.Services
 {
     public class JwtTokenService : IJwtTokenService
     {
         private readonly IConfiguration _configuration;
+        private readonly Nafadhcontext _context;
 
-        public JwtTokenService(IConfiguration configuration)
+        public JwtTokenService(
+            IConfiguration configuration,
+            Nafadhcontext context)
         {
             _configuration = configuration;
+            _context = context;
         }
 
-        public (string Token, DateTime ExpiresAtUtc) GenerateToken(NFD_User user)
+        public async Task<(string Token, DateTime ExpiresAtUtc)> GenerateTokenAsync(NFD_User user)
         {
             var jwtSection = _configuration.GetSection("Jwt");
             var key = jwtSection["Key"]
@@ -24,6 +29,17 @@ namespace Nafadh_Backend.Services
             var issuer = jwtSection["Issuer"];
             var audience = jwtSection["Audience"];
             var expiryMinutes = jwtSection.GetValue<int?>("ExpiryMinutes") ?? 60;
+
+            var setting = await _context.SystemVariables
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v => v.VariableKey == "SessionTimeoutMinutes");
+
+            if (setting != null &&
+                int.TryParse(setting.Value, out int configuredMinutes) &&
+                configuredMinutes > 0)
+            {
+                expiryMinutes = configuredMinutes;
+            }
 
             var claims = new List<Claim>
             {

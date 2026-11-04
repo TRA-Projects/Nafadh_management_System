@@ -1,9 +1,13 @@
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
-using Nafadh_Backend.Enums;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 
 namespace Nafadh_Backend.Services
 {
@@ -11,14 +15,16 @@ namespace Nafadh_Backend.Services
     {
         private readonly ITraineeRepository _repository;
         private readonly IConfiguration _configuration;
+        private readonly Nafadhcontext _context;
 
         public TraineeService(
             ITraineeRepository repository,
-            IConfiguration configuration
-        )
+            IConfiguration configuration,
+            Nafadhcontext context)
         {
             _repository = repository;
             _configuration = configuration;
+            _context = context;
         }
 
         public Task<(List<NFD_Trainee> Items, int TotalCount)> GetAllAsync(
@@ -35,8 +41,7 @@ namespace Nafadh_Backend.Services
                 university,
                 searchTerm,
                 pageNumber,
-                pageSize
-            );
+                pageSize);
         }
 
         public Task<NFD_Trainee?> GetByIdAsync(int id)
@@ -79,212 +84,131 @@ namespace Nafadh_Backend.Services
             _repository.Update(trainee);
         }
 
-
         // =====================================================
         // UPLOAD TRAINEE PROFILE IMAGE
         // =====================================================
 
         public async Task<string?> UploadProfileImageAsync(
             int traineeId,
-            IFormFile file
-        )
+            IFormFile file)
         {
-            // ---------------------------------------------
             // Find trainee
-            // ---------------------------------------------
-
-            var trainee =
-                await _repository.GetByIdAsync(
-                    traineeId
-                );
+            var trainee = await _repository.GetByIdAsync(traineeId);
 
             if (trainee == null)
             {
                 return null;
             }
 
-
-            // ---------------------------------------------
-            // Validate uploaded file
-            // ---------------------------------------------
-
-            if (
-                file == null ||
-                file.Length == 0
-            )
+            // Validate file
+            if (file == null || file.Length == 0)
             {
                 throw new ArgumentException(
-                    "Profile image is required."
-                );
+                    "Profile image is required.");
+            }
+            // Read maximum attachment size from system settings
+            var setting = await _context.SystemVariables
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v =>
+                    v.VariableKey == "ATTACHMENT_MAX_SIZE_MB");
+
+            if (setting == null ||
+                !int.TryParse(setting.Value, out int maxSizeMB) ||
+                maxSizeMB <= 0)
+            {
+                throw new InvalidOperationException(
+                    "Attachment size setting is missing or invalid.");
             }
 
-
-            // Maximum allowed size: 5 MB
-            const long maxFileSize =
-                5 * 1024 * 1024;
+            long maxFileSize = (long)maxSizeMB * 1024 * 1024;
 
             if (file.Length > maxFileSize)
             {
                 throw new ArgumentException(
-                    "Profile image cannot exceed 5 MB."
-                );
+                   $"Profile image cannot exceed {maxSizeMB} MB.");
             }
 
-
-            // ---------------------------------------------
-            // Validate file extension
-            // ---------------------------------------------
-
-            var extension =
-                Path.GetExtension(
-                    file.FileName
-                )
+            // Validate extension
+            var extension = Path.GetExtension(file.FileName)
                 .ToLowerInvariant();
 
-            var allowedExtensions =
-                new HashSet<string>
-                {
-                    ".jpg",
-                    ".jpeg",
-                    ".png",
-                    ".webp"
-                };
+            var allowedExtensions = new HashSet<string>
+            {
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".webp"
+            };
 
-            if (
-                !allowedExtensions.Contains(
-                    extension
-                )
-            )
+            if (!allowedExtensions.Contains(extension))
             {
                 throw new ArgumentException(
-                    "Only JPG, JPEG, PNG and WEBP images are allowed."
-                );
+                    "Only JPG, JPEG, PNG and WEBP images are allowed.");
             }
 
-
-            // ---------------------------------------------
             // Validate content type
-            // ---------------------------------------------
+            var allowedContentTypes = new HashSet<string>
+            {
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            };
 
-            var allowedContentTypes =
-                new HashSet<string>
-                {
-                    "image/jpeg",
-                    "image/png",
-                    "image/webp"
-                };
-
-            if (
-                !allowedContentTypes.Contains(
-                    file.ContentType.ToLowerInvariant()
-                )
-            )
+            if (!allowedContentTypes.Contains(
+                file.ContentType.ToLowerInvariant()))
             {
                 throw new ArgumentException(
-                    "Invalid image type."
-                );
+                    "Invalid image type.");
             }
 
+            // Storage folder
+            var storagePath = _configuration[
+                "Storage:TraineeProfileImagesPath"];
 
-            // ---------------------------------------------
-            // Get physical storage folder
-            // ---------------------------------------------
-
-            var storagePath =
-                _configuration[
-                    "Storage:TraineeProfileImagesPath"
-                ];
-
-            if (
-                string.IsNullOrWhiteSpace(
-                    storagePath
-                )
-            )
+            if (string.IsNullOrWhiteSpace(storagePath))
             {
                 throw new InvalidOperationException(
-                    "Trainee profile image storage path is not configured."
-                );
+                    "Trainee profile image storage path is not configured.");
             }
 
-            Directory.CreateDirectory(
-                storagePath
-            );
+            Directory.CreateDirectory(storagePath);
 
-
-            // ---------------------------------------------
-            // Get public request path
-            // ---------------------------------------------
-
-            var requestPath =
-                _configuration[
-                    "Storage:TraineeProfileImagesRequestPath"
-                ]
+            // Public request path
+            var requestPath = _configuration[
+                "Storage:TraineeProfileImagesRequestPath"]
                 ?? "/uploads/trainee-profiles";
 
-            requestPath =
-                requestPath.TrimEnd('/');
+            requestPath = requestPath.TrimEnd('/');
 
-
-            // ---------------------------------------------
-            // Generate unique filename
-            // ---------------------------------------------
-
+            // Unique filename
             var fileName =
                 $"trainee-{traineeId}-{Guid.NewGuid():N}{extension}";
 
-            var fullPath =
-                Path.Combine(
-                    storagePath,
-                    fileName
-                );
+            var fullPath = Path.Combine(storagePath, fileName);
 
-            var oldProfileImageUrl =
-                trainee.ProfileImageUrl;
+            var oldProfileImageUrl = trainee.ProfileImageUrl;
 
-
-            // ---------------------------------------------
-            // Save new physical image
-            // ---------------------------------------------
-
-            await using (
-                var stream =
-                    new FileStream(
-                        fullPath,
-                        FileMode.CreateNew
-                    )
-            )
+            // Save new file
+            await using (var stream = new FileStream(
+                fullPath,
+                FileMode.CreateNew))
             {
-                await file.CopyToAsync(
-                    stream
-                );
+                await file.CopyToAsync(stream);
             }
 
+            // Build URL
+            var profileImageUrl = $"{requestPath}/{fileName}";
 
-            // ---------------------------------------------
-            // Build public URL
-            // ---------------------------------------------
+            trainee.ProfileImageUrl = profileImageUrl;
 
-            var profileImageUrl =
-                $"{requestPath}/{fileName}";
+            _repository.Update(trainee);
 
-            trainee.ProfileImageUrl =
-                profileImageUrl;
-
-            _repository.Update(
-                trainee
-            );
-
-
-            // ---------------------------------------------
-            // Save database changes safely
-            // ---------------------------------------------
-
+            // Save database
             bool saved;
 
             try
             {
-                saved =
-                    await _repository.SaveChangesAsync();
+                saved = await _repository.SaveChangesAsync();
             }
             catch
             {
@@ -293,12 +217,10 @@ namespace Nafadh_Backend.Services
                     File.Delete(fullPath);
                 }
 
-                trainee.ProfileImageUrl =
-                    oldProfileImageUrl;
+                trainee.ProfileImageUrl = oldProfileImageUrl;
 
                 throw;
             }
-
 
             if (!saved)
             {
@@ -307,41 +229,22 @@ namespace Nafadh_Backend.Services
                     File.Delete(fullPath);
                 }
 
-                trainee.ProfileImageUrl =
-                    oldProfileImageUrl;
+                trainee.ProfileImageUrl = oldProfileImageUrl;
 
                 throw new InvalidOperationException(
-                    "Could not save trainee profile image."
-                );
+                    "Could not save trainee profile image.");
             }
 
-
-            // ---------------------------------------------
-            // Delete previous profile image
-            // ---------------------------------------------
-
-            if (
-                !string.IsNullOrWhiteSpace(
-                    oldProfileImageUrl
-                )
-            )
+            // Delete previous image
+            if (!string.IsNullOrWhiteSpace(oldProfileImageUrl))
             {
                 var oldFileName =
-                    Path.GetFileName(
-                        oldProfileImageUrl
-                    );
+                    Path.GetFileName(oldProfileImageUrl);
 
-                if (
-                    !string.IsNullOrWhiteSpace(
-                        oldFileName
-                    )
-                )
+                if (!string.IsNullOrWhiteSpace(oldFileName))
                 {
                     var oldFullPath =
-                        Path.Combine(
-                            storagePath,
-                            oldFileName
-                        );
+                        Path.Combine(storagePath, oldFileName);
 
                     if (File.Exists(oldFullPath))
                     {
@@ -350,10 +253,8 @@ namespace Nafadh_Backend.Services
                 }
             }
 
-
             return profileImageUrl;
         }
-
 
         // =====================================================
         // UPLOAD TRAINEE CV
@@ -361,142 +262,97 @@ namespace Nafadh_Backend.Services
 
         public async Task<string?> UploadResumeAsync(
             int traineeId,
-            IFormFile file
-        )
+            IFormFile file)
         {
-            // ---------------------------------------------
-            // Find trainee
-            // ---------------------------------------------
+            // Validate file first
+            if (file == null || file.Length == 0)
+            {
+                throw new ArgumentException(
+                    "CV file is required.");
+            }
 
-            var trainee =
-                await _repository.GetByIdAsync(
-                    traineeId
-                );
+            // Read attachment size from database
+            var setting = await _context.SystemVariables
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v =>
+                    v.VariableKey == "ATTACHMENT_MAX_SIZE_MB");
+
+            if (setting == null ||
+                !int.TryParse(setting.Value, out int maxSizeMB) ||
+                maxSizeMB <= 0)
+            {
+                throw new InvalidOperationException(
+                    "Attachment size setting is missing or invalid.");
+            }
+
+            long maxFileSize = (long)maxSizeMB * 1024 * 1024;
+
+            if (file.Length > maxFileSize)
+            {
+                throw new ArgumentException(
+                    $"CV file cannot exceed {maxSizeMB} MB.");
+            }
+
+            // Validate CV extension
+            var extension = Path.GetExtension(file.FileName)
+                .ToLowerInvariant();
+
+            var allowedCvExtensions = new HashSet<string>
+            {
+                ".pdf",
+                ".doc",
+                ".docx"
+            };
+
+            if (!allowedCvExtensions.Contains(extension))
+            {
+                throw new ArgumentException(
+                    "Only PDF, DOC and DOCX files are allowed for CV.");
+            }
+
+            // Find trainee after validation
+            var trainee = await _repository.GetByIdAsync(traineeId);
 
             if (trainee == null)
             {
                 return null;
             }
 
+            // CV storage folder
+            var uploadsFolder = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                "uploads",
+                "cv");
 
-            // ---------------------------------------------
-            // Validate file
-            // ---------------------------------------------
+            Directory.CreateDirectory(uploadsFolder);
 
-            if (
-                file == null ||
-                file.Length == 0
-            )
-            {
-                throw new ArgumentException(
-                    "CV file is required."
-                );
-            }
-
-
-            // ---------------------------------------------
-            // Maximum allowed size: 10 MB
-            // ---------------------------------------------
-
-            const long maxFileSize =
-                10 * 1024 * 1024;
-
-            if (file.Length > maxFileSize)
-            {
-                throw new ArgumentException(
-                    "CV file cannot exceed 10 MB."
-                );
-            }
-
-
-            // ---------------------------------------------
-            // Get CV storage folder
-            // ---------------------------------------------
-
-            var uploadsFolder =
-                Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "wwwroot",
-                    "uploads",
-                    "cv"
-                );
-
-            if (!Directory.Exists(uploadsFolder))
-            {
-                Directory.CreateDirectory(
-                    uploadsFolder
-                );
-            }
-
-
-            // ---------------------------------------------
             // Generate unique filename
-            // ---------------------------------------------
-
-            var extension =
-                Path.GetExtension(
-                    file.FileName
-                );
-
             var fileName =
                 $"trainee-{traineeId}-{Guid.NewGuid():N}{extension}";
 
-            var filePath =
-                Path.Combine(
-                    uploadsFolder,
-                    fileName
-                );
+            var filePath = Path.Combine(
+                uploadsFolder,
+                fileName);
 
-
-            // ---------------------------------------------
-            // Save new CV file
-            // ---------------------------------------------
-
-            await using (
-                var stream =
-                    new FileStream(
-                        filePath,
-                        FileMode.Create
-                    )
-            )
+            // Save new CV
+            await using (var stream = new FileStream(
+                filePath,
+                FileMode.CreateNew))
             {
-                await file.CopyToAsync(
-                    stream
-                );
+                await file.CopyToAsync(stream);
             }
 
-
-            // ---------------------------------------------
             // Build public URL
-            // ---------------------------------------------
+            var resumeUrl = "/uploads/cv/" + fileName;
 
-            var resumeUrl =
-                "/uploads/cv/" + fileName;
-
-
-            // ---------------------------------------------
             // Keep old CV URL
-            // ---------------------------------------------
+            var oldResumeUrl = trainee.ResumeUrl;
 
-            var oldResumeUrl =
-                trainee.ResumeUrl;
+            // Update database
+            trainee.ResumeUrl = resumeUrl;
 
-
-            // ---------------------------------------------
-            // Update database value
-            // ---------------------------------------------
-
-            trainee.ResumeUrl =
-                resumeUrl;
-
-            _repository.Update(
-                trainee
-            );
-
-
-            // ---------------------------------------------
-            // Save database changes
-            // ---------------------------------------------
+            _repository.Update(trainee);
 
             try
             {
@@ -505,17 +361,8 @@ namespace Nafadh_Backend.Services
 
                 if (!saved)
                 {
-                    if (File.Exists(filePath))
-                    {
-                        File.Delete(filePath);
-                    }
-
-                    trainee.ResumeUrl =
-                        oldResumeUrl;
-
                     throw new InvalidOperationException(
-                        "Could not save trainee CV."
-                    );
+                        "Could not save trainee CV.");
                 }
             }
             catch
@@ -525,53 +372,31 @@ namespace Nafadh_Backend.Services
                     File.Delete(filePath);
                 }
 
-                trainee.ResumeUrl =
-                    oldResumeUrl;
+                trainee.ResumeUrl = oldResumeUrl;
 
                 throw;
             }
 
-
-            // ---------------------------------------------
-            // Delete old CV file
-            // ---------------------------------------------
-
-            if (
-                !string.IsNullOrWhiteSpace(
-                    oldResumeUrl
-                )
-            )
+            // Delete previous CV
+            if (!string.IsNullOrWhiteSpace(oldResumeUrl))
             {
                 var oldFileName =
-                    Path.GetFileName(
-                        oldResumeUrl
-                    );
+                    Path.GetFileName(oldResumeUrl);
 
-                if (
-                    !string.IsNullOrWhiteSpace(
-                        oldFileName
-                    )
-                )
+                if (!string.IsNullOrWhiteSpace(oldFileName))
                 {
                     var oldFilePath =
-                        Path.Combine(
-                            uploadsFolder,
-                            oldFileName
-                        );
+                        Path.Combine(uploadsFolder, oldFileName);
 
                     if (File.Exists(oldFilePath))
                     {
-                        File.Delete(
-                            oldFilePath
-                        );
+                        File.Delete(oldFilePath);
                     }
                 }
             }
 
-
             return resumeUrl;
         }
-
 
         // =====================================================
         // SAVE CHANGES
@@ -582,18 +407,14 @@ namespace Nafadh_Backend.Services
             return _repository.SaveChangesAsync();
         }
 
-
         // =====================================================
         // GET TRAINEE BY USER ID
         // =====================================================
 
         public async Task<NFD_Trainee?> GetTraineeIdByUserID(
-            int userId
-        )
+            int userId)
         {
-            return await _repository.GetTraineeIdByUserID(
-                userId
-            );
+            return await _repository.GetTraineeIdByUserID(userId);
         }
     }
 }

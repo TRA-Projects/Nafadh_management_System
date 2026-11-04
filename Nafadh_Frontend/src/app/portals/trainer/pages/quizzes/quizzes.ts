@@ -1,3 +1,6 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { inject as injectCatalog } from '@angular/core';
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -44,11 +47,16 @@ interface QuizForm {
 @Component({
   selector: 'app-trainer-quizzes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './quizzes.html',
   styleUrl: './quizzes.scss'
 })
 export class TrainerQuizzes implements OnInit {
+  get quizChoices() {
+    return [{value: 'all', label: 'كل الاختبارات'}, ...this.constants.supportedChoices('NFD_QIZ_STAT', [{value: 'Draft', label: 'المسودات'}, {value: 'Scheduled', label: 'المجدولة'}, {value: 'Open', label: 'المفتوحة'}, {value: 'Closed', label: 'المغلقة'}, {value: 'Archived', label: 'المؤرشفة'}], true)];
+  }
+  readonly constants = injectCatalog(NafadhConstantsService);
+
   trainer = signal<TrainerDto | null>(null);
   batches = signal<TrainerBatchDto[]>([]);
   quizzes = signal<QuizDto[]>([]);
@@ -115,7 +123,9 @@ const matchesStatus =
     private api: TrainerApi,
     private auth: AuthService,
     private router: Router
-  ) { }
+  ) {
+    this.constants.ensure('NFD_QIZ_STAT');
+  }
 
   ngOnInit(): void {
     const userId = this.auth.session()?.userId;

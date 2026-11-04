@@ -1,3 +1,5 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -50,11 +52,12 @@ export function normalizeCategory(item: any): 'announcement' | 'alert' | 'compan
 @Component({
   selector: 'app-admin-notifications',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './notifications.html',
   styleUrl: './notifications.css',
 })
 export class AdminNotifications implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private readonly api = inject(AdminApi);
   private readonly auth = inject(AuthService);
   private readonly notificationsApi = inject(NotificationService);
@@ -186,7 +189,7 @@ export class AdminNotifications implements OnInit {
     });
   });
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void { this.constants.ensure('NFD_ANN_SCOPE'); this.load(); }
 
   loadPlanRequests(): void {
     // The approval queue is the source of truth. Notifications can be missed by
@@ -408,6 +411,14 @@ export class AdminNotifications implements OnInit {
     return 0;
   });
 
+  readonly scopeByAudience = {all:'Platform', admins:'Admin', trainers:'Trainer', companies:'Company', trainees:'Trainee'} as const;
+  get audienceChoices() {
+    return this.constants.supportedChoices('NFD_ANN_SCOPE', Object.values(this.scopeByAudience).map(value => ({value,label:value})));
+  }
+  chooseAudience(scope: string) {
+    const key = (Object.keys(this.scopeByAudience) as MainAudienceType[]).find(k => this.scopeByAudience[k] === scope);
+    if (key) this.setAudience(key);
+  }
   setAudience(aud: MainAudienceType) {
     this.newAnnounceData.mainAudience = aud;
     this.newAnnounceData.selectedCompanyIds = [];
@@ -525,6 +536,10 @@ export class AdminNotifications implements OnInit {
   // نشر الإعلان وتصدير البيانات
   // =========================================================================
  postAnnouncement(): void {
+    if (!this.constants.isSelectable('NFD_ANN_SCOPE', this.scopeByAudience[this.newAnnounceData.mainAudience])) {
+      alert('اختر نطاق إعلان مفعّلاً.');
+      return;
+    }
     if (!this.newAnnounceData.title.trim() || !this.newAnnounceData.content.trim() || this.posting()) {
       alert('يرجى تعبئة الحقول الإلزامية (العنوان، الرسالة)');
       return;
@@ -626,14 +641,6 @@ export class AdminNotifications implements OnInit {
     }
   }
 
-  getScopeLabel(scope?: string): string {
-    switch (scope) {
-      case 'companies': return 'الشركات المستضيفة';
-      case 'trainers': return 'المدربين';
-      case 'trainees': return 'المتدربين';
-      default: return 'كافة المستخدمين';
-    }
-  }
 
   trackById(_: number, item: NotificationViewModel): number { return item.notificationId; }
 

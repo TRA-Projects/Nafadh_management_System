@@ -1,3 +1,7 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { inject } from '@angular/core';
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
+import { traineeAttendanceKey } from '../../../../core/models/enums';
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -5,13 +9,14 @@ import { firstValueFrom, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { TraineeApi } from '../../services/trainee-api';
+import { SystemVariablesService } from '../../../../services/system-variables.service';
 import { ATTENDANCE_STATUS_LABELS } from '../../../../core/models/enums';
 import { ExcuseDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-trainee-attendance',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './attendance.html',
   styleUrl: './attendance.scss',
 })
@@ -51,6 +56,12 @@ export class TraineeAttendance implements OnInit {
 
   selectedFileName = signal<string>('');
   selectedFile = signal<File | null>(null);
+  // Attachment settings from SystemVariables
+allowedExtensions = signal<string[]>([]);
+maxAttachmentSizeMb = signal<number>(0);
+attachmentSettingsLoaded = signal(false);
+attachmentSizeError = signal('');
+attachmentTypeError = signal('');
 
   // =========================================================
   // EXCUSES CACHE
@@ -72,18 +83,64 @@ export class TraineeAttendance implements OnInit {
 
   private popupTimer: any;
 
-  constructor(
-    private api: TraineeApi
-  ) {}
+ constructor(
+  private api: TraineeApi,
+  private systemVariablesService: SystemVariablesService
+) {}
 
   // =========================================================
   // INIT
   // =========================================================
 
+  readonly constants = inject(NafadhConstantsService);
+  get attendancePickerChoices() {
+    const rows = [{value:'Present',label:'حاضر'}, {value:'Late',label:'متأخر'}, {value:'Absent',label:'غائب'}] as const;
+    return [{value:'All' as const,label:'الكل',labelEn:'All'}, ...this.constants.supportedChoices('NFD_ATT_STAT',rows,true)];
+  }
   ngOnInit(): void {
+    this.constants.ensure('NFD_ATT_STAT');
     this.getLoggedInUserId();
     this.loadTraineeData();
+    this.loadAttachmentSettings();
   }
+
+  private async loadAttachmentSettings(): Promise<void> {
+    this.attachmentSettingsLoaded.set(false);
+
+    try {
+      const [
+        extensions,
+        maxSize,
+        sizeError,
+        typeError
+      ] = await Promise.all([
+        firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
+        firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb()),
+        firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_SIZE_ERROR')),
+        firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_TYPE_ERROR'))
+      ]);
+
+      this.attachmentSizeError.set(sizeError);
+      this.attachmentTypeError.set(typeError);
+
+      if (extensions.length === 0) {
+        throw new Error('No allowed attachment extensions configured');
+      }
+
+      this.allowedExtensions.set(extensions);
+      this.maxAttachmentSizeMb.set(maxSize);
+      this.attachmentSettingsLoaded.set(true);
+
+    } catch (error) {
+      console.error('خطأ في تحميل إعدادات المرفقات:', error);
+
+      this.allowedExtensions.set([]);
+      this.maxAttachmentSizeMb.set(0);
+      this.attachmentSettingsLoaded.set(false);
+    }
+  }
+  }
+}
 
   // =========================================================
   // ATTENDANCE FILTER FUNCTIONS
@@ -284,7 +341,7 @@ export class TraineeAttendance implements OnInit {
         date: item.date || item.attendanceDate,
         checkInTime: item.checkInTime || item.checkIn || item.clockIn,
         checkOutTime: item.checkOutTime || item.checkOut || item.clockOut,
-        status: item.status || item.attendanceStatus || 'Present',
+        status: traineeAttendanceKey(item.status ?? item.attendanceStatus) ?? (item.status ?? item.attendanceStatus ?? 'Present'),
         note: item.note || item.notes || item.remarks || '',
       }));
 
@@ -589,76 +646,70 @@ export class TraineeAttendance implements OnInit {
   // FILE
   // =========================================================
 
-  onFileSelected(
-    event: Event
-  ): void {
-    const input =
-      event.target as HTMLInputElement;
+onFileSelected(event: Event): void {
+  const input = event.target as HTMLInputElement;
 
-    if (
-      !input.files ||
-      input.files.length === 0
-    ) {
-      return;
-    }
-
-    const file =
-      input.files[0];
-
-    // Maximum file size: 5 MB
-    const maxFileSize =
-      5 * 1024 * 1024;
-
-    if (
-      file.size >
-      maxFileSize
-    ) {
-      this.openPopup(
-        'حجم المرفق يجب ألا يتجاوز 5 MB',
-        'error',
-        'تنبيه'
-      );
-
-      input.value = '';
-      this.selectedFileName.set('');
-      this.selectedFile.set(null);
-
-      return;
-    }
-
-    const allowedTypes = [
-      'application/pdf',
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-    ];
-
-    if (
-      !allowedTypes.includes(
-        file.type
-      )
-    ) {
-      this.openPopup(
-        'يسمح فقط بملفات PDF أو صور JPG و PNG و WEBP',
-        'error',
-        'تنبيه'
-      );
-
-      input.value = '';
-      this.selectedFileName.set('');
-      this.selectedFile.set(null);
-
-      return;
-    }
-
-    this.selectedFileName.set(
-      file.name
-    );
-
-    this.selectedFile.set(
-      file
-    );
+  if (!input.files || input.files.length === 0) {
+    return;
   }
+
+  // Clear the previous selected file
+  this.selectedFileName.set('');
+  this.selectedFile.set(null);
+
+  // Check whether system settings are available
+  if (!this.attachmentSettingsLoaded()) {
+    this.openPopup(
+      'تعذر تحميل إعدادات المرفقات، يرجى تحديث الصفحة والمحاولة مرة أخرى',
+      'error',
+      'تنبيه'
+    );
+
+    input.value = '';
+    return;
+  }
+
+  const file = input.files[0];
+
+  // Read maximum size from SystemVariables
+  const maxSizeMb = this.maxAttachmentSizeMb();
+  const maxFileSize = maxSizeMb * 1024 * 1024;
+
+if (file.size > maxFileSize) {
+  this.openPopup(
+    this.attachmentSizeError().replace(
+      '{maxSize}',
+      String(maxSizeMb)
+    ),
+    'error',
+    'تنبيه'
+  );
+
+  input.value = '';
+  return;
+}
+
+  // Read allowed extensions from SystemVariables
+  const allowedExtensions = this.allowedExtensions();
+  const fileExtension = file.name
+    .split('.')
+    .pop()
+    ?.toLowerCase() ?? '';
+
+if (!allowedExtensions.includes(fileExtension)) {
+  this.openPopup(
+    this.attachmentTypeError(),
+    'error',
+    'تنبيه'
+  );
+
+  input.value = '';
+  return;
+}
+
+  this.selectedFileName.set(file.name);
+  this.selectedFile.set(file);
+}
 
   // =========================================================
   // RESET EXCUSE FORM
@@ -721,6 +772,39 @@ export class TraineeAttendance implements OnInit {
 
     const proofFile =
       this.selectedFile();
+      if (proofFile) {
+  if (!this.attachmentSettingsLoaded()) {
+    this.openPopup(
+      'إعدادات المرفقات غير متاحة حالياً، يرجى المحاولة مرة أخرى',
+      'error',
+      'تنبيه'
+    );
+    return;
+  }
+
+  const extension = proofFile.name.split('.').pop()?.toLowerCase() ?? '';
+
+ if (proofFile.size > this.maxAttachmentSizeMb() * 1024 * 1024) {
+  this.openPopup(
+    this.attachmentSizeError().replace(
+      '{maxSize}',
+      String(this.maxAttachmentSizeMb())
+    ),
+    'error',
+    'تنبيه'
+  );
+  return;
+}
+
+if (!this.allowedExtensions().includes(extension)) {
+  this.openPopup(
+    this.attachmentTypeError(),
+    'error',
+    'تنبيه'
+  );
+  return;
+}
+}
 
     const currentDailyAttendanceId =
       row.dailyAttendanceId;

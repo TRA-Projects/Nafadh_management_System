@@ -16,11 +16,13 @@ namespace Nafadh_Backend.Services
         private readonly IEnrollmentRepository _enrollmentRepository;
         private readonly ICompanyProgramRepository _companyProgramRepository;
         private readonly Nafadhcontext _context;
-        public BatchService(IBatchRepository repository, IEnrollmentRepository enrollmentRepository, ICompanyProgramRepository companyProgramRepository, Nafadhcontext context)
+        private readonly ITrainingConstantsService _constants;
+        public BatchService(IBatchRepository repository, IEnrollmentRepository enrollmentRepository, ICompanyProgramRepository companyProgramRepository, Nafadhcontext context, ITrainingConstantsService constants)
         {
             _repository = repository;
             _enrollmentRepository = enrollmentRepository;
             _companyProgramRepository = companyProgramRepository;
+            _constants = constants;
             _context = context;
         }
 
@@ -94,6 +96,8 @@ namespace Nafadh_Backend.Services
             if (dto.EndDate.Date < dto.StartDate.Date)
                 throw new InvalidOperationException("مدة الدفعة غير صالحة.");
 
+            if (batch.Status != dto.Status)
+                await CatalogSelectionPolicy.RequireActiveAsync(_constants, dto.Status);
             var previousCompanyId = batch.CompanyId;
             var previousProgramId = batch.ProgramId;
             var assignmentChanged = previousCompanyId != dto.CompanyId ||

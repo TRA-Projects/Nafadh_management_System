@@ -1,3 +1,6 @@
+import { CatalogPicker } from '../../../../../core/models/catalog-picker';
+import { NafadhConstantsService } from '../../../../../core/services/nafadh-constants.service';
+
 import {
   Component,
   HostListener,
@@ -100,11 +103,13 @@ interface AnnouncementViewModel {
 @Component({
   selector: 'app-notification-templates-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './notification-templates-page.component.html',
   styleUrl: './notification-templates-page.component.css',
 })
 export class NotificationTemplatesPageComponent {
+  readonly constants = inject(NafadhConstantsService);
+  private readonly api = inject(AdminSystemApiService);
   private readonly templateApi = inject(NotificationTemplateApiService);
   private readonly announcementApi = inject(AnnouncementApiService);
   private readonly authService = inject(AuthService);
@@ -170,6 +175,10 @@ export class NotificationTemplatesPageComponent {
     { value: ANNOUNCEMENT_SCOPE.Company, label: 'الشركة' },
     { value: ANNOUNCEMENT_SCOPE.Batch, label: 'الدفعة' },
   ];
+
+  get scopeChoices() {
+    return this.constants.supportedChoices('NFD_ANN_SCOPE', this.announcementScopeOptions);
+  }
 
   // Template filters and pagination
   readonly hasActiveFilters = computed(
@@ -295,6 +304,7 @@ export class NotificationTemplatesPageComponent {
   });
 
   constructor() {
+    this.constants.ensure('NFD_ANN_SCOPE');
     this.loadTemplates();
     this.loadAnnouncements();
   }
@@ -586,19 +596,7 @@ export class NotificationTemplatesPageComponent {
   }
 
   getScopeLabel(scopeType: ScopeName | null): string {
-    switch (scopeType) {
-      case ANNOUNCEMENT_SCOPE.Platform:
-        return 'المنصة';
 
-      case ANNOUNCEMENT_SCOPE.Company:
-        return 'الشركة';
-
-      case ANNOUNCEMENT_SCOPE.Batch:
-        return 'الدفعة';
-
-      default:
-        return 'غير محدد';
-    }
   }
 
   // Opens the form in Add mode and resets its values.
@@ -701,6 +699,15 @@ export class NotificationTemplatesPageComponent {
     const scopeType = this.announcementScopeType();
     const scopeId = this.announcementScopeId();
     const editingId = this.editingAnnouncementId();
+    const original = editingId === null ? null : this.announcements().find(row => row.id === editingId);
+    if (editingId !== null && !original?.scopeType) {
+      this.announcementFormError.set('لا يمكن تعديل هذا الإعلان من نموذج لا يدعم نطاقه الأصلي.');
+      return;
+    }
+    if (original?.scopeType !== scopeType && !this.constants.isSelectable('NFD_ANN_SCOPE', scopeType)) {
+      this.announcementFormError.set('اختر نطاق إعلان مفعّلاً.');
+      return;
+    }
 
     this.announcementFormError.set('');
     this.announcementSuccessMessage.set('');

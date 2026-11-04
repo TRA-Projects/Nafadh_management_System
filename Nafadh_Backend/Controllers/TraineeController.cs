@@ -264,11 +264,11 @@ namespace Nafadh_Backend.Controllers
         [HttpPost("{id}/resume")]
         [RequirePagePermission(new[] { "nf.trainee.profile", "nf.admin.trainees" }, "Edit")]
         [Consumes("multipart/form-data")]
-        [RequestSizeLimit(10 * 1024 * 1024)]
+        [RequestSizeLimit(30 * 1024 * 1024)]
         public async Task<IActionResult> UploadResume(
-            int id,
-            [FromForm] IFormFile file
-        )
+    int id,
+    IFormFile file
+)
         {
             if (IsMineScopeOnly() && TryGetCurrentUserId(out var currentUserId))
             {

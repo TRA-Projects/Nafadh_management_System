@@ -53,24 +53,24 @@ namespace Nafadh_Backend.Repositories
         {
             var result = await _context.NFD_Enrollments
                 .Where(e => e.BatchId == batchId)
-                .Select(e => new TraineeCertificateStatusDTO
+                .Select(e => new {
+                    Enrollment = e,
+                    Certificate = _context.NFD_Certificates.Where(c => c.EnrollmentId == e.EnrollmentId)
+                        .OrderBy(c => c.CertificateId).Select(c => new { c.CertificateId, c.Type, c.FileUrl }).FirstOrDefault()
+                })
+                .Select(row => new TraineeCertificateStatusDTO
                 {
-                    TraineeId = e.TraineeId,
-                    EnrollmentId = e.EnrollmentId,
-                    FullName = e.Trainee.User.FullName,
-                    IsIssued = _context.NFD_Certificates.Any(c => c.EnrollmentId == e.EnrollmentId),
-                    CertificateId = _context.NFD_Certificates
-                        .Where(c => c.EnrollmentId == e.EnrollmentId)
-                        .Select(c => (int?)c.CertificateId)
-                        .FirstOrDefault(),
-                    FileUrl = _context.NFD_Certificates
-                        .Where(c => c.EnrollmentId == e.EnrollmentId)
-                        .Select(c => c.FileUrl)
-                        .FirstOrDefault(),
+                    TraineeId = row.Enrollment.TraineeId,
+                    EnrollmentId = row.Enrollment.EnrollmentId,
+                    FullName = row.Enrollment.Trainee.User.FullName,
+                    IsIssued = row.Certificate != null,
+                    CertificateId = row.Certificate == null ? null : row.Certificate.CertificateId,
+                    Type = row.Certificate == null ? null : row.Certificate.Type,
+                    FileUrl = row.Certificate == null ? null : row.Certificate.FileUrl,
 
                     // Type = Final (بُعد "الدرجة الإجمالية النهائية")، مو Period = Final (توقيت زمني)
                     Grade = _context.NFD_Evaluations
-                        .Where(ev => ev.EnrollmentId == e.EnrollmentId)
+                        .Where(ev => ev.EnrollmentId == row.Enrollment.EnrollmentId)
                         .Select(ev => (decimal?)ev.Score)
                         .Average()
                 })

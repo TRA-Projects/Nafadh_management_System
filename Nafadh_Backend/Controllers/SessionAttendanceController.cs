@@ -30,7 +30,9 @@ namespace Nafadh_Backend.Controllers
         [HttpPost("mark")]
         public async Task<IActionResult> MarkBulk([FromBody] MarkAttendanceBulkDto dto)
         {
-            var success = await _service.MarkBulkAsync(dto);
+            bool success = false;
+            var failure = await CatalogSelectionPolicy.CheckSelectionAsync(async () => { success = await _service.MarkBulkAsync(dto); });
+            if (failure is not null) return failure;
             if (!success) return BadRequest("No attendance records provided.");
             return Ok();
         }
@@ -38,7 +40,9 @@ namespace Nafadh_Backend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateSessionAttendanceDto dto)
         {
-            var success = await _service.UpdateAsync(id, dto);
+            bool success = false;
+            var failure = await CatalogSelectionPolicy.CheckSelectionAsync(async () => { success = await _service.UpdateAsync(id, dto); });
+            if (failure is not null) return failure;
             if (!success) return NotFound();
             return NoContent();
         }

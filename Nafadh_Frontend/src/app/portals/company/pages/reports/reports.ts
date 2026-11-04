@@ -1,3 +1,4 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 
 import { CommonModule } from '@angular/common';
 
@@ -100,6 +101,7 @@ interface ComparisonDepartment {
   styleUrls: ['./reports.scss']
 })
 export class ReportsComponent implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
 
   private readonly companyApi = inject(CompanyApi);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -227,6 +229,7 @@ export class ReportsComponent implements OnInit {
   // =====================================================
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_TSK_PRI');
 
     const id = this.auth.companyId;
 
@@ -1257,7 +1260,7 @@ export class ReportsComponent implements OnInit {
           'اسم المهمة': item.task,
           'البرنامج أو الدفعة': item.program,
           'تاريخ التسليم': item.due,
-          'الأولوية': item.priority,
+          'الأولوية': this.constants.administrativeLabel('NFD_TSK_PRI', item.priority),
           'الحالة': this.getTaskStatusText(item.status),
           'عدد التسليمات': item.submissionsCount
         }));

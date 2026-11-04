@@ -25,6 +25,11 @@ namespace Nafadh_Backend
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            // Allow training material uploads up to 200 MB
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MaxRequestBodySize = 220L * 1024 * 1024;
+            });
             QuestPDF.Settings.License = LicenseType.Community;
             QuestPDF.Settings.UseSystemFonts = true;
 
@@ -36,6 +41,7 @@ namespace Nafadh_Backend
             })
   .AddJsonOptions(options =>
   {
+      options.JsonSerializerOptions.Converters.Add(new Nafadh_Backend.DTOs.CatalogEnumConverter());
       // Serialize enums as strings instead of numbers
       options.JsonSerializerOptions.Converters.Add(
           new System.Text.Json.Serialization.JsonStringEnumConverter());
@@ -261,8 +267,6 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IQuizResultRepository, QuizResultRepository>();
 
             builder.Services.AddScoped<IQuizResultService, QuizResultService>();
-            builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
-            builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 
             builder.Services.AddScoped<IQuizAccessService, QuizAccessService>();
             builder.Services.AddScoped<IQuizProctoringService, QuizProctoringService>();
@@ -553,6 +557,9 @@ namespace Nafadh_Backend
             app.UseCors("AllowAll");
             app.UseStaticFiles();
             app.UseAuthentication();
+
+            app.UseMiddleware<Nafadh_Backend.Middleware.MaintenanceModeMiddleware>();
+
             app.UseAuthorization();
 
             app.MapControllers();

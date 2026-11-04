@@ -4,6 +4,9 @@
   <h2 class="min-w-0 text-xl font-bold text-black dark:text-white-light sm:text-2xl" i18n="@@jobseeker.admin.constants.pageTitle">
     Constants management
   </h2>
+  @if (editKeyError()) {
+    <p role="alert" class="text-danger">{{ editKeyError() }}</p>
+  }
 
   @if (catalogLoading()) {
     <p class="mt-3 text-sm text-white-dark" i18n="@@jobseeker.admin.constants.loadingGroups">
@@ -24,16 +27,8 @@
 
   <div class="relative z-50 flex flex-wrap items-center gap-3">
     <div class="min-w-[16rem] flex-1 sm:max-w-md">
-      <app-searchable-multi-select
-        mode="single"
-        [allowAddCustom]="false"
-        [required]="false"
-        [options]="lookupSelectOptions()"
-        [selectedValues]="selectedLookupValues()"
-        [searchPlaceholder]="lookupGroupPlaceholder"
-        [emptyText]="lookupEmptyText"
-        (selectionChange)="onLookupSelectionChange($event)"
-      />
+      <app-catalog-picker [options]="lookupSelectOptions()" [value]="selectedLookupCode()"
+        [caption]="lookupGroupPlaceholder" (valueChange)="onLookupSelectionChange($event ? [$event] : [])" />
     </div>
 
     @if (activeTab() === 'sub') {
@@ -51,7 +46,7 @@
       </div>
     }
 
-    @if (canManageSubRows()) {
+    @if (canManageSubRows() && !isFixedKeysGroup()) {
       <button
         type="button"
         class="btn btn-gradient inline-flex h-10 shrink-0 items-center gap-1 px-4 py-0 leading-none"
@@ -63,10 +58,25 @@
     }
   </div>
 
-  @if (isReadOnlyManagementGroup()) {
-    <p class="mt-3 text-sm text-white-dark" i18n="@@jobseeker.admin.constants.managementReferenceNote">
-      These are read-only reference values from Nafadh Training. Workflow state keys cannot be edited here.
-    </p>
+  @switch (policyHint()) {
+    @case ('priorityActivation') {
+      <p class="mt-3 text-sm text-white-dark">يمكن تعديل أسماء الأولويات. يمكن إيقاف أو إعادة تفعيل High وCritical فقط؛ تبقى القيم الافتراضية محمية.</p>
+    }
+    @case ('labelsOnly') {
+      <p class="mt-3 text-sm text-white-dark" i18n="@@jobseeker.admin.constants.labelsOnlyNote">
+        You can edit only the Arabic and English names of existing values. Keys and activation stay unchanged.
+      </p>
+    }
+    @case ('labelsAndActivation') {
+      <p class="mt-3 text-sm text-white-dark" i18n="@@jobseeker.admin.constants.fixedKeysNote">
+        You can edit the Arabic and English names of existing values. Activation changes only when you explicitly enable or disable a value.
+      </p>
+    }
+    @case ('readOnly') {
+      <p class="mt-3 text-sm text-white-dark" i18n="@@jobseeker.admin.constants.managementReferenceNote">
+        This group is read-only. You can view its values.
+      </p>
+    }
   }
 
   <div class="mt-4 rounded-xl border border-[#ebedf2] bg-white dark:border-[#191e3a] dark:bg-[#0e1726] md:overflow-hidden">
@@ -343,7 +353,7 @@
               </div>
             }
 
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2" [class.hidden]="isLabelsOnlyGroup() || (selectedLookupCode() === 'NFD_TSK_PRI' && !canEditPriorityActivation())">
               <span class="app-toggle">
                 <input type="checkbox" id="constantIsActive" formControlName="IsActive" />
                 <span class="app-toggle__track"></span>

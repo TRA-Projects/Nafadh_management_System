@@ -239,7 +239,7 @@
         <div class="plans-stats">
           <div class="plans-stat">
             <b>{{ plans.counts.pendingApproval }}</b>
-            <span>بانتظار اعتماد الهيئة</span>
+            <span>{{ constants.administrativeLabel('NFD_CPA_STAT', 'PendingApproval') }}</span>
           </div>
           <div class="plans-stat">
             <b>{{ plans.counts.inProgress }}</b>
@@ -251,7 +251,7 @@
           </div>
           <div class="plans-stat" [class.plans-stat-alert]="plans.counts.rejected > 0">
             <b>{{ plans.counts.rejected }}</b>
-            <span>مرفوضة وتحتاج تعديلًا</span>
+            <span>{{ constants.administrativeLabel('NFD_CPA_STAT', 'Rejected') }}</span>
           </div>
         </div>
 
@@ -536,7 +536,7 @@
                 </div>
 
                 <div class="warning-name">
-                  <b>{{ warning.type || 'إنذار' }}</b>
+                  <b>{{ warningTypes.label(warning.type) }}</b>
                   <span>{{ warning.traineeName || 'متدرب' }}</span>
                   <small>
                     #{{ warning.warningId }}

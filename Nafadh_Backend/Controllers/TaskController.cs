@@ -11,8 +11,11 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly ITaskService _service;
 
-        public TaskController(ITaskService service)
+        private readonly ITrainingConstantsService _constants;
+
+        public TaskController(ITaskService service, ITrainingConstantsService constants)
         {
+            _constants = constants;
             _service = service;
         }
 
@@ -92,6 +95,9 @@ namespace Nafadh_Backend.Controllers
         public async Task<IActionResult> AddTask(AddTaskDto dto)
         {
 
+            if (await CatalogSelectionPolicy.CheckSelectionAsync(() => CatalogSelectionPolicy.RequireActiveAsync(_constants, dto.Priority, HttpContext.RequestAborted)) is { } failure)
+                return failure;
+
             var task = new NFD_Task
             {
                 Title = dto.Title,
@@ -141,6 +147,10 @@ namespace Nafadh_Backend.Controllers
                 return NotFound("Task not found");
 
 
+
+            if (existingTask.Priority != dto.Priority &&
+                await CatalogSelectionPolicy.CheckSelectionAsync(() => CatalogSelectionPolicy.RequireActiveAsync(_constants, dto.Priority, HttpContext.RequestAborted)) is { } failure)
+                return failure;
 
             existingTask.Title = dto.Title;
             existingTask.Description = dto.Description;

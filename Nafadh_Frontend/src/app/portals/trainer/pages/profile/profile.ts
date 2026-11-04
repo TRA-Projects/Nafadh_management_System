@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { environment } from '../../../../../environments/environment';
+import { SystemVariablesService } from '../../../../services/system-variables.service';
 
 import {
   TrainerBatchDto,
@@ -267,7 +268,7 @@ certificateFileInput: HTMLInputElement | null = null;
 
   hasUnsavedChanges =
     signal(false);
-
+attachmentMaxSizeMb = signal(5);
 
   // =====================================================
   // EDIT MODE
@@ -363,22 +364,37 @@ certificateFileInput: HTMLInputElement | null = null;
   // CONSTRUCTOR
   // =====================================================
 
-  constructor(
-    private api: TrainerApi,
-    private auth: AuthService
-  ) { }
+constructor(
+  private api: TrainerApi,
+  private auth: AuthService,
+  private systemVariables: SystemVariablesService
+) {}
 
 
   // =====================================================
   // INIT
   // =====================================================
 
-  ngOnInit(): void {
+ ngOnInit(): void {
+  this.loadTrainer();
+  this.loadAttachmentSettings();
+}
+private loadAttachmentSettings(): void {
+  this.systemVariables
+    .getVariable('ATTACHMENT_MAX_SIZE_MB')
+    .subscribe({
+      next: (variable) => {
+        const size = Number(variable.value);
 
-    this.loadTrainer();
-
-  }
-
+        if (Number.isFinite(size) && size > 0) {
+          this.attachmentMaxSizeMb.set(size);
+        }
+      },
+      error: (err) => {
+        console.error('تعذر تحميل إعداد حجم الملفات:', err);
+      }
+    });
+}
 
   ngOnDestroy(): void {
 
@@ -834,8 +850,7 @@ getCertificateFileUrl(fileUrl: string): string {
     }
 
 
-    const maxSize =
-      5 * 1024 * 1024;
+   const maxSize = this.attachmentMaxSizeMb() * 1024 * 1024;
 
 
     if (
@@ -843,7 +858,7 @@ getCertificateFileUrl(fileUrl: string): string {
     ) {
 
       this.showError(
-        'حجم الصورة يجب ألا يتجاوز 5 MB.'
+        `حجم الصورة يجب ألا يتجاوز ${this.attachmentMaxSizeMb()} MB.`
       );
 
       input.value = '';

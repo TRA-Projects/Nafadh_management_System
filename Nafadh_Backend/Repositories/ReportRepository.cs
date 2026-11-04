@@ -39,6 +39,14 @@ namespace Nafadh_Backend.Repositories
             return await query.ToListAsync();
         }
 
+        public Task<string?> GetReportTypeLabelAsync(NFD_ReportType type) =>
+            _context.Database.SqlQuery<string>($@"
+                SELECT COALESCE(NULLIF(v.LabelAr, ''), NULLIF(v.LabelEn, ''), v.ValueKey) AS Value
+                FROM dbo.SystemConfigValues v
+                JOIN dbo.SystemConfigGroups g ON g.Id = v.ConfigGroupId
+                WHERE g.Code = 'NFD_RPT_TYPE' AND v.ValueKey = {type.ToString()}")
+                .FirstOrDefaultAsync();
+
         // generte report
         public async Task AddReportAsync(NFD_Report report)
         {

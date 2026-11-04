@@ -2,7 +2,8 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend;
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
@@ -15,18 +16,20 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly ITrainingMaterialService _service;
         private readonly IConfiguration _configuration;
-
+        private readonly Nafadhcontext _context;
 
         // =====================================================
         // CONSTRUCTOR
         // =====================================================
 
         public TrainingMaterialController(
-            ITrainingMaterialService service,
-             IConfiguration configuration)
+      ITrainingMaterialService service,
+      IConfiguration configuration,
+      Nafadhcontext context)
         {
             _service = service;
             _configuration = configuration;
+            _context = context;
         }
 
 
@@ -88,6 +91,7 @@ namespace Nafadh_Backend.Controllers
         // =====================================================
 
         [HttpPost("upload")]
+        [RequestFormLimits(MultipartBodyLengthLimit = 209715200)]
         public async Task<IActionResult> Upload(
             [FromForm] UploadTrainingMaterialDto dto)
         {
@@ -116,7 +120,55 @@ namespace Nafadh_Backend.Controllers
             }
 
 
-        
+            // Read training material settings from database
+            var maxSizeSetting = await _context.SystemVariables
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x =>
+                    x.VariableKey == "TRAINING_MATERIAL_MAX_SIZE_MB");
+
+            var extensionsSetting = await _context.SystemVariables
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x =>
+                    x.VariableKey == "TRAINING_MATERIAL_ALLOWED_EXTENSIONS");
+
+            // Validate settings
+            if (maxSizeSetting == null ||
+                extensionsSetting == null ||
+                !int.TryParse(maxSizeSetting.Value, out int maxSizeMb) ||
+                maxSizeMb <= 0)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Training material settings are invalid."
+                });
+            }
+
+            // Validate file size
+            if (dto.File.Length > (long)maxSizeMb * 1024 * 1024)
+            {
+                return BadRequest(new
+                {
+                    message = $"File size exceeds {maxSizeMb} MB."
+                });
+            }
+
+            // Validate file extension
+            var allowedExtensions = extensionsSetting.Value
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Trim().TrimStart('.').ToLowerInvariant())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var fileExtension = Path.GetExtension(dto.File.FileName)
+                .TrimStart('.')
+                .ToLowerInvariant();
+
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return BadRequest(new
+                {
+                    message = "File type is not allowed."
+                });
+            }
 
             // ---------------------------------------------
             // Get upload folder from appsettings

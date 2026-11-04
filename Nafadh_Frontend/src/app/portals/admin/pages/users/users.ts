@@ -1,4 +1,7 @@
-import {
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { administrativeValue } from '../../../../core/models/administrative-constants';
+import { inject,
   Component,
   OnInit,
   computed,
@@ -49,11 +52,36 @@ export const PRESET_AVATARS: PresetAvatar[] = [
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './users.html',
   styleUrls: ['./users.css']
 })
 export class AdminUsers implements OnInit {
+minPasswordLength = signal<number | null>(null);
+passwordRequireUppercase = signal<boolean | null>(null);
+passwordRequireLowercase = signal<boolean | null>(null);
+passwordRequireDigit = signal<boolean | null>(null);
+
+get userStatusChoices() {
+  return [
+    { value: 'ALL', label: 'كل الحالات' },
+    ...this.constants.supportedChoices(
+      'NFD_USR_STAT',
+      [
+        { value: 'Active', label: this.userLabel('Active') },
+        { value: 'Inactive', label: this.userLabel('Inactive') },
+        { value: 'Suspended', label: this.userLabel('Suspended') },
+        {
+          value: 'PendingVerification',
+          label: this.userLabel('PendingVerification')
+        }
+      ],
+      true
+    )
+  ];
+}
+
+readonly constants = inject(NafadhConstantsService);
   // =========================================================
   // USERS
   // =========================================================
@@ -123,10 +151,12 @@ export class AdminUsers implements OnInit {
   statsTotal = computed(() => this.users().length);
 
   statsActiveCount = computed(() =>
-    this.users().filter((u) => (u.status || '').toLowerCase() !== 'suspended').length
+    this.users().filter((u) => this.userKey(u.status) === 'Active').length
   );
 
-  statsSuspendedCount = computed(() => this.statsTotal() - this.statsActiveCount());
+  statsSuspendedCount = computed(() =>
+    this.users().filter(u => this.userKey(u.status) === 'Suspended').length
+  );
 
   statsActivePercentage = computed(() =>
     this.statsTotal() === 0 ? 0 : Math.round((this.statsActiveCount() / this.statsTotal()) * 100)
@@ -206,7 +236,7 @@ export class AdminUsers implements OnInit {
     }
 
     if (status !== 'ALL') {
-      result = result.filter((u) => (u.status || '').toLowerCase() === status.toLowerCase());
+      result = result.filter((u) => this.userKey(u.status) === status);
     }
 
     if (query) {
@@ -415,11 +445,55 @@ export class AdminUsers implements OnInit {
   constructor(
     private api: AdminApi,
     private cdr: ChangeDetectorRef
-  ) {}
-
-  ngOnInit(): void {
-    this.loadData();
+  ) {
+    this.constants.ensure('NFD_USR_STAT');
   }
+
+ngOnInit(): void {
+  this.loadData();
+
+  this.api.getSystemVariables().subscribe({
+    next: (variables: any[]) => {
+      const setting = variables.find(
+        (v: any) =>
+          (v.variableKey ?? v.VariableKey) === 'MinPasswordLength'
+      );
+
+      const value = Number(setting?.value ?? setting?.Value);
+
+      if (setting && Number.isInteger(value) && value > 0) {
+        this.minPasswordLength.set(value);
+      }
+      const getPasswordRule = (key: string): boolean | null => {
+  const rule = variables.find(
+    (v: any) => (v.variableKey ?? v.VariableKey) === key
+  );
+
+  const value = rule?.value ?? rule?.Value;
+
+  if (value === 'Y') return true;
+  if (value === 'N') return false;
+
+  return null;
+};
+
+this.passwordRequireUppercase.set(
+  getPasswordRule('PasswordRequireUppercase')
+);
+
+this.passwordRequireLowercase.set(
+  getPasswordRule('PasswordRequireLowercase')
+);
+
+this.passwordRequireDigit.set(
+  getPasswordRule('PasswordRequireDigit')
+);
+    },
+    error: (err) => {
+      console.error('تعذر تحميل إعدادات كلمة المرور:', err);
+    }
+  });
+}
 
   loadData(): void {
     this.loadingUsers.set(true);
@@ -663,6 +737,7 @@ export class AdminUsers implements OnInit {
 
   isCreateFormValid(): boolean {
     return (
+      this.minPasswordLength() !== null &&
       !!this.newUser.fullName?.trim() &&
       this.newUser.fullName.trim().length >= 3 &&
       this.isValidEmail(this.newUser.email) &&
@@ -748,20 +823,12 @@ export class AdminUsers implements OnInit {
     window.print();
   }
 
-  toggleUserStatus(user: any): void {
-    const current = (user.status || '').toLowerCase();
-    const newStatus = current === 'suspended' ? 'Active' : 'Suspended';
+  userKey(status: unknown) {
+    return administrativeValue('NFD_USR_STAT', status)?.key;
+  }
 
-    user.status = newStatus;
-    if (this.detailsUser && this.detailsUser.userId === user.userId) {
-      this.detailsUser.status = newStatus;
-    }
-
-    this.users.update((list) =>
-      list.map((u) => (u.userId === user.userId ? { ...u, status: newStatus } : u))
-    );
-
-    this.cdr.detectChanges();
+  userLabel(status: unknown): string {
+    return this.constants.administrativeLabel('NFD_USR_STAT', status);
   }
 
   // =========================================================
@@ -947,27 +1014,68 @@ export class AdminUsers implements OnInit {
   }
 
   getPasswordError(password: string): string {
-    if (!password) return 'كلمة المرور مطلوبة';
-    if (!this.passwordHasMinLengthFor(password)) return 'كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل';
-    if (!this.passwordHasUppercaseFor(password)) return 'يجب أن تحتوي كلمة المرور على حرف كبير';
-    if (!this.passwordHasLowercaseFor(password)) return 'يجب أن تحتوي كلمة المرور على حرف صغير';
-    if (!this.passwordHasNumberFor(password)) return 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل';
-    return '';
+  if (!password) return 'كلمة المرور مطلوبة';
+
+  if (
+    this.minPasswordLength() === null ||
+    this.passwordRequireUppercase() === null ||
+    this.passwordRequireLowercase() === null ||
+    this.passwordRequireDigit() === null
+  ) {
+    return 'تعذر تحميل إعدادات كلمة المرور';
   }
+
+  if (!this.passwordHasMinLengthFor(password)) {
+    return `كلمة المرور يجب أن تحتوي على ${this.minPasswordLength()} أحرف على الأقل`;
+  }
+
+  if (
+    this.passwordRequireUppercase() &&
+    !this.passwordHasUppercaseFor(password)
+  ) {
+    return 'يجب أن تحتوي كلمة المرور على حرف كبير';
+  }
+
+  if (
+    this.passwordRequireLowercase() &&
+    !this.passwordHasLowercaseFor(password)
+  ) {
+    return 'يجب أن تحتوي كلمة المرور على حرف صغير';
+  }
+
+  if (
+    this.passwordRequireDigit() &&
+    !this.passwordHasNumberFor(password)
+  ) {
+    return 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل';
+  }
+
+  return '';
+}
 
   isValidPassword(password: string): boolean {
-    if (!password) return false;
-    return (
-      this.passwordHasMinLengthFor(password) &&
-      this.passwordHasUppercaseFor(password) &&
-      this.passwordHasLowercaseFor(password) &&
-      this.passwordHasNumberFor(password)
-    );
+  if (!password) return false;
+
+  if (
+    this.minPasswordLength() === null ||
+    this.passwordRequireUppercase() === null ||
+    this.passwordRequireLowercase() === null ||
+    this.passwordRequireDigit() === null
+  ) {
+    return false;
   }
 
+  return (
+    this.passwordHasMinLengthFor(password) &&
+    (!this.passwordRequireUppercase() || this.passwordHasUppercaseFor(password)) &&
+    (!this.passwordRequireLowercase() || this.passwordHasLowercaseFor(password)) &&
+    (!this.passwordRequireDigit() || this.passwordHasNumberFor(password))
+  );
+}
+
   passwordHasMinLength(): boolean {
-    return (this.newUser.password || '').length >= 8;
-  }
+  return this.passwordHasMinLengthFor(this.newUser.password);
+}
 
   passwordHasUppercase(): boolean {
     return /[A-Z]/.test(this.newUser.password || '');
@@ -981,9 +1089,11 @@ export class AdminUsers implements OnInit {
     return /\d/.test(this.newUser.password || '');
   }
 
-  passwordHasMinLengthFor(password: string): boolean {
-    return (password || '').length >= 8;
-  }
+ passwordHasMinLengthFor(password: string): boolean {
+  const min = this.minPasswordLength();
+
+  return min !== null && (password || '').length >= min;
+}
 
   passwordHasUppercaseFor(password: string): boolean {
     return /[A-Z]/.test(password || '');

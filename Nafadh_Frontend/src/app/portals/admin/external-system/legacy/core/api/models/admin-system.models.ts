@@ -25,9 +25,18 @@ export interface SystemConfigGroupDto {
   label_ar: string;
   IsActive: boolean;
   IsReadOnly: boolean;
+  /** Nafadh enum group: labels editable, stored activation preserved (workflow depends on every value). */
+  IsLabelsOnly?: boolean;
+  canEditLabels?: boolean;
+  canChangeActive?: boolean;
+  activationKeys?: readonly string[];
+  canCreate?: boolean;
+  /** Legacy equivalent of disallowing new keys for Nafadh groups. */
+  IsFixedKeys?: boolean;
 }
 
 export interface SystemConfigValueDto {
+  isActive?: boolean;
   id: string | number;
   code?: string;
   label_en: string;
@@ -56,7 +65,7 @@ export interface CreateSystemConfigValueDto {
 export interface UpdateSystemConfigValueDto {
   label_en: string;
   label_ar: string;
-  IsActive: boolean;
+  IsActive?: boolean;
   subReasonDropdown?: boolean;
   parentReasonId?: string | number | null;
 }

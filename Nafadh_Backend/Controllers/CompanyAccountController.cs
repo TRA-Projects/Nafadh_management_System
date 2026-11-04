@@ -125,6 +125,21 @@ namespace Nafadh_Backend.Controllers
                 });
             }
 
+            // =====================================================
+            // Status labels from SystemConfigValues (must be loaded
+            // before Document.Create because the lambda is not async)
+            // =====================================================
+            var statusLabels = await _context.Database.SqlQuery<AccountStatusLabel>($@"
+                SELECT g.Code, COALESCE(NULLIF(v.LabelAr, ''), NULLIF(v.LabelEn, ''), v.ValueKey) AS Label
+                FROM dbo.SystemConfigValues v
+                JOIN dbo.SystemConfigGroups g ON g.Id = v.ConfigGroupId
+                WHERE (g.Code = 'NFD_USR_STAT' AND v.ValueKey = {account.UserStatus})
+                   OR (g.Code = 'NFD_CMP_STAT' AND v.ValueKey = {account.CompanyStatus})")
+                .ToListAsync(HttpContext.RequestAborted);
+
+            string? FindLabel(string code) =>
+                statusLabels.FirstOrDefault(s => s.Code == code)?.Label;
+
             QuestPDF.Settings.UseSystemFonts = true;
 
             var document = Document.Create(container =>
@@ -226,9 +241,26 @@ namespace Nafadh_Backend.Controllers
 
                         column.Item().PaddingTop(8).Row(row =>
                         {
-                            AddStatusCard(row, "حالة الحساب", account.UserStatus, GetStatusColor(account.UserStatus));
-                            AddStatusCard(row, "حالة الصفة الوظيفية", account.SupervisorStatus, GetStatusColor(account.SupervisorStatus));
-                            AddStatusCard(row, "حالة الشركة", account.CompanyStatus, GetStatusColor(account.CompanyStatus));
+                            AddStatusCard(
+                                row,
+                                "حالة الحساب",
+                                FindLabel("NFD_USR_STAT") ?? account.UserStatus,
+                                GetStatusColor(account.UserStatus)
+                            );
+
+                            AddStatusCard(
+                                row,
+                                "حالة الصفة الوظيفية",
+                                account.SupervisorStatus,
+                                GetStatusColor(account.SupervisorStatus)
+                            );
+
+                            AddStatusCard(
+                                row,
+                                "حالة الشركة",
+                                FindLabel("NFD_CMP_STAT") ?? account.CompanyStatus,
+                                GetStatusColor(account.CompanyStatus)
+                            );
                         });
 
                         column.Item().PaddingTop(15);
@@ -525,6 +557,12 @@ namespace Nafadh_Backend.Controllers
             return name.Trim().Substring(0, 1);
         }
 
+        // Row shape returned by the status-labels SQL query
+        private sealed record AccountStatusLabel(string Code, string Label);
+
+        // =========================================================
+        // Helper: Status Color
+        // =========================================================
         private static string GetStatusColor(string? status)
         {
             if (string.IsNullOrWhiteSpace(status))
@@ -532,7 +570,7 @@ namespace Nafadh_Backend.Controllers
 
             var value = status.Trim().ToLowerInvariant();
 
-            if (value.Contains("active") ||
+            if (value == "active" ||
                 value.Contains("approved") ||
                 value.Contains("مفعل") ||
                 value.Contains("نشط") ||
