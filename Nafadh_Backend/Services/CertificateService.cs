@@ -7,21 +7,23 @@ using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 using Nafadh_Backend.DTOs;
-
+using Microsoft.EntityFrameworkCore;
 namespace Nafadh_Backend.Services
 {
     public class CertificateService : ICertificateService
     {
         private readonly ICertificateRepository _repository;
         private readonly IEvaluationRepository _evaluationRepository;
+        private readonly Nafadhcontext _context;
 
-        public CertificateService(ICertificateRepository repository,
-                                 IEvaluationRepository evaluationRepository)
-
+        public CertificateService(
+     ICertificateRepository repository,
+     IEvaluationRepository evaluationRepository,
+     Nafadhcontext context)
         {
             _repository = repository;
             _evaluationRepository = evaluationRepository;
-
+            _context = context;
         }
 
         // TODO: implement business-logic contract methods for this entity
@@ -60,14 +62,28 @@ namespace Nafadh_Backend.Services
                 await _evaluationRepository
                     .GetAverageScoreByEnrollmentIdAsync(dto.EnrollmentId);
 
-            // إذا كانت النسبة أقل من 85% يمنع إصدار الشهادة
-            if (averageScore < 85)
+            var minGradeSetting = await _context.SystemVariables
+     .AsNoTracking()
+     .FirstOrDefaultAsync(v => v.VariableKey == "CERT_MIN_GRADE");
+
+            if (minGradeSetting == null ||
+                !decimal.TryParse(
+                    minGradeSetting.Value,
+                    System.Globalization.NumberStyles.Number,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out var minGrade) ||
+                minGrade < 0 || minGrade > 100)
             {
                 throw new InvalidOperationException(
-                    $"لا يمكن إصدار الشهادة. نسبة المتدرب {averageScore:F2}% وهي أقل من الحد الأدنى المطلوب للإصدار (85%)."
+                    "إعداد الحد الأدنى لإصدار الشهادة غير موجود أو غير صالح."
                 );
             }
-
+            if (Convert.ToDecimal(averageScore) < minGrade)
+            {
+                throw new InvalidOperationException(
+                    $"لا يمكن إصدار الشهادة. نسبة المتدرب {averageScore:F2}% وهي أقل من الحد الأدنى المطلوب للإصدار ({minGrade}%)."
+                );
+            }
             // =========================================================
             // 2. منع إصدار شهادة مكررة
             // =========================================================
