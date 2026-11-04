@@ -39,18 +39,31 @@ public sealed class NafadhConstantLabelsController : ControllerBase
 
         // Parameterized interpolated SQL. Only the two labels and UpdatedAt change.
         // Existing ValueKey, Code, IsActive and all NFD_ operational data are untouched.
-        var rows = await _db.Database.ExecuteSqlInterpolatedAsync($@"
+        var subject = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        if (!int.TryParse(subject, out var userId)) return Forbid();
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        var ids = await _db.Database.SqlQuery<int>($@"
+            DECLARE @changed TABLE (Id int);
             UPDATE v
                SET v.LabelAr = {ar},
                    v.LabelEn = {en},
                    v.UpdatedAt = SYSUTCDATETIME()
+            OUTPUT INSERTED.Id INTO @changed
               FROM dbo.SystemConfigValues AS v
               JOIN dbo.SystemConfigGroups AS g ON g.Id = v.ConfigGroupId
              WHERE g.Code = N'NFD_QUE_DIFF'
-               AND v.ValueKey = {valueKey};", cancellationToken);
+               AND v.ValueKey = {valueKey};
+            SELECT Id AS Value FROM @changed;").ToListAsync(cancellationToken);
 
-        if (rows == 0) return NotFound(new { message = "Constant value was not found." });
-        if (rows != 1) return StatusCode(500, new { message = "Unexpected number of modified rows." });
+        if (ids.Count == 0) return NotFound(new { message = "Constant value was not found." });
+        if (ids.Count != 1) return StatusCode(500, new { message = "Unexpected number of modified rows." });
+        _db.NFD_AuditLogs.Add(new Models.NFD_AuditLog {
+            Action = "UpdateReferenceConstant", EntityName = "SystemConfigValues", EntityId = ids[0],
+            UserId = userId, Timestamp = DateTime.UtcNow, Details = System.Text.Json.JsonSerializer.Serialize(
+                new { group = "NFD_QUE_DIFF", valueKey, label_ar = ar, label_en = en })
+        });
+        await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         return Ok(new { valueKey, label_ar = ar, label_en = en });
     }
 }
