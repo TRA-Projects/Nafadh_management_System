@@ -155,32 +155,17 @@
 
       <div class="filter-field">
         <label for="warningType">نوع الإنذار</label>
-        <select id="warningType" [(ngModel)]="selectedType">
-          <option value="">جميع الأنواع</option>
-          <option *ngFor="let item of warningTypeOptions" [value]="item.value">{{ item.label }}</option>
-        </select>
+        <app-catalog-picker inputId="warningType" caption="نوع الإنذار" [options]="warningTypeOptions" [(value)]="selectedType" />
       </div>
 
       <div class="filter-field">
         <label for="warningLevel">مستوى الخطورة</label>
-        <select id="warningLevel" [(ngModel)]="selectedLevel">
-          <option value="">جميع المستويات</option>
-          <option value="Low">{{ levelLabel('Low') }}</option>
-          <option value="Medium">{{ levelLabel('Medium') }}</option>
-          <option value="High">{{ levelLabel('High') }}</option>
-          <option value="Critical">{{ levelLabel('Critical') }}</option>
-        </select>
+        <app-catalog-picker inputId="warningLevel" caption="مستوى الخطورة" [options]="warningLevelOptions" [(value)]="selectedLevel" />
       </div>
 
       <div class="filter-field">
         <label for="warningStatus">الحالة</label>
-        <select id="warningStatus" [(ngModel)]="selectedStatus">
-          <option value="">جميع الحالات</option>
-          <option value="Open">مفتوح</option>
-          <option value="UnderReview">قيد المراجعة</option>
-          <option value="Resolved">تم الحل</option>
-          <option value="Escalated">تم التصعيد</option>
-        </select>
+        <app-catalog-picker caption="حالة الإنذار" [options]="warningStatusChoices" [value]="selectedStatus" (valueChange)="selectedStatus = $event" />
       </div>
 
       <button
