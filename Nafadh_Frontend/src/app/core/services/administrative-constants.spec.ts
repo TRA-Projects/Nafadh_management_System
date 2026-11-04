@@ -1,3 +1,4 @@
+import { CatalogPicker } from '../models/catalog-picker';
 import '@angular/compiler';
 import '@angular/localize/init';
 import { FormBuilder } from '@angular/forms';
@@ -20,6 +21,7 @@ import { CompanyProgramDetails } from '../../portals/company/pages/program-detai
 import { TrainerContent } from '../../portals/trainer/pages/content/content';
 import { CompanyApi } from '../../portals/company/services/company-api';
 import { AdminWarnings } from '../../portals/admin/pages/warnings/warnings';
+import { TrainerLiveSessions } from '../../portals/trainer/pages/live-sessions/live-sessions';
 import { QuestionBank } from '../../portals/trainer/pages/question-bank/question-bank';
 import { AdminNotifications } from '../../portals/admin/pages/notifications/notifications';
 import { AdminPrograms } from '../../portals/admin/pages/programs/programs';
@@ -411,8 +413,13 @@ describe('Administrative constant identities and labels', () => {
   });
 
   it('keeps company recipients, scope and channels in the announcement request', () => {
+    const { get, injector } = mockLookups();
+    const constants = runInInjectionContext(injector, () => new NafadhConstantsService());
+    get.mockReturnValue(of([{ValueKey:'Company',LabelAr:'الشركة',IsActive:true}]));
+    constants.refresh('NFD_ANN_SCOPE');
     const createAnnouncement = vi.fn().mockReturnValue(EMPTY);
     AdminNotifications.prototype.postAnnouncement.call(Object.assign(Object.create(AdminNotifications.prototype), {
+      constants, scopeByAudience: {companies:'Company'},
       newAnnounceData: { title: 'test', content: 'test', mainAudience: 'companies',
         companyScope: 'specific_companies', selectedCompanyIds: ['7'], channels: { inApp: true, email: false } },
       posting: signal(false), announceError: signal(null), api: { createAnnouncement }
@@ -491,7 +498,8 @@ describe('Administrative constant identities and labels', () => {
     const page = runInInjectionContext(pageInjector, () => new AdminPrograms());
     page.batches.set(['بانتظار اعتماد الهيئة', 1, 'PendingApproval', 'معتمدة', 'مرفوضة - تحتاج تعديل',
       'مسودة لدى الشركة', 'لم تُرفع بعد', 'الربط يحتاج مراجعة'].map((coursePlanStatus, batchId) => ({ batchId, coursePlanStatus })));
-    page.planFilter.set('بانتظار الاعتماد');
+    page.choosePlanFilter('PendingApproval');
+    expect(page.planPickerKey).toBe('PendingApproval');
     const ids = () => page.filteredBatches().map(row => row.batchId);
     const label = (index: number) => page.batchPlanLabel(page.getBatchPlanStatus(page.batches()[index]));
     expect(ids()).toEqual([0, 1, 2]);
@@ -505,7 +513,8 @@ describe('Administrative constant identities and labels', () => {
     }
     expect(label(5)).toBe('مسودة اختبار');
     expect(label(7)).toBe('الربط يحتاج مراجعة');
-    page.planFilter.set('لم تُرفع بعد');
+    page.choosePlanFilter('no-plan');
+    expect(page.planPickerKey).toBe('no-plan');
     expect(label(6)).toBe('لم تُرفع بعد');
     expect(ids()).toEqual([6]);
   });
@@ -601,5 +610,102 @@ describe('Existing Nafadh lookups', () => {
     service.refresh();
     expect(service.label(0)).toBe('اسم تاريخي');
     expect(service.selectable('Attendance')).toBe(false);
+  });
+});
+
+describe('Catalog selection by stable key', () => {
+  const entries = [
+    { value: 'Easy', label: 'مشترك', labelEn: 'Beginner' },
+    { value: 'Hard', label: 'مشترك', labelEn: 'Advanced' }
+  ];
+  it.each(['NFD_TSK_PRI', 'NFD_CPI_TYPE', 'NFD_ANN_SCOPE', 'NFD_BAT_STAT'])(
+    'keeps the screen contract, requires verified activity and preserves both historical keys in %s', group => {
+      const { get, injector } = mockLookups();
+      const service = runInInjectionContext(injector, () => new NafadhConstantsService());
+      const keys = ({ NFD_TSK_PRI:['High','Low'], NFD_CPI_TYPE:['Task','Project'],
+        NFD_ANN_SCOPE:['Platform','Company'], NFD_BAT_STAT:['Upcoming','Completed'] } as Record<string,string[]>)[group];
+      const supported = keys.map(value => ({value,label:value}));
+      expect(service.supportedChoices(group,supported)).toEqual([]);
+      expect(service.supportedChoices(group,supported,true).map(o => o.value)).toEqual(keys);
+      get.mockReturnValue(of([...keys.map((ValueKey,i) => ({ ValueKey, LabelAr:'مشترك', LabelEn:'Shared', IsActive:i === 0 })),
+        { ValueKey:'Unsupported', LabelAr:'مشترك', IsActive:true }]));
+      service.refresh(group);
+      expect(service.supportedChoices(group,supported).map(o => o.value)).toEqual(keys.slice(0,1));
+      const picker = new CatalogPicker();
+      picker.options = service.supportedChoices(group,supported,true);
+      for (const query of ['مشتر','shared']) {
+        picker.search(query);
+        expect(picker.results.map(o => o.value)).toEqual(keys);
+        expect(picker.ambiguous(picker.results[0])).toBe(true);
+      }
+    });
+
+  it('keeps numeric trainee attendance separate from trainer attendance and allows an unchanged historical note', () => {
+    const { get, injector } = mockLookups();
+    const constants = runInInjectionContext(injector, () => new NafadhConstantsService());
+    get.mockReturnValue(of([{ValueKey:'Absent', LabelAr:'سابق', IsActive:false}, {ValueKey:'Late', LabelAr:'متأخر', IsActive:true}]));
+    constants.refresh('NFD_ATT_STAT');
+    const send = vi.fn().mockReturnValue(EMPTY);
+    const page = Object.assign(Object.create(TrainerLiveSessions.prototype), {
+      constants, originalAttendance:new Map([[8,'Absent']]),
+      attendanceOptions:[{value:1,label:'غائب'},{value:2,label:'متأخر'}],
+      attendanceSession:signal({id:7}), attendanceRows:signal([{traineeId:8,status:1}]),
+      attendanceError:signal(''), attendanceSuccess:signal(''), attendanceSavingId:signal(null),
+      api:{updateTrainerSessionAttendance:send}
+    });
+    expect(page.sessionAttendanceChoices.map((o: {value:string}) => o.value)).toEqual(['Late']);
+    expect(page.sessionAttendanceLabel(1)).toBe('سابق');
+    page.saveAttendance({traineeId:8,status:1,note:'note'});
+    expect(send).toHaveBeenCalledWith(7,8,{status:1,note:'note'});
+    page.saveAttendance({traineeId:9,status:1,note:null});
+    expect(send).toHaveBeenCalledTimes(1);
+    page.chooseSessionAttendance(8,'Late');
+    expect(page.attendanceRows()[0].status).toBe(2);
+  });
+
+  it('searches both stored languages and keeps a renamed key selected', () => {
+    const picker = new CatalogPicker();
+    picker.options = entries;
+    picker.value = 'Hard';
+    picker.search('aDvAn');
+    expect(picker.results.map(x => x.value)).toEqual(['Hard']);
+    picker.search('مشتر');
+    expect(picker.results.map(x => x.value)).toEqual(['Easy', 'Hard']);
+    expect(picker.selectedLabel).toContain('Hard');
+    picker.options = [{ ...entries[1], label: 'جديد' }];
+    expect(picker.selectedLabel).toBe('جديد');
+    expect(picker.value).toBe('Hard');
+  });
+
+  it('emits only a matching catalog key on keyboard selection, never the query', () => {
+    const picker = new CatalogPicker();
+    picker.options = entries;
+    const emitted = vi.fn();
+    picker.valueChange.subscribe(emitted);
+    const press = (key: string) => picker.onKey({ key, preventDefault() {} } as KeyboardEvent);
+    vi.stubGlobal('document', { getElementById: () => null });
+    try {
+      picker.search('unlisted');
+      press('Enter');
+      expect(picker.results).toEqual([]);
+      expect(emitted).not.toHaveBeenCalled();
+      picker.search('مشترك');
+      press('ArrowDown'); press('ArrowDown'); press('Enter');
+      expect(emitted.mock.calls).toEqual([['Hard']]);
+      expect(picker.open).toBe(false);
+    } finally { vi.unstubAllGlobals(); }
+  });
+
+  it('requires a verified active row while retaining historical display', () => {
+    const { get, injector } = mockLookups();
+    const service = runInInjectionContext(injector, () => new NafadhConstantsService());
+    expect(service.isSelectable('NFD_WRN_LVL', 'High')).toBe(false);
+    get.mockReturnValue(of([{ ValueKey: 'High', LabelAr: 'سابق', IsActive: false },
+      { ValueKey: 'Low', LabelAr: 'منخفض' }, { ValueKey: 'Medium', IsActive: true }]));
+    service.ensure('NFD_WRN_LVL');
+    expect(service.label('NFD_WRN_LVL', 'High')).toBe('سابق');
+    expect(service.isSelectable('NFD_WRN_LVL', 'Other')).toBe(false);
+    expect(service.choices('NFD_WRN_LVL').map(x => x.value)).toEqual(['Medium']);
+    expect(service.choices('NFD_WRN_LVL', true).map(x => x.value)).toEqual(['High', 'Low', 'Medium']);
   });
 });
