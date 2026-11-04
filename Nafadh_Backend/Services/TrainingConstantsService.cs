@@ -16,10 +16,7 @@ public sealed class TrainingConstantsService : ITrainingConstantsService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IBiddingTokenService _biddingTokenService;
 
-private readonly IHttpClientFactory _httpClientFactory;
-private readonly IConfiguration _configuration;
-private readonly IHttpContextAccessor _httpContextAccessor;
-private readonly IBiddingTokenService _biddingTokenService;
+
 private readonly Nafadhcontext _db;
 
 public TrainingConstantsService(
@@ -69,7 +66,7 @@ internal static string? ReadValueKey(JsonElement row)
 
     return explicitKey ?? legacyId;
 }
-    }
+    
 
     public async Task<(int Status, string ContentType, string Body)> ForwardAsync(
         string code, string? suffix, HttpMethod method, string? query, string? jsonBody, CancellationToken cancellationToken)

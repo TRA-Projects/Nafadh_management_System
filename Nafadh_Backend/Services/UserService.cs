@@ -38,15 +38,8 @@ public UserService(
     _biddingTokenService = biddingTokenService;
     _context = context;
 }
-        {
-            _companyRegistrationService = companyRegistrationService;
-            _biddingTokenService = biddingTokenService;
-            _repository = repository;
-            _roleRepository = roleRepository;
-            _jwtTokenService = jwtTokenService;
-            _supervisorRepository = supervisorRepository;
-            _context = context;
-        }
+       
+     
 
         public async Task<UserResponseDTO> RegisterAsync(UserRegisterationDTO dto)
         {
