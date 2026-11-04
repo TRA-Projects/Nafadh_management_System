@@ -8,7 +8,7 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
+import { SystemVariablesService } from '../../../../services/system-variables.service';
 import {
   ActivatedRoute,
   Router
@@ -218,7 +218,14 @@ showDeleteMaterialModal =
   fileLessonId:
     number | null =
       null;
+// SYSTEM ATTACHMENT SETTINGS
+maxAttachmentSizeMb = signal(5);
 
+allowedExtensions = signal<string[]>([]);
+
+attachmentSizeError = signal('حجم الملف يتجاوز الحد المسموح.');
+
+attachmentTypeError = signal('نوع الملف غير مسموح.');
 
   // =====================================================
   // REFERENCE
@@ -239,7 +246,8 @@ showDeleteMaterialModal =
     private api: TrainerApi,
     private auth: AuthService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private systemVariables: SystemVariablesService
   ) {}
 
 
@@ -276,10 +284,50 @@ showDeleteMaterialModal =
 
 
     this.loadCurrentTrainer();
+    this.loadAttachmentSettings();
 
   }
+private loadAttachmentSettings(): void {
+  forkJoin({
+    maxSize: this.systemVariables.getVariable(
+      'TRAINING_MATERIAL_MAX_SIZE_MB'
+    ),
+    extensions: this.systemVariables.getVariable(
+      'TRAINING_MATERIAL_ALLOWED_EXTENSIONS'
+    ),
+    sizeError: this.systemVariables.getErrorMessage(
+      'ATTACHMENT_SIZE_ERROR'
+    ),
+    typeError: this.systemVariables.getErrorMessage(
+      'ATTACHMENT_TYPE_ERROR'
+    )
+  }).subscribe({
+    next: (settings) => {
+      const maxSize = Number(settings.maxSize.value);
 
+      if (!Number.isFinite(maxSize) || maxSize <= 0) {
+        this.errorMessage.set('إعداد حجم مواد التدريب غير صالح.');
+        return;
+      }
 
+      this.maxAttachmentSizeMb.set(maxSize);
+
+      this.allowedExtensions.set(
+        settings.extensions.value
+          .split(',')
+          .map(ext => ext.trim().replace(/^\./, '').toLowerCase())
+          .filter(Boolean)
+      );
+
+      this.attachmentSizeError.set(settings.sizeError);
+      this.attachmentTypeError.set(settings.typeError);
+    },
+    error: (error) => {
+      console.error('تعذر تحميل إعدادات مواد التدريب:', error);
+      this.errorMessage.set('تعذر تحميل إعدادات رفع مواد التدريب.');
+    }
+  });
+}
   // =====================================================
   // LOAD CURRENT TRAINER
   // =====================================================
@@ -1632,30 +1680,48 @@ restoreModule(
   // =====================================================
   // FILE SELECTED
   // =====================================================
+onFileSelected(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0] ?? null;
 
-  onFileSelected(
-    event: Event
-  ): void {
+  this.errorMessage.set('');
+  this.selectedFile = null;
+  this.selectedFileType = null;
 
-    const input =
-      event.target as HTMLInputElement;
-
-
-    const file =
-      input.files?.[0] ??
-      null;
-
-
-    this.selectedFile =
-      file;
-
-
-    this.selectedFileType =
-      file
-        ? this.detectFileType(file)
-        : null;
-
+  if (!file) {
+    return;
   }
+
+  // التحقق من حجم الملف
+  const maxSizeBytes =
+    this.maxAttachmentSizeMb() * 1024 * 1024;
+
+  if (file.size > maxSizeBytes) {
+    this.errorMessage.set(
+      `${this.attachmentSizeError()} الحد الأقصى ${this.maxAttachmentSizeMb()} MB.`
+    );
+    input.value = '';
+    return;
+  }
+
+  // التحقق من امتداد الملف
+  const extension =
+    file.name.split('.').pop()?.toLowerCase() ?? '';
+
+  const allowed = this.allowedExtensions().map(
+    ext => ext.replace(/^\./, '').trim().toLowerCase()
+  );
+
+  if (!allowed.includes(extension)) {
+    this.errorMessage.set(this.attachmentTypeError());
+    input.value = '';
+    return;
+  }
+
+  // الملف مسموح
+  this.selectedFile = file;
+  this.selectedFileType = this.detectFileType(file);
+}
 
 
   // =====================================================

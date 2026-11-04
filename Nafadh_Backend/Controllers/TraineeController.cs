@@ -377,11 +377,11 @@ namespace Nafadh_Backend.Controllers
 
         [HttpPost("{id}/resume")]
         [Consumes("multipart/form-data")]
-        [RequestSizeLimit(10 * 1024 * 1024)]
+        [RequestSizeLimit(30 * 1024 * 1024)]
         public async Task<IActionResult> UploadResume(
-            int id,
-            [FromForm] IFormFile file
-        )
+    int id,
+    IFormFile file
+)
         {
             try
             {

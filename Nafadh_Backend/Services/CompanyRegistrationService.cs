@@ -124,7 +124,21 @@ namespace Nafadh_Backend.Services
             company.Phone = dto.Phone;
             company.Email = email;
             company.Logo = dto.Logo;
-            company.Capacity = dto.Capacity;
+            var defaultCapacitySetting = await _context.SystemVariables
+     .AsNoTracking()
+     .FirstOrDefaultAsync(x => x.VariableKey == "DefaultCapacity");
+
+            decimal defaultCapacity = 50;
+
+            if (defaultCapacitySetting != null &&
+                decimal.TryParse(defaultCapacitySetting.Value, out var configuredCapacity) &&
+                configuredCapacity >= 0 &&
+                configuredCapacity <= 100000)
+            {
+                defaultCapacity = configuredCapacity;
+            }
+
+            company.Capacity = dto.Capacity ?? defaultCapacity;
             company.Status = NFD_CompanyStatus.PendingApproval;
             company.ApprovalDate = null;
             company.RejectionReason = null;

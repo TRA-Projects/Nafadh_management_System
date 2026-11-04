@@ -87,6 +87,7 @@ export class AdminCompanies implements OnInit {
 
   currentPage = signal<number>(1);
   pageSize: number = 8;
+  defaultCompanyCapacity = signal<number>(50);
 
   showAddModal = signal<boolean>(false);
   showRejectModal = signal<boolean>(false);
@@ -102,7 +103,7 @@ export class AdminCompanies implements OnInit {
     workField: '',
     city: 'مسقط',
     address: 'مسقط',
-    capacity: 10,
+    capacity: this.defaultCompanyCapacity(),
     contactName: '',
     email: '',
     phone: '',
@@ -121,6 +122,24 @@ export class AdminCompanies implements OnInit {
     } catch { }
 
     this.loadCompaniesFromDatabase();
+    this.api.getSystemVariables().subscribe({
+  next: (variables: any[]) => {
+    const setting = variables.find(
+      (v: any) => v.variableKey === 'DefaultCapacity'
+    );
+
+    if (setting) {
+      const capacity = Number(setting.value);
+
+      if (Number.isFinite(capacity) && capacity > 0) {
+        this.defaultCompanyCapacity.set(capacity);
+      }
+    }
+  },
+  error: (err) => {
+    console.error('Failed to load DefaultCapacity:', err);
+  }
+});
   }
 
   isApproved(status: any): boolean {
@@ -538,7 +557,7 @@ export class AdminCompanies implements OnInit {
       workField: '',
       city: 'مسقط',
       address: 'مسقط',
-      capacity: 10,
+      capacity: this.defaultCompanyCapacity(),
       contactName: '',
       email: '',
       phone: '',
@@ -733,7 +752,7 @@ export class AdminCompanies implements OnInit {
       workField: this.newCompany.workField.trim(),
       city: cityVal,
       address: cityVal,
-      capacity: Number(this.newCompany.capacity) || 10,
+      capacity: Number(this.newCompany.capacity) || this.defaultCompanyCapacity(),
       contactName: contactVal,
       supervisorEmail: emailVal,
       supervisorPhone: phoneVal,

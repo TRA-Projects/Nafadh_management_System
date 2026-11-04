@@ -1291,7 +1291,12 @@
         </span>
         <span class="audit-meta-item">
           <i class="fa-solid fa-trophy"></i>
-          <span>نسبة النجاح المقررة: <strong class="text-emerald">60%</strong></span>
+         <span>
+  نسبة النجاح المقررة:
+  <strong class="text-emerald">
+    {{ setting('PROJECT_PASS_PERCENT') }}%
+  </strong>
+</span>
         </span>
       </div>
     </div>
@@ -1494,7 +1499,7 @@
           <!-- 6. الدرجة -->
           <td class="text-center">
             <div *ngIf="item.score !== null && item.score !== undefined" class="project-score-pill"
-              [ngClass]="item.score >= 60 ? 'score-pass-pill' : 'score-fail-pill'">
+              [ngClass]="item.score >= setting('PROJECT_PASS_PERCENT')? 'score-pass-pill' : 'score-fail-pill'">
               <div class="score-fraction" dir="ltr">
                 <strong class="score-achieved">{{ item.score }}</strong>
                 <span class="score-divider">/</span>
@@ -1624,7 +1629,7 @@
       <!-- بطاقة الدرجة الإجمالية والاعتماد -->
       <div class="eval-score-summary-badge">
         <div class="score-grand-box"
-          [ngClass]="((selectedProjectForView || selectedProjectForGrading)?.score || 0) >= 60 ? 'score-box-pass' : 'score-box-fail'">
+        [ngClass]="((selectedProjectForView || selectedProjectForGrading)?.score ?? 0) >= setting('PROJECT_PASS_PERCENT') ? 'score-box-pass' : 'score-box-fail'">
           <div class="score-grand-fraction" dir="ltr">
             <span class="score-grand-achieved">{{ (selectedProjectForView || selectedProjectForGrading)?.score ?? '–'
               }}</span>
@@ -2272,6 +2277,34 @@
           </option>
         </select>
       </div>
+ <div class="form-group">
+  <label class="form-label">
+    مدة البرنامج (بالأسابيع)
+    <span class="required-star">*</span>
+  </label>
+
+  <input
+    type="number"
+    formControlName="durationWeeks"
+    class="form-input text-right"
+    [min]="setting('PROGRAM_MIN_DURATION_WEEKS')"
+  >
+
+ <small
+  class="text-danger"
+  *ngIf="
+    programForm.get('durationWeeks')?.hasError('min') &&
+    programForm.get('durationWeeks')?.touched
+  "
+>
+  {{
+    programMinDurationErrorMessage().replace(
+      '{min}',
+      setting('PROGRAM_MIN_DURATION_WEEKS').toString()
+    )
+  }}
+</small>
+</div>
       <div class="modal-footer-buttons-program">
         <button type="submit" [disabled]="isSubmittingProgram" class="btn-submit-program">إنشاء البرنامج</button>
         <button type="button" (click)="onCloseProgramModal()" class="btn-cancel-program">إلغاء</button>

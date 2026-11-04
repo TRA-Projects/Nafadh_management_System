@@ -2,7 +2,8 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Services;
 using static Nafadh_Backend.DTOs.ExcuseDto;
@@ -15,14 +16,16 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly IExcuseService _service;
         private readonly IConfiguration _configuration;
+        private readonly Nafadhcontext _context;
 
         public ExcuseController(
-            IExcuseService service,
-            IConfiguration configuration
-        )
+      IExcuseService service,
+      IConfiguration configuration,
+      Nafadhcontext context)
         {
             _service = service;
             _configuration = configuration;
+            _context = context;
         }
 
 
@@ -57,7 +60,7 @@ namespace Nafadh_Backend.Controllers
         // POST /api/Excuse
         [HttpPost]
         [Consumes("multipart/form-data")]
-        [RequestSizeLimit(6 * 1024 * 1024)]
+       
         public async Task<IActionResult> Create(
             [FromForm] CreateExcuseFormDto form
         )
@@ -94,9 +97,22 @@ namespace Nafadh_Backend.Controllers
                     form.File.Length > 0
                 )
                 {
-                    // Maximum file size: 5 MB.
-                    const long maxFileSize =
-                        5 * 1024 * 1024;
+                    var sizeSetting = await _context.SystemVariables
+     .AsNoTracking()
+     .FirstOrDefaultAsync(v =>
+         v.VariableKey == "ATTACHMENT_MAX_SIZE_MB");
+
+                    if (sizeSetting == null ||
+                        !int.TryParse(sizeSetting.Value, out int maxSizeMb) ||
+                        maxSizeMb <= 0)
+                    {
+                        return StatusCode(500, new
+                        {
+                            message = "Attachment size setting is invalid."
+                        });
+                    }
+
+                    long maxFileSize = (long)maxSizeMb * 1024 * 1024;
 
 
                     if (
@@ -108,7 +124,12 @@ namespace Nafadh_Backend.Controllers
                             new
                             {
                                 message =
-                                    "Excuse attachment cannot exceed 5 MB."
+                                (await _context.SystemVariables
+    .AsNoTracking()
+    .Where(v => v.VariableKey == "ATTACHMENT_SIZE_ERROR")
+    .Select(v => v.Value)
+    .FirstOrDefaultAsync() ?? "Attachment exceeds the allowed size.")
+    .Replace("{maxSize}", maxSizeMb.ToString())
                             }
                         );
                     }
@@ -121,15 +142,25 @@ namespace Nafadh_Backend.Controllers
                         .ToLowerInvariant();
 
 
-                    var allowedExtensions =
-                        new HashSet<string>
+                    var extensionsSetting = await _context.SystemVariables
+     .AsNoTracking()
+     .FirstOrDefaultAsync(v =>
+         v.VariableKey == "ATTACHMENT_ALLOWED_EXTENSIONS");
+
+                    if (extensionsSetting == null ||
+                        string.IsNullOrWhiteSpace(extensionsSetting.Value))
+                    {
+                        return StatusCode(500, new
                         {
-                            ".pdf",
-                            ".jpg",
-                            ".jpeg",
-                            ".png",
-                            ".webp"
-                        };
+                            message = "Allowed attachment extensions are not configured."
+                        });
+                    }
+
+                    var allowedExtensions = extensionsSetting.Value
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries |
+                                    StringSplitOptions.TrimEntries)
+                        .Select(ext => "." + ext.TrimStart('.').ToLowerInvariant())
+                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
 
                     if (
@@ -142,21 +173,26 @@ namespace Nafadh_Backend.Controllers
                             new
                             {
                                 message =
-                                    "Only PDF, JPG, JPEG, PNG and WEBP files are allowed."
+                                    (await _context.SystemVariables
+    .AsNoTracking()
+    .Where(v => v.VariableKey == "ATTACHMENT_TYPE_ERROR")
+    .Select(v => v.Value)
+    .FirstOrDefaultAsync() ?? "Attachment file type is not allowed.")
                             }
                         );
                     }
 
 
-                    var allowedContentTypes =
-                        new HashSet<string>
-                        {
-                            "application/pdf",
-                            "image/jpeg",
-                            "image/png",
-                            "image/webp"
-                        };
-
+                    var allowedContentTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+{
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+};
 
                     if (
                         !allowedContentTypes.Contains(

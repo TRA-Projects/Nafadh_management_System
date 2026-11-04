@@ -23,15 +23,151 @@ const approvalKeyByBatchStatus = new Map([
   styleUrls: ['./programs.css']
 })
 export class AdminPrograms implements OnInit {
-  readonly constants = inject(NafadhConstantsService);
+traineeAddMode: 'manual' | 'excel' | 'existing' = 'manual';
+
+private router = inject(Router);
+private route = inject(ActivatedRoute);
+private notificationPlanId: number | null = null;
+
+readonly constants = inject(NafadhConstantsService);
   private fb = inject(FormBuilder);
   private adminApi = inject(AdminApi);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private notificationPlanId: number | null = null;
 
-  traineeAddMode: 'existing' | 'manual' | 'excel' = 'existing';
 
+systemSettings = signal<Record<string, number>>({});
+
+setting(key: string): number {
+  const value = this.systemSettings()[key];
+
+  if (value === undefined || !Number.isFinite(value)) {
+    throw new Error(`إعداد النظام غير متوفر: ${key}`);
+  }
+
+  return value;
+}
+programMinDurationErrorMessage = signal<string>('');
+systemSettingsLoaded = signal<boolean>(false);
+systemSettingsMessages = signal<Record<string, string>>({});
+
+private getSystemSettingsMessage(key: string): string {
+  return this.systemSettingsMessages()[key] ?? '';
+}
+private loadSystemSettings(): void {
+  const requiredKeys = [
+    'PROGRAM_DEFAULT_DURATION_WEEKS',
+   'PROGRAM_WEEKLY_HOURS',
+    'PROGRAM_MIN_DURATION_WEEKS',
+    'BATCH_DEFAULT_CAPACITY',
+    'PROJECT_PASS_PERCENT',
+    'QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT',
+    'QUIZ_CHEATING_RISK_PERCENT'
+  ];
+
+  this.systemSettingsLoaded.set(false);
+
+  this.adminApi.getSystemVariables().subscribe({
+    next: (rows) => {
+      const values: Record<string, number> = {};
+      const messages: Record<string, string> = {};
+
+      for (const row of rows) {
+        const key = row.variableKey ?? row.VariableKey;
+        const rawValue = row.value ?? row.Value;
+        if (
+  key === 'SYSTEM_SETTINGS_MISSING_MESSAGE' ||
+  key === 'SYSTEM_SETTINGS_LOAD_ERROR_MESSAGE'
+) {
+  messages[key] = String(rawValue ?? '');
+  continue;
+}
+
+        if (key === 'PROGRAM_MIN_DURATION_ERROR_MESSAGE') {
+          this.programMinDurationErrorMessage.set(
+            String(rawValue ?? '')
+          );
+          continue;
+        }
+
+        if (!requiredKeys.includes(key)) continue;
+
+        if (
+          rawValue === null ||
+          rawValue === undefined ||
+          String(rawValue).trim() === ''
+        ) {
+          continue;
+        }
+
+        const value = Number(rawValue);
+
+        if (Number.isFinite(value) && value >= 0) {
+          values[key] = value;
+        }
+      }
+        this.systemSettingsMessages.set(messages);
+        
+      const missingKeys = requiredKeys.filter(
+        key => values[key] === undefined
+      );
+
+    if (missingKeys.length > 0) {
+  console.error('إعدادات النظام ناقصة:', missingKeys);
+
+  this.showToast(
+    this.getSystemSettingsMessage('SYSTEM_SETTINGS_MISSING_MESSAGE'),
+    'error'
+  );
+
+  return;
+}
+
+      this.systemSettings.set(values);
+      this.applySystemSettings();
+      this.systemSettingsLoaded.set(true);
+    },
+
+ error: (err) => {
+  console.error('تعذر تحميل إعدادات النظام:', err);
+
+  this.showToast(
+    this.getSystemSettingsMessage('SYSTEM_SETTINGS_LOAD_ERROR_MESSAGE')
+      || 'تعذر تحميل إعدادات النظام من قاعدة البيانات.',
+    'error'
+  );
+}
+  });
+}
+private applySystemSettings(): void {
+  const settings = this.systemSettings();
+
+  const minWeeks = settings['PROGRAM_MIN_DURATION_WEEKS'];
+  const defaultWeeks = settings['PROGRAM_DEFAULT_DURATION_WEEKS'];
+  const batchCapacity = settings['BATCH_DEFAULT_CAPACITY'];
+
+  if (
+    !Number.isFinite(minWeeks) ||
+    !Number.isFinite(defaultWeeks) ||
+    !Number.isFinite(batchCapacity) ||
+    minWeeks <= 0 ||
+    defaultWeeks < minWeeks ||
+    batchCapacity <= 0
+  ) {
+    console.error('Invalid or missing system settings');
+    return;
+  }
+
+  const durationControl = this.programForm.get('durationWeeks');
+
+  durationControl?.setValidators([
+    Validators.required,
+    Validators.min(minWeeks)
+  ]);
+
+  durationControl?.setValue(defaultWeeks);
+  durationControl?.updateValueAndValidity();
+
+  this.batchForm.get('capacity')?.setValue(batchCapacity);
+}
   // ==========================================================
   // 1. Data Signals
   // ==========================================================
@@ -232,16 +368,53 @@ export class AdminPrograms implements OnInit {
   selectedNoteRow: any = null;
 
   // المحاولات المفلترة بحسب التبويب المحدد
-  filteredQuizAttempts = computed(() => {
-    const list = this.activeQuizAttempts();
-    const f = this.auditFilter;
-    if (f === 'all') return list;
-    if (f === 'passed') return list.filter(a => a.status === 'Passed');
-    if (f === 'failed') return list.filter(a => a.status === 'Failed');
-    if (f === 'absent') return list.filter(a => a.status === 'Absent' || a.status === 'NotAttempted' || !a.submittedAt || a.excuseStatus);
-    if (f === 'cheating') return list.filter(a => (a.cheatingRiskPercentage || 0) > 0 || (a.tabSwitchCount || 0) > 0 || (a.cameraDisconnectionsCount || 0) > 0);
-    return list;
-  });
+
+private isSuspiciousQuizAttempt(a: any): boolean {
+  if (!this.systemSettingsLoaded()) {
+    return false;
+  }
+
+  return (
+    Number(a.cheatingRiskPercentage ?? 0) >
+      this.setting('QUIZ_CHEATING_RISK_PERCENT') ||
+
+    Number(a.tabSwitchCount ?? 0) >
+      this.setting('QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT') ||
+
+    Number(a.cameraDisconnectionsCount ?? 0) > 0
+  );
+}
+
+filteredQuizAttempts = computed(() => {
+  const list = this.activeQuizAttempts();
+  const filter = this.auditFilter;
+
+  if (filter === 'all') return list;
+
+  if (filter === 'passed') {
+    return list.filter(a => a.status === 'Passed');
+  }
+
+  if (filter === 'failed') {
+    return list.filter(a => a.status === 'Failed');
+  }
+
+  if (filter === 'absent') {
+    return list.filter(a =>
+      a.status === 'Absent' ||
+      a.status === 'NotAttempted' ||
+      !a.submittedAt ||
+      a.excuseStatus
+    );
+  }
+
+  if (filter === 'cheating') {
+    return list.filter(a => this.isSuspiciousQuizAttempt(a));
+  }
+
+  return list;
+});
+
 
   // ==========================================================
   // 5.1 سجل مشاريع GitHub وتسليمات الكود والواجبات (Project Dossier)
@@ -277,6 +450,7 @@ export class AdminPrograms implements OnInit {
     this.initBatchForm();
     this.initEditBatchForm();
     this.initProgramForm();
+    this.loadSystemSettings();
     this.loadInitialData();
     this.buildMonthlyCalendarGrid();
   }
@@ -791,9 +965,12 @@ export class AdminPrograms implements OnInit {
     return this.activeQuizAttempts().filter(a => a.status === 'Absent' || a.status === 'NotAttempted' || !a.submittedAt).length;
   }
 
-  getCheatingSuspectsCount(): number {
-    return this.activeQuizAttempts().filter(a => (a.cheatingRiskPercentage || 0) > 20 || (a.tabSwitchCount || 0) > 2).length;
-  }
+
+getCheatingSuspectsCount(): number {
+  return this.activeQuizAttempts().filter(a =>
+    this.isSuspiciousQuizAttempt(a)
+  ).length;
+}
 
   // ==========================================================
   // 12. استعراض الأعذار الطبية (للاطلاع فقط للأدمن)
@@ -869,16 +1046,40 @@ export class AdminPrograms implements OnInit {
   // ==========================================================
   // 13.1 سجل ومحضر مشاريع GitHub والواجبات (Full-Page Dossier)
   // ==========================================================
-  openProjectDossier(event: any): void {
-    this.activeProjectEvent = event;
-    this.projectFilter.set('all');
-    this.projectSubmissions.set(this.generateSampleProjectSubmissions(event));
-    this.isProjectAuditFullPageOpen.set(true);
-    this.isProjectDossierOpen.set(true);
-    this.isQuizAuditFullPageOpen.set(false);
-    this.isDetailsPageOpen.set(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+
+openProjectDossier(event: any): void {
+  this.activeProjectEvent = event;
+  this.projectFilter.set('all');
+
+  const submissions =
+    this.generateSampleProjectSubmissions(event);
+
+  const passPercent =
+    this.setting('PROJECT_PASS_PERCENT');
+
+  const updatedSubmissions = submissions.map(sub => {
+    if (sub.score === null || sub.score === undefined) {
+      return sub;
+    }
+
+    return {
+      ...sub,
+      status: Number(sub.score) >= passPercent
+        ? 'مكتمل ومعتمد'
+        : 'يتطلب تحسينات'
+    };
+  });
+
+  this.projectSubmissions.set(updatedSubmissions);
+
+  this.isProjectAuditFullPageOpen.set(true);
+  this.isProjectDossierOpen.set(true);
+  this.isQuizAuditFullPageOpen.set(false);
+  this.isDetailsPageOpen.set(false);
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 
   closeProjectAuditFullPage(): void {
     this.isProjectAuditFullPageOpen.set(false);
@@ -906,7 +1107,7 @@ export class AdminPrograms implements OnInit {
 
   onOpenProjectGradeModal(sub: any): void {
     this.selectedProjectForGrading = sub;
-    this.gradingScoreInput = sub?.score || 85;
+   this.gradingScoreInput = sub?.score ?? 0;
     this.gradingFeedbackInput = sub?.reviewerFeedback || '';
     this.isProjectGradeModalOpen = true;
   }
@@ -927,7 +1128,7 @@ export class AdminPrograms implements OnInit {
       if (target) {
         target.score = Number(newScore);
         target.reviewerFeedback = feedback || '';
-        target.status = target.score >= 60 ? 'مكتمل ومعتمد' : 'يتطلب تحسينات';
+        target.status = target.score >= this.setting('PROJECT_PASS_PERCENT') ? 'مكتمل ومعتمد' : 'يتطلب تحسينات';
         target.gradedAt = new Date().toISOString();
         this.projectSubmissions.set([...list]);
       }
@@ -942,7 +1143,7 @@ export class AdminPrograms implements OnInit {
     if (target) {
       target.score = Number(this.gradingScoreInput);
       target.reviewerFeedback = this.gradingFeedbackInput;
-      target.status = target.score >= 60 ? 'مكتمل ومعتمد' : 'يتطلب تحسينات';
+      target.status = target.score >= this.setting('PROJECT_PASS_PERCENT') ? 'مكتمل ومعتمد' : 'يتطلب تحسينات';
       target.gradedAt = new Date().toISOString();
       this.projectSubmissions.set([...list]);
     }
@@ -1537,57 +1738,31 @@ export class AdminPrograms implements OnInit {
     }, { validators: this.dateRangeValidator });
   }
 
-
-  private initEditBatchForm(): void {
-    this.editBatchForm = this.fb.group({
-      batchName: ['', [Validators.required]],
-      programId: [null, [Validators.required]],
-      companyId: [null],
-      startDate: ['', [Validators.required]],
-      endDate: ['', [Validators.required]],
-      capacity: [15, [Validators.required, Validators.min(1)]],
-      status: [null, [Validators.required]]
-    }, { validators: this.dateRangeValidator });
-  }
-
-
-  private initProgramForm(): void {
-    this.programForm = this.fb.group({
-      title: ['', [Validators.required, Validators.minLength(2)]],
-      trackId: [null, [Validators.required]],
-      durationWeeks: [10, [Validators.required, Validators.min(1)]],
-      description: ['']
-    });
-  }
-
-  preventNegative(event: KeyboardEvent): void {
-    if (['-', 'e', 'E', '+'].includes(event.key)) event.preventDefault();
-  }
-
-
-  onCreateBatch(): void {
-    this.batchForm.reset({
-      batchName: '',
-      programId: '',
-      companyId: '',
-      startDate: '',
-      endDate: '',
-      capacity: null
-    });
-
-    this.batchFormSubmitted = false;
-    this.batchErrorMessage = null;
-
-    this.selectedTraineeIds.set([]);
-    this.traineePickerError.set(null);
-    this.traineeImportError.set(null);
-    this.loadAvailableBatchTrainees();
-    this.isBatchModalOpen = false;
-    this.isCreateBatchPageOpen.set(true);
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
+private initEditBatchForm(): void {
+  this.editBatchForm = this.fb.group({
+    batchName: ['', [Validators.required]],
+    programId: [null, [Validators.required]],
+    companyId: [null],
+    startDate: ['', [Validators.required]],
+    endDate: ['', [Validators.required]],
+    capacity: [
+      null,
+      [Validators.required, Validators.min(1)]
+    ],
+    status: [null, [Validators.required]]
+  }, { validators: this.dateRangeValidator });
+}
+private initProgramForm(): void {
+  this.programForm = this.fb.group({
+    title: ['', [Validators.required, Validators.minLength(2)]],
+    trackId: [null, [Validators.required]],
+    durationWeeks: [
+      null,
+      [Validators.required]
+    ],
+    description: ['']
+  });
+}
 
   loadAvailableBatchTrainees(): void {
     this.isLoadingAvailableTrainees.set(true);
@@ -1974,7 +2149,35 @@ addManualTrainee(): void {
       }
     });
   }
+onCreateBatch(): void {
+  if (!this.systemSettingsLoaded()) {
+    console.warn('System settings are not loaded yet');
+    return;
+  }
 
+  this.batchForm.reset({
+    batchName: '',
+    programId: '',
+    companyId: '',
+    startDate: '',
+    endDate: '',
+    capacity: this.setting('BATCH_DEFAULT_CAPACITY')
+  });
+
+  this.batchFormSubmitted = false;
+  this.batchErrorMessage = null;
+
+  this.selectedTraineeIds.set([]);
+  this.traineePickerError.set(null);
+  this.traineeImportError.set(null);
+
+  this.loadAvailableBatchTrainees();
+
+  this.isBatchModalOpen = false;
+  this.isCreateBatchPageOpen.set(true);
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
   onCloseBatchModal(): void {
     this.isCreateBatchPageOpen.set(false);
     this.isBatchModalOpen = false;
@@ -1985,12 +2188,34 @@ addManualTrainee(): void {
   }
 
 
-  onCreateProgram(): void {
-    this.programForm.reset({ durationWeeks: 10, trackId: null });
-    this.programFormSubmitted = false;
-    this.programErrorMessage = null;
-    this.isProgramModalOpen = true;
-  }
+  
+onCreateProgram(): void {
+  if (!this.systemSettingsLoaded()) {
+  console.warn('System settings are not loaded yet');
+  return;
+}
+  const minWeeks = Math.max(
+    1,
+    this.setting('PROGRAM_MIN_DURATION_WEEKS')
+  );
+
+  const defaultWeeks = Math.max(
+    minWeeks,
+    this.setting('PROGRAM_DEFAULT_DURATION_WEEKS')
+  );
+
+  this.programForm.reset({
+    title: '',
+    trackId: null,
+    durationWeeks: defaultWeeks,
+    description: ''
+  });
+
+  this.programFormSubmitted = false;
+  this.programErrorMessage = null;
+  this.isProgramModalOpen = true;
+}
+
 
   onCloseProgramModal(): void {
     this.isProgramModalOpen = false;
@@ -2001,6 +2226,10 @@ addManualTrainee(): void {
 
 
   onEdit(batch: any): void {
+    if (!this.systemSettingsLoaded()) {
+  console.warn('System settings are not loaded yet');
+  return;
+}
     this.selectedBatch = batch;
 
     this.editBatchForm.patchValue({
@@ -2009,7 +2238,7 @@ addManualTrainee(): void {
       companyId: batch.companyId ?? null,
       startDate: batch.startDate ? batch.startDate.split('T')[0] : '',
       endDate: batch.endDate ? batch.endDate.split('T')[0] : '',
-      capacity: batch.capacity ?? 15,
+     capacity: batch.capacity ?? this.setting('BATCH_DEFAULT_CAPACITY'),
       status: this.getBatchStatusValue(batch.status)
     });
 
@@ -2237,6 +2466,10 @@ addManualTrainee(): void {
 
 
   onSubmitProgram(): void {
+    if (!this.systemSettingsLoaded()) {
+  console.warn('System settings are not loaded yet');
+  return;
+}
     this.programFormSubmitted = true;
 
     if (this.programForm.invalid) {
@@ -2246,11 +2479,11 @@ addManualTrainee(): void {
 
     const val = this.programForm.value;
 
-    // كل أسبوع يعادل 40 ساعة تدريبية
+    // حساب ساعات التدريب باستخدام PROGRAM_WEEKLY_HOURS من إعدادات النظام
     const payload = {
       title: val.title,
       trackId: Number(val.trackId),
-      durationHours: Number(val.durationWeeks || 10) * 40,
+   durationHours: Number(val.durationWeeks || this.setting('PROGRAM_DEFAULT_DURATION_WEEKS')) * this.setting('PROGRAM_WEEKLY_HOURS'),
       description: val.description || '',
       category: 'تقنية المعلومات'
     };
@@ -2605,7 +2838,7 @@ addManualTrainee(): void {
   onOpenProjectEvaluation(sub: any): void {
     this.selectedProjectForView = sub;
     this.selectedProjectForGrading = sub;
-    this.gradingScoreInput = sub?.score || 85;
+   this.gradingScoreInput = sub?.score ?? 0;
     this.gradingFeedbackInput = sub?.reviewerFeedback || '';
     this.isProjectEvaluationFullPageOpen.set(true);
     this.isProjectAuditFullPageOpen.set(false);

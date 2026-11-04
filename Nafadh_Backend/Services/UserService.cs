@@ -1,5 +1,6 @@
 // Implemented by Noura
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Common;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
@@ -17,23 +18,83 @@ namespace Nafadh_Backend.Services
         private readonly IJwtTokenService _jwtTokenService;
         private readonly ICompanySupervisorRepository _supervisorRepository;
         private readonly ICompanyRegistrationService _companyRegistrationService;
-
+        private readonly Nafadhcontext _context;
         public UserService(
-            IUserRepository repository,
-            IRoleRepository roleRepository,
-            IJwtTokenService jwtTokenService,
-            ICompanySupervisorRepository supervisorRepository,
-            ICompanyRegistrationService companyRegistrationService)
+      IUserRepository repository,
+      IRoleRepository roleRepository,
+      IJwtTokenService jwtTokenService,
+      ICompanySupervisorRepository supervisorRepository,
+      ICompanyRegistrationService companyRegistrationService,
+      Nafadhcontext context)
         {
             _companyRegistrationService = companyRegistrationService;
             _repository = repository;
             _roleRepository = roleRepository;
             _jwtTokenService = jwtTokenService;
             _supervisorRepository = supervisorRepository;
+            _context = context;
         }
 
         public async Task<UserResponseDTO> RegisterAsync(UserRegisterationDTO dto)
         {
+            var passwordSetting = await _context.SystemVariables
+    .AsNoTracking()
+    .FirstOrDefaultAsync(v =>
+        v.VariableKey == "MinPasswordLength");
+
+            if (passwordSetting == null ||
+                !int.TryParse(passwordSetting.Value, out int minPasswordLength) ||
+                minPasswordLength <= 0)
+            {
+                throw new InvalidOperationException(
+                    "Minimum password length setting is missing or invalid.");
+            }
+
+            if (dto.Password.Length < minPasswordLength)
+            {
+                throw new ValidationException(
+                    $"Password must be at least {minPasswordLength} characters long.");
+            }
+            var passwordRules = await _context.SystemVariables
+    .AsNoTracking()
+    .Where(v =>
+        v.VariableKey == "PasswordRequireUppercase" ||
+        v.VariableKey == "PasswordRequireLowercase" ||
+        v.VariableKey == "PasswordRequireDigit")
+    .ToDictionaryAsync(v => v.VariableKey, v => v.Value);
+
+            bool IsRequired(string key)
+            {
+                if (!passwordRules.TryGetValue(key, out var value) ||
+                    (value != "Y" && value != "N"))
+                {
+                    throw new InvalidOperationException(
+                        $"Password setting '{key}' is missing or invalid.");
+                }
+
+                return value == "Y";
+            }
+
+            if (IsRequired("PasswordRequireUppercase") &&
+                !dto.Password.Any(char.IsUpper))
+            {
+                throw new ValidationException(
+                    "Password must contain an uppercase letter.");
+            }
+
+            if (IsRequired("PasswordRequireLowercase") &&
+                !dto.Password.Any(char.IsLower))
+            {
+                throw new ValidationException(
+                    "Password must contain a lowercase letter.");
+            }
+
+            if (IsRequired("PasswordRequireDigit") &&
+                !dto.Password.Any(char.IsDigit))
+            {
+                throw new ValidationException(
+                    "Password must contain a number.");
+            }
             var role = await _roleRepository.GetByIdAsync(dto.RoleId)
                 ?? throw new ValidationException($"RoleId {dto.RoleId} does not exist.");
 
@@ -59,6 +120,7 @@ namespace Nafadh_Backend.Services
             created.Role = role;
             return MapToResponseDTO(created);
         }
+
 
         public async Task<UserLoginResponseDTO> LoginAsync(UserLoginDTO dto)
         {
@@ -96,7 +158,7 @@ namespace Nafadh_Backend.Services
                     }
                 }
 
-                var (token, expiresAtUtc) = _jwtTokenService.GenerateToken(user);
+                var (token, expiresAtUtc) = await _jwtTokenService.GenerateTokenAsync(user);
 
                 int? companyId = null;
                 int? supervisorId = null;
@@ -188,13 +250,74 @@ namespace Nafadh_Backend.Services
 
         public async Task ResetPasswordAsync(int userId, AdminResetPasswordDTO dto)
         {
+            var passwordSetting = await _context.SystemVariables
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v =>
+                    v.VariableKey == "MinPasswordLength");
+
+            if (passwordSetting == null ||
+                !int.TryParse(passwordSetting.Value, out int minPasswordLength) ||
+                minPasswordLength <= 0)
+            {
+                throw new InvalidOperationException(
+                    "Minimum password length setting is missing or invalid.");
+            }
+
+            if (dto.NewPassword.Length < minPasswordLength)
+            {
+                throw new ValidationException(
+                    $"Password must be at least {minPasswordLength} characters long.");
+            }
+
+            // جلب شروط كلمة المرور من إعدادات النظام
+            var passwordRules = await _context.SystemVariables
+                .AsNoTracking()
+                .Where(v =>
+                    v.VariableKey == "PasswordRequireUppercase" ||
+                    v.VariableKey == "PasswordRequireLowercase" ||
+                    v.VariableKey == "PasswordRequireDigit")
+                .ToDictionaryAsync(v => v.VariableKey, v => v.Value);
+
+            bool IsRequired(string key)
+            {
+                if (!passwordRules.TryGetValue(key, out var value) ||
+                    (value != "Y" && value != "N"))
+                {
+                    throw new InvalidOperationException(
+                        $"Password setting '{key}' is missing or invalid.");
+                }
+
+                return value == "Y";
+            }
+
+            if (IsRequired("PasswordRequireUppercase") &&
+                !dto.NewPassword.Any(char.IsUpper))
+            {
+                throw new ValidationException(
+                    "Password must contain an uppercase letter.");
+            }
+
+            if (IsRequired("PasswordRequireLowercase") &&
+                !dto.NewPassword.Any(char.IsLower))
+            {
+                throw new ValidationException(
+                    "Password must contain a lowercase letter.");
+            }
+
+            if (IsRequired("PasswordRequireDigit") &&
+                !dto.NewPassword.Any(char.IsDigit))
+            {
+                throw new ValidationException(
+                    "Password must contain a number.");
+            }
+
             var user = await _repository.GetByIdAsync(userId)
                 ?? throw new NotFoundException($"User {userId} was not found.");
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+
             await _repository.UpdateAsync(user);
         }
-
         public async Task<PagedResult<UserResponseDTO>> SearchAsync(
 
             int? roleId,

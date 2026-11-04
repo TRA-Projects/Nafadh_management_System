@@ -38,6 +38,13 @@ const NAFADH_NOTIFICATION_TEMPLATE =
 export const API_ROOT = '/api/jobseekers';
 
 export const ApiPaths = {
+  
+  // Unified database - System Variables
+  systemVariables: '/api/system-variables',
+
+  systemVariableByKey: (key: string) =>
+    `/api/system-variables/${encodeURIComponent(key)}`,
+
   health: '/api/jobseekers/health',
 
   jobseekerProfile: '/api/jobseekers/jobseeker/profile',
@@ -406,20 +413,18 @@ export const ApiPaths = {
   jobsJobApplication: (jobId: number, applicationId: number) =>
     `/api/jobseekers/jobs/${jobId}/applications/${applicationId}`,
 
-  // ── System Administration ──────────────────────────────────────
+// ── System Administration ──────────────────────────────────────
 
-  adminSystemVariables:
-    '/api/jobseekers/admin/system-variables',
+adminSystemVariables: '/api/system-variables',
 
-  adminSystemVariable: (variableKey: string) =>
-    `/api/jobseekers/admin/system-variables/${encodeURIComponent(variableKey)}`,
+adminSystemVariable: (variableKey: string) =>
+  `/api/system-variables/${encodeURIComponent(variableKey)}`,
 
-  adminSystemConfigGroups:
-    `${MANAGEMENT_REFERENCE_CONSTANTS}/groups`,
+adminSystemConfigGroups:
+  `${MANAGEMENT_REFERENCE_CONSTANTS}/groups`,
 
-  adminSystemConfigValues: (code: string) =>
-    `${MANAGEMENT_REFERENCE_CONSTANTS}/values/${encodeURIComponent(code)}`,
-
+adminSystemConfigValues: (code: string) =>
+  `${MANAGEMENT_REFERENCE_CONSTANTS}/values/${encodeURIComponent(code)}`,
   adminSystemConfigValuesSearch: (code: string) =>
     `${MANAGEMENT_REFERENCE_CONSTANTS}/values/${encodeURIComponent(code)}/search`,
 
