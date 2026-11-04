@@ -94,7 +94,8 @@ export interface NotificationTemplate {
 interface AnnouncementViewModel {
   id: number;
   message: string;
-  scopeType: ScopeName | null;
+  scopeType: AnnouncementDto['scopeType'];
+  editableScope: ScopeName | null;
   scopeId: number | null;
   date: Date | string;
   createdByUserId: number;
@@ -535,7 +536,8 @@ export class NotificationTemplatesPageComponent {
     return {
       id: dto.announcementId,
       message: dto.message,
-      scopeType: normalizeScope(dto.scopeType),
+      scopeType: dto.scopeType,
+      editableScope: normalizeScope(dto.scopeType),
       scopeId: dto.scopeId ?? null,
       date: dto.date,
       createdByUserId: dto.createdByUserId,
@@ -597,22 +599,13 @@ export class NotificationTemplatesPageComponent {
     );
   }
 
-  getScopeLabel(scopeType: ScopeName | null): string {
-    if (!scopeType) {
+  getScopeLabel(scopeType: unknown): string {
+    if (scopeType == null || String(scopeType).trim() === '') {
       return 'غير محدد';
     }
 
-    const fromCatalog = this.scopeChoices.find(
-      (option) => String(option.value) === scopeType,
-    );
-    if (fromCatalog?.label) {
-      return fromCatalog.label;
-    }
-
-    const fallback = this.announcementScopeOptions.find(
-      (option) => option.value === scopeType,
-    );
-    return fallback?.label ?? scopeType;
+    const fallback = this.announcementScopeOptions.find(option => option.value === normalizeScope(scopeType))?.label;
+    return this.constants.administrativeLabel('NFD_ANN_SCOPE', scopeType, fallback);
   }
 
   // Opens the form in Add mode and resets its values.
@@ -656,7 +649,7 @@ export class NotificationTemplatesPageComponent {
     this.announcementMessage.set(announcement.message);
 
     this.announcementScopeType.set(
-      announcement.scopeType ?? ANNOUNCEMENT_SCOPE.Platform,
+      announcement.editableScope ?? ANNOUNCEMENT_SCOPE.Platform,
     );
 
     this.announcementScopeId.set(announcement.scopeId);
@@ -719,14 +712,14 @@ export class NotificationTemplatesPageComponent {
       editingId === null
         ? null
         : this.announcements().find((row) => row.id === editingId);
-    if (editingId !== null && !original?.scopeType) {
+    if (editingId !== null && !original?.editableScope) {
       this.announcementFormError.set(
         'لا يمكن تعديل هذا الإعلان من نموذج لا يدعم نطاقه الأصلي.',
       );
       return;
     }
     if (
-      original?.scopeType !== scopeType &&
+      original?.editableScope !== scopeType &&
       !this.constants.isSelectable('NFD_ANN_SCOPE', scopeType)
     ) {
       this.announcementFormError.set('اختر نطاق إعلان مفعّلاً.');
