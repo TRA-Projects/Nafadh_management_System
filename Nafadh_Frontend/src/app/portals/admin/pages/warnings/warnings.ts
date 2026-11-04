@@ -1,3 +1,4 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { csvCell } from '../../../../core/models/csv-cell';
 import { administrativeValue } from '../../../../core/models/administrative-constants';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
@@ -12,7 +13,7 @@ import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warn
 @Component({
   selector: 'app-admin-warnings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './warnings.html',
   styleUrls: ['./warnings.css']
 })
@@ -88,7 +89,7 @@ export class AdminWarnings implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.constants.ensure('NFD_WRN_LVL');
+    this.constants.ensure('NFD_WRN_LVL', 'NFD_WRN_STAT');
     this.warningTypes.refresh();
     this.load();
     this.loadCompanies();
@@ -132,6 +133,14 @@ export class AdminWarnings implements OnInit {
     this.activeFilterTab = tab;
   }
 
+  get filterStatusChoices() {
+    return [{value:'ALL',label:'الكل',labelEn:'All'}, ...this.constants.supportedChoices('NFD_WRN_STAT',
+      ['Open', 'UnderReview', 'Escalated', 'Resolved'].map(value => ({value,label:this.getStatusLabel(value)})), true)];
+  }
+  get filterLevelChoices() {
+    return [{value:'ALL',label:'الكل',labelEn:'All'}, ...this.constants.supportedChoices('NFD_WRN_LVL',
+      ['Low', 'Medium', 'High', 'Critical'].map(value => ({value,label:this.getLevelLabel(value)})), true)];
+  }
   selectFilterOption(type: 'YEAR' | 'MONTH' | 'STATUS' | 'LEVEL', value: string): void {
     if (type === 'YEAR') {
       this.selectedYear = value;
@@ -332,7 +341,7 @@ export class AdminWarnings implements OnInit {
     if (!this.newWarning.type || !this.warningTypes.selectable(this.newWarning.type)) {
       errors['type'] = 'يرجى اختيار تصنيف مخالفة نشط من الثوابت.';
     }
-    if (!this.newWarning.level) {
+    if (!this.constants.isSelectable('NFD_WRN_LVL', this.newWarning.level)) {
       errors['level'] = 'يرجى اختيار درجة الأهمية.';
     }
 
