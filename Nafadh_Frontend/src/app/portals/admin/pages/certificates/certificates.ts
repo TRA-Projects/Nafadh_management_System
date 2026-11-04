@@ -954,26 +954,25 @@ private loadCertificateSettings(): void {
 
   issueAllCertificates(): void {
     const batch = this.selectedBatch();
-    if (!this.isBatchCompleted(batch)) {
-      this.showCertificateMessage(
-        'error',
-        'غير مسموح بإصدار الشهادات',
-        'إصدار الشهادات متاح فقط للدفعات المكتملة.'
-      );
-      return;
-    }
+   if (!this.isBatchCompleted(batch)) {
+  this.showCertificateMessage(
+    'error',
+    this.getCertificateText('CERT_ALL_BATCH_REQUIRED_TITLE'),
+    this.getCertificateText('CERT_ALL_BATCH_REQUIRED_MESSAGE')
+  );
+  return;
+}
 
     const unissued = this.selectedBatchTrainees().filter(t => !this.isCertificateIssued(t));
 
-    if (unissued.length === 0) {
-      this.showCertificateMessage(
-        'warning',
-        'مكتملة بالكامل',
-        'جميع الشهادات لمتدربي هذه الدفعة صُدرت بالفعل.'
-      );
-      return;
-    }
-
+ if (unissued.length === 0) {
+  this.showCertificateMessage(
+    'warning',
+    this.getCertificateText('CERT_ALL_ALREADY_ISSUED_TITLE'),
+    this.getCertificateText('CERT_ALL_ALREADY_ISSUED_MESSAGE')
+  );
+  return;
+}
     const requests$ = unissued.map(trainee => {
       const payload = {
         enrollmentId: trainee.enrollmentId,
@@ -987,26 +986,29 @@ private loadCertificateSettings(): void {
       );
     });
 
-    forkJoin(requests$).subscribe({
-      next: () => {
-        if (batch) {
-          this.reloadTraineesAndBatchStatus(batch.batchId || batch.id);
-        }
-        this.showCertificateMessage(
-          'success',
-          'تم إصدار جميع الشهادات بنجاح',
-          `تم إصدار وتوثيق الشهادات لـ ${unissued.length} متدربين بأرقامهم التسلسلية.`
-        );
-      },
-      error: () => {
-        this.showCertificateMessage(
-          'error',
-          'حدث خطأ',
-          'حدث خطأ أثناء إصدار الشهادات الجماعي.'
-        );
-      }
-    });
+ forkJoin(requests$).subscribe({
+  next: () => {
+    if (batch) {
+      this.reloadTraineesAndBatchStatus(batch.batchId || batch.id);
+    }
+
+    this.showCertificateMessage(
+      'success',
+      this.getCertificateText('CERT_ALL_SUCCESS_TITLE'),
+      this.getCertificateText('CERT_ALL_SUCCESS_MESSAGE', {
+        count: unissued.length
+      })
+    );
+  },
+
+  error: () => {
+    this.showCertificateMessage(
+      'error',
+      this.getCertificateText('CERT_ALL_ERROR_TITLE'),
+      this.getCertificateText('CERT_ALL_ERROR_MESSAGE')
+    );
   }
+});}
 
   private reloadTraineesAndBatchStatus(batchId: number): void {
     const bId = this.cleanId(batchId);
