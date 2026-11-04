@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 export interface NafadhWarningTypeOption {
   value: string;
   label: string;
+  labelEn?: string;
   isActive: boolean;
 }
 
@@ -21,6 +22,7 @@ export class NafadhWarningTypesService {
   private readonly allRows = signal<NafadhWarningTypeOption[]>([]);
   readonly loaded = signal(false);
   /** Only active values may be used for new selections; historical labels remain available. */
+  readonly historicalOptions = this.allRows.asReadonly();
   readonly activeOptions = computed(() => this.allRows().filter(row => row.isActive));
 
   refresh(): void {
@@ -39,9 +41,9 @@ export class NafadhWarningTypesService {
             const key = this.key(lookupValueKey(v));
             if (!WARNING_KEYS.includes(key as typeof WARNING_KEYS[number])) continue;
             const label = lookupLabel(v);
-            const active = v['isActive'] ?? v['IsActive'] ?? v['is_active'] ?? true;
+            const active = v['isActive'] ?? v['IsActive'] ?? v['is_active'];
             if (rows.some(row => row.value === key)) continue;
-            rows.push({ value: key, label: label || FALLBACK_LABELS[key],
+            rows.push({ value: key, labelEn: String(v['label_en'] ?? v['LabelEn'] ?? v['labelEn'] ?? ''), label: label || FALLBACK_LABELS[key],
               isActive: active === true || active === 1 || active === 'true' || active === 'True' });
           }
           this.allRows.set(rows);
