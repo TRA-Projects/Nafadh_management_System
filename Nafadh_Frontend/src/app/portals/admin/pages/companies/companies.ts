@@ -1,3 +1,4 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { csvCell } from '../../../../core/models/csv-cell';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { administrativeValue } from '../../../../core/models/administrative-constants';
@@ -55,7 +56,7 @@ function convertArabicDigits(str: string): string {
 @Component({
   selector: 'app-admin-companies',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './companies.html',
   styleUrls: ['./companies.css']
 })
@@ -112,6 +113,7 @@ export class AdminCompanies implements OnInit {
   touchedFields: { [key: string]: boolean } = {};
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_CMP_STAT');
     // تنظيف أي بيانات قديمة مخزنة محلياً كانت تحجب بيانات السيرفر الحقيقية
     try {
       localStorage.removeItem('nfd_company_status_overrides');
@@ -369,6 +371,10 @@ export class AdminCompanies implements OnInit {
     this.filterVersion.update(v => v + 1);
   }
 
+  get companyChoices() {
+    return [{value:'الكل',label:'جميع الحالات',labelEn:'All'}, ...this.constants.supportedChoices('NFD_CMP_STAT',
+      ['Approved','PendingApproval','Suspended','Rejected'].map(value => ({value,label:this.statusLabel(value)})), true)];
+  }
   setFilter(status: string): void {
     this.statusFilter.set(status);
     this.currentPage.set(1);
