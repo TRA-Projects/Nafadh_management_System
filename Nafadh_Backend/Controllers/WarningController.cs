@@ -85,6 +85,18 @@ namespace Nafadh_Backend.Controllers
         {
             // Resolve the admin-controlled label BEFORE the warning is persisted.
             // This prevents a lookup failure from being reported after saving a warning.
+            try
+            {
+                await CatalogSelectionPolicy.RequireActiveAsync(_trainingConstants, dto.Level, HttpContext.RequestAborted);
+            }
+            catch (CatalogSelectionPolicy.InactiveValueException ex)
+            {
+                return BadRequest(new { code = "WarningLevelInactive", message = ex.Message });
+            }
+            catch (CatalogSelectionPolicy.LookupUnavailableException)
+            {
+                return StatusCode(503, new { code = "CatalogUnavailable" });
+            }
             var warningType = await WarningTypePolicy.GetAsync(_trainingConstants, dto.Type);
             if (!warningType.IsActive)
                 return BadRequest(new { Code = "WarningTypeInactive", Message = "This warning type is inactive." });
