@@ -1641,7 +1641,7 @@
       <!-- بطاقة الدرجة الإجمالية والاعتماد -->
       <div class="eval-score-summary-badge">
         <div class="score-grand-box"
-          [ngClass]="(selectedProjectForView || selectedProjectForGrading)setting('PROJECT_PASS_PERCENT') ? 'score-box-pass' : 'score-box-fail'">
+        [ngClass]="((selectedProjectForView || selectedProjectForGrading)?.score ?? 0) >= setting('PROJECT_PASS_PERCENT') ? 'score-box-pass' : 'score-box-fail'">
           <div class="score-grand-fraction" dir="ltr">
             <span class="score-grand-achieved">{{ (selectedProjectForView || selectedProjectForGrading)?.score ?? '–'
               }}</span>

@@ -1,5 +1,5 @@
 import { Injectable, computed, effect, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+
 import { Store } from '@ngrx/store';
 
 import { persistLocale, readPersistedLocale } from './locale-persistence';
@@ -13,9 +13,7 @@ export type { AppLocale } from '../store/locale/locale.state';
 export class LocaleService {
   private readonly store = inject(Store);
 
-  readonly locale = toSignal(this.store.select(localeFeature.selectLocale), {
-    initialValue: 'ar' as AppLocale,
-  });
+ readonly locale = this.store.selectSignal(localeFeature.selectLocale);
 
   readonly isRtl = computed(() => this.locale() === 'ar');
 

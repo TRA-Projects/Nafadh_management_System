@@ -14,7 +14,7 @@ import * as XLSX from 'xlsx';
   styleUrls: ['./programs.css']
 })
 export class AdminPrograms implements OnInit {
-  traineeAddMode: 'manual' | 'excel' = 'manual';
+traineeAddMode: 'manual' | 'excel' | 'existing' = 'manual';
   private router = inject(Router);
 private route = inject(ActivatedRoute);
 private notificationPlanId: number | null = null;
@@ -43,7 +43,7 @@ private getSystemSettingsMessage(key: string): string {
 private loadSystemSettings(): void {
   const requiredKeys = [
     'PROGRAM_DEFAULT_DURATION_WEEKS',
-    'PROGRAM_WEEKLY_HOURS',
+   'PROGRAM_WEEKLY_HOURS',
     'PROGRAM_MIN_DURATION_WEEKS',
     'BATCH_DEFAULT_CAPACITY',
     'PROJECT_PASS_PERCENT',
