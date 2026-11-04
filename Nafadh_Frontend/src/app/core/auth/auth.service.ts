@@ -1,10 +1,11 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, switchMap } from 'rxjs';
 import { LoginResponseDto } from '../models/dtos';
 import { RoleName } from '../models/enums';
 import { environment } from '../../../environments/environment';
+import { PagePermissionService } from './page-permission.service';
 
 const STORAGE_KEY = 'nafadh_session';
 
@@ -32,13 +33,17 @@ export class AuthService {
   readonly isAuthenticated = computed(() => !!this.sessionSignal());
   readonly role = computed(() => this.sessionSignal()?.roleName ?? null);
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private pagePermissions: PagePermissionService
+  ) {}
 
   login(email: string, password: string): Observable<LoginResponseDto> {
     return this.http
       .post<LoginResponseDto>(`${environment.apiBaseUrl}/User/login`, { email, password })
       .pipe(
-        tap((res) => {
+        switchMap((res) => {
           const session: Session = {
             token: res.token,
             expiresAtUtc: res.expiresAtUtc,
@@ -52,6 +57,8 @@ export class AuthService {
           };
           this.sessionSignal.set(session);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+
+          return this.pagePermissions.loadPermissions().pipe(map(() => res));
         })
       );
   }
@@ -59,6 +66,7 @@ export class AuthService {
   logout(): void {
     this.sessionSignal.set(null);
     localStorage.removeItem(STORAGE_KEY);
+    this.pagePermissions.clear();
     this.router.navigate(['/login']);
   }
 

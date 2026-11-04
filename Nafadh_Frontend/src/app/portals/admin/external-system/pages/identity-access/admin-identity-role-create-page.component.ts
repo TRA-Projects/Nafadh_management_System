@@ -46,27 +46,28 @@ export class AdminIdentityRoleCreatePageComponent implements OnInit {
     await this.loadCatalog();
   }
 
-  async save(): Promise<void> {
-    const result = await this.formPipeline.run({
-      form: this.form,
-      work: () => {
-        const raw = this.form.getRawValue();
-        return firstValueFrom(
-          this.api.createRole({
-            Name: raw.name.trim(),
-            ParentRoleId: raw.parentRoleId,
-          })
-        );
-      },
-      execute: {
-        successMessage: $localize`:@@jobseeker.identityAccess.roleCreated:Role created`,
-      },
-    });
+async save(): Promise<void> {
+  const result = await this.formPipeline.run({
+    form: this.form,
+    work: () => {
+      const raw = this.form.getRawValue();
+      return firstValueFrom(
+        this.api.createRole({
+          Name: raw.name.trim(),
+          ParentRoleId: raw.parentRoleId,
+          OrganizationId: 1,
+        })
+      );
+    },
+    execute: {
+      successMessage: $localize`:@@jobseeker.identityAccess.roleCreated:Role created`,
+    },
+  });
 
-    if (result.ok) {
-      await this.router.navigateByUrl(this.backToList);
-    }
+  if (result.ok) {
+    await this.router.navigateByUrl(this.backToList);
   }
+}
 
   cancel(): void {
     void this.router.navigateByUrl(this.backToList);

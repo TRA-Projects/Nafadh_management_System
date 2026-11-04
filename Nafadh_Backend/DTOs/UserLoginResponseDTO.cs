@@ -1,4 +1,4 @@
-
+﻿
 
 namespace Nafadh_Backend.DTOs
 {
@@ -17,5 +17,8 @@ namespace Nafadh_Backend.DTOs
         // of a hardcoded placeholder id.
         public int? CompanyId { get; set; }
         public int? SupervisorId { get; set; }
+        // Token accepted by Bidding_API, issued in the same login (no second call needed).
+        public string? BiddingToken { get; set; }
+        public DateTime? BiddingTokenExpiresAtUtc { get; set; }
     }
 }

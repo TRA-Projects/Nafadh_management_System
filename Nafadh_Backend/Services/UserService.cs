@@ -18,16 +18,29 @@ namespace Nafadh_Backend.Services
         private readonly IJwtTokenService _jwtTokenService;
         private readonly ICompanySupervisorRepository _supervisorRepository;
         private readonly ICompanyRegistrationService _companyRegistrationService;
+        private readonly IBiddingTokenService _biddingTokenService;
         private readonly Nafadhcontext _context;
-        public UserService(
-      IUserRepository repository,
-      IRoleRepository roleRepository,
-      IJwtTokenService jwtTokenService,
-      ICompanySupervisorRepository supervisorRepository,
-      ICompanyRegistrationService companyRegistrationService,
-      Nafadhcontext context)
+
+public UserService(
+    IUserRepository repository,
+    IRoleRepository roleRepository,
+    IJwtTokenService jwtTokenService,
+    ICompanySupervisorRepository supervisorRepository,
+    ICompanyRegistrationService companyRegistrationService,
+    IBiddingTokenService biddingTokenService,
+    Nafadhcontext context)
+{
+    _repository = repository;
+    _roleRepository = roleRepository;
+    _jwtTokenService = jwtTokenService;
+    _supervisorRepository = supervisorRepository;
+    _companyRegistrationService = companyRegistrationService;
+    _biddingTokenService = biddingTokenService;
+    _context = context;
+}
         {
             _companyRegistrationService = companyRegistrationService;
+            _biddingTokenService = biddingTokenService;
             _repository = repository;
             _roleRepository = roleRepository;
             _jwtTokenService = jwtTokenService;
@@ -172,6 +185,8 @@ namespace Nafadh_Backend.Services
                     }
                 }
 
+                var bidding = _biddingTokenService.TryGenerate(user.UserId, user.Email, user.Role?.RoleName);
+
                 return new UserLoginResponseDTO
                 {
                     Token = token,
@@ -182,7 +197,9 @@ namespace Nafadh_Backend.Services
                     RoleId = user.RoleId,
                     RoleName = user.Role?.RoleName ?? string.Empty,
                     CompanyId = companyId,
-                    SupervisorId = supervisorId
+                    SupervisorId = supervisorId,
+                    BiddingToken = bidding?.Token,
+                    BiddingTokenExpiresAtUtc = bidding?.ExpiresAtUtc
                 };
             }
             catch (CompanyAccessDeniedException)

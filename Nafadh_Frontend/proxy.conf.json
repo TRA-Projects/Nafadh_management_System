@@ -1,7 +1,7 @@
 
 {
   "/api/jobseekers": {
-    "target": "http://localhost:58888",
+    "target": "https://localhost:7082",
     "secure": false,
     "changeOrigin": true
   },

@@ -6,7 +6,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Services;
 using Nafadh_Backend.DTOs;
-
+using Nafadh_Backend.Filters;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Nafadh_Backend.Controllers
@@ -23,6 +24,7 @@ namespace Nafadh_Backend.Controllers
         }
 
         [HttpGet]
+        [RequirePagePermission(new[] { "nf.admin.users-permissions", "nf.company.trainer-attendance", "nf.trainer.dashboard" }, "View")]
         public async Task<IActionResult> GetAll([FromQuery] TrainerFilterDto filter)
         {
             var (items, total) = await _service.GetAllAsync(filter);
@@ -30,6 +32,7 @@ namespace Nafadh_Backend.Controllers
         }
 
         [HttpGet("{id}")]
+        [RequirePagePermission(new[] { "nf.trainer.profile", "nf.admin.users-permissions", "nf.company.trainer-attendance" }, "View")]
         public async Task<IActionResult> GetById(int id)
         {
             var profile = await _service.GetByIdAsync(id);
@@ -39,8 +42,14 @@ namespace Nafadh_Backend.Controllers
 
         // Retrieves the trainer profile linked to the specified user account.
         [HttpGet("by-user/{userId}")]
+        [RequirePagePermission(new[] { "nf.trainer.profile", "nf.admin.users-permissions" }, "View")]
         public async Task<IActionResult> GetByUserId(int userId)
         {
+            if (IsMineScopeOnly() && TryGetCurrentUserId(out var currentUserId) && currentUserId != userId)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "لا يمكنك عرض ملف مدرب آخر." });
+            }
+
             var profile = await _service.GetByUserIdAsync(userId);
 
             if (profile == null)
@@ -50,6 +59,7 @@ namespace Nafadh_Backend.Controllers
         }
 
         [HttpPost]
+        [RequirePagePermission("nf.admin.users-permissions", "Create")]
         public async Task<IActionResult> Create([FromBody] TrainerCreateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -61,9 +71,19 @@ namespace Nafadh_Backend.Controllers
         }
 
         [HttpPut("{id}")]
+        [RequirePagePermission(new[] { "nf.trainer.profile", "nf.admin.users-permissions" }, "Edit")]
         public async Task<IActionResult> Update(int id, [FromBody] TrainerUpdateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            if (IsMineScopeOnly() && TryGetCurrentUserId(out var currentUserId))
+            {
+                var myProfile = await _service.GetByUserIdAsync(currentUserId);
+                if (myProfile == null || myProfile.TrainerId != id)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "لا يمكنك تعديل ملف مدرب آخر." });
+                }
+            }
 
             var ok = await _service.UpdateAsync(id, dto);
             if (!ok) return NotFound();
@@ -74,21 +94,30 @@ namespace Nafadh_Backend.Controllers
         // =====================================================
 
         [HttpPost("{id}/profile-image")]
+        [RequirePagePermission(new[] { "nf.trainer.profile", "nf.admin.users-permissions" }, "Edit")]
         [Consumes("multipart/form-data")]
         [RequestSizeLimit(6 * 1024 * 1024)]
         public async Task<IActionResult> UploadProfileImage(
-    int id,
-    [FromForm] ProfileImageUploadDto dto
-)
+            int id,
+            [FromForm] ProfileImageUploadDto dto
+        )
         {
+            if (IsMineScopeOnly() && TryGetCurrentUserId(out var currentUserId))
+            {
+                var myProfile = await _service.GetByUserIdAsync(currentUserId);
+                if (myProfile == null || myProfile.TrainerId != id)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "لا يمكنك تعديل صورة مدرب آخر." });
+                }
+            }
+
             try
             {
                 var profileImageUrl =
                    await _service.UploadProfileImageAsync(
-    id,
-    dto.File
-);
-
+                        id,
+                        dto.File
+                    );
 
                 // Trainer does not exist.
                 if (profileImageUrl == null)
@@ -100,7 +129,6 @@ namespace Nafadh_Backend.Controllers
                         }
                     );
                 }
-
 
                 // Return the public image URL
                 // to the frontend.
@@ -136,6 +164,7 @@ namespace Nafadh_Backend.Controllers
         }
 
         [HttpPut("{id}/status")]
+        [RequirePagePermission("nf.admin.users-permissions", "Approve")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] TrainerStatusUpdateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -146,6 +175,7 @@ namespace Nafadh_Backend.Controllers
         }
 
         [HttpGet("{id}/batches")]
+        [RequirePagePermission(new[] { "nf.trainer.batches-programs", "nf.admin.programs-batches" }, "View")]
         public async Task<IActionResult> GetBatches(int id)
         {
             var items = await _service.GetBatchesAsync(id);
@@ -153,10 +183,27 @@ namespace Nafadh_Backend.Controllers
         }
 
         [HttpGet("{id}/evaluations")]
+        [RequirePagePermission(new[] { "nf.trainer.evaluations", "nf.admin.trainees" }, "View")]
         public async Task<IActionResult> GetEvaluations(int id)
         {
             var items = await _service.GetEvaluationsAsync(id);
             return Ok(items);
+        }
+
+        // ── Permission Scope Helpers (Added) ──
+        private bool IsMineScopeOnly()
+        {
+            var scope = HttpContext.Items["PageDataScope"] as string;
+            return string.Equals(scope, "mine", System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool TryGetCurrentUserId(out int userId)
+        {
+            var idStr = User.FindFirstValue("userId")
+                     ?? User.FindFirstValue("UserId")
+                     ?? User.FindFirstValue("sub")
+                     ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(idStr, out userId);
         }
     }
 }

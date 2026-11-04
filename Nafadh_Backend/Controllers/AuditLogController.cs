@@ -2,7 +2,9 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.Filters;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Services;
 
@@ -26,6 +28,7 @@ namespace Nafadh_Backend.Controllers
         // 1. GET: api/AuditLog
         // جلب قائمة سجلات التدقيق مع إمكانية الفلترة (حسب المستخدم، الكيان، أو التاريخ)
         [HttpGet]
+        [RequirePagePermission("nf.admin.audit-logs", "View")]
         public async Task<IActionResult> GetAll([FromQuery] int? userId, [FromQuery] string? entityName, [FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
         {
             var logs = await _service.GetAllLogsAsync(userId, entityName, fromDate, toDate);
@@ -35,6 +38,7 @@ namespace Nafadh_Backend.Controllers
         // 2. GET: api/AuditLog/5
         // جلب سجل تدقيق محدد عن طريق الرقم التعريفي (ID)
         [HttpGet("{id:int}")]
+        [RequirePagePermission("nf.admin.audit-logs", "View")]
         public async Task<IActionResult> GetById(int id)
         {
             var log = await _service.GetLogByIdAsync(id);
@@ -48,6 +52,7 @@ namespace Nafadh_Backend.Controllers
         // 3. POST: api/AuditLog
         // إضافة سجل تدقيق جديد لتوثيق حركة حساسة في النظام
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Create([FromBody] NFD_AuditLog log)
         {
             if (!ModelState.IsValid)
@@ -62,6 +67,7 @@ namespace Nafadh_Backend.Controllers
         // 4. GET: api/AuditLog/entity/User/10
         // جلب سجل التغييرات الكامل لكيان أو سجل محدد في جدول معين
         [HttpGet("entity/{entityName}/{entityId:int}")]
+        [RequirePagePermission("nf.admin.audit-logs", "View")]
         public async Task<IActionResult> GetByEntity(string entityName, int entityId)
         {
             var logs = await _service.GetEntityHistoryAsync(entityName, entityId);
@@ -71,6 +77,7 @@ namespace Nafadh_Backend.Controllers
         // 5. GET: api/AuditLog/user/3
         // جلب كافة الأنشطة والعمليات التي قام بها مستخدم محدد
         [HttpGet("user/{userId:int}")]
+        [RequirePagePermission(new[] { "nf.admin.audit-logs", "nf.company.account" }, "View")]
         public async Task<IActionResult> GetByUserId(int userId)
         {
             var logs = await _service.GetUserHistoryAsync(userId);
