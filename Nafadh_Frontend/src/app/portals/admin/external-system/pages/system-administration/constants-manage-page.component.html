@@ -27,16 +27,8 @@
 
   <div class="relative z-50 flex flex-wrap items-center gap-3">
     <div class="min-w-[16rem] flex-1 sm:max-w-md">
-      <app-searchable-multi-select
-        mode="single"
-        [allowAddCustom]="false"
-        [required]="false"
-        [options]="lookupSelectOptions()"
-        [selectedValues]="selectedLookupValues()"
-        [searchPlaceholder]="lookupGroupPlaceholder"
-        [emptyText]="lookupEmptyText"
-        (selectionChange)="onLookupSelectionChange($event)"
-      />
+      <app-catalog-picker [options]="lookupSelectOptions()" [value]="selectedLookupCode()"
+        [caption]="lookupGroupPlaceholder" (valueChange)="onLookupSelectionChange($event ? [$event] : [])" />
     </div>
 
     @if (activeTab() === 'sub') {
