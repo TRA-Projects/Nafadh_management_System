@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Filters;
 
 namespace Nafadh_Backend.Controllers;
 
@@ -16,9 +17,10 @@ namespace Nafadh_Backend.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/management/reference-constants")]
-//[Authorize(Roles = "Admin,SuperAdmin")]
+[Authorize]
 public sealed class ReferenceConstantsController : ControllerBase
 {
+    private const string CatalogPage = "nf.admin.system-settings";
     private readonly Nafadhcontext _db;
     private readonly ITrainingConstantsService _service;
     private readonly ILogger<ReferenceConstantsController> _logger;
@@ -34,6 +36,7 @@ public sealed class ReferenceConstantsController : ControllerBase
 
     // Discover even empty groups in SQL. Discovery never grants write permission.
     [HttpGet("groups")]
+    [RequirePagePermission(CatalogPage, "View")]
     public async Task<IActionResult> GetGroups(CancellationToken cancellationToken)
     {
         List<GroupHeader> headers;
@@ -71,10 +74,12 @@ public sealed class ReferenceConstantsController : ControllerBase
     }
 
     [HttpGet("values/{code}")]
+    [RequirePagePermission(CatalogPage, "View")]
     public Task<IActionResult> GetValues(string code, CancellationToken cancellationToken) =>
         Forward(code, null, null, HttpMethod.Get, cancellationToken);
 
     [HttpGet("values/{code}/search")]
+    [RequirePagePermission(CatalogPage, "View")]
     public Task<IActionResult> SearchValues(string code, CancellationToken cancellationToken) =>
         Forward(code, "search", null, HttpMethod.Get, cancellationToken);
 
@@ -84,12 +89,14 @@ public sealed class ReferenceConstantsController : ControllerBase
         TrainingConstantsCatalog.Find(code) is { CanCreate: false, CanEditLabels: true };
 
     [HttpPost("values/{code}/ensure")]
+    [RequirePagePermission(CatalogPage, "Create")]
     public Task<IActionResult> EnsureValue(string code, [FromBody] JsonElement payload, CancellationToken cancellationToken) =>
         IsRestrictedNafadhGroup(code)
             ? Task.FromResult<IActionResult>(BadRequest(new { Code = "RestrictedGroup", Message = "Adding values to this group is not supported." }))
             : Forward(code, "ensure", payload, HttpMethod.Post, cancellationToken);
 
     [HttpPost("values/{code}")]
+    [RequirePagePermission(CatalogPage, "Create")]
     public Task<IActionResult> CreateValue(string code, [FromBody] JsonElement payload, CancellationToken cancellationToken) =>
         IsRestrictedNafadhGroup(code)
             ? Task.FromResult<IActionResult>(BadRequest(new
@@ -100,6 +107,7 @@ public sealed class ReferenceConstantsController : ControllerBase
             : Forward(code, null, payload, HttpMethod.Post, cancellationToken);
 
     [HttpPut("values/{code}/{id}")]
+    [RequirePagePermission(CatalogPage, "Edit")]
     public Task<IActionResult> UpdateValue(string code, string id, [FromBody] JsonElement payload, CancellationToken cancellationToken)
     {
         if (!TrainingConstantsCatalog.IsManagedNafadh(code) || TrainingConstantsCatalog.IsReadOnly(code))
