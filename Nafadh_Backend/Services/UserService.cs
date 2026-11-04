@@ -55,6 +55,46 @@ namespace Nafadh_Backend.Services
                 throw new ValidationException(
                     $"Password must be at least {minPasswordLength} characters long.");
             }
+            var passwordRules = await _context.SystemVariables
+    .AsNoTracking()
+    .Where(v =>
+        v.VariableKey == "PasswordRequireUppercase" ||
+        v.VariableKey == "PasswordRequireLowercase" ||
+        v.VariableKey == "PasswordRequireDigit")
+    .ToDictionaryAsync(v => v.VariableKey, v => v.Value);
+
+            bool IsRequired(string key)
+            {
+                if (!passwordRules.TryGetValue(key, out var value) ||
+                    (value != "Y" && value != "N"))
+                {
+                    throw new InvalidOperationException(
+                        $"Password setting '{key}' is missing or invalid.");
+                }
+
+                return value == "Y";
+            }
+
+            if (IsRequired("PasswordRequireUppercase") &&
+                !dto.Password.Any(char.IsUpper))
+            {
+                throw new ValidationException(
+                    "Password must contain an uppercase letter.");
+            }
+
+            if (IsRequired("PasswordRequireLowercase") &&
+                !dto.Password.Any(char.IsLower))
+            {
+                throw new ValidationException(
+                    "Password must contain a lowercase letter.");
+            }
+
+            if (IsRequired("PasswordRequireDigit") &&
+                !dto.Password.Any(char.IsDigit))
+            {
+                throw new ValidationException(
+                    "Password must contain a number.");
+            }
             var role = await _roleRepository.GetByIdAsync(dto.RoleId)
                 ?? throw new ValidationException($"RoleId {dto.RoleId} does not exist.");
 
@@ -229,6 +269,48 @@ namespace Nafadh_Backend.Services
                     $"Password must be at least {minPasswordLength} characters long.");
             }
 
+            // جلب شروط كلمة المرور من إعدادات النظام
+            var passwordRules = await _context.SystemVariables
+                .AsNoTracking()
+                .Where(v =>
+                    v.VariableKey == "PasswordRequireUppercase" ||
+                    v.VariableKey == "PasswordRequireLowercase" ||
+                    v.VariableKey == "PasswordRequireDigit")
+                .ToDictionaryAsync(v => v.VariableKey, v => v.Value);
+
+            bool IsRequired(string key)
+            {
+                if (!passwordRules.TryGetValue(key, out var value) ||
+                    (value != "Y" && value != "N"))
+                {
+                    throw new InvalidOperationException(
+                        $"Password setting '{key}' is missing or invalid.");
+                }
+
+                return value == "Y";
+            }
+
+            if (IsRequired("PasswordRequireUppercase") &&
+                !dto.NewPassword.Any(char.IsUpper))
+            {
+                throw new ValidationException(
+                    "Password must contain an uppercase letter.");
+            }
+
+            if (IsRequired("PasswordRequireLowercase") &&
+                !dto.NewPassword.Any(char.IsLower))
+            {
+                throw new ValidationException(
+                    "Password must contain a lowercase letter.");
+            }
+
+            if (IsRequired("PasswordRequireDigit") &&
+                !dto.NewPassword.Any(char.IsDigit))
+            {
+                throw new ValidationException(
+                    "Password must contain a number.");
+            }
+
             var user = await _repository.GetByIdAsync(userId)
                 ?? throw new NotFoundException($"User {userId} was not found.");
 
@@ -236,7 +318,6 @@ namespace Nafadh_Backend.Services
 
             await _repository.UpdateAsync(user);
         }
-
         public async Task<PagedResult<UserResponseDTO>> SearchAsync(
 
             int? roleId,
