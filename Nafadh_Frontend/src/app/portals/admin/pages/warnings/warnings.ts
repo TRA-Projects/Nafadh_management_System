@@ -1,18 +1,25 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
+import { csvCell } from '../../../../core/models/csv-cell';
+import { administrativeValue } from '../../../../core/models/administrative-constants';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
 import { WarningDto } from '../../../../core/models/dtos';
+import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warning-types.service';
 
 @Component({
   selector: 'app-admin-warnings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './warnings.html',
   styleUrls: ['./warnings.css']
 })
 export class AdminWarnings implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
+  readonly warningTypes = inject(NafadhWarningTypesService);
   warnings = signal<WarningDto[]>([]);
   companies = signal<any[]>([]);
   showIssue = signal(false);
@@ -57,7 +64,7 @@ export class AdminWarnings implements OnInit {
   isSubmitting = signal(false);
   formErrors = signal<{ [key: string]: string }>({});
   touchedFields = signal<{ [key: string]: boolean }>({});
-  newWarning = { companyId: null as number | null, type: 'Performance', level: 'Medium', evidence: '' };
+  newWarning = { companyId: null as number | null, type: '', level: 'Medium', evidence: '' };
 
   // =========================================================================
   // 🌟 قائمة أسباب ومخالفات الشركات المعتمدة والمطابقة تماماً لقاعدة البيانات SQL
@@ -82,6 +89,8 @@ export class AdminWarnings implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_WRN_LVL', 'NFD_WRN_STAT');
+    this.warningTypes.refresh();
     this.load();
     this.loadCompanies();
   }
@@ -124,6 +133,14 @@ export class AdminWarnings implements OnInit {
     this.activeFilterTab = tab;
   }
 
+  get filterStatusChoices() {
+    return [{value:'ALL',label:'الكل',labelEn:'All'}, ...this.constants.supportedChoices('NFD_WRN_STAT',
+      ['Open', 'UnderReview', 'Escalated', 'Resolved'].map(value => ({value,label:this.getStatusLabel(value)})), true)];
+  }
+  get filterLevelChoices() {
+    return [{value:'ALL',label:'الكل',labelEn:'All'}, ...this.constants.supportedChoices('NFD_WRN_LVL',
+      ['Low', 'Medium', 'High', 'Critical'].map(value => ({value,label:this.getLevelLabel(value)})), true)];
+  }
   selectFilterOption(type: 'YEAR' | 'MONTH' | 'STATUS' | 'LEVEL', value: string): void {
     if (type === 'YEAR') {
       this.selectedYear = value;
@@ -229,7 +246,7 @@ export class AdminWarnings implements OnInit {
       const lvl = String(w.level);
       let matchesLevel = true;
       if (this.selectedLevel !== 'ALL') {
-        matchesLevel = lvl === this.selectedLevel || this.getLevelLabel(lvl) === this.getLevelLabel(this.selectedLevel);
+        matchesLevel = lvl === this.selectedLevel || administrativeValue('NFD_WRN_LVL', lvl)?.key === this.selectedLevel;
       }
 
       let matchesYear = true;
@@ -302,7 +319,7 @@ export class AdminWarnings implements OnInit {
   }
 
   openIssueModal(): void {
-    this.newWarning = { companyId: null, type: 'Performance', level: 'Medium', evidence: '' };
+    this.newWarning = { companyId: null, type: '', level: 'Medium', evidence: '' };
     this.selectedReasons.set([]);
     this.otherReasonText = '';
     this.formErrors.set({});
@@ -321,10 +338,10 @@ export class AdminWarnings implements OnInit {
     if (!this.newWarning.companyId || this.newWarning.companyId <= 0) {
       errors['companyId'] = 'يرجى اختيار الشركة المستضيفة من القائمة.';
     }
-    if (!this.newWarning.type) {
-      errors['type'] = 'يرجى اختيار تصنيف المخالفة.';
+    if (!this.newWarning.type || !this.warningTypes.selectable(this.newWarning.type)) {
+      errors['type'] = 'يرجى اختيار تصنيف مخالفة نشط من الثوابت.';
     }
-    if (!this.newWarning.level) {
+    if (!this.constants.isSelectable('NFD_WRN_LVL', this.newWarning.level)) {
       errors['level'] = 'يرجى اختيار درجة الأهمية.';
     }
 
@@ -385,7 +402,7 @@ export class AdminWarnings implements OnInit {
       const status = this.getStatusLabel(w.status);
       const date = w.issuedDate ? new Date(w.issuedDate).toLocaleDateString('en-GB') : '-';
 
-      csvContent += `${code},${company},${type},${level},${status},${date}\n`;
+      csvContent += [code, company, type, level, status, date].map(csvCell).join(',') + '\n';
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -469,21 +486,11 @@ export class AdminWarnings implements OnInit {
   }
 
   getTypeLabel(type?: any): string {
-    const val = String(type);
-    if (val === '0' || val === 'Performance') return 'بيئة الأداء والتدريب';
-    if (val === '1' || val === 'Attendance') return 'التزامات الحضور';
-    if (val === '2' || val === 'Behavioral') return 'الضوابط السلوكية';
-    if (val === '3' || val === 'Other') return 'تنظيمي آخر';
-    return type ?? '-';
+    return this.warningTypes.label(type);
   }
 
   getLevelLabel(level?: any): string {
-    const val = String(level);
-    if (val === '0' || val === 'Low') return 'منخفض';
-    if (val === '1' || val === 'Medium') return 'متوسط';
-    if (val === '2' || val === 'High') return 'مرتفع';
-    if (val === '3' || val === 'Critical') return 'حرج جداً';
-    return level ?? 'متوسط';
+    return this.constants.administrativeLabel('NFD_WRN_LVL', level);
   }
 
   getLevelClass(level?: any): string {

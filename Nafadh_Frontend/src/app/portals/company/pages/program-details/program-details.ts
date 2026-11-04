@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 
 import {
   CompanyProgramBatchDto,
@@ -57,6 +58,7 @@ export class CompanyProgramDetails implements OnInit {
   private readonly router = inject(Router);
   private readonly api = inject(CompanyApi);
   private readonly auth = inject(AuthService);
+  private readonly constants = inject(NafadhConstantsService);
 
   readonly loading = signal(true);
   readonly error = signal('');
@@ -106,6 +108,7 @@ export class CompanyProgramDetails implements OnInit {
   // ============================================================
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_PRG_STAT');
     const programId = Number(
       this.route.snapshot.paramMap.get('id')
     );
@@ -707,7 +710,7 @@ openQuizResults(): void {
       occupied,
       available,
       percent: utilizationPercentage,
-      status: details.status || '',
+      status: details.status ?? '',
       approved: Boolean(details.approvedForCompany),
       batchCount: Number(details.batchCount ?? 0),
       enrollmentCount: Number(details.enrollmentCount ?? 0),
@@ -811,16 +814,9 @@ openQuizResults(): void {
   }
 
   programStatusLabel(value: string): string {
-    switch (String(value ?? '').toLowerCase()) {
-      case 'published':
-        return 'منشور';
-      case 'draft':
-        return 'مسودة';
-      case 'archived':
-        return 'مؤرشف';
-      default:
-        return value || 'غير محدد';
-    }
+    return value == null || value === ''
+      ? 'غير محدد'
+      : this.constants.administrativeLabel('NFD_PRG_STAT', value);
   }
 
   batchStatusLabel(value: string): string {

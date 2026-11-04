@@ -1,3 +1,4 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { Observable, defer, finalize, timeout } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -43,6 +44,7 @@ export interface HostedSpecialtyDto {
   styleUrl: './profile.scss',
 })
 export class CompanyProfile implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private readonly api = inject(CompanyApi);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
@@ -313,22 +315,7 @@ export class CompanyProfile implements OnInit {
   }
 
   statusLabel(value?: string | null): string {
-    switch (value) {
-      case 'PendingApproval':
-        return 'قيد الموافقة';
-      case 'Approved':
-        return 'معتمد';
-      case 'Suspended':
-        return 'موقوف';
-      case 'Rejected':
-        return 'مرفوض';
-      case 'Active':
-        return 'نشط';
-      case 'Inactive':
-        return 'غير نشط';
-      default:
-        return value || 'غير محدد';
-    }
+    return this.constants.administrativeLabel('NFD_CMP_STAT', value);
   }
 
   workFieldList(c: CompanyProfileDto): string[] {

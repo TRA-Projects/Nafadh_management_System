@@ -767,16 +767,7 @@
             <!-- PRIORITY -->
             <div class="tasks-inline-054">
               <label for="taskPriority" class="tasks-inline-055">الأولوية</label>
-              <select
-                id="taskPriority"
-                name="taskPriority"
-                [(ngModel)]="newTaskPriority"
-                class="tasks-inline-058"
-              >
-                @for (option of priorityOptions; track option.value) {
-                  <option [ngValue]="option.value">{{ option.label }}</option>
-                }
-              </select>
+              <app-catalog-picker caption="أولوية المهمة" [options]="priorityChoices" [(value)]="newTaskPriority" />
             </div>
 
             <!-- DUE DATE + BATCH -->

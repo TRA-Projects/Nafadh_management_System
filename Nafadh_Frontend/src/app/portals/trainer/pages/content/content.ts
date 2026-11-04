@@ -2,6 +2,7 @@ import {
   Component,
   OnInit,
   computed,
+  inject,
   signal
 } from '@angular/core';
 
@@ -21,6 +22,7 @@ import {
 
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 
 // Used to build the public URL for uploaded training materials
 import { environment } from '../../../../../environments/environment';
@@ -59,6 +61,7 @@ type MaterialFileType =
   styleUrl:'./content.scss'
 })
 export class TrainerContent implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
 
   // =====================================================
   // TRAINER
@@ -253,6 +256,7 @@ attachmentTypeError = signal('نوع الملف غير مسموح.');
   // =====================================================
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_FIL_TYPE');
 
     const batchIdParam =
       this.route.snapshot

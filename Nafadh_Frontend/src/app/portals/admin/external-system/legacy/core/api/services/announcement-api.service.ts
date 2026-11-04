@@ -1,8 +1,6 @@
-
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
 
 export type AnnouncementScopeType = 0 | 1 | 2;
 
@@ -31,26 +29,14 @@ export type UpdateAnnouncementDto = Omit<
 export class AnnouncementApiService {
   private readonly http = inject(HttpClient);
 
-  private readonly baseUrl = this.buildBaseUrl(
-    environment.apiBaseUrl,
-  );
+  private readonly baseUrl =
+    'https://localhost:7082/api/Announcement';
 
-  private buildBaseUrl(apiBaseUrl: string): string {
-    const normalizedUrl = apiBaseUrl.replace(/\/+$/, '');
-
-    const urlWithApi = /\/api$/i.test(normalizedUrl)
-      ? normalizedUrl
-      : `${normalizedUrl}/api`;
-
-    return `${urlWithApi}/Announcement`;
-  }
-
-  // جلب إعلانات النطاق الافتراضي من الـ Backend
+  // جلب جميع الإعلانات
   getAll(): Observable<AnnouncementDto[]> {
     return this.http.get<AnnouncementDto[]>(this.baseUrl);
   }
 
-  // جلب الإعلانات حسب النطاق
   // 0 = Platform, 1 = Company, 2 = Batch
   getByScope(
     scopeType: AnnouncementScopeType,
@@ -63,30 +49,37 @@ export class AnnouncementApiService {
     return this.http.get<AnnouncementDto[]>(scopeUrl);
   }
 
+  // جلب إعلان محدد
   getById(id: number): Observable<AnnouncementDto> {
     return this.http.get<AnnouncementDto>(
       `${this.baseUrl}/${id}`,
     );
   }
 
+  // إضافة إعلان
   create(dto: CreateAnnouncementDto): Observable<string> {
     return this.http.post(this.baseUrl, dto, {
       responseType: 'text',
     });
   }
 
+  // تعديل إعلان
   update(
     id: number,
     dto: UpdateAnnouncementDto,
   ): Observable<string> {
-    return this.http.put(`${this.baseUrl}/${id}`, dto, {
-      responseType: 'text',
-    });
+    return this.http.put(
+      `${this.baseUrl}/${id}`,
+      dto,
+      { responseType: 'text' },
+    );
   }
 
+  // حذف إعلان
   delete(id: number): Observable<string> {
-    return this.http.delete(`${this.baseUrl}/${id}`, {
-      responseType: 'text',
-    });
+    return this.http.delete(
+      `${this.baseUrl}/${id}`,
+      { responseType: 'text' },
+    );
   }
 }

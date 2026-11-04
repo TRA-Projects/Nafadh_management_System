@@ -1,3 +1,6 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { inject as injectCatalog } from '@angular/core';
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { Component, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -8,11 +11,20 @@ import { BatchPerformanceReportDto, AdminSupervisorReportDto } from '../../../..
 @Component({
   selector: 'app-admin-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './reports.html',
   styleUrls: ['./reports.css']
 })
 export class AdminReports implements OnInit {
+  get attendanceChoices() {
+    return [{value: 'ALL', label: 'جميع الحالات'}, ...this.constants.supportedChoices('NFD_TAT_STAT', [{value: 'Present', label: 'حاضر'}, {value: 'Late', label: 'متأخر'}, {value: 'Absent', label: 'غائب'}, {value: 'EarlyLeave', label: 'انصراف مبكر'}], true)];
+  }
+
+  get supervisorChoices() {
+    return [{value: 'ALL', label: 'جميع الحالات'}, ...this.constants.supportedChoices('NFD_SUP_STAT', [{value: 'Active', label: 'نشط'}, {value: 'Inactive', label: 'غير نشط'}, {value: 'Suspended', label: 'موقوف'}], true)];
+  }
+  readonly constants = injectCatalog(NafadhConstantsService);
+
   // 1. التحكم في الأقسام والشاشات
   currentSubSection: 'company' | 'trainer' | 'trainee' | 'supervisor' = 'company';
   currentView: 'companies' | 'programs' | 'batch-report' | 'company-details' = 'companies';
@@ -323,7 +335,10 @@ navigateTrainerAttendance(direction: -1 | 1): void {
     private api: AdminApi,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute
-  ) { }
+  ) {
+    this.constants.ensure('NFD_TAT_STAT');
+    this.constants.ensure('NFD_SUP_STAT');
+  }
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {

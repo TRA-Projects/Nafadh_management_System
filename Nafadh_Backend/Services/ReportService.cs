@@ -238,7 +238,7 @@ namespace Nafadh_Backend.Services
             // Arabic Report Type
             // ======================================================
 
-            var reportTypeName =
+            var reportTypeName = await _repository.GetReportTypeLabelAsync(dto.Type) ??
                 dto.Type switch
                 {
                     NFD_ReportType.Attendance =>
@@ -1260,6 +1260,7 @@ namespace Nafadh_Backend.Services
                 ReportInputDTO dto
             )
         {
+            var reportTypeName = await _repository.GetReportTypeLabelAsync(dto.Type) ?? dto.Type.ToString();
             // مجلد حفظ التقارير
             var reportsFolder =
                 Path.Combine(
@@ -1358,7 +1359,7 @@ namespace Nafadh_Backend.Services
                                 column.Item()
                                     .AlignRight()
                                     .Text(
-                                        $"نوع التقرير: {dto.Type}"
+                                        $"نوع التقرير: {reportTypeName}"
                                     );
 
 

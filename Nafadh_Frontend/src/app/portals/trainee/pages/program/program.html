@@ -341,7 +341,7 @@
                   "
                   class="module-badge completed"
                 >
-                  مكتمل
+                  {{ constants.administrativeLabel('NFD_MOD_STAT', 'Completed') }}
                 </span>
                 <span
                   *ngIf="
@@ -351,7 +351,7 @@
                   "
                   class="module-badge active"
                 >
-                  مستمر
+                  {{ constants.administrativeLabel('NFD_MOD_STAT', 'InProgress') }}
                 </span>
                 <span
                   *ngIf="module.isLocked"

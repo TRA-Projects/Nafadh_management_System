@@ -1,3 +1,7 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
+import { csvCell } from '../../../../core/models/csv-cell';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { administrativeValue } from '../../../../core/models/administrative-constants';
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -20,7 +24,7 @@ export interface HostCompany {
   contactName: string;
   email: string;
   phone: string;
-  status: any; // 1=Approved, 0=PendingApproval, 2=Rejected, 3=Suspended
+  status: any; // 1=Approved, 0=PendingApproval, 2=Suspended, 3=Rejected
   rejectionReason?: string;
   createdAt?: string;
   logo?: string | null;
@@ -29,6 +33,8 @@ export interface HostCompany {
   programs?: any[];
   departments?: any[];
 }
+
+export { csvCell as companyCsvCell } from '../../../../core/models/csv-cell';
 
 function normalizeArabic(text: string): string {
   if (!text) return '';
@@ -50,11 +56,12 @@ function convertArabicDigits(str: string): string {
 @Component({
   selector: 'app-admin-companies',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './companies.html',
   styleUrls: ['./companies.css']
 })
 export class AdminCompanies implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private api = inject(AdminApi);
   private http = inject(HttpClient);
 
@@ -107,6 +114,7 @@ export class AdminCompanies implements OnInit {
   touchedFields: { [key: string]: boolean } = {};
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_CMP_STAT');
     // تنظيف أي بيانات قديمة مخزنة محلياً كانت تحجب بيانات السيرفر الحقيقية
     try {
       localStorage.removeItem('nfd_company_status_overrides');
@@ -135,19 +143,19 @@ export class AdminCompanies implements OnInit {
   }
 
   isApproved(status: any): boolean {
-    return status === 1 || status === '1' || status === 'Approved' || status === 'approved';
+    return administrativeValue('NFD_CMP_STAT', status)?.key === 'Approved';
   }
 
   isPending(status: any): boolean {
-    return status === 0 || status === '0' || status === 'PendingApproval' || status === 'pending' || status === 'Pending';
+    return administrativeValue('NFD_CMP_STAT', status)?.key === 'PendingApproval';
   }
 
   isRejected(status: any): boolean {
-    return status === 2 || status === '2' || status === 'Rejected' || status === 'rejected';
+    return administrativeValue('NFD_CMP_STAT', status)?.key === 'Rejected';
   }
 
   isSuspended(status: any): boolean {
-    return status === 3 || status === '3' || status === 'Suspended' || status === 'suspended';
+    return administrativeValue('NFD_CMP_STAT', status)?.key === 'Suspended';
   }
 
   getStatusColor(status: any): string {
@@ -167,11 +175,7 @@ export class AdminCompanies implements OnInit {
   }
 
   statusLabel(status?: any): string {
-    if (this.isApproved(status)) return 'معتمدة ومفعلة';
-    if (this.isPending(status)) return 'قيد المراجعة والاعتماد';
-    if (this.isRejected(status)) return 'مرفوضة';
-    if (this.isSuspended(status)) return 'موقوفة مؤقتاً';
-    return 'غير محدد';
+    return this.constants.administrativeLabel('NFD_CMP_STAT', status);
   }
 
   // =========================================================================
@@ -386,6 +390,10 @@ export class AdminCompanies implements OnInit {
     this.filterVersion.update(v => v + 1);
   }
 
+  get companyChoices() {
+    return [{value:'الكل',label:'جميع الحالات',labelEn:'All'}, ...this.constants.supportedChoices('NFD_CMP_STAT',
+      ['Approved','PendingApproval','Suspended','Rejected'].map(value => ({value,label:this.statusLabel(value)})), true)];
+  }
   setFilter(status: string): void {
     this.statusFilter.set(status);
     this.currentPage.set(1);
@@ -777,7 +785,8 @@ export class AdminCompanies implements OnInit {
     if (data.length === 0) return;
     let csv = '\uFEFFمعرف الشركة,اسم الشركة,السجل التجاري,القطاع,المحافظة,مسؤول التواصل,الطاقة,الحالة\n';
     data.forEach(c => {
-      csv += `${c.companyId},"${c.companyName}","${c.commercialRegister || ''}","${c.workField}","${c.city || c.address}","${c.contactName}",${c.capacity},"${this.statusLabel(c.status)}"\n`;
+      csv += [c.companyId, c.companyName, c.commercialRegister, c.workField, c.city || c.address,
+        c.contactName, c.capacity, this.statusLabel(c.status)].map(csvCell).join(',') + '\r\n';
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');

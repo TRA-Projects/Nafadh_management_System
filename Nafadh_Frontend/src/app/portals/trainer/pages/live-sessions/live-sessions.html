@@ -326,23 +326,7 @@
                     </div>
 
                     <div class="attendance-fields">
-                        <select [ngModel]="row.status" (ngModelChange)="setAttendanceStatus(
-                            row.traineeId,
-                            $event
-                          )">
-                            <option [ngValue]="null">
-                                اختر حالة الحضور
-                            </option>
-
-                            @for (
-                            option of attendanceOptions;
-                            track option.value
-                            ) {
-                            <option [ngValue]="option.value">
-                                {{ option.label }}
-                            </option>
-                            }
-                        </select>
+                        <app-catalog-picker caption="حضور المتدرب في الجلسة" [options]="sessionAttendanceChoices" [value]="attendanceKey(row.status) ?? null" [fallbackLabel]="sessionAttendanceLabel(row.status)" (valueChange)="chooseSessionAttendance(row.traineeId, $event)" />
 
                         <input type="text" placeholder="ملاحظة (اختياري)" [ngModel]="row.note ?? ''" (ngModelChange)="setAttendanceNote(
                            row.traineeId,

@@ -1,3 +1,5 @@
+import { constantEditKey } from '../../../../../core/models/administrative-constants';
+import { CatalogPicker } from '../../../../../core/models/catalog-picker';
 
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
@@ -9,6 +11,8 @@ import {
   type EvaluationTemplateDetailsDto,
   type EvaluationTemplateInputDto,
   type EvaluationTemplateType,
+  type EvaluationCriterionDto,
+  type EvaluationCriterionInputDto,
 } from '../../legacy/core/api/services/admin-system-api.service';
 
 interface EvaluationTemplateForm {
@@ -18,33 +22,93 @@ interface EvaluationTemplateForm {
   createdByUserId: number | null;
 }
 
+interface CriterionForm {
+  name: string;
+  weight: number;
+  maxPoints: number;
+}
+
 @Component({
   selector: 'app-evaluation-templates',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './evaluation-templates.component.html',
   styleUrl: './evaluation-templates.component.css',
 })
 export class EvaluationTemplatesComponent implements OnInit {
   private readonly api = inject(AdminSystemApiService);
 
-  readonly types: {
-    value: EvaluationTemplateType;
-    label: string;
-  }[] = [
-    { value: 'Technical', label: 'تقييم فني' },
-    { value: 'Behavioral', label: 'تقييم سلوكي' },
-    { value: 'CompanyEvaluation', label: 'تقييم الشركة' },
-    { value: 'Final', label: 'التقييم النهائي' },
-    { value: 'TrainerPerformance', label: 'تقييم أداء المدرب' },
-    { value: 'TraineePerformance', label: 'تقييم أداء المتدرب' },
+  // Only values supported by the current Management Backend enum may be submitted.
+  private readonly supportedTypes: EvaluationTemplateType[] = [
+    'Technical', 'Behavioral', 'CompanyEvaluation', 'Final', 'TrainerPerformance'
   ];
+  private readonly historicalLabels: Record<string, string> = {
+    Technical: 'تقييم فني', Behavioral: 'تقييم سلوكي',
+    CompanyEvaluation: 'تقييم الشركة', Final: 'التقييم النهائي',
+    TrainerPerformance: 'تقييم أداء المدرب', TraineePerformance: 'تقييم أداء المتدرب'
+  };
+  types: { value: EvaluationTemplateType; label: string }[] = [];
+  // Filters also include historical/inactive types; creating new templates only uses active types.
+  filterTypes: { value: EvaluationTemplateType; label: string }[] = [];
+  get filterChoices() {
+    return [{ value: '' as const, label: 'جميع الأنواع' }, ...(this.filterTypes.length ? this.filterTypes : this.types)];
+  }
+  private originalEditType: EvaluationTemplateType | null = null;
+  typesLoading = true;
+  typesError = '';
+
+  private loadEvaluationTypes(): void {
+    this.typesLoading = true;
+    this.typesError = '';
+    // Read ALL rows (including inactive) for labels on existing templates and filtering.
+    // Read active rows separately for new-template choices and validation.
+    this.api.getValues('NFD_EVL_TYPE', true).subscribe({
+      next: (rows) => {
+        const historical = rows
+          .filter((row) => this.supportedTypes.includes(String(constantEditKey('NFD_EVL_TYPE', row) ?? '') as EvaluationTemplateType))
+          .map((row) => ({
+            value: String(constantEditKey('NFD_EVL_TYPE', row) ?? '') as EvaluationTemplateType,
+            labelEn: row.label_en,
+            label: row.label_ar || row.label_en || String(constantEditKey('NFD_EVL_TYPE', row) ?? '')
+          }));
+        for (const row of historical) this.historicalLabels[row.value] = row.label;
+        this.filterTypes = historical;
+      },
+      error: () => {
+        // Keep active-only options working even if the historical list is temporarily unavailable.
+        this.filterTypes = [];
+      }
+    });
+    this.api.getValues('NFD_EVL_TYPE').subscribe({
+      next: (rows) => {
+        this.types = rows
+          .filter((row) => this.supportedTypes.includes(String(constantEditKey('NFD_EVL_TYPE', row) ?? '') as EvaluationTemplateType))
+          .map((row) => ({
+            value: String(constantEditKey('NFD_EVL_TYPE', row) ?? '') as EvaluationTemplateType,
+            labelEn: row.label_en,
+            label: row.label_ar || row.label_en || String(constantEditKey('NFD_EVL_TYPE', row) ?? '')
+          }));
+        this.typesLoading = false;
+        if (this.types.length === 0) {
+          this.typesError = 'لا توجد أنواع تقييم مفعّلة ومتوافقة مع النظام.';
+        }
+      },
+      error: () => {
+        this.types = [];
+        this.typesLoading = false;
+        this.typesError = 'تعذّر تحميل أنواع التقييم من قاعدة الثوابت.';
+      }
+    });
+  }
 
   templates: EvaluationTemplateDto[] = [];
   details: EvaluationTemplateDetailsDto | null = null;
 
   loading = false;
   saving = false;
+  savingCriterion = false;
+  deletingCriterionId: number | null = null;
+
   errorMessage = '';
   successMessage = '';
 
@@ -52,7 +116,6 @@ export class EvaluationTemplatesComponent implements OnInit {
   filterModuleId: number | null = null;
   filterStage: number | null = null;
 
-  // Pagination
   pageIndex = 0;
   pageSize = 5;
 
@@ -64,7 +127,16 @@ export class EvaluationTemplatesComponent implements OnInit {
 
   form: EvaluationTemplateForm = this.emptyForm();
 
+  // Details editor
+  detailsLoading = false;
+  detailsSaving = false;
+  showCriterionForm = false;
+  weightValidation: boolean | null = null;
+
+  criterionForm: CriterionForm = this.emptyCriterionForm();
+
   ngOnInit(): void {
+    this.loadEvaluationTypes();
     this.loadTemplates();
   }
 
@@ -77,9 +149,7 @@ export class EvaluationTemplatesComponent implements OnInit {
   }
 
   get safePageIndex(): number {
-    if (this.totalPages === 0) {
-      return 0;
-    }
+    if (this.totalPages === 0) return 0;
 
     return Math.min(
       Math.max(this.pageIndex, 0),
@@ -89,11 +159,9 @@ export class EvaluationTemplatesComponent implements OnInit {
 
   get paginatedTemplates(): EvaluationTemplateDto[] {
     const start = this.safePageIndex * this.pageSize;
-
     return this.templates.slice(start, start + this.pageSize);
   }
 
-  // Show at most five page numbers at a time.
   get pageNumbers(): number[] {
     const total = this.totalPages;
 
@@ -106,10 +174,7 @@ export class EvaluationTemplatesComponent implements OnInit {
       this.safePageIndex - Math.floor(this.maxVisiblePages / 2),
     );
 
-    start = Math.min(
-      start,
-      total - this.maxVisiblePages,
-    );
+    start = Math.min(start, total - this.maxVisiblePages);
 
     return Array.from(
       { length: this.maxVisiblePages },
@@ -122,6 +187,13 @@ export class EvaluationTemplatesComponent implements OnInit {
       (this.safePageIndex + 1) * this.pageSize,
       this.totalTemplates,
     );
+  }
+
+  get totalWeight(): number {
+    return this.details?.criteria.reduce(
+      (total, item) => total + Number(item.weight || 0),
+      0,
+    ) ?? 0;
   }
 
   canPrev(): boolean {
@@ -175,8 +247,7 @@ export class EvaluationTemplatesComponent implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.errorMessage =
-          'تعذر تحميل قوالب التقييم. تحققي من اتصال الـ API.';
+        this.errorMessage = 'تعذر تحميل قوالب التقييم.';
         this.loading = false;
       },
     });
@@ -191,7 +262,12 @@ export class EvaluationTemplatesComponent implements OnInit {
 
   openCreateForm(): void {
     this.editingId = null;
-    this.form = this.emptyForm();
+    this.originalEditType = null;
+    if (this.typesLoading || this.types.length === 0) {
+      this.errorMessage = this.typesError || 'أنواع التقييم غير جاهزة.';
+      return;
+    }
+    this.form = { ...this.emptyForm(), type: this.types[0].value };
     this.formVisible = true;
     this.details = null;
     this.errorMessage = '';
@@ -200,6 +276,7 @@ export class EvaluationTemplatesComponent implements OnInit {
 
   openEditForm(template: EvaluationTemplateDto): void {
     this.editingId = template.templateId;
+    this.originalEditType = template.type;
 
     this.form = {
       type: template.type,
@@ -217,9 +294,22 @@ export class EvaluationTemplatesComponent implements OnInit {
   cancelForm(): void {
     this.formVisible = false;
     this.editingId = null;
+    this.originalEditType = null;
+  }
+
+  isEditingInactiveOriginalType(): boolean {
+    return this.editingId !== null && this.form.type === this.originalEditType &&
+      !this.types.some(item => item.value === this.form.type);
   }
 
   saveTemplate(): void {
+    // Updating non-type fields on a historical template is allowed by the Backend.
+    // Switching to an inactive type or creating one is not.
+    if (!this.types.some((item) => item.value === this.form.type) &&
+        !this.isEditingInactiveOriginalType()) {
+      this.errorMessage = 'نوع التقييم غير مفعّل أو غير مدعوم حاليًا.';
+      return;
+    }
     const createdByUserId = this.form.createdByUserId;
 
     if (
@@ -228,8 +318,7 @@ export class EvaluationTemplatesComponent implements OnInit {
       !Number.isInteger(createdByUserId) ||
       createdByUserId <= 0
     ) {
-      this.errorMessage =
-        'يرجى اختيار نوع التقييم وإدخال رقم المستخدم المنشئ بصورة صحيحة.';
+      this.errorMessage = 'يرجى إدخال بيانات القالب بصورة صحيحة.';
       return;
     }
 
@@ -240,22 +329,23 @@ export class EvaluationTemplatesComponent implements OnInit {
       createdByUserId,
     };
 
-    const editingId = this.editingId;
+    const id = this.editingId;
     this.saving = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    const request = editingId == null
+    const request = id == null
       ? this.api.createEvaluationTemplate(payload)
-      : this.api.updateEvaluationTemplate(editingId, payload);
+      : this.api.updateEvaluationTemplate(id, payload);
 
     request.subscribe({
       next: () => {
         this.saving = false;
         this.formVisible = false;
         this.editingId = null;
+        this.originalEditType = null;
 
-        this.successMessage = editingId == null
+        this.successMessage = id == null
           ? 'تم إنشاء القالب بنجاح.'
           : 'تم تحديث القالب بنجاح.';
 
@@ -263,28 +353,231 @@ export class EvaluationTemplatesComponent implements OnInit {
       },
       error: () => {
         this.saving = false;
-        this.errorMessage =
-          'تعذر حفظ القالب. تحققي من البيانات واستجابة الـ Backend.';
+        this.errorMessage = 'تعذر حفظ القالب.';
       },
     });
   }
 
+  // Open editable template details
   viewDetails(template: EvaluationTemplateDto): void {
-    this.errorMessage = '';
     this.details = null;
+    this.detailsLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.showCriterionForm = false;
+    this.weightValidation = null;
 
     this.api.getEvaluationTemplateById(template.templateId).subscribe({
       next: (result) => {
-        this.details = result;
+        this.details = {
+          ...result,
+          criteria: result.criteria ?? [],
+        };
+
+        this.detailsLoading = false;
       },
       error: () => {
-        this.errorMessage = 'تعذر تحميل تفاصيل القالب.';
+        this.detailsLoading = false;
+        this.errorMessage = 'تعذر تحميل تفاصيل قالب التقييم.';
+      },
+    });
+  }
+
+  // Save template information from details editor
+  saveDetails(): void {
+    if (!this.details) return;
+
+    const payload: EvaluationTemplateInputDto = {
+      type: this.details.type,
+      moduleId: this.details.moduleId,
+      stage: this.details.stage,
+      createdByUserId: this.details.createdByUserId,
+    };
+
+    this.detailsSaving = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.api.updateEvaluationTemplate(
+      this.details.templateId,
+      payload,
+    ).subscribe({
+      next: () => {
+        this.detailsSaving = false;
+        this.successMessage = 'تم تحديث بيانات قالب التقييم بنجاح.';
+        this.loadTemplates();
+      },
+      error: () => {
+        this.detailsSaving = false;
+        this.errorMessage = 'تعذر تحديث بيانات القالب.';
+      },
+    });
+  }
+
+  // Add criterion form
+  openCriterionForm(): void {
+    this.criterionForm = this.emptyCriterionForm();
+    this.showCriterionForm = true;
+    this.errorMessage = '';
+  }
+
+  cancelCriterionForm(): void {
+    this.showCriterionForm = false;
+  }
+
+  // Create criterion
+  addCriterion(): void {
+    if (!this.details) return;
+
+    const name = this.criterionForm.name.trim();
+    const weight = Number(this.criterionForm.weight);
+    const maxPoints = Number(this.criterionForm.maxPoints);
+
+    if (
+      !name ||
+      name.length > 100 ||
+      !Number.isFinite(weight) ||
+      weight < 0 ||
+      weight > 100 ||
+      !Number.isFinite(maxPoints) ||
+      maxPoints < 0
+    ) {
+      this.errorMessage = 'تحققي من اسم المعيار والوزن والدرجة القصوى.';
+      return;
+    }
+
+    const payload: EvaluationCriterionInputDto = {
+      templateId: this.details.templateId,
+      name,
+      weight,
+      maxPoints,
+    };
+
+    this.savingCriterion = true;
+    this.errorMessage = '';
+
+    this.api.createEvaluationCriterion(payload).subscribe({
+      next: () => {
+        this.savingCriterion = false;
+        this.showCriterionForm = false;
+        this.successMessage = 'تمت إضافة معيار التقييم.';
+        this.reloadDetails();
+      },
+      error: () => {
+        this.savingCriterion = false;
+        this.errorMessage = 'تعذرت إضافة معيار التقييم.';
+      },
+    });
+  }
+
+  // Update existing criterion
+  saveCriterion(criterion: EvaluationCriterionDto): void {
+    if (!this.details) return;
+
+    const name = criterion.name.trim();
+
+    if (
+      !name ||
+      name.length > 100 ||
+      !Number.isFinite(Number(criterion.weight)) ||
+      Number(criterion.weight) < 0 ||
+      Number(criterion.weight) > 100 ||
+      !Number.isFinite(Number(criterion.maxPoints)) ||
+      Number(criterion.maxPoints) < 0
+    ) {
+      this.errorMessage = 'تحققي من بيانات المعيار قبل الحفظ.';
+      return;
+    }
+
+    const payload: EvaluationCriterionInputDto = {
+      templateId: this.details.templateId,
+      name,
+      weight: Number(criterion.weight),
+      maxPoints: Number(criterion.maxPoints),
+    };
+
+    this.savingCriterion = true;
+    this.errorMessage = '';
+
+    this.api.updateEvaluationCriterion(
+      criterion.criteriaId,
+      payload,
+    ).subscribe({
+      next: () => {
+        this.savingCriterion = false;
+        this.successMessage = 'تم تحديث المعيار بنجاح.';
+        this.reloadDetails();
+      },
+      error: () => {
+        this.savingCriterion = false;
+        this.errorMessage = 'تعذر تحديث المعيار.';
+      },
+    });
+  }
+
+  // Delete criterion
+  deleteCriterion(criterion: EvaluationCriterionDto): void {
+    const confirmed = window.confirm(
+      `هل تريدين حذف المعيار "${criterion.name}"؟`,
+    );
+
+    if (!confirmed) return;
+
+    this.deletingCriterionId = criterion.criteriaId;
+    this.errorMessage = '';
+
+    this.api.deleteEvaluationCriterion(
+      criterion.criteriaId,
+    ).subscribe({
+      next: () => {
+        this.deletingCriterionId = null;
+        this.successMessage = 'تم حذف المعيار بنجاح.';
+        this.reloadDetails();
+      },
+      error: () => {
+        this.deletingCriterionId = null;
+        this.errorMessage = 'تعذر حذف المعيار.';
+      },
+    });
+  }
+
+  // Check if criteria weights equal 100
+  checkWeights(): void {
+    if (!this.details) return;
+
+    this.api.checkEvaluationWeights(
+      this.details.templateId,
+    ).subscribe({
+      next: (result) => {
+        this.weightValidation = result.isValid;
+      },
+      error: () => {
+        this.errorMessage = 'تعذر التحقق من أوزان المعايير.';
+      },
+    });
+  }
+
+  private reloadDetails(): void {
+    if (!this.details) return;
+
+    const id = this.details.templateId;
+
+    this.api.getEvaluationTemplateById(id).subscribe({
+      next: (result) => {
+        this.details = {
+          ...result,
+          criteria: result.criteria ?? [],
+        };
+      },
+      error: () => {
+        this.errorMessage = 'تم تنفيذ العملية، لكن تعذر تحديث التفاصيل.';
       },
     });
   }
 
   typeLabel(type: EvaluationTemplateType | string): string {
-    return this.types.find((item) => item.value === type)?.label ?? type;
+    // The admin-edited label is authoritative even if the type is now inactive.
+    return this.historicalLabels[type] ?? this.types.find((item) => item.value === type)?.label ?? type;
   }
 
   private emptyForm(): EvaluationTemplateForm {
@@ -293,6 +586,14 @@ export class EvaluationTemplatesComponent implements OnInit {
       moduleId: null,
       stage: null,
       createdByUserId: null,
+    };
+  }
+
+  private emptyCriterionForm(): CriterionForm {
+    return {
+      name: '',
+      weight: 0,
+      maxPoints: 0,
     };
   }
 }

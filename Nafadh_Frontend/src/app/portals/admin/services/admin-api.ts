@@ -31,6 +31,7 @@ import {
 } from '../../../core/models/dtos';
 
 export interface TraineeCertificateStatusDto {
+  type?: string | number | null;
   traineeId: number;
   enrollmentId: number;
   fullName: string;
@@ -582,6 +583,12 @@ getWarningById(id: number): Observable<any> {
   submitWithdrawalDecision(traineeId: number, dto: { approved: boolean; adminReason?: string }): Observable<any> {
     const cleanId = this.sanitizeId(traineeId);
     return this.http.put<any>(`${this.base}/Trainee/${cleanId}/withdrawal-decision`, dto);
+  }
+
+  getTraineeWithdrawalRequests(traineeId: number): Observable<Array<{ status: string | number }>> {
+    return this.http.get<Array<{ status: string | number }>>(
+      this.base + '/WithdrawalRequests/trainee/' + this.sanitizeId(traineeId)
+    );
   }
 
   getWithdrawalRequests(status?: string): Observable<any[]> {

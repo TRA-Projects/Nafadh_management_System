@@ -28,7 +28,7 @@
         <div>
           <span>إجمالي الخطط</span>
           <strong>{{ counts().total }}</strong>
-          <small>{{ counts().draft }} مسودة</small>
+          <small>{{ counts().draft }} {{ approvalLabel('Draft') }}</small>
         </div>
       </article>
 
@@ -38,12 +38,12 @@
         </div>
 
         <div>
-          <span>بانتظار اعتماد الهيئة</span>
+          <span>{{ approvalLabel('PendingApproval') }}</span>
           <strong class="warn">
             {{ counts().pendingApproval }}
           </strong>
           <small>
-            {{ counts().rejected }} مرفوضة تحتاج تعديلاً
+            {{ counts().rejected }} {{ approvalLabel('Rejected') }}
           </small>
         </div>
       </article>
@@ -59,8 +59,8 @@
             {{ approvedCourseCount() }}
           </strong>
           <small>
-            {{ counts().inProgress }} قيد التنفيذ ·
-            {{ counts().completed }} مكتملة
+            {{ counts().inProgress }} {{ constants.administrativeLabel('NFD_CPE_STAT', 'InProgress') }} ·
+            {{ counts().completed }} {{ constants.administrativeLabel('NFD_CPE_STAT', 'Completed') }}
           </small>
         </div>
       </article>
@@ -110,14 +110,7 @@
       role="group"
       aria-label="تصفية الخطط والكورسات">
 
-      @for (f of filters; track f.key) {
-        <button
-          type="button"
-          [class.active]="filter() === f.key"
-          (click)="setFilter(f.key)">
-          {{ f.label }}
-        </button>
-      }
+      <app-catalog-picker caption="تصفية الخطط والكورسات" [options]="planChoices" [value]="filter()" (valueChange)="setFilter($event)" />
 
       <input
         type="search"
@@ -263,7 +256,7 @@
                   <span
                     [class]="
                       'chip ex-' +
-                      plan.executionStatus.toLowerCase()
+                      ('' + plan.executionStatus).toLowerCase()
                     ">
                     {{ ex }}
                   </span>

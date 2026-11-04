@@ -1,3 +1,7 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { inject } from '@angular/core';
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
+import { traineeAttendanceKey } from '../../../../core/models/enums';
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +16,7 @@ import { ExcuseDto } from '../../../../core/models/dtos';
 @Component({
   selector: 'app-trainee-attendance',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './attendance.html',
   styleUrl: './attendance.scss',
 })
@@ -88,45 +92,53 @@ attachmentTypeError = signal('');
   // INIT
   // =========================================================
 
+  readonly constants = inject(NafadhConstantsService);
+  get attendancePickerChoices() {
+    const rows = [{value:'Present',label:'حاضر'}, {value:'Late',label:'متأخر'}, {value:'Absent',label:'غائب'}] as const;
+    return [{value:'All' as const,label:'الكل',labelEn:'All'}, ...this.constants.supportedChoices('NFD_ATT_STAT',rows,true)];
+  }
   ngOnInit(): void {
-  this.getLoggedInUserId();
-  this.loadTraineeData();
-  this.loadAttachmentSettings();
-}
+    this.constants.ensure('NFD_ATT_STAT');
+    this.getLoggedInUserId();
+    this.loadTraineeData();
+    this.loadAttachmentSettings();
+  }
 
-private async loadAttachmentSettings(): Promise<void> {
-  this.attachmentSettingsLoaded.set(false);
-
-  try {
- const [
-  extensions,
-  maxSize,
-  sizeError,
-  typeError
-] = await Promise.all([
-  firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
-  firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb()),
-  firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_SIZE_ERROR')),
-  firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_TYPE_ERROR'))
-]);
-
-this.attachmentSizeError.set(sizeError);
-this.attachmentTypeError.set(typeError);
-
-    if (extensions.length === 0) {
-      throw new Error('No allowed attachment extensions configured');
-    }
-
-    this.allowedExtensions.set(extensions);
-    this.maxAttachmentSizeMb.set(maxSize);
-    this.attachmentSettingsLoaded.set(true);
-
-  } catch (error) {
-    console.error('خطأ في تحميل إعدادات المرفقات:', error);
-
-    this.allowedExtensions.set([]);
-    this.maxAttachmentSizeMb.set(0);
+  private async loadAttachmentSettings(): Promise<void> {
     this.attachmentSettingsLoaded.set(false);
+
+    try {
+      const [
+        extensions,
+        maxSize,
+        sizeError,
+        typeError
+      ] = await Promise.all([
+        firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
+        firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb()),
+        firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_SIZE_ERROR')),
+        firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_TYPE_ERROR'))
+      ]);
+
+      this.attachmentSizeError.set(sizeError);
+      this.attachmentTypeError.set(typeError);
+
+      if (extensions.length === 0) {
+        throw new Error('No allowed attachment extensions configured');
+      }
+
+      this.allowedExtensions.set(extensions);
+      this.maxAttachmentSizeMb.set(maxSize);
+      this.attachmentSettingsLoaded.set(true);
+
+    } catch (error) {
+      console.error('خطأ في تحميل إعدادات المرفقات:', error);
+
+      this.allowedExtensions.set([]);
+      this.maxAttachmentSizeMb.set(0);
+      this.attachmentSettingsLoaded.set(false);
+    }
+  }
   }
 }
 
@@ -329,7 +341,7 @@ this.attachmentTypeError.set(typeError);
         date: item.date || item.attendanceDate,
         checkInTime: item.checkInTime || item.checkIn || item.clockIn,
         checkOutTime: item.checkOutTime || item.checkOut || item.clockOut,
-        status: item.status || item.attendanceStatus || 'Present',
+        status: traineeAttendanceKey(item.status ?? item.attendanceStatus) ?? (item.status ?? item.attendanceStatus ?? 'Present'),
         note: item.note || item.notes || item.remarks || '',
       }));
 
