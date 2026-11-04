@@ -1038,21 +1038,22 @@
             <div class="status-tabs-group">
               <label class="track-dropdown-label">تصفية بحالة الحضور</label>
               <div class="status-tabs-wrap">
-                <button type="button" class="status-tab" [class.active]="attendanceStatusFilter() === 'ALL'" (click)="onAttendanceStatusFilterChange('ALL')">
+              <app-catalog-picker caption="تصفية حضور المتدرب" [options]="attendancePickerChoices" [value]="attendanceStatusFilter()" (valueChange)="onAttendanceStatusFilterChange($event)" />
+                <span>
                   الكل ({{ attendanceSummary().total }})
-                </button>
-                <button type="button" class="status-tab present" [class.active]="attendanceStatusFilter() === 'Present'" (click)="onAttendanceStatusFilterChange('Present')">
+                </span>
+                <span>
                   حاضر ({{ attendanceSummary().present }})
-                </button>
-                <button type="button" class="status-tab late" [class.active]="attendanceStatusFilter() === 'Late'" (click)="onAttendanceStatusFilterChange('Late')">
+                </span>
+                <span>
                   متأخر ({{ attendanceSummary().late }})
-                </button>
-                <button type="button" class="status-tab absent" [class.active]="attendanceStatusFilter() === 'Absent'" (click)="onAttendanceStatusFilterChange('Absent')">
+                </span>
+                <span>
                   غائب ({{ attendanceSummary().absent }})
-                </button>
-                <button type="button" class="status-tab excused" [class.active]="attendanceStatusFilter() === 'Excused'" (click)="onAttendanceStatusFilterChange('Excused')">
+                </span>
+                <span>
                   بعذر ({{ attendanceSummary().excused }})
-                </button>
+                </span>
               </div>
             </div>
 
