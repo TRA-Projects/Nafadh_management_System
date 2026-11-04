@@ -1,3 +1,4 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
@@ -10,17 +11,27 @@ import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warn
 @Component({
   selector: 'app-company-warnings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './warnings.html',
   styleUrls: ['./warnings.scss']
 })
 export class WarningsComponent implements OnInit {
+  get warningStatusChoices() {
+    return [{value: '', label: 'جميع الحالات'}, ...this.constants.supportedChoices('NFD_WRN_STAT', [{value: 'Open', label: 'مفتوح'}, {value: 'UnderReview', label: 'قيد المراجعة'}, {value: 'Resolved', label: 'تم الحل'}, {value: 'Escalated', label: 'تم التصعيد'}], true)];
+  }
+
   readonly constants = inject(NafadhConstantsService);
   private readonly companyApi = inject(CompanyApi);
   private readonly cdr = inject(ChangeDetectorRef);
   readonly warningTypes = inject(NafadhWarningTypesService);
   get warningTypeOptions(): { value: string; label: string }[] {
-    return this.warningTypes.activeOptions();
+    return [{ value: '', label: 'جميع الأنواع' }, ...this.warningTypes.historicalOptions()];
+  }
+
+  get warningLevelOptions() {
+    return [{ value: '', label: 'جميع المستويات' }, ...['Low', 'Medium', 'High', 'Critical'].map(value => ({
+      value, label: this.levelLabel(value), labelEn: this.constants.all('NFD_WRN_LVL').find(row => row.key === value)?.labelEn
+    }))];
   }
 
   warnings: WarningDto[] = [];
@@ -41,6 +52,7 @@ export class WarningsComponent implements OnInit {
   replySuccess = '';
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_WRN_STAT');
     this.constants.ensure('NFD_WRN_LVL');
     this.loadCompanyWarnings();
     this.warningTypes.refresh();
