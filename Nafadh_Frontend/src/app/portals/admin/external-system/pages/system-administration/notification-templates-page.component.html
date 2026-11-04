@@ -607,22 +607,7 @@
               <div class="form-field">
                 <label for="announcementScope">نطاق الإعلان</label>
 
-                <select
-                  id="announcementScope"
-                  name="announcementScope"
-                  required
-                  [ngModel]="announcementScopeType()"
-                  (ngModelChange)="onAnnouncementScopeChange($event)"
-                >
-                  @for (
-                    option of announcementScopeOptions;
-                    track option.value
-                  ) {
-                    <option [ngValue]="option.value">
-                      {{ getScopeLabel(option.value) }}
-                    </option>
-                  }
-                </select>
+                <app-catalog-picker inputId="announcementScope" caption="نطاق الإعلان" [options]="scopeChoices" [value]="announcementScopeType()" [fallbackLabel]="editingAnnouncementId() ? getScopeLabel(announcementScopeType()) : ''" (valueChange)="onAnnouncementScopeChange($event)" />
               </div>
 
               @if (
