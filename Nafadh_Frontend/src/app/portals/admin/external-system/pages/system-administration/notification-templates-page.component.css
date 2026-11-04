@@ -649,7 +649,7 @@
   opacity: 0.7;
 }
 
-/* Announcements workspace: table on top, form below */
+/* Announcements workspace */
 .announcements-workspace {
   display: flex;
   flex-direction: column;
@@ -657,7 +657,6 @@
   min-width: 0;
 }
 
-/* Announcement-specific cell styling */
 .announcement-message {
   min-width: 150px;
   max-width: 350px;

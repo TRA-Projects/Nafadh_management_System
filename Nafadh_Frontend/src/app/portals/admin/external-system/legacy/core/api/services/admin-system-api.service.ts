@@ -1,4 +1,3 @@
-
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Store } from '@ngrx/store';
@@ -58,6 +57,7 @@ export type {
 } from '../models/admin-system.models';
 
 export { SkillKind } from '../models/admin-system.models';
+
 export type {
   PagedListResponse,
   PagedQueryParams,
@@ -81,9 +81,24 @@ export interface EvaluationTemplateDto {
   createdByUserId: number;
 }
 
+export interface EvaluationCriterionDto {
+  criteriaId: number;
+  templateId: number;
+  name: string;
+  weight: number;
+  maxPoints: number;
+}
+
+export interface EvaluationCriterionInputDto {
+  templateId: number;
+  name: string;
+  weight: number;
+  maxPoints: number;
+}
+
 export interface EvaluationTemplateDetailsDto
   extends EvaluationTemplateDto {
-  criteria: unknown[];
+  criteria: EvaluationCriterionDto[];
 }
 
 export interface EvaluationTemplateInputDto {
@@ -553,8 +568,6 @@ export class AdminSystemApiService {
       .pipe(map(unwrapData));
   }
 
-
-  
   // ── Audit Trail ───────────────────────────────────────────────────────────
 
   getAuditTrailPage(params: SystemAuditTrailQuery) {
@@ -741,16 +754,62 @@ export class AdminSystemApiService {
     );
   }
 
+  deleteEvaluationTemplate(
+    templateId: number
+  ): Observable<string> {
+    return this.http.delete(
+      ApiPaths.deleteEvaluationTemplate(templateId),
+      { responseType: 'text' }
+    );
+  }
 
-deleteEvaluationTemplate(
-  templateId: number
-): Observable<string> {
-  return this.http.delete(
-    ApiPaths.deleteEvaluationTemplate(templateId),
-    { responseType: 'text' }
-  );
-}
+  // ── Evaluation Criteria API ────────────────────────────────────────────────
 
+  getEvaluationCriteria(
+    templateId: number
+  ): Observable<EvaluationCriterionDto[]> {
+    return this.http.get<EvaluationCriterionDto[]>(
+      `https://localhost:7082/api/EvaluationCriterion/GetCriteriaByTemplate/${templateId}`
+    );
+  }
+
+  createEvaluationCriterion(
+    payload: EvaluationCriterionInputDto
+  ): Observable<unknown> {
+    return this.http.post<unknown>(
+      'https://localhost:7082/api/EvaluationCriterion/CreateCriterion',
+      payload
+    );
+  }
+
+  updateEvaluationCriterion(
+    criteriaId: number,
+    payload: EvaluationCriterionInputDto
+  ): Observable<unknown> {
+    return this.http.put<unknown>(
+      `https://localhost:7082/api/EvaluationCriterion/UpdateCriterion/${criteriaId}`,
+      payload
+    );
+  }
+
+  deleteEvaluationCriterion(
+    criteriaId: number
+  ): Observable<unknown> {
+    return this.http.delete<unknown>(
+      `https://localhost:7082/api/EvaluationCriterion/DeleteCriterion/${criteriaId}`
+    );
+  }
+
+  checkEvaluationWeights(
+    templateId: number
+  ): Observable<{ templateId: number; isValid: boolean }> {
+    return this.http.get<{
+      templateId: number;
+      isValid: boolean;
+    }>(
+      `https://localhost:7082/api/EvaluationCriterion/CheckWeights/${templateId}`
+    );
+  }
 
   // ── Shared Helpers ────────────────────────────────────────────────────────
 

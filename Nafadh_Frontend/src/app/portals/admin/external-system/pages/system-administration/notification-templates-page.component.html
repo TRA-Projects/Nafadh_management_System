@@ -1,10 +1,5 @@
 <div class="notification-templates-container" dir="rtl">
-  <!-- Tabs -->
-  <div
-    class="content-tabs"
-    role="tablist"
-    aria-label="إدارة الإشعارات والإعلانات"
-  >
+  <div class="content-tabs" role="tablist" aria-label="إدارة الإشعارات والإعلانات">
     <button
       type="button"
       class="content-tab"
@@ -32,7 +27,6 @@
     </button>
   </div>
 
-  <!-- Notification Templates -->
   @if (activeTab() === 'templates') {
     <section class="tab-content" role="tabpanel">
       <div class="filters-card">
@@ -53,16 +47,16 @@
         </div>
 
         <div class="filter-field">
-          <label for="templateType">نوع الإشعار</label>
+          <label for="templatePortal">البوابة</label>
           <select
-            id="templateType"
-            [ngModel]="selectedType()"
-            (ngModelChange)="onTypeChange($event)"
+            id="templatePortal"
+            [ngModel]="selectedPortal()"
+            (ngModelChange)="onPortalChange($event)"
           >
-            <option value="">جميع الأنواع</option>
-            <option value="Email">البريد الإلكتروني</option>
-            <option value="SMS">الرسائل النصية SMS</option>
-            <option value="Push">الإشعارات الفورية</option>
+            <option value="">جميع البوابات</option>
+            @for (portal of portalOptions(); track portal) {
+              <option [value]="portal">{{ portal }}</option>
+            }
           </select>
         </div>
 
@@ -72,6 +66,14 @@
           (click)="clearFilters()"
         >
           إعادة تعيين
+        </button>
+
+        <button
+          type="button"
+          class="primary-button"
+          (click)="createTemplate()"
+        >
+          + إضافة قالب
         </button>
       </div>
 
@@ -85,7 +87,6 @@
       @if (!loading() && errorMessage()) {
         <div class="state-container error-state" role="alert">
           <p>{{ errorMessage() }}</p>
-
           <button
             type="button"
             class="secondary-button"
@@ -105,9 +106,8 @@
                   <th scope="col">#</th>
                   <th scope="col">رمز القالب</th>
                   <th scope="col">اسم القالب</th>
+                  <th scope="col">البوابة</th>
                   <th scope="col">نوع الإشعار</th>
-                  <th scope="col">البريد الإلكتروني</th>
-                  <th scope="col">الرسائل النصية</th>
                   <th scope="col">الحالة</th>
                   <th scope="col">الإجراءات</th>
                 </tr>
@@ -121,51 +121,18 @@
                     </td>
 
                     <td>
-                      <span class="template-code">
-                        {{ template.code }}
-                      </span>
+                      <span class="template-code">{{ template.code }}</span>
                     </td>
 
                     <td>
-                      <span class="template-name">
-                        {{ template.name }}
-                      </span>
+                      <span class="template-name">{{ template.name }}</span>
                     </td>
 
-                    <td>
-                      <span
-                        class="type-badge"
-                        [class.email-type]="template.type === 'Email'"
-                        [class.sms-type]="template.type === 'SMS'"
-                        [class.push-type]="template.type === 'Push'"
-                      >
-                        {{
-                          template.type === 'Email'
-                            ? 'البريد الإلكتروني'
-                            : template.type === 'SMS'
-                              ? 'رسائل SMS'
-                              : 'إشعار فوري'
-                        }}
-                      </span>
-                    </td>
+                    <td>{{ template.portalCode }}</td>
 
                     <td>
-                      <span
-                        class="status-badge"
-                        [class.status-enabled]="template.hasEmail"
-                        [class.status-disabled]="!template.hasEmail"
-                      >
-                        {{ template.hasEmail ? 'مفعّل' : 'غير مفعّل' }}
-                      </span>
-                    </td>
-
-                    <td>
-                      <span
-                        class="status-badge"
-                        [class.status-enabled]="template.hasSms"
-                        [class.status-disabled]="!template.hasSms"
-                      >
-                        {{ template.hasSms ? 'مفعّل' : 'غير مفعّل' }}
+                      <span class="type-badge email-type">
+                        البريد الإلكتروني
                       </span>
                     </td>
 
@@ -220,7 +187,7 @@
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="8">
+                    <td colspan="7">
                       <div class="empty-state">
                         <span class="empty-icon" aria-hidden="true">⌕</span>
                         <p>لا توجد قوالب إشعارات مطابقة.</p>
@@ -232,19 +199,18 @@
             </table>
           </div>
 
-          <!-- Templates Pagination -->
           <div class="pagination-footer">
             <div class="pagination-info">
               عرض
               <strong>
                 {{
-                  totalCount() === 0
+                  filteredTemplates().length === 0
                     ? 0
                     : safePageIndex() * pageSize() + 1
                 }}
               </strong>
               إلى <strong>{{ getEndIndex() }}</strong>
-              من <strong>{{ totalCount() }}</strong> قالب
+              من <strong>{{ filteredTemplates().length }}</strong> قالب
             </div>
 
             <div class="pagination-controls">
@@ -298,11 +264,8 @@
     </section>
   }
 
-  <!-- Announcements -->
   @if (activeTab() === 'announcements') {
     <section class="tab-content announcements-content" role="tabpanel">
-
-      <!-- Announcement Filters and Actions -->
       <div class="filters-card announcement-filters">
         <div class="filter-field search-field">
           <label for="announcementSearch">البحث في الإعلانات</label>
@@ -348,7 +311,6 @@
         </button>
       </div>
 
-      <!-- Loading -->
       @if (announcementsLoading()) {
         <div class="state-container" role="status">
           <span class="loading-spinner" aria-hidden="true"></span>
@@ -356,11 +318,9 @@
         </div>
       }
 
-      <!-- Error -->
       @if (!announcementsLoading() && announcementsError()) {
         <div class="state-container error-state" role="alert">
           <p>{{ announcementsError() }}</p>
-
           <button
             type="button"
             class="secondary-button"
@@ -371,10 +331,7 @@
         </div>
       }
 
-      <!-- Announcements Workspace -->
       <div class="announcements-workspace">
-
-        <!-- Announcements List (same structure as templates table) -->
         @if (!announcementsLoading() && !announcementsError()) {
           <div class="table-card">
             <div class="table-responsive">
@@ -489,7 +446,6 @@
               </table>
             </div>
 
-            <!-- Announcements Pagination -->
             <div class="pagination-footer">
               <div class="pagination-info">
                 عرض
@@ -555,7 +511,6 @@
           </div>
         }
 
-        <!-- Announcement Form: shown below the table only when requested -->
         @if (announcementFormVisible()) {
           <section
             class="announcement-form-card"

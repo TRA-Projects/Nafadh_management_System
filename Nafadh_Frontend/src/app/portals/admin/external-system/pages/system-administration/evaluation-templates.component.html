@@ -287,48 +287,324 @@
     </form>
   </section>
 
-  <!-- Template Details -->
-  <section *ngIf="details" class="details-panel">
+
+<!-- Editable Evaluation Template Details -->
+<div *ngIf="detailsLoading" class="empty-state">
+  جارٍ تحميل تفاصيل قالب التقييم...
+</div>
+
+<section *ngIf="details" class="details-panel">
+
+  <div class="panel-header details-header">
+    <div>
+      <h3>تعديل قالب التقييم #{{ details.templateId }}</h3>
+      <p>تعديل بيانات القالب ومعايير التقييم المرتبطة به</p>
+    </div>
+
+    <button
+      type="button"
+      class="secondary-button"
+      (click)="details = null"
+    >
+      إغلاق
+    </button>
+  </div>
+
+  <!-- Template Information -->
+  <div class="form-panel">
+    <h4>بيانات القالب</h4>
+
+    <div class="form-grid">
+
+      <div class="filter-group">
+        <label>نوع التقييم</label>
+
+        <select
+          class="form-control"
+          name="detailsType"
+          [(ngModel)]="details.type"
+        >
+          <option
+            *ngFor="let item of types"
+            [ngValue]="item.value"
+          >
+            {{ item.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>رقم الوحدة</label>
+
+        <input
+          type="number"
+          min="1"
+          class="form-control"
+          name="detailsModuleId"
+          [(ngModel)]="details.moduleId"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label>المرحلة</label>
+
+        <input
+          type="number"
+          min="1"
+          class="form-control"
+          name="detailsStage"
+          [(ngModel)]="details.stage"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label>رقم المستخدم المنشئ</label>
+
+        <input
+          type="number"
+          min="1"
+          class="form-control"
+          name="detailsCreatedBy"
+          [(ngModel)]="details.createdByUserId"
+        />
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+      <button
+        type="button"
+        class="primary-button"
+        (click)="saveDetails()"
+        [disabled]="detailsSaving"
+      >
+        {{ detailsSaving ? 'جارٍ الحفظ...' : 'حفظ بيانات القالب' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Evaluation Criteria -->
+  <div class="form-panel">
+
     <div class="panel-header details-header">
-      <h3>تفاصيل القالب #{{ details.templateId }}</h3>
+      <div>
+        <h4>معايير التقييم</h4>
+        <p>إدارة المعايير والأوزان والدرجات</p>
+      </div>
 
       <button
         type="button"
-        class="secondary-button"
-        (click)="details = null"
+        class="primary-button"
+        (click)="openCriterionForm()"
       >
-        إغلاق
+        + إضافة معيار
       </button>
     </div>
 
+    <!-- Weight Summary -->
     <div class="details-grid">
       <p>
-        <strong>نوع التقييم:</strong>
-        {{ typeLabel(details.type) }}
+        <strong>عدد المعايير:</strong>
+        {{ details.criteria.length }}
       </p>
 
       <p>
-        <strong>رقم الوحدة:</strong>
-        {{ details.moduleId ?? '—' }}
-      </p>
-
-      <p>
-        <strong>المرحلة:</strong>
-        {{ details.stage ?? '—' }}
-      </p>
-
-      <p>
-        <strong>رقم المنشئ:</strong>
-        {{ details.createdByUserId }}
+        <strong>مجموع الأوزان:</strong>
+        {{ totalWeight }}%
       </p>
     </div>
 
-    <h4>معايير التقييم</h4>
+    <div class="form-actions">
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="checkWeights()"
+      >
+        التحقق من مجموع الأوزان
+      </button>
 
-    <p *ngIf="!details.criteria?.length" class="empty-state">
-      لا توجد معايير تقييم في الاستجابة.
-    </p>
+      <span
+        *ngIf="weightValidation === true"
+        class="message success"
+      >
+        مجموع الأوزان صحيح (100%)
+      </span>
 
-    <pre *ngIf="details.criteria?.length">{{ details.criteria | json }}</pre>
-  </section>
+      <span
+        *ngIf="weightValidation === false"
+        class="message error"
+      >
+        مجموع الأوزان غير صحيح
+      </span>
+    </div>
+
+    <!-- Add Criterion -->
+    <div *ngIf="showCriterionForm" class="form-panel">
+
+      <h4>إضافة معيار جديد</h4>
+
+      <div class="form-grid">
+
+        <div class="filter-group">
+          <label>اسم المعيار</label>
+
+          <input
+            type="text"
+            maxlength="100"
+            class="form-control"
+            name="newCriterionName"
+            [(ngModel)]="criterionForm.name"
+            placeholder="مثال: جودة تنفيذ المهام"
+          />
+        </div>
+
+        <div class="filter-group">
+          <label>الوزن (%)</label>
+
+          <input
+            type="number"
+            min="0"
+            max="100"
+            class="form-control"
+            name="newCriterionWeight"
+            [(ngModel)]="criterionForm.weight"
+          />
+        </div>
+
+        <div class="filter-group">
+          <label>الدرجة القصوى</label>
+
+          <input
+            type="number"
+            min="0"
+            class="form-control"
+            name="newCriterionMaxPoints"
+            [(ngModel)]="criterionForm.maxPoints"
+          />
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="primary-button"
+          (click)="addCriterion()"
+          [disabled]="savingCriterion"
+        >
+          {{ savingCriterion ? 'جارٍ الإضافة...' : 'إضافة' }}
+        </button>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="cancelCriterionForm()"
+          [disabled]="savingCriterion"
+        >
+          إلغاء
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Existing Criteria -->
+    <div
+      *ngIf="details.criteria.length > 0"
+      class="table-responsive"
+    >
+      <table class="data-table">
+
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>اسم المعيار</th>
+            <th>الوزن (%)</th>
+            <th>الدرجة القصوى</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr
+            *ngFor="let criterion of details.criteria; let i = index"
+          >
+            <td>{{ i + 1 }}</td>
+
+            <td>
+              <input
+                type="text"
+                maxlength="100"
+                class="form-control"
+                [name]="'criterionName' + criterion.criteriaId"
+                [(ngModel)]="criterion.name"
+              />
+            </td>
+
+            <td>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                class="form-control"
+                [name]="'criterionWeight' + criterion.criteriaId"
+                [(ngModel)]="criterion.weight"
+              />
+            </td>
+
+            <td>
+              <input
+                type="number"
+                min="0"
+                class="form-control"
+                [name]="'criterionPoints' + criterion.criteriaId"
+                [(ngModel)]="criterion.maxPoints"
+              />
+            </td>
+
+            <td>
+              <div class="actions">
+
+                <button
+                  type="button"
+                  class="text-button"
+                  (click)="saveCriterion(criterion)"
+                  [disabled]="savingCriterion"
+                >
+                  حفظ
+                </button>
+
+                <button
+                  type="button"
+                  class="text-button danger"
+                  (click)="deleteCriterion(criterion)"
+                  [disabled]="deletingCriterionId === criterion.criteriaId"
+                >
+                  {{
+                    deletingCriterionId === criterion.criteriaId
+                      ? 'جارٍ الحذف...'
+                      : 'حذف'
+                  }}
+                </button>
+
+              </div>
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+    </div>
+
+    <div
+      *ngIf="details.criteria.length === 0"
+      class="empty-state"
+    >
+      لا توجد معايير مرتبطة بهذا القالب. يمكنك إضافة معيار جديد.
+    </div>
+
+  </div>
+
+</section>
+
 </div>

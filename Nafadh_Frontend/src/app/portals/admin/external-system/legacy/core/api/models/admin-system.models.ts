@@ -1,3 +1,7 @@
+/* =========================================================
+   System Variables
+========================================================= */
+
 export interface SystemVariableDto {
   Code: string;
   VariableKey: string;
@@ -11,7 +15,10 @@ export interface SystemVariableDto {
   DescriptionAr?: string;
 }
 
-/** Groups are discovered from SystemConfigGroups in the Training database. */
+/* =========================================================
+   System Configuration
+========================================================= */
+
 export interface SystemConfigGroupDto {
   code: string;
   label_en: string;
@@ -35,9 +42,7 @@ export interface SystemConfigValueDto {
   label_en: string;
   label_ar: string;
   IsActive?: boolean;
-  /** When true on a main reason row, conduct UI shows a linked sub-reason dropdown. */
   subReasonDropdown?: boolean;
-  /** Sub-reason row — id of the parent main reason constant. */
   parentReasonId?: string | number | null;
 }
 
@@ -65,6 +70,10 @@ export interface UpdateSystemConfigValueDto {
   parentReasonId?: string | number | null;
 }
 
+/* =========================================================
+   Skills
+========================================================= */
+
 export interface SkillCategoryDto {
   Id: number;
   NameEn: string;
@@ -73,18 +82,18 @@ export interface SkillCategoryDto {
   IsActive: boolean;
 }
 
-/** Mirrors backend `CatalogSkillKind` (merged CatalogSkills table discriminator). */
 export const SkillKind = {
   Professional: 1,
   Basic: 2,
   Personal: 3,
   TechStack: 4,
 } as const;
-export type SkillKind = (typeof SkillKind)[keyof typeof SkillKind];
+
+export type SkillKind =
+  (typeof SkillKind)[keyof typeof SkillKind];
 
 export interface SkillDto {
   Id: number;
-  /** Null for tech-stack rows (flat list without categories). */
   CategoryId: number | null;
   Kind: SkillKind;
   NameEn: string;
@@ -99,6 +108,11 @@ export interface TechStackDto {
   IsActive: boolean;
 }
 
+/* =========================================================
+   Existing Jobseekers Notification Templates
+   Keep these because existing Jobseekers APIs use them.
+========================================================= */
+
 export interface NotificationTemplateListItemDto {
   Id: number;
   ActionCode: string;
@@ -110,7 +124,8 @@ export interface NotificationTemplateListItemDto {
   SortOrder: number;
 }
 
-export interface NotificationTemplateDto extends NotificationTemplateListItemDto {
+export interface NotificationTemplateDto
+  extends NotificationTemplateListItemDto {
   EmailSubjectEn: string;
   EmailSubjectAr: string;
   EmailBodyEn: string;
@@ -156,6 +171,141 @@ export interface RenderedNotificationDto {
   Email: RenderedNotificationChannelDto | null;
   Sms: RenderedNotificationChannelDto | null;
 }
+
+/* =========================================================
+   Nafadh Backend Notification Templates
+   API: /api/NotificationTemplate
+========================================================= */
+
+export type NafadhNotificationTemplateType =
+  | 'Email'
+  | 'SMS'
+  | 'Push';
+
+export interface NafadhNotificationTemplateDto {
+  Id: number;
+  Code: string;
+  Name: string;
+  PortalCode: string;
+  Type: string;
+  Subject: string | null;
+  Body: string;
+  IsActive: boolean;
+  CreatedAt: string;
+  UpdatedAt: string | null;
+}
+
+export interface CreateNafadhNotificationTemplateDto {
+  Code: string;
+  Name: string;
+  PortalCode: string;
+  Type: string;
+  Subject: string | null;
+  Body: string;
+  IsActive: boolean;
+}
+
+export interface UpdateNafadhNotificationTemplateDto {
+  Code: string;
+  Name: string;
+  PortalCode: string;
+  Type: string;
+  Subject: string | null;
+  Body: string;
+  IsActive: boolean;
+}
+
+export interface UpdateNafadhNotificationTemplateStatusDto {
+  IsActive: boolean;
+}
+
+export interface TestNafadhNotificationEmailDto {
+  Email: string;
+  TraineeName: string;
+  BatchName: string;
+  ProgramName: string;
+}
+
+/* =========================================================
+   Evaluation Programs and Modules
+========================================================= */
+
+export interface EvaluationProgramOption {
+  ProgramId: number;
+  Title: string;
+}
+
+export interface EvaluationModuleOption {
+  ModuleId: number;
+  ProgramId: number;
+  Title: string;
+  OrderIndex: number;
+  AvailableFrom?: string | null;
+  AvailableTo?: string | null;
+  IsArchived?: boolean;
+  PrerequisiteModuleId?: number | null;
+}
+
+/* =========================================================
+   Evaluation Templates
+   API: /api/EvaluationTemplate
+========================================================= */
+
+export interface EvaluationTemplateDto {
+  TemplateId: number;
+  Type: string;
+  ModuleId: number | null;
+  Stage: string | null;
+  CreatedByUserId: string;
+}
+
+export interface EvaluationTemplateDetailsDto
+  extends EvaluationTemplateDto {
+  Criteria: EvaluationCriterionDto[];
+}
+
+export interface CreateEvaluationTemplateDto {
+  Type: string;
+  ModuleId: number | null;
+  Stage: string | null;
+  CreatedByUserId: string;
+}
+
+export interface UpdateEvaluationTemplateDto {
+  Type: string;
+  ModuleId: number | null;
+  Stage: string | null;
+  CreatedByUserId: string;
+}
+
+/* =========================================================
+   Evaluation Criteria
+   API: /api/EvaluationCriterion
+========================================================= */
+
+export interface EvaluationCriterionDto {
+  CriteriaId: number;
+  TemplateId: number;
+  Name: string;
+  Weight: number;
+  MaxPoints: number;
+}
+
+export interface EvaluationCriterionInputDto {
+  TemplateId: number;
+  Name: string;
+  Weight: number;
+  MaxPoints: number;
+}
+
+export interface EvaluationWeightsCheckDto {
+  TemplateId: number;
+  IsValid: boolean;
+}
+
+/* =========================================================
+   System Audit Trail
+========================================================= */
 
 export interface SystemAuditTrailRowDto {
   Id: number;
@@ -209,6 +359,10 @@ export interface SystemAuditValueHistoryQuery {
   rangeFrom?: string;
   rangeTo?: string;
 }
+
+/* =========================================================
+   Notification Transaction Logs
+========================================================= */
 
 export interface NotificationTransactionLogRowDto {
   Id: number;

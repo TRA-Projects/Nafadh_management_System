@@ -300,6 +300,13 @@ namespace Nafadh_Backend
 
             // ── Swagger with JWT support ───────────────────────────────────────
             builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddScoped<
+    INotificationTemplateRepository,
+    NotificationTemplateRepository>();
+
+            builder.Services.AddScoped<
+                INotificationTemplateService,
+                NotificationTemplateService>();
 
             builder.Services.AddSwaggerGen(c =>
             {

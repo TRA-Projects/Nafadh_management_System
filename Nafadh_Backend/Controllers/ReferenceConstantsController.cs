@@ -16,7 +16,7 @@ namespace Nafadh_Backend.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/management/reference-constants")]
-[Authorize(Roles = "Admin,SuperAdmin")]
+//[Authorize(Roles = "Admin,SuperAdmin")]
 public sealed class ReferenceConstantsController : ControllerBase
 {
     private readonly Nafadhcontext _db;
