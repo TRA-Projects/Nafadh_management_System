@@ -109,7 +109,6 @@ interface AnnouncementViewModel {
 })
 export class NotificationTemplatesPageComponent {
   readonly constants = inject(NafadhConstantsService);
-  private readonly api = inject(AdminSystemApiService);
   private readonly templateApi = inject(NotificationTemplateApiService);
   private readonly announcementApi = inject(AnnouncementApiService);
   private readonly authService = inject(AuthService);
@@ -177,7 +176,10 @@ export class NotificationTemplatesPageComponent {
   ];
 
   get scopeChoices() {
-    return this.constants.supportedChoices('NFD_ANN_SCOPE', this.announcementScopeOptions);
+    return this.constants.supportedChoices(
+      'NFD_ANN_SCOPE',
+      this.announcementScopeOptions,
+    );
   }
 
   // Template filters and pagination
@@ -596,7 +598,21 @@ export class NotificationTemplatesPageComponent {
   }
 
   getScopeLabel(scopeType: ScopeName | null): string {
+    if (!scopeType) {
+      return 'غير محدد';
+    }
 
+    const fromCatalog = this.scopeChoices.find(
+      (option) => String(option.value) === scopeType,
+    );
+    if (fromCatalog?.label) {
+      return fromCatalog.label;
+    }
+
+    const fallback = this.announcementScopeOptions.find(
+      (option) => option.value === scopeType,
+    );
+    return fallback?.label ?? scopeType;
   }
 
   // Opens the form in Add mode and resets its values.
@@ -699,12 +715,20 @@ export class NotificationTemplatesPageComponent {
     const scopeType = this.announcementScopeType();
     const scopeId = this.announcementScopeId();
     const editingId = this.editingAnnouncementId();
-    const original = editingId === null ? null : this.announcements().find(row => row.id === editingId);
+    const original =
+      editingId === null
+        ? null
+        : this.announcements().find((row) => row.id === editingId);
     if (editingId !== null && !original?.scopeType) {
-      this.announcementFormError.set('لا يمكن تعديل هذا الإعلان من نموذج لا يدعم نطاقه الأصلي.');
+      this.announcementFormError.set(
+        'لا يمكن تعديل هذا الإعلان من نموذج لا يدعم نطاقه الأصلي.',
+      );
       return;
     }
-    if (original?.scopeType !== scopeType && !this.constants.isSelectable('NFD_ANN_SCOPE', scopeType)) {
+    if (
+      original?.scopeType !== scopeType &&
+      !this.constants.isSelectable('NFD_ANN_SCOPE', scopeType)
+    ) {
       this.announcementFormError.set('اختر نطاق إعلان مفعّلاً.');
       return;
     }
