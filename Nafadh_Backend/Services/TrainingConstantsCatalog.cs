@@ -15,6 +15,9 @@ public static class TrainingConstantsCatalog
     {
         public bool CanEditLabels => !ReadOnly;
         public bool CanChangeActive => CanEditLabels && !LabelsOnly;
+        // Low is the CLR default; Medium is the existing trainer/company form default.
+        public IReadOnlyList<string>? ActivationKeys => Code == "NFD_TSK_PRI" ? ["High", "Critical"] : null;
+        public bool CanChangeActiveFor(string key) => CanChangeActive && (ActivationKeys?.Contains(key) ?? true);
         public bool CanCreate => CanEditLabels && !Code.StartsWith("NFD_", StringComparison.OrdinalIgnoreCase);
     }
 
@@ -97,7 +100,7 @@ public static class TrainingConstantsCatalog
         new("NFD_TRE_STAT", "Trainee Status", "حالة المتدرب", true),
         new("NFD_TRK_STAT", "Track Status", "حالة المسار", false, true),
         new("NFD_TRN_STAT", "Trainer Status", "حالة المدرب", true),
-        new("NFD_TSK_PRI", "Task Priority", "أولوية المهمة", false, true),
+        new("NFD_TSK_PRI", "Task Priority", "أولوية المهمة", false),
         new("NFD_TSK_STAT", "Task Status", "حالة المهمة", true),
         new("NFD_USR_STAT", "User Status", "حالة المستخدم", false, true),
         new("NFD_VER_STAT", "Verification Status", "حالة التحقق", false, true),
