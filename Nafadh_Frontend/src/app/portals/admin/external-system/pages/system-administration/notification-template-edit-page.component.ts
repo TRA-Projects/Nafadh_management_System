@@ -7,152 +7,118 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { QuillModule } from 'ngx-quill';
 
-import { AdminSystemApiService } from '../../legacy/core/api/services/admin-system-api.service';
-import type { UpdateNotificationTemplateDto } from '../../legacy/core/api/models/admin-system.models';
-
-interface NotificationTemplateNavigationState {
-  id?: number;
-  code?: string;
-  name?: string;
-  active?: boolean;
-  email?: boolean;
-  sms?: boolean;
-}
+import {
+  NotificationTemplateApiService,
+  type NotificationTemplateDto,
+  type NotificationTemplateRequest,
+} from './notification-template-api.service';
 
 @Component({
   selector: 'app-notification-template-edit-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, QuillModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './notification-template-edit-page.component.html',
   styleUrl: './notification-template-edit-page.component.css',
 })
-export class NotificationTemplateEditPageComponent implements OnInit {
+export class NotificationTemplateEditPageComponent
+  implements OnInit {
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
-  private readonly api = inject(AdminSystemApiService);
+  private readonly api = inject(NotificationTemplateApiService);
 
-  templateId: string | null = null;
-  templateName = '';
-  activeTab: 'main' | 'ar' | 'en' = 'main';
+  templateId: number | null = null;
+  templateName = 'قالب إشعار';
 
   isLoading = false;
   isSaving = false;
+
   errorMessage = '';
   successMessage = '';
+
+  // جميع البوابات المدعومة من Backend
+  readonly portalOptions = [
+    {
+      value: 'Admin',
+      label: 'بوابة الإدارة المركزية',
+    },
+    {
+      value: 'Company',
+      label: 'بوابة الشركة',
+    },
+    {
+      value: 'Trainer',
+      label: 'بوابة المدرب',
+    },
+    {
+      value: 'Trainee',
+      label: 'بوابة المتدرب',
+    },
+  ];
 
   readonly isCreateMode =
     this.route.snapshot.data['mode'] === 'create';
 
-  variables = [
-    '{jobseeker_name}',
-    '{job_title}',
-    '{company_name}',
-    '{operator_name}',
-    '{portal_link}',
-  ];
-
-  quillModules = {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ color: [] }, { background: [] }],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      [{ align: [] }],
-      ['link', 'image'],
-      ['clean'],
+  readonly editForm = this.fb.nonNullable.group({
+    code: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(100),
+      ],
     ],
-  };
-
-  quills: Record<string, any> = {};
-
-  private focusedKey: string | null = null;
-
-  private focusedEl:
-    | HTMLInputElement
-    | HTMLTextAreaElement
-    | null = null;
-
-  editForm = this.fb.nonNullable.group({
-    code: [''],
-    nameAr: ['', Validators.required],
-    nameEn: ['', Validators.required],
+    name: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(200),
+      ],
+    ],
+    portalCode: ['', Validators.required],
+    subject: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(500),
+      ],
+    ],
+    body: ['', Validators.required],
     isActive: [true],
-    hasEmail: [true],
-    hasSms: [true],
-
-    subjectAr: ['', Validators.required],
-    bodyAr: [''],
-    smsAr: ['', [Validators.required, Validators.maxLength(500)]],
-
-    subjectEn: ['', Validators.required],
-    bodyEn: [''],
-    smsEn: ['', [Validators.required, Validators.maxLength(500)]],
   });
 
   ngOnInit(): void {
-    this.templateId = this.route.snapshot.paramMap.get('id');
+    const idParam = this.route.snapshot.paramMap.get('id');
+    this.templateId = idParam ? Number(idParam) : null;
 
     if (this.isCreateMode) {
-      this.templateName = 'إضافة قالب إشعارات';
+      this.templateName = 'إضافة قالب إشعار';
       return;
     }
 
-    const navigationState = history.state as {
-      template?: NotificationTemplateNavigationState;
-    };
-
-    const stateData = navigationState?.template;
-
-    // الأولوية لرمز القالب المرسل من صفحة القائمة.
-    // إذا لم يتوفر، نستخدم القيمة الموجودة في المسار.
-    const actionCode = (
-      stateData?.code ||
-      this.templateId ||
-      ''
-    ).trim();
-
-    if (!actionCode) {
-      this.errorMessage = 'لم يتم تحديد رمز القالب المطلوب.';
+    if (
+      !this.templateId ||
+      !Number.isInteger(this.templateId)
+    ) {
+      this.errorMessage = 'معرّف القالب غير صحيح.';
       return;
     }
 
-    this.loadTemplate(actionCode);
+    this.loadTemplate(this.templateId);
   }
 
-  private loadTemplate(actionCode: string): void {
+  private loadTemplate(id: number): void {
     this.isLoading = true;
     this.errorMessage = '';
-    this.successMessage = '';
 
-    this.api.getNotificationTemplate(actionCode).subscribe({
+    this.api.getById(id).subscribe({
       next: (template) => {
-        this.editForm.patchValue({
-          code: template.ActionCode ?? '',
-          nameAr: template.LabelAr ?? '',
-          nameEn: template.LabelEn ?? '',
-          isActive: template.IsActive,
-          hasEmail: template.EmailEnabled,
-          hasSms: template.SmsEnabled,
-
-          subjectAr: template.EmailSubjectAr ?? '',
-          bodyAr: template.EmailBodyAr ?? '',
-          smsAr: template.SmsBodyAr ?? '',
-
-          subjectEn: template.EmailSubjectEn ?? '',
-          bodyEn: template.EmailBodyEn ?? '',
-          smsEn: template.SmsBodyEn ?? '',
-        });
+        this.patchForm(template);
 
         this.templateName =
-          template.LabelAr ||
-          template.LabelEn ||
-          template.ActionCode;
+          template.name || 'تعديل قالب إشعار';
 
-        // الاحتفاظ برمز ActionCode لاستخدامه عند الحفظ.
-        this.templateId = template.ActionCode;
         this.isLoading = false;
       },
       error: (error: unknown) => {
@@ -162,77 +128,21 @@ export class NotificationTemplateEditPageComponent implements OnInit {
         );
 
         this.errorMessage =
-          'تعذر تحميل بيانات القالب. تحققي من رمز القالب واتصال الـ Backend.';
+          'تعذر تحميل بيانات القالب المطلوب.';
 
         this.isLoading = false;
       },
     });
   }
 
-  len(key: string): number {
-    const value = this.editForm.get(key)?.value as
-      | string
-      | undefined;
-
-    return value?.length ?? 0;
-  }
-
-  onFocus(key: string, event: Event): void {
-    this.focusedKey = key;
-    this.focusedEl = event.target as
-      | HTMLInputElement
-      | HTMLTextAreaElement;
-  }
-
-  onQuillFocus(key: string): void {
-    this.focusedKey = key;
-    this.focusedEl = null;
-  }
-
-  insertVariable(
-    variable: string,
-    language: 'Ar' | 'En',
-  ): void {
-    const key = this.focusedKey?.endsWith(language)
-      ? this.focusedKey
-      : 'body' + language;
-
-    const quill = this.quills[key];
-
-    if (quill) {
-      const index =
-        quill.getSelection(true)?.index ??
-        quill.getLength() - 1;
-
-      quill.insertText(index, variable, 'user');
-      quill.setSelection(index + variable.length, 0);
-      return;
-    }
-
-    const element = this.focusedEl;
-    const control = this.editForm.get(key);
-
-    if (!element || !control) {
-      return;
-    }
-
-    const start =
-      element.selectionStart ?? element.value.length;
-
-    const end = element.selectionEnd ?? start;
-
-    control.setValue(
-      element.value.slice(0, start) +
-        variable +
-        element.value.slice(end),
-    );
-
-    queueMicrotask(() => {
-      element.focus();
-      element.setSelectionRange(
-        start + variable.length,
-        start + variable.length,
-      );
+  private patchForm(template: NotificationTemplateDto): void {
+    this.editForm.patchValue({
+      code: template.code,
+      name: template.name,
+      portalCode: template.portalCode,
+      subject: template.subject ?? '',
+      body: template.body ?? '',
+      isActive: template.isActive,
     });
   }
 
@@ -242,106 +152,72 @@ export class NotificationTemplateEditPageComponent implements OnInit {
     ]);
   }
 
-  preview(): void {
-    const actionCode = this.editForm.controls.code.value;
-
-    if (!actionCode) {
-      this.errorMessage = 'رمز القالب غير متوفر للمعاينة.';
-      return;
-    }
-
-    const locale = this.activeTab === 'en' ? 'en' : 'ar';
-
-    this.api
-      .previewNotificationTemplate(actionCode, locale)
-      .subscribe({
-        next: (result) => {
-          console.log(
-            'Notification template preview:',
-            result,
-          );
-
-          this.successMessage = 'تم إنشاء المعاينة بنجاح.';
-          this.errorMessage = '';
-        },
-        error: (error: unknown) => {
-          console.error(
-            'Template preview failed:',
-            error,
-          );
-
-          this.errorMessage = 'تعذرت معاينة القالب.';
-          this.successMessage = '';
-        },
-      });
-  }
-
   save(): void {
     this.errorMessage = '';
     this.successMessage = '';
-
-    if (this.isCreateMode) {
-      this.errorMessage =
-        'إضافة القوالب غير مفعّلة بعد؛ يجب توفير endpoint للإنشاء في الـ Backend أولًا.';
-      return;
-    }
 
     if (this.editForm.invalid) {
       this.editForm.markAllAsTouched();
 
       this.errorMessage =
-        'يرجى تعبئة الحقول المطلوبة والتحقق من طول الرسائل النصية.';
+        'يرجى تعبئة جميع الحقول المطلوبة والتحقق من البيانات.';
 
       return;
     }
 
-    const form = this.editForm.getRawValue();
-    const actionCode = form.code.trim();
+    const value = this.editForm.getRawValue();
 
-    if (!actionCode) {
-      this.errorMessage = 'رمز القالب غير متوفر.';
-      return;
-    }
+    const request: NotificationTemplateRequest = {
+      code: value.code.trim(),
+      name: value.name.trim(),
 
-    const payload: UpdateNotificationTemplateDto = {
-      LabelEn: form.nameEn,
-      LabelAr: form.nameAr,
-      EmailSubjectEn: form.subjectEn,
-      EmailSubjectAr: form.subjectAr,
-      EmailBodyEn: form.bodyEn,
-      EmailBodyAr: form.bodyAr,
-      SmsBodyEn: form.smsEn,
-      SmsBodyAr: form.smsAr,
-      IsActive: form.isActive,
-      EmailEnabled: form.hasEmail,
-      SmsEnabled: form.hasSms,
+      // نرسل القيمة المعتمدة للـ Backend وليس الاسم العربي
+      portalCode: value.portalCode,
+
+      type: 'Email',
+      subject: value.subject.trim(),
+      body: value.body.trim(),
+      isActive: value.isActive,
     };
 
     this.isSaving = true;
 
-    this.api
-      .updateNotificationTemplate(actionCode, payload)
-      .subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.successMessage =
-            'تم حفظ تعديلات القالب بنجاح.';
+    const operation = this.isCreateMode
+      ? this.api.create(request)
+      : this.templateId !== null
+        ? this.api.update(this.templateId, request)
+        : null;
 
-          this.router.navigate([
-            '/admin/external-system/notification-templates',
-          ]);
-        },
-        error: (error: unknown) => {
-          console.error(
-            'Failed to update notification template:',
-            error,
-          );
+    if (!operation) {
+      this.isSaving = false;
+      this.errorMessage =
+        'تعذر تحديد عملية الحفظ المطلوبة.';
+      return;
+    }
 
-          this.isSaving = false;
+    operation.subscribe({
+      next: () => {
+        this.isSaving = false;
 
-          this.errorMessage =
-            'تعذر حفظ التعديلات. تحققي من بيانات الطلب واستجابة الـ Backend.';
-        },
-      });
+        this.successMessage = this.isCreateMode
+          ? 'تمت إضافة قالب البريد الإلكتروني بنجاح.'
+          : 'تم تحديث قالب البريد الإلكتروني بنجاح.';
+
+        this.router.navigate([
+          '/admin/external-system/notification-templates',
+        ]);
+      },
+      error: (error: unknown) => {
+        console.error(
+          'Failed to save notification template:',
+          error,
+        );
+
+        this.isSaving = false;
+
+        this.errorMessage =
+          'تعذر حفظ القالب. تحققي من البيانات واستجابة الـ Backend.';
+      },
+    });
   }
 }
