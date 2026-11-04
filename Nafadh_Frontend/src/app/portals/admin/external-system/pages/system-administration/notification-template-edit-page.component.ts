@@ -1,3 +1,4 @@
+
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -21,8 +22,8 @@ import {
   styleUrl: './notification-template-edit-page.component.css',
 })
 export class NotificationTemplateEditPageComponent
-  implements OnInit
-{
+  implements OnInit {
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
@@ -37,7 +38,25 @@ export class NotificationTemplateEditPageComponent
   errorMessage = '';
   successMessage = '';
 
-  portalOptions: string[] = [];
+  // جميع البوابات المدعومة من Backend
+  readonly portalOptions = [
+    {
+      value: 'Admin',
+      label: 'بوابة الإدارة المركزية',
+    },
+    {
+      value: 'Company',
+      label: 'بوابة الشركة',
+    },
+    {
+      value: 'Trainer',
+      label: 'بوابة المدرب',
+    },
+    {
+      value: 'Trainee',
+      label: 'بوابة المتدرب',
+    },
+  ];
 
   readonly isCreateMode =
     this.route.snapshot.data['mode'] === 'create';
@@ -70,58 +89,36 @@ export class NotificationTemplateEditPageComponent
   });
 
   ngOnInit(): void {
-    this.isLoading = true;
-
     const idParam = this.route.snapshot.paramMap.get('id');
     this.templateId = idParam ? Number(idParam) : null;
 
-    this.api.getAll().subscribe({
-      next: (templates) => {
-        this.portalOptions = [
-          ...new Set(
-            templates
-              .map((item) => item.portalCode)
-              .filter((value) => !!value),
-          ),
-        ].sort((a, b) => a.localeCompare(b));
+    if (this.isCreateMode) {
+      this.templateName = 'إضافة قالب إشعار';
+      return;
+    }
 
-        if (this.isCreateMode) {
-          this.templateName = 'إضافة قالب إشعار';
-          this.isLoading = false;
-          return;
-        }
+    if (
+      !this.templateId ||
+      !Number.isInteger(this.templateId)
+    ) {
+      this.errorMessage = 'معرّف القالب غير صحيح.';
+      return;
+    }
 
-        if (
-          !this.templateId ||
-          !Number.isInteger(this.templateId)
-        ) {
-          this.errorMessage = 'معرّف القالب غير صحيح.';
-          this.isLoading = false;
-          return;
-        }
-
-        this.loadTemplate(this.templateId);
-      },
-      error: (error: unknown) => {
-        console.error(
-          'Failed to load notification template options:',
-          error,
-        );
-
-        this.errorMessage =
-          'تعذر تحميل بيانات القوالب والبوابات من قاعدة البيانات.';
-
-        this.isLoading = false;
-      },
-    });
+    this.loadTemplate(this.templateId);
   }
 
   private loadTemplate(id: number): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
     this.api.getById(id).subscribe({
       next: (template) => {
         this.patchForm(template);
+
         this.templateName =
           template.name || 'تعديل قالب إشعار';
+
         this.isLoading = false;
       },
       error: (error: unknown) => {
@@ -173,7 +170,10 @@ export class NotificationTemplateEditPageComponent
     const request: NotificationTemplateRequest = {
       code: value.code.trim(),
       name: value.name.trim(),
+
+      // نرسل القيمة المعتمدة للـ Backend وليس الاسم العربي
       portalCode: value.portalCode,
+
       type: 'Email',
       subject: value.subject.trim(),
       body: value.body.trim(),

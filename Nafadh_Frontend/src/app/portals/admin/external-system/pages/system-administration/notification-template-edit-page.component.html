@@ -1,3 +1,4 @@
+
 <div class="template-edit-container" dir="rtl">
   <div class="page-head">
     <div class="breadcrumb">
@@ -78,7 +79,15 @@
           </div>
         }
 
+        @if (successMessage) {
+          <div class="form-message success-state" role="status">
+            {{ successMessage }}
+          </div>
+        }
+
         <form [formGroup]="editForm" (ngSubmit)="save()">
+
+          <!-- رمز القالب -->
           <div class="form-group">
             <label class="form-label" for="templateCode">
               رمز القالب <span class="req">*</span>
@@ -95,6 +104,7 @@
             />
           </div>
 
+          <!-- اسم القالب والبوابة -->
           <div class="names-row">
             <div class="form-group">
               <label class="form-label" for="templateName">
@@ -106,6 +116,7 @@
                 type="text"
                 formControlName="name"
                 class="form-control"
+                placeholder="أدخلي اسم القالب"
               />
             </div>
 
@@ -119,21 +130,20 @@
                 formControlName="portalCode"
                 class="form-control"
               >
-                <option value="" disabled>اختاري البوابة</option>
+                <option value="" disabled>
+                  اختاري البوابة
+                </option>
 
-                @for (portal of portalOptions; track portal) {
-                  <option [value]="portal">{{ portal }}</option>
+                @for (portal of portalOptions; track portal.value) {
+                  <option [value]="portal.value">
+                    {{ portal.label }}
+                  </option>
                 }
               </select>
-
-              @if (portalOptions.length === 0) {
-                <small class="field-hint">
-                  لا توجد بوابات مسجلة في قوالب قاعدة البيانات.
-                </small>
-              }
             </div>
           </div>
 
+          <!-- نوع الإشعار -->
           <div class="form-group type-field">
             <label class="form-label" for="templateType">
               نوع الإشعار
@@ -154,6 +164,7 @@
 
           <hr class="divider" />
 
+          <!-- محتوى البريد الإلكتروني -->
           <section
             class="email-content"
             aria-label="محتوى البريد الإلكتروني"
@@ -172,6 +183,7 @@
                 type="text"
                 formControlName="subject"
                 class="form-control"
+                placeholder="أدخلي موضوع البريد الإلكتروني"
               />
             </div>
 
@@ -192,6 +204,7 @@
 
           <hr class="divider" />
 
+          <!-- حالة القالب -->
           <div class="status-block">
             <label class="form-label">حالة القالب</label>
 
@@ -205,6 +218,7 @@
             </label>
           </div>
 
+          <!-- أزرار الإجراءات -->
           <div class="actions">
             <button
               type="button"
@@ -217,11 +231,12 @@
             <button
               type="submit"
               class="btn-primary"
-              [disabled]="isSaving || portalOptions.length === 0"
+              [disabled]="isSaving"
             >
               {{ isSaving ? 'جارٍ الحفظ...' : 'حفظ' }}
             </button>
           </div>
+
         </form>
       }
     </div>
