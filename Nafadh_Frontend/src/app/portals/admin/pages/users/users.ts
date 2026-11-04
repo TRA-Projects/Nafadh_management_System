@@ -1,3 +1,4 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { administrativeValue } from '../../../../core/models/administrative-constants';
 import { inject,
@@ -51,11 +52,15 @@ export const PRESET_AVATARS: PresetAvatar[] = [
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './users.html',
   styleUrls: ['./users.css']
 })
 export class AdminUsers implements OnInit {
+  get userStatusChoices() {
+    return [{value: 'ALL', label: 'كل الحالات'}, ...this.constants.supportedChoices('NFD_USR_STAT', [{value: 'Active', label: this.userLabel('Active')}, {value: 'Inactive', label: this.userLabel('Inactive')}, {value: 'Suspended', label: this.userLabel('Suspended')}, {value: 'PendingVerification', label: this.userLabel('PendingVerification')}], true)];
+  }
+
   readonly constants = inject(NafadhConstantsService);
   // =========================================================
   // USERS
@@ -420,7 +425,9 @@ export class AdminUsers implements OnInit {
   constructor(
     private api: AdminApi,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    this.constants.ensure('NFD_USR_STAT');
+  }
 
   ngOnInit(): void {
     this.loadData();
