@@ -1,3 +1,4 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -52,7 +53,7 @@ export interface RemediationRequestDto {
 @Component({
   selector: 'app-remediation-requests',
   standalone: true,
-  imports: [
+  imports: [CatalogPicker,
     CommonModule,
     FormsModule
   ],
@@ -60,6 +61,10 @@ export interface RemediationRequestDto {
   styleUrls: ['./remediation-requests.css']
 })
 export class AdminRemediationRequests implements OnInit {
+  get remediationChoices() {
+    return [{value: 'ALL', label: 'جميع الحالات'}, ...this.constants.supportedChoices('NFD_REM_STAT', [{value: 'Pending', label: this.getStatusLabel('Pending')}, {value: 'Approved', label: this.getStatusLabel('Approved')}, {value: 'Rejected', label: 'مرفوض'}, {value: 'NeedsRevision', label: this.getStatusLabel('NeedsRevision')}], true)];
+  }
+
 
   private readonly auth = inject(AuthService);
   readonly constants = inject(NafadhConstantsService);
