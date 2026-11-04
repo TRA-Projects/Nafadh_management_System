@@ -188,6 +188,7 @@ export class ConstantsManagePageComponent {
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
   readonly modalOpen = signal(false);
   readonly editingId = signal<string | number | null>(null);
+  private originalValue?: { label_ar: string; label_en: string; active: boolean };
   readonly editKeyError = signal('');
   readonly subParentReasonRows = signal<SystemConfigValueDto[]>([]);
   readonly actionsMenuRowId = signal<string | null>(null);
@@ -259,6 +260,11 @@ export class ConstantsManagePageComponent {
   readonly canEditSelectedGroup = computed(() =>
     !!this.selectedLookupCode() && !this.catalogLoading() && !this.catalogLoadFailed() && !this.isReadOnlyManagementGroup()
   );
+
+  canEditPriorityActivation(): boolean {
+    const policy = this.catalogGroups().find(row => row.code === 'NFD_TSK_PRI');
+    return policy?.canChangeActive === true && policy.activationKeys?.includes(String(this.editingId())) === true;
+  }
 
   readonly policyHint = computed(() => this.catalogLoading() || this.catalogLoadFailed() ? null :
     constantPolicyHint(this.selectedLookupCode(), this.isReadOnlyManagementGroup(), this.isLabelsOnlyGroup(), this.isFixedKeysGroup()));
@@ -569,6 +575,9 @@ export class ConstantsManagePageComponent {
       return;
     }
     this.editingId.set(key);
+    this.originalValue = hasFixedEditKey(group) ? {
+      label_ar: row.label_ar, label_en: row.label_en, active: row.IsActive ?? row.isActive ?? true
+    } : undefined;
     this.form.reset({
       code: hasFixedEditKey(group) ? String(key) : row.code ?? String(row.id),
       label_en: row.label_en,
@@ -629,10 +638,12 @@ export class ConstantsManagePageComponent {
             })
           );
         }
-        if (isAdministrativeGroup(group) || (hasFixedEditKey(group) && !this.form.controls.IsActive.dirty)) {
-          return firstValueFrom(this.api.updateConfigValue(group, id, { label_ar: labels.label_ar, label_en: labels.label_en }));
+        const precondition = this.originalValue && hasFixedEditKey(group) ? { expected: this.originalValue } : {};
+        if ((isAdministrativeGroup(group) && !(group === 'NFD_TSK_PRI' && this.canEditPriorityActivation())) ||
+            (hasFixedEditKey(group) && !this.form.controls.IsActive.dirty)) {
+          return firstValueFrom(this.api.updateConfigValue(group, id, { label_ar: labels.label_ar, label_en: labels.label_en, ...precondition }));
         }
-        return firstValueFrom(this.api.updateConfigValue(group, id, { ...labels, ...extras }));
+        return firstValueFrom(this.api.updateConfigValue(group, id, { ...labels, ...extras, ...precondition }));
       },
       execute: {
         successMessage: $localize`:@@jobseeker.common.saved:Saved`,
@@ -643,7 +654,7 @@ export class ConstantsManagePageComponent {
       return;
     }
     const saved = result.value;
-    if (hasFixedEditKey(group)) this.constants.refresh(group);
+    if (hasFixedEditKey(group)) this.constants.afterSave(group);
     this.closeModal();
     await this.reload();
     if (saved?.IsActive === false) {
