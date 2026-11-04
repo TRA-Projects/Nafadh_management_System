@@ -1,3 +1,4 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -17,7 +18,7 @@ const approvalKeyByBatchStatus = new Map([
 @Component({
   selector: 'app-admin-programs',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './programs.html',
   styleUrls: ['./programs.css']
 })
@@ -82,6 +83,36 @@ export class AdminPrograms implements OnInit {
   readonly planFilterOptions = computed(() =>
     ['بانتظار الاعتماد', 'معتمدة', 'مرفوضة'].map(value => ({ value, label: this.batchPlanLabel(value) }))
   );
+  readonly batchStatusKeys = ['Upcoming','Ongoing','Completed','Cancelled'] as const;
+  readonly batchStatusFallback = {Upcoming:'قادمة', Ongoing:'جارية', Completed:'مكتملة', Cancelled:'ملغاة'} as const;
+  get batchFilterKey() {
+    return this.batchStatusKeys.find(key => this.batchStatusFallback[key] === this.statusFilter()) ?? 'all';
+  }
+  get batchFilterChoices() {
+    const supported = (['Ongoing','Upcoming','Completed'] as const).map(value => ({value,label:this.batchStatusFallback[value]}));
+    return [{value:'all' as const,label:'الدفعات',labelEn:'All'}, ...this.constants.supportedChoices('NFD_BAT_STAT',supported,true)];
+  }
+  chooseBatchFilter(key: 'all' | 'Ongoing' | 'Upcoming' | 'Completed') {
+    this.statusFilter.set(key === 'all' ? 'الكل' : this.batchStatusFallback[key]);
+    this.currentPage.set(1);
+  }
+  get batchStatusChoices() {
+    return this.constants.supportedChoices('NFD_BAT_STAT', this.batchStatusKeys.map(value => ({value,label:this.batchStatusFallback[value]})));
+  }
+  get planPickerKey() {
+    return approvalKeyByBatchStatus.get(this.planFilter()) ?? (this.planFilter() === 'لم تُرفع بعد' ? 'no-plan' : 'all');
+  }
+  get planPickerChoices() {
+    return [{value:'all',label:'كل الحالات',labelEn:'All'}, ...this.constants.supportedChoices('NFD_CPA_STAT',
+      this.planFilterOptions().map(o => ({value:approvalKeyByBatchStatus.get(o.value)!,label:o.label})), true),
+      {value:'no-plan',label:'لم تُرفع بعد',labelEn:'Not submitted'}];
+  }
+  choosePlanFilter(key: string) {
+    const legacy = this.planFilterOptions().find(o => approvalKeyByBatchStatus.get(o.value) === key)?.value;
+    if (!legacy && key !== 'all' && key !== 'no-plan') return;
+    this.planFilter.set(legacy ?? (key === 'no-plan' ? 'لم تُرفع بعد' : 'الكل'));
+    this.currentPage.set(1);
+  }
   batchesError = signal<string | null>(null);
 
   currentPage = signal<number>(1);
@@ -240,7 +271,7 @@ export class AdminPrograms implements OnInit {
   // 6. Lifecycle Hook
   // ==========================================================
   ngOnInit(): void {
-    this.constants.ensure('NFD_CPI_TYPE');
+    this.constants.ensure('NFD_CPI_TYPE', 'NFD_CPA_STAT', 'NFD_BAT_STAT');
     const incomingId = Number(this.route.snapshot.queryParamMap.get('coursePlanId'));
     this.notificationPlanId = Number.isInteger(incomingId) && incomingId > 0 ? incomingId : null;
     this.initBatchForm();
@@ -2274,6 +2305,11 @@ addManualTrainee(): void {
     );
 
     const formValue = this.editBatchForm.getRawValue();
+    if (this.getBatchStatusValue(this.selectedBatch?.status) !== formValue.status &&
+        !this.constants.isSelectable('NFD_BAT_STAT', this.batchStatusKeys[formValue.status])) {
+      this.editBatchErrorMessage = 'اختر حالة دفعة مفعّلة.';
+      return;
+    }
 
     const companyId =
       formValue.companyId === '' || formValue.companyId == null
