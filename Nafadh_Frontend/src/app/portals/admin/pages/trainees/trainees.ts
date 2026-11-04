@@ -1,3 +1,4 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { inject, Component, OnInit, signal, computed, ViewEncapsulation } from '@angular/core';
 import { CommonModule, NgClass, NgStyle } from '@angular/common';
@@ -71,7 +72,7 @@ export interface TraineeAttendanceRecord {
 @Component({
   selector: 'app-admin-trainees',
   standalone: true,
-  imports: [CommonModule, NgClass, NgStyle, FormsModule],
+  imports: [CatalogPicker, CommonModule, NgClass, NgStyle, FormsModule],
   templateUrl: './trainees.html',
   styleUrls: ['./trainees.css'],
   encapsulation: ViewEncapsulation.None
@@ -425,7 +426,12 @@ export class AdminTrainees implements OnInit {
     private sanitizer: DomSanitizer
   ) {}
 
+  get attendancePickerChoices() {
+    const rows = [{value:'Present',label:'حاضر'}, {value:'Late',label:'متأخر'}, {value:'Absent',label:'غائب'}, {value:'Excused',label:'بعذر'}] as const;
+    return [{value:'ALL' as const,label:'الكل',labelEn:'All'}, ...this.constants.supportedChoices('NFD_ATT_STAT',rows,true)];
+  }
   ngOnInit() {
+    this.constants.ensure('NFD_ATT_STAT');
     this.constants.ensure('NFD_WDR_STAT');
     this.loadSavedUnreadReplies();
     this.loadTrainers();
