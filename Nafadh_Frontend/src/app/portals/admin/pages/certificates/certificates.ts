@@ -71,7 +71,8 @@ export class AdminCertificates implements OnInit {
   private static cachedTraineesByBatch = new Map<number, TraineeDto[]>();
 
   readonly batches = signal<BatchCertificateCardDto[]>([]);
-  readonly weeklyTrainingHours = signal<number>(40);
+ readonly weeklyTrainingHours = signal<number | null>(null);
+  readonly certificateMinGrade = signal<number | null>(null);
   readonly certificateTexts = signal<Record<string, string>>({});
 
 getCertificateText(
@@ -173,10 +174,19 @@ private loadCertificateSettings(): void {
 
       // ساعات التدريب الأسبوعية من قاعدة البيانات
       const hours = Number(settings['PROGRAM_WEEKLY_HOURS']);
+      const minGrade = Number(settings['CERT_MIN_GRADE']);
+
+if (settings['CERT_MIN_GRADE'] !== undefined &&
+    Number.isFinite(minGrade) &&
+    minGrade >= 0 &&
+    minGrade <= 100) {
+  this.certificateMinGrade.set(minGrade);
+}
 
       if (Number.isFinite(hours) && hours > 0) {
         this.weeklyTrainingHours.set(hours);
       }
+  
     },
 
     error: (err) => {
@@ -242,6 +252,9 @@ private loadCertificateSettings(): void {
   practicalHours: number;
 } {
   const weeklyHours = this.weeklyTrainingHours();
+  if (weeklyHours === null) {
+  throw new Error('PROGRAM_WEEKLY_HOURS is not loaded');
+}
 
   if (!startDate || !endDate) {
     return {
@@ -720,9 +733,9 @@ private loadCertificateSettings(): void {
       trackName: batch?.trackName || 'البرنامج التدريبي المعتمد',
       companyName: batch?.companyName || 'الشركة المدربة المعتمدة',
       batchName: batch?.batchName || '',
-      startDate: batch?.startDate || '2026-01-01',
-      endDate: batch?.endDate || '2026-06-30',
-      grade: trainee.grade || '92.00%',
+     startDate: batch?.startDate,
+endDate: batch?.endDate,
+grade: trainee.grade,
       gradeLabel: trainee.gradeLabel || this.getGradeLabel(trainee.grade),
       serialNumber:
         trainee.serialNumber ||
@@ -892,14 +905,28 @@ private loadCertificateSettings(): void {
   );
   return;
 }
-   if (grade < 50) {
+   const minGrade = this.certificateMinGrade();
+
+if (minGrade === null) {
+  this.showCertificateMessage(
+    'error',
+    this.getCertificateText('CERT_ISSUE_FAILED_TITLE'),
+    this.getCertificateText('CERT_ISSUE_FAILED_MESSAGE', {
+      traineeName: trainee.fullName,
+      error: 'CERT_MIN_GRADE is not loaded'
+    })
+  );
+  return;
+}
+
+if (grade < minGrade) {
   this.showCertificateMessage(
     'error',
     this.getCertificateText('CERT_GRADE_MISSING_TITLE'),
     this.getCertificateText('CERT_GRADE_BELOW_MIN_MESSAGE', {
       traineeName: trainee.fullName,
       grade: grade.toFixed(2),
-      minGrade: 50
+    minGrade: minGrade
     })
   );
   return;
@@ -952,64 +979,92 @@ private loadCertificateSettings(): void {
     });
   }
 
-  issueAllCertificates(): void {
-    const batch = this.selectedBatch();
-   if (!this.isBatchCompleted(batch)) {
-  this.showCertificateMessage(
-    'error',
-    this.getCertificateText('CERT_ALL_BATCH_REQUIRED_TITLE'),
-    this.getCertificateText('CERT_ALL_BATCH_REQUIRED_MESSAGE')
-  );
-  return;
-}
+ 
+issueAllCertificates(): void {
+  const batch = this.selectedBatch();
 
-    const unissued = this.selectedBatchTrainees().filter(t => !this.isCertificateIssued(t));
-
- if (unissued.length === 0) {
-  this.showCertificateMessage(
-    'warning',
-    this.getCertificateText('CERT_ALL_ALREADY_ISSUED_TITLE'),
-    this.getCertificateText('CERT_ALL_ALREADY_ISSUED_MESSAGE')
-  );
-  return;
-}
-    const requests$ = unissued.map(trainee => {
-      const payload = {
-        enrollmentId: trainee.enrollmentId,
-        type: 0
-      };
-      return this.api.issueCertificate(payload).pipe(
-        catchError(err => {
-          console.error(`فشل إصدار شهادة ${trainee.fullName}`, err);
-          return of(null);
-        })
-      );
-    });
-
- forkJoin(requests$).subscribe({
-  next: () => {
-    if (batch) {
-      this.reloadTraineesAndBatchStatus(batch.batchId || batch.id);
-    }
-
-    this.showCertificateMessage(
-      'success',
-      this.getCertificateText('CERT_ALL_SUCCESS_TITLE'),
-      this.getCertificateText('CERT_ALL_SUCCESS_MESSAGE', {
-        count: unissued.length
-      })
-    );
-  },
-
-  error: () => {
+  if (!this.isBatchCompleted(batch)) {
     this.showCertificateMessage(
       'error',
-      this.getCertificateText('CERT_ALL_ERROR_TITLE'),
-      this.getCertificateText('CERT_ALL_ERROR_MESSAGE')
+      this.getCertificateText('CERT_ALL_BATCH_REQUIRED_TITLE'),
+      this.getCertificateText('CERT_ALL_BATCH_REQUIRED_MESSAGE')
     );
+    return;
   }
-});}
 
+  const minGrade = this.certificateMinGrade();
+
+  if (minGrade === null) {
+    console.error('CERT_MIN_GRADE is not loaded');
+    return;
+  }
+
+  const unissued = this.selectedBatchTrainees()
+    .filter(t => !this.isCertificateIssued(t));
+
+  if (unissued.length === 0) {
+    this.showCertificateMessage(
+      'warning',
+      this.getCertificateText('CERT_ALL_ALREADY_ISSUED_TITLE'),
+      this.getCertificateText('CERT_ALL_ALREADY_ISSUED_MESSAGE')
+    );
+    return;
+  }
+
+  const requests$ = unissued.map(trainee => {
+    const payload = {
+      enrollmentId: trainee.enrollmentId,
+      type: 0
+    };
+
+    return this.api.issueCertificate(payload).pipe(
+      map(() => true),
+      catchError(err => {
+        console.error(
+          `Failed to issue certificate for ${trainee.fullName}`,
+          err
+        );
+        return of(false);
+      })
+    );
+  });
+
+  forkJoin(requests$).subscribe({
+    next: results => {
+      const successCount = results.filter(Boolean).length;
+      const failedCount = results.length - successCount;
+
+      if (batch) {
+        this.reloadTraineesAndBatchStatus(batch.batchId || batch.id);
+      }
+
+      if (failedCount > 0) {
+        this.showCertificateMessage(
+          'error',
+          this.getCertificateText('CERT_ALL_ERROR_TITLE'),
+          this.getCertificateText('CERT_ALL_ERROR_MESSAGE')
+        );
+        return;
+      }
+
+      this.showCertificateMessage(
+        'success',
+        this.getCertificateText('CERT_ALL_SUCCESS_TITLE'),
+        this.getCertificateText('CERT_ALL_SUCCESS_MESSAGE', {
+          count: successCount
+        })
+      );
+    },
+
+    error: () => {
+      this.showCertificateMessage(
+        'error',
+        this.getCertificateText('CERT_ALL_ERROR_TITLE'),
+        this.getCertificateText('CERT_ALL_ERROR_MESSAGE')
+      );
+    }
+  });
+}
   private reloadTraineesAndBatchStatus(batchId: number): void {
     const bId = this.cleanId(batchId);
     this.loadingTrainees.set(true);
