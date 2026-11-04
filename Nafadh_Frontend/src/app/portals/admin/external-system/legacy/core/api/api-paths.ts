@@ -7,7 +7,8 @@ const MANAGEMENT_REFERENCE_CONSTANTS = `${managementEnvironment.apiBaseUrl.repla
 /** Evaluation Templates belong to Nafadh_Backend, not Bidding_API. */
 const NAFADH_EVALUATION_TEMPLATE =
   'https://localhost:7082/api/EvaluationTemplate';
-
+/** Identity & Access belongs to Nafadh_Backend (no jobseekers / Bidding_API). */
+const NAFADH_ADMIN_IDENTITY = `${managementEnvironment.apiBaseUrl.replace(/\/api\/?$/, '')}/api/admin/identity`;
 /**
  * Single place for relative API paths. Use these everywhere so mock + real use identical calls.
  * Host/origin is applied once in `apiBaseUrlInterceptor` via runtime config / `environment.apiBaseUrl`
@@ -138,24 +139,24 @@ announcementById: (id: number) => `/api/Announcement/${id}`,
   adminJobseekerOpportunityHistory: (profileId: number) => `/api/jobseekers/admin/jobseekers/${profileId}/opportunity-history`,
   /** Admin only: one page of the evaluation history (optional type / date filters). */
   adminJobseekerEvaluationHistory: (profileId: number) => `/api/jobseekers/admin/jobseekers/${profileId}/evaluation-history`,
-  adminIdentityUsers: '/api/jobseekers/admin/identity/users',
+adminIdentityUsers: `${NAFADH_ADMIN_IDENTITY}/users`,
   adminIdentityUserGroup: (userId: string) =>
-    `/api/jobseekers/admin/identity/users/${encodeURIComponent(userId)}/group`,
+    `${NAFADH_ADMIN_IDENTITY}/users/${encodeURIComponent(userId)}/group`,
   adminIdentityUserAccounts: (userId: string) =>
-    `/api/jobseekers/admin/identity/users/${encodeURIComponent(userId)}/accounts`,
+    `${NAFADH_ADMIN_IDENTITY}/users/${encodeURIComponent(userId)}/accounts`,
   adminIdentityUser: (userId: string) =>
-    `/api/jobseekers/admin/identity/users/${encodeURIComponent(userId)}`,
-  adminIdentityGroups: '/api/jobseekers/admin/identity/groups',
-  adminIdentityGroup: (id: number) => `/api/jobseekers/admin/identity/groups/${id}`,
-  adminIdentityOrganizations: '/api/jobseekers/admin/identity/organizations',
-  adminIdentityPages: '/api/jobseekers/admin/identity/pages',
+    `${NAFADH_ADMIN_IDENTITY}/users/${encodeURIComponent(userId)}`,
+  adminIdentityGroups: `${NAFADH_ADMIN_IDENTITY}/groups`,
+  adminIdentityGroup: (id: number) => `${NAFADH_ADMIN_IDENTITY}/groups/${id}`,
+  adminIdentityOrganizations: `${NAFADH_ADMIN_IDENTITY}/organizations`,
+  adminIdentityPages: `${NAFADH_ADMIN_IDENTITY}/pages`,
   adminIdentityPageRequirements: (pageId: number) =>
-    `/api/jobseekers/admin/identity/pages/${pageId}/requirements`,
-  adminIdentityRoles: '/api/jobseekers/admin/identity/roles',
+    `${NAFADH_ADMIN_IDENTITY}/pages/${pageId}/requirements`,
+  adminIdentityRoles: `${NAFADH_ADMIN_IDENTITY}/roles`,
   adminIdentityRole: (roleId: string) =>
-    `/api/jobseekers/admin/identity/roles/${encodeURIComponent(roleId)}`,
+    `${NAFADH_ADMIN_IDENTITY}/roles/${encodeURIComponent(roleId)}`,
   adminIdentityRolePages: (roleId: string) =>
-    `/api/jobseekers/admin/identity/roles/${encodeURIComponent(roleId)}/pages`,
+    `${NAFADH_ADMIN_IDENTITY}/roles/${encodeURIComponent(roleId)}/pages`,
   jobsFind: '/api/jobseekers/jobs/find',
   jobsFindById: (jobId: number) => `/api/jobseekers/jobs/find/${jobId}`,
   jobsList: '/api/jobseekers/jobs/list',

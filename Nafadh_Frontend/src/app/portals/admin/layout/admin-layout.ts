@@ -59,12 +59,12 @@ private readonly pagePermissions: PagePermissionService = inject(PagePermissionS
         },
       ],
     },
-    {
-      path: 'users',
-      label: 'المستخدمون والصلاحيات',
-      icon: 'shield',
-      pageCode: 'nf.admin.users-permissions',
-    },
+    // {
+    //   path: 'users',
+    //   label: 'المستخدمون والصلاحيات',
+    //   icon: 'shield',
+    //   pageCode: 'nf.admin.users-permissions',
+    // },
     {
       path: 'trainees',
       label: 'إدارة المتدربين',
