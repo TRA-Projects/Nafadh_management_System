@@ -9,8 +9,6 @@ const NAFADH_API_BASE_URL = 'https://localhost:7082';
 
 /** Evaluation Templates API. */
 const NAFADH_EVALUATION_TEMPLATE =
-/** Evaluation Templates API. */
-const NAFADH_EVALUATION_TEMPLATE =
   `${NAFADH_API_BASE_URL}/api/EvaluationTemplate`;
 
 /** Evaluation Criteria API. */

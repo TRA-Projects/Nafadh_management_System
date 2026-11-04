@@ -513,7 +513,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("NFD_ConversationGroupMembers");
+                    b.ToTable("NFD_ConversationGroupMembers", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlan", b =>
@@ -2684,7 +2684,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("TraineeId");
 
-                    b.ToTable("NFD_TraineeSkills");
+                    b.ToTable("NFD_TraineeSkills", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Trainer", b =>
@@ -2783,7 +2783,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("TrainerId");
 
-                    b.ToTable("NFD_TrainerAttendances");
+                    b.ToTable("NFD_TrainerAttendances", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerCertificate", b =>
@@ -3042,7 +3042,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("TraineeId");
 
-                    b.ToTable("NFD_WithdrawalRequests");
+                    b.ToTable("NFD_WithdrawalRequests", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.RemediationRequest", b =>

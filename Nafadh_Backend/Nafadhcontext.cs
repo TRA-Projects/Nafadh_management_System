@@ -6,10 +6,16 @@
 
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using IA = Nafadh_Backend.IdentityAccess;
 
 namespace Nafadh_Backend
 {
-    public class Nafadhcontext : DbContext
+    public class Nafadhcontext : IdentityDbContext<
+     IA.AppUser, IA.Roles, string,
+     IdentityUserClaim<string>, IA.AppUserRoles, IdentityUserLogin<string>,
+     IdentityRoleClaim<string>, IdentityUserToken<string>>
     {
         public Nafadhcontext(DbContextOptions<Nafadhcontext> options) : base(options)
         {
@@ -114,7 +120,17 @@ namespace Nafadh_Backend
         public DbSet<NFD_NotificationTemplate> NFD_NotificationTemplates
         { get; set; }
 
+        // Identity & Access (shared Bidding tables)
+        public DbSet<IA.Profile> Profiles { get; set; }
+        public DbSet<IA.UserType> UserTypes { get; set; }
+        public DbSet<IA.UserGroup> UserGroups { get; set; }
+        public DbSet<IA.Organization> Organizations { get; set; }
+        public DbSet<IA.AppPage> AppPages { get; set; }
+        public DbSet<IA.RolePage> RolePages { get; set; }
+        public DbSet<IA.SystemAuditTrail> SystemAuditTrails { get; set; }
         public DbSet<NFD_CompanySupervisorTrainer>
+
+
     NFD_CompanySupervisorTrainers
         { get; set; }
 
@@ -1244,6 +1260,7 @@ namespace Nafadh_Backend
             // ---- Company Portal course plans ----
             modelBuilder.ConfigureCoursePlans();
 
+            IA.IdentityAccessModelConfiguration.Apply(modelBuilder);
 
             // ---- NFD_TraineeSkill ----
             modelBuilder.Entity<NFD_TraineeSkill>()

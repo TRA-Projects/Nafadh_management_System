@@ -1,17 +1,15 @@
-import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
-import { inject } from '@angular/core';
-import { CatalogPicker } from '../../../../core/models/catalog-picker';
-import { traineeAttendanceKey } from '../../../../core/models/enums';
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
+import { traineeAttendanceKey, ATTENDANCE_STATUS_LABELS } from '../../../../core/models/enums';
+import { ExcuseDto } from '../../../../core/models/dtos';
 import { TraineeApi } from '../../services/trainee-api';
 import { SystemVariablesService } from '../../../../services/system-variables.service';
-import { ATTENDANCE_STATUS_LABELS } from '../../../../core/models/enums';
-import { ExcuseDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-trainee-attendance',
@@ -56,12 +54,13 @@ export class TraineeAttendance implements OnInit {
 
   selectedFileName = signal<string>('');
   selectedFile = signal<File | null>(null);
+
   // Attachment settings from SystemVariables
-allowedExtensions = signal<string[]>([]);
-maxAttachmentSizeMb = signal<number>(0);
-attachmentSettingsLoaded = signal(false);
-attachmentSizeError = signal('');
-attachmentTypeError = signal('');
+  allowedExtensions = signal<string[]>([]);
+  maxAttachmentSizeMb = signal<number>(0);
+  attachmentSettingsLoaded = signal(false);
+  attachmentSizeError = signal('');
+  attachmentTypeError = signal('');
 
   // =========================================================
   // EXCUSES CACHE
@@ -83,20 +82,29 @@ attachmentTypeError = signal('');
 
   private popupTimer: any;
 
- constructor(
-  private api: TraineeApi,
-  private systemVariablesService: SystemVariablesService
-) {}
+  constructor(
+    private api: TraineeApi,
+    private systemVariablesService: SystemVariablesService
+  ) {}
 
   // =========================================================
   // INIT
   // =========================================================
 
   readonly constants = inject(NafadhConstantsService);
+
   get attendancePickerChoices() {
-    const rows = [{value:'Present',label:'حاضر'}, {value:'Late',label:'متأخر'}, {value:'Absent',label:'غائب'}] as const;
-    return [{value:'All' as const,label:'الكل',labelEn:'All'}, ...this.constants.supportedChoices('NFD_ATT_STAT',rows,true)];
+    const rows = [
+      { value: 'Present', label: 'حاضر' },
+      { value: 'Late', label: 'متأخر' },
+      { value: 'Absent', label: 'غائب' },
+    ] as const;
+    return [
+      { value: 'All' as const, label: 'الكل', labelEn: 'All' },
+      ...this.constants.supportedChoices('NFD_ATT_STAT', rows, true),
+    ];
   }
+
   ngOnInit(): void {
     this.constants.ensure('NFD_ATT_STAT');
     this.getLoggedInUserId();
@@ -139,8 +147,6 @@ attachmentTypeError = signal('');
       this.attachmentSettingsLoaded.set(false);
     }
   }
-  }
-}
 
   // =========================================================
   // ATTENDANCE FILTER FUNCTIONS
@@ -205,24 +211,14 @@ attachmentTypeError = signal('');
 
   private getLoggedInUserId(): void {
     try {
-      for (
-        let i = 0;
-        i < localStorage.length;
-        i++
-      ) {
-        const key =
-          localStorage.key(i);
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
 
         if (key) {
-          const val =
-            localStorage.getItem(key);
+          const val = localStorage.getItem(key);
 
-          if (
-            val &&
-            val.startsWith('{')
-          ) {
-            const parsed =
-              JSON.parse(val);
+          if (val && val.startsWith('{')) {
+            const parsed = JSON.parse(val);
 
             const foundId =
               parsed.traineeId ||
@@ -230,9 +226,7 @@ attachmentTypeError = signal('');
               parsed.id;
 
             if (foundId) {
-              this.traineeId =
-                Number(foundId);
-
+              this.traineeId = Number(foundId);
               return;
             }
           }
@@ -240,29 +234,19 @@ attachmentTypeError = signal('');
       }
 
       const token =
-        localStorage.getItem(
-          'auth_token'
-        ) ||
-        localStorage.getItem(
-          'token'
-        ) ||
-        localStorage.getItem(
-          'user_session'
-        );
+        localStorage.getItem('auth_token') ||
+        localStorage.getItem('token') ||
+        localStorage.getItem('user_session');
 
-      if (
-        token &&
-        token.includes('.')
-      ) {
-        const payload =
-          JSON.parse(
-            atob(
-              token
-                .split('.')[1]
-                .replace(/-/g, '+')
-                .replace(/_/g, '/')
-            )
-          );
+      if (token && token.includes('.')) {
+        const payload = JSON.parse(
+          atob(
+            token
+              .split('.')[1]
+              .replace(/-/g, '+')
+              .replace(/_/g, '/')
+          )
+        );
 
         const id =
           payload.traineeId ||
@@ -273,15 +257,11 @@ attachmentTypeError = signal('');
           ];
 
         if (id) {
-          this.traineeId =
-            Number(id);
+          this.traineeId = Number(id);
         }
       }
     } catch (e) {
-      console.warn(
-        'تنبيه قراءة التوكن:',
-        e
-      );
+      console.warn('تنبيه قراءة التوكن:', e);
     }
   }
 
@@ -291,28 +271,20 @@ attachmentTypeError = signal('');
 
   loadTraineeData(): void {
     this.api
-      .getTrainee(
-        this.traineeId
-      )
+      .getTrainee(this.traineeId)
       .subscribe({
         next: (t) => {
           if (t) {
             this.trainee.set(t);
-            this.enrollmentId =
-              t.enrollmentId ?? 0;
+            this.enrollmentId = t.enrollmentId ?? 0;
             this.loadAttendanceData();
           }
         },
 
         error: (err) => {
-          console.error(
-            'خطأ في جلب البيانات:',
-            err
-          );
+          console.error('خطأ في جلب البيانات:', err);
 
-          if (
-            this.traineeId !== 2
-          ) {
+          if (this.traineeId !== 2) {
             this.traineeId = 2;
             this.loadTraineeData();
           }
@@ -341,7 +313,9 @@ attachmentTypeError = signal('');
         date: item.date || item.attendanceDate,
         checkInTime: item.checkInTime || item.checkIn || item.clockIn,
         checkOutTime: item.checkOutTime || item.checkOut || item.clockOut,
-        status: traineeAttendanceKey(item.status ?? item.attendanceStatus) ?? (item.status ?? item.attendanceStatus ?? 'Present'),
+        status:
+          traineeAttendanceKey(item.status ?? item.attendanceStatus) ??
+          (item.status ?? item.attendanceStatus ?? 'Present'),
         note: item.note || item.notes || item.remarks || '',
       }));
 
@@ -391,69 +365,37 @@ attachmentTypeError = signal('');
   // EXCUSES
   // =========================================================
 
-  hasExcuse(
-    dailyAttendanceId: number
-  ): boolean {
-    return this.excusesCache.has(
-      dailyAttendanceId
-    );
+  hasExcuse(dailyAttendanceId: number): boolean {
+    return this.excusesCache.has(dailyAttendanceId);
   }
 
-  getExcuse(
-    dailyAttendanceId: number
-  ): ExcuseDto | undefined {
-    return this.excusesCache.get(
-      dailyAttendanceId
-    );
+  getExcuse(dailyAttendanceId: number): ExcuseDto | undefined {
+    return this.excusesCache.get(dailyAttendanceId);
   }
 
-  getExcuseStatus(
-    dailyAttendanceId: number
-  ): string | null {
-    const excuse =
-      this.excusesCache.get(
-        dailyAttendanceId
-      );
-
-    return excuse
-      ? excuse.status
-      : null;
+  getExcuseStatus(dailyAttendanceId: number): string | null {
+    const excuse = this.excusesCache.get(dailyAttendanceId);
+    return excuse ? excuse.status : null;
   }
 
-  canSubmitExcuse(
-    row: any
-  ): boolean {
-    if (
-      this.hasExcuse(
-        row.dailyAttendanceId
-      )
-    ) {
+  canSubmitExcuse(row: any): boolean {
+    if (this.hasExcuse(row.dailyAttendanceId)) {
       return false;
     }
 
-    if (
-      row.status === 'Present'
-    ) {
+    if (row.status === 'Present') {
       return false;
     }
 
-    return (
-      row.status === 'Absent' ||
-      row.status === 'Late'
-    );
+    return row.status === 'Absent' || row.status === 'Late';
   }
 
   // =========================================================
   // VIEW EXCUSE (Popup نفس البروفايل + زر المرفق)
   // =========================================================
 
-  viewExcuse(
-    dailyAttendanceId: number
-  ): void {
-    const excuse =
-      this.excusesCache.get(
-        dailyAttendanceId
-      );
+  viewExcuse(dailyAttendanceId: number): void {
+    const excuse = this.excusesCache.get(dailyAttendanceId);
 
     if (excuse) {
       const statusMap: {
@@ -476,14 +418,10 @@ attachmentTypeError = signal('');
         },
       };
 
-      const statusInfo =
-        statusMap[
-          excuse.status
-        ] || {
-          text:
-            excuse.status,
-          emoji: '',
-        };
+      const statusInfo = statusMap[excuse.status] || {
+        text: excuse.status,
+        emoji: '',
+      };
 
       this.openPopup(
         `تفاصيل العذر\n\nالسبب: ${excuse.reason}\nالحالة: ${statusInfo.emoji} ${statusInfo.text}`,
@@ -501,25 +439,12 @@ attachmentTypeError = signal('');
       // =============================================
 
       this.api
-        .getExcuse(
-          dailyAttendanceId
-        )
+        .getExcuse(dailyAttendanceId)
         .subscribe({
-          next: (
-            excuse: ExcuseDto
-          ) => {
-            if (
-              excuse &&
-              excuse.excuseId
-            ) {
-              this.excusesCache.set(
-                dailyAttendanceId,
-                excuse
-              );
-
-              this.viewExcuse(
-                dailyAttendanceId
-              );
+          next: (excuse: ExcuseDto) => {
+            if (excuse && excuse.excuseId) {
+              this.excusesCache.set(dailyAttendanceId, excuse);
+              this.viewExcuse(dailyAttendanceId);
             } else {
               this.openPopup(
                 'لا توجد تفاصيل إضافية للعذر',
@@ -568,174 +493,132 @@ attachmentTypeError = signal('');
   // STATISTICS
   // =========================================================
 
-  totalPresent =
-    computed(() =>
-      this.rows().filter(
-        (r) =>
-          r.status === 'Present'
-      ).length
-    );
+  totalPresent = computed(() =>
+    this.rows().filter((r) => r.status === 'Present').length
+  );
 
-  totalAbsent =
-    computed(() =>
-      this.rows().filter(
-        (r) =>
-          r.status === 'Absent'
-      ).length
-    );
+  totalAbsent = computed(() =>
+    this.rows().filter((r) => r.status === 'Absent').length
+  );
 
-  totalLate =
-    computed(() =>
-      this.rows().filter(
-        (r) =>
-          r.status === 'Late'
-      ).length
-    );
+  totalLate = computed(() =>
+    this.rows().filter((r) => r.status === 'Late').length
+  );
 
-  totalExcused =
-    computed(() => {
-      let count = 0;
+  totalExcused = computed(() => {
+    let count = 0;
 
-      this.rows().forEach(
-        (row) => {
-          const excuse =
-            this.excusesCache.get(
-              row.dailyAttendanceId
-            );
+    this.rows().forEach((row) => {
+      const excuse = this.excusesCache.get(row.dailyAttendanceId);
 
-          if (
-            excuse &&
-            excuse.status ===
-              'Approved'
-          ) {
-            count++;
-          }
-        }
-      );
-
-      return count;
-    });
-
-  commitmentPercentage =
-    computed(() => {
-      const total =
-        this.rows().length;
-
-      if (
-        total === 0
-      ) {
-        return 0;
+      if (excuse && excuse.status === 'Approved') {
+        count++;
       }
-
-      const presentCount =
-        this.rows().filter(
-          (r) =>
-            r.status ===
-            'Present'
-        ).length;
-
-      return Math.round(
-        (
-          presentCount /
-          total
-        ) * 100
-      );
     });
+
+    return count;
+  });
+
+  commitmentPercentage = computed(() => {
+    const total = this.rows().length;
+
+    if (total === 0) {
+      return 0;
+    }
+
+    const presentCount = this.rows().filter(
+      (r) => r.status === 'Present'
+    ).length;
+
+    return Math.round((presentCount / total) * 100);
+  });
 
   // =========================================================
   // FILE
   // =========================================================
 
-onFileSelected(event: Event): void {
-  const input = event.target as HTMLInputElement;
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
 
-  if (!input.files || input.files.length === 0) {
-    return;
+    if (!input.files || input.files.length === 0) {
+      return;
+    }
+
+    // Clear the previous selected file
+    this.selectedFileName.set('');
+    this.selectedFile.set(null);
+
+    // Check whether system settings are available
+    if (!this.attachmentSettingsLoaded()) {
+      this.openPopup(
+        'تعذر تحميل إعدادات المرفقات، يرجى تحديث الصفحة والمحاولة مرة أخرى',
+        'error',
+        'تنبيه'
+      );
+
+      input.value = '';
+      return;
+    }
+
+    const file = input.files[0];
+
+    // Read maximum size from SystemVariables
+    const maxSizeMb = this.maxAttachmentSizeMb();
+    const maxFileSize = maxSizeMb * 1024 * 1024;
+
+    if (file.size > maxFileSize) {
+      this.openPopup(
+        this.attachmentSizeError().replace(
+          '{maxSize}',
+          String(maxSizeMb)
+        ),
+        'error',
+        'تنبيه'
+      );
+
+      input.value = '';
+      return;
+    }
+
+    // Read allowed extensions from SystemVariables
+    const allowedExtensions = this.allowedExtensions();
+    const fileExtension = file.name
+      .split('.')
+      .pop()
+      ?.toLowerCase() ?? '';
+
+    if (!allowedExtensions.includes(fileExtension)) {
+      this.openPopup(
+        this.attachmentTypeError(),
+        'error',
+        'تنبيه'
+      );
+
+      input.value = '';
+      return;
+    }
+
+    this.selectedFileName.set(file.name);
+    this.selectedFile.set(file);
   }
-
-  // Clear the previous selected file
-  this.selectedFileName.set('');
-  this.selectedFile.set(null);
-
-  // Check whether system settings are available
-  if (!this.attachmentSettingsLoaded()) {
-    this.openPopup(
-      'تعذر تحميل إعدادات المرفقات، يرجى تحديث الصفحة والمحاولة مرة أخرى',
-      'error',
-      'تنبيه'
-    );
-
-    input.value = '';
-    return;
-  }
-
-  const file = input.files[0];
-
-  // Read maximum size from SystemVariables
-  const maxSizeMb = this.maxAttachmentSizeMb();
-  const maxFileSize = maxSizeMb * 1024 * 1024;
-
-if (file.size > maxFileSize) {
-  this.openPopup(
-    this.attachmentSizeError().replace(
-      '{maxSize}',
-      String(maxSizeMb)
-    ),
-    'error',
-    'تنبيه'
-  );
-
-  input.value = '';
-  return;
-}
-
-  // Read allowed extensions from SystemVariables
-  const allowedExtensions = this.allowedExtensions();
-  const fileExtension = file.name
-    .split('.')
-    .pop()
-    ?.toLowerCase() ?? '';
-
-if (!allowedExtensions.includes(fileExtension)) {
-  this.openPopup(
-    this.attachmentTypeError(),
-    'error',
-    'تنبيه'
-  );
-
-  input.value = '';
-  return;
-}
-
-  this.selectedFileName.set(file.name);
-  this.selectedFile.set(file);
-}
 
   // =========================================================
   // RESET EXCUSE FORM
   // =========================================================
 
   private resetExcuseForm(): void {
-    this.excuseOpenFor.set(
-      null
-    );
-
+    this.excuseOpenFor.set(null);
     this.excuseReason = '';
     this.selectedFileName.set('');
-    this.selectedFile.set(
-      null
-    );
+    this.selectedFile.set(null);
   }
 
   // =========================================================
   // SUBMIT EXCUSE
   // =========================================================
 
-  submitExcuse(
-    row: any
-  ): void {
-    const reason =
-      this.excuseReason.trim();
+  submitExcuse(row: any): void {
+    const reason = this.excuseReason.trim();
 
     if (!reason) {
       this.openPopup(
@@ -751,11 +634,7 @@ if (!allowedExtensions.includes(fileExtension)) {
     // CHECK EXISTING EXCUSE
     // =============================================
 
-    if (
-      this.hasExcuse(
-        row.dailyAttendanceId
-      )
-    ) {
+    if (this.hasExcuse(row.dailyAttendanceId)) {
       this.openPopup(
         'يوجد عذر مسبق لهذا اليوم، لا يمكن إرسال عذر جديد',
         'error',
@@ -770,81 +649,66 @@ if (!allowedExtensions.includes(fileExtension)) {
     // KEEP THE SELECTED FILE BEFORE RESETTING FORM
     // =============================================
 
-    const proofFile =
-      this.selectedFile();
-      if (proofFile) {
-  if (!this.attachmentSettingsLoaded()) {
-    this.openPopup(
-      'إعدادات المرفقات غير متاحة حالياً، يرجى المحاولة مرة أخرى',
-      'error',
-      'تنبيه'
-    );
-    return;
-  }
+    const proofFile = this.selectedFile();
+    if (proofFile) {
+      if (!this.attachmentSettingsLoaded()) {
+        this.openPopup(
+          'إعدادات المرفقات غير متاحة حالياً، يرجى المحاولة مرة أخرى',
+          'error',
+          'تنبيه'
+        );
+        return;
+      }
 
-  const extension = proofFile.name.split('.').pop()?.toLowerCase() ?? '';
+      const extension = proofFile.name.split('.').pop()?.toLowerCase() ?? '';
 
- if (proofFile.size > this.maxAttachmentSizeMb() * 1024 * 1024) {
-  this.openPopup(
-    this.attachmentSizeError().replace(
-      '{maxSize}',
-      String(this.maxAttachmentSizeMb())
-    ),
-    'error',
-    'تنبيه'
-  );
-  return;
-}
+      if (proofFile.size > this.maxAttachmentSizeMb() * 1024 * 1024) {
+        this.openPopup(
+          this.attachmentSizeError().replace(
+            '{maxSize}',
+            String(this.maxAttachmentSizeMb())
+          ),
+          'error',
+          'تنبيه'
+        );
+        return;
+      }
 
-if (!this.allowedExtensions().includes(extension)) {
-  this.openPopup(
-    this.attachmentTypeError(),
-    'error',
-    'تنبيه'
-  );
-  return;
-}
-}
+      if (!this.allowedExtensions().includes(extension)) {
+        this.openPopup(
+          this.attachmentTypeError(),
+          'error',
+          'تنبيه'
+        );
+        return;
+      }
+    }
 
-    const currentDailyAttendanceId =
-      row.dailyAttendanceId;
+    const currentDailyAttendanceId = row.dailyAttendanceId;
 
     // =============================================
     // PREPARE FORM DATA FOR TRAINEE API
     // =============================================
 
     const excuseData = {
-      dailyAttendanceId:
-        currentDailyAttendanceId,
+      dailyAttendanceId: currentDailyAttendanceId,
       reason: reason,
-      file:
-        proofFile,
+      file: proofFile,
     };
 
     // =============================================
     // TEMPORARY EXCUSE FOR IMMEDIATE UI UPDATE
     // =============================================
 
-    const tempExcuse:
-      ExcuseDto = {
-        excuseId:
-          Date.now(),
-        dailyAttendanceId:
-          currentDailyAttendanceId,
-        reason:
-          reason,
-        status:
-          'Pending' as any,
-        proofUrl:
-          proofFile
-            ? 'pending-upload'
-            : undefined,
-      };
+    const tempExcuse: ExcuseDto = {
+      excuseId: Date.now(),
+      dailyAttendanceId: currentDailyAttendanceId,
+      reason: reason,
+      status: 'Pending' as any,
+      proofUrl: proofFile ? 'pending-upload' : undefined,
+    };
 
-    this.excusesCache.set(
-      currentDailyAttendanceId,
-      tempExcuse
-    );
+    this.excusesCache.set(currentDailyAttendanceId, tempExcuse);
 
     // Close the form.
     this.resetExcuseForm();
@@ -854,26 +718,15 @@ if (!this.allowedExtensions().includes(extension)) {
     // =============================================
 
     this.api
-      .submitExcuse(
-        excuseData
-      )
+      .submitExcuse(excuseData)
       .subscribe({
-        next: (
-          response: ExcuseDto
-        ) => {
-          console.log(
-            '✅ تم إرسال العذر بنجاح:',
-            response
-          );
+        next: (response: ExcuseDto) => {
+          console.log('✅ تم إرسال العذر بنجاح:', response);
 
-          this.excusesCache.set(
-            currentDailyAttendanceId,
-            {
-              ...response,
-              status:
-                'Pending' as any,
-            }
-          );
+          this.excusesCache.set(currentDailyAttendanceId, {
+            ...response,
+            status: 'Pending' as any,
+          });
 
           this.openPopup(
             proofFile
@@ -883,65 +736,36 @@ if (!this.allowedExtensions().includes(extension)) {
             'تم بنجاح'
           );
 
-          setTimeout(
-            () => {
-              this.loadAttendanceData();
-            },
-            500
-          );
+          setTimeout(() => {
+            this.loadAttendanceData();
+          }, 500);
         },
 
-        error: (err) => {
-          console.error(
-            '❌ خطأ في إرسال العذر:',
-            err
-          );
+        error: (err: any) => {
+          console.error('❌ خطأ في إرسال العذر:', err);
 
           let errorMessage =
             'حدث خطأ في إرسال العذر، يرجى المحاولة مرة أخرى';
 
-          if (
-            err.error &&
-            typeof err.error ===
-              'string'
-          ) {
-            errorMessage =
-              err.error;
-          } else if (
-            err.error &&
-            err.error.message
-          ) {
-            errorMessage =
-              err.error.message;
-          } else if (
-            err.message
-          ) {
-            errorMessage =
-              err.message;
+          if (err.error && typeof err.error === 'string') {
+            errorMessage = err.error;
+          } else if (err.error && err.error.message) {
+            errorMessage = err.error.message;
+          } else if (err.message) {
+            errorMessage = err.message;
           }
 
           if (
-            errorMessage.includes(
-              'already exists'
-            ) ||
-            errorMessage.includes(
-              'موجود'
-            )
+            errorMessage.includes('already exists') ||
+            errorMessage.includes('موجود')
           ) {
-            errorMessage =
-              'يوجد عذر مسبق لهذا اليوم';
+            errorMessage = 'يوجد عذر مسبق لهذا اليوم';
           }
 
-          this.openPopup(
-            errorMessage,
-            'error',
-            'فشل الإرسال'
-          );
+          this.openPopup(errorMessage, 'error', 'فشل الإرسال');
 
           // Remove the temporary excuse
-          this.excusesCache.delete(
-            currentDailyAttendanceId
-          );
+          this.excusesCache.delete(currentDailyAttendanceId);
 
           this.loadAttendanceData();
         },

@@ -9,9 +9,9 @@ namespace Nafadh_Backend.IdentityAccess
 {
     public class IdentityAccessAdminService : IIdentityAccessAdminService
     {
-        private readonly IdentityAccessDbContext _context;
+        private readonly Nafadhcontext _context;
 
-        public IdentityAccessAdminService(IdentityAccessDbContext context)
+        public IdentityAccessAdminService(Nafadhcontext context)
         {
             _context = context;
         }

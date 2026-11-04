@@ -71,10 +71,6 @@ namespace Nafadh_Backend
             builder.Services.AddDbContext<Nafadhcontext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Identity & Access (users, groups, templates/roles, pages) from the shared database,
-            // so one backend serves them. Same connection string as Nafadhcontext.
-            builder.Services.AddDbContext<Nafadh_Backend.IdentityAccess.IdentityAccessDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddScoped<Nafadh_Backend.IdentityAccess.IIdentityAccessAdminService, Nafadh_Backend.IdentityAccess.IdentityAccessAdminService>();
 
             // ── JWT Authentication ─────────────────────────────────────────────

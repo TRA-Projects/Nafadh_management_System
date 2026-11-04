@@ -19,11 +19,11 @@ namespace Nafadh_Backend.IdentityAccess
     public class AdminIdentityAccessController : ControllerBase
     {
         private readonly IIdentityAccessAdminService _identityAccessAdminService;
-        private readonly IdentityAccessDbContext _db;
+        private readonly Nafadhcontext _db;
         private string _callerUserId;
         private bool _callerResolved;
 
-        public AdminIdentityAccessController(IIdentityAccessAdminService identityAccessAdminService, IdentityAccessDbContext db)
+        public AdminIdentityAccessController(IIdentityAccessAdminService identityAccessAdminService, Nafadhcontext db)
         {
             _identityAccessAdminService = identityAccessAdminService;
             _db = db;

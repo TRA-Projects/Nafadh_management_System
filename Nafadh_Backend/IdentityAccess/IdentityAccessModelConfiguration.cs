@@ -1,33 +1,13 @@
 #nullable disable
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.IdentityAccess
 {
-    /// <summary>
-    /// Same-database context for the Bidding identity tables (AspNetUsers, AspNetRoles, UserGroups, ...).
-    /// Never migrates: the schema is owned by the shared BiddingDB_Training database.
-    /// </summary>
-    public class IdentityAccessDbContext : IdentityDbContext<
-        AppUser, Roles, string,
-        IdentityUserClaim<string>, AppUserRoles, IdentityUserLogin<string>,
-        IdentityRoleClaim<string>, IdentityUserToken<string>>
+    /// <summary>Relationship mapping for the Bidding identity tables, applied from Nafadhcontext.OnModelCreating.</summary>
+    public static class IdentityAccessModelConfiguration
     {
-        public IdentityAccessDbContext(DbContextOptions<IdentityAccessDbContext> options) : base(options) { }
-
-        public DbSet<Profile> Profiles { get; set; }
-        public DbSet<UserType> UserTypes { get; set; }
-        public DbSet<UserGroup> UserGroups { get; set; }
-        public DbSet<Organization> Organizations { get; set; }
-        public DbSet<AppPage> AppPages { get; set; }
-        public DbSet<RolePage> RolePages { get; set; }
-        public DbSet<SystemAuditTrail> SystemAuditTrails { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder builder)
+        public static void Apply(ModelBuilder builder)
         {
-            base.OnModelCreating(builder);
-
             builder.Entity<UserGroup>(e =>
                 e.HasOne(x => x.UserType).WithMany(t => t.UserGroups)
                     .HasForeignKey(x => x.UserTypeId).OnDelete(DeleteBehavior.Restrict));
