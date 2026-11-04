@@ -36,85 +36,21 @@ namespace Nafadh_Backend.Controllers
         public async Task<ActionResult<CompanyAccountDto>> GetCurrentAccount()
         {
             var userIdValue =
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
+                User.FindFirstValue("userId")
+                ?? User.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? User.FindFirstValue("sub");
 
             if (!int.TryParse(userIdValue, out var userId))
                 return Unauthorized();
 
-            var supervisor = await _context.NFD_CompanySupervisors
-                .AsNoTracking()
-                .Include(s => s.User)
-                    .ThenInclude(u => u.Role)
-                        .ThenInclude(r => r.RolePermissions)
-                            .ThenInclude(rp => rp.Permission)
-                .Include(s => s.Company)
-                .FirstOrDefaultAsync(s => s.UserId == userId);
-
-            if (supervisor is null ||
-                supervisor.User is null ||
-                supervisor.Company is null)
+            var dto = await BuildAccountDtoAsync(userId);
+            if (dto is null)
             {
                 return NotFound(new
                 {
-                    message = "Company supervisor profile was not found for the authenticated user."
+                    message = "Company account profile was not found for the authenticated user."
                 });
             }
-
-            var logs = await _context.NFD_AuditLogs
-                .AsNoTracking()
-                .Where(x => x.UserId == userId)
-                .OrderByDescending(x => x.Timestamp)
-                .Take(5)
-                .Select(x => new CompanyAccountActivityDto
-                {
-                    LogId = x.LogId,
-                    Action = x.Action,
-                    EntityName = x.EntityName,
-                    EntityId = x.EntityId,
-                    Details = x.Details,
-                    Timestamp = x.Timestamp
-                })
-                .ToListAsync();
-
-            var permissions = supervisor.User.Role?.RolePermissions
-                .Select(rp => rp.Permission)
-                .Where(p => p != null)
-                .GroupBy(p => p!.PermissionId)
-                .Select(g => g.First()!)
-                .OrderBy(p => p.PermissionKey)
-                .Select(p => new CompanyAccountPermissionDto
-                {
-                    PermissionId = p.PermissionId,
-                    PermissionKey = p.PermissionKey,
-                    Description = p.Description
-                })
-                .ToList()
-                ?? new List<CompanyAccountPermissionDto>();
-
-            var dto = new CompanyAccountDto
-            {
-                UserId = supervisor.User.UserId,
-                FullName = supervisor.User.FullName,
-                Email = supervisor.User.Email,
-                Phone = supervisor.User.Phone,
-                UserStatus = supervisor.User.Status.ToString(),
-                CreatedAt = supervisor.User.CreatedAt,
-
-                SupervisorId = supervisor.SupervisorId,
-                CompanyId = supervisor.CompanyId,
-                Department = supervisor.Department,
-                Position = supervisor.Position,
-                SupervisorStatus = supervisor.Status.ToString(),
-
-                CompanyName = supervisor.Company.CompanyName,
-                CompanyStatus = supervisor.Company.Status.ToString(),
-
-                RoleName = supervisor.User.Role?.RoleName ?? string.Empty,
-                Permissions = permissions,
-                RecentActivities = logs,
-                LastActivityAt = logs.Count > 0 ? logs[0].Timestamp : null
-            };
 
             return Ok(dto);
         }
@@ -130,32 +66,29 @@ namespace Nafadh_Backend.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateMyAccount([FromBody] CompanyAccountDto dto)
         {
-            // الحصول على ID المستخدم الحالي من الـ JWT
             var userIdValue =
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
+                User.FindFirstValue("userId")
+                ?? User.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? User.FindFirstValue("sub");
 
             if (!int.TryParse(userIdValue, out var userId))
                 return Unauthorized();
 
-            // البحث عن حساب المشرف المرتبط بالمستخدم الحالي
-            var supervisor = await _context.NFD_CompanySupervisors
-                .Include(s => s.User)
-                .FirstOrDefaultAsync(s => s.UserId == userId);
+            var hasCompanyLink =
+                await _context.NFD_CompanySupervisors.AnyAsync(s => s.UserId == userId) ||
+                await _context.NFD_Companies.AnyAsync(c => c.UserId == userId);
 
-            if (supervisor is null || supervisor.User is null)
+            var user = await _context.NFD_Users.FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (!hasCompanyLink || user is null)
             {
                 return NotFound(new
                 {
-                    message = "Company supervisor profile was not found."
+                    message = "Company account profile was not found."
                 });
             }
 
-            // =====================================================
-            // تعديل رقم الجوال فقط
-            // =====================================================
-
-            supervisor.User.Phone = string.IsNullOrWhiteSpace(dto.Phone)
+            user.Phone = string.IsNullOrWhiteSpace(dto.Phone)
                 ? null
                 : dto.Phone.Trim();
 
@@ -176,101 +109,21 @@ namespace Nafadh_Backend.Controllers
         public async Task<IActionResult> ExportMyAccountPdf()
         {
             var userIdValue =
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
+                User.FindFirstValue("userId")
+                ?? User.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? User.FindFirstValue("sub");
 
             if (!int.TryParse(userIdValue, out var userId))
                 return Unauthorized();
 
-            var supervisor = await _context.NFD_CompanySupervisors
-                .AsNoTracking()
-                .Include(s => s.User)
-                    .ThenInclude(u => u.Role)
-                        .ThenInclude(r => r.RolePermissions)
-                            .ThenInclude(rp => rp.Permission)
-                .Include(s => s.Company)
-                .FirstOrDefaultAsync(s => s.UserId == userId);
-
-            if (supervisor is null ||
-                supervisor.User is null ||
-                supervisor.Company is null)
+            var account = await BuildAccountDtoAsync(userId);
+            if (account is null)
             {
                 return NotFound(new
                 {
-                    message = "Company supervisor profile was not found for the authenticated user."
+                    message = "Company account profile was not found for the authenticated user."
                 });
             }
-
-            // =====================================================
-            // Activities
-            // =====================================================
-
-            var logs = await _context.NFD_AuditLogs
-                .AsNoTracking()
-                .Where(x => x.UserId == userId)
-                .OrderByDescending(x => x.Timestamp)
-                .Take(5)
-                .Select(x => new CompanyAccountActivityDto
-                {
-                    LogId = x.LogId,
-                    Action = x.Action,
-                    EntityName = x.EntityName,
-                    EntityId = x.EntityId,
-                    Details = x.Details,
-                    Timestamp = x.Timestamp
-                })
-                .ToListAsync();
-
-            // =====================================================
-            // Permissions
-            // =====================================================
-
-            var permissions = supervisor.User.Role?.RolePermissions
-                .Select(rp => rp.Permission)
-                .Where(p => p != null)
-                .GroupBy(p => p!.PermissionId)
-                .Select(g => g.First()!)
-                .OrderBy(p => p.PermissionKey)
-                .Select(p => new CompanyAccountPermissionDto
-                {
-                    PermissionId = p.PermissionId,
-                    PermissionKey = p.PermissionKey,
-                    Description = p.Description
-                })
-                .ToList()
-                ?? new List<CompanyAccountPermissionDto>();
-
-            // =====================================================
-            // Account DTO
-            // =====================================================
-
-            var account = new CompanyAccountDto
-            {
-                UserId = supervisor.User.UserId,
-                FullName = supervisor.User.FullName,
-                Email = supervisor.User.Email,
-                Phone = supervisor.User.Phone,
-                UserStatus = supervisor.User.Status.ToString(),
-                CreatedAt = supervisor.User.CreatedAt,
-
-                SupervisorId = supervisor.SupervisorId,
-                CompanyId = supervisor.CompanyId,
-                Department = supervisor.Department,
-                Position = supervisor.Position,
-                SupervisorStatus = supervisor.Status.ToString(),
-
-                CompanyName = supervisor.Company.CompanyName,
-                CompanyStatus = supervisor.Company.Status.ToString(),
-
-                RoleName = supervisor.User.Role?.RoleName ?? string.Empty,
-                Permissions = permissions,
-                RecentActivities = logs,
-                LastActivityAt = logs.Count > 0 ? logs[0].Timestamp : null
-            };
-
-            // =====================================================
-            // QuestPDF
-            // =====================================================
 
             QuestPDF.Settings.UseSystemFonts = true;
 
@@ -278,19 +131,11 @@ namespace Nafadh_Backend.Controllers
             {
                 container.Page(page =>
                 {
-                    // -------------------------------------------------
-                    // Page
-                    // -------------------------------------------------
-
                     page.Size(PageSizes.A4);
                     page.MarginHorizontal(35);
                     page.MarginVertical(30);
                     page.ContentFromRightToLeft();
                     page.DefaultTextStyle(x => x.FontFamily("Lato").FontSize(10).FontColor("#1F2937"));
-
-                    // -------------------------------------------------
-                    // Header
-                    // -------------------------------------------------
 
                     page.Header().Column(header =>
                     {
@@ -311,10 +156,6 @@ namespace Nafadh_Backend.Controllers
                         header.Item().Height(5).Background("#2563EB");
                     });
 
-                    // -------------------------------------------------
-                    // Footer
-                    // -------------------------------------------------
-
                     page.Footer()
                         .PaddingTop(10)
                         .BorderTop(1)
@@ -329,13 +170,8 @@ namespace Nafadh_Backend.Controllers
                             });
                         });
 
-                    // =================================================
-                    // Main Content
-                    // =================================================
-
                     page.Content().PaddingTop(20).Column(column =>
                     {
-                        // Profile Hero
                         column.Item()
                             .Background("#F1F5FF")
                             .Border(1)
@@ -365,7 +201,6 @@ namespace Nafadh_Backend.Controllers
 
                         column.Item().PaddingTop(18);
 
-                        // Section: Personal Information
                         AddSectionTitle(column, "البيانات الشخصية", "المعلومات الأساسية للحساب");
 
                         column.Item().PaddingTop(8).Table(table =>
@@ -383,21 +218,19 @@ namespace Nafadh_Backend.Controllers
                             AddInfoCard(table, "القسم", account.Department ?? "غير محدد");
                             AddInfoCard(table, "الجهة / الشركة", account.CompanyName);
                             AddInfoCard(table, "الدور الوظيفي", account.RoleName);
-                            AddInfoCard(table, "رقم المشرف", account.SupervisorId.ToString());
+                            AddInfoCard(table, "رقم الحساب الفرعي", account.SupervisorId.ToString());
                         });
 
-                        // Account Status
                         column.Item().PaddingTop(15);
-                        AddSectionTitle(column, "حالة الحساب", "الحالات الحالية للحساب والمشرف والشركة");
+                        AddSectionTitle(column, "حالة الحساب", "الحالات الحالية للحساب والشركة");
 
                         column.Item().PaddingTop(8).Row(row =>
                         {
                             AddStatusCard(row, "حالة الحساب", account.UserStatus, GetStatusColor(account.UserStatus));
-                            AddStatusCard(row, "حالة المشرف", account.SupervisorStatus, GetStatusColor(account.SupervisorStatus));
+                            AddStatusCard(row, "حالة الصفة الوظيفية", account.SupervisorStatus, GetStatusColor(account.SupervisorStatus));
                             AddStatusCard(row, "حالة الشركة", account.CompanyStatus, GetStatusColor(account.CompanyStatus));
                         });
 
-                        // Dates
                         column.Item().PaddingTop(15);
                         column.Item()
                             .Background("#F8FAFC")
@@ -422,7 +255,6 @@ namespace Nafadh_Backend.Controllers
                                 });
                             });
 
-                        // Permissions
                         column.Item().PaddingTop(18);
                         AddSectionTitle(column, "الصلاحيات الممنوحة", $"{account.Permissions.Count} صلاحية مفعّلة");
                         column.Item().PaddingTop(8);
@@ -454,7 +286,6 @@ namespace Nafadh_Backend.Controllers
                             column.Item().Background("#F8FAFC").CornerRadius(7).Padding(12).AlignCenter().Text("لا توجد صلاحيات مسجلة لهذا الحساب.").FontColor("#64748B");
                         }
 
-                        // Activities
                         column.Item().PaddingTop(18);
                         AddSectionTitle(column, "سجل النشاطات", "آخر الأنشطة المسجلة للحساب");
                         column.Item().PaddingTop(8);
@@ -507,8 +338,136 @@ namespace Nafadh_Backend.Controllers
         }
 
         // =========================================================
-        // Helper: Section Title
+        // Helper: Build Account DTO for Supervisor/Staff OR Operator
         // =========================================================
+        private async Task<CompanyAccountDto?> BuildAccountDtoAsync(int userId)
+        {
+            var logs = await _context.NFD_AuditLogs
+                .AsNoTracking()
+                .Where(x => x.UserId == userId)
+                .OrderByDescending(x => x.Timestamp)
+                .Take(5)
+                .Select(x => new CompanyAccountActivityDto
+                {
+                    LogId = x.LogId,
+                    Action = x.Action,
+                    EntityName = x.EntityName,
+                    EntityId = x.EntityId,
+                    Details = x.Details,
+                    Timestamp = x.Timestamp
+                })
+                .ToListAsync();
+
+            // 1) مسار مشرف نفاذ أو موظف نفاذ (NFD_CompanySupervisors)
+            var supervisor = await _context.NFD_CompanySupervisors
+                .AsNoTracking()
+                .Include(s => s.User)
+                    .ThenInclude(u => u.Role)
+                        .ThenInclude(r => r.RolePermissions)
+                            .ThenInclude(rp => rp.Permission)
+                .Include(s => s.Company)
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+            if (supervisor is { User: not null, Company: not null })
+            {
+                var pos = supervisor.Position ?? string.Empty;
+                var isStaff = pos.Contains("منسق") || pos.Contains("أخصائي") || pos.Contains("موظف");
+                var distinctRoleName = isStaff ? "موظف نفاذ" : "مشرف نفاذ";
+
+                var permissions = supervisor.User.Role?.RolePermissions
+                    .Select(rp => rp.Permission)
+                    .Where(p => p != null)
+                    .GroupBy(p => p!.PermissionId)
+                    .Select(g => g.First()!)
+                    .OrderBy(p => p.PermissionKey)
+                    .Select(p => new CompanyAccountPermissionDto
+                    {
+                        PermissionId = p.PermissionId,
+                        PermissionKey = p.PermissionKey,
+                        Description = p.Description
+                    })
+                    .ToList()
+                    ?? new List<CompanyAccountPermissionDto>();
+
+                return new CompanyAccountDto
+                {
+                    UserId = supervisor.User.UserId,
+                    FullName = supervisor.User.FullName,
+                    Email = supervisor.User.Email,
+                    Phone = supervisor.User.Phone,
+                    UserStatus = supervisor.User.Status.ToString(),
+                    CreatedAt = supervisor.User.CreatedAt,
+
+                    SupervisorId = supervisor.SupervisorId,
+                    CompanyId = supervisor.CompanyId,
+                    Department = supervisor.Department,
+                    Position = supervisor.Position,
+                    SupervisorStatus = supervisor.Status.ToString(),
+
+                    CompanyName = supervisor.Company.CompanyName,
+                    CompanyStatus = supervisor.Company.Status.ToString(),
+
+                    RoleName = distinctRoleName,
+                    Permissions = permissions,
+                    RecentActivities = logs,
+                    LastActivityAt = logs.Count > 0 ? logs[0].Timestamp : null
+                };
+            }
+
+            // 2) مسار مشغّل نفاذ (حساب مالك/مسؤول الشركة الرئيسي في NFD_Companies)
+            var companyOwner = await _context.NFD_Companies
+                .AsNoTracking()
+                .Include(c => c.User)
+                    .ThenInclude(u => u!.Role)
+                        .ThenInclude(r => r.RolePermissions)
+                            .ThenInclude(rp => rp.Permission)
+                .FirstOrDefaultAsync(c => c.UserId == userId);
+
+            if (companyOwner is { User: not null })
+            {
+                var permissions = companyOwner.User.Role?.RolePermissions
+                    .Select(rp => rp.Permission)
+                    .Where(p => p != null)
+                    .GroupBy(p => p!.PermissionId)
+                    .Select(g => g.First()!)
+                    .OrderBy(p => p.PermissionKey)
+                    .Select(p => new CompanyAccountPermissionDto
+                    {
+                        PermissionId = p.PermissionId,
+                        PermissionKey = p.PermissionKey,
+                        Description = p.Description
+                    })
+                    .ToList()
+                    ?? new List<CompanyAccountPermissionDto>();
+
+                return new CompanyAccountDto
+                {
+                    UserId = companyOwner.User.UserId,
+                    FullName = companyOwner.User.FullName,
+                    Email = companyOwner.User.Email,
+                    Phone = companyOwner.User.Phone ?? companyOwner.Phone,
+                    UserStatus = companyOwner.User.Status.ToString(),
+                    CreatedAt = companyOwner.User.CreatedAt,
+
+                    SupervisorId = 0,
+                    CompanyId = companyOwner.CompanyId,
+                    Department = "الإدارة العامة للشركة",
+                    Position = "مشغّل الشركة الرئيسي",
+                    SupervisorStatus = companyOwner.User.Status.ToString(),
+
+                    CompanyName = companyOwner.CompanyName,
+                    CompanyStatus = companyOwner.Status.ToString(),
+
+                    RoleName = "مشغّل نفاذ",
+                    Permissions = permissions,
+                    RecentActivities = logs,
+                    LastActivityAt = logs.Count > 0 ? logs[0].Timestamp : null
+                };
+            }
+
+            return null;
+        }
+
         private static void AddSectionTitle(ColumnDescriptor column, string title, string subtitle)
         {
             column.Item().Row(row =>
@@ -522,9 +481,6 @@ namespace Nafadh_Backend.Controllers
             });
         }
 
-        // =========================================================
-        // Helper: Information Card
-        // =========================================================
         private static void AddInfoCard(TableDescriptor table, string label, string value)
         {
             table.Cell()
@@ -541,9 +497,6 @@ namespace Nafadh_Backend.Controllers
                 });
         }
 
-        // =========================================================
-        // Helper: Status Card
-        // =========================================================
         private static void AddStatusCard(RowDescriptor row, string label, string value, string color)
         {
             row.RelativeItem()
@@ -564,9 +517,6 @@ namespace Nafadh_Backend.Controllers
                 });
         }
 
-        // =========================================================
-        // Helper: Initial
-        // =========================================================
         private static string GetInitial(string? name)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -575,9 +525,6 @@ namespace Nafadh_Backend.Controllers
             return name.Trim().Substring(0, 1);
         }
 
-        // =========================================================
-        // Helper: Status Color
-        // =========================================================
         private static string GetStatusColor(string? status)
         {
             if (string.IsNullOrWhiteSpace(status))
