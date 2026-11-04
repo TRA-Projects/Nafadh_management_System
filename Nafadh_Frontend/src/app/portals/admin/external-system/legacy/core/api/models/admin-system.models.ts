@@ -22,6 +22,7 @@ export interface SystemConfigGroupDto {
   IsLabelsOnly?: boolean;
   canEditLabels?: boolean;
   canChangeActive?: boolean;
+  activationKeys?: readonly string[];
   canCreate?: boolean;
   /** Legacy equivalent of disallowing new keys for Nafadh groups. */
   IsFixedKeys?: boolean;
