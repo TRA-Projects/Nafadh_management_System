@@ -1,3 +1,4 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { inject, Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -21,7 +22,7 @@ import { TaskPriority, TaskStatus } from '../../../../core/models/enums';
 @Component({
   selector: 'app-trainer-tasks',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CatalogPicker, CommonModule, FormsModule, RouterLink],
   templateUrl: './tasks.html',
   styleUrl: './tasks.scss',
 })
@@ -103,6 +104,9 @@ export class TrainerTasks implements OnInit {
   // OPTIONS
   // =====================================================
 
+  get priorityChoices() {
+    return this.constants.supportedChoices('NFD_TSK_PRI', this.priorityOptions.map(value => ({value, label: value})));
+  }
   readonly priorityOptions: TaskPriority[] = ['Low', 'Medium', 'High', 'Critical'];
 
 
@@ -746,6 +750,10 @@ export class TrainerTasks implements OnInit {
   saveTask(): void {
     this.errorMessage.set('');
 
+    if (!this.constants.isSelectable('NFD_TSK_PRI', this.newTaskPriority)) {
+      this.errorMessage.set('اختر أولوية مفعّلة للمهمة.');
+      return;
+    }
     if (!this.newTaskTitle.trim()) {
       this.errorMessage.set('يرجى إدخال عنوان المهمة');
       return;
