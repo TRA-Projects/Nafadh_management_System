@@ -1,3 +1,4 @@
+import { CatalogPicker } from '../../../../../core/models/catalog-picker';
 import { NafadhConstantsService } from '../../../../../core/services/nafadh-constants.service';
 import { constantEditKey, constantPolicyHint, hasFixedEditKey, isAdministrativeGroup } from '../../../../../core/models/administrative-constants';
 /// <reference types="@angular/localize" />
@@ -43,6 +44,7 @@ type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 type ConstantsTab = 'main' | 'sub';
 
 interface LookupTypeOption {
+  labelEn?: string;
   code: string;
   label: string;
 }
@@ -53,6 +55,7 @@ type ConstantFormControlName = 'code' | 'label_en' | 'label_ar' | 'IsActive' | '
   selector: 'app-constants-manage-page',
   standalone: true,
   imports: [
+    CatalogPicker,
     CommonModule,
     ReactiveFormsModule,
     ModalCloseButtonComponent,
@@ -79,7 +82,7 @@ export class ConstantsManagePageComponent {
   private readonly fallbackLookupTypes: LookupTypeOption[] = [
     ...MANAGEMENT_SYSTEM_LOOKUP_TYPES.map((item) => ({
       code: item.code,
-      label: item.labelAr,
+      label: item.labelAr, labelEn: item.labelEn,
     })),
     { code: SYSTEM_CONFIG_CODES.QUALIFICATION_DEGREES, label: $localize`:@@jobseeker.admin.constants.lookup.qualificationDegrees:Qualification degrees` },
     { code: SYSTEM_CONFIG_CODES.NATIONALITY, label: $localize`:@@jobseeker.admin.constants.lookup.nationalities:Nationalities` },
@@ -160,6 +163,7 @@ export class ConstantsManagePageComponent {
     if (this.catalogLoadFailed()) return this.fallbackLookupTypes;
     return this.catalogGroups().map((group) => ({
       code: group.code,
+      labelEn: group.label_en,
       label: getArabicConfigGroupLabel(group.code, group.label_ar, group.label_en),
     }));
   });
@@ -225,35 +229,31 @@ export class ConstantsManagePageComponent {
   readonly lookupGroupPlaceholder = $localize`:@@jobseeker.admin.constants.lookupGroupPlaceholder:Select constants group…`;
   readonly lookupSearchPlaceholder = $localize`:@@jobseeker.admin.constants.lookupSearchPlaceholder:Search constants group…`;
   readonly lookupEmptyText = $localize`:@@jobseeker.admin.constants.lookupEmpty:No matching group`;
-  readonly lookupSelectOptions = computed<SearchableMultiSelectOption[]>(() =>
-    (this.activeTab() === 'main' ? this.mainLookupTypes() : this.subMainLookupTypes()).map((option) => ({
-      id: option.code,
-      label: option.label,
+  readonly lookupSelectOptions = computed(() => [
+    { value: '', label: this.lookupGroupPlaceholder },
+    ...(this.activeTab() === 'main' ? this.mainLookupTypes() : this.subMainLookupTypes()).map(option => ({
+      value: option.code, label: option.label, labelEn: option.labelEn
     }))
-  );
-
-  readonly selectedLookupValues = computed<Array<number | string>>(() => {
-    const code = this.activeTab() === 'main' ? this.selectedMainLookupCode() : this.selectedSubMainLookupCode();
-    return code ? [code] : [];
-  });
+  ]);
 
   // UI guard: only catalog groups flagged read-only are locked. Nafadh enum groups (NFD_*) are
   // editable by label, but their keys are fixed (see isFixedKeysGroup / isLabelsOnlyGroup).
   readonly isReadOnlyManagementGroup = computed(() => {
     const code = this.selectedLookupCode();
-    return this.catalogGroups().some((group) => group.code === code && group.IsReadOnly);
+    return this.catalogGroups().some((group) => group.code === code && !(group.canEditLabels ?? !group.IsReadOnly));
   });
 
   /** NFD_* groups: no new values, code is immutable. */
   readonly isFixedKeysGroup = computed(() => {
     const code = this.selectedLookupCode();
-    return code.startsWith('NFD_') || this.catalogGroups().some((group) => group.code === code && !!group.IsFixedKeys);
+    const group = this.catalogGroups().find(row => row.code === code);
+    return group?.canCreate === undefined ? code.startsWith('NFD_') || !!group?.IsFixedKeys : !group.canCreate;
   });
 
   /** NFD_* groups used by system workflows: only labels can change, activation stays on. */
   readonly isLabelsOnlyGroup = computed(() => {
     const code = this.selectedLookupCode();
-    return this.catalogGroups().some((group) => group.code === code && !!group.IsLabelsOnly);
+    return this.catalogGroups().some((group) => group.code === code && (group.canChangeActive === undefined ? !!group.IsLabelsOnly : !!group.canEditLabels && !group.canChangeActive));
   });
 
   readonly canEditSelectedGroup = computed(() =>
@@ -643,7 +643,7 @@ export class ConstantsManagePageComponent {
       return;
     }
     const saved = result.value;
-    if (isAdministrativeGroup(group)) this.constants.refresh(group);
+    if (hasFixedEditKey(group)) this.constants.refresh(group);
     this.closeModal();
     await this.reload();
     if (saved?.IsActive === false) {
