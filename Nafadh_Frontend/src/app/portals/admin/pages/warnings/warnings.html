@@ -102,20 +102,12 @@
 
       <!-- الحالة (محدث بالـ 4 حالات) -->
       <div *ngIf="activeFilterTab === 'STATUS'" class="chips-group">
-        <button class="filter-chip" [class.selected]="selectedStatus === 'ALL'" (click)="selectFilterOption('STATUS', 'ALL')">كافة الحالات</button>
-        <button class="filter-chip" [class.selected]="selectedStatus === 'Open'" (click)="selectFilterOption('STATUS', 'Open')">نشط</button>
-        <button class="filter-chip" [class.selected]="selectedStatus === 'UnderReview'" (click)="selectFilterOption('STATUS', 'UnderReview')">قيد المراجعة</button>
-        <button class="filter-chip" [class.selected]="selectedStatus === 'Escalated'" (click)="selectFilterOption('STATUS', 'Escalated')">مُصعّد</button>
-        <button class="filter-chip" [class.selected]="selectedStatus === 'Resolved'" (click)="selectFilterOption('STATUS', 'Resolved')">مكتمل</button>
+        <app-catalog-picker caption="حالة الإنذار" [options]="filterStatusChoices" [value]="selectedStatus" (valueChange)="selectFilterOption('STATUS', $event)" />
       </div>
 
       <!-- المستوى -->
       <div *ngIf="activeFilterTab === 'LEVEL'" class="chips-group">
-        <button class="filter-chip" [class.selected]="selectedLevel === 'ALL'" (click)="selectFilterOption('LEVEL', 'ALL')">كافة المستويات</button>
-        <button class="filter-chip" [class.selected]="selectedLevel === 'Low'" (click)="selectFilterOption('LEVEL', 'Low')">{{ getLevelLabel('Low') }}</button>
-        <button class="filter-chip" [class.selected]="selectedLevel === 'Medium'" (click)="selectFilterOption('LEVEL', 'Medium')">{{ getLevelLabel('Medium') }}</button>
-        <button class="filter-chip" [class.selected]="selectedLevel === 'High'" (click)="selectFilterOption('LEVEL', 'High')">{{ getLevelLabel('High') }}</button>
-        <button class="filter-chip" [class.selected]="selectedLevel === 'Critical'" (click)="selectFilterOption('LEVEL', 'Critical')">{{ getLevelLabel('Critical') }}</button>
+        <app-catalog-picker caption="مستوى الإنذار" [options]="filterLevelChoices" [value]="selectedLevel" (valueChange)="selectFilterOption('LEVEL', $event)" />
       </div>
     </div>
 
@@ -243,20 +235,14 @@
         <div class="form-row">
           <div class="form-group">
             <label class="required">تصنيف المخالفة</label>
-            <select [(ngModel)]="newWarning.type" (change)="markFieldTouched('type')">
-              <option value="" disabled>اختر نوع الإنذار...</option>
-              <option *ngFor="let option of warningTypes.activeOptions()" [value]="option.value">{{ option.label }}</option>
-            </select>
+            <app-catalog-picker caption="نوع الإنذار" [options]="warningTypes.activeOptions()"
+              [value]="newWarning.type" (valueChange)="newWarning.type = $event; markFieldTouched('type')" />
           </div>
 
           <div class="form-group">
             <label class="required">درجة الأهمية والخطورة</label>
-            <select [(ngModel)]="newWarning.level" (change)="markFieldTouched('level')">
-              <option value="Low">{{ getLevelLabel('Low') }}</option>
-              <option value="Medium">{{ getLevelLabel('Medium') }}</option>
-              <option value="High">{{ getLevelLabel('High') }}</option>
-              <option value="Critical">{{ getLevelLabel('Critical') }}</option>
-            </select>
+            <app-catalog-picker caption="مستوى الإنذار" [options]="constants.choices('NFD_WRN_LVL')"
+              [value]="newWarning.level" (valueChange)="newWarning.level = $event; markFieldTouched('level')" />
           </div>
         </div>
 
