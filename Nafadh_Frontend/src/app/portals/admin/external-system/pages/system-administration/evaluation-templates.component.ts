@@ -1,3 +1,5 @@
+import { constantEditKey } from '../../../../../core/models/administrative-constants';
+import { CatalogPicker } from '../../../../../core/models/catalog-picker';
 
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
@@ -21,7 +23,7 @@ interface EvaluationTemplateForm {
 @Component({
   selector: 'app-evaluation-templates',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './evaluation-templates.component.html',
   styleUrl: './evaluation-templates.component.css',
 })
@@ -40,6 +42,9 @@ export class EvaluationTemplatesComponent implements OnInit {
   types: { value: EvaluationTemplateType; label: string }[] = [];
   // Filters also include historical/inactive types; creating new templates only uses active types.
   filterTypes: { value: EvaluationTemplateType; label: string }[] = [];
+  get filterChoices() {
+    return [{ value: '' as const, label: 'جميع الأنواع' }, ...(this.filterTypes.length ? this.filterTypes : this.types)];
+  }
   private originalEditType: EvaluationTemplateType | null = null;
   typesLoading = true;
   typesError = '';
@@ -52,10 +57,11 @@ export class EvaluationTemplatesComponent implements OnInit {
     this.api.getValues('NFD_EVL_TYPE', true).subscribe({
       next: (rows) => {
         const historical = rows
-          .filter((row) => this.supportedTypes.includes(String(row.id) as EvaluationTemplateType))
+          .filter((row) => this.supportedTypes.includes(String(constantEditKey('NFD_EVL_TYPE', row) ?? '') as EvaluationTemplateType))
           .map((row) => ({
-            value: String(row.id) as EvaluationTemplateType,
-            label: row.label_ar || row.label_en || String(row.id)
+            value: String(constantEditKey('NFD_EVL_TYPE', row) ?? '') as EvaluationTemplateType,
+            labelEn: row.label_en,
+            label: row.label_ar || row.label_en || String(constantEditKey('NFD_EVL_TYPE', row) ?? '')
           }));
         for (const row of historical) this.historicalLabels[row.value] = row.label;
         this.filterTypes = historical;
@@ -68,10 +74,11 @@ export class EvaluationTemplatesComponent implements OnInit {
     this.api.getValues('NFD_EVL_TYPE').subscribe({
       next: (rows) => {
         this.types = rows
-          .filter((row) => this.supportedTypes.includes(String(row.id) as EvaluationTemplateType))
+          .filter((row) => this.supportedTypes.includes(String(constantEditKey('NFD_EVL_TYPE', row) ?? '') as EvaluationTemplateType))
           .map((row) => ({
-            value: String(row.id) as EvaluationTemplateType,
-            label: row.label_ar || row.label_en || String(row.id)
+            value: String(constantEditKey('NFD_EVL_TYPE', row) ?? '') as EvaluationTemplateType,
+            labelEn: row.label_en,
+            label: row.label_ar || row.label_en || String(constantEditKey('NFD_EVL_TYPE', row) ?? '')
           }));
         this.typesLoading = false;
         if (this.types.length === 0) {
