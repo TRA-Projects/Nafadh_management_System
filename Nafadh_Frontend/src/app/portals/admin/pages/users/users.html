@@ -316,12 +316,32 @@
       <div class="field-error">{{ getCreateFieldError('password') }}</div>
       }
       @if (newUser.password) {
-      <div class="password-rules">
-        <div [class.rule-valid]="passwordHasMinLength()">{{ passwordHasMinLength() ? '✓' : '•' }} 8 أحرف على الأقل</div>
-        <div [class.rule-valid]="passwordHasUppercase()">{{ passwordHasUppercase() ? '✓' : '•' }} حرف إنجليزي كبير</div>
-        <div [class.rule-valid]="passwordHasLowercase()">{{ passwordHasLowercase() ? '✓' : '•' }} حرف إنجليزي صغير</div>
-        <div [class.rule-valid]="passwordHasNumber()">{{ passwordHasNumber() ? '✓' : '•' }} رقم واحد على الأقل</div>
-      </div>
+     <div class="password-rules">
+  @if (minPasswordLength() !== null) {
+    <div [class.rule-valid]="passwordHasMinLength()">
+      {{ passwordHasMinLength() ? '✓' : '•' }}
+      {{ minPasswordLength() }} أحرف على الأقل
+    </div>
+  }
+
+  @if (passwordRequireUppercase()) {
+    <div [class.rule-valid]="passwordHasUppercase()">
+      {{ passwordHasUppercase() ? '✓' : '•' }} حرف إنجليزي كبير
+    </div>
+  }
+
+  @if (passwordRequireLowercase()) {
+    <div [class.rule-valid]="passwordHasLowercase()">
+      {{ passwordHasLowercase() ? '✓' : '•' }} حرف إنجليزي صغير
+    </div>
+  }
+
+  @if (passwordRequireDigit()) {
+    <div [class.rule-valid]="passwordHasNumber()">
+      {{ passwordHasNumber() ? '✓' : '•' }} رقم واحد على الأقل
+    </div>
+  }
+</div>
       }
     </div>
 
@@ -497,12 +517,35 @@
       <div class="field-error">{{ getResetPasswordError() }}</div>
       }
       @if (newPassword) {
-      <div class="password-rules">
-        <div [class.rule-valid]="passwordHasMinLengthFor(newPassword)">{{ passwordHasMinLengthFor(newPassword) ? '✓' : '•' }} 8 أحرف على الأقل</div>
-        <div [class.rule-valid]="passwordHasUppercaseFor(newPassword)">{{ passwordHasUppercaseFor(newPassword) ? '✓' : '•' }} حرف إنجليزي كبير</div>
-        <div [class.rule-valid]="passwordHasLowercaseFor(newPassword)">{{ passwordHasLowercaseFor(newPassword) ? '✓' : '•' }} حرف إنجليزي صغير</div>
-        <div [class.rule-valid]="passwordHasNumberFor(newPassword)">{{ passwordHasNumberFor(newPassword) ? '✓' : '•' }} رقم واحد على الأقل</div>
-      </div>
+    <div class="password-rules">
+  @if (minPasswordLength() !== null) {
+    <div [class.rule-valid]="passwordHasMinLengthFor(newPassword)">
+      {{ passwordHasMinLengthFor(newPassword) ? '✓' : '•' }}
+      {{ minPasswordLength() }} أحرف على الأقل
+    </div>
+  }
+
+  @if (passwordRequireUppercase()) {
+    <div [class.rule-valid]="passwordHasUppercaseFor(newPassword)">
+      {{ passwordHasUppercaseFor(newPassword) ? '✓' : '•' }}
+      حرف إنجليزي كبير
+    </div>
+  }
+
+  @if (passwordRequireLowercase()) {
+    <div [class.rule-valid]="passwordHasLowercaseFor(newPassword)">
+      {{ passwordHasLowercaseFor(newPassword) ? '✓' : '•' }}
+      حرف إنجليزي صغير
+    </div>
+  }
+
+  @if (passwordRequireDigit()) {
+    <div [class.rule-valid]="passwordHasNumberFor(newPassword)">
+      {{ passwordHasNumberFor(newPassword) ? '✓' : '•' }}
+      رقم واحد على الأقل
+    </div>
+  }
+</div>
       }
     </div>
 
