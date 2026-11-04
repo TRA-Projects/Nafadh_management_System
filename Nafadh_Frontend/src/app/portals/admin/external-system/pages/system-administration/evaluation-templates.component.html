@@ -25,16 +25,8 @@
     <div class="filter-grid">
       <div class="filter-group">
         <label for="filterType">نوع التقييم</label>
-        <select
-          id="filterType"
-          class="form-control"
-          [(ngModel)]="filterType"
-        >
-          <option value="">جميع الأنواع</option>
-          <option *ngFor="let item of (filterTypes.length ? filterTypes : types)" [value]="item.value">
-            {{ item.label }}
-          </option>
-        </select>
+        <app-catalog-picker inputId="filterType" caption="نوع التقييم" [options]="filterChoices"
+          [(value)]="filterType" />
       </div>
 
       <div class="filter-group">
@@ -232,20 +224,8 @@
       <div class="form-grid">
         <div class="filter-group">
           <label for="formType">نوع التقييم</label>
-          <select
-            id="formType"
-            name="type"
-            class="form-control"
-            [(ngModel)]="form.type"
-            required
-          >
-            <option *ngIf="isEditingInactiveOriginalType()" [value]="form.type">
-              {{ typeLabel(form.type) }} (غير نشط — قالب محفوظ)
-            </option>
-            <option *ngFor="let item of types" [value]="item.value">
-              {{ item.label }}
-            </option>
-          </select>
+          <app-catalog-picker inputId="formType" caption="نوع التقييم" [options]="types"
+            [(value)]="form.type" [fallbackLabel]="isEditingInactiveOriginalType() ? typeLabel(form.type) + ' (غير نشط)' : ''" />
         </div>
 
         <div class="filter-group">
