@@ -110,14 +110,7 @@
       role="group"
       aria-label="تصفية الخطط والكورسات">
 
-      @for (f of filters; track f.key) {
-        <button
-          type="button"
-          [class.active]="filter() === f.key"
-          (click)="setFilter(f.key)">
-          {{ filterLabel(f.key, f.label) }}
-        </button>
-      }
+      <app-catalog-picker caption="تصفية الخطط والكورسات" [options]="planChoices" [value]="filter()" (valueChange)="setFilter($event)" />
 
       <input
         type="search"
