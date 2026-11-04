@@ -30,25 +30,36 @@ public sealed class ReferenceConstantsController : ControllerBase
         _logger = logger;
     }
 
-    // Original Training API does NOT expose a groups endpoint.
-    // This is a curated catalog of the 37 Training seed groups and 47 Management enum groups.
+    private sealed record GroupHeader(string Code, string NameEn, string NameAr, bool IsActive);
+
+    // Discover even empty groups in SQL. Discovery never grants write permission.
     [HttpGet("groups")]
-    public IActionResult GetGroups()
+    public async Task<IActionResult> GetGroups(CancellationToken cancellationToken)
     {
-        var groups = TrainingConstantsCatalog.Groups
-            .Select(group => new ReferenceConstantGroupDto
+        List<GroupHeader> headers;
+        try
+        {
+            headers = await _db.Database.SqlQuery<GroupHeader>($"""
+                SELECT Code, NameEn, NameAr, IsActive FROM dbo.SystemConfigGroups ORDER BY SortOrder, Code
+                """).ToListAsync(cancellationToken);
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex)
+        {
+            _logger.LogError(ex, "Unable to list reference catalog groups");
+            return StatusCode(503, new { Code = "CatalogUnavailable" });
+        }
+        var groups = headers.Select(header =>
+        {
+            var group = TrainingConstantsCatalog.Find(header.Code);
+            return new ReferenceConstantGroupDto
             {
-                Code = group.Code,
-                LabelEn = group.LabelEn,
-                LabelAr = group.LabelAr,
-                CanEditLabels = group.CanEditLabels,
-                CanChangeActive = group.CanChangeActive,
-                CanCreate = group.CanCreate,
-                IsActive = true,
-                IsReadOnly = group.ReadOnly,
-                IsLabelsOnly = group.LabelsOnly,
-                IsFixedKeys = TrainingConstantsCatalog.IsManagedNafadh(group.Code)
-            }).ToList();
+                Code = header.Code, LabelEn = header.NameEn, LabelAr = header.NameAr,
+                IsActive = header.IsActive, CanEditLabels = group?.CanEditLabels ?? false,
+                CanChangeActive = group?.CanChangeActive ?? false, ActivationKeys = group?.ActivationKeys,
+                CanCreate = group?.CanCreate ?? false, IsReadOnly = group?.ReadOnly ?? true,
+                IsLabelsOnly = group?.LabelsOnly ?? false, IsFixedKeys = TrainingConstantsCatalog.IsManagedNafadh(header.Code)
+            };
+        }).ToList();
 
         var json = JsonSerializer.Serialize(
             new ReferenceConstantGroupsResponseDto
@@ -157,38 +168,72 @@ public sealed class ReferenceConstantsController : ControllerBase
                 && (field.Value.ValueKind != JsonValueKind.String || field.Value.GetString() != id))
                 return Task.FromResult<IActionResult>(BadRequest(new { Code = "InvalidValueKey" }));
             if (!field.Name.Replace("_", "").Equals("IsActive", StringComparison.OrdinalIgnoreCase)) continue;
-            if (TrainingConstantsCatalog.Find(group)?.CanChangeActive != true)
+            if (TrainingConstantsCatalog.Find(group)?.CanChangeActiveFor(id) != true)
                 return Task.FromResult<IActionResult>(BadRequest(new { Code = "ActivationLocked" }));
             if (requestedActive.HasValue || field.Value.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
                 return Task.FromResult<IActionResult>(BadRequest(new { Code = "InvalidActivation" }));
             requestedActive = field.Value.GetBoolean();
         }
-        if (!requestedActive.HasValue)
-            return UpdateLabelsOnly(group, id, ar, en, cancellationToken);
-
-        var update = JsonSerializer.SerializeToElement(new { label_en = en, label_ar = ar, IsActive = requestedActive.Value });
-        return Forward(group, id, update, HttpMethod.Put, cancellationToken);
+        OriginalValue? original = null;
+        if (payload.TryGetProperty("expected", out var expected))
+        {
+            if (expected.ValueKind != JsonValueKind.Object ||
+                !expected.TryGetProperty("label_ar", out var oldAr) || oldAr.ValueKind != JsonValueKind.String ||
+                !expected.TryGetProperty("label_en", out var oldEn) || oldEn.ValueKind != JsonValueKind.String ||
+                !expected.TryGetProperty("active", out var oldActive) || oldActive.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+                return Task.FromResult<IActionResult>(BadRequest(new { Code = "InvalidPrecondition" }));
+            original = new(oldAr.GetString()!, oldEn.GetString()!, oldActive.GetBoolean());
+        }
+        return UpdateNafadhValue(group, id, ar, en, requestedActive, original, cancellationToken);
     }
 
-    private async Task<IActionResult> UpdateLabelsOnly(string group, string id, string ar, string en, CancellationToken ct)
+    private sealed record OriginalValue(string Ar, string En, bool Active);
+
+    private async Task<IActionResult> UpdateNafadhValue(string group, string id, string ar, string en, bool? active, OriginalValue? original, CancellationToken ct)
     {
         // Update by stable key, and return the persisted activation flag in the same transaction.
         await using var transaction = await _db.Database.BeginTransactionAsync(ct);
-        var flags = await _db.Database.SqlQuery<bool>($@"
-            DECLARE @updated TABLE (Active bit);
-            UPDATE v SET LabelAr = {ar}, LabelEn = {en}, UpdatedAt = SYSUTCDATETIME()
-            OUTPUT INSERTED.IsActive INTO @updated
+        var actor = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        if (!int.TryParse(actor, out var userId)) return Forbid();
+        var updated = await _db.Database.SqlQuery<ChangedValue>($@"
+            DECLARE @updated TABLE (Id int, Code nvarchar(16), Active bit, SubReason bit, ParentKey nvarchar(64), OldAr nvarchar(512), OldEn nvarchar(512), OldActive bit);
+            UPDATE v SET LabelAr = {ar}, LabelEn = {en}, IsActive = COALESCE({active}, v.IsActive), UpdatedAt = SYSUTCDATETIME()
+            OUTPUT INSERTED.Id, INSERTED.Code, INSERTED.IsActive, INSERTED.SubReasonDropdown, INSERTED.ParentValueKey,
+                   DELETED.LabelAr, DELETED.LabelEn, DELETED.IsActive INTO @updated
             FROM dbo.SystemConfigValues v
             JOIN dbo.SystemConfigGroups g ON g.Id = v.ConfigGroupId
             WHERE g.Code = {group} AND v.ValueKey = {id};
-            SELECT Active AS Value FROM @updated;").ToListAsync(ct);
-        if (flags.Count == 0) return NotFound(new { Code = "UnknownValue" });
-        if (flags.Count != 1) return Conflict(new { Code = "DuplicateValueKey" });
+            SELECT * FROM @updated;").ToListAsync(ct);
+        if (updated.Count == 0) return active.HasValue
+            ? NotFound(new { Code = "NotFound", Message = "Config value not found" }) : NotFound(new { Code = "UnknownValue" });
+        if (updated.Count != 1) return Conflict(new { Code = "DuplicateValueKey" });
+        var row = updated[0];
+        if (original != null && original != new OriginalValue(row.OldAr, row.OldEn, row.OldActive))
+            return Conflict(new { Code = "CatalogValueChanged", Message = "The value changed after it was opened. Reload it before saving." });
+        _db.NFD_AuditLogs.Add(new Models.NFD_AuditLog { Action = "UpdateReferenceConstant", EntityName = "SystemConfigValues",
+            EntityId = row.Id, UserId = userId, Timestamp = DateTime.UtcNow,
+            Details = JsonSerializer.Serialize(new { group, valueKey = id, label_ar = ar, label_en = en, row.Active }) });
+        await _db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
+        if (active.HasValue)
+            return Content(JsonSerializer.Serialize(new { Data = new { id, code = string.IsNullOrWhiteSpace(row.Code) ? id : row.Code,
+                label_en = en, label_ar = ar, IsActive = row.Active, subReasonDropdown = row.SubReason, parentReasonId = row.ParentKey } }), "application/json", Encoding.UTF8);
         return Ok(new { data = new Dictionary<string, object>
         {
-            ["id"] = id, ["label_ar"] = ar, ["label_en"] = en, ["IsActive"] = flags[0]
+            ["id"] = id, ["label_ar"] = ar, ["label_en"] = en, ["IsActive"] = row.Active
         } });
+    }
+
+    private sealed class ChangedValue
+    {
+        public int Id { get; set; }
+        public string? Code { get; set; }
+        public bool Active { get; set; }
+        public bool? SubReason { get; set; }
+        public string? ParentKey { get; set; }
+        public string OldAr { get; set; } = "";
+        public string OldEn { get; set; } = "";
+        public bool OldActive { get; set; }
     }
 
     private async Task<IActionResult> Forward(
@@ -198,7 +243,7 @@ public sealed class ReferenceConstantsController : ControllerBase
         HttpMethod method,
         CancellationToken cancellationToken)
     {
-        if (!TrainingConstantsCatalog.IsKnown(code))
+        if (method != HttpMethod.Get && !TrainingConstantsCatalog.IsKnown(code))
             return NotFound(new { Code = "UnknownGroup", Message = "Unknown reference catalog group." });
 
         if (method != HttpMethod.Get && TrainingConstantsCatalog.Find(code)?.CanEditLabels != true)
@@ -236,6 +281,11 @@ public sealed class ReferenceConstantsController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
+            if (method == HttpMethod.Get)
+            {
+                _logger.LogError(ex, "Unable to read reference catalog {Code}", code);
+                return StatusCode(503, new { Code = "CatalogUnavailable" });
+            }
             _logger.LogError(ex, "Training constants integration not configured");
             return StatusCode(StatusCodes.Status503ServiceUnavailable,
                 new { Code = "TrainingNotConfigured", Message = "Training constants endpoint is not configured." });
