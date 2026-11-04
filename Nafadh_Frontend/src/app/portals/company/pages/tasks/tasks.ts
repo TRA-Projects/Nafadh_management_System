@@ -1,3 +1,4 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -39,7 +40,7 @@ interface PlanForm {
 /** Company Portal — Tasks & Projects: the company's course plans. */
 @Component({
   selector: 'app-company-tasks',
-  imports: [FormsModule],
+  imports: [CatalogPicker, FormsModule],
   templateUrl: './tasks.html',
   styleUrl: './tasks.scss',
 })
@@ -305,6 +306,12 @@ export class CompanyTasks implements OnInit {
 
   readonly today = toInputDate(new Date());
 
+  get planChoices() {
+    return this.filters.map(({key:value,label}) => {
+      const group = ['InProgress','OnHold','Completed'].includes(value) ? 'NFD_CPE_STAT' : 'NFD_CPA_STAT';
+      return value === 'all' ? {value,label,labelEn:'All'} : this.constants.supportedChoices(group,[{value,label}],true)[0];
+    });
+  }
   filterLabel(key: PlanFilter, fallback: string): string {
     const group = key === 'InProgress' || key === 'OnHold' || key === 'Completed'
       ? 'NFD_CPE_STAT' : 'NFD_CPA_STAT';
@@ -326,7 +333,7 @@ export class CompanyTasks implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.constants.ensure('NFD_CPE_STAT');
+    this.constants.ensure('NFD_CPE_STAT', 'NFD_CPA_STAT');
     this.load();
   }
 
