@@ -1,3 +1,6 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { inject } from '@angular/core';
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { traineeAttendanceKey } from '../../../../core/models/enums';
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -12,7 +15,7 @@ import { ExcuseDto } from '../../../../core/models/dtos';
 @Component({
   selector: 'app-trainee-attendance',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './attendance.html',
   styleUrl: './attendance.scss',
 })
@@ -81,7 +84,13 @@ export class TraineeAttendance implements OnInit {
   // INIT
   // =========================================================
 
+  readonly constants = inject(NafadhConstantsService);
+  get attendancePickerChoices() {
+    const rows = [{value:'Present',label:'حاضر'}, {value:'Late',label:'متأخر'}, {value:'Absent',label:'غائب'}] as const;
+    return [{value:'All' as const,label:'الكل',labelEn:'All'}, ...this.constants.supportedChoices('NFD_ATT_STAT',rows,true)];
+  }
   ngOnInit(): void {
+    this.constants.ensure('NFD_ATT_STAT');
     this.getLoggedInUserId();
     this.loadTraineeData();
   }
