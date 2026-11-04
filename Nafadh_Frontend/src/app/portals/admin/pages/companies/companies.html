@@ -77,31 +77,8 @@
       <div
         style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
         <div class="nfd-chips">
-          <button type="button" class="filter-btn" [class.active]="statusFilter() === 'الكل'"
-            (click)="setFilter('الكل')">
-            جميع الحالات
-          </button>
-          <button type="button" class="filter-btn" [class.active]="statusFilter() === 'Approved'"
-            (click)="setFilter('Approved')">
-            {{ statusLabel('Approved') }}
-          </button>
-          <button type="button" class="filter-btn" [class.active]="statusFilter() === 'PendingApproval'"
-            (click)="setFilter('PendingApproval')">
-            {{ statusLabel('PendingApproval') }}
-          </button>
-          <button type="button" class="filter-btn" [class.active]="statusFilter() === 'Suspended'"
-            (click)="setFilter('Suspended')">
-            {{ statusLabel('Suspended') }}
-          </button>
-          <!-- 🚫 زر الطلبات المرفوضة مع العداد التفاعلي -->
-          <button type="button" class="btn-outline-red" [class.active]="statusFilter() === 'Rejected'"
-            (click)="setFilter('Rejected')">
-            <span class="btn-icon">✕</span>
-            <span>{{ statusLabel('Rejected') }}</span>
-            <span class="rejected-counter-badge" *ngIf="rejectedCompaniesCount() > 0">
-              {{ rejectedCompaniesCount() }}
-            </span>
-          </button>
+          <app-catalog-picker caption="حالة الشركة" [options]="companyChoices" [value]="statusFilter()" (valueChange)="setFilter($event)" />
+          <span *ngIf="rejectedCompaniesCount() > 0">{{ statusLabel('Rejected') }}: {{ rejectedCompaniesCount() }}</span>
         </div>
 
         <div class="results-count-text">
