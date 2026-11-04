@@ -14,33 +14,59 @@ import * as XLSX from 'xlsx';
   styleUrls: ['./programs.css']
 })
 export class AdminPrograms implements OnInit {
+  private router = inject(Router);
+private route = inject(ActivatedRoute);
+private notificationPlanId: number | null = null;
   private fb = inject(FormBuilder);
   private adminApi = inject(AdminApi);
 
 
-systemSettings = signal<Record<string, number>>({
-  PROGRAM_DEFAULT_DURATION_WEEKS: 10,
-  PROGRAM_WEEKLY_HOURS: 40,
-  PROGRAM_MIN_DURATION_WEEKS: 1,
-  BATCH_DEFAULT_CAPACITY: 15,
-  PROJECT_PASS_PERCENT: 60,
-  QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT: 2,
-  QUIZ_CHEATING_RISK_PERCENT: 20
-});
+systemSettings = signal<Record<string, number>>({});
 
 setting(key: string): number {
-  return this.systemSettings()[key];
+  const value = this.systemSettings()[key];
+
+  if (value === undefined || !Number.isFinite(value)) {
+    throw new Error(`إعداد النظام غير متوفر: ${key}`);
+  }
+
+  return value;
 }
 programMinDurationErrorMessage = signal<string>('');
+systemSettingsLoaded = signal<boolean>(false);
+systemSettingsMessages = signal<Record<string, string>>({});
 
+private getSystemSettingsMessage(key: string): string {
+  return this.systemSettingsMessages()[key] ?? '';
+}
 private loadSystemSettings(): void {
+  const requiredKeys = [
+    'PROGRAM_DEFAULT_DURATION_WEEKS',
+    'PROGRAM_WEEKLY_HOURS',
+    'PROGRAM_MIN_DURATION_WEEKS',
+    'BATCH_DEFAULT_CAPACITY',
+    'PROJECT_PASS_PERCENT',
+    'QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT',
+    'QUIZ_CHEATING_RISK_PERCENT'
+  ];
+
+  this.systemSettingsLoaded.set(false);
+
   this.adminApi.getSystemVariables().subscribe({
     next: (rows) => {
-      const values = { ...this.systemSettings() };
+      const values: Record<string, number> = {};
+      const messages: Record<string, string> = {};
 
       for (const row of rows) {
         const key = row.variableKey ?? row.VariableKey;
         const rawValue = row.value ?? row.Value;
+        if (
+  key === 'SYSTEM_SETTINGS_MISSING_MESSAGE' ||
+  key === 'SYSTEM_SETTINGS_LOAD_ERROR_MESSAGE'
+) {
+  messages[key] = String(rawValue ?? '');
+  continue;
+}
 
         if (key === 'PROGRAM_MIN_DURATION_ERROR_MESSAGE') {
           this.programMinDurationErrorMessage.set(
@@ -49,8 +75,9 @@ private loadSystemSettings(): void {
           continue;
         }
 
+        if (!requiredKeys.includes(key)) continue;
+
         if (
-          !Object.prototype.hasOwnProperty.call(values, key) ||
           rawValue === null ||
           rawValue === undefined ||
           String(rawValue).trim() === ''
@@ -60,34 +87,61 @@ private loadSystemSettings(): void {
 
         const value = Number(rawValue);
 
-        if (Number.isInteger(value) && value >= 0) {
+        if (Number.isFinite(value) && value >= 0) {
           values[key] = value;
         }
       }
+        this.systemSettingsMessages.set(messages);
+        
+      const missingKeys = requiredKeys.filter(
+        key => values[key] === undefined
+      );
+
+    if (missingKeys.length > 0) {
+  console.error('إعدادات النظام ناقصة:', missingKeys);
+
+  this.showToast(
+    this.getSystemSettingsMessage('SYSTEM_SETTINGS_MISSING_MESSAGE'),
+    'error'
+  );
+
+  return;
+}
 
       this.systemSettings.set(values);
       this.applySystemSettings();
+      this.systemSettingsLoaded.set(true);
     },
-    error: (err) => {
-      console.error('تعذر تحميل إعدادات النظام:', err);
-      this.showToast(
-        'تعذر تحميل إعدادات النظام؛ سيتم استخدام القيم الافتراضية.',
-        'warning'
-      );
-    }
+
+ error: (err) => {
+  console.error('تعذر تحميل إعدادات النظام:', err);
+
+  this.showToast(
+    this.getSystemSettingsMessage('SYSTEM_SETTINGS_LOAD_ERROR_MESSAGE')
+      || 'تعذر تحميل إعدادات النظام من قاعدة البيانات.',
+    'error'
+  );
+}
   });
 }
-
 private applySystemSettings(): void {
-  const minWeeks = Math.max(
-    1,
-    this.setting('PROGRAM_MIN_DURATION_WEEKS')
-  );
+  const settings = this.systemSettings();
 
-  const defaultWeeks = Math.max(
-    minWeeks,
-    this.setting('PROGRAM_DEFAULT_DURATION_WEEKS')
-  );
+  const minWeeks = settings['PROGRAM_MIN_DURATION_WEEKS'];
+  const defaultWeeks = settings['PROGRAM_DEFAULT_DURATION_WEEKS'];
+  const batchCapacity = settings['BATCH_DEFAULT_CAPACITY'];
+
+  if (
+    !Number.isFinite(minWeeks) ||
+    !Number.isFinite(defaultWeeks) ||
+    !Number.isFinite(batchCapacity) ||
+    minWeeks <= 0 ||
+    defaultWeeks < minWeeks ||
+    batchCapacity <= 0
+  ) {
+    console.error('Invalid or missing system settings');
+    return;
+  }
 
   const durationControl = this.programForm.get('durationWeeks');
 
@@ -99,17 +153,8 @@ private applySystemSettings(): void {
   durationControl?.setValue(defaultWeeks);
   durationControl?.updateValueAndValidity();
 
-  this.batchForm.get('capacity')?.setValue(
-    Math.max(1, this.setting('BATCH_DEFAULT_CAPACITY'))
-  );
+  this.batchForm.get('capacity')?.setValue(batchCapacity);
 }
-
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private notificationPlanId: number | null = null;
-
-  traineeAddMode: 'existing' | 'manual' | 'excel' = 'existing';
-
   // ==========================================================
   // 1. Data Signals
   // ==========================================================
@@ -279,6 +324,10 @@ private applySystemSettings(): void {
   // المحاولات المفلترة بحسب التبويب المحدد
 
 private isSuspiciousQuizAttempt(a: any): boolean {
+  if (!this.systemSettingsLoaded()) {
+    return false;
+  }
+
   return (
     Number(a.cheatingRiskPercentage ?? 0) >
       this.setting('QUIZ_CHEATING_RISK_PERCENT') ||
@@ -1011,7 +1060,7 @@ openProjectDossier(event: any): void {
 
   onOpenProjectGradeModal(sub: any): void {
     this.selectedProjectForGrading = sub;
-    this.gradingScoreInput = sub?.score || 85;
+   this.gradingScoreInput = sub?.score ?? 0;
     this.gradingFeedbackInput = sub?.reviewerFeedback || '';
     this.isProjectGradeModalOpen = true;
   }
@@ -1637,63 +1686,31 @@ openProjectDossier(event: any): void {
     }, { validators: this.dateRangeValidator });
   }
 
-
-  private initEditBatchForm(): void {
-    this.editBatchForm = this.fb.group({
-      batchName: ['', [Validators.required]],
-      programId: [null, [Validators.required]],
-      companyId: [null],
-      startDate: ['', [Validators.required]],
-      endDate: ['', [Validators.required]],
-      capacity: [this.setting('BATCH_DEFAULT_CAPACITY'), [Validators.required, Validators.min(1)]],
-      status: [null, [Validators.required]]
-    }, { validators: this.dateRangeValidator });
-  }
-
-
-  private initProgramForm(): void {
-    this.programForm = this.fb.group({
-      title: ['', [Validators.required, Validators.minLength(2)]],
-      trackId: [null, [Validators.required]],
-     durationWeeks: [
-  this.setting('PROGRAM_DEFAULT_DURATION_WEEKS'),
-  [
-    Validators.required,
-    Validators.min(Math.max(1, this.setting('PROGRAM_MIN_DURATION_WEEKS')))
-  ]
-],
-      description: ['']
-    });
-  }
-
-  preventNegative(event: KeyboardEvent): void {
-    if (['-', 'e', 'E', '+'].includes(event.key)) event.preventDefault();
-  }
-
-
-  onCreateBatch(): void {
-    this.batchForm.reset({
-      batchName: '',
-      programId: '',
-      companyId: '',
-      startDate: '',
-      endDate: '',
-      capacity: this.setting('BATCH_DEFAULT_CAPACITY')
-    });
-
-    this.batchFormSubmitted = false;
-    this.batchErrorMessage = null;
-
-    this.selectedTraineeIds.set([]);
-    this.traineePickerError.set(null);
-    this.traineeImportError.set(null);
-    this.loadAvailableBatchTrainees();
-    this.isBatchModalOpen = false;
-    this.isCreateBatchPageOpen.set(true);
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
+private initEditBatchForm(): void {
+  this.editBatchForm = this.fb.group({
+    batchName: ['', [Validators.required]],
+    programId: [null, [Validators.required]],
+    companyId: [null],
+    startDate: ['', [Validators.required]],
+    endDate: ['', [Validators.required]],
+    capacity: [
+      null,
+      [Validators.required, Validators.min(1)]
+    ],
+    status: [null, [Validators.required]]
+  }, { validators: this.dateRangeValidator });
+}
+private initProgramForm(): void {
+  this.programForm = this.fb.group({
+    title: ['', [Validators.required, Validators.minLength(2)]],
+    trackId: [null, [Validators.required]],
+    durationWeeks: [
+      null,
+      [Validators.required]
+    ],
+    description: ['']
+  });
+}
 
   loadAvailableBatchTrainees(): void {
     this.isLoadingAvailableTrainees.set(true);
@@ -2080,7 +2097,35 @@ addManualTrainee(): void {
       }
     });
   }
+onCreateBatch(): void {
+  if (!this.systemSettingsLoaded()) {
+    console.warn('System settings are not loaded yet');
+    return;
+  }
 
+  this.batchForm.reset({
+    batchName: '',
+    programId: '',
+    companyId: '',
+    startDate: '',
+    endDate: '',
+    capacity: this.setting('BATCH_DEFAULT_CAPACITY')
+  });
+
+  this.batchFormSubmitted = false;
+  this.batchErrorMessage = null;
+
+  this.selectedTraineeIds.set([]);
+  this.traineePickerError.set(null);
+  this.traineeImportError.set(null);
+
+  this.loadAvailableBatchTrainees();
+
+  this.isBatchModalOpen = false;
+  this.isCreateBatchPageOpen.set(true);
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
   onCloseBatchModal(): void {
     this.isCreateBatchPageOpen.set(false);
     this.isBatchModalOpen = false;
@@ -2093,6 +2138,10 @@ addManualTrainee(): void {
 
   
 onCreateProgram(): void {
+  if (!this.systemSettingsLoaded()) {
+  console.warn('System settings are not loaded yet');
+  return;
+}
   const minWeeks = Math.max(
     1,
     this.setting('PROGRAM_MIN_DURATION_WEEKS')
@@ -2125,6 +2174,10 @@ onCreateProgram(): void {
 
 
   onEdit(batch: any): void {
+    if (!this.systemSettingsLoaded()) {
+  console.warn('System settings are not loaded yet');
+  return;
+}
     this.selectedBatch = batch;
 
     this.editBatchForm.patchValue({
@@ -2361,6 +2414,10 @@ onCreateProgram(): void {
 
 
   onSubmitProgram(): void {
+    if (!this.systemSettingsLoaded()) {
+  console.warn('System settings are not loaded yet');
+  return;
+}
     this.programFormSubmitted = true;
 
     if (this.programForm.invalid) {
@@ -2370,7 +2427,7 @@ onCreateProgram(): void {
 
     const val = this.programForm.value;
 
-    // كل أسبوع يعادل 40 ساعة تدريبية
+    // حساب ساعات التدريب باستخدام PROGRAM_WEEKLY_HOURS من إعدادات النظام
     const payload = {
       title: val.title,
       trackId: Number(val.trackId),
@@ -2719,7 +2776,7 @@ onCreateProgram(): void {
   onOpenProjectEvaluation(sub: any): void {
     this.selectedProjectForView = sub;
     this.selectedProjectForGrading = sub;
-    this.gradingScoreInput = sub?.score || 85;
+   this.gradingScoreInput = sub?.score ?? 0;
     this.gradingFeedbackInput = sub?.reviewerFeedback || '';
     this.isProjectEvaluationFullPageOpen.set(true);
     this.isProjectAuditFullPageOpen.set(false);
