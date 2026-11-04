@@ -14,6 +14,7 @@ import * as XLSX from 'xlsx';
   styleUrls: ['./programs.css']
 })
 export class AdminPrograms implements OnInit {
+  traineeAddMode: 'manual' | 'excel' = 'manual';
   private router = inject(Router);
 private route = inject(ActivatedRoute);
 private notificationPlanId: number | null = null;
