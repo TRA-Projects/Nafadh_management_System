@@ -7,16 +7,29 @@ namespace Nafadh_Backend.Services
         Task SendSecondAbsenceWarningAsync(string email, string traineeName);
 
         // Company self-registration decision emails
-        Task SendCompanyApprovedAsync(string email, string companyName, string contactName, string temporaryPassword);
+        Task SendCompanyApprovedAsync(
+            string email,
+            string companyName,
+            string contactName,
+            string temporaryPassword);
 
-        Task SendCompanyRejectedAsync(string email, string companyName, string contactName, string? reason);
+        Task SendCompanyRejectedAsync(
+            string email,
+            string companyName,
+            string contactName,
+            string? reason);
 
-        // Trainee withdrawal decision emails (Admin actions)
+        // Trainee withdrawal emails
+        Task SendWithdrawalSubmittedAsync(string email, string traineeName);
+
         Task SendWithdrawalApprovedAsync(string email, string traineeName);
 
-        Task SendWithdrawalRejectedAsync(string email, string traineeName, string? reason);
+        Task SendWithdrawalRejectedAsync(
+            string email,
+            string traineeName,
+            string? reason);
 
-        // إشعار تسجيل متدرب جديد في دفعة وبرنامج تدريبي
+        // Trainee enrollment
         Task SendTraineeEnrolledAsync(
             string email,
             string traineeName,
@@ -24,30 +37,44 @@ namespace Nafadh_Backend.Services
             string programName,
             string? temporaryPassword = null);
 
-
-
+        // Certificate
         Task SendCertificateIssuedAsync(
-          string email,
-          string traineeName,
-          string? programName = null,
-          string? certificateUrl = null);
+            string email,
+            string traineeName,
+            string? programName = null,
+            string? certificateUrl = null);
 
-
-        // إرسال إعلان إداري للمستخدمين (متدرب / مدرب / شركة)
+        // Announcement
         Task SendAnnouncementAsync(
             string email,
             string recipientName,
             string title,
             string content);
 
-        Task SendCompanyWarningAsync(string email, string companyName, string reason, string? warningLevel = null);
+        // Company warning
+        Task SendCompanyWarningAsync(
+            string email,
+            string companyName,
+            string reason,
+            string? warningLevel = null);
 
+        // Course plan decision
+        Task SendCoursePlanDecisionAsync(
+            string email,
+            string companyName,
+            string planTitle,
+            bool approved,
+            string? note = null);
 
-        Task SendCoursePlanDecisionAsync(string email, string companyName, string planTitle, bool approved, string? note = null);
+        // Course plan submission
+        Task SendCoursePlanSubmittedAsync(
+            string email,
+            string companyName,
+            string planTitle,
+            int planId,
+            bool resubmitted);
 
-        // Informs active Authority administrators when a company submits or resubmits a plan.
-        Task SendCoursePlanSubmittedAsync(string email, string companyName, string planTitle, int planId, bool resubmitted);
-
+        // Batch assignment
         Task SendBatchAssignedToCompanyAsync(
             string email,
             string companyName,

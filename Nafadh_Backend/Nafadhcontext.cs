@@ -110,6 +110,8 @@ namespace Nafadh_Backend
         public DbSet<NFD_LessonFeedback> NFD_LessonFeedbacks { get; set; }
         public DbSet<NFD_TraineeSkill> NFD_TraineeSkills { get; set; }
         public DbSet<NFD_WithdrawalRequest> NFD_WithdrawalRequests { get; set; }
+        public DbSet<NFD_NotificationTemplate> NFD_NotificationTemplates
+        { get; set; }
 
         public DbSet<NFD_CompanySupervisorTrainer>
     NFD_CompanySupervisorTrainers
@@ -1264,6 +1266,39 @@ namespace Nafadh_Backend
                     .WithMany()
                     .HasForeignKey(x => x.TrainerId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+
+                modelBuilder.Entity<NFD_NotificationTemplate>(entity =>
+                {
+                    entity.ToTable("NFD_NotificationTemplates");
+
+                    entity.HasKey(x => x.Id);
+
+                    entity.HasIndex(x => x.Code)
+                        .IsUnique();
+
+                    entity.Property(x => x.Code)
+                        .HasMaxLength(100)
+                        .IsRequired();
+
+                    entity.Property(x => x.Name)
+                        .HasMaxLength(150)
+                        .IsRequired();
+
+                    entity.Property(x => x.PortalCode)
+                        .HasMaxLength(30)
+                        .IsRequired();
+
+                    entity.Property(x => x.Type)
+                        .HasMaxLength(20)
+                        .IsRequired();
+
+                    entity.Property(x => x.Subject)
+                        .HasMaxLength(250);
+
+                    entity.Property(x => x.Body)
+                        .IsRequired();
+                });
             });
         }
 
