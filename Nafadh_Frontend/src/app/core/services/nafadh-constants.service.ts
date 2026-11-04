@@ -8,6 +8,7 @@ export interface NafadhConstantOption {
   /** Stable enum key sent to and stored by the backend. Never edited from the UI. */
   key: string;
   label: string;
+  labelEn?: string;
   isActive: boolean;
 }
 
@@ -65,14 +66,32 @@ export class NafadhConstantsService {
     return this.all(group).filter(row => row.isActive);
   }
 
-  /** True when the key may be chosen for new records. Unknown / not-yet-loaded groups return true. */
+  choices(group: string, historical = false) {
+    return (historical ? this.all(group) : this.options(group)).map(row => ({
+      value: row.key, label: row.label || row.key, labelEn: row.labelEn
+    }));
+  }
+
+  /** Keep the screen's supported keys and order. History survives a catalog outage;
+   * new choices require a confirmed active row from the matching group. */
+  supportedChoices<K extends string>(group: string, supported: readonly { value: K; label: string }[], historical = false) {
+    const rows = this.all(group);
+    return supported.flatMap(option => {
+      const row = rows.find(r => r.key === option.value);
+      return historical || row?.isActive === true
+        ? [{ ...option, label: row?.label || option.label, labelEn: row?.labelEn }]
+        : [];
+    });
+  }
+
+  /** True when the key may be chosen for new records. Unknown / not-yet-loaded groups cannot authorize a new choice. */
   isSelectable(group: string, value: unknown): boolean {
     group = group.toUpperCase();
     const rows = this.rowsByGroup()[group];
-    if (!rows) return true;
+    if (!rows) return false;
     const key = this.normalize(group, value);
     const row = rows.find(r => r.key === key);
-    return row ? row.isActive : true;
+    return row?.isActive === true;
   }
 
   /**
@@ -121,10 +140,11 @@ export class NafadhConstantsService {
               : lookupValueKey(data);
             if (!key || rows.some(row => row.key.toLowerCase() === key.toLowerCase())) continue;
             const label = lookupLabel(data);
-            const active = data['IsActive'] ?? data['isActive'] ?? data['is_active'] ?? data['active'] ?? true;
+            const active = data['IsActive'] ?? data['isActive'] ?? data['is_active'] ?? data['active'];
             rows.push({
               key,
               label,
+              labelEn: String(data['label_en'] ?? data['labelEn'] ?? data['LabelEn'] ?? '') || undefined,
               isActive: active === true || active === 1 || String(active).toLowerCase() === 'true'
             });
           }
