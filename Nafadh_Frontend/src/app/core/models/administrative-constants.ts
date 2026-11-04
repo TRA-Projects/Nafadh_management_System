@@ -179,6 +179,7 @@ export function hasFixedEditKey(group: string): boolean {
 export function constantPolicyHint(code: string, readOnly: boolean, labelsOnly: boolean, fixedKeys: boolean) {
   if (!code) return null;
   if (readOnly || (code.startsWith('NFD_') && !hasFixedEditKey(code))) return 'readOnly';
+  if (code === 'NFD_TSK_PRI' && !labelsOnly) return 'priorityActivation';
   if (isAdministrativeGroup(code) || labelsOnly) return 'labelsOnly';
   if (hasFixedEditKey(code)) return 'labelsAndActivation';
   return fixedKeys ? 'labelsAndActivation' : null;
