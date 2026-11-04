@@ -88,13 +88,7 @@
       <input type="date" class="nfd-filter-date" [ngModel]="dateTo()" (ngModelChange)="onDateToChange($event)" />
     </div>
 
-    <select class="nfd-filter-select" [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)">
-      <option value="ALL">كل الحالات</option>
-      <option value="Active">{{ userLabel('Active') }}</option>
-      <option value="Inactive">{{ userLabel('Inactive') }}</option>
-      <option value="Suspended">{{ userLabel('Suspended') }}</option>
-      <option value="PendingVerification">{{ userLabel('PendingVerification') }}</option>
-    </select>
+    <app-catalog-picker caption="حالة المستخدم" [options]="userStatusChoices" [value]="statusFilter()" (valueChange)="setStatusFilter($event)" />
 
     @if (hasActiveFilters()) {
       <button type="button" class="nfd-clear-filters-btn" (click)="clearAllFilters()">
