@@ -28,7 +28,16 @@ public sealed class ReferenceConstantGroupDto
     [JsonPropertyName("IsLabelsOnly")]
     public bool IsLabelsOnly { get; set; }
 
-    /// <summary>True when values can be added (never for Nafadh enum groups).</summary>
+    [JsonPropertyName("canEditLabels")]
+    public bool CanEditLabels { get; init; }
+
+    [JsonPropertyName("canChangeActive")]
+    public bool CanChangeActive { get; init; }
+
+    [JsonPropertyName("canCreate")]
+    public bool CanCreate { get; init; }
+
+    /// <summary>True when value keys are fixed.</summary>
     [JsonPropertyName("IsFixedKeys")]
     public bool IsFixedKeys { get; set; }
 }
