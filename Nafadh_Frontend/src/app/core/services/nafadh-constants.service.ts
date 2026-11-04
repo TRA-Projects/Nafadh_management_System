@@ -1,5 +1,5 @@
 import { AdministrativeGroup, administrativeValue, constantEditKey, isAdministrativeGroup, lookupLabel, lookupValueKey } from '../models/administrative-constants';
-import { Injectable, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
@@ -30,10 +30,29 @@ export class NafadhConstantsService {
   private readonly http = inject(HttpClient);
   private readonly rowsByGroup = signal<Record<string, readonly NafadhConstantOption[]>>({});
   private readonly requested = new Set<string>();
+  private readonly versions = new Map<string, number>();
+  private readonly checkedAt = new Map<string, number>();
+  private readonly channel = typeof window !== 'undefined' && typeof window.BroadcastChannel === 'function'
+    ? new window.BroadcastChannel('nafadh-reference-catalog') : undefined;
+
+  constructor() {
+    if (this.channel) {
+      this.channel.onmessage = ({ data }) => {
+        if (typeof data === 'string' && this.requested.has(data)) this.load(data, true);
+      };
+      inject(DestroyRef).onDestroy(() => this.channel?.close());
+    }
+  }
+
+  /** Send only an invalidation; each tab reads the value with its own credentials. */
+  afterSave(group: string): void {
+    this.refresh(group);
+    this.channel?.postMessage(group.toUpperCase());
+  }
   /** Existing exported label maps (e.g. TRAINEE_STATUS_LABELS) kept in sync with the database labels. */
   private readonly liveMaps = new Map<string, Array<Record<string, string>>>();
 
-  /** Loads the given groups once. Pass force = true to refresh after an admin edit. */
+  /** Re-entering a screen also sees edits made on another device without polling idle tabs. */
   ensure(...groups: string[]): void {
     for (const group of groups) this.load(group, false);
   }
@@ -119,13 +138,18 @@ export class NafadhConstantsService {
   private load(group: string, force: boolean): void {
     const code = String(group ?? '').trim().toUpperCase();
     if (!code.startsWith('NFD_')) return;
-    if (!force && this.requested.has(code)) return;
+    if (!force && this.requested.has(code) &&
+        (!this.checkedAt.has(code) || Date.now() - this.checkedAt.get(code)! < 60_000)) return;
     this.requested.add(code);
+    this.checkedAt.delete(code);
+    const version = (this.versions.get(code) ?? 0) + 1;
+    this.versions.set(code, version);
 
     this.http
       .get<unknown>(`${environment.apiBaseUrl}/management/nafadh-lookups/groups/${encodeURIComponent(code)}`)
       .subscribe({
         next: payload => {
+          if (this.versions.get(code) !== version) return;
           const source = this.extractRows(payload);
           if (!source) {
             this.requested.delete(code);
@@ -149,9 +173,11 @@ export class NafadhConstantsService {
             });
           }
           this.rowsByGroup.update(current => ({ ...current, [code]: rows }));
+          this.checkedAt.set(code, Date.now());
           this.applyToMaps(code, rows);
         },
         error: error => {
+          if (this.versions.get(code) !== version) return;
           // Allow a later ensure() to retry; pages keep showing their built-in fallback labels.
           this.requested.delete(code);
           console.warn(`Nafadh constants ${code}: unable to load current labels`, error);
