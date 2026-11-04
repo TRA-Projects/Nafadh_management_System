@@ -11,10 +11,13 @@ namespace Nafadh_Backend.Services
         private readonly Nafadhcontext _context;
         private readonly INotificationService _notificationService;
 
+        private readonly ITrainingConstantsService _constants;
+
         public TrainerLiveSessionService(
             Nafadhcontext context,
-            INotificationService notificationService)
+            INotificationService notificationService, ITrainingConstantsService constants)
         {
+            _constants = constants;
             _context = context;
             _notificationService = notificationService;
         }
@@ -671,6 +674,8 @@ namespace Nafadh_Backend.Services
                     a.SessionId == sessionId &&
                     a.TraineeId == traineeId);
 
+            if (attendance?.Status != dto.Status.Value)
+                await CatalogSelectionPolicy.RequireActiveAsync(_constants, dto.Status.Value);
             if (attendance == null)
             {
                 attendance = new NFD_SessionAttendance
