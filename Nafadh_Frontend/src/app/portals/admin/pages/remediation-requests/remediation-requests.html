@@ -157,32 +157,7 @@
 
       <!-- Status -->
 
-      <select
-        class="nfd-select"
-        [(ngModel)]="selectedStatus"
-      >
-
-        <option value="ALL">
-          جميع الحالات
-        </option>
-
-        <option value="Pending">
-          {{ getStatusLabel('Pending') }}
-        </option>
-
-        <option value="Approved">
-          {{ getStatusLabel('Approved') }}
-        </option>
-
-        <option value="Rejected">
-          مرفوض
-        </option>
-
-        <option value="NeedsRevision">
-          {{ getStatusLabel('NeedsRevision') }}
-        </option>
-
-      </select>
+      <app-catalog-picker caption="حالة طلب المعالجة" [options]="remediationChoices" [value]="selectedStatus" (valueChange)="selectedStatus = $event" />
 
 
       <!-- Action Type -->
