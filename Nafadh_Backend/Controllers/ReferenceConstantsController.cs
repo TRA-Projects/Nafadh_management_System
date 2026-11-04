@@ -41,6 +41,9 @@ public sealed class ReferenceConstantsController : ControllerBase
                 Code = group.Code,
                 LabelEn = group.LabelEn,
                 LabelAr = group.LabelAr,
+                CanEditLabels = group.CanEditLabels,
+                CanChangeActive = group.CanChangeActive,
+                CanCreate = group.CanCreate,
                 IsActive = true,
                 IsReadOnly = group.ReadOnly,
                 IsLabelsOnly = group.LabelsOnly,
@@ -67,7 +70,7 @@ public sealed class ReferenceConstantsController : ControllerBase
     // Every Nafadh enum-backed group has fixed keys (backend business logic switches on them),
     // so new values can never be added through this gateway.
     private static bool IsRestrictedNafadhGroup(string code) =>
-        TrainingConstantsCatalog.IsManagedNafadh(code) && !TrainingConstantsCatalog.IsReadOnly(code);
+        TrainingConstantsCatalog.Find(code) is { CanCreate: false, CanEditLabels: true };
 
     [HttpPost("values/{code}/ensure")]
     public Task<IActionResult> EnsureValue(string code, [FromBody] JsonElement payload, CancellationToken cancellationToken) =>
@@ -154,7 +157,7 @@ public sealed class ReferenceConstantsController : ControllerBase
                 && (field.Value.ValueKind != JsonValueKind.String || field.Value.GetString() != id))
                 return Task.FromResult<IActionResult>(BadRequest(new { Code = "InvalidValueKey" }));
             if (!field.Name.Replace("_", "").Equals("IsActive", StringComparison.OrdinalIgnoreCase)) continue;
-            if (TrainingConstantsCatalog.IsLabelsOnly(group))
+            if (TrainingConstantsCatalog.Find(group)?.CanChangeActive != true)
                 return Task.FromResult<IActionResult>(BadRequest(new { Code = "ActivationLocked" }));
             if (requestedActive.HasValue || field.Value.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
                 return Task.FromResult<IActionResult>(BadRequest(new { Code = "InvalidActivation" }));
@@ -198,7 +201,7 @@ public sealed class ReferenceConstantsController : ControllerBase
         if (!TrainingConstantsCatalog.IsKnown(code))
             return NotFound(new { Code = "UnknownGroup", Message = "Unknown reference catalog group." });
 
-        if (method != HttpMethod.Get && TrainingConstantsCatalog.IsReadOnly(code))
+        if (method != HttpMethod.Get && TrainingConstantsCatalog.Find(code)?.CanEditLabels != true)
             return StatusCode(StatusCodes.Status403Forbidden,
                 new { Code = "ReadOnlyGroup", Message = "This reference catalog cannot be modified." });
 
