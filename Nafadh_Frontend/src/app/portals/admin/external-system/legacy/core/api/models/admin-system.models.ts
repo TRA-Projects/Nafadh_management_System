@@ -18,9 +18,12 @@ export interface SystemConfigGroupDto {
   label_ar: string;
   IsActive: boolean;
   IsReadOnly: boolean;
-  /** Nafadh enum group: labels editable, activation locked ON (workflow depends on every value). */
+  /** Nafadh enum group: labels editable, stored activation preserved (workflow depends on every value). */
   IsLabelsOnly?: boolean;
-  /** Nafadh enum group: keys are fixed by backend enums, so values cannot be added. */
+  canEditLabels?: boolean;
+  canChangeActive?: boolean;
+  canCreate?: boolean;
+  /** Legacy equivalent of disallowing new keys for Nafadh groups. */
   IsFixedKeys?: boolean;
 }
 
