@@ -11,7 +11,14 @@ public static class TrainingConstantsCatalog
     /// <param name="ReadOnly">No writes at all (Training/legacy catalogs outside Nafadh stay as before).</param>
     /// <param name="LabelsOnly">Nafadh enum groups where only the display labels may change.
     /// Their stored activation flag is preserved, including for inactive historical values.</param>
-    public sealed record Group(string Code, string LabelEn, string LabelAr, bool ReadOnly, bool LabelsOnly = false);
+    public sealed record Group(string Code, string LabelEn, string LabelAr, bool ReadOnly, bool LabelsOnly = false)
+    {
+        public bool CanEditLabels => !ReadOnly;
+        public bool CanChangeActive => CanEditLabels && !LabelsOnly;
+        public bool CanCreate => CanEditLabels && !Code.StartsWith("NFD_", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static Group? Find(string code) => ByCode.GetValueOrDefault(code);
 
     public static readonly IReadOnlyList<Group> Groups = new List<Group>
     {
