@@ -553,16 +553,11 @@
           <div class="field-row">
             <label class="field">
               <span>النوع <em>*</em></span>
-              <select name="type" [(ngModel)]="itemForm.itemType">
-                <option ngValue="Task">{{ typeLabel('Task') }}</option>
-                <option ngValue="Project">{{ typeLabel('Project') }}</option>
-              </select>
+              <app-catalog-picker caption="نوع العنصر" [options]="itemTypes" [(value)]="itemForm.itemType" [fallbackLabel]="itemForm.itemId ? typeLabel(itemForm.itemType) : ''" />
             </label>
             <label class="field">
               <span>الأولوية <em>*</em></span>
-              <select name="priority" [(ngModel)]="itemForm.priority">
-                @for (o of priorities; track o) { <option [ngValue]="o">{{ priorityLabel(o) }}</option> }
-              </select>
+              <app-catalog-picker caption="أولوية العنصر" [options]="itemPriorities" [(value)]="itemForm.priority" [fallbackLabel]="itemForm.itemId ? priorityLabel(itemForm.priority) : ''" />
             </label>
           </div>
           <label class="field">
