@@ -1,3 +1,4 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -76,7 +77,7 @@ interface ReadinessCheck {
 /** Company Portal — one course plan: stages, tasks/projects, approval and execution tracking. */
 @Component({
   selector: 'app-company-plan-workspace',
-  imports: [FormsModule, RouterLink],
+  imports: [CatalogPicker, FormsModule, RouterLink],
   templateUrl: './plan-workspace.html',
   styleUrl: './tasks.scss',
 })
@@ -119,6 +120,12 @@ export class CompanyPlanWorkspace implements OnInit {
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly today = toInputDate(new Date());
+  get itemTypes() {
+    return this.constants.supportedChoices('NFD_CPI_TYPE', (['Task', 'Project'] as const).map(value => ({value, label: this.typeLabel(value)})));
+  }
+  get itemPriorities() {
+    return this.constants.supportedChoices('NFD_TSK_PRI', this.priorities.map(value => ({value, label: this.priorityLabel(value)})));
+  }
   readonly priorities: PlanPriority[] = ['Low', 'Medium', 'High', 'Critical'];
   readonly progressOptions: PlanProgressStatus[] = ['NotStarted', 'InProgress', 'Completed'];
   readonly formatDate = formatDate;
@@ -551,6 +558,11 @@ export class CompanyPlanWorkspace implements OnInit {
     const f = this.itemForm;
     const stage = p?.stages.find((s) => s.stageId === f.stageId);
     if (!p || !stage) return;
+    const original = stage.items.find(item => item.itemId === f.itemId);
+    if ((original?.itemType !== f.itemType && !this.constants.isSelectable('NFD_CPI_TYPE', f.itemType))
+      || (original?.priority !== f.priority && !this.constants.isSelectable('NFD_TSK_PRI', f.priority))) {
+      return this.formError.set('اختر نوعًا وأولوية مفعّلين للعنصر.');
+    }
 
     if (!f.title.trim()) return this.formError.set('العنوان مطلوب.');
     if (!f.dueDate) return this.formError.set('الموعد النهائي مطلوب.');
