@@ -36,6 +36,7 @@ namespace Nafadh_Backend
             })
   .AddJsonOptions(options =>
   {
+      options.JsonSerializerOptions.Converters.Add(new Nafadh_Backend.DTOs.CatalogEnumConverter());
       // Serialize enums as strings instead of numbers
       options.JsonSerializerOptions.Converters.Add(
           new System.Text.Json.Serialization.JsonStringEnumConverter());
@@ -249,8 +250,6 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IQuizResultRepository, QuizResultRepository>();
 
             builder.Services.AddScoped<IQuizResultService, QuizResultService>();
-            builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
-            builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 
             builder.Services.AddScoped<IQuizAccessService, QuizAccessService>();
             builder.Services.AddScoped<IQuizProctoringService, QuizProctoringService>();
