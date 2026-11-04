@@ -34,6 +34,10 @@ public sealed class ReferenceConstantGroupDto
     [JsonPropertyName("canChangeActive")]
     public bool CanChangeActive { get; init; }
 
+    [JsonPropertyName("activationKeys")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? ActivationKeys { get; init; }
+
     [JsonPropertyName("canCreate")]
     public bool CanCreate { get; init; }
 
