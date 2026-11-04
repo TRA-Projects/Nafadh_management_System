@@ -1,3 +1,4 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { administrativeValue, constantEditKey } from '../../../../core/models/administrative-constants';
 import { CommonModule } from '@angular/common';
@@ -57,7 +58,7 @@ interface QuestionForm {
 @Component({
     selector: 'app-question-bank',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CatalogPicker, CommonModule, FormsModule],
     templateUrl: './question-bank.html',
     styleUrl: './question-bank.scss'
 })
@@ -92,7 +93,30 @@ export class QuestionBank implements OnInit {
     questionForm: QuestionForm = this.emptyQuestionForm();
 
     // Stable enum values must be preserved: Easy=0, Medium=1, Hard=2.
-    readonly difficultyOptions = signal<Array<{ value: number; label: string }>>([]);
+    readonly typeKeys = ['MultipleChoice', 'TrueFalse', 'Essay'];
+    private originalQuestionType: number | null = null;
+    readonly typeFilterChoices = computed(() => [
+        { value: 'all', label: 'كل الأنواع' },
+        ...this.typeKeys.map((value, i) => ({
+            value, label: this.getQuestionTypeLabel(i),
+            labelEn: this.constants.all('NFD_QUE_TYPE').find(row => row.key === value)?.labelEn
+        }))
+    ]);
+    private originalDifficulty: number | null = null;
+    readonly difficultyKeys = ['Easy', 'Medium', 'Hard'];
+    readonly activeDifficultyChoices = computed(() => this.difficultyOptions().map(option => ({
+        value: this.difficultyKeys[option.value], label: option.label, labelEn: option.labelEn
+    })));
+    readonly difficultyFilterChoices = computed(() => [
+        { value: 'all', label: 'كل المستويات' },
+        ...this.historicalDifficulties().map(option => {
+            const key = this.difficultyKeys[option.value];
+            return { value: key, label: option.label,
+                labelEn: this.constants.all('NFD_QUE_DIFF').find(row => row.key === key)?.labelEn };
+        })
+    ]);
+
+    readonly difficultyOptions = signal<Array<{ value: number; label: string; labelEn?: string }>>([]);
     readonly historicalDifficulties = computed(() => {
         const rows = this.constants.all('NFD_QUE_DIFF');
         return rows.length ? ['Easy', 'Medium', 'Hard'].flatMap((key, value) =>
@@ -108,8 +132,8 @@ export class QuestionBank implements OnInit {
                 const mapped = (response.Data?.rows ?? [])
                     .flatMap(row => {
                         const key = constantEditKey('NFD_QUE_DIFF', row);
-                        return row.IsActive && key
-                            ? [{ value: valueKeys[key], label: row.label_ar || row.label_en || key }]
+                        return row.IsActive === true && key
+                            ? [{ value: valueKeys[key], labelEn: row.label_en, label: row.label_ar || row.label_en || key }]
                             : [];
                     });
                 this.difficultyOptions.set(mapped);
@@ -516,6 +540,8 @@ export class QuestionBank implements OnInit {
             });
     }
     openCreateQuestion(): void {
+        this.originalQuestionType = null;
+        this.originalDifficulty = null;
         this.editingQuestionId.set(null);
         this.questionForm = this.emptyQuestionForm();
 
@@ -550,9 +576,14 @@ export class QuestionBank implements OnInit {
         const questionType = questionTypeMap[typeKey];
         this.editingQuestionId.set(question.questionId);
         const difficulty =
-            typeof rawDifficulty === 'string'
-                ? difficultyMap[rawDifficulty] ?? 0
-                : Number(rawDifficulty);
+            typeof rawDifficulty === 'string' && !/^[0-2]$/.test(rawDifficulty)
+                ? difficultyMap[rawDifficulty] : Number(rawDifficulty);
+        if (!this.difficultyKeys[difficulty]) {
+            this.questionError.set('تعذر تحديد صعوبة السؤال المحفوظة.');
+            return;
+        }
+        this.originalQuestionType = questionType;
+        this.originalDifficulty = difficulty;
 
         this.questionForm = {
             questionText: question.questionText,
@@ -695,7 +726,13 @@ export class QuestionBank implements OnInit {
     }
 
     saveQuestion(): void {
-        if (!this.difficultyOptions().some(option => option.value === this.questionForm.difficulty)) {
+        if (!(this.editingQuestionId() !== null && this.questionForm.questionType === this.originalQuestionType) &&
+            !this.constants.isSelectable('NFD_QUE_TYPE', this.typeKeys[this.questionForm.questionType])) {
+            this.questionError.set('نوع السؤال غير متاح في الثوابت الحالية.');
+            return;
+        }
+        if (!(this.editingQuestionId() !== null && this.questionForm.difficulty === this.originalDifficulty) &&
+            !this.difficultyOptions().some(option => option.value === this.questionForm.difficulty)) {
             this.questionError.set('مستوى الصعوبة غير متاح في الثوابت الحالية.');
             return;
         }
