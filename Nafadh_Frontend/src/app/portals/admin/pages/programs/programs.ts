@@ -1,3 +1,5 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -5,14 +7,23 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
 import * as XLSX from 'xlsx';
 
+// These are existing filter values, also used for counts and badge styles.
+const approvalKeyByBatchStatus = new Map([
+  ['بانتظار الاعتماد', 'PendingApproval'],
+  ['معتمدة', 'Approved'],
+  ['مرفوضة', 'Rejected'],
+  ['مسودة', 'Draft'],
+]);
+
 @Component({
   selector: 'app-admin-programs',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './programs.html',
   styleUrls: ['./programs.css']
 })
 export class AdminPrograms implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private fb = inject(FormBuilder);
   private adminApi = inject(AdminApi);
   private router = inject(Router);
@@ -69,6 +80,39 @@ export class AdminPrograms implements OnInit {
 
   statusFilter = signal<string>('الكل');
   planFilter = signal<string>('الكل');
+  readonly planFilterOptions = computed(() =>
+    ['بانتظار الاعتماد', 'معتمدة', 'مرفوضة'].map(value => ({ value, label: this.batchPlanLabel(value) }))
+  );
+  readonly batchStatusKeys = ['Upcoming','Ongoing','Completed','Cancelled'] as const;
+  readonly batchStatusFallback = {Upcoming:'قادمة', Ongoing:'جارية', Completed:'مكتملة', Cancelled:'ملغاة'} as const;
+  get batchFilterKey() {
+    return this.batchStatusKeys.find(key => this.batchStatusFallback[key] === this.statusFilter()) ?? 'all';
+  }
+  get batchFilterChoices() {
+    const supported = (['Ongoing','Upcoming','Completed'] as const).map(value => ({value,label:this.batchStatusFallback[value]}));
+    return [{value:'all' as const,label:'الدفعات',labelEn:'All'}, ...this.constants.supportedChoices('NFD_BAT_STAT',supported,true)];
+  }
+  chooseBatchFilter(key: 'all' | 'Ongoing' | 'Upcoming' | 'Completed') {
+    this.statusFilter.set(key === 'all' ? 'الكل' : this.batchStatusFallback[key]);
+    this.currentPage.set(1);
+  }
+  get batchStatusChoices() {
+    return this.constants.supportedChoices('NFD_BAT_STAT', this.batchStatusKeys.map(value => ({value,label:this.batchStatusFallback[value]})));
+  }
+  get planPickerKey() {
+    return approvalKeyByBatchStatus.get(this.planFilter()) ?? (this.planFilter() === 'لم تُرفع بعد' ? 'no-plan' : 'all');
+  }
+  get planPickerChoices() {
+    return [{value:'all',label:'كل الحالات',labelEn:'All'}, ...this.constants.supportedChoices('NFD_CPA_STAT',
+      this.planFilterOptions().map(o => ({value:approvalKeyByBatchStatus.get(o.value)!,label:o.label})), true),
+      {value:'no-plan',label:'لم تُرفع بعد',labelEn:'Not submitted'}];
+  }
+  choosePlanFilter(key: string) {
+    const legacy = this.planFilterOptions().find(o => approvalKeyByBatchStatus.get(o.value) === key)?.value;
+    if (!legacy && key !== 'all' && key !== 'no-plan') return;
+    this.planFilter.set(legacy ?? (key === 'no-plan' ? 'لم تُرفع بعد' : 'الكل'));
+    this.currentPage.set(1);
+  }
   batchesError = signal<string | null>(null);
 
   currentPage = signal<number>(1);
@@ -227,6 +271,7 @@ export class AdminPrograms implements OnInit {
   // 6. Lifecycle Hook
   // ==========================================================
   ngOnInit(): void {
+    this.constants.ensure('NFD_CPI_TYPE', 'NFD_CPA_STAT', 'NFD_BAT_STAT');
     const incomingId = Number(this.route.snapshot.queryParamMap.get('coursePlanId'));
     this.notificationPlanId = Number.isInteger(incomingId) && incomingId > 0 ? incomingId : null;
     this.initBatchForm();
@@ -1312,6 +1357,11 @@ export class AdminPrograms implements OnInit {
     return s === 'الربط يحتاج مراجعة' ? s : 'لم تُرفع بعد';
   }
 
+  batchPlanLabel(status: string): string {
+    const key = approvalKeyByBatchStatus.get(status);
+    return key ? this.constants.administrativeLabel('NFD_CPA_STAT', key, status) : status;
+  }
+
   onViewPlan(batch: any): void {
     if (!batch) return;
 
@@ -2255,6 +2305,11 @@ addManualTrainee(): void {
     );
 
     const formValue = this.editBatchForm.getRawValue();
+    if (this.getBatchStatusValue(this.selectedBatch?.status) !== formValue.status &&
+        !this.constants.isSelectable('NFD_BAT_STAT', this.batchStatusKeys[formValue.status])) {
+      this.editBatchErrorMessage = 'اختر حالة دفعة مفعّلة.';
+      return;
+    }
 
     const companyId =
       formValue.companyId === '' || formValue.companyId == null
@@ -2466,6 +2521,11 @@ addManualTrainee(): void {
     const data = this.filteredBatches();
     if (!data.length) return;
     const headers = ['الدفعة', 'البرنامج', 'الشركة', 'البداية', 'النهاية', 'المسجلين', 'السعة', 'حالة الدفعة', 'حالة الخطة'];
+    const planCell = (batch: any) => {
+      const label = this.batchPlanLabel(this.getBatchPlanStatus(batch));
+      const safe = /^[\t\r\n]|^\s*[=+@\-＝＋＠－]/u.test(label) ? "'" + label : label;
+      return '"' + safe.replace(/"/g, '""') + '"';
+    };
     const rows = data.map(b => [
       `"${b.batchName}"`,
       `"${this.getProgramName(b)}"`,
@@ -2475,11 +2535,11 @@ addManualTrainee(): void {
       b.totalTraineesCount || 0,
       b.capacity || 0,
       `"${this.getStatusLabel(b.status)}"`,
-      `"${this.getBatchPlanStatus(b)}"`
+      planCell(b)
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const link = document.createElement('a');
-    link.href = encodeURI(csvContent);
+    link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
     link.download = `batches_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
   }

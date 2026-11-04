@@ -566,7 +566,7 @@
                 <td>
                   {{ item.due !== 'غير محدد' ? (item.due | date:'yyyy/MM/dd') : 'غير محدد' }}
                 </td>
-                <td>{{ item.priority }}</td>
+                <td>{{ constants.administrativeLabel('NFD_TSK_PRI', item.priority) }}</td>
                 <td>
                   <span [ngClass]="getTaskStatusClass(item.status)">
                     {{ getTaskStatusText(item.status) }}

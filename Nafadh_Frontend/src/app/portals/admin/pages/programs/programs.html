@@ -136,7 +136,7 @@
       </div>
       <div class="org-item-box">
         <span class="org-label"><i class="fa-solid fa-file-shield"></i> حالة خطة التدريب:</span>
-        <span class="org-value">{{ getBatchPlanStatus(selectedBatch) }}</span>
+        <span class="org-value">{{ batchPlanLabel(getBatchPlanStatus(selectedBatch)) }}</span>
       </div>
       <div class="org-item-box">
         <span class="org-label"><i class="fa-regular fa-calendar"></i> تاريخ البداية:</span>
@@ -449,26 +449,23 @@
 
   <div class="action-header-bar">
     <div class="filter-buttons-group">
-      <button type="button" (click)="statusFilter.set('الكل'); currentPage.set(1)"
-        [class.active]="statusFilter() === 'الكل'" class="filter-btn">
+      <app-catalog-picker caption="تصفية حالة الدفعة" [options]="batchFilterChoices" [value]="batchFilterKey" (valueChange)="chooseBatchFilter($event)" />
+      <span>
         <span class="filter-badge">{{ batches().length }}</span>
         <span>الدفعات</span>
-      </button>
-      <button type="button" (click)="statusFilter.set('جارية'); currentPage.set(1)"
-        [class.active]="statusFilter() === 'جارية'" class="filter-btn">
+      </span>
+      <span>
         <span class="filter-badge">{{ getCountByStatus('جارية') }}</span>
         <span>جارية</span>
-      </button>
-      <button type="button" (click)="statusFilter.set('قادمة'); currentPage.set(1)"
-        [class.active]="statusFilter() === 'قادمة'" class="filter-btn">
+      </span>
+      <span>
         <span class="filter-badge">{{ getCountByStatus('قادمة') }}</span>
         <span>قادمة</span>
-      </button>
-      <button type="button" (click)="statusFilter.set('مكتملة'); currentPage.set(1)"
-        [class.active]="statusFilter() === 'مكتملة'" class="filter-btn">
+      </span>
+      <span>
         <span class="filter-badge">{{ getCountByStatus('مكتملة') }}</span>
         <span>مكتملة</span>
-      </button>
+      </span>
     </div>
 
     <!-- أزرار الإجراءات -->
@@ -538,14 +535,7 @@
       <div class="filter-col">
         <label class="filter-field-label">خطة التدريب (الشركة)</label>
         <div class="filter-input-wrapper">
-          <select [value]="planFilter()" (change)="planFilter.set($any($event.target).value); currentPage.set(1)"
-            class="filter-select-ctrl filter-plan-select">
-            <option value="الكل">كل الحالات</option>
-            <option value="بانتظار الاعتماد">بانتظار الاعتماد ⏳</option>
-            <option value="معتمدة">معتمدة رسمياً ✔️</option>
-            <option value="مرفوضة">مرفوضة / تتطلب تعديل ⚠️</option>
-            <option value="لم تُرفع بعد">لم تُرفع بعد</option>
-          </select>
+          <app-catalog-picker caption="حالة اعتماد خطة التدريب" [options]="planPickerChoices" [value]="planPickerKey" (valueChange)="choosePlanFilter($event)" />
           <i class="fa-solid fa-chevron-down filter-icon-left select-chevron"></i>
         </div>
       </div>
@@ -614,7 +604,7 @@
                 'plan-rejected': getBatchPlanStatus(batch) === 'مرفوضة',
                 'plan-empty': getBatchPlanStatus(batch) === 'لم تُرفع بعد'
               }">
-                {{ getBatchPlanStatus(batch) }}
+                {{ batchPlanLabel(getBatchPlanStatus(batch)) }}
               </span>
             </td>
 
@@ -700,9 +690,7 @@
           البرنامج: <strong>{{ getProgramName(selectedPlanBatch()) }}</strong></p>
         <p class="plan-sub" *ngIf="selectedPlan() as plan">
           رقم الخطة: <strong>{{ plan.planId }}</strong> ·
-          حالة الخطة: <strong>{{ plan.approvalStatus === 1 ? 'بانتظار الاعتماد' :
-            plan.approvalStatus === 2 ? 'معتمدة' :
-            plan.approvalStatus === 3 ? 'مرفوضة' : 'مسودة' }}</strong>
+          حالة الخطة: <strong>{{ constants.administrativeLabel('NFD_CPA_STAT', plan.approvalStatus ?? plan.ApprovalStatus) }}</strong>
         </p>
       </div>
       <button type="button" (click)="closePlanModal()" class="modal-close-btn">&times;</button>
@@ -752,7 +740,7 @@
             <div *ngFor="let itm of stage.items" class="stage-item-row">
               <i class="fa-regular fa-circle-check text-emerald"></i>
               <span class="item-title">{{ itm.title || itm.name }}</span>
-              <span class="item-type-badge">{{ itm.itemType === 0 || itm.itemType === 'Task' ? 'مهمة' : itm.itemType === 1 || itm.itemType === 'Project' ? 'مشروع' : 'عنصر تدريبي' }}</span>
+              <span class="item-type-badge">{{ constants.administrativeLabel('NFD_CPI_TYPE', itm.itemType) }}</span>
             </div>
           </div>
         </div>
@@ -2385,12 +2373,7 @@
 
       <div class="form-group">
         <label class="form-label">حالة الدفعة <span class="required-star">*</span></label>
-        <select formControlName="status" class="form-select text-right">
-          <option [ngValue]="0">قادمة</option>
-          <option [ngValue]="1">جارية</option>
-          <option [ngValue]="2">مكتملة</option>
-          <option [ngValue]="3">ملغاة</option>
-        </select>
+        <app-catalog-picker caption="حالة الدفعة" [options]="batchStatusChoices" [value]="batchStatusKeys[editBatchForm.controls['status'].value]" [fallbackLabel]="batchStatusFallback[batchStatusKeys[editBatchForm.controls['status'].value]] || ''" (valueChange)="editBatchForm.controls['status'].setValue(batchStatusKeys.indexOf($event))" />
       </div>
 
       

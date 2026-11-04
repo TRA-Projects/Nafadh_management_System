@@ -1,4 +1,5 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
+import { certificateDocument } from '../../../../core/models/enums';
 import { CommonModule } from '@angular/common';
 import { AdminApi } from '../../services/admin-api';
 import { forkJoin, of } from 'rxjs';
@@ -24,6 +25,7 @@ export interface TraineeDto {
   enrollmentId: number;
   fullName: string;
   isIssued: boolean;
+  type?: string | number;
   fileUrl?: string;
   grade?: string;
   gradeLabel?: string;
@@ -33,6 +35,7 @@ export interface TraineeDto {
 }
 
 export interface ActiveCertificateModal {
+  document: ReturnType<typeof certificateDocument>;
   traineeName: string;
   traineeId: number;
   enrollmentId: number;
@@ -358,6 +361,7 @@ export class AdminCertificates implements OnInit {
         enrollmentId: cleanEId,
         fullName: t.fullName || 'متدرب',
         isIssued: !!t.isIssued,
+        type: t.type,
         fileUrl: t.fileUrl || undefined,
         grade: gradeFormatted,
         gradeLabel: this.getGradeLabel(gradeFormatted),
@@ -641,6 +645,7 @@ export class AdminCertificates implements OnInit {
 
     return {
       traineeName: trainee.fullName,
+      document: certificateDocument(trainee.type),
       traineeId: trainee.traineeId,
       enrollmentId: trainee.enrollmentId,
       trackName: batch?.trackName || 'البرنامج التدريبي المعتمد',
@@ -703,7 +708,7 @@ export class AdminCertificates implements OnInit {
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>شهادة إتمام تدريب - ${this.activeCertData()?.traineeName || ''}</title>
+  <title>${this.activeCertData()?.document.ar} - ${this.activeCertData()?.traineeName || ''}</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   ${styles}
   <style>
@@ -836,7 +841,7 @@ export class AdminCertificates implements OnInit {
         const certObj = res?.certificate || res;
         const newFileUrl = certObj?.fileUrl || res?.certificateUrl || trainee.fileUrl;
 
-        this.updateTraineeStatusInState(eId, true, newFileUrl);
+        this.updateTraineeStatusInState(eId, true, newFileUrl, certObj?.type);
 
         if (batch) {
           this.refreshBatchStatus(batch.batchId || batch.id);
@@ -852,6 +857,7 @@ export class AdminCertificates implements OnInit {
           this.viewSingleCertificate({
             ...trainee,
             isIssued: true,
+            type: certObj?.type,
             fileUrl: newFileUrl
           });
         }
@@ -1053,7 +1059,8 @@ export class AdminCertificates implements OnInit {
   private updateTraineeStatusInState(
     enrollmentId: number,
     isIssued: boolean,
-    fileUrl?: string
+    fileUrl?: string,
+    type?: string | number
   ): void {
     const today = new Date().toISOString().slice(0, 10);
     this.selectedBatchTrainees.update(list =>
@@ -1062,6 +1069,7 @@ export class AdminCertificates implements OnInit {
           ? {
               ...t,
               isIssued,
+              type: type ?? t.type,
               issueDate: today,
               fileUrl: fileUrl || t.fileUrl
             }

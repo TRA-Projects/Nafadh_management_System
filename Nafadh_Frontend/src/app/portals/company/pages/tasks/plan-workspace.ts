@@ -1,3 +1,5 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -11,10 +13,7 @@ import {
   CoursePlanNoteDto,
   CoursePlanStageDto,
   CoursePlanTrainerOptionDto,
-  EXECUTION_LABELS,
-  ITEM_TYPE_LABELS,
-  PRIORITY_LABELS,
-  PROGRESS_LABELS,
+  PlanExecutionStatus,
   PlanItemType,
   PlanPriority,
   PlanProgressStatus,
@@ -78,11 +77,12 @@ interface ReadinessCheck {
 /** Company Portal — one course plan: stages, tasks/projects, approval and execution tracking. */
 @Component({
   selector: 'app-company-plan-workspace',
-  imports: [FormsModule, RouterLink],
+  imports: [CatalogPicker, FormsModule, RouterLink],
   templateUrl: './plan-workspace.html',
   styleUrl: './tasks.scss',
 })
 export class CompanyPlanWorkspace implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private readonly api = inject(CompanyApi);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
@@ -120,6 +120,12 @@ export class CompanyPlanWorkspace implements OnInit {
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly today = toInputDate(new Date());
+  get itemTypes() {
+    return this.constants.supportedChoices('NFD_CPI_TYPE', (['Task', 'Project'] as const).map(value => ({value, label: this.typeLabel(value)})));
+  }
+  get itemPriorities() {
+    return this.constants.supportedChoices('NFD_TSK_PRI', this.priorities.map(value => ({value, label: this.priorityLabel(value)})));
+  }
   readonly priorities: PlanPriority[] = ['Low', 'Medium', 'High', 'Critical'];
   readonly progressOptions: PlanProgressStatus[] = ['NotStarted', 'InProgress', 'Completed'];
   readonly formatDate = formatDate;
@@ -138,9 +144,15 @@ export class CompanyPlanWorkspace implements OnInit {
       if (p.executionStatus === 'Completed') current = 4;
     }
 
-    const labels = ['مسودة', 'اعتماد الهيئة', 'معتمدة', 'قيد التنفيذ', 'مكتمل'];
-    return labels.map((label, i) => ({
-      label,
+    const steps = [
+      { id: 'preparation', label: this.approvalLabel(p.approvalStatus === 'Rejected' ? 'Rejected' : 'Draft') },
+      { id: 'PendingApproval', label: this.approvalLabel('PendingApproval') },
+      { id: 'Approved', label: this.approvalLabel('Approved') },
+      { id: 'InProgress', label: this.executionLabel('InProgress') },
+      { id: 'Completed', label: this.executionLabel('Completed') },
+    ];
+    return steps.map((step, i) => ({
+      ...step,
       state: i < current ? 'done' : i === current ? 'current' : 'todo',
       rejected: i === 0 && p.approvalStatus === 'Rejected',
     }));
@@ -204,7 +216,7 @@ export class CompanyPlanWorkspace implements OnInit {
     for (const stage of p.stages) {
       list.push({ value: `s:${stage.stageId}`, label: `مرحلة: ${stage.title}` });
       for (const item of stage.items) {
-        list.push({ value: `i:${item.itemId}`, label: `${ITEM_TYPE_LABELS[item.itemType]}: ${item.title}` });
+        list.push({ value: `i:${item.itemId}`, label: `${this.typeLabel(item.itemType)}: ${item.title}` });
       }
     }
     return list;
@@ -214,6 +226,7 @@ export class CompanyPlanWorkspace implements OnInit {
 
   // ── lifecycle ──
   ngOnInit(): void {
+    this.constants.ensure('NFD_TSK_PRI', 'NFD_CPE_STAT', 'NFD_CPI_TYPE', 'NFD_CPP_STAT');
     this.planId = Number(this.route.snapshot.paramMap.get('id'));
     this.load();
 
@@ -304,7 +317,7 @@ export class CompanyPlanWorkspace implements OnInit {
       },
       resume: {
         title: 'استئناف الكورس',
-        text: 'سيعود الكورس إلى حالة قيد التنفيذ.',
+        text: `سيعود الكورس إلى حالة «${this.executionLabel('InProgress')}».`,
         danger: false,
         confirmLabel: 'استئناف',
       },
@@ -545,6 +558,11 @@ export class CompanyPlanWorkspace implements OnInit {
     const f = this.itemForm;
     const stage = p?.stages.find((s) => s.stageId === f.stageId);
     if (!p || !stage) return;
+    const original = stage.items.find(item => item.itemId === f.itemId);
+    if ((original?.itemType !== f.itemType && !this.constants.isSelectable('NFD_CPI_TYPE', f.itemType))
+      || (original?.priority !== f.priority && !this.constants.isSelectable('NFD_TSK_PRI', f.priority))) {
+      return this.formError.set('اختر نوعًا وأولوية مفعّلين للعنصر.');
+    }
 
     if (!f.title.trim()) return this.formError.set('العنوان مطلوب.');
     if (!f.dueDate) return this.formError.set('الموعد النهائي مطلوب.');
@@ -563,7 +581,7 @@ export class CompanyPlanWorkspace implements OnInit {
       trainerId: f.trainerId,
     };
 
-    const label = ITEM_TYPE_LABELS[f.itemType];
+    const label = this.typeLabel(f.itemType);
 
     this.submitForm(
       f.itemId
@@ -666,11 +684,11 @@ export class CompanyPlanWorkspace implements OnInit {
   // Presentation helpers
   // ============================================================
 
-  approvalLabel = (s: keyof typeof APPROVAL_LABELS) => APPROVAL_LABELS[s];
-  executionLabel = (s: keyof typeof EXECUTION_LABELS) => EXECUTION_LABELS[s];
-  progressLabel = (s: PlanProgressStatus) => PROGRESS_LABELS[s];
-  priorityLabel = (s: PlanPriority) => PRIORITY_LABELS[s];
-  typeLabel = (s: PlanItemType) => ITEM_TYPE_LABELS[s];
+  approvalLabel = (s: keyof typeof APPROVAL_LABELS) => this.constants.administrativeLabel('NFD_CPA_STAT', s);
+  executionLabel = (s: PlanExecutionStatus) => this.constants.administrativeLabel('NFD_CPE_STAT', s);
+  progressLabel = (s: PlanProgressStatus) => this.constants.administrativeLabel('NFD_CPP_STAT', s);
+  priorityLabel = (s: PlanPriority) => this.constants.administrativeLabel('NFD_TSK_PRI', s);
+  typeLabel = (s: PlanItemType) => this.constants.administrativeLabel('NFD_CPI_TYPE', s);
 
   trackStage(_: number, s: CoursePlanStageDto): number {
     return s.stageId;

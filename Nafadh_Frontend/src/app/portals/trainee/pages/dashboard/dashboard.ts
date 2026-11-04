@@ -1,3 +1,4 @@
+import { traineeAttendanceKey } from '../../../../core/models/enums';
 import { Component, OnInit, signal, computed, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -448,7 +449,7 @@ export class TraineeDashboard implements OnInit {
           if (attendanceList && attendanceList.length > 0) {
             const total = attendanceList.length;
             const present = attendanceList.filter(
-              (a) => a.status === 'Present'
+              (a) => traineeAttendanceKey(a.status) === 'Present'
             ).length;
             const rate = total > 0 ? (present / total) * 100 : 0;
             this.attendanceRate.set(rate);

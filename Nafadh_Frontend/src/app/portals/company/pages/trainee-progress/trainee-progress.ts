@@ -14,6 +14,7 @@ import { catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { CompanyApi, CompanyQuizResult } from '../../services/company-api';
 import { EnrollmentDto, ProgressSummaryDto } from '../../../../core/models/dtos';
 import { NfdIcon } from '../../../../shared/ui/icon/icon';
+import { NafadhEvaluationTypesService } from '../../../../core/services/nafadh-evaluation-types.service';
 
 /* ------------------------------------------------------------------ */
 /*  View models (mirror the backend EvaluationDTO / criteria breakdown) */
@@ -76,13 +77,7 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 // Labels for the NFD_EvaluationType enum names returned by the API.
-const TYPE_LABELS: Record<string, string> = {
-  Technical: 'تقييم تقني',
-  Behavioral: 'تقييم سلوكي',
-  Final: 'التقييم النهائي',
-  CompanyEvaluation: 'تقييم الشركة',
-  TrainerPerformance: 'أداء المدرب'
-};
+
 
 // Types that describe the trainer, not the trainee, so they stay out of this page.
 const EXCLUDED_TYPES = new Set(['TrainerPerformance']);
@@ -121,6 +116,7 @@ export class CompanyTraineeProgress {
   private readonly router = inject(Router);
   private readonly location = inject(Location);
   private readonly api = inject(CompanyApi);
+  readonly evaluationTypes = inject(NafadhEvaluationTypesService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly ringCircumference = RING_CIRCUMFERENCE;
@@ -148,6 +144,7 @@ export class CompanyTraineeProgress {
   private currentEnrollmentId = 0;
 
   constructor() {
+    this.evaluationTypes.refresh();
     this.route.paramMap
       .pipe(
         map((params) => Number(params.get('id'))),
@@ -346,7 +343,7 @@ export class CompanyTraineeProgress {
       return value == null ? null : this.round(Number(value));
     };
 
-    return BUCKET_ORDER.map((name) => ({ name, label: TYPE_LABELS[name], value: read(name) })).filter(
+    return BUCKET_ORDER.map((name) => ({ name, label: this.evaluationTypes.label(name), value: read(name) })).filter(
       (row) => row.value !== null
     );
   });
@@ -515,7 +512,7 @@ export class CompanyTraineeProgress {
   }
 
   typeLabel(type?: string | null): string {
-    return type ? TYPE_LABELS[type] ?? type : 'تقييم';
+    return type ? this.evaluationTypes.label(type) : 'تقييم';
   }
 
   tone(score: number | null): Tone | 'none' {

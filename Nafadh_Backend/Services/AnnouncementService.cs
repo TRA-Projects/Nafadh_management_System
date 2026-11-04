@@ -14,9 +14,12 @@ namespace Nafadh_Backend.Services
     {
         private readonly IAnnouncementRepository _repository;
 
-        public AnnouncementService(IAnnouncementRepository repository)
+        private readonly ITrainingConstantsService _constants;
+
+        public AnnouncementService(IAnnouncementRepository repository, ITrainingConstantsService constants)
         {
             _repository = repository;
+            _constants = constants;
         }
 
         // =====================================================
@@ -92,6 +95,7 @@ namespace Nafadh_Backend.Services
         public async Task CreateAsync(
             CreateAnnouncementDTO dto)
         {
+            await CatalogSelectionPolicy.RequireActiveAsync(_constants, dto.ScopeType);
             var announcement = new NFD_Announcement
             {
                 ScopeType = dto.ScopeType,
@@ -119,6 +123,9 @@ namespace Nafadh_Backend.Services
                 throw new KeyNotFoundException(
                     "Announcement not found");
             }
+
+            if (announcement.ScopeType != dto.ScopeType)
+                await CatalogSelectionPolicy.RequireActiveAsync(_constants, dto.ScopeType);
 
             announcement.ScopeType =
                 dto.ScopeType;

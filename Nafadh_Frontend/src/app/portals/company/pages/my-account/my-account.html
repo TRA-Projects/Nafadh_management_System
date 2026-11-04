@@ -134,11 +134,9 @@
             {{ account.supervisorId }}
           </div>
 
-          <div class="badge-box badge-green">
+          <div class="badge-box" [class.badge-green]="account.userStatus === 'Active'">
             {{
-              account.userStatus === 'Active'
-              ? 'نشط'
-              : account.userStatus || 'غير محدد'
+              constants.administrativeLabel('NFD_USR_STAT', account.userStatus)
             }}
           </div>
 
@@ -371,7 +369,7 @@
                 <div class="info-cell">
                   <label>حالة الحساب</label>
                   <span class="val">
-                    {{ account.userStatus || 'غير محدد' }}
+                    {{ constants.administrativeLabel('NFD_USR_STAT', account.userStatus) }}
                   </span>
                 </div>
 
@@ -387,7 +385,7 @@
                 <div class="info-cell">
                   <label>حالة الشركة</label>
                   <span class="val">
-                    {{ account.companyStatus || 'غير محدد' }}
+                    {{ constants.administrativeLabel('NFD_CMP_STAT', account.companyStatus) }}
                   </span>
                 </div>
 

@@ -1,4 +1,6 @@
-import {
+import { administrativeValue } from '../../../../core/models/administrative-constants';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { inject,
   Component,
   OnInit,
   signal,
@@ -41,6 +43,7 @@ type SupportTab = 'messages' | 'batch';
   styleUrl: './support.scss'
 })
 export class TraineeSupport implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
 
   // =========================================================
   // Active Tab
@@ -217,6 +220,7 @@ export class TraineeSupport implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_WDR_STAT', 'NFD_TIC_STAT');
     this.loadConversations();
     this.loadCurrentTraineeData();
   }
@@ -243,8 +247,7 @@ export class TraineeSupport implements OnInit {
   // =========================================================
 
   isWithdrawalRequest(conversation: any): boolean {
-    if (!conversation) return false;
-    return String(conversation?.subject ?? '').trim() === 'طلب انسحاب';
+    return conversation?.isWithdrawal === true && conversation.originalRequest != null;
   }
 
   getWithdrawalStatus(
@@ -252,21 +255,13 @@ export class TraineeSupport implements OnInit {
   ): 'pending' | 'approved' | 'rejected' | null {
     if (!this.isWithdrawalRequest(conversation)) return null;
 
-    let req: any = conversation.originalRequest;
-
-    if (!req) {
-      const requests = this.withdrawalRequests();
-      req = requests && requests.length > 0 ? requests[0] : null;
-    }
-
-    if (!req) return 'pending';
-
-    const statusStr = String(req.status).toLowerCase();
-
-    if (statusStr === '1' || statusStr === 'approved') return 'approved';
-    if (statusStr === '2' || statusStr === 'rejected') return 'rejected';
-
-    return 'pending';
+    const req = conversation.originalRequest;
+    if (!req) return null;
+    const key = administrativeValue('NFD_WDR_STAT', req.status)?.key;
+    if (key === 'Pending') return 'pending';
+    if (key === 'Approved') return 'approved';
+    if (key === 'Rejected') return 'rejected';
+    return null;
   }
 
   // =========================================================
@@ -521,7 +516,7 @@ export class TraineeSupport implements OnInit {
           subject: 'طلب انسحاب',
           receiverType: 'Authority',
           messages: messages,
-          withdrawalStatus: this.getWithdrawalStatus({ originalRequest: req }),
+          originalRequest: req,
           isWithdrawal: true
         } as any);
       }

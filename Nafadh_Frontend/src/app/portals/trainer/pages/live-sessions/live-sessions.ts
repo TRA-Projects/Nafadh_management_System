@@ -1,4 +1,8 @@
 
+import { inject as injectCatalog } from '@angular/core';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { traineeAttendanceKey } from '../../../../core/models/enums';
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import {
   Component,
   computed,
@@ -52,7 +56,7 @@ interface LiveSession {
 @Component({
   selector: 'app-trainer-live-sessions',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './live-sessions.html',
   styleUrl: './live-sessions.scss'
 })
@@ -89,6 +93,21 @@ activeTab = signal<SessionTab>(
 
   private timeInterval?: ReturnType<typeof setInterval>;
 
+  readonly constants = injectCatalog(NafadhConstantsService);
+  private originalAttendance = new Map<number, string | undefined>();
+  readonly attendanceKey = traineeAttendanceKey;
+  get sessionAttendanceChoices() {
+    return this.constants.supportedChoices('NFD_ATT_STAT', this.attendanceOptions.map(o => ({value: traineeAttendanceKey(o.value)!,label:o.label})));
+  }
+  chooseSessionAttendance(traineeId: number, key: string) {
+    const option = this.attendanceOptions.find(o => traineeAttendanceKey(o.value) === key);
+    if (option) this.setAttendanceStatus(traineeId, option.value);
+  }
+  sessionAttendanceLabel(value: unknown): string {
+    const key = traineeAttendanceKey(value);
+    const option = this.attendanceOptions.find(o => traineeAttendanceKey(o.value) === key);
+    return key ? this.constants.label('NFD_ATT_STAT', key, option?.label) : '';
+  }
   attendanceOptions: {
     value: TrainerAttendanceStatus;
     label: string;
@@ -351,6 +370,7 @@ getSessionStatusLabel(session: LiveSession): string {
   });
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_ATT_STAT');
     if (this.batchId <= 0) {
       this.errorMessage.set('لم يتم تحديد الدفعة.');
       return;
@@ -834,6 +854,7 @@ next: () => {
       )
       .subscribe({
         next: rows => {
+          this.originalAttendance = new Map(rows.map(row => [row.traineeId, traineeAttendanceKey(row.status)]));
           this.attendanceRows.set(rows);
         },
         error: err => {
@@ -901,6 +922,11 @@ next: () => {
       return;
     }
 
+    const key = traineeAttendanceKey(row.status);
+    if (!key || (this.originalAttendance.get(row.traineeId) !== key && !this.constants.isSelectable('NFD_ATT_STAT', key))) {
+      this.attendanceError.set('اختر حالة حضور مفعّلة.');
+      return;
+    }
     if (this.attendanceSavingId() !== null) return;
 
     this.attendanceSavingId.set(row.traineeId);
@@ -920,6 +946,7 @@ next: () => {
       )
       .subscribe({
         next: saved => {
+          this.originalAttendance.set(row.traineeId, traineeAttendanceKey(saved.status));
           this.attendanceRows.update(rows =>
             rows.map(item =>
               item.traineeId === row.traineeId

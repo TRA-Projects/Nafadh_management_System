@@ -125,9 +125,12 @@
           @if (enrollment()?.departmentName) {
             <span class="pill pill-muted">القسم: {{ enrollment()?.departmentName }}</span>
           }
-          <span class="pill pill-status" [class.pill-withdrawn]="withdrawalStatus() === 'Approved'">
+          <span class="pill pill-status" [class.pill-withdrawn]="enrollment()?.completionStatus === 'Dropped'">
             <span class="status-dot"></span>{{ enrollmentStatusLabel() }}
           </span>
+          @if (latestRequestStatus() !== null) {
+            <span class="pill">طلب الانسحاب · {{ constants.administrativeLabel('NFD_WDR_STAT', latestRequestStatus()) }}</span>
+          }
 
         </div>
 
@@ -311,7 +314,7 @@
                   <span class="stage-name">الوحدة {{ s.orderIndex }}: {{ s.module.title }}</span>
                 </div>
                 <span class="pill" [class.pill-done]="s.statusRaw === 'Completed'" [class.pill-progress]="s.statusRaw === 'InProgress'" [class.pill-muted]="s.statusRaw === 'NotStarted'">
-                  {{ s.statusLabel }}
+                  {{ constants.administrativeLabel('NFD_MOD_STAT', s.statusRaw) }}
                 </span>
               </div>
               <div class="stage-progress-track">
@@ -371,8 +374,8 @@
           @for (w of warnings(); track w.warningId) {
             <div class="warning-item" [attr.data-level]="w.level">
               <div class="warning-main">
-                <span class="warning-type">{{ warningTypeLabels[w.type] }}</span>
-                <span class="warning-level" [attr.data-level]="w.level">{{ warningLevelLabels[w.level] }}</span>
+                <span class="warning-type">{{ warningTypes.label(w.type) }}</span>
+                <span class="warning-level" [attr.data-level]="w.level">{{ constants.administrativeLabel('NFD_WRN_LVL', w.level) }}</span>
               </div>
               @if (w.evidence) {
                 <p class="warning-evidence">{{ w.evidence }}</p>
@@ -512,6 +515,9 @@
           <button class="prof-close-btn" (click)="showWithdrawalModal.set(false)">×</button>
         </div>
         <div class="prof-modal-body" style="direction: rtl; text-align: right;">
+          @if (latestRequestStatus() !== null) {
+            <p>حالة طلب الانسحاب · {{ constants.administrativeLabel('NFD_WDR_STAT', latestRequestStatus()) }}</p>
+          }
           <label class="prof-label">سبب الانسحاب (المقدم من المتدرب أو المسجل) *</label>
           <textarea
             rows="2"

@@ -702,14 +702,7 @@
 
                               <span class="material-type">
 
-                                @switch (material.fileType) {
-                                  @case ('Pdf') { PDF }
-                                  @case ('Video') { فيديو }
-                                  @case ('Image') { صورة }
-                                  @case ('Document') { مستند }
-                                  @case ('Link') { رابط }
-                                  @default { ملف }
-                                }
+                                {{ constants.administrativeLabel('NFD_FIL_TYPE', material.fileType) }}
 
                               </span>
 
@@ -1090,7 +1083,7 @@
             <strong>{{ selectedFile.name }}</strong>
             <span>
               النوع المكتشف:
-              {{ selectedFileType || 'غير محدد' }}
+              {{ selectedFileType ? constants.administrativeLabel('NFD_FIL_TYPE', selectedFileType) : 'غير محدد' }}
             </span>
           </div>
 

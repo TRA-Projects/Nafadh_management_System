@@ -20,11 +20,14 @@ namespace Nafadh_Backend.Services
         private readonly ISessionRepository _sessionRepository;
         private readonly IEnrollmentRepository _enrollmentRepository;
 
+        private readonly ITrainingConstantsService _constants;
+
         public SessionAttendanceService(
             ISessionAttendanceRepository repository,
             ISessionRepository sessionRepository,
-            IEnrollmentRepository enrollmentRepository)
+            IEnrollmentRepository enrollmentRepository, ITrainingConstantsService constants)
         {
+            _constants = constants;
             _repository = repository;
             _sessionRepository = sessionRepository;
             _enrollmentRepository = enrollmentRepository;
@@ -40,6 +43,8 @@ namespace Nafadh_Backend.Services
         {
             if (dto.Records == null || dto.Records.Count == 0) return false;
 
+            foreach (var status in dto.Records.Select(r => r.Status).Distinct())
+                await CatalogSelectionPolicy.RequireActiveAsync(_constants, status);
             var entities = dto.Records.Select(r => new NFD_SessionAttendance
             {
                 SessionId = dto.SessionId,
@@ -57,6 +62,8 @@ namespace Nafadh_Backend.Services
             var record = await _repository.GetByIdAsync(id);
             if (record == null) return false;
 
+            if (record.Status != dto.Status)
+                await CatalogSelectionPolicy.RequireActiveAsync(_constants, dto.Status);
             record.Status = dto.Status;
             record.Note = dto.Note;
 

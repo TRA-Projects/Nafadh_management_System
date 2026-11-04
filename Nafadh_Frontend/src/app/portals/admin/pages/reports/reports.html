@@ -584,13 +584,7 @@
           </option>
         </select>
 
-        <select class="custom-select-filter" [(ngModel)]="supervisorStatusFilter" (change)="applySupervisorFilters()">
-
-          <option value="ALL">جميع الحالات</option>
-          <option value="Active">نشط</option>
-          <option value="Inactive">غير نشط</option>
-          <option value="Suspended">موقوف</option>
-        </select>
+        <app-catalog-picker caption="حالة المشرف" [options]="supervisorChoices" [value]="supervisorStatusFilter" (valueChange)="supervisorStatusFilter = $event; applySupervisorFilters()" />
 
         <button class="btn-reset-filters" *ngIf="supervisorSearchTerm ||
                supervisorCompanyFilter !== 'ALL' ||
@@ -1209,13 +1203,7 @@
 
             <!-- Attendance Status Filter -->
             <label for="attendance-status">حالة الحضور:</label>
-            <select id="attendance-status" class="custom-select-filter" [(ngModel)]="trainerAttendanceStatusFilter">
-              <option value="ALL">جميع الحالات</option>
-              <option value="Present">حاضر</option>
-              <option value="Late">متأخر</option>
-              <option value="Absent">غائب</option>
-              <option value="EarlyLeave">انصراف مبكر</option>
-            </select>
+            <app-catalog-picker caption="حالة حضور المدرب" [options]="attendanceChoices" [value]="trainerAttendanceStatusFilter" (valueChange)="trainerAttendanceStatusFilter = $event" />
 
             <!-- Confirmation Filter -->
             <label for="attendance-confirmation">حالة التأكيد:</label>

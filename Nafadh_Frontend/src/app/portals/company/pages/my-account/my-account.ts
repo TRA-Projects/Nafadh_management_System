@@ -1,3 +1,4 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,6 +17,7 @@ type AccountTab = 'info' | 'permissions' | 'activities';
   styleUrls: ['./my-account.scss'],
 })
 export class CompanyMyAccount implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
 
   private readonly api = inject(CompanyApi);
   readonly auth = inject(AuthService);

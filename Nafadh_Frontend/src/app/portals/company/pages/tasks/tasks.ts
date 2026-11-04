@@ -1,13 +1,13 @@
+import { CatalogPicker } from '../../../../core/models/catalog-picker';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {
-  APPROVAL_LABELS,
   CoursePlanSummaryDto,
   CoursePlansCountsDto,
-  EXECUTION_LABELS,
   PlanApprovalStatus,
   CoursePlanProgramOptionDto,
   CoursePlanLookupsDto,
@@ -40,11 +40,12 @@ interface PlanForm {
 /** Company Portal — Tasks & Projects: the company's course plans. */
 @Component({
   selector: 'app-company-tasks',
-  imports: [FormsModule],
+  imports: [CatalogPicker, FormsModule],
   templateUrl: './tasks.html',
   styleUrl: './tasks.scss',
 })
 export class CompanyTasks implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private readonly api = inject(CompanyApi);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -305,6 +306,18 @@ export class CompanyTasks implements OnInit {
 
   readonly today = toInputDate(new Date());
 
+  get planChoices() {
+    return this.filters.map(({key:value,label}) => {
+      const group = ['InProgress','OnHold','Completed'].includes(value) ? 'NFD_CPE_STAT' : 'NFD_CPA_STAT';
+      return value === 'all' ? {value,label,labelEn:'All'} : this.constants.supportedChoices(group,[{value,label}],true)[0];
+    });
+  }
+  filterLabel(key: PlanFilter, fallback: string): string {
+    const group = key === 'InProgress' || key === 'OnHold' || key === 'Completed'
+      ? 'NFD_CPE_STAT' : 'NFD_CPA_STAT';
+    return this.constants.administrativeLabel(group, key, fallback);
+  }
+
   readonly filters: {
     key: PlanFilter;
     label: string;
@@ -320,6 +333,7 @@ export class CompanyTasks implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_CPE_STAT', 'NFD_CPA_STAT');
     this.load();
   }
 
@@ -568,7 +582,7 @@ export class CompanyTasks implements OnInit {
   approvalLabel(
     status: PlanApprovalStatus
   ): string {
-    return APPROVAL_LABELS[status];
+    return this.constants.administrativeLabel('NFD_CPA_STAT', status);
   }
 
   /** Badge text for the execution phase; only relevant after approval. */
@@ -576,7 +590,7 @@ export class CompanyTasks implements OnInit {
     plan: CoursePlanSummaryDto
   ): string | null {
     return plan.approvalStatus === 'Approved'
-      ? EXECUTION_LABELS[plan.executionStatus]
+      ? this.constants.administrativeLabel('NFD_CPE_STAT', plan.executionStatus)
       : null;
   }
 

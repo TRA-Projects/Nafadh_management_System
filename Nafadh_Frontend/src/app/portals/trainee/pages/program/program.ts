@@ -1,4 +1,6 @@
 
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { moduleProgressKey } from '../../../../core/models/administrative-constants';
 import {
 
   Component,
@@ -152,6 +154,7 @@ export class TraineeProgram implements OnInit {
 
 
   private api = inject(TraineeApi);
+  readonly constants = inject(NafadhConstantsService);
 
   private auth = inject(AuthService);
 
@@ -499,6 +502,7 @@ export class TraineeProgram implements OnInit {
   // =====================================================
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_MOD_STAT');
 
     console.log('====================================');
 
@@ -1318,13 +1322,12 @@ export class TraineeProgram implements OnInit {
       let percentage = 0;
 
       if (progress) {
-        const status = String(progress.status ?? '').toLowerCase();
+        const status = moduleProgressKey(progress.status);
 
-        if (status === 'completed') {
+        if (status === 'Completed') {
           percentage = 100;
         } else if (
-          status === 'inprogress' ||
-          status === 'in_progress'
+          status === 'InProgress'
         ) {
           percentage = 50;
         } else {

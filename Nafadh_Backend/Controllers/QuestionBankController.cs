@@ -99,6 +99,14 @@ namespace Nafadh_Backend.Controllers
 
                 return Ok(createdQuestion);
             }
+            catch (CatalogSelectionPolicy.InactiveValueException ex)
+            {
+                return BadRequest(new { code = "CatalogValueInactive", message = ex.Message });
+            }
+            catch (CatalogSelectionPolicy.LookupUnavailableException)
+            {
+                return StatusCode(503, new { code = "CatalogUnavailable" });
+            }
             catch (ArgumentException ex)
             {
                 return BadRequest(new
@@ -168,6 +176,14 @@ namespace Nafadh_Backend.Controllers
                 {
                     message = "تم تحديث السؤال بنجاح."
                 });
+            }
+            catch (CatalogSelectionPolicy.InactiveValueException ex)
+            {
+                return BadRequest(new { code = "CatalogValueInactive", message = ex.Message });
+            }
+            catch (CatalogSelectionPolicy.LookupUnavailableException)
+            {
+                return StatusCode(503, new { code = "CatalogUnavailable" });
             }
             catch (ArgumentException ex)
             {

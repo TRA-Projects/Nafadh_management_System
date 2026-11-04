@@ -76,6 +76,8 @@ namespace Nafadh_Backend.Controllers
                 if (!success) return NotFound();
                 return NoContent();
             }
+            catch (CatalogSelectionPolicy.InactiveValueException) { return BadRequest(new { code = "CatalogValueInactive" }); }
+            catch (CatalogSelectionPolicy.LookupUnavailableException) { return StatusCode(503, new { code = "CatalogUnavailable" }); }
             catch (InvalidOperationException ex)
             {
                 return Conflict(new { message = ex.Message });
