@@ -65,12 +65,25 @@ namespace Nafadh_Backend
             builder.Services.AddDbContext<Nafadhcontext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            // Identity & Access (users, groups, templates/roles, pages) from the shared database,
+            // so one backend serves them. Same connection string as Nafadhcontext.
+            builder.Services.AddDbContext<Nafadh_Backend.IdentityAccess.IdentityAccessDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddScoped<Nafadh_Backend.IdentityAccess.IIdentityAccessAdminService, Nafadh_Backend.IdentityAccess.IdentityAccessAdminService>();
+
             // ── JWT Authentication ─────────────────────────────────────────────
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<IBiddingTokenService, BiddingTokenService>();
 
             var jwtKey = builder.Configuration["Jwt:Key"];
             var jwtIssuer = builder.Configuration["Jwt:Issuer"];
             var jwtAudience = builder.Configuration["Jwt:Audience"];
+
+            var biddingSecret = builder.Configuration["BiddingJwtSettings:Secret"]
+                ?? "TrainingModuleTrainingModuleTrainingModuleTrainingModuleTrainingModuleTrainingModule";
+            var biddingIssuer = builder.Configuration["BiddingJwtSettings:Issuer"] ?? "https://localhost:9494/";
+            var biddingAudience = builder.Configuration["BiddingJwtSettings:Audience"] ?? "https://localhost:9494/";
 
             builder.Services
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -89,30 +102,27 @@ namespace Nafadh_Backend
                         RoleClaimType = ClaimTypes.Role,
                         ClockSkew = TimeSpan.Zero,
                         IssuerSigningKey = new SymmetricSecurityKey(
-                                                       Encoding.UTF8.GetBytes(jwtKey))
+                            Encoding.UTF8.GetBytes(jwtKey))
                     };
+                })
+                .AddJwtBearer("BiddingBearer", options =>
+                {
+                    options.MapInboundClaims = false;
 
-                    options.Events = new JwtBearerEvents
+                    options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        OnAuthenticationFailed = context =>
-                        {
-                            var error = context.Exception.Message;
-                            return Task.CompletedTask;
-                        },
-                        OnTokenValidated = context =>
-                        {
-                            var claims = context.Principal.Claims.ToList();
-                            return Task.CompletedTask;
-                        },
-                        OnChallenge = context =>
-                        {
-                            var error = context.Error;
-                            var desc = context.ErrorDescription;
-                            return Task.CompletedTask;
-                        }
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = biddingIssuer,
+                        ValidAudience = biddingAudience,
+                        RoleClaimType = ClaimTypes.Role,
+                        ClockSkew = TimeSpan.FromMinutes(2),
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.ASCII.GetBytes(biddingSecret))
                     };
                 });
-
             builder.Services.AddAuthorization();
             // ── end JWT Authentication ─────────────────────────────────────────────
 
