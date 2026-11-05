@@ -6,10 +6,16 @@
 
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using IA = Nafadh_Backend.IdentityAccess;
 
 namespace Nafadh_Backend
 {
-    public class Nafadhcontext : DbContext
+    public class Nafadhcontext : IdentityDbContext<
+     IA.AppUser, IA.Roles, string,
+     IdentityUserClaim<string>, IA.AppUserRoles, IdentityUserLogin<string>,
+     IdentityRoleClaim<string>, IdentityUserToken<string>>
     {
         public Nafadhcontext(DbContextOptions<Nafadhcontext> options) : base(options)
         {
@@ -82,6 +88,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_TrainerCertificate> NFD_TrainerCertificates { get; set; }
         public DbSet<NFD_Report> NFD_Reports { get; set; }
         public DbSet<NFD_SystemSetting> NFD_SystemSettings { get; set; }
+        public virtual DbSet<SystemVariable> SystemVariables { get; set; }
         public DbSet<NFD_TraineePayment> NFD_TraineePayments { get; set; }
         public DbSet<NFD_QuizQuestion> NFD_QuizQuestions { get; set; }
 
@@ -110,8 +117,20 @@ namespace Nafadh_Backend
         public DbSet<NFD_LessonFeedback> NFD_LessonFeedbacks { get; set; }
         public DbSet<NFD_TraineeSkill> NFD_TraineeSkills { get; set; }
         public DbSet<NFD_WithdrawalRequest> NFD_WithdrawalRequests { get; set; }
+        public DbSet<NFD_NotificationTemplate> NFD_NotificationTemplates
+        { get; set; }
 
+        // Identity & Access (shared Bidding tables)
+        public DbSet<IA.Profile> Profiles { get; set; }
+        public DbSet<IA.UserType> UserTypes { get; set; }
+        public DbSet<IA.UserGroup> UserGroups { get; set; }
+        public DbSet<IA.Organization> Organizations { get; set; }
+        public DbSet<IA.AppPage> AppPages { get; set; }
+        public DbSet<IA.RolePage> RolePages { get; set; }
+        public DbSet<IA.SystemAuditTrail> SystemAuditTrails { get; set; }
         public DbSet<NFD_CompanySupervisorTrainer>
+
+
     NFD_CompanySupervisorTrainers
         { get; set; }
 
@@ -125,6 +144,52 @@ namespace Nafadh_Backend
         {
 
             base.OnModelCreating(modelBuilder);
+
+            // ---- SystemVariables ----
+            modelBuilder.Entity<SystemVariable>(entity =>
+            {
+                entity.ToTable("SystemVariables", "dbo");
+
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.VariableKey)
+                    .HasMaxLength(64)
+                    .IsRequired();
+
+                entity.Property(e => e.VariableName)
+                    .HasMaxLength(256)
+                    .IsRequired();
+
+                entity.Property(e => e.ValueType)
+                    .HasMaxLength(32)
+                    .IsRequired();
+
+                entity.Property(e => e.Value)
+                    .IsRequired();
+
+                entity.Property(e => e.Description)
+                    .HasMaxLength(512);
+
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnType("datetime2")
+                    .IsRequired();
+
+                entity.Property(e => e.UpdatedAt)
+                    .HasColumnType("datetime2")
+                    .IsRequired();
+
+                entity.Property(e => e.DescriptionAr)
+                    .HasMaxLength(512);
+
+                entity.Property(e => e.DescriptionEn)
+                    .HasMaxLength(512);
+
+                entity.Property(e => e.VariableNameAr)
+                    .HasMaxLength(256);
+
+                entity.Property(e => e.VariableNameEn)
+                    .HasMaxLength(256);
+            });
 
             // ---- NFD_User ----
             modelBuilder.Entity<NFD_User>(entity =>
@@ -1195,6 +1260,7 @@ namespace Nafadh_Backend
             // ---- Company Portal course plans ----
             modelBuilder.ConfigureCoursePlans();
 
+            IA.IdentityAccessModelConfiguration.Apply(modelBuilder);
 
             // ---- NFD_TraineeSkill ----
             modelBuilder.Entity<NFD_TraineeSkill>()
@@ -1264,6 +1330,39 @@ namespace Nafadh_Backend
                     .WithMany()
                     .HasForeignKey(x => x.TrainerId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+
+                modelBuilder.Entity<NFD_NotificationTemplate>(entity =>
+                {
+                    entity.ToTable("NFD_NotificationTemplates");
+
+                    entity.HasKey(x => x.Id);
+
+                    entity.HasIndex(x => x.Code)
+                        .IsUnique();
+
+                    entity.Property(x => x.Code)
+                        .HasMaxLength(100)
+                        .IsRequired();
+
+                    entity.Property(x => x.Name)
+                        .HasMaxLength(150)
+                        .IsRequired();
+
+                    entity.Property(x => x.PortalCode)
+                        .HasMaxLength(30)
+                        .IsRequired();
+
+                    entity.Property(x => x.Type)
+                        .HasMaxLength(20)
+                        .IsRequired();
+
+                    entity.Property(x => x.Subject)
+                        .HasMaxLength(250);
+
+                    entity.Property(x => x.Body)
+                        .IsRequired();
+                });
             });
         }
 

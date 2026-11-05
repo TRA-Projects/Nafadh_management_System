@@ -2,7 +2,7 @@
 
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { firstValueFrom } from 'rxjs';
@@ -56,10 +56,9 @@ export class SystemConfigurationPageComponent implements OnInit {
 
   readonly rowActionsMenuAria = $localize`:@@jobseeker.admin.systemConfig.rowActionsMenu:Row actions`;
 
-  private readonly pageCache = toSignal(this.store.select(adminSystemFeature.selectSystemVariablesPage), {
-    initialValue: null,
-  });
-
+private readonly pageCache = this.store.selectSignal(
+  adminSystemFeature.selectSystemVariablesPage
+);
   readonly rows = computed(() => this.pageCache()?.rows ?? []);
   readonly totalCount = computed(() => this.pageCache()?.total ?? 0);
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalCount() / this.pageSize())));

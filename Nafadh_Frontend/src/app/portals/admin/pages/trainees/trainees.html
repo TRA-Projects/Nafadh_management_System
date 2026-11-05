@@ -84,7 +84,7 @@
       <div class="kpi-icon amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
       <div class="kpi-info">
         <span class="kpi-value">{{ stats().pendingWithdrawals }}</span>
-        <span class="kpi-label">طلبات انسحاب معلّقة</span>
+        <span class="kpi-label">طلبات الانسحاب · {{ constants.administrativeLabel('NFD_WDR_STAT', 'Pending') }}</span>
       </div>
     </div>
 
@@ -97,7 +97,7 @@
     </div>
   </div>
 
-  <!-- شريط تنبيه طلبات الانسحاب المعلقة -->
+  <!-- شريط طلبات الانسحاب · {{ constants.administrativeLabel('NFD_WDR_STAT', 'Pending') }} -->
   @if (stats().pendingWithdrawals > 0) {
     <div class="withdrawal-alert-banner">
       <div class="banner-right">
@@ -108,7 +108,7 @@
         </div>
       </div>
       <button class="btn btn-secondary" (click)="onStatusFilterChange('WITHDRAWAL_PENDING')">
-        عرض الطلبات المعلقة
+        عرض الطلبات · {{ constants.administrativeLabel('NFD_WDR_STAT', 'Pending') }}
       </button>
     </div>
   }
@@ -258,9 +258,9 @@
                     <span class="status-badge" [ngStyle]="getStatusStyle(tr)">
                       {{ labelFor(tr) }}
                     </span>
-                    @if (tr.withdrawalStatus === 'Pending') {
+                    @if (tr.withdrawalRequestId && tr.withdrawalStatus !== 'None') {
                       <span class="withdrawal-reason-hint" (click)="openWithdrawalModal(tr)">
-                        <i class="fa-solid fa-bell"></i> بانتظار اعتماد الهيئة
+                        <i class="fa-solid fa-bell"></i> طلب الانسحاب · {{ constants.administrativeLabel('NFD_WDR_STAT', tr.withdrawalStatus) }}
                       </span>
                     }
                   </div>
@@ -481,6 +481,9 @@
         </div>
 
         <div class="modal-body">
+          @if (activeTrainee()!.withdrawalRequestId && activeTrainee()!.withdrawalStatus !== 'None') {
+            <p>حالة طلب الانسحاب · {{ constants.administrativeLabel('NFD_WDR_STAT', activeTrainee()!.withdrawalStatus) }}</p>
+          }
           @if (activeTrainee()!.withdrawalStatus === 'Pending') {
             <div class="alert-box-warning">
               <i class="fa-solid fa-bell"></i>
@@ -1035,21 +1038,22 @@
             <div class="status-tabs-group">
               <label class="track-dropdown-label">تصفية بحالة الحضور</label>
               <div class="status-tabs-wrap">
-                <button type="button" class="status-tab" [class.active]="attendanceStatusFilter() === 'ALL'" (click)="onAttendanceStatusFilterChange('ALL')">
+              <app-catalog-picker caption="تصفية حضور المتدرب" [options]="attendancePickerChoices" [value]="attendanceStatusFilter()" (valueChange)="onAttendanceStatusFilterChange($event)" />
+                <span>
                   الكل ({{ attendanceSummary().total }})
-                </button>
-                <button type="button" class="status-tab present" [class.active]="attendanceStatusFilter() === 'Present'" (click)="onAttendanceStatusFilterChange('Present')">
+                </span>
+                <span>
                   حاضر ({{ attendanceSummary().present }})
-                </button>
-                <button type="button" class="status-tab late" [class.active]="attendanceStatusFilter() === 'Late'" (click)="onAttendanceStatusFilterChange('Late')">
+                </span>
+                <span>
                   متأخر ({{ attendanceSummary().late }})
-                </button>
-                <button type="button" class="status-tab absent" [class.active]="attendanceStatusFilter() === 'Absent'" (click)="onAttendanceStatusFilterChange('Absent')">
+                </span>
+                <span>
                   غائب ({{ attendanceSummary().absent }})
-                </button>
-                <button type="button" class="status-tab excused" [class.active]="attendanceStatusFilter() === 'Excused'" (click)="onAttendanceStatusFilterChange('Excused')">
+                </span>
+                <span>
                   بعذر ({{ attendanceSummary().excused }})
-                </button>
+                </span>
               </div>
             </div>
 

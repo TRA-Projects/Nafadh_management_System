@@ -5,6 +5,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Filters;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -21,6 +22,7 @@ namespace Nafadh_Backend.Controllers
         }
 
         [HttpGet]
+        [RequirePagePermission("nf.admin.system-settings", "View")]
         public async Task<IActionResult> GetAllSystemSettings()
         {
             var settings = await _service.GetAllSystemSettingsAsync();
@@ -28,8 +30,8 @@ namespace Nafadh_Backend.Controllers
             return Ok(settings);
         }
 
-
         [HttpGet("{key}")]
+        [RequirePagePermission(new[] { "nf.admin.system-settings", "nf.company.dashboard", "nf.trainer.dashboard", "nf.trainee.dashboard" }, "View")]
         public async Task<IActionResult> GetSystemSettingByKey(string key)
         {
             var setting = await _service.GetSystemSettingByKeyAsync(key);
@@ -40,8 +42,8 @@ namespace Nafadh_Backend.Controllers
             return Ok(setting);
         }
 
-
         [HttpPost]
+        [RequirePagePermission("nf.admin.system-settings", "Create")]
         public async Task<IActionResult> AddSystemSetting(SystemSettingInputDTO input)
         {
             await _service.AddSystemSettingAsync(input);
@@ -49,8 +51,8 @@ namespace Nafadh_Backend.Controllers
             return Ok("System Setting added successfully");
         }
 
-
         [HttpPut("{key}")]
+        [RequirePagePermission("nf.admin.system-settings", "Edit")]
         public async Task<IActionResult> UpdateSystemSetting(string key, UpdateSystemSettingDTO input)
         {
             var result = await _service.UpdateSystemSettingAsync(key, input);
@@ -61,8 +63,8 @@ namespace Nafadh_Backend.Controllers
             return Ok("System Setting updated successfully");
         }
 
-
         [HttpDelete("{id}")]
+        [RequirePagePermission("nf.admin.system-settings", "Edit")]
         public async Task<IActionResult> DeleteSystemSetting(int id)
         {
             var result = await _service.DeleteSystemSettingAsync(id);

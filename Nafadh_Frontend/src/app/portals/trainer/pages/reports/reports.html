@@ -489,7 +489,7 @@
         </span>
 
         <h3>
-          تقرير الحضور والغياب
+          {{ getHistoryReportTitle('Attendance') }}
         </h3>
 
         <p>
@@ -579,7 +579,7 @@
         </span>
 
         <h3>
-          تقرير أداء الدفعات والمهام
+          {{ getHistoryReportTitle('Performance') }}
         </h3>
 
         <p>
@@ -666,7 +666,7 @@
         </span>
 
         <h3>
-          التقرير الشامل للأداء التدريبي
+          {{ getHistoryReportTitle('Custom') }}
         </h3>
 
         <p>
@@ -885,27 +885,7 @@
         <div class="history-report-actions">
 
           <span
-            class="history-report-type"
-            [ngSwitch]="report.type"
-          >
-
-            <ng-container *ngSwitchCase="'Attendance'">
-              حضور
-            </ng-container>
-
-            <ng-container *ngSwitchCase="'Performance'">
-              أداء
-            </ng-container>
-
-            <ng-container *ngSwitchCase="'Custom'">
-              شامل
-            </ng-container>
-
-            <ng-container *ngSwitchDefault>
-              تقرير
-            </ng-container>
-
-          </span>
+            class="history-report-type">{{ getHistoryReportTitle(report.type) }}</span>
 
 
           <button

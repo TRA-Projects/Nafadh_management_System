@@ -10,12 +10,14 @@ namespace Nafadh_Backend.Services
 {
     public class QuestionBankService : IQuestionBankService
     {
+        private readonly ITrainingConstantsService _constants;
         private readonly IQuestionBankRepository _repository;
 
         public QuestionBankService(
-            IQuestionBankRepository repository)
+            IQuestionBankRepository repository, ITrainingConstantsService constants)
         {
             _repository = repository;
+            _constants = constants;
         }
 
         public async Task<IEnumerable<NFD_QuestionBank>>
@@ -52,6 +54,8 @@ namespace Nafadh_Backend.Services
         {
             ValidateQuestion(question);
 
+            await CatalogSelectionPolicy.RequireActiveAsync(_constants, question.Difficulty);
+            await CatalogSelectionPolicy.RequireActiveAsync(_constants, question.QuestionType);
             question.QuestionId = 0;
             question.TrainerId = trainerId;
             question.CreatedAt = DateTime.UtcNow;
@@ -95,6 +99,11 @@ namespace Nafadh_Backend.Services
             {
                 return false;
             }
+
+            if (existingQuestion.QuestionType != updatedQuestion.QuestionType)
+                await CatalogSelectionPolicy.RequireActiveAsync(_constants, updatedQuestion.QuestionType);
+            if (existingQuestion.Difficulty != updatedQuestion.Difficulty)
+                await CatalogSelectionPolicy.RequireActiveAsync(_constants, updatedQuestion.Difficulty);
 
             existingQuestion.QuestionText =
                 updatedQuestion.QuestionText;

@@ -141,17 +141,19 @@
                     
                     @if (status === 'pending') {
                       <span class="withdrawal-badge pending">
-                        <i class="fa-solid fa-clock"></i> قيد المراجعة
+                        <i class="fa-solid fa-clock"></i> {{ constants.administrativeLabel('NFD_WDR_STAT', status) }}
                       </span>
                     } @else if (status === 'approved') {
                       <span class="withdrawal-badge approved">
-                        <i class="fa-solid fa-check"></i> مقبول
+                        <i class="fa-solid fa-check"></i> {{ constants.administrativeLabel('NFD_WDR_STAT', status) }}
                       </span>
                     } @else if (status === 'rejected') {
                       <span class="withdrawal-badge rejected">
-                        <i class="fa-solid fa-xmark"></i> مرفوض
+                        <i class="fa-solid fa-xmark"></i> {{ constants.administrativeLabel('NFD_WDR_STAT', status) }}
                       </span>
                     }
+                  } @else if (c.status != null) {
+                    <span>{{ constants.administrativeLabel('NFD_TIC_STAT', c.status) }}</span>
                   }
 
                 </div>
@@ -227,15 +229,15 @@
                     
                     @if (status === 'pending') {
                       <span class="withdrawal-badge pending">
-                        <i class="fa-solid fa-clock"></i> قيد المراجعة
+                        <i class="fa-solid fa-clock"></i> {{ constants.administrativeLabel('NFD_WDR_STAT', status) }}
                       </span>
                     } @else if (status === 'approved') {
                       <span class="withdrawal-badge approved">
-                        <i class="fa-solid fa-check"></i> مقبول
+                        <i class="fa-solid fa-check"></i> {{ constants.administrativeLabel('NFD_WDR_STAT', status) }}
                       </span>
                     } @else if (status === 'rejected') {
                       <span class="withdrawal-badge rejected">
-                        <i class="fa-solid fa-xmark"></i> مرفوض
+                        <i class="fa-solid fa-xmark"></i> {{ constants.administrativeLabel('NFD_WDR_STAT', status) }}
                       </span>
                     }
                   }
@@ -243,6 +245,9 @@
 
                     <span>
                       شكوى أو استفسار
+                      @if (conversation.status != null) {
+                        · {{ constants.administrativeLabel('NFD_TIC_STAT', conversation.status) }}
+                      }
                     </span>
 
                   }

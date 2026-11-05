@@ -9,6 +9,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
+using Nafadh_Backend.Filters;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -42,6 +43,7 @@ namespace Nafadh_Backend.Controllers
                   s.UserId == userId && s.Status == NFD_SupervisorStatus.Active)));
 
         [Authorize(Roles = "Admin,CompanySupervisor")]
+        [RequirePagePermission(new[] { "nf.company.profile", "nf.admin.companies" }, "Edit")]
         [HttpPatch("{companyId:int}/contact")]
         public async Task<IActionResult> UpdateContact(int companyId, [FromBody] CompanyContactUpdateDTO dto)
         {
@@ -67,6 +69,7 @@ namespace Nafadh_Backend.Controllers
         // 1. GET: api/Company (مع دعم البحث الفوري من أول حرف والمدينة والترتيب)
         // =========================================================================
         [HttpGet]
+        [RequirePagePermission(new[] { "nf.admin.companies", "nf.company.dashboard", "nf.company.profile" }, "View")]
         public async Task<ActionResult<IEnumerable<NFD_CompanyOutputDTO>>> GetCompanies(
             [FromQuery] NFD_CompanyStatus? status,
             [FromQuery] string? workField,
@@ -88,6 +91,7 @@ namespace Nafadh_Backend.Controllers
         // 2. GET: api/Company/{companyId}
         // =========================================================================
         [HttpGet("{companyId}")]
+        [RequirePagePermission(new[] { "nf.company.profile", "nf.company.dashboard", "nf.admin.companies" }, "View")]
         public async Task<ActionResult<NFD_CompanyOutputDTO>> GetCompanyById(int companyId)
         {
             var company = await _service.GetCompanyByIdAsync(companyId);
@@ -104,6 +108,7 @@ namespace Nafadh_Backend.Controllers
         // 3. GET: api/Company/{companyId}/details 
         // =========================================================================
         [HttpGet("{companyId}/details")]
+        [RequirePagePermission(new[] { "nf.company.profile", "nf.company.dashboard", "nf.admin.companies" }, "View")]
         public async Task<ActionResult<object>> GetCompanyFullDetails(int companyId)
         {
             var details = await _service.GetCompanyFullDetailsAsync(companyId);
@@ -120,6 +125,7 @@ namespace Nafadh_Backend.Controllers
         // 4. POST: api/Company (إضافة شركة جديدة)
         // =========================================================================
         [HttpPost]
+        [RequirePagePermission("nf.admin.companies", "Create")]
         public async Task<ActionResult<NFD_CompanyOutputDTO>> AddCompany([FromBody] NFD_CompanyInputDTO dto)
         {
             var (company, error) = await _service.AddCompanyAsync(dto);
@@ -138,6 +144,7 @@ namespace Nafadh_Backend.Controllers
         // 5. PUT: api/Company/{companyId} (تحديث بيانات الشركة)
         // =========================================================================
         [Authorize(Roles = "Admin")]
+        [RequirePagePermission("nf.admin.companies", "Edit")]
         [HttpPut("{companyId}")]
         public async Task<ActionResult<NFD_CompanyOutputDTO>> UpdateCompany(
             int companyId,
@@ -157,6 +164,7 @@ namespace Nafadh_Backend.Controllers
         // 6. PUT: api/Company/{companyId}/approve (اعتماد الشركة)
         // =========================================================================
         [Authorize(Roles = "Admin")]
+        [RequirePagePermission("nf.admin.companies", "Approve")]
         [HttpPut("{companyId}/approve")]
         public async Task<ActionResult<NFD_CompanyOutputDTO>> ApproveCompany(int companyId)
         {
@@ -178,6 +186,7 @@ namespace Nafadh_Backend.Controllers
         // 7. PUT: api/Company/{companyId}/suspend
         // =========================================================================
         [Authorize(Roles = "Admin")]
+        [RequirePagePermission("nf.admin.companies", "Approve")]
         [HttpPut("{companyId}/suspend")]
         public async Task<ActionResult<NFD_CompanyOutputDTO>> SuspendCompany(int companyId)
         {
@@ -195,6 +204,7 @@ namespace Nafadh_Backend.Controllers
         // 8. PUT: api/Company/{companyId}/reject 
         // =========================================================================
         [Authorize(Roles = "Admin")]
+        [RequirePagePermission("nf.admin.companies", "Approve")]
         [HttpPut("{companyId}/reject")]
         public async Task<ActionResult<NFD_CompanyOutputDTO>> RejectCompany(
             int companyId,
@@ -218,6 +228,7 @@ namespace Nafadh_Backend.Controllers
         // 9. GET: api/Company/{companyId}/warnings 
         // =========================================================================
         [HttpGet("{companyId}/warnings")]
+        [RequirePagePermission(new[] { "nf.company.warnings", "nf.admin.warnings", "nf.admin.companies" }, "View")]
         public async Task<ActionResult<IEnumerable<object>>> GetCompanyWarnings(int companyId)
         {
             var warnings = await _service.GetCompanyWarningsAsync(companyId);
@@ -228,6 +239,7 @@ namespace Nafadh_Backend.Controllers
         // 10. POST: api/Company/{companyId}/warnings 
         // =========================================================================
         [Authorize(Roles = "Admin")]
+        [RequirePagePermission(new[] { "nf.admin.warnings", "nf.admin.companies" }, "Create")]
         [HttpPost("{companyId}/warnings")]
         public async Task<ActionResult<object>> AddCompanyWarning(
             int companyId,
@@ -241,6 +253,7 @@ namespace Nafadh_Backend.Controllers
         // 11. GET: api/Company/{companyId}/capacity
         // =========================================================================
         [HttpGet("{companyId}/capacity")]
+        [RequirePagePermission(new[] { "nf.company.profile", "nf.company.dashboard", "nf.admin.companies" }, "View")]
         public async Task<ActionResult<object>> GetCompanyCapacity(int companyId)
         {
             var capacity = await _service.GetCompanyCapacityAsync(companyId);
@@ -257,6 +270,7 @@ namespace Nafadh_Backend.Controllers
         // 12. DELETE: api/Company/{companyId}
         // =========================================================================
         [Authorize(Roles = "Admin")]
+        [RequirePagePermission("nf.admin.companies", "Edit")]
         [HttpDelete("{companyId}")]
         public async Task<IActionResult> DeleteCompany(int companyId)
         {

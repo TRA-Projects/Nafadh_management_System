@@ -1,6 +1,7 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { inject, Component, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 
@@ -21,6 +22,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
   styleUrl: './quiz-results.scss'
 })
 export class QuizResults implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
 
   // =========================================
   // DATA
@@ -241,6 +243,7 @@ closeSnapshot(): void {
   // =========================================
 
   ngOnInit(): void {
+    this.constants.ensure('NFD_QUE_TYPE');
 
     const id =
       this.route.snapshot.queryParamMap.get('quizId');

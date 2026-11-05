@@ -17,6 +17,7 @@ import {
 
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { NafadhEvaluationTypesService } from '../../../../core/services/nafadh-evaluation-types.service';
 
 import {
   EnrollmentDto,
@@ -945,6 +946,7 @@ if (batchQuery) {
 
   constructor(
     private api: TrainerApi,
+    private evalTypes: NafadhEvaluationTypesService,
     private auth: AuthService,
     private route: ActivatedRoute
   ) { }
@@ -1779,18 +1781,18 @@ closeQuizResults(): void {
     }
 
 
-    this.api
-      .getEvaluationTemplates(
-        this.selectedModuleId
-      )
-      .subscribe({
+    forkJoin({
+      templates: this.api.getEvaluationTemplates(this.selectedModuleId),
+      activeTypes: this.evalTypes.getActiveTypes()
+    }).subscribe({
 
-        next: (templates) => {
+        next: ({ templates, activeTypes }) => {
 
           const stages =
             [
               ...new Set(
                 (templates ?? [])
+                  .filter(template => this.evalTypes.isActiveType(template.type, activeTypes))
                   .map(
                     template =>
                       template.stage
@@ -1880,17 +1882,15 @@ closeQuizResults(): void {
     }
 
 
-    this.api
-      .getEvaluationTemplates(
-        this.selectedModuleId,
-        this.selectedStage
-      )
-      .subscribe({
+    forkJoin({
+      templates: this.api.getEvaluationTemplates(this.selectedModuleId, this.selectedStage),
+      activeTypes: this.evalTypes.getActiveTypes()
+    }).subscribe({
 
-        next: (templates) => {
+        next: ({ templates, activeTypes }) => {
 
           const first =
-            templates?.[0];
+            (templates ?? []).find(template => this.evalTypes.isActiveType(template.type, activeTypes));
 
 
           if (!first) {

@@ -66,7 +66,7 @@
         class="feedback-btn"
         (click)="openFeedback('TrainerRating')">
         <i class="fas fa-star"></i>
-        تقييم المدرب
+        {{ constants.administrativeLabel('NFD_FBK_TYPE', 'TrainerRating') }}
       </button>
 
       <button
@@ -74,7 +74,7 @@
         class="feedback-btn"
         (click)="openFeedback('BatchExperienceRating')">
         <i class="fas fa-chart-bar"></i>
-        تقييم البرنامج التدريبي
+        {{ constants.administrativeLabel('NFD_FBK_TYPE', 'BatchExperienceRating') }}
       </button>
     </div>
   </div>
@@ -183,7 +183,7 @@
 
         <div>
           <h3>
-            شهادة إتمام التدريب
+            {{ certificateDocument(certificates()[0]?.type).ar }}
           </h3>
 
           <p>
@@ -232,7 +232,7 @@
 
       <div class="certificate-text">
         <span>
-          شهادة إتمام التدريب
+          {{ certificateDocument(certificates()[0]?.type).ar }}
         </span>
 
         <strong>
@@ -240,7 +240,7 @@
         </strong>
 
         <small>
-          أتم برنامج {{ programTitle() }}
+          {{ certificateDocument(certificates()[0]?.type).completion ? 'أتم برنامج' : 'البرنامج' }} {{ programTitle() }}
         </small>
       </div>
     </div>
@@ -292,10 +292,10 @@
                 feedbackType() === 'TrainerRating'
               ) {
                 <i class="fas fa-star"></i>
-                تقييم المدرب
+                {{ constants.administrativeLabel('NFD_FBK_TYPE', 'TrainerRating') }}
               } @else {
                 <i class="fas fa-chart-pie"></i>
-                تقييم البرنامج التدريبي
+                {{ constants.administrativeLabel('NFD_FBK_TYPE', 'BatchExperienceRating') }}
               }
             </h3>
 
@@ -640,7 +640,7 @@
 
             <i class="fas fa-info-circle"></i>
 
-            تقييم البرنامج التدريبي متاح للإرسال عند اكتمال البرنامج 100%.
+            {{ constants.administrativeLabel('NFD_FBK_TYPE', 'BatchExperienceRating') }} متاح للإرسال عند اكتمال البرنامج 100%.
           </div>
 
           @for (

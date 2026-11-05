@@ -1,21 +1,26 @@
-
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { Routes } from '@angular/router';
 import { provideState } from '@ngrx/store';
 
 import { ExternalSystemHostComponent } from './external-system-host.component';
+
 import { apiBaseUrlInterceptor } from './legacy/core/interceptors/api-base-url.interceptor';
 import { authBearerInterceptor } from './legacy/core/interceptors/auth-bearer.interceptor';
 import { httpErrorInterceptor } from './legacy/core/interceptors/http-error.interceptor';
+
 import { AdminSystemApiService } from './legacy/core/api/services/admin-system-api.service';
 import { IdentityAccessApiService } from './legacy/core/api/services/identity-access-api.service';
 import { LocaleService } from './legacy/core/locale/locale.service';
+
 import { AsyncExecutorService } from './legacy/core/ui/async-executor.service';
 import { FormPipelineService } from './legacy/core/ui/form-pipeline.service';
+
 import { adminSystemFeature } from './legacy/core/store/admin-system/admin-system.reducer';
 import { identityAccessFeature } from './legacy/core/store/identity-access/identity-access.reducer';
 import { localeFeature } from './legacy/core/store/locale/locale.reducer';
 import { uiAsyncFeature } from './legacy/core/store/ui-async/ui-async.reducer';
+
+import { NotificationTemplateApiService } from './pages/system-administration/notification-template-api.service';
 
 const usersPage = () =>
   import('./pages/identity-access/admin-identity-users-page.component')
@@ -59,24 +64,30 @@ export const EXTERNAL_ROUTES: Routes = [
   {
     path: '',
     component: ExternalSystemHostComponent,
-    providers: [
-      provideHttpClient(
-        withInterceptors([
-          apiBaseUrlInterceptor,
-          authBearerInterceptor,
-          httpErrorInterceptor,
-        ]),
-      ),
-      AdminSystemApiService,
-      IdentityAccessApiService,
-      AsyncExecutorService,
-      FormPipelineService,
-      LocaleService,
-      provideState(adminSystemFeature),
-      provideState(localeFeature),
-      provideState(identityAccessFeature),
-      provideState(uiAsyncFeature),
-    ],
+
+  providers: [
+  provideHttpClient(
+    withInterceptors([
+      apiBaseUrlInterceptor,
+      authBearerInterceptor,
+      httpErrorInterceptor,
+    ]),
+  ),
+
+  AdminSystemApiService,
+  IdentityAccessApiService,
+  NotificationTemplateApiService,
+
+  AsyncExecutorService,
+  FormPipelineService,
+  LocaleService,
+
+  provideState(adminSystemFeature),
+  provideState(localeFeature),
+  provideState(identityAccessFeature),
+  provideState(uiAsyncFeature),
+],
+
     children: [
       {
         path: 'constants',
@@ -84,6 +95,7 @@ export const EXTERNAL_ROUTES: Routes = [
           import('./pages/system-administration/constants-manage-page.component')
             .then((m) => m.ConstantsManagePageComponent),
       },
+
       {
         path: 'system-configuration',
         loadComponent: () =>
@@ -98,7 +110,7 @@ export const EXTERNAL_ROUTES: Routes = [
       },
 
       // Create notification template
-      // Keep this route before ':id' so "new" is not treated as an ID.
+      // Keep this route before ':id'.
       {
         path: 'notification-templates/new',
         loadComponent: notificationTemplateEditPage,
@@ -126,11 +138,16 @@ export const EXTERNAL_ROUTES: Routes = [
         pathMatch: 'full',
         redirectTo: 'identity/users',
       },
+
       {
         path: 'identity/users',
         loadComponent: usersPage,
-        data: { title: 'Users', titleAr: 'المستخدمون' },
+        data: {
+          title: 'Users',
+          titleAr: 'المستخدمون',
+        },
       },
+
       {
         path: 'identity/roles',
         loadComponent: rolesPage,
@@ -140,6 +157,7 @@ export const EXTERNAL_ROUTES: Routes = [
           rolesMode: 'custom',
         },
       },
+
       {
         path: 'identity/template-roles',
         loadComponent: rolesPage,
@@ -149,35 +167,59 @@ export const EXTERNAL_ROUTES: Routes = [
           rolesMode: 'template',
         },
       },
+
       {
         path: 'identity/roles/create',
         loadComponent: roleCreatePage,
-        data: { title: 'Create role', titleAr: 'إنشاء دور' },
+        data: {
+          title: 'Create role',
+          titleAr: 'إنشاء دور',
+        },
       },
+
       {
         path: 'identity/roles/pages',
         loadComponent: groupPagesPage,
-        data: { title: 'Role pages', titleAr: 'صفحات الدور' },
+        data: {
+          title: 'Role pages',
+          titleAr: 'صفحات الدور',
+        },
       },
+
       {
         path: 'identity/groups',
         loadComponent: groupsPage,
-        data: { title: 'Groups', titleAr: 'المجموعات' },
+        data: {
+          title: 'Groups',
+          titleAr: 'المجموعات',
+        },
       },
+
       {
         path: 'identity/groups/create',
         loadComponent: groupCreatePage,
-        data: { title: 'Create group', titleAr: 'إنشاء مجموعة' },
+        data: {
+          title: 'Create group',
+          titleAr: 'إنشاء مجموعة',
+        },
       },
+
       {
         path: 'identity/groups/edit',
         loadComponent: groupEditPage,
-        data: { title: 'Edit group', titleAr: 'تعديل المجموعة' },
+        data: {
+          title: 'Edit group',
+          titleAr: 'تعديل المجموعة',
+        },
       },
+
       {
         path: 'identity/groups/pages',
         loadComponent: groupPagesPage,
-        data: { title: 'Group pages', titleAr: 'صفحات المجموعة' },
+        data: {
+          title: 'Group pages',
+          titleAr: 'صفحات المجموعة',
+        },
       },
     ],
   },

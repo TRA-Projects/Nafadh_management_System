@@ -1,7 +1,7 @@
 
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 import {
@@ -797,7 +797,27 @@ export class CompanyApi {
   // ============================================================
   // Trainer Attendance
   // ============================================================
-
+getAttachmentSettings(): Observable<{
+  maxSizeMB: number;
+  allowedExtensions: string[];
+}> {
+  return forkJoin({
+    size: this.http.get<{ value: string }>(
+      `${this.base}/system-variables/ATTACHMENT_MAX_SIZE_MB`
+    ),
+    extensions: this.http.get<{ value: string }>(
+      `${this.base}/system-variables/ATTACHMENT_ALLOWED_EXTENSIONS`
+    )
+  }).pipe(
+    map(({ size, extensions }) => ({
+      maxSizeMB: Number(size.value),
+      allowedExtensions: extensions.value
+        .split(',')
+        .map(x => x.trim().toLowerCase())
+        .filter(Boolean)
+    }))
+  );
+}
   getCompanyTrainers(companyId: number): Observable<CompanyTrainerDto[]> {
     return this.http.get<CompanyTrainerDto[]>(
       `${this.base}/TrainerAttendance/company/${companyId}/trainers`

@@ -1,7 +1,7 @@
 /// <reference types="@angular/localize" />
 
 import { Component, effect, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+
 import { Store } from '@ngrx/store';
 
 import { translateAuthApiError } from '../api/auth-api-error.i18n';
@@ -25,9 +25,9 @@ export class UiAsyncToastHostComponent {
   private readonly locale = inject(LocaleService);
   private lastShownSnapshotAt: string | null = null;
 
-  private readonly lastSnapshot = toSignal(this.store.select(uiAsyncFeature.selectLastSnapshot), {
-    initialValue: null,
-  });
+ private readonly lastSnapshot = this.store.selectSignal(
+  uiAsyncFeature.selectLastSnapshot
+);
 
   constructor() {
     effect(() => {

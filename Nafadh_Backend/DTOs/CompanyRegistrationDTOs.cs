@@ -30,7 +30,7 @@ namespace Nafadh_Backend.DTOs
 
         // الطاقة الاستيعابية (عدد المتدربين المتوقع)
         [Range(0, 100000)]
-        public decimal Capacity { get; set; }
+        public decimal? Capacity { get; set; }
 
         // اسم المسؤول (يصبح صاحب حساب الشركة)
         [Required]

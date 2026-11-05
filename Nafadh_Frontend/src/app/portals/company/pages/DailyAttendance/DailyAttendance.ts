@@ -170,7 +170,9 @@ export class CompanyDailyAttendance implements OnInit {
 
 
   private companyId = 0;
-
+attachmentMaxSizeMB = signal<number | null>(null);
+attachmentAllowedExtensions = signal<string[]>([]);
+attachmentSettingsLoaded = signal(false);
 
 
   @ViewChildren('trainerFilterMenu') trainerFilterMenus!: QueryList<ElementRef<HTMLDetailsElement>>;
@@ -497,17 +499,39 @@ export class CompanyDailyAttendance implements OnInit {
     const record = this.weeklyExcuse();
     if (!file || !record || this.view() !== 'week' || !this.canEditWeeklyExcuse(record) || !this.weeklyExcuseEditing() || this.weeklyExcuseSaving()) return;
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-    const extensionAllowed = /\.(jpe?g|png|webp|pdf)$/i.test(file.name);
-    if (!allowedTypes.includes(file.type) && !extensionAllowed) {
-      this.errorMessage.set('نوع الملف غير مدعوم. اختاري JPG أو PNG أو WEBP أو PDF.');
-      return;
-    }
+   if (!this.attachmentSettingsLoaded()) {
+  this.errorMessage.set('تعذر تحميل إعدادات المرفقات. أعيدي تحميل الصفحة.');
+  return;
+}
 
-    if (file.size > 5 * 1024 * 1024) {
-      this.errorMessage.set('حجم الإثبات كبير جدًا. الحد الأقصى المسموح 5 ميجابايت.');
-      return;
-    }
+const maxSizeMB = this.attachmentMaxSizeMB();
+const allowedExtensions = this.attachmentAllowedExtensions();
+
+const proofExtensions = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
+const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+
+const allowedTypes = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf'
+];
+
+if (
+  !allowedExtensions.includes(extension) ||
+  !proofExtensions.includes(extension) ||
+  !allowedTypes.includes(file.type.toLowerCase())
+) {
+  this.errorMessage.set('نوع الملف غير مدعوم. اختاري JPG أو PNG أو WEBP أو PDF.');
+  return;
+}
+
+if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
+  this.errorMessage.set(
+    `حجم الإثبات كبير جدًا. الحد الأقصى المسموح ${maxSizeMB} ميجابايت.`
+  );
+  return;
+}
 
     this.weeklyExcuseSaving.set(true);
     this.errorMessage.set(null);
@@ -819,17 +843,27 @@ export class CompanyDailyAttendance implements OnInit {
 
 
 ngOnInit(): void {
-
   this.companyId = this.auth.companyId ?? 0;
-
-
 
   console.log('Company ID:', this.companyId);
 
-
-
   this.load();
 
+  this.api.getAttachmentSettings().subscribe({
+    next: settings => {
+      this.attachmentMaxSizeMB.set(settings.maxSizeMB);
+      this.attachmentAllowedExtensions.set(settings.allowedExtensions);
+      this.attachmentSettingsLoaded.set(
+        Number.isFinite(settings.maxSizeMB) &&
+        settings.maxSizeMB > 0 &&
+        settings.allowedExtensions.length > 0
+      );
+    },
+    error: err => {
+      console.error('Failed to load attachment settings.', err);
+      this.attachmentSettingsLoaded.set(false);
+    }
+  });
 }
 
 
@@ -1031,16 +1065,48 @@ ngOnInit(): void {
     if (!file || !row.record || row.record.status === 'Present' || this.isConfirmed()) return;
 
 
+if (!this.attachmentSettingsLoaded()) {
+  this.errorMessage.set(
+    'تعذر تحميل إعدادات المرفقات. أعيدي تحميل الصفحة.'
+  );
+  return;
+}
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-    if (!allowedTypes.includes(file.type) && !/\.(jpe?g|png|webp|pdf)$/i.test(file.name)) {
-      this.errorMessage.set('نوع الملف غير مدعوم. اختاري صورة JPG أو PNG أو WEBP أو ملف PDF.');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      this.errorMessage.set('حجم الإثبات كبير جدًا. الحد الأقصى المسموح 5 ميجابايت.');
-      return;
-    }
+const maxSizeMB = this.attachmentMaxSizeMB();
+const allowedExtensions = this.attachmentAllowedExtensions();
+
+const proofExtensions = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
+
+const extension = file.name
+  .split('.')
+  .pop()
+  ?.toLowerCase() ?? '';
+
+const allowedTypes = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf'
+];
+
+if (
+  !allowedExtensions.includes(extension) ||
+  !proofExtensions.includes(extension) ||
+  !allowedTypes.includes(file.type.toLowerCase())
+) {
+  this.errorMessage.set(
+    'نوع الملف غير مدعوم. اختاري JPG أو PNG أو WEBP أو PDF.'
+  );
+  return;
+}
+
+if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
+  this.errorMessage.set(
+    `حجم الإثبات كبير جدًا. الحد الأقصى المسموح ${maxSizeMB} ميجابايت.`
+  );
+  return;
+}
+   
 
     const attendanceId = row.record.trainerAttendanceId;
 
@@ -1374,9 +1440,17 @@ ngOnInit(): void {
     let message = fallback;
     if (raw.includes('storage path') || raw.includes('not configured')) {
       message = 'تعذر رفع الإثبات لأن مسار حفظ الملفات غير مُعدّ في الخادم. تواصلي مع مسؤول النظام.';
-    } else if (raw.includes('5 mb') || raw.includes('5mb') || raw.includes('exceed') || error?.status === 413) {
-      message = 'حجم الإثبات كبير جدًا. الحد الأقصى المسموح 5 ميجابايت.';
-    } else if (raw.includes('file type') || raw.includes('invalid file') || raw.includes('only jpg') || raw.includes('extension')) {
+   } else if (
+  raw.includes('exceed') ||
+  raw.includes('mb') ||
+  error?.status === 413
+) {
+  const maxSizeMB = this.attachmentMaxSizeMB();
+
+  message = maxSizeMB !== null
+    ? `حجم الإثبات كبير جدًا. الحد الأقصى المسموح ${maxSizeMB} ميجابايت.`
+    : 'حجم الإثبات يتجاوز الحد المسموح في إعدادات النظام.';
+} else if (raw.includes('file type') || raw.includes('invalid file') || raw.includes('only jpg') || raw.includes('extension')) {
       message = 'نوع الملف غير مدعوم. اختاري صورة JPG أو PNG أو WEBP أو ملف PDF.';
     } else if (raw.includes('proof file is required') || raw.includes('empty file')) {
       message = 'يرجى اختيار صورة أو ملف PDF قبل الرفع.';

@@ -31,7 +31,7 @@
   <!-- Canonical pending approvals, visible even when a notification was missed. -->
   <section class="toolbar-card" aria-label="قائمة الخطط بانتظار الاعتماد" style="margin-bottom: 16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-      <h2 style="font-size:1.1rem;margin:0;">الخطط بانتظار اعتماد الهيئة ({{ pendingCoursePlans().length }})</h2>
+      <h2 style="font-size:1.1rem;margin:0;">الخطط — {{ constants.administrativeLabel('NFD_CPA_STAT', 'PendingApproval') }} ({{ pendingCoursePlans().length }})</h2>
       <button type="button" class="btn btn-secondary" (click)="loadPlanRequests()">تحديث القائمة</button>
     </div>
     @if (pendingPlansError()) { <p role="alert">{{ pendingPlansError() }}</p> }
@@ -250,33 +250,7 @@
 
           <p class="section-title">الفئة المستهدفة الرئيسية:</p>
           
-          <div class="audience-cards">
-            <div class="aud-card" [class.selected]="newAnnounceData.mainAudience === 'all'" (click)="setAudience('all')">
-              <span style="font-size: 24px;">👥</span>
-              <span class="aud-title">الجميع</span>
-              <span class="aud-sub">كامل المنظومة</span>
-            </div>
-            <div class="aud-card" [class.selected]="newAnnounceData.mainAudience === 'admins'" (click)="setAudience('admins')">
-              <span style="font-size: 24px;">🛡️</span>
-              <span class="aud-title">الأدمن / الإداريين</span>
-              <span class="aud-sub">فريق الإشراف</span>
-            </div>
-            <div class="aud-card" [class.selected]="newAnnounceData.mainAudience === 'trainers'" (click)="setAudience('trainers')">
-              <span style="font-size: 24px;">🎓</span>
-              <span class="aud-title">المدربين المعتمدين</span>
-              <span class="aud-sub">كلي أو محددين</span>
-            </div>
-            <div class="aud-card" [class.selected]="newAnnounceData.mainAudience === 'companies'" (click)="setAudience('companies')">
-              <span style="font-size: 24px;">🏢</span>
-              <span class="aud-title">الشركات المستضيفة</span>
-              <span class="aud-sub">تخصيص متقدم</span>
-            </div>
-            <div class="aud-card" [class.selected]="newAnnounceData.mainAudience === 'trainees'" (click)="setAudience('trainees')">
-              <span style="font-size: 24px;">👨‍🎓</span>
-              <span class="aud-title">المتدربين الملحقين</span>
-              <span class="aud-sub">تخصيص متقدم</span>
-            </div>
-          </div>
+          <app-catalog-picker caption="الفئة المستهدفة الرئيسية" [options]="audienceChoices" [value]="scopeByAudience[newAnnounceData.mainAudience]" (valueChange)="chooseAudience($event)" />
 
           <!-- إعدادات التخصيص للشركات (التصميم الجديد) -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'companies'">

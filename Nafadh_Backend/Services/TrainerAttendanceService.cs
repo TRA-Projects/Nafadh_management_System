@@ -3,6 +3,7 @@ using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.Services
 {
@@ -48,11 +49,16 @@ namespace Nafadh_Backend.Services
 
         private readonly ITrainerAttendanceRepository _repository;
         private readonly IConfiguration _configuration;
+        private readonly Nafadhcontext _context;
 
-        public TrainerAttendanceService(ITrainerAttendanceRepository repository, IConfiguration configuration)
+        public TrainerAttendanceService(
+       ITrainerAttendanceRepository repository,
+       IConfiguration configuration,
+       Nafadhcontext context)
         {
             _repository = repository;
             _configuration = configuration;
+            _context = context;
         }
 
         public async Task<List<CompanyTrainerDto>> GetCompanyTrainersAsync(int companyId)
@@ -204,12 +210,49 @@ namespace Nafadh_Backend.Services
             if (file == null || file.Length == 0)
                 throw new ArgumentException("Proof file is required.");
 
-            if (file.Length > MaxProofSize)
-                throw new ArgumentException("Proof file cannot exceed 5 MB.");
+            var maxSizeSetting = await _context.SystemVariables
+    .AsNoTracking()
+    .Where(x => x.VariableKey == "ATTACHMENT_MAX_SIZE_MB")
+    .Select(x => x.Value)
+    .FirstOrDefaultAsync();
+
+            if (!int.TryParse(maxSizeSetting, out int maxSizeMB) || maxSizeMB <= 0)
+                throw new InvalidOperationException(
+                    "ATTACHMENT_MAX_SIZE_MB is not configured correctly.");
+
+            if (file.Length > (long)maxSizeMB * 1024 * 1024)
+                throw new ArgumentException(
+                    $"Proof file cannot exceed {maxSizeMB} MB.");
+
+            var allowedExtensionsSetting = await _context.SystemVariables
+     .AsNoTracking()
+     .Where(x => x.VariableKey == "ATTACHMENT_ALLOWED_EXTENSIONS")
+     .Select(x => x.Value)
+     .FirstOrDefaultAsync();
+
+            if (string.IsNullOrWhiteSpace(allowedExtensionsSetting))
+                throw new InvalidOperationException(
+                    "ATTACHMENT_ALLOWED_EXTENSIONS is not configured correctly.");
+
+            var allowedExtensions = allowedExtensionsSetting
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => "." + x.Trim().TrimStart('.').ToLowerInvariant())
+                .ToHashSet();
+
+            // إثباتات الأعذار تقبل الصور وPDF فقط
+            var proofExtensions = new HashSet<string>
+{
+    ".jpg", ".jpeg", ".png", ".webp", ".pdf"
+};
 
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (!AllowedExtensions.Contains(extension))
-                throw new ArgumentException("Only JPG, PNG, WEBP and PDF files are allowed.");
+
+            if (!allowedExtensions.Contains(extension) ||
+                !proofExtensions.Contains(extension))
+            {
+                throw new ArgumentException(
+                    "Only JPG, PNG, WEBP and PDF files are allowed.");
+            }
 
             if (!AllowedContentTypes.Contains(file.ContentType.ToLowerInvariant()))
                 throw new ArgumentException("Invalid file type.");

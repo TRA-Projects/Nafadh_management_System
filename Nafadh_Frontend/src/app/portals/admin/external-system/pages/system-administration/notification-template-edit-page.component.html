@@ -1,160 +1,244 @@
-<div class="template-edit-container" dir="rtl">
 
-  <!-- Breadcrumb & Header -->
+<div class="template-edit-container" dir="rtl">
   <div class="page-head">
     <div class="breadcrumb">
-      <a>الرئيسية</a><i>/</i><a>الإدارة</a><i>/</i><span>قالب إشعار</span>
+      <a>الرئيسية</a>
+      <i>/</i>
+      <a>الإدارة</a>
+      <i>/</i>
+      <span>قوالب الإشعارات</span>
     </div>
-  <div class="title-row">
-  <button type="button" (click)="goBack()" class="back-arrow-btn" aria-label="رجوع">
-    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-    </svg>
-  </button>
-  <h1 class="page-title">{{ templateName || 'دعوة للتقديم' }}</h1>
-</div>
+
+    <div class="title-row">
+      <button
+        type="button"
+        (click)="goBack()"
+        class="back-arrow-btn"
+        aria-label="رجوع"
+      >
+        <svg
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 5l7 7-7 7"
+          ></path>
+        </svg>
+      </button>
+
+      <h1 class="page-title">{{ templateName }}</h1>
+    </div>
   </div>
 
-  <!-- Main Card -->
   <div class="main-card">
     <div class="card-banner">
       <div class="banner-icon">
-        <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <rect x="4" y="4" width="16" height="13" rx="2" stroke-width="1.8"></rect>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 9h8M8 13h5M9 21l3-4"></path>
+        <svg
+          width="26"
+          height="26"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <rect
+            x="4"
+            y="4"
+            width="16"
+            height="13"
+            rx="2"
+            stroke-width="1.8"
+          ></rect>
+
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.8"
+            d="M8 9h8M8 13h5M9 21l3-4"
+          ></path>
         </svg>
       </div>
-      <span class="banner-title">قوالب الإشعارات</span>
+
+      <span class="banner-title">قالب البريد الإلكتروني</span>
     </div>
 
     <div class="card-body">
-      <!-- Tabs -->
-      <div class="tabs-header">
-        <button type="button" class="tab-item" [class.active]="activeTab === 'main'" (click)="activeTab = 'main'">
-          التفاصيل الرئيسية
-        </button>
-        <button type="button" class="tab-item" [class.active]="activeTab === 'ar'" (click)="activeTab = 'ar'">
-          العربية
-        </button>
-        <button type="button" class="tab-item" [class.active]="activeTab === 'en'" (click)="activeTab = 'en'">
-          الإنجليزية
-        </button>
-      </div>
+      @if (isLoading) {
+        <div class="state-container" role="status">
+          جارٍ تحميل بيانات القالب...
+        </div>
+      } @else {
+        @if (errorMessage) {
+          <div class="form-message error-state" role="alert">
+            {{ errorMessage }}
+          </div>
+        }
 
-      <form [formGroup]="editForm" (ngSubmit)="save()">
+        @if (successMessage) {
+          <div class="form-message success-state" role="status">
+            {{ successMessage }}
+          </div>
+        }
 
-        <!-- التفاصيل الرئيسية -->
-        <div *ngIf="activeTab === 'main'">
+        <form [formGroup]="editForm" (ngSubmit)="save()">
+
+          <!-- رمز القالب -->
           <div class="form-group">
-            <label class="form-label">رمز الإجراء</label>
-            <input type="text" formControlName="code" readonly class="form-control readonly" />
+            <label class="form-label" for="templateCode">
+              رمز القالب <span class="req">*</span>
+            </label>
+
+            <input
+              id="templateCode"
+              type="text"
+              formControlName="code"
+              class="form-control"
+              [class.readonly]="!isCreateMode"
+              [readonly]="!isCreateMode"
+              dir="ltr"
+            />
           </div>
 
+          <!-- اسم القالب والبوابة -->
           <div class="names-row">
             <div class="form-group">
-              <label class="form-label">التسمية (إنجليزي)<span class="req">*</span></label>
-              <input type="text" formControlName="nameEn" class="form-control" />
+              <label class="form-label" for="templateName">
+                اسم القالب <span class="req">*</span>
+              </label>
+
+              <input
+                id="templateName"
+                type="text"
+                formControlName="name"
+                class="form-control"
+                placeholder="أدخلي اسم القالب"
+              />
             </div>
+
             <div class="form-group">
-              <label class="form-label">التسمية (عربي)<span class="req">*</span></label>
-              <input type="text" formControlName="nameAr" class="form-control" />
+              <label class="form-label" for="portalCode">
+                البوابة <span class="req">*</span>
+              </label>
+
+              <select
+                id="portalCode"
+                formControlName="portalCode"
+                class="form-control"
+              >
+                <option value="" disabled>
+                  اختاري البوابة
+                </option>
+
+                @for (portal of portalOptions; track portal.value) {
+                  <option [value]="portal.value">
+                    {{ portal.label }}
+                  </option>
+                }
+              </select>
             </div>
+          </div>
+
+          <!-- نوع الإشعار -->
+          <div class="form-group type-field">
+            <label class="form-label" for="templateType">
+              نوع الإشعار
+            </label>
+
+            <input
+              id="templateType"
+              type="text"
+              value="البريد الإلكتروني (Email)"
+              readonly
+              class="form-control readonly"
+            />
+
+            <small class="field-hint">
+              نوع القالب ثابت حسب إعدادات الـ Backend.
+            </small>
           </div>
 
           <hr class="divider" />
 
-          <div class="status-block">
-            <label class="form-label">الحالة</label>
-            <div class="checks">
-              <label class="checkbox-label">
-                <input type="checkbox" formControlName="isActive" class="custom-checkbox" />
-                <span>نشط</span><span class="req">*</span>
+          <!-- محتوى البريد الإلكتروني -->
+          <section
+            class="email-content"
+            aria-label="محتوى البريد الإلكتروني"
+          >
+            <h2 class="section-title">
+              محتوى البريد الإلكتروني
+            </h2>
+
+            <div class="form-group">
+              <label class="form-label" for="emailSubject">
+                الموضوع <span class="req">*</span>
               </label>
-              <label class="checkbox-label">
-                <input type="checkbox" formControlName="hasEmail" class="custom-checkbox" />
-                <span>تفعيل البريد</span><span class="req">*</span>
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" formControlName="hasSms" class="custom-checkbox" />
-                <span>تفعيل الرسائل النصية</span><span class="req">*</span>
-              </label>
+
+              <input
+                id="emailSubject"
+                type="text"
+                formControlName="subject"
+                class="form-control"
+                placeholder="أدخلي موضوع البريد الإلكتروني"
+              />
             </div>
+
+            <div class="form-group body-field">
+              <label class="form-label" for="emailBody">
+                محتوى الرسالة <span class="req">*</span>
+              </label>
+
+              <textarea
+                id="emailBody"
+                formControlName="body"
+                class="form-control body-control"
+                rows="9"
+                placeholder="اكتبي محتوى البريد الإلكتروني هنا..."
+              ></textarea>
+            </div>
+          </section>
+
+          <hr class="divider" />
+
+          <!-- حالة القالب -->
+          <div class="status-block">
+            <label class="form-label">حالة القالب</label>
+
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                formControlName="isActive"
+                class="custom-checkbox"
+              />
+              <span>القالب نشط</span>
+            </label>
           </div>
-        </div>
 
-        <!-- العربية -->
-        <ng-container *ngIf="activeTab === 'ar'">
-          <ng-container *ngTemplateOutlet="langTpl; context: { s: 'Ar', dir: 'rtl' }"></ng-container>
-        </ng-container>
+          <!-- أزرار الإجراءات -->
+          <div class="actions">
+            <button
+              type="button"
+              (click)="goBack()"
+              class="btn-secondary"
+            >
+              إلغاء
+            </button>
 
-        <!-- الإنجليزية -->
-        <ng-container *ngIf="activeTab === 'en'">
-          <ng-container *ngTemplateOutlet="langTpl; context: { s: 'En', dir: 'ltr' }"></ng-container>
-        </ng-container>
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="isSaving"
+            >
+              {{ isSaving ? 'جارٍ الحفظ...' : 'حفظ' }}
+            </button>
+          </div>
 
-        <hr class="divider" />
-
-        <div class="actions">
-          <button type="button" (click)="preview()" class="btn-secondary">معاينة</button>
-          <button type="submit" class="btn-primary">حفظ</button>
-        </div>
-      </form>
+        </form>
+      }
     </div>
   </div>
 </div>
-
-<!-- قالب مشترك للغتين -->
-<ng-template #langTpl let-s="s" let-dir="dir">
-
-  <div class="vars">
-    <h3 class="section-title">المتغيرات المتاحة</h3>
-    <div class="chips">
-      <button
-        type="button"
-        class="chip"
-        dir="ltr"
-        *ngFor="let v of variables"
-        (mousedown)="$event.preventDefault()"
-        (click)="insertVariable(v, s)">{{ v }}</button>
-    </div>
-  </div>
-
-  <div class="cols">
-    <!-- البريد -->
-    <div class="col-email">
-      <h3 class="section-title">البريد</h3>
-
-      <label class="form-label">الموضوع<span class="req">*</span></label>
-      <input
-        type="text"
-        class="form-control"
-        [attr.dir]="dir"
-        [formControlName]="'subject' + s"
-        (focus)="onFocus('subject' + s, $event)" />
-
-      <label class="form-label content-label">المحتوى</label>
-      <div class="editor-wrap" [attr.dir]="dir">
-        <quill-editor
-          [formControlName]="'body' + s"
-          [modules]="quillModules"
-          (onEditorCreated)="quills['body' + s] = $event"
-          (onFocus)="onQuillFocus('body' + s)">
-        </quill-editor>
-      </div>
-    </div>
-
-    <!-- رسالة نصية -->
-    <div class="col-sms">
-      <h3 class="section-title">رسالة نصية</h3>
-
-      <label class="form-label">الرسالة<span class="req">*</span></label>
-      <textarea
-        class="form-control sms-area"
-        [attr.dir]="dir"
-        maxlength="500"
-        [formControlName]="'sms' + s"
-        (focus)="onFocus('sms' + s, $event)"></textarea>
-      <div class="counter">500 / {{ len('sms' + s) }}</div>
-    </div>
-  </div>
-</ng-template>

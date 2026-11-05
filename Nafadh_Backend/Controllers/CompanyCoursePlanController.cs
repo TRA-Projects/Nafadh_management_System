@@ -35,11 +35,14 @@ namespace Nafadh_Backend.Controllers
         private readonly IEmailService _emailService;
         private readonly ILogger<CompanyCoursePlanController> _logger;
 
+        private readonly ITrainingConstantsService _constants;
+
         public CompanyCoursePlanController(
-            Nafadhcontext context,
+            Nafadhcontext context, ITrainingConstantsService constants,
             IEmailService emailService,
             ILogger<CompanyCoursePlanController> logger)
         {
+            _constants = constants;
             _context = context;
             _reader = new CoursePlanReader(context);
             _emailService = emailService;
@@ -549,6 +552,12 @@ namespace Nafadh_Backend.Controllers
             if (error is not null)
                 return BadRequest(new { message = error });
 
+            if (await CatalogSelectionPolicy.CheckSelectionAsync(() => CatalogSelectionPolicy.RequireActiveAsync(_constants, dto.ItemType, HttpContext.RequestAborted)) is { } typeFailure)
+                return typeFailure;
+
+            if (await CatalogSelectionPolicy.CheckSelectionAsync(() => CatalogSelectionPolicy.RequireActiveAsync(_constants, dto.Priority, HttpContext.RequestAborted)) is { } priorityFailure)
+                return priorityFailure;
+
             _context.NFD_CoursePlanItems.Add(new NFD_CoursePlanItem
             {
                 StageId = stage.StageId,
@@ -586,6 +595,14 @@ namespace Nafadh_Backend.Controllers
             var error = ValidateItem(stage, dto) ?? await ValidateTrainerAsync(dto.TrainerId);
             if (error is not null)
                 return BadRequest(new { message = error });
+
+            if (item.ItemType != dto.ItemType &&
+                await CatalogSelectionPolicy.CheckSelectionAsync(() => CatalogSelectionPolicy.RequireActiveAsync(_constants, dto.ItemType, HttpContext.RequestAborted)) is { } typeFailure)
+                return typeFailure;
+
+            if (item.Priority != dto.Priority &&
+                await CatalogSelectionPolicy.CheckSelectionAsync(() => CatalogSelectionPolicy.RequireActiveAsync(_constants, dto.Priority, HttpContext.RequestAborted)) is { } priorityFailure)
+                return priorityFailure;
 
             item.ItemType = dto.ItemType;
             item.Title = dto.Title.Trim();

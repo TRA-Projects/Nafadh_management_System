@@ -1,3 +1,6 @@
+import { CatalogPicker } from '../../../../../core/models/catalog-picker';
+import { NafadhConstantsService } from '../../../../../core/services/nafadh-constants.service';
+import { constantEditKey, constantPolicyHint, hasFixedEditKey, isAdministrativeGroup } from '../../../../../core/models/administrative-constants';
 /// <reference types="@angular/localize" />
 
 import { CommonModule } from '@angular/common';
@@ -41,6 +44,7 @@ type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 type ConstantsTab = 'main' | 'sub';
 
 interface LookupTypeOption {
+  labelEn?: string;
   code: string;
   label: string;
 }
@@ -51,6 +55,7 @@ type ConstantFormControlName = 'code' | 'label_en' | 'label_ar' | 'IsActive' | '
   selector: 'app-constants-manage-page',
   standalone: true,
   imports: [
+    CatalogPicker,
     CommonModule,
     ReactiveFormsModule,
     ModalCloseButtonComponent,
@@ -63,6 +68,7 @@ type ConstantFormControlName = 'code' | 'label_en' | 'label_ar' | 'IsActive' | '
 styleUrl: './constants-manage-page.component.scss',
 })
 export class ConstantsManagePageComponent {
+  readonly constants = inject(NafadhConstantsService);
   private readonly api = inject(AdminSystemApiService);
   private readonly locale = inject(LocaleService);
   private readonly asyncExec = inject(AsyncExecutorService);
@@ -76,7 +82,7 @@ export class ConstantsManagePageComponent {
   private readonly fallbackLookupTypes: LookupTypeOption[] = [
     ...MANAGEMENT_SYSTEM_LOOKUP_TYPES.map((item) => ({
       code: item.code,
-      label: item.labelAr,
+      label: item.labelAr, labelEn: item.labelEn,
     })),
     { code: SYSTEM_CONFIG_CODES.QUALIFICATION_DEGREES, label: $localize`:@@jobseeker.admin.constants.lookup.qualificationDegrees:Qualification degrees` },
     { code: SYSTEM_CONFIG_CODES.NATIONALITY, label: $localize`:@@jobseeker.admin.constants.lookup.nationalities:Nationalities` },
@@ -157,6 +163,7 @@ export class ConstantsManagePageComponent {
     if (this.catalogLoadFailed()) return this.fallbackLookupTypes;
     return this.catalogGroups().map((group) => ({
       code: group.code,
+      labelEn: group.label_en,
       label: getArabicConfigGroupLabel(group.code, group.label_ar, group.label_en),
     }));
   });
@@ -181,6 +188,8 @@ export class ConstantsManagePageComponent {
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
   readonly modalOpen = signal(false);
   readonly editingId = signal<string | number | null>(null);
+  private originalValue?: { label_ar: string; label_en: string; active: boolean };
+  readonly editKeyError = signal('');
   readonly subParentReasonRows = signal<SystemConfigValueDto[]>([]);
   readonly actionsMenuRowId = signal<string | null>(null);
 
@@ -221,27 +230,44 @@ export class ConstantsManagePageComponent {
   readonly lookupGroupPlaceholder = $localize`:@@jobseeker.admin.constants.lookupGroupPlaceholder:Select constants group…`;
   readonly lookupSearchPlaceholder = $localize`:@@jobseeker.admin.constants.lookupSearchPlaceholder:Search constants group…`;
   readonly lookupEmptyText = $localize`:@@jobseeker.admin.constants.lookupEmpty:No matching group`;
-  readonly lookupSelectOptions = computed<SearchableMultiSelectOption[]>(() =>
-    (this.activeTab() === 'main' ? this.mainLookupTypes() : this.subMainLookupTypes()).map((option) => ({
-      id: option.code,
-      label: option.label,
+  readonly lookupSelectOptions = computed(() => [
+    { value: '', label: this.lookupGroupPlaceholder },
+    ...(this.activeTab() === 'main' ? this.mainLookupTypes() : this.subMainLookupTypes()).map(option => ({
+      value: option.code, label: option.label, labelEn: option.labelEn
     }))
-  );
+  ]);
 
-  readonly selectedLookupValues = computed<Array<number | string>>(() => {
-    const code = this.activeTab() === 'main' ? this.selectedMainLookupCode() : this.selectedSubMainLookupCode();
-    return code ? [code] : [];
-  });
-
-  // UI guard mirrors the Training Backend's NFD_* write protection.
+  // UI guard: only catalog groups flagged read-only are locked. Nafadh enum groups (NFD_*) are
+  // editable by label, but their keys are fixed (see isFixedKeysGroup / isLabelsOnlyGroup).
   readonly isReadOnlyManagementGroup = computed(() => {
     const code = this.selectedLookupCode();
-    return code.startsWith('NFD_') || this.catalogGroups().some((group) => group.code === code && group.IsReadOnly);
+    return this.catalogGroups().some((group) => group.code === code && !(group.canEditLabels ?? !group.IsReadOnly));
+  });
+
+  /** NFD_* groups: no new values, code is immutable. */
+  readonly isFixedKeysGroup = computed(() => {
+    const code = this.selectedLookupCode();
+    const group = this.catalogGroups().find(row => row.code === code);
+    return group?.canCreate === undefined ? code.startsWith('NFD_') || !!group?.IsFixedKeys : !group.canCreate;
+  });
+
+  /** NFD_* groups used by system workflows: only labels can change, activation stays on. */
+  readonly isLabelsOnlyGroup = computed(() => {
+    const code = this.selectedLookupCode();
+    return this.catalogGroups().some((group) => group.code === code && (group.canChangeActive === undefined ? !!group.IsLabelsOnly : !!group.canEditLabels && !group.canChangeActive));
   });
 
   readonly canEditSelectedGroup = computed(() =>
     !!this.selectedLookupCode() && !this.catalogLoading() && !this.catalogLoadFailed() && !this.isReadOnlyManagementGroup()
   );
+
+  canEditPriorityActivation(): boolean {
+    const policy = this.catalogGroups().find(row => row.code === 'NFD_TSK_PRI');
+    return policy?.canChangeActive === true && policy.activationKeys?.includes(String(this.editingId())) === true;
+  }
+
+  readonly policyHint = computed(() => this.catalogLoading() || this.catalogLoadFailed() ? null :
+    constantPolicyHint(this.selectedLookupCode(), this.isReadOnlyManagementGroup(), this.isLabelsOnlyGroup(), this.isFixedKeysGroup()));
 
   readonly canManageSubRows = computed(() => {
     if (this.catalogLoading() || this.catalogLoadFailed() || this.isReadOnlyManagementGroup()) return false;
@@ -508,6 +534,7 @@ export class ConstantsManagePageComponent {
   }
 
   openAdd(): void {
+    if (['NFD_QUE_DIFF', 'NFD_EVL_TYPE', 'NFD_WRN_TYPE'].includes(this.selectedLookupCode())) return;
     if (!this.canManageSubRows()) {
       return;
     }
@@ -538,12 +565,24 @@ export class ConstantsManagePageComponent {
 
   openEdit(row: SystemConfigValueDto): void {
     if (this.catalogLoading() || this.catalogLoadFailed() || this.isReadOnlyManagementGroup()) return;
-    this.editingId.set(row.id);
+    const group = this.selectedLookupCode();
+    const key = hasFixedEditKey(group) ? constantEditKey(group, row) : row.id;
+    this.editKeyError.set('');
+    if (key == null) {
+      this.editingId.set(null);
+      this.modalOpen.set(false);
+      this.editKeyError.set('تعذّر تحديد مفتاح القيمة (ValueKey) لهذا السجل. لا يمكن حفظ التعديل.');
+      return;
+    }
+    this.editingId.set(key);
+    this.originalValue = hasFixedEditKey(group) ? {
+      label_ar: row.label_ar, label_en: row.label_en, active: row.IsActive ?? row.isActive ?? true
+    } : undefined;
     this.form.reset({
-      code: row.code ?? String(row.id),
+      code: hasFixedEditKey(group) ? String(key) : row.code ?? String(row.id),
       label_en: row.label_en,
       label_ar: row.label_ar,
-      IsActive: row.IsActive ?? true,
+      IsActive: row.IsActive ?? row.isActive ?? true,
       subReasonDropdown: row.subReasonDropdown ?? false,
       parentReasonId: row.parentReasonId != null ? String(row.parentReasonId) : '',
     });
@@ -558,6 +597,8 @@ export class ConstantsManagePageComponent {
   async save(): Promise<void> {
     if (this.catalogLoading() || this.catalogLoadFailed() || this.isReadOnlyManagementGroup()) return;
     const id = this.editingId();
+    const group = this.selectedLookupCode();
+    if (id == null && this.isFixedKeysGroup()) return;
     const isSubTab = this.activeTab() === 'sub';
     const result = await this.formPipeline.run({
       form: this.form,
@@ -597,7 +638,12 @@ export class ConstantsManagePageComponent {
             })
           );
         }
-        return firstValueFrom(this.api.updateConfigValue(this.selectedLookupCode(), id, { ...labels, ...extras }));
+        const precondition = this.originalValue && hasFixedEditKey(group) ? { expected: this.originalValue } : {};
+        if ((isAdministrativeGroup(group) && !(group === 'NFD_TSK_PRI' && this.canEditPriorityActivation())) ||
+            (hasFixedEditKey(group) && !this.form.controls.IsActive.dirty)) {
+          return firstValueFrom(this.api.updateConfigValue(group, id, { label_ar: labels.label_ar, label_en: labels.label_en, ...precondition }));
+        }
+        return firstValueFrom(this.api.updateConfigValue(group, id, { ...labels, ...extras, ...precondition }));
       },
       execute: {
         successMessage: $localize`:@@jobseeker.common.saved:Saved`,
@@ -608,6 +654,7 @@ export class ConstantsManagePageComponent {
       return;
     }
     const saved = result.value;
+    if (hasFixedEditKey(group)) this.constants.afterSave(group);
     this.closeModal();
     await this.reload();
     if (saved?.IsActive === false) {

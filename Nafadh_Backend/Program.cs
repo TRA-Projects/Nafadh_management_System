@@ -25,6 +25,11 @@ namespace Nafadh_Backend
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            // Allow training material uploads up to 200 MB
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MaxRequestBodySize = 220L * 1024 * 1024;
+            });
             QuestPDF.Settings.License = LicenseType.Community;
             QuestPDF.Settings.UseSystemFonts = true;
 
@@ -36,6 +41,7 @@ namespace Nafadh_Backend
             })
   .AddJsonOptions(options =>
   {
+      options.JsonSerializerOptions.Converters.Add(new Nafadh_Backend.DTOs.CatalogEnumConverter());
       // Serialize enums as strings instead of numbers
       options.JsonSerializerOptions.Converters.Add(
           new System.Text.Json.Serialization.JsonStringEnumConverter());
@@ -65,12 +71,21 @@ namespace Nafadh_Backend
             builder.Services.AddDbContext<Nafadhcontext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            builder.Services.AddScoped<Nafadh_Backend.IdentityAccess.IIdentityAccessAdminService, Nafadh_Backend.IdentityAccess.IdentityAccessAdminService>();
+
             // ── JWT Authentication ─────────────────────────────────────────────
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<IBiddingTokenService, BiddingTokenService>();
 
             var jwtKey = builder.Configuration["Jwt:Key"];
             var jwtIssuer = builder.Configuration["Jwt:Issuer"];
             var jwtAudience = builder.Configuration["Jwt:Audience"];
+
+            var biddingSecret = builder.Configuration["BiddingJwtSettings:Secret"]
+                ?? "TrainingModuleTrainingModuleTrainingModuleTrainingModuleTrainingModuleTrainingModule";
+            var biddingIssuer = builder.Configuration["BiddingJwtSettings:Issuer"] ?? "https://localhost:9494/";
+            var biddingAudience = builder.Configuration["BiddingJwtSettings:Audience"] ?? "https://localhost:9494/";
 
             builder.Services
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -89,30 +104,27 @@ namespace Nafadh_Backend
                         RoleClaimType = ClaimTypes.Role,
                         ClockSkew = TimeSpan.Zero,
                         IssuerSigningKey = new SymmetricSecurityKey(
-                                                       Encoding.UTF8.GetBytes(jwtKey))
+                            Encoding.UTF8.GetBytes(jwtKey))
                     };
+                })
+                .AddJwtBearer("BiddingBearer", options =>
+                {
+                    options.MapInboundClaims = false;
 
-                    options.Events = new JwtBearerEvents
+                    options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        OnAuthenticationFailed = context =>
-                        {
-                            var error = context.Exception.Message;
-                            return Task.CompletedTask;
-                        },
-                        OnTokenValidated = context =>
-                        {
-                            var claims = context.Principal.Claims.ToList();
-                            return Task.CompletedTask;
-                        },
-                        OnChallenge = context =>
-                        {
-                            var error = context.Error;
-                            var desc = context.ErrorDescription;
-                            return Task.CompletedTask;
-                        }
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = biddingIssuer,
+                        ValidAudience = biddingAudience,
+                        RoleClaimType = ClaimTypes.Role,
+                        ClockSkew = TimeSpan.FromMinutes(2),
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.ASCII.GetBytes(biddingSecret))
                     };
                 });
-
             builder.Services.AddAuthorization();
             // ── end JWT Authentication ─────────────────────────────────────────────
 
@@ -162,6 +174,8 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ITrainingMaterialService, TrainingMaterialService>();
             builder.Services.AddScoped<ITraineeModuleProgressRepository, TraineeModuleProgressRepository>();
             builder.Services.AddScoped<ITraineeModuleProgressService, TraineeModuleProgressService>();
+            builder.Services.AddScoped<IPagePermissionRepository, PagePermissionRepository>();
+            builder.Services.AddScoped<IPagePermissionService, PagePermissionService>();
 
             // User Guide Progress
             builder.Services.AddScoped<IUserGuideProgressRepository, UserGuideProgressRepository>();
@@ -249,8 +263,6 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IQuizResultRepository, QuizResultRepository>();
 
             builder.Services.AddScoped<IQuizResultService, QuizResultService>();
-            builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
-            builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 
             builder.Services.AddScoped<IQuizAccessService, QuizAccessService>();
             builder.Services.AddScoped<IQuizProctoringService, QuizProctoringService>();
@@ -301,6 +313,13 @@ namespace Nafadh_Backend
 
             // ── Swagger with JWT support ───────────────────────────────────────
             builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddScoped<
+    INotificationTemplateRepository,
+    NotificationTemplateRepository>();
+
+            builder.Services.AddScoped<
+                INotificationTemplateService,
+                NotificationTemplateService>();
 
             builder.Services.AddSwaggerGen(c =>
             {
@@ -534,6 +553,9 @@ namespace Nafadh_Backend
             app.UseCors("AllowAll");
             app.UseStaticFiles();
             app.UseAuthentication();
+
+            app.UseMiddleware<Nafadh_Backend.Middleware.MaintenanceModeMiddleware>();
+
             app.UseAuthorization();
 
             app.MapControllers();

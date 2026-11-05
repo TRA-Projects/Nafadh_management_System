@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend;
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Filters;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -34,6 +35,7 @@ namespace Nafadh_Backend.Controllers
 
         // GET certificate by enrollment
         [HttpGet("enrollment/{enrollmentId}")]
+        [RequirePagePermission(new[] { "nf.admin.certificates", "nf.trainee.evaluations-badges", "nf.company.trainees" }, "View")]
         public async Task<IActionResult> GetCertificateByEnrollment(int enrollmentId)
         {
             var result =
@@ -47,6 +49,7 @@ namespace Nafadh_Backend.Controllers
 
         // Create certificate + Send Email to Trainee
         [HttpPost]
+        [RequirePagePermission("nf.admin.certificates", "Create")]
         public async Task<IActionResult> AddCertificate([FromBody] CertificateInputDTO dto)
         {
             try
@@ -128,6 +131,7 @@ namespace Nafadh_Backend.Controllers
 
         // GET Certificate/{id}/download
         [HttpGet("{id}/download")]
+        [RequirePagePermission(new[] { "nf.admin.certificates", "nf.trainee.evaluations-badges", "nf.company.trainees" }, "View")]
         public async Task<IActionResult> DownloadCertificate(int id)
         {
             var fileUrl = await _service.DownloadCertificateAsync(id);
@@ -140,6 +144,7 @@ namespace Nafadh_Backend.Controllers
 
         // Get all certificates for trainee
         [HttpGet("trainee/{traineeId}")]
+        [RequirePagePermission(new[] { "nf.admin.certificates", "nf.trainee.evaluations-badges", "nf.company.trainees" }, "View")]
         public async Task<IActionResult> GetCertificatesByTrainee(int traineeId)
         {
             var result = await _service.GetCertificatesByTraineeIdAsync(traineeId);
@@ -153,6 +158,7 @@ namespace Nafadh_Backend.Controllers
         //=================-- Admin portal =================--
 
         [HttpGet("batch/{batchId}/status")]
+        [RequirePagePermission("nf.admin.certificates", "View")]
         public async Task<IActionResult> GetBatchCertificatesStatus(int batchId)
         {
             var result = await _service.GetBatchCertificatesStatusAsync(batchId);
@@ -163,6 +169,7 @@ namespace Nafadh_Backend.Controllers
         }
 
         [HttpPatch("enrollment/{enrollmentId}/status")]
+        [RequirePagePermission("nf.admin.certificates", "Approve")]
         public async Task<IActionResult> UpdateCertificateStatus(int enrollmentId, [FromBody] UpdateCertificateStatusDTO dto)
         {
             var result = await _service.UpdateCertificateStatusAsync(enrollmentId, dto.IsIssued);

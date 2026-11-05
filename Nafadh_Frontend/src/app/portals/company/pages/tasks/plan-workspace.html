@@ -21,7 +21,7 @@
           <h2>{{ p.title }}</h2>
           <span [class]="'chip ap-' + p.approvalStatus.toLowerCase()">{{ approvalLabel(p.approvalStatus) }}</span>
           @if (p.approvalStatus === 'Approved') {
-            <span [class]="'chip ex-' + p.executionStatus.toLowerCase()">{{ executionLabel(p.executionStatus) }}</span>
+            <span [class]="'chip ex-' + ('' + p.executionStatus).toLowerCase()">{{ executionLabel(p.executionStatus) }}</span>
           }
           @if (p.isDelayed) {
             <span class="chip late"><i class="fa-solid fa-clock"></i> متأخرة عن الجدول</span>
@@ -79,7 +79,7 @@
     <!-- ───────── حالة الاعتماد ───────── -->
     <div class="panel" data-guide="company-workspace-approval">
       <ol class="stepper">
-        @for (s of steps(); track s.label) {
+        @for (s of steps(); track s.id) {
           <li [class.done]="s.state === 'done'" [class.current]="s.state === 'current'" [class.bad]="s.rejected">
             <span class="dot">
               @if (s.rejected) { <i class="fa-solid fa-xmark"></i> }
@@ -125,7 +125,7 @@
         @if (p.executionStatus === 'OnHold') {
           <div class="notice warn" style="margin-top: 16px">
             <i class="fa-solid fa-pause"></i>
-            <p>الكورس موقوف مؤقتاً، استأنفه لمتابعة تحديث الحالات.</p>
+            <p>حالة الكورس «{{ executionLabel('OnHold') }}». استأنفه لمتابعة تحديث الحالات.</p>
           </div>
         }
         @if (p.executionStatus === 'Completed') {
@@ -260,7 +260,7 @@
                   @for (item of stage.items; track trackItem($index, item)) {
                     <tr>
                       <td>
-                        <span [class]="'chip type-' + item.itemType.toLowerCase()">
+                        <span [class]="'chip type-' + ('' + item.itemType).toLowerCase()">
                           <i [class]="item.itemType === 'Project' ? 'fa-solid fa-diagram-project' : 'fa-solid fa-list-check'"></i>
                           {{ typeLabel(item.itemType) }}
                         </span>
@@ -274,7 +274,7 @@
                         {{ formatDate(item.dueDate) }}
                         @if (item.isOverdue) { <span class="chip late">متأخرة</span> }
                       </td>
-                      <td><span [class]="'chip pr-' + item.priority.toLowerCase()">{{ priorityLabel(item.priority) }}</span></td>
+                      <td><span [class]="'chip pr-' + ('' + item.priority).toLowerCase()">{{ priorityLabel(item.priority) }}</span></td>
                       <td>
                         @if (p.canTrack) {
                           <select class="mini-select" [value]="item.status" (change)="onItemStatus(item, $event)" [disabled]="busy()" aria-label="حالة التنفيذ">
@@ -315,10 +315,10 @@
             @if (p.canEditStructure) {
               <div class="stage-foot" style="display: flex; gap: 8px; flex-wrap: wrap">
                 <button type="button" class="btn ghost sm" (click)="openItemForm(stage, undefined, 'Task')" [disabled]="busy()">
-                  <i class="fa-solid fa-plus"></i> مهمة
+                  <i class="fa-solid fa-plus"></i> {{ typeLabel('Task') }}
                 </button>
                 <button type="button" class="btn ghost sm" data-guide="company-workspace-new-project" (click)="openItemForm(stage, undefined, 'Project')" [disabled]="busy()">
-                  <i class="fa-solid fa-plus"></i> مشروع
+                  <i class="fa-solid fa-plus"></i> {{ typeLabel('Project') }}
                 </button>
               </div>
             }
@@ -553,16 +553,11 @@
           <div class="field-row">
             <label class="field">
               <span>النوع <em>*</em></span>
-              <select name="type" [(ngModel)]="itemForm.itemType">
-                <option ngValue="Task">مهمة</option>
-                <option ngValue="Project">مشروع</option>
-              </select>
+              <app-catalog-picker caption="نوع العنصر" [options]="itemTypes" [(value)]="itemForm.itemType" [fallbackLabel]="itemForm.itemId ? typeLabel(itemForm.itemType) : ''" />
             </label>
             <label class="field">
               <span>الأولوية <em>*</em></span>
-              <select name="priority" [(ngModel)]="itemForm.priority">
-                @for (o of priorities; track o) { <option [ngValue]="o">{{ priorityLabel(o) }}</option> }
-              </select>
+              <app-catalog-picker caption="أولوية العنصر" [options]="itemPriorities" [(value)]="itemForm.priority" [fallbackLabel]="itemForm.itemId ? priorityLabel(itemForm.priority) : ''" />
             </label>
           </div>
           <label class="field">

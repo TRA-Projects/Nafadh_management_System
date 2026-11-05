@@ -127,46 +127,14 @@
             </div>
 
 
-            <select [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)">
-
-                <option value="all">
-                    كل الأنواع
-                </option>
-
-                <option value="1">
-                    صح أو خطأ
-                </option>
-
-                <option value="2">
-                    اختيار متعدد
-                </option>
-
-                <option value="3">
-                    مقالي
-                </option>
-
-            </select>
+            <app-catalog-picker caption="فلتر نوع السؤال" [options]="typeFilterChoices()"
+                [value]="typeKeys[+typeFilter()] || 'all'"
+                (valueChange)="typeFilter.set($event === 'all' ? 'all' : typeKeys.indexOf($event).toString())" />
 
 
-            <select [ngModel]="difficultyFilter()" (ngModelChange)="difficultyFilter.set($event)">
-
-                <option value="all">
-                    كل المستويات
-                </option>
-
-                <option value="1">
-                    سهل
-                </option>
-
-                <option value="2">
-                    متوسط
-                </option>
-
-                <option value="3">
-                    صعب
-                </option>
-
-            </select>
+            <app-catalog-picker caption="فلتر الصعوبة" [options]="difficultyFilterChoices()"
+                [value]="difficultyKeys[+difficultyFilter()] || 'all'"
+                (valueChange)="difficultyFilter.set($event === 'all' ? 'all' : difficultyKeys.indexOf($event).toString())" />
 
 
             <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
@@ -501,22 +469,9 @@
                                 نوع السؤال
                             </label>
 
-                            <select id="questionType" name="questionType" [(ngModel)]="questionForm.questionType"
-                                (ngModelChange)="questionTypeChanged()">
-
-                                <option [ngValue]="0">
-                                    اختيار من متعدد
-                                </option>
-
-                                <option [ngValue]="1">
-                                    صح أو خطأ
-                                </option>
-
-                                <option [ngValue]="2">
-                                    مقالي
-                                </option>
-
-                            </select>
+                            <app-catalog-picker inputId="questionType" caption="نوع السؤال" [options]="constants.choices('NFD_QUE_TYPE')"
+                                [value]="typeKeys[questionForm.questionType]" [fallbackLabel]="editingQuestionId() ? getQuestionTypeLabel(questionForm.questionType) : ''"
+                                (valueChange)="questionForm.questionType = typeKeys.indexOf($event); questionTypeChanged()" />
 
                         </div>
 
@@ -527,21 +482,11 @@
                                 مستوى الصعوبة
                             </label>
 
-                            <select id="difficulty" name="difficulty" [(ngModel)]="questionForm.difficulty">
-
-                                <option [ngValue]="0">
-                                    سهل
-                                </option>
-
-                                <option [ngValue]="1">
-                                    متوسط
-                                </option>
-
-                                <option [ngValue]="2">
-                                    صعب
-                                </option>
-
-                            </select>
+                            <app-catalog-picker inputId="difficulty" caption="صعوبة السؤال" [options]="activeDifficultyChoices()"
+                                [value]="difficultyKeys[questionForm.difficulty]"
+                                [fallbackLabel]="editingQuestionId() ? getDifficultyLabel(questionForm.difficulty) : ''"
+                                (valueChange)="questionForm.difficulty = difficultyKeys.indexOf($event)" />
+                            <small *ngIf="difficultyOptionsError()">تعذر تحميل مستويات الصعوبة من الثوابت؛ لا يمكن اختيار مستوى حتى يعود الاتصال.</small>
 
                         </div>
 

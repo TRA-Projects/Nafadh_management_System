@@ -44,6 +44,7 @@ namespace Nafadh_Backend.DTOs
             public int EnrollmentId { get; set; }
             public string FullName { get; set; }
             public bool IsIssued { get; set; }
+            public NFD_CertificateType? Type { get; set; }
             public int? CertificateId { get; set; }   
             public string? FileUrl { get; set; }
             public decimal? Grade { get; set; }

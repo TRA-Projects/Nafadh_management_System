@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Nafadh_Backend.Repositories;
+using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -12,12 +13,12 @@ namespace Nafadh_Backend.Controllers
     [Route("api/[controller]")]
     public class BiddingSsoController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
+        private readonly IBiddingTokenService _biddingTokenService;
         private readonly IUserRepository _userRepository;
 
-        public BiddingSsoController(IConfiguration configuration, IUserRepository userRepository)
+        public BiddingSsoController(IBiddingTokenService biddingTokenService, IUserRepository userRepository)
         {
-            _configuration = configuration;
+            _biddingTokenService = biddingTokenService;
             _userRepository = userRepository;
         }
 
@@ -50,59 +51,9 @@ namespace Nafadh_Backend.Controllers
                 }
             }
 
-            // ProfileId يجب أن يكون رقماً صحيحاً موجباً
-            var profileId = int.TryParse(userIdStr, out var validId) && validId > 0
-                ? validId.ToString()
-                : "1";
-
-            // التحقق هل المستخدم Admin لإعطائه VendorType = "0"
-            var isAdmin = string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase)
-                       || string.Equals(role, "SuperAdmin", StringComparison.OrdinalIgnoreCase)
-                       || string.Equals(email, "admin@nafadh.om", StringComparison.OrdinalIgnoreCase);
-
-            // 2. قراءة إعدادات توقيع Bidding_API
-            var secret = _configuration["BiddingJwtSettings:Secret"]
-                ?? "TrainingModuleTrainingModuleTrainingModuleTrainingModuleTrainingModuleTrainingModule";
-            var issuer = _configuration["BiddingJwtSettings:Issuer"]
-                ?? "https://localhost:9494/";
-            var audience = _configuration["BiddingJwtSettings:Audience"]
-                ?? "https://localhost:9494/";
-            var expiryMinutes = int.TryParse(_configuration["BiddingJwtSettings:ExpiryTimeInMinute"], out var mins)
-                ? mins
-                : 60;
-
-            var securityKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secret));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            // 3. بناء الـ Claims المطلوبة من Bidding_API
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, profileId),
-                new Claim(ClaimTypes.Name, email),
-                new Claim(ClaimTypes.Email, email),
-                new Claim(ClaimTypes.Role, isAdmin ? "Admin" : (string.IsNullOrWhiteSpace(role) ? "User" : role)),
-                new Claim("ProfileId", profileId),
-                new Claim("VendorType", isAdmin ? "0" : "1")
-            };
-
-            // استخدام UtcNow لأن ClockSkew = TimeSpan.Zero في Bidding_API
-            var nowUtc = DateTime.UtcNow;
-            var expiresUtc = nowUtc.AddMinutes(expiryMinutes);
-
-            var token = new JwtSecurityToken(
-                issuer: issuer,
-                audience: audience,
-                claims: claims,
-                notBefore: nowUtc,
-                expires: expiresUtc,
-                signingCredentials: credentials
-            );
-
-            return Ok(new
-            {
-                token = new JwtSecurityTokenHandler().WriteToken(token),
-                expiresAtUtc = expiresUtc
-            });
+            var id = int.TryParse(userIdStr, out var validId) ? validId : 0;
+            var (token, expiresUtc) = _biddingTokenService.Generate(id, email, role);
+            return Ok(new { token, expiresAtUtc = expiresUtc });
         }
     }
 }

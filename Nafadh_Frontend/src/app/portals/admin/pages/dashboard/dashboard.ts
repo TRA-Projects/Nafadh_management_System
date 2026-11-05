@@ -1,9 +1,12 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, signal, computed } from '@angular/core';
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
+import { traineeAttendanceKey } from '../../../../core/models/enums';
+import { Component, OnInit, AfterViewInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AdminApi } from '../../services/admin-api';
+import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warning-types.service';
 import { AuditLogDto, DashboardChartsDto, BatchDto, AnnouncementDto } from '../../../../core/models/dtos';
 import Chart, { TooltipItem } from 'chart.js/auto';
 
@@ -122,7 +125,6 @@ export interface SelectedWarningDetailView {
   type: string;
   typeArabic: string;
   level: string;
-  levelArabic: string;
   status: string;
   statusArabic: string;
   issuedDate: string;
@@ -143,6 +145,8 @@ export interface SelectedWarningDetailView {
   styleUrls: ['./dashboard.css']
 })
 export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
+  readonly constants = inject(NafadhConstantsService);
+  readonly warningTypes = inject(NafadhWarningTypesService);
   summary = signal<AdminDashboardSummary | null>(null);
   announcements = signal<any[]>([]);
   showAnnouncements = signal<boolean>(true);
@@ -485,6 +489,8 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   ) { }
 
   ngOnInit() {
+    this.constants.ensure('NFD_WRN_SCOPE', 'NFD_WRN_LVL');
+    this.warningTypes.refresh();
     this.loadAllDashboardData();
   }
 
@@ -627,20 +633,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       const levelRaw = String(warning.level ?? '');
       const statusRaw = String(warning.status ?? '');
 
-      const typeArabic = typeRaw.toLowerCase().includes('attend')
-        ? 'التزام الحضور والمتابعة (Attendance)'
-        : typeRaw.toLowerCase().includes('behav')
-          ? 'الانضباط والالتزام التنظيمي (Behavioral)'
-          : typeRaw.toLowerCase().includes('performance')
-            ? 'مستوى الأداء وجودة التدريب (Performance)'
-            : typeRaw || '—';
-
-      const levelArabic =
-        levelRaw.toLowerCase().includes('low') ? 'منخفض' :
-          levelRaw.toLowerCase().includes('medium') ? 'متوسط' :
-            levelRaw.toLowerCase().includes('high') ? 'مرتفع' :
-              levelRaw.toLowerCase().includes('critical') ? 'حرج' :
-                levelRaw || '—';
+      const typeArabic = this.warningTypes.label(typeRaw);
 
       const statusArabic =
         statusRaw.toLowerCase().includes('resolved') ? 'تمت المعالجة' :
@@ -659,7 +652,6 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         type: typeRaw || '—',
         typeArabic,
         level: levelRaw || '—',
-        levelArabic,
         status: statusRaw || '—',
         statusArabic,
         issuedDate: warning.issuedDate
@@ -794,10 +786,11 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         const attList: any[] = Array.isArray(dailyAtt) ? dailyAtt : [];
         const evalList: any[] = Array.isArray(evals) ? evals : [];
 
-        const presentCount = attList.filter(a => String(a.status).toLowerCase().includes('present') || a.status === 1).length;
-        const absentCount = attList.filter(a => String(a.status).toLowerCase().includes('absent') || a.status === 2).length;
-        const lateCount = attList.filter(a => String(a.status).toLowerCase().includes('late') || a.status === 3).length;
-        const excusedCount = attList.filter(a => String(a.status).toLowerCase().includes('excus') || a.status === 4).length;
+        const statuses = attList.map(a => traineeAttendanceKey(a.status));
+        const presentCount = statuses.filter(s => s === 'Present').length;
+        const absentCount = statuses.filter(s => s === 'Absent').length;
+        const lateCount = statuses.filter(s => s === 'Late').length;
+        const excusedCount = statuses.filter(s => s === 'Excused').length;
 
         const latestEval = evalList[0];
         const evalNotes = latestEval?.feedback || latestEval?.notes || latestEval?.comment || initialView.trainerNotes;

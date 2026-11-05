@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
+using Nafadh_Backend.Filters;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Services;
 using System.Globalization;
@@ -37,6 +38,7 @@ namespace Nafadh_Backend.Controllers
         // GET: api/CoursePlanApproval?status=PendingApproval&companyId=1
         // Defaults to the approval queue (PendingApproval, oldest submission first).
         [HttpGet]
+        [RequirePagePermission("nf.admin.programs-batches", "View")]
         public async Task<ActionResult<IEnumerable<CoursePlanSummaryDTO>>> GetPlans(
             [FromQuery] NFD_CoursePlanApprovalStatus? status,
             [FromQuery] int? companyId)
@@ -61,6 +63,7 @@ namespace Nafadh_Backend.Controllers
         // GET: api/CoursePlanApproval/{planId}
         // Full plan (stages, tasks, trainers, notes). Drafts are not visible to the Authority.
         [HttpGet("{planId:int}")]
+        [RequirePagePermission("nf.admin.programs-batches", "View")]
         public async Task<ActionResult<CoursePlanDetailDTO>> GetPlan(int planId)
         {
             var plan = await _reader.DetailQuery(tracking: false)
@@ -99,6 +102,7 @@ namespace Nafadh_Backend.Controllers
 
         // GET: api/CoursePlanApproval/batch/{batchId}/plan
         [HttpGet("batch/{batchId:int}/plan")]
+        [RequirePagePermission("nf.admin.programs-batches", "View")]
         public async Task<ActionResult<CoursePlanDetailDTO>> GetBatchPlan(int batchId)
         {
             var match = await ResolveBatchPlanAsync(batchId);
@@ -108,6 +112,7 @@ namespace Nafadh_Backend.Controllers
 
         // Link a plan notification directly to its unique Admin batch.
         [HttpGet("{planId:int}/batch")]
+        [RequirePagePermission("nf.admin.programs-batches", "View")]
         public async Task<IActionResult> GetBatchForPlan(int planId)
         {
             var plan = await _context.NFD_CoursePlans.AsNoTracking()
@@ -130,6 +135,7 @@ namespace Nafadh_Backend.Controllers
         // This route verifies again at decision time that the reviewed plan belongs
         // to the selected batch; the existing plan-id API remains compatible.
         [HttpPut("batch/{batchId:int}/plans/{planId:int}/decision")]
+        [RequirePagePermission("nf.admin.programs-batches", "Approve")]
         public async Task<ActionResult<CoursePlanDetailDTO>> DecideForBatch(
             int batchId, int planId, [FromBody] CoursePlanDecisionDTO dto)
         {
@@ -144,6 +150,7 @@ namespace Nafadh_Backend.Controllers
         // Approve (note optional) or Reject (note required). The company is notified and the
         // note is added to the plan's notes timeline as an Authority note.
         [HttpPut("{planId:int}/decision")]
+        [RequirePagePermission("nf.admin.programs-batches", "Approve")]
         public async Task<ActionResult<CoursePlanDetailDTO>> Decide(int planId, [FromBody] CoursePlanDecisionDTO dto)
         {
             var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
@@ -297,4 +304,3 @@ namespace Nafadh_Backend.Controllers
         }
     }
 }
-    

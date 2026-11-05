@@ -1,3 +1,5 @@
+import { CatalogPicker } from '../../../../../core/models/catalog-picker';
+import { NafadhConstantsService } from '../../../../../core/services/nafadh-constants.service';
 
 import {
   Component,
@@ -11,13 +13,18 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
-import { AdminSystemApiService } from '../../legacy/core/api/services/admin-system-api.service';
-import type { NotificationTemplateListItemDto } from '../../legacy/core/api/models/admin-system.models';
+import {
+  NotificationTemplateApiService,
+  type NotificationTemplateDto,
+} from './notification-template-api.service';
+
 import { AnnouncementApiService } from '../../legacy/core/api/services/announcement-api.service';
+
 import type {
   AnnouncementDto,
   AnnouncementScopeType,
 } from '../../legacy/core/api/services/announcement-api.service';
+
 import { AuthService } from '../../../../../core/auth/auth.service';
 
 type ScopeName = 'Platform' | 'Company' | 'Batch';
@@ -77,18 +84,18 @@ export interface NotificationTemplate {
   id: number;
   code: string;
   name: string;
-  type: 'SMS' | 'Email' | 'Push';
-  subject?: string;
+  portalCode: string;
+  type: 'Email';
+  subject: string;
   body: string;
   isActive: boolean;
-  hasEmail: boolean;
-  hasSms: boolean;
 }
 
 interface AnnouncementViewModel {
   id: number;
   message: string;
-  scopeType: ScopeName | null;
+  scopeType: AnnouncementDto['scopeType'];
+  editableScope: ScopeName | null;
   scopeId: number | null;
   date: Date | string;
   createdByUserId: number;
@@ -97,12 +104,13 @@ interface AnnouncementViewModel {
 @Component({
   selector: 'app-notification-templates-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CatalogPicker, CommonModule, FormsModule],
   templateUrl: './notification-templates-page.component.html',
   styleUrl: './notification-templates-page.component.css',
 })
 export class NotificationTemplatesPageComponent {
-  private readonly api = inject(AdminSystemApiService);
+  readonly constants = inject(NafadhConstantsService);
+  private readonly templateApi = inject(NotificationTemplateApiService);
   private readonly announcementApi = inject(AnnouncementApiService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
@@ -112,8 +120,19 @@ export class NotificationTemplatesPageComponent {
 
   // Notification templates
   readonly searchTerm = signal('');
-  readonly selectedType = signal('');
+  readonly selectedPortal = signal('');
   readonly templates = signal<NotificationTemplate[]>([]);
+
+  readonly portalOptions = computed(() =>
+    [
+      ...new Set(
+        this.templates()
+          .map((template) => template.portalCode)
+          .filter(Boolean),
+      ),
+    ].sort((a, b) => a.localeCompare(b)),
+  );
+
   readonly loading = signal(false);
   readonly errorMessage = signal('');
   readonly errorRetryable = signal(false);
@@ -157,27 +176,40 @@ export class NotificationTemplatesPageComponent {
     { value: ANNOUNCEMENT_SCOPE.Batch, label: 'الدفعة' },
   ];
 
+  get scopeChoices() {
+    return this.constants.supportedChoices(
+      'NFD_ANN_SCOPE',
+      this.announcementScopeOptions,
+    );
+  }
+
   // Template filters and pagination
   readonly hasActiveFilters = computed(
-    () => this.searchTerm().trim() !== '' || this.selectedType() !== '',
+    () => this.searchTerm().trim() !== '' || this.selectedPortal() !== '',
   );
 
   readonly filteredTemplates = computed(() => {
-    const type = this.selectedType();
-    const rows = this.templates();
+    const term = this.searchTerm().trim().toLocaleLowerCase();
+    const portal = this.selectedPortal();
 
-    if (!type) return rows;
+    return this.templates().filter((template) => {
+      const matchesTerm =
+        !term ||
+        template.name.toLocaleLowerCase().includes(term) ||
+        template.code.toLocaleLowerCase().includes(term);
 
-    return rows.filter((template) => {
-      if (type === 'Email') return template.hasEmail;
-      if (type === 'SMS') return template.hasSms;
-      if (type === 'Push') return template.type === 'Push';
-      return true;
+      const matchesPortal =
+        !portal || template.portalCode === portal;
+
+      return matchesTerm && matchesPortal;
     });
   });
 
   readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.totalCount() / this.pageSize())),
+    Math.max(
+      1,
+      Math.ceil(this.filteredTemplates().length / this.pageSize()),
+    ),
   );
 
   readonly safePageIndex = computed(() =>
@@ -198,7 +230,14 @@ export class NotificationTemplatesPageComponent {
     pageWindow(this.totalPages(), this.safePageIndex()),
   );
 
-  readonly paginatedTemplates = computed(() => this.filteredTemplates());
+  readonly paginatedTemplates = computed(() => {
+    const start = this.safePageIndex() * this.pageSize();
+
+    return this.filteredTemplates().slice(
+      start,
+      start + this.pageSize(),
+    );
+  });
 
   // Announcement filters and pagination
   readonly filteredAnnouncements = computed(() => {
@@ -219,7 +258,8 @@ export class NotificationTemplatesPageComponent {
     Math.max(
       1,
       Math.ceil(
-        this.announcementTotalCount() / this.announcementPageSize(),
+        this.announcementTotalCount() /
+          this.announcementPageSize(),
       ),
     ),
   );
@@ -257,7 +297,8 @@ export class NotificationTemplatesPageComponent {
 
   readonly paginatedAnnouncements = computed(() => {
     const start =
-      this.safeAnnouncementPageIndex() * this.announcementPageSize();
+      this.safeAnnouncementPageIndex() *
+      this.announcementPageSize();
 
     return this.filteredAnnouncements().slice(
       start,
@@ -266,6 +307,7 @@ export class NotificationTemplatesPageComponent {
   });
 
   constructor() {
+    this.constants.ensure('NFD_ANN_SCOPE');
     this.loadTemplates();
     this.loadAnnouncements();
   }
@@ -281,57 +323,51 @@ export class NotificationTemplatesPageComponent {
     this.errorMessage.set('');
     this.errorRetryable.set(false);
 
-    this.api
-      .getNotificationTemplatesPage({
-        pageIndex: this.pageIndex(),
-        pageSize: this.pageSize(),
-        q: this.searchTerm().trim(),
-      })
-      .subscribe({
-        next: (page) => {
-          const rows = page.rows ?? [];
+    this.templateApi.getAll().subscribe({
+      next: (rows) => {
+        this.templates.set(
+          rows.map((dto) => this.mapTemplate(dto)),
+        );
 
-          this.templates.set(rows.map((dto) => this.mapTemplate(dto)));
-          this.totalCount.set(page.total ?? rows.length);
-          this.loading.set(false);
+        this.totalCount.set(rows.length);
+        this.pageIndex.set(0);
+        this.loading.set(false);
+      },
 
-          if (
-            this.pageIndex() >= this.totalPages() &&
-            this.pageIndex() > 0
-          ) {
-            this.pageIndex.set(this.totalPages() - 1);
-            this.loadTemplates();
-          }
-        },
-        error: (error: unknown) => {
-          console.error('Failed to load notification templates:', error);
-          this.errorMessage.set(
-            'تعذر تحميل قوالب الإشعارات. يرجى المحاولة مرة أخرى.',
-          );
-          this.errorRetryable.set(true);
-          this.loading.set(false);
-        },
-      });
+      error: (error: unknown) => {
+        console.error(
+          'Failed to load notification templates:',
+          error,
+        );
+
+        this.errorMessage.set(
+          'تعذر تحميل قوالب الإشعارات من قاعدة البيانات. يرجى المحاولة مرة أخرى.',
+        );
+
+        this.errorRetryable.set(true);
+        this.loading.set(false);
+      },
+    });
   }
 
   private mapTemplate(
-    dto: NotificationTemplateListItemDto,
+    dto: NotificationTemplateDto,
   ): NotificationTemplate {
     return {
-      id: dto.Id,
-      code: dto.ActionCode,
-      name: dto.LabelAr || dto.LabelEn || dto.ActionCode,
-      type: dto.EmailEnabled ? 'Email' : 'SMS',
-      body: '',
-      isActive: dto.IsActive,
-      hasEmail: dto.EmailEnabled,
-      hasSms: dto.SmsEnabled,
+      id: dto.id,
+      code: dto.code,
+      name: dto.name,
+      portalCode: dto.portalCode,
+      type: 'Email',
+      subject: dto.subject ?? '',
+      body: dto.body ?? '',
+      isActive: dto.isActive,
     };
   }
 
   getEndIndex(): number {
     return Math.min(
-      this.totalCount(),
+      this.filteredTemplates().length,
       (this.safePageIndex() + 1) * this.pageSize(),
     );
   }
@@ -340,24 +376,19 @@ export class NotificationTemplatesPageComponent {
     this.searchTerm.set(value);
     this.pageIndex.set(0);
     this.closeMenu();
-    this.loadTemplates();
   }
 
-  onTypeChange(value: string): void {
-    this.selectedType.set(value);
+  onPortalChange(value: string): void {
+    this.selectedPortal.set(value);
     this.pageIndex.set(0);
     this.closeMenu();
   }
 
   clearFilters(): void {
-    const searchChanged = this.searchTerm().trim() !== '';
-
     this.searchTerm.set('');
-    this.selectedType.set('');
+    this.selectedPortal.set('');
     this.pageIndex.set(0);
     this.closeMenu();
-
-    if (searchChanged) this.loadTemplates();
   }
 
   dismissError(): void {
@@ -366,12 +397,13 @@ export class NotificationTemplatesPageComponent {
   }
 
   onPageSizeChange(event: Event): void {
-    const value = Number((event.target as HTMLSelectElement).value);
+    const value = Number(
+      (event.target as HTMLSelectElement).value,
+    );
 
     if (PAGE_SIZE_OPTIONS.includes(value as PageSize)) {
       this.pageSize.set(value as PageSize);
       this.pageIndex.set(0);
-      this.loadTemplates();
     }
   }
 
@@ -379,7 +411,6 @@ export class NotificationTemplatesPageComponent {
     if (page >= 0 && page < this.totalPages()) {
       this.pageIndex.set(page);
       this.closeMenu();
-      this.loadTemplates();
     }
   }
 
@@ -387,7 +418,6 @@ export class NotificationTemplatesPageComponent {
     if (this.canNext()) {
       this.pageIndex.update((page) => page + 1);
       this.closeMenu();
-      this.loadTemplates();
     }
   }
 
@@ -395,7 +425,6 @@ export class NotificationTemplatesPageComponent {
     if (this.canPrev()) {
       this.pageIndex.update((page) => page - 1);
       this.closeMenu();
-      this.loadTemplates();
     }
   }
 
@@ -414,31 +443,28 @@ export class NotificationTemplatesPageComponent {
     this.openMenuId = null;
   }
 
+  createTemplate(): void {
+    this.router.navigate([
+      '/admin/external-system/notification-templates/new',
+    ]);
+  }
+
   editTemplate(template: NotificationTemplate): void {
     this.closeMenu();
 
-    this.router.navigate(
-      ['/admin/external-system/notification-templates', template.code],
-      {
-        state: {
-          template: {
-            id: template.id,
-            code: template.code,
-            name: template.name,
-            active: template.isActive,
-            email: template.hasEmail,
-            sms: template.hasSms,
-          },
-        },
-      },
-    );
+    this.router.navigate([
+      '/admin/external-system/notification-templates',
+      template.id,
+    ]);
   }
 
   deleteTemplate(id: number): void {
     this.closeMenu();
+
     this.errorMessage.set(
-      `حذف القالب رقم ${id} غير متاح حاليًا؛ لا توجد عملية حذف معرفة في خدمة الـ API.`,
+      `حذف القالب رقم ${id} غير متاح؛ لا توجد واجهة حذف في الـ Backend.`,
     );
+
     this.errorRetryable.set(false);
   }
 
@@ -453,7 +479,10 @@ export class NotificationTemplatesPageComponent {
       batches: this.announcementApi.getByScope(2),
     }).subscribe({
       next: ({ platform, companies, batches }) => {
-        const uniqueAnnouncements = new Map<number, AnnouncementDto>();
+        const uniqueAnnouncements = new Map<
+          number,
+          AnnouncementDto
+        >();
 
         [...platform, ...companies, ...batches].forEach((dto) => {
           uniqueAnnouncements.set(dto.announcementId, dto);
@@ -463,7 +492,8 @@ export class NotificationTemplatesPageComponent {
           .map((dto) => this.mapAnnouncement(dto))
           .sort(
             (a, b) =>
-              new Date(b.date).getTime() - new Date(a.date).getTime() ||
+              new Date(b.date).getTime() -
+                new Date(a.date).getTime() ||
               b.id - a.id,
           );
 
@@ -484,8 +514,12 @@ export class NotificationTemplatesPageComponent {
         console.log('Batch announcements:', batches.length);
         console.log('Total unique announcements:', mapped.length);
       },
+
       error: (error: unknown) => {
-        console.error('Failed to load announcements by scope:', error);
+        console.error(
+          'Failed to load announcements by scope:',
+          error,
+        );
 
         this.announcementsError.set(
           'تعذر تحميل الإعلانات حسب النطاق. يرجى التحقق من استجابات الـ API.',
@@ -502,7 +536,8 @@ export class NotificationTemplatesPageComponent {
     return {
       id: dto.announcementId,
       message: dto.message,
-      scopeType: normalizeScope(dto.scopeType),
+      scopeType: dto.scopeType,
+      editableScope: normalizeScope(dto.scopeType),
       scopeId: dto.scopeId ?? null,
       date: dto.date,
       createdByUserId: dto.createdByUserId,
@@ -522,7 +557,9 @@ export class NotificationTemplatesPageComponent {
   }
 
   onAnnouncementPageSizeChange(event: Event): void {
-    const value = Number((event.target as HTMLSelectElement).value);
+    const value = Number(
+      (event.target as HTMLSelectElement).value,
+    );
 
     if (PAGE_SIZE_OPTIONS.includes(value as PageSize)) {
       this.announcementPageSize.set(value as PageSize);
@@ -531,7 +568,10 @@ export class NotificationTemplatesPageComponent {
   }
 
   setAnnouncementPage(page: number): void {
-    if (page >= 0 && page < this.announcementTotalPages()) {
+    if (
+      page >= 0 &&
+      page < this.announcementTotalPages()
+    ) {
       this.announcementPageIndex.set(page);
       this.closeMenu();
     }
@@ -559,17 +599,13 @@ export class NotificationTemplatesPageComponent {
     );
   }
 
-  getScopeLabel(scopeType: ScopeName | null): string {
-    switch (scopeType) {
-      case ANNOUNCEMENT_SCOPE.Platform:
-        return 'المنصة';
-      case ANNOUNCEMENT_SCOPE.Company:
-        return 'الشركة';
-      case ANNOUNCEMENT_SCOPE.Batch:
-        return 'الدفعة';
-      default:
-        return 'غير محدد';
+  getScopeLabel(scopeType: unknown): string {
+    if (scopeType == null || String(scopeType).trim() === '') {
+      return 'غير محدد';
     }
+
+    const fallback = this.announcementScopeOptions.find(option => option.value === normalizeScope(scopeType))?.label;
+    return this.constants.administrativeLabel('NFD_ANN_SCOPE', scopeType, fallback);
   }
 
   // Opens the form in Add mode and resets its values.
@@ -578,7 +614,9 @@ export class NotificationTemplatesPageComponent {
 
     this.editingAnnouncementId.set(null);
     this.announcementMessage.set('');
-    this.announcementScopeType.set(ANNOUNCEMENT_SCOPE.Platform);
+    this.announcementScopeType.set(
+      ANNOUNCEMENT_SCOPE.Platform,
+    );
     this.announcementScopeId.set(null);
     this.announcementFormError.set('');
     this.announcementSuccessMessage.set('');
@@ -595,19 +633,25 @@ export class NotificationTemplatesPageComponent {
     this.announcementFormVisible.set(false);
     this.editingAnnouncementId.set(null);
     this.announcementMessage.set('');
-    this.announcementScopeType.set(ANNOUNCEMENT_SCOPE.Platform);
+    this.announcementScopeType.set(
+      ANNOUNCEMENT_SCOPE.Platform,
+    );
     this.announcementScopeId.set(null);
     this.announcementFormError.set('');
     this.announcementSuccessMessage.set('');
   }
 
   // Opens the same form in Edit mode.
-  editAnnouncement(announcement: AnnouncementViewModel): void {
+  editAnnouncement(
+    announcement: AnnouncementViewModel,
+  ): void {
     this.editingAnnouncementId.set(announcement.id);
     this.announcementMessage.set(announcement.message);
+
     this.announcementScopeType.set(
-      announcement.scopeType ?? ANNOUNCEMENT_SCOPE.Platform,
+      announcement.editableScope ?? ANNOUNCEMENT_SCOPE.Platform,
     );
+
     this.announcementScopeId.set(announcement.scopeId);
     this.announcementFormError.set('');
     this.announcementSuccessMessage.set('');
@@ -641,15 +685,21 @@ export class NotificationTemplatesPageComponent {
     }
   }
 
-  onAnnouncementScopeIdChange(value: string | number): void {
+  onAnnouncementScopeIdChange(
+    value: string | number,
+  ): void {
     const parsed = Number(value);
 
     this.announcementScopeId.set(
-      Number.isFinite(parsed) && parsed > 0 ? parsed : null,
+      Number.isFinite(parsed) && parsed > 0
+        ? parsed
+        : null,
     );
   }
 
-  private toApiScope(scope: ScopeName): AnnouncementScopeType {
+  private toApiScope(
+    scope: ScopeName,
+  ): AnnouncementScopeType {
     return SCOPE_NUMBER[scope] as unknown as AnnouncementScopeType;
   }
 
@@ -658,6 +708,23 @@ export class NotificationTemplatesPageComponent {
     const scopeType = this.announcementScopeType();
     const scopeId = this.announcementScopeId();
     const editingId = this.editingAnnouncementId();
+    const original =
+      editingId === null
+        ? null
+        : this.announcements().find((row) => row.id === editingId);
+    if (editingId !== null && !original?.editableScope) {
+      this.announcementFormError.set(
+        'لا يمكن تعديل هذا الإعلان من نموذج لا يدعم نطاقه الأصلي.',
+      );
+      return;
+    }
+    if (
+      original?.editableScope !== scopeType &&
+      !this.constants.isSelectable('NFD_ANN_SCOPE', scopeType)
+    ) {
+      this.announcementFormError.set('اختر نطاق إعلان مفعّلاً.');
+      return;
+    }
 
     this.announcementFormError.set('');
     this.announcementSuccessMessage.set('');
@@ -665,13 +732,17 @@ export class NotificationTemplatesPageComponent {
     if (this.savingAnnouncement()) return;
 
     if (!message) {
-      this.announcementFormError.set('يرجى إدخال نص الإعلان.');
+      this.announcementFormError.set(
+        'يرجى إدخال نص الإعلان.',
+      );
       return;
     }
 
     if (
       scopeType !== ANNOUNCEMENT_SCOPE.Platform &&
-      (!scopeId || !Number.isInteger(scopeId) || scopeId <= 0)
+      (!scopeId ||
+        !Number.isInteger(scopeId) ||
+        scopeId <= 0)
     ) {
       this.announcementFormError.set(
         'يرجى إدخال رقم صحيح للشركة أو الدفعة.',
@@ -691,7 +762,9 @@ export class NotificationTemplatesPageComponent {
     const dto = {
       scopeType: this.toApiScope(scopeType),
       scopeId:
-        scopeType === ANNOUNCEMENT_SCOPE.Platform ? null : scopeId,
+        scopeType === ANNOUNCEMENT_SCOPE.Platform
+          ? null
+          : scopeId,
       message,
     };
 
@@ -724,6 +797,7 @@ export class NotificationTemplatesPageComponent {
         // Keep the form visible so the success message can be seen.
         this.loadAnnouncements();
       },
+
       error: (error: unknown) => {
         console.error(
           editingId !== null
@@ -746,23 +820,33 @@ export class NotificationTemplatesPageComponent {
   private resetAnnouncementAfterSave(): void {
     this.editingAnnouncementId.set(null);
     this.announcementMessage.set('');
-    this.announcementScopeType.set(ANNOUNCEMENT_SCOPE.Platform);
+    this.announcementScopeType.set(
+      ANNOUNCEMENT_SCOPE.Platform,
+    );
     this.announcementScopeId.set(null);
   }
 
   deleteAnnouncement(id: number): void {
     this.closeMenu();
 
-    const confirmed = window.confirm('هل أنت متأكد من حذف هذا الإعلان؟');
+    const confirmed = window.confirm(
+      'هل أنت متأكد من حذف هذا الإعلان؟',
+    );
+
     if (!confirmed) return;
 
     this.announcementApi.delete(id).subscribe({
       next: () => {
-        this.announcementSuccessMessage.set('تم حذف الإعلان بنجاح.');
+        this.announcementSuccessMessage.set(
+          'تم حذف الإعلان بنجاح.',
+        );
+
         this.loadAnnouncements();
       },
+
       error: (error: unknown) => {
         console.error('Failed to delete announcement:', error);
+
         this.announcementsError.set(
           'تعذر حذف الإعلان. يرجى المحاولة مرة أخرى.',
         );

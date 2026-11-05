@@ -4,9 +4,11 @@ using Nafadh_Backend.Services;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Enums;
+using Nafadh_Backend.Filters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Nafadh_Backend.Controllers
@@ -37,6 +39,7 @@ namespace Nafadh_Backend.Controllers
         // =====================================================
 
         [HttpGet]
+        [RequirePagePermission(new[] { "nf.admin.trainees", "nf.company.trainees", "nf.trainer.trainees" }, "View")]
         public async Task<IActionResult> GetAll(
             [FromQuery] int? companyId = null,
             [FromQuery] NFD_TraineeStatus? status = null,
@@ -45,277 +48,174 @@ namespace Nafadh_Backend.Controllers
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 20)
         {
-            var (items, total) =
-                await _service.GetAllAsync(
-                    companyId,
-                    status,
-                    university,
-                    searchTerm,
-                    pageNumber,
-                    pageSize
-                );
-
-            var dtos =
-                items.Select(t => new TraineeListItemDto
-                {
-                    TraineeId = t.TraineeId,
-                    FullName =
-                        string.IsNullOrEmpty(
-                            t.User?.FullName
-                        )
-                        ? "متدرب"
-                        : t.User.FullName,
-
-                    Email =
-                        t.User?.Email ??
-                        string.Empty,
-
-                    University =
-                        string.IsNullOrEmpty(
-                            t.University
-                        )
-                        ? "غير محدد"
-                        : t.University,
-
-                    Major =
-                        string.IsNullOrEmpty(
-                            t.Major
-                        )
-                        ? "غير محدد"
-                        : t.Major,
-
-                    Status = t.Status,
-                    VerificationStatus =
-                        t.VerificationStatus,
-
-                    CompanyId = t.CompanyId,
-
-                    CompanyName =
-                        t.Company?.CompanyName,
-
-                    ProgramName =
-                        !string.IsNullOrEmpty(
-                            t.Major
-                        )
-                        ? t.Major
-                        : "برنامج التدريب",
-
-                    AttendanceRate = t.AttendanceRate,
-                    TechnicalScore = t.TechnicalScore,
-                    ProjectScore = t.ProjectScore,
-                    BehavioralScore = t.BehavioralScore,
-                    TrainerNotes = t.TrainerNotes,
-                    TrainerRecommendation = t.TrainerRecommendation,
-                    AttendanceNotes = t.AttendanceNotes,
-                    TechnicalNotes = t.TechnicalNotes,
-                    ProjectNotes = t.ProjectNotes,
-                    BehavioralNotes = t.BehavioralNotes,
-
-                }).ToList();
-
-            return Ok(
-                new
-                {
-                    Items = dtos,
-                    TotalCount = total
-                }
+            var (items, total) = await _service.GetAllAsync(
+                companyId,
+                status,
+                university,
+                searchTerm,
+                pageNumber,
+                pageSize
             );
-        }
 
+            var dtos = items.Select(t => new TraineeListItemDto
+            {
+                TraineeId = t.TraineeId,
+                FullName = string.IsNullOrEmpty(t.User?.FullName) ? "متدرب" : t.User.FullName,
+                Email = t.User?.Email ?? string.Empty,
+                University = string.IsNullOrEmpty(t.University) ? "غير محدد" : t.University,
+                Major = string.IsNullOrEmpty(t.Major) ? "غير محدد" : t.Major,
+                Status = t.Status,
+                VerificationStatus = t.VerificationStatus,
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.CompanyName,
+                ProgramName = !string.IsNullOrEmpty(t.Major) ? t.Major : "برنامج التدريب",
+                AttendanceRate = t.AttendanceRate,
+                TechnicalScore = t.TechnicalScore,
+                ProjectScore = t.ProjectScore,
+                BehavioralScore = t.BehavioralScore,
+                TrainerNotes = t.TrainerNotes,
+                TrainerRecommendation = t.TrainerRecommendation,
+                AttendanceNotes = t.AttendanceNotes,
+                TechnicalNotes = t.TechnicalNotes,
+                ProjectNotes = t.ProjectNotes,
+                BehavioralNotes = t.BehavioralNotes,
+            }).ToList();
+
+            return Ok(new
+            {
+                Items = dtos,
+                TotalCount = total
+            });
+        }
 
         // =====================================================
         // GET TRAINEE BY ID
         // =====================================================
 
         [HttpGet("{id}")]
+        [RequirePagePermission(new[] { "nf.trainee.profile", "nf.admin.trainees", "nf.company.trainees", "nf.trainer.trainees" }, "View")]
         public async Task<IActionResult> GetById(int id)
         {
-            var t =
-                await _service.GetByIdWithDashboardDataAsync(
-                    id
-                );
+            var t = await _service.GetByIdWithDashboardDataAsync(id);
 
             if (t == null)
             {
                 return NotFound();
             }
 
-            var activeEnrollment =
-                t.Enrollments?
-                    .OrderByDescending(
-                        e =>
-                            e.CompletionStatus ==
-                            Enums.NFD_EnrollmentCompletionStatus.InProgress
-                    )
-                    .ThenByDescending(
-                        e => e.EnrollmentDate
-                    )
-                    .FirstOrDefault();
+            if (IsMineScopeOnly() && TryGetCurrentUserId(out var currentUserId) && t.UserId != currentUserId)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "لا يمكنك عرض ملف متدرب آخر." });
+            }
 
-            var dto =
-                new TraineeProfileDto
-                {
-                    TraineeId = t.TraineeId,
-                    FullName = t.User?.FullName,
-                    Email = t.User?.Email,
-                    NationalId = t.NationalId,
-                    University = t.University,
-                    Major = t.Major,
-                    AcademicLevel = t.AcademicLevel,
+            var activeEnrollment = t.Enrollments?
+                .OrderByDescending(e => e.CompletionStatus == Enums.NFD_EnrollmentCompletionStatus.InProgress)
+                .ThenByDescending(e => e.EnrollmentDate)
+                .FirstOrDefault();
 
-                    ResumeUrl = t.ResumeUrl,
-
-                    GitHubUrl = t.GitHubUrl,
-                    LinkedInUrl = t.LinkedInUrl,
-                    ProfileImageUrl =
-                        t.ProfileImageUrl,
-
-                    Governorate = t.Governorate,
-                    Wilaya = t.Wilaya,
-                    Village = t.Village,
-
-                    BankName = t.BankName,
-                    AccountHolderName =
-                        t.AccountHolderName,
-
-                    AccountNumber =
-                        t.AccountNumber,
-
-                    IBAN = t.IBAN,
-
-                    BankBranch =
-                        t.BankBranch,
-
-                    Status = t.Status,
-                    VerificationStatus =
-                        t.VerificationStatus,
-
-                    CompanyId = t.CompanyId,
-
-                    CompanyName =
-                        t.Company?.CompanyName,
-
-                    EnrollmentId =
-                        activeEnrollment?.EnrollmentId ??
-                        0
-                };
+            var dto = new TraineeProfileDto
+            {
+                TraineeId = t.TraineeId,
+                FullName = t.User?.FullName,
+                Email = t.User?.Email,
+                NationalId = t.NationalId,
+                University = t.University,
+                Major = t.Major,
+                AcademicLevel = t.AcademicLevel,
+                ResumeUrl = t.ResumeUrl,
+                GitHubUrl = t.GitHubUrl,
+                LinkedInUrl = t.LinkedInUrl,
+                ProfileImageUrl = t.ProfileImageUrl,
+                Governorate = t.Governorate,
+                Wilaya = t.Wilaya,
+                Village = t.Village,
+                BankName = t.BankName,
+                AccountHolderName = t.AccountHolderName,
+                AccountNumber = t.AccountNumber,
+                IBAN = t.IBAN,
+                BankBranch = t.BankBranch,
+                Status = t.Status,
+                VerificationStatus = t.VerificationStatus,
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.CompanyName,
+                EnrollmentId = activeEnrollment?.EnrollmentId ?? 0
+            };
 
             return Ok(dto);
         }
-
 
         // =====================================================
         // UPDATE TRAINEE
         // =====================================================
 
         [HttpPut("{id}")]
+        [RequirePagePermission(new[] { "nf.trainee.profile", "nf.admin.trainees" }, "Edit")]
         public async Task<IActionResult> Update(
             int id,
             [FromBody] TraineeProfileDto update)
         {
             if (id != update.TraineeId)
             {
-                return BadRequest(
-                    "Id mismatch."
-                );
+                return BadRequest("Id mismatch.");
             }
 
-            var existing =
-                await _service.GetByIdAsync(id);
+            var existing = await _service.GetByIdAsync(id);
 
             if (existing == null)
             {
                 return NotFound();
             }
 
-            existing.NationalId =
-                update.NationalId;
+            if (IsMineScopeOnly() && TryGetCurrentUserId(out var currentUserId) && existing.UserId != currentUserId)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "لا يمكنك تعديل ملف متدرب آخر." });
+            }
 
-            existing.University =
-                update.University;
-
-            existing.Major =
-                update.Major;
-
-            existing.AcademicLevel =
-                update.AcademicLevel;
-
-            existing.ResumeUrl =
-                update.ResumeUrl;
-
-            existing.GitHubUrl =
-                update.GitHubUrl;
-
-            existing.LinkedInUrl =
-                update.LinkedInUrl;
-
-            existing.Status =
-                update.Status;
-
-            existing.CompanyId =
-                update.CompanyId;
-
-            existing.Governorate =
-                update.Governorate;
-
-            existing.Wilaya =
-                update.Wilaya;
-
-            existing.Village =
-                update.Village;
-
-            existing.BankName =
-                update.BankName;
-
-            existing.AccountHolderName =
-                update.AccountHolderName;
-
-            existing.AccountNumber =
-                update.AccountNumber;
-
-            existing.IBAN =
-                update.IBAN;
-
-            existing.BankBranch =
-                update.BankBranch;
+            existing.NationalId = update.NationalId;
+            existing.University = update.University;
+            existing.Major = update.Major;
+            existing.AcademicLevel = update.AcademicLevel;
+            existing.ResumeUrl = update.ResumeUrl;
+            existing.GitHubUrl = update.GitHubUrl;
+            existing.LinkedInUrl = update.LinkedInUrl;
+            existing.Status = update.Status;
+            existing.CompanyId = update.CompanyId;
+            existing.Governorate = update.Governorate;
+            existing.Wilaya = update.Wilaya;
+            existing.Village = update.Village;
+            existing.BankName = update.BankName;
+            existing.AccountHolderName = update.AccountHolderName;
+            existing.AccountNumber = update.AccountNumber;
+            existing.IBAN = update.IBAN;
+            existing.BankBranch = update.BankBranch;
 
             if (existing.CompanyId.HasValue)
             {
-                var exists =
-                    await _service.CompanyExistsAsync(
-                        existing.CompanyId.Value
-                    );
-
+                var exists = await _service.CompanyExistsAsync(existing.CompanyId.Value);
                 if (!exists)
                 {
-                    return BadRequest(
-                        "Company does not exist."
-                    );
+                    return BadRequest("Company does not exist.");
                 }
             }
 
             _service.Update(existing);
 
-            var saved =
-                await _service.SaveChangesAsync();
+            var saved = await _service.SaveChangesAsync();
 
             if (!saved)
             {
-                return StatusCode(
-                    500,
-                    "Failed to save updates."
-                );
+                return StatusCode(500, "Failed to save updates.");
             }
 
             return NoContent();
         }
-
 
         // =====================================================
         // UPLOAD TRAINEE PROFILE IMAGE
         // =====================================================
 
         [HttpPost("{id}/profile-image")]
+        [RequirePagePermission(new[] { "nf.trainee.profile", "nf.admin.trainees" }, "Edit")]
         [Consumes("multipart/form-data")]
         [RequestSizeLimit(6 * 1024 * 1024)]
         public async Task<IActionResult> UploadProfileImage(
@@ -323,361 +223,241 @@ namespace Nafadh_Backend.Controllers
             [FromForm] ProfileImageUploadDto dto
         )
         {
+            if (IsMineScopeOnly() && TryGetCurrentUserId(out var currentUserId))
+            {
+                var existing = await _service.GetByIdAsync(id);
+                if (existing == null) return NotFound(new { message = "Trainee not found." });
+                if (existing.UserId != currentUserId)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "لا يمكنك تعديل صورة متدرب آخر." });
+                }
+            }
+
             try
             {
-                var profileImageUrl =
-                    await _service.UploadProfileImageAsync(
-                        id,
-                        dto.File
-                    );
+                var profileImageUrl = await _service.UploadProfileImageAsync(id, dto.File);
 
                 if (profileImageUrl == null)
                 {
-                    return NotFound(
-                        new
-                        {
-                            message =
-                                "Trainee not found."
-                        }
-                    );
+                    return NotFound(new { message = "Trainee not found." });
                 }
 
-                return Ok(
-                    new
-                    {
-                        profileImageUrl
-                    }
-                );
+                return Ok(new { profileImageUrl });
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(
-                    new
-                    {
-                        message = ex.Message
-                    }
-                );
+                return BadRequest(new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
                 return StatusCode(
                     StatusCodes.Status500InternalServerError,
-                    new
-                    {
-                        message = ex.Message
-                    }
+                    new { message = ex.Message }
                 );
             }
         }
-
 
         // =====================================================
         // UPLOAD TRAINEE CV
         // =====================================================
 
         [HttpPost("{id}/resume")]
+        [RequirePagePermission(new[] { "nf.trainee.profile", "nf.admin.trainees" }, "Edit")]
         [Consumes("multipart/form-data")]
-        [RequestSizeLimit(10 * 1024 * 1024)]
+        [RequestSizeLimit(30 * 1024 * 1024)]
         public async Task<IActionResult> UploadResume(
-            int id,
-            [FromForm] IFormFile file
-        )
+    int id,
+    IFormFile file
+)
         {
+            if (IsMineScopeOnly() && TryGetCurrentUserId(out var currentUserId))
+            {
+                var existing = await _service.GetByIdAsync(id);
+                if (existing == null) return NotFound(new { message = "Trainee not found." });
+                if (existing.UserId != currentUserId)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "لا يمكنك رفع سيرة ذاتية لمتدرب آخر." });
+                }
+            }
+
             try
             {
-                var resumeUrl =
-                    await _service.UploadResumeAsync(
-                        id,
-                        file
-                    );
+                var resumeUrl = await _service.UploadResumeAsync(id, file);
 
                 if (resumeUrl == null)
                 {
-                    return NotFound(
-                        new
-                        {
-                            message =
-                                "Trainee not found."
-                        }
-                    );
+                    return NotFound(new { message = "Trainee not found." });
                 }
 
-                return Ok(
-                    new
-                    {
-                        resumeUrl
-                    }
-                );
+                return Ok(new { resumeUrl });
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(
-                    new
-                    {
-                        message = ex.Message
-                    }
-                );
+                return BadRequest(new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
                 return StatusCode(
                     StatusCodes.Status500InternalServerError,
-                    new
-                    {
-                        message = ex.Message
-                    }
+                    new { message = ex.Message }
                 );
             }
         }
-
 
         // =====================================================
         // CREATE TRAINEE
         // =====================================================
 
         [HttpPost]
+        [RequirePagePermission("nf.admin.trainees", "Create")]
         public async Task<IActionResult> Create(
             [FromBody] TraineeCreateDTO create)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(
-                    ModelState
-                );
+                return BadRequest(ModelState);
             }
 
-            var existingUser =
-                await _context.NFD_Users
-                    .FirstOrDefaultAsync(
-                        u => u.Email == create.Email
-                    );
+            var existingUser = await _context.NFD_Users
+                .FirstOrDefaultAsync(u => u.Email == create.Email);
 
             if (existingUser != null)
             {
-                return BadRequest(
-                    "Email is already registered."
-                );
+                return BadRequest("Email is already registered.");
             }
 
-            var newUser =
-                new NFD_User
-                {
-                    FullName =
-                        create.FullName,
+            var newUser = new NFD_User
+            {
+                FullName = create.FullName,
+                Email = create.Email,
+                PasswordHash = "DefaultHashedPassword123!",
+                RoleId = 4,
+                CreatedAt = DateTime.UtcNow
+            };
 
-                    Email =
-                        create.Email,
-
-                    PasswordHash =
-                        "DefaultHashedPassword123!",
-
-                    RoleId = 4,
-
-                    CreatedAt =
-                        DateTime.UtcNow
-                };
-
-            _context.NFD_Users.Add(
-                newUser
-            );
-
+            _context.NFD_Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            var model =
-                new NFD_Trainee
-                {
-                    UserId =
-                        newUser.UserId,
+            var model = new NFD_Trainee
+            {
+                UserId = newUser.UserId,
+                NationalId = create.NationalId,
+                University = create.University,
+                Major = create.Major,
+                AcademicLevel = create.AcademicLevel,
+                ResumeUrl = create.ResumeUrl,
+                GitHubUrl = create.GitHubUrl,
+                LinkedInUrl = create.LinkedInUrl,
+                Governorate = create.Governorate,
+                Wilaya = create.Wilaya,
+                Village = create.Village,
+                BankName = create.BankName,
+                AccountHolderName = create.AccountHolderName,
+                AccountNumber = create.AccountNumber,
+                IBAN = create.IBAN,
+                BankBranch = create.BankBranch,
+                Status = Enums.NFD_TraineeStatus.NotAssigned,
+                VerificationStatus = Enums.NFD_VerificationStatus.Pending
+            };
 
-                    NationalId =
-                        create.NationalId,
-
-                    University =
-                        create.University,
-
-                    Major =
-                        create.Major,
-
-                    AcademicLevel =
-                        create.AcademicLevel,
-
-                    ResumeUrl =
-                        create.ResumeUrl,
-
-                    GitHubUrl =
-                        create.GitHubUrl,
-
-                    LinkedInUrl =
-                        create.LinkedInUrl,
-
-                    Governorate =
-                        create.Governorate,
-
-                    Wilaya =
-                        create.Wilaya,
-
-                    Village =
-                        create.Village,
-
-                    BankName =
-                        create.BankName,
-
-                    AccountHolderName =
-                        create.AccountHolderName,
-
-                    AccountNumber =
-                        create.AccountNumber,
-
-                    IBAN =
-                        create.IBAN,
-
-                    BankBranch =
-                        create.BankBranch,
-
-                    Status =
-                        Enums.NFD_TraineeStatus.NotAssigned,
-
-                    VerificationStatus =
-                        Enums.NFD_VerificationStatus.Pending
-                };
-
-            await _service.AddAsync(
-                model
-            );
-
-            var saved =
-                await _service.SaveChangesAsync();
+            await _service.AddAsync(model);
+            var saved = await _service.SaveChangesAsync();
 
             if (!saved)
             {
-                return StatusCode(
-                    500,
-                    "Failed to create trainee profile."
-                );
+                return StatusCode(500, "Failed to create trainee profile.");
             }
 
             return CreatedAtAction(
                 nameof(GetById),
-                new
-                {
-                    id = model.TraineeId
-                },
+                new { id = model.TraineeId },
                 null
             );
         }
-
 
         // =====================================================
         // UPDATE STATUS
         // =====================================================
 
         [HttpPut("{id}/status")]
+        [RequirePagePermission("nf.admin.trainees", "Approve")]
         public async Task<IActionResult> UpdateStatus(
             int id,
             [FromBody] TraineeStatusUpdateDto dto)
         {
-            var existing =
-                await _service.GetByIdAsync(id);
+            var existing = await _service.GetByIdAsync(id);
 
             if (existing == null)
             {
                 return NotFound();
             }
 
-            existing.Status =
-                dto.Status;
+            existing.Status = dto.Status;
+            _service.Update(existing);
 
-            _service.Update(
-                existing
-            );
-
-            var saved =
-                await _service.SaveChangesAsync();
+            var saved = await _service.SaveChangesAsync();
 
             if (!saved)
             {
-                return StatusCode(
-                    500,
-                    "Failed to update status."
-                );
+                return StatusCode(500, "Failed to update status.");
             }
 
-            if (
-                dto.Status ==
-                Enums.NFD_TraineeStatus.Completed
-            )
+            if (dto.Status == Enums.NFD_TraineeStatus.Completed)
             {
-                await _badgeEvaluationService
-                    .EvaluateTraineeAsync(id);
+                await _badgeEvaluationService.EvaluateTraineeAsync(id);
             }
 
             return NoContent();
         }
-
 
         // =====================================================
         // ASSIGN COMPANY
         // =====================================================
 
         [HttpPut("{id}/assign-company")]
+        [RequirePagePermission("nf.admin.trainees", "Approve")]
         public async Task<IActionResult> AssignCompany(
             int id,
             [FromBody] TraineeAssignCompanyDto dto)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(
-                    ModelState
-                );
+                return BadRequest(ModelState);
             }
 
-            var existing =
-                await _service.GetByIdAsync(id);
+            var existing = await _service.GetByIdAsync(id);
 
             if (existing == null)
             {
                 return NotFound();
             }
 
-            var companyExists =
-                await _service.CompanyExistsAsync(
-                    dto.CompanyId
-                );
+            var companyExists = await _service.CompanyExistsAsync(dto.CompanyId);
 
             if (!companyExists)
             {
-                return BadRequest(
-                    "Company does not exist."
-                );
+                return BadRequest("Company does not exist.");
             }
 
-            existing.CompanyId =
-                dto.CompanyId;
+            existing.CompanyId = dto.CompanyId;
+            _service.Update(existing);
 
-            _service.Update(
-                existing
-            );
-
-            var saved =
-                await _service.SaveChangesAsync();
+            var saved = await _service.SaveChangesAsync();
 
             if (!saved)
             {
-                return StatusCode(
-                    500,
-                    "Failed to assign company."
-                );
+                return StatusCode(500, "Failed to assign company.");
             }
 
             return NoContent();
         }
-
 
         // =====================================================
         // DASHBOARD SUMMARY
         // =====================================================
 
         [HttpGet("{id}/dashboard-summary")]
+        [RequirePagePermission(new[] { "nf.trainee.dashboard", "nf.admin.trainees", "nf.company.trainees", "nf.trainer.trainees" }, "View")]
         public async Task<IActionResult> GetDashboardSummary(int id)
         {
             var t = await _service.GetByIdWithDashboardDataAsync(id);
@@ -713,248 +493,142 @@ namespace Nafadh_Backend.Controllers
         // =====================================================
 
         [HttpPost("import")]
+        [RequirePagePermission("nf.admin.trainees", "Create")]
         public async Task<IActionResult> Import(
             [FromBody] List<TraineeCreateDTO> items)
         {
-            if (
-                items == null ||
-                items.Count == 0
-            )
+            if (items == null || items.Count == 0)
             {
-                return BadRequest(
-                    "No items provided."
-                );
+                return BadRequest("No items provided.");
             }
 
             int importedCount = 0;
 
             foreach (var item in items)
             {
-                var existingUser =
-                    await _context.NFD_Users
-                        .FirstOrDefaultAsync(
-                            u =>
-                                u.Email ==
-                                item.Email
-                        );
+                var existingUser = await _context.NFD_Users
+                    .FirstOrDefaultAsync(u => u.Email == item.Email);
 
                 int userId;
 
                 if (existingUser != null)
                 {
-                    userId =
-                        existingUser.UserId;
+                    userId = existingUser.UserId;
                 }
                 else
                 {
-                    var newUser =
-                        new NFD_User
-                        {
-                            FullName =
-                                item.FullName,
-
-                            Email =
-                                item.Email,
-
-                            PasswordHash =
-                                "DefaultHashedPassword123!",
-
-                            RoleId = 4,
-
-                            CreatedAt =
-                                DateTime.UtcNow
-                        };
-
-                    _context.NFD_Users.Add(
-                        newUser
-                    );
-
-                    await _context.SaveChangesAsync();
-
-                    userId =
-                        newUser.UserId;
-                }
-
-                var model =
-                    new NFD_Trainee
+                    var newUser = new NFD_User
                     {
-                        UserId =
-                            userId,
-
-                        NationalId =
-                            item.NationalId,
-
-                        University =
-                            item.University,
-
-                        Major =
-                            item.Major,
-
-                        AcademicLevel =
-                            item.AcademicLevel,
-
-                        ResumeUrl =
-                            item.ResumeUrl,
-
-                        GitHubUrl =
-                            item.GitHubUrl,
-
-                        LinkedInUrl =
-                            item.LinkedInUrl,
-
-                        Governorate =
-                            item.Governorate,
-
-                        Wilaya =
-                            item.Wilaya,
-
-                        Village =
-                            item.Village,
-
-                        BankName =
-                            item.BankName,
-
-                        AccountHolderName =
-                            item.AccountHolderName,
-
-                        AccountNumber =
-                            item.AccountNumber,
-
-                        IBAN =
-                            item.IBAN,
-
-                        BankBranch =
-                            item.BankBranch,
-
-                        Status =
-                            Enums.NFD_TraineeStatus.NotAssigned,
-
-                        VerificationStatus =
-                            Enums.NFD_VerificationStatus.Pending
+                        FullName = item.FullName,
+                        Email = item.Email,
+                        PasswordHash = "DefaultHashedPassword123!",
+                        RoleId = 4,
+                        CreatedAt = DateTime.UtcNow
                     };
 
-                await _service.AddAsync(
-                    model
-                );
+                    _context.NFD_Users.Add(newUser);
+                    await _context.SaveChangesAsync();
+                    userId = newUser.UserId;
+                }
 
+                var model = new NFD_Trainee
+                {
+                    UserId = userId,
+                    NationalId = item.NationalId,
+                    University = item.University,
+                    Major = item.Major,
+                    AcademicLevel = item.AcademicLevel,
+                    ResumeUrl = item.ResumeUrl,
+                    GitHubUrl = item.GitHubUrl,
+                    LinkedInUrl = item.LinkedInUrl,
+                    Governorate = item.Governorate,
+                    Wilaya = item.Wilaya,
+                    Village = item.Village,
+                    BankName = item.BankName,
+                    AccountHolderName = item.AccountHolderName,
+                    AccountNumber = item.AccountNumber,
+                    IBAN = item.IBAN,
+                    BankBranch = item.BankBranch,
+                    Status = Enums.NFD_TraineeStatus.NotAssigned,
+                    VerificationStatus = Enums.NFD_VerificationStatus.Pending
+                };
+
+                await _service.AddAsync(model);
                 importedCount++;
             }
 
-            var saved =
-                await _service.SaveChangesAsync();
+            var saved = await _service.SaveChangesAsync();
 
             if (!saved)
             {
-                return StatusCode(
-                    500,
-                    "Failed to import trainees."
-                );
+                return StatusCode(500, "Failed to import trainees.");
             }
 
-            return Ok(
-                new
-                {
-                    Imported =
-                        importedCount
-                }
-            );
+            return Ok(new { Imported = importedCount });
         }
-
 
         // =====================================================
         // PENDING VERIFICATION
         // =====================================================
 
         [HttpGet("pending-verification")]
+        [RequirePagePermission("nf.admin.trainees", "View")]
         public async Task<IActionResult> GetPendingVerification()
         {
-            var trainees =
-                await _service
-                    .GetPendingVerificationAsync();
+            var trainees = await _service.GetPendingVerificationAsync();
 
-            var dtos =
-                trainees.Select(
-                    t =>
-                        new TraineeListItemDto
-                        {
-                            TraineeId =
-                                t.TraineeId,
-
-                            FullName =
-                                t.User?.FullName,
-
-                            Email =
-                                t.User?.Email ??
-                                string.Empty,
-
-                            University =
-                                t.University,
-
-                            Major =
-                                t.Major,
-
-                            Status =
-                                t.Status,
-
-                            VerificationStatus =
-                                t.VerificationStatus,
-
-                            CompanyId =
-                                t.CompanyId,
-
-                            CompanyName =
-                                t.Company?.CompanyName
-                        }
-                ).ToList();
+            var dtos = trainees.Select(t => new TraineeListItemDto
+            {
+                TraineeId = t.TraineeId,
+                FullName = t.User?.FullName,
+                Email = t.User?.Email ?? string.Empty,
+                University = t.University,
+                Major = t.Major,
+                Status = t.Status,
+                VerificationStatus = t.VerificationStatus,
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.CompanyName
+            }).ToList();
 
             return Ok(dtos);
         }
-
 
         // =====================================================
         // UPDATE VERIFICATION
         // =====================================================
 
         [HttpPut("{id}/verification")]
+        [RequirePagePermission("nf.admin.trainees", "Approve")]
         public async Task<IActionResult> UpdateVerification(
             int id,
             [FromBody] TraineeVerificationInputDTO dto)
         {
-            var existing =
-                await _service.GetByIdAsync(id);
+            var existing = await _service.GetByIdAsync(id);
 
             if (existing == null)
             {
                 return NotFound();
             }
 
-            existing.VerificationStatus =
-                dto.Status;
+            existing.VerificationStatus = dto.Status;
+            _service.Update(existing);
 
-            _service.Update(
-                existing
-            );
-
-            var saved =
-                await _service.SaveChangesAsync();
+            var saved = await _service.SaveChangesAsync();
 
             if (!saved)
             {
-                return StatusCode(
-                    500,
-                    "Failed to update verification status."
-                );
+                return StatusCode(500, "Failed to update verification status.");
             }
 
             return NoContent();
         }
-
 
         // =====================================================
         // CERTIFICATES DASHBOARD
         // =====================================================
 
         [HttpGet("certificates-dashboard")]
+        [RequirePagePermission(new[] { "nf.admin.certificates", "nf.admin.trainees" }, "View")]
         public async Task<IActionResult> GetCertificatesDashboard(
             [FromQuery] int? companyId = null,
             [FromQuery] NFD_TraineeStatus? status = null,
@@ -963,372 +637,173 @@ namespace Nafadh_Backend.Controllers
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 20)
         {
-            var (items, total) =
-                await _service.GetAllAsync(
-                    companyId,
-                    status,
-                    university,
-                    searchTerm,
-                    pageNumber,
-                    pageSize
-                );
-
-            var dtos =
-                items.Select(
-                    t =>
-                    {
-                        var firstEnrollment =
-                            t.Enrollments?
-                                .FirstOrDefault();
-
-                        return new TraineeListItemDto
-                        {
-                            TraineeId =
-                                t.TraineeId,
-
-                            FullName =
-                                t.User?.FullName,
-
-                            Email =
-                                t.User?.Email ??
-                                string.Empty,
-
-                            University =
-                                t.University,
-
-                            Major =
-                                t.Major,
-
-                            Status =
-                                t.Status,
-
-                            VerificationStatus =
-                                t.VerificationStatus,
-
-                            CompanyId =
-                                t.CompanyId,
-
-                            CompanyName =
-                                t.Company?.CompanyName,
-
-                            EnrollmentId =
-                                firstEnrollment?
-                                    .EnrollmentId
-                                ?? 0,
-
-                            FileUrl =
-                                null
-                        };
-                    }
-                ).ToList();
-
-            return Ok(
-                new
-                {
-                    Items = dtos,
-                    TotalCount = total
-                }
+            var (items, total) = await _service.GetAllAsync(
+                companyId,
+                status,
+                university,
+                searchTerm,
+                pageNumber,
+                pageSize
             );
-        }
 
+            var dtos = items.Select(t =>
+            {
+                var firstEnrollment = t.Enrollments?.FirstOrDefault();
+
+                return new TraineeListItemDto
+                {
+                    TraineeId = t.TraineeId,
+                    FullName = t.User?.FullName,
+                    Email = t.User?.Email ?? string.Empty,
+                    University = t.University,
+                    Major = t.Major,
+                    Status = t.Status,
+                    VerificationStatus = t.VerificationStatus,
+                    CompanyId = t.CompanyId,
+                    CompanyName = t.Company?.CompanyName,
+                    EnrollmentId = firstEnrollment?.EnrollmentId ?? 0,
+                    FileUrl = null
+                };
+            }).ToList();
+
+            return Ok(new
+            {
+                Items = dtos,
+                TotalCount = total
+            });
+        }
 
         // =====================================================
         // GET TRAINEE BY USER ID
         // =====================================================
 
         [HttpGet("traineeByUserID/{userId}")]
-        public async Task<IActionResult> GetTraineeIdByUserID(
-            int userId)
+        [RequirePagePermission(new[] { "nf.trainee.profile", "nf.admin.trainees", "nf.company.trainees", "nf.trainer.trainees" }, "View")]
+        public async Task<IActionResult> GetTraineeIdByUserID(int userId)
         {
-            var t =
-                await _service
-                    .GetTraineeIdByUserID(
-                        userId
-                    );
+            if (IsMineScopeOnly() && TryGetCurrentUserId(out var currentUserId) && currentUserId != userId)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "لا يمكنك عرض ملف متدرب آخر." });
+            }
+
+            var t = await _service.GetTraineeIdByUserID(userId);
 
             if (t == null)
             {
-                return NotFound(
-                    new
-                    {
-                        message =
-                            "Trainee not found for this UserId."
-                    }
-                );
+                return NotFound(new { message = "Trainee not found for this UserId." });
             }
 
-            var dto =
-                new TraineeProfileDto
-                {
-                    TraineeId =
-                        t.TraineeId,
-
-                    FullName =
-                        t.User?.FullName,
-
-                    Email =
-                        t.User?.Email,
-
-                    Phone =
-                        t.User?.Phone,
-
-                    NationalId =
-                        t.NationalId,
-
-                    University =
-                        t.University,
-
-                    Major =
-                        t.Major,
-
-                    AcademicLevel =
-                        t.AcademicLevel,
-
-                    ResumeUrl =
-                        t.ResumeUrl,
-
-                    GitHubUrl =
-                        t.GitHubUrl,
-
-                    LinkedInUrl =
-                        t.LinkedInUrl,
-
-                    ProfileImageUrl =
-                        t.ProfileImageUrl,
-
-                    Governorate =
-                        t.Governorate,
-
-                    Wilaya =
-                        t.Wilaya,
-
-                    Village =
-                        t.Village,
-
-                    BankName =
-                        t.BankName,
-
-                    AccountHolderName =
-                        t.AccountHolderName,
-
-                    AccountNumber =
-                        t.AccountNumber,
-
-                    IBAN =
-                        t.IBAN,
-
-                    BankBranch =
-                        t.BankBranch,
-
-                    Status =
-                        t.Status,
-
-                    VerificationStatus =
-                        t.VerificationStatus,
-
-                    CompanyId =
-                        t.CompanyId,
-
-                    CompanyName =
-                        t.Company?.CompanyName,
-
-                    EnrollmentId =
-                        t.Enrollments?
-                            .LastOrDefault(
-                                u =>
-                                    u.TraineeId ==
-                                    t.TraineeId
-                            )?
-                            .EnrollmentId
-                        ?? 0
-                };
+            var dto = new TraineeProfileDto
+            {
+                TraineeId = t.TraineeId,
+                FullName = t.User?.FullName,
+                Email = t.User?.Email,
+                Phone = t.User?.Phone,
+                NationalId = t.NationalId,
+                University = t.University,
+                Major = t.Major,
+                AcademicLevel = t.AcademicLevel,
+                ResumeUrl = t.ResumeUrl,
+                GitHubUrl = t.GitHubUrl,
+                LinkedInUrl = t.LinkedInUrl,
+                ProfileImageUrl = t.ProfileImageUrl,
+                Governorate = t.Governorate,
+                Wilaya = t.Wilaya,
+                Village = t.Village,
+                BankName = t.BankName,
+                AccountHolderName = t.AccountHolderName,
+                AccountNumber = t.AccountNumber,
+                IBAN = t.IBAN,
+                BankBranch = t.BankBranch,
+                Status = t.Status,
+                VerificationStatus = t.VerificationStatus,
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.CompanyName,
+                EnrollmentId = t.Enrollments?
+                    .LastOrDefault(u => u.TraineeId == t.TraineeId)?
+                    .EnrollmentId ?? 0
+            };
 
             return Ok(dto);
         }
-
 
         // =====================================================
         // UPDATE TRAINEE BY USER ID
         // =====================================================
 
         [HttpPut("traineeByUserID/{userId}")]
+        [RequirePagePermission(new[] { "nf.trainee.profile", "nf.admin.trainees" }, "Edit")]
         public async Task<IActionResult> UpdateTraineeByUserID(
             int userId,
             [FromBody] TraineeUpdateDto dto)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(
-                    ModelState
-                );
+                return BadRequest(ModelState);
             }
 
-            var trainee =
-                await _service
-                    .GetTraineeIdByUserID(
-                        userId
-                    );
+            if (IsMineScopeOnly() && TryGetCurrentUserId(out var currentUserId) && currentUserId != userId)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "لا يمكنك تعديل ملف متدرب آخر." });
+            }
+
+            var trainee = await _service.GetTraineeIdByUserID(userId);
 
             if (trainee == null)
             {
-                return NotFound(
-                    new
-                    {
-                        message =
-                            "Trainee not found for this UserId."
-                    }
-                );
+                return NotFound(new { message = "Trainee not found for this UserId." });
             }
 
             if (trainee.User == null)
             {
-                return NotFound(
-                    new
-                    {
-                        message =
-                            "User account not found."
-                    }
-                );
+                return NotFound(new { message = "User account not found." });
             }
-
 
             // ---------------------------------------------
             // Check email
             // ---------------------------------------------
 
-            var emailExists =
-                await _context.NFD_Users
-                    .AnyAsync(
-                        u =>
-                            u.Email == dto.Email &&
-                            u.UserId != trainee.UserId
-                    );
+            var emailExists = await _context.NFD_Users
+                .AnyAsync(u => u.Email == dto.Email && u.UserId != trainee.UserId);
 
             if (emailExists)
             {
-                return BadRequest(
-                    new
-                    {
-                        message =
-                            "This email is already registered by another user."
-                    }
-                );
+                return BadRequest(new { message = "This email is already registered by another user." });
             }
-
 
             // ---------------------------------------------
             // Update User information
             // ---------------------------------------------
 
-            trainee.User.Email =
-                dto.Email.Trim();
-
-            trainee.User.Phone =
-                string.IsNullOrWhiteSpace(
-                    dto.Phone
-                )
-                ? null
-                : dto.Phone.Trim();
-
+            trainee.User.Email = dto.Email.Trim();
+            trainee.User.Phone = string.IsNullOrWhiteSpace(dto.Phone) ? null : dto.Phone.Trim();
 
             // ---------------------------------------------
             // Update Trainee information
             // ---------------------------------------------
 
-            trainee.ResumeUrl =
-                string.IsNullOrWhiteSpace(
-                    dto.ResumeUrl
-                )
-                ? null
-                : dto.ResumeUrl.Trim();
-
-            trainee.GitHubUrl =
-                string.IsNullOrWhiteSpace(
-                    dto.GitHubUrl
-                )
-                ? null
-                : dto.GitHubUrl.Trim();
-
-            trainee.LinkedInUrl =
-                string.IsNullOrWhiteSpace(
-                    dto.LinkedInUrl
-                )
-                ? null
-                : dto.LinkedInUrl.Trim();
-
-            trainee.AcademicLevel =
-                string.IsNullOrWhiteSpace(
-                    dto.AcademicLevel
-                )
-                ? null
-                : dto.AcademicLevel.Trim();
-
+            trainee.ResumeUrl = string.IsNullOrWhiteSpace(dto.ResumeUrl) ? null : dto.ResumeUrl.Trim();
+            trainee.GitHubUrl = string.IsNullOrWhiteSpace(dto.GitHubUrl) ? null : dto.GitHubUrl.Trim();
+            trainee.LinkedInUrl = string.IsNullOrWhiteSpace(dto.LinkedInUrl) ? null : dto.LinkedInUrl.Trim();
+            trainee.AcademicLevel = string.IsNullOrWhiteSpace(dto.AcademicLevel) ? null : dto.AcademicLevel.Trim();
 
             // ---------------------------------------------
             // Address
             // ---------------------------------------------
 
-            trainee.Governorate =
-                string.IsNullOrWhiteSpace(
-                    dto.Governorate
-                )
-                ? null
-                : dto.Governorate.Trim();
-
-            trainee.Wilaya =
-                string.IsNullOrWhiteSpace(
-                    dto.Wilaya
-                )
-                ? null
-                : dto.Wilaya.Trim();
-
-            trainee.Village =
-                string.IsNullOrWhiteSpace(
-                    dto.Village
-                )
-                ? null
-                : dto.Village.Trim();
-
+            trainee.Governorate = string.IsNullOrWhiteSpace(dto.Governorate) ? null : dto.Governorate.Trim();
+            trainee.Wilaya = string.IsNullOrWhiteSpace(dto.Wilaya) ? null : dto.Wilaya.Trim();
+            trainee.Village = string.IsNullOrWhiteSpace(dto.Village) ? null : dto.Village.Trim();
 
             // ---------------------------------------------
             // Bank Account
             // ---------------------------------------------
 
-            trainee.BankName =
-                string.IsNullOrWhiteSpace(
-                    dto.BankName
-                )
-                ? null
-                : dto.BankName.Trim();
-
-            trainee.AccountHolderName =
-                string.IsNullOrWhiteSpace(
-                    dto.AccountHolderName
-                )
-                ? null
-                : dto.AccountHolderName.Trim();
-
-            trainee.AccountNumber =
-                string.IsNullOrWhiteSpace(
-                    dto.AccountNumber
-                )
-                ? null
-                : dto.AccountNumber.Trim();
-
-            trainee.IBAN =
-                string.IsNullOrWhiteSpace(
-                    dto.IBAN
-                )
-                ? null
-                : dto.IBAN.Trim();
-
-            trainee.BankBranch =
-                string.IsNullOrWhiteSpace(
-                    dto.BankBranch
-                )
-                ? null
-                : dto.BankBranch.Trim();
-
+            trainee.BankName = string.IsNullOrWhiteSpace(dto.BankName) ? null : dto.BankName.Trim();
+            trainee.AccountHolderName = string.IsNullOrWhiteSpace(dto.AccountHolderName) ? null : dto.AccountHolderName.Trim();
+            trainee.AccountNumber = string.IsNullOrWhiteSpace(dto.AccountNumber) ? null : dto.AccountNumber.Trim();
+            trainee.IBAN = string.IsNullOrWhiteSpace(dto.IBAN) ? null : dto.IBAN.Trim();
+            trainee.BankBranch = string.IsNullOrWhiteSpace(dto.BankBranch) ? null : dto.BankBranch.Trim();
 
             // ---------------------------------------------
             // Save
@@ -1336,126 +811,53 @@ namespace Nafadh_Backend.Controllers
 
             try
             {
-                var saved =
-                    await _service.SaveChangesAsync();
+                var saved = await _service.SaveChangesAsync();
 
                 if (!saved)
                 {
-                    return StatusCode(
-                        500,
-                        new
-                        {
-                            message =
-                                "Failed to update trainee profile."
-                        }
-                    );
+                    return StatusCode(500, new { message = "Failed to update trainee profile." });
                 }
-
 
                 // -----------------------------------------
                 // Return updated profile
                 // -----------------------------------------
 
-                var updatedDto =
-                    new TraineeProfileDto
-                    {
-                        TraineeId =
-                            trainee.TraineeId,
+                var updatedDto = new TraineeProfileDto
+                {
+                    TraineeId = trainee.TraineeId,
+                    FullName = trainee.User.FullName,
+                    Email = trainee.User.Email,
+                    Phone = trainee.User.Phone,
+                    NationalId = trainee.NationalId,
+                    University = trainee.University,
+                    Major = trainee.Major,
+                    AcademicLevel = trainee.AcademicLevel,
+                    ResumeUrl = trainee.ResumeUrl,
+                    GitHubUrl = trainee.GitHubUrl,
+                    LinkedInUrl = trainee.LinkedInUrl,
+                    ProfileImageUrl = trainee.ProfileImageUrl,
+                    Governorate = trainee.Governorate,
+                    Wilaya = trainee.Wilaya,
+                    Village = trainee.Village,
+                    BankName = trainee.BankName,
+                    AccountHolderName = trainee.AccountHolderName,
+                    AccountNumber = trainee.AccountNumber,
+                    IBAN = trainee.IBAN,
+                    BankBranch = trainee.BankBranch,
+                    Status = trainee.Status,
+                    VerificationStatus = trainee.VerificationStatus,
+                    CompanyId = trainee.CompanyId,
+                    CompanyName = trainee.Company?.CompanyName,
+                    EnrollmentId = trainee.Enrollments?
+                        .LastOrDefault(e => e.TraineeId == trainee.TraineeId)?
+                        .EnrollmentId ?? 0
+                };
 
-                        FullName =
-                            trainee.User.FullName,
-
-                        Email =
-                            trainee.User.Email,
-
-                        Phone =
-                            trainee.User.Phone,
-
-                        NationalId =
-                            trainee.NationalId,
-
-                        University =
-                            trainee.University,
-
-                        Major =
-                            trainee.Major,
-
-                        AcademicLevel =
-                            trainee.AcademicLevel,
-
-                        ResumeUrl =
-                            trainee.ResumeUrl,
-
-                        GitHubUrl =
-                            trainee.GitHubUrl,
-
-                        LinkedInUrl =
-                            trainee.LinkedInUrl,
-
-                        ProfileImageUrl =
-                            trainee.ProfileImageUrl,
-
-                        Governorate =
-                            trainee.Governorate,
-
-                        Wilaya =
-                            trainee.Wilaya,
-
-                        Village =
-                            trainee.Village,
-
-                        BankName =
-                            trainee.BankName,
-
-                        AccountHolderName =
-                            trainee.AccountHolderName,
-
-                        AccountNumber =
-                            trainee.AccountNumber,
-
-                        IBAN =
-                            trainee.IBAN,
-
-                        BankBranch =
-                            trainee.BankBranch,
-
-                        Status =
-                            trainee.Status,
-
-                        VerificationStatus =
-                            trainee.VerificationStatus,
-
-                        CompanyId =
-                            trainee.CompanyId,
-
-                        CompanyName =
-                            trainee.Company?.CompanyName,
-
-                        EnrollmentId =
-                            trainee.Enrollments?
-                                .LastOrDefault(
-                                    e =>
-                                        e.TraineeId ==
-                                        trainee.TraineeId
-                                )?
-                                .EnrollmentId
-                            ?? 0
-                    };
-
-                return Ok(
-                    updatedDto
-                );
+                return Ok(updatedDto);
             }
             catch (DbUpdateException)
             {
-                return StatusCode(
-                    500,
-                    new
-                    {
-                        message =
-                            "A database error occurred while updating the profile."
-                    }
-                );
+                return StatusCode(500, new { message = "A database error occurred while updating the profile." });
             }
         }
 
@@ -1464,6 +866,7 @@ namespace Nafadh_Backend.Controllers
         // اعتماد أو رفض طلب انسحاب المتدرب + سحب صلاحية الدخول + إرسال إيميل
         // =====================================================
         [HttpPost("{id}/withdrawal-decision")]
+        [RequirePagePermission("nf.admin.remediation", "Approve")]
         public async Task<IActionResult> ProcessWithdrawalDecision(
             int id,
             [FromBody] WithdrawalDecisionInputDto dto)
@@ -1555,6 +958,21 @@ namespace Nafadh_Backend.Controllers
             }
         }
 
+        // ── Permission Scope Helpers (Added) ──
+        private bool IsMineScopeOnly()
+        {
+            var scope = HttpContext.Items["PageDataScope"] as string;
+            return string.Equals(scope, "mine", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool TryGetCurrentUserId(out int userId)
+        {
+            var idStr = User.FindFirstValue("userId")
+                     ?? User.FindFirstValue("UserId")
+                     ?? User.FindFirstValue("sub")
+                     ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(idStr, out userId);
+        }
 
         public class WithdrawalDecisionInputDto
         {
@@ -1562,6 +980,4 @@ namespace Nafadh_Backend.Controllers
             public string? AdminNotes { get; set; }
         }
     }
-
-
 }

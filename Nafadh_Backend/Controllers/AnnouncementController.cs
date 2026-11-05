@@ -17,12 +17,15 @@ namespace Nafadh_Backend.Controllers
         private readonly IEmailService _emailService;
         private readonly Nafadhcontext _context;
 
+        private readonly ITrainingConstantsService _constants;
+
         public AnnouncementController(
-            IAnnouncementService service,
+            IAnnouncementService service, ITrainingConstantsService constants,
             INotificationService notificationService,
             IEmailService emailService,
             Nafadhcontext context)
         {
+            _constants = constants;
             _service = service;
             _notificationService = notificationService;
             _emailService = emailService;
@@ -112,6 +115,9 @@ namespace Nafadh_Backend.Controllers
                     _ => dto.ScopeType
                 };
             }
+
+            if (await CatalogSelectionPolicy.CheckSelectionAsync(() => CatalogSelectionPolicy.RequireActiveAsync(_constants, resolvedScope, HttpContext.RequestAborted)) is { } failure)
+                return failure;
 
             string cleanTitle = !string.IsNullOrWhiteSpace(dto.Title)
                 ? dto.Title.Trim()
@@ -387,7 +393,8 @@ namespace Nafadh_Backend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, UpdateAnnouncementDTO dto)
         {
-            await _service.UpdateAsync(id, dto);
+            var failure = await CatalogSelectionPolicy.CheckSelectionAsync(() => _service.UpdateAsync(id, dto));
+            if (failure is not null) return failure;
             return Ok("Announcement updated successfully.");
         }
 

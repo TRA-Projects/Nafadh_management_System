@@ -31,7 +31,7 @@
     </div>
     <div class="stat-info">
       <div class="stat-value">{{ statsActivePercentage() }}%</div>
-      <div class="stat-label">نشط ({{ statsActiveCount() }} حساب)</div>
+      <div class="stat-label">{{ userLabel('Active') }} ({{ statsActiveCount() }} حساب)</div>
     </div>
   </div>
 
@@ -41,7 +41,7 @@
     </div>
     <div class="stat-info">
       <div class="stat-value">{{ statsSuspendedPercentage() }}%</div>
-      <div class="stat-label">موقوف ({{ statsSuspendedCount() }} حساب)</div>
+      <div class="stat-label">{{ userLabel('Suspended') }} ({{ statsSuspendedCount() }} حساب)</div>
     </div>
   </div>
 </div>
@@ -88,13 +88,7 @@
       <input type="date" class="nfd-filter-date" [ngModel]="dateTo()" (ngModelChange)="onDateToChange($event)" />
     </div>
 
-    <select class="nfd-filter-select" [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)">
-      <option value="ALL">كل الحالات</option>
-      <option value="Active">نشط</option>
-      <option value="Inactive">غير نشط</option>
-      <option value="Suspended">موقوف</option>
-      <option value="PendingVerification">بانتظار التحقق</option>
-    </select>
+    <app-catalog-picker caption="حالة المستخدم" [options]="userStatusChoices" [value]="statusFilter()" (valueChange)="setStatusFilter($event)" />
 
     @if (hasActiveFilters()) {
       <button type="button" class="nfd-clear-filters-btn" (click)="clearAllFilters()">
@@ -154,9 +148,9 @@
           <td>
             <span
               class="nfd-badge status"
-              [class.active]="(u.status | lowercase) !== 'suspended'"
-              [class.suspended]="(u.status | lowercase) === 'suspended'">
-              {{ (u.status | lowercase) === 'suspended' ? 'موقوف' : 'نشط' }}
+              [class.active]="userKey(u.status) === 'Active'"
+              [class.suspended]="userKey(u.status) === 'Suspended'">
+              {{ userLabel(u.status) }}
             </span>
           </td>
           <td>{{ (u.createdAt | date:'dd/MM/yyyy') || '---' }}</td>
@@ -316,12 +310,32 @@
       <div class="field-error">{{ getCreateFieldError('password') }}</div>
       }
       @if (newUser.password) {
-      <div class="password-rules">
-        <div [class.rule-valid]="passwordHasMinLength()">{{ passwordHasMinLength() ? '✓' : '•' }} 8 أحرف على الأقل</div>
-        <div [class.rule-valid]="passwordHasUppercase()">{{ passwordHasUppercase() ? '✓' : '•' }} حرف إنجليزي كبير</div>
-        <div [class.rule-valid]="passwordHasLowercase()">{{ passwordHasLowercase() ? '✓' : '•' }} حرف إنجليزي صغير</div>
-        <div [class.rule-valid]="passwordHasNumber()">{{ passwordHasNumber() ? '✓' : '•' }} رقم واحد على الأقل</div>
-      </div>
+     <div class="password-rules">
+  @if (minPasswordLength() !== null) {
+    <div [class.rule-valid]="passwordHasMinLength()">
+      {{ passwordHasMinLength() ? '✓' : '•' }}
+      {{ minPasswordLength() }} أحرف على الأقل
+    </div>
+  }
+
+  @if (passwordRequireUppercase()) {
+    <div [class.rule-valid]="passwordHasUppercase()">
+      {{ passwordHasUppercase() ? '✓' : '•' }} حرف إنجليزي كبير
+    </div>
+  }
+
+  @if (passwordRequireLowercase()) {
+    <div [class.rule-valid]="passwordHasLowercase()">
+      {{ passwordHasLowercase() ? '✓' : '•' }} حرف إنجليزي صغير
+    </div>
+  }
+
+  @if (passwordRequireDigit()) {
+    <div [class.rule-valid]="passwordHasNumber()">
+      {{ passwordHasNumber() ? '✓' : '•' }} رقم واحد على الأقل
+    </div>
+  }
+</div>
       }
     </div>
 
@@ -497,12 +511,35 @@
       <div class="field-error">{{ getResetPasswordError() }}</div>
       }
       @if (newPassword) {
-      <div class="password-rules">
-        <div [class.rule-valid]="passwordHasMinLengthFor(newPassword)">{{ passwordHasMinLengthFor(newPassword) ? '✓' : '•' }} 8 أحرف على الأقل</div>
-        <div [class.rule-valid]="passwordHasUppercaseFor(newPassword)">{{ passwordHasUppercaseFor(newPassword) ? '✓' : '•' }} حرف إنجليزي كبير</div>
-        <div [class.rule-valid]="passwordHasLowercaseFor(newPassword)">{{ passwordHasLowercaseFor(newPassword) ? '✓' : '•' }} حرف إنجليزي صغير</div>
-        <div [class.rule-valid]="passwordHasNumberFor(newPassword)">{{ passwordHasNumberFor(newPassword) ? '✓' : '•' }} رقم واحد على الأقل</div>
-      </div>
+    <div class="password-rules">
+  @if (minPasswordLength() !== null) {
+    <div [class.rule-valid]="passwordHasMinLengthFor(newPassword)">
+      {{ passwordHasMinLengthFor(newPassword) ? '✓' : '•' }}
+      {{ minPasswordLength() }} أحرف على الأقل
+    </div>
+  }
+
+  @if (passwordRequireUppercase()) {
+    <div [class.rule-valid]="passwordHasUppercaseFor(newPassword)">
+      {{ passwordHasUppercaseFor(newPassword) ? '✓' : '•' }}
+      حرف إنجليزي كبير
+    </div>
+  }
+
+  @if (passwordRequireLowercase()) {
+    <div [class.rule-valid]="passwordHasLowercaseFor(newPassword)">
+      {{ passwordHasLowercaseFor(newPassword) ? '✓' : '•' }}
+      حرف إنجليزي صغير
+    </div>
+  }
+
+  @if (passwordRequireDigit()) {
+    <div [class.rule-valid]="passwordHasNumberFor(newPassword)">
+      {{ passwordHasNumberFor(newPassword) ? '✓' : '•' }}
+      رقم واحد على الأقل
+    </div>
+  }
+</div>
       }
     </div>
 
@@ -540,16 +577,7 @@
         <span>طباعة الملف</span>
       </button>
 
-      <!-- زر إيقاف / تفعيل الحساب -->
-      <button
-        type="button"
-        class="details-status-btn"
-        [class.btn-suspend]="(detailsUser.status | lowercase) !== 'suspended'"
-        [class.btn-activate]="(detailsUser.status | lowercase) === 'suspended'"
-        (click)="toggleUserStatus(detailsUser)">
-        <i class="fa-solid" [class.fa-ban]="(detailsUser.status | lowercase) !== 'suspended'" [class.fa-check]="(detailsUser.status | lowercase) === 'suspended'"></i>
-        <span>{{ (detailsUser.status | lowercase) === 'suspended' ? 'تفعيل الحساب' : 'إيقاف الحساب' }}</span>
-      </button>
+      <span class="details-status-btn">حالة الحساب للعرض فقط</span>
     </div>
   </div>
 
@@ -577,9 +605,9 @@
             </span>
             <span
               class="nfd-badge status"
-              [class.active]="(detailsUser.status | lowercase) !== 'suspended'"
-              [class.suspended]="(detailsUser.status | lowercase) === 'suspended'">
-              {{ (detailsUser.status | lowercase) === 'suspended' ? 'حساب موقوف' : 'حساب نشط' }}
+              [class.active]="userKey(detailsUser.status) === 'Active'"
+              [class.suspended]="userKey(detailsUser.status) === 'Suspended'">
+              {{ userLabel(detailsUser.status) }}
             </span>
             <span class="details-meta-pill">
               <i class="fa-solid fa-clock"></i>

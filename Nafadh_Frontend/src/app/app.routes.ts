@@ -23,9 +23,19 @@ export const routes: Routes = [
     path: 'trainer',
     loadChildren: () => import('./portals/trainer/trainer.routes').then((m) => m.TRAINER_ROUTES),
   },
+  
+  
   {
     path: 'trainee',
-    loadChildren: () => import('./portals/trainee/trainee.routes').then((m) => m.TRAINEE_ROUTES),
+    loadChildren: () =>
+      import('./portals/trainee/trainee.routes')
+        .then((m) => m.TRAINEE_ROUTES),
+  },
+  {
+    path: 'maintenance',
+    loadComponent: () =>
+      import('./pages/maintenance/maintenance')
+        .then((m) => m.Maintenance),
   },
   { path: '**', redirectTo: 'login' },
 ];

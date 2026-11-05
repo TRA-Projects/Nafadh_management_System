@@ -1,8 +1,10 @@
+import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { Component, OnInit, signal, inject, computed} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router'; // 👈 1. أضفنا Router هنا
 import { AdminApi } from '../../services/admin-api';
+import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warning-types.service';
 import { ConversationDetailDto, ConversationListItemDto, WarningDto, AdminBatchGroupDto,AdminBatchGroupMessageDto} from '../../../../core/models/dtos';
 
 @Component({
@@ -13,7 +15,9 @@ import { ConversationDetailDto, ConversationListItemDto, WarningDto, AdminBatchG
   styleUrl: './communications.css'
 })
 export class AdminCommunications implements OnInit {
+  readonly constants = inject(NafadhConstantsService);
   private api = inject(AdminApi);
+  readonly warningTypes = inject(NafadhWarningTypesService);
   private route = inject(ActivatedRoute);
   private router = inject(Router); // 👈 2. حقن خدمة التوجيه هنا
 
@@ -60,6 +64,8 @@ totalMembers = computed(() =>
   replyText = '';
   
   ngOnInit() {
+    this.constants.ensure('NFD_TIC_STAT', 'NFD_WRN_LVL');
+    this.warningTypes.refresh();
     // 1. جلب البيانات العادية
     this.api.getConversations('CompanyThread').subscribe((d) => this.companyThreads.set(d || []));
     this.api.getWarnings({ scope: 'Trainee' }).subscribe((d) => this.traineeWarnings.set(d || []));

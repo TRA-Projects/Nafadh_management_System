@@ -238,13 +238,9 @@
       <div class="record-header-actions">
 
         <div class="attendance-filters">
+              <app-catalog-picker caption="تصفية حضور المتدرب" [options]="attendancePickerChoices" [value]="attendanceFilter()" (valueChange)="setAttendanceFilter($event)" />
 
-          <button
-            type="button"
-            class="attendance-filter-button filter-all"
-            [class.active]="attendanceFilter() === 'All'"
-            (click)="setAttendanceFilter('All')"
-          >
+          <span>
 
             <span class="filter-text">
               الكل
@@ -254,15 +250,10 @@
               {{ getFilterCount('All') }}
             </span>
 
-          </button>
+          </span>
 
 
-          <button
-            type="button"
-            class="attendance-filter-button filter-present"
-            [class.active]="attendanceFilter() === 'Present'"
-            (click)="setAttendanceFilter('Present')"
-          >
+          <span>
 
             <span class="filter-text">
               حضور
@@ -272,15 +263,10 @@
               {{ getFilterCount('Present') }}
             </span>
 
-          </button>
+          </span>
 
 
-          <button
-            type="button"
-            class="attendance-filter-button filter-late"
-            [class.active]="attendanceFilter() === 'Late'"
-            (click)="setAttendanceFilter('Late')"
-          >
+          <span>
 
             <span class="filter-text">
               متأخر
@@ -290,15 +276,10 @@
               {{ getFilterCount('Late') }}
             </span>
 
-          </button>
+          </span>
 
 
-          <button
-            type="button"
-            class="attendance-filter-button filter-absent"
-            [class.active]="attendanceFilter() === 'Absent'"
-            (click)="setAttendanceFilter('Absent')"
-          >
+          <span>
 
             <span class="filter-text">
               غياب
@@ -308,7 +289,7 @@
               {{ getFilterCount('Absent') }}
             </span>
 
-          </button>
+          </span>
 
         </div>
 
@@ -645,9 +626,15 @@
                     {{ selectedFileName() || 'اختر ملف الإرفاق' }}
                   </strong>
 
-                  <span>
-                    PDF أو صورة
-                  </span>
+                <span>
+  @if (attachmentSettingsLoaded()) {
+    الامتدادات المسموحة:
+    {{ allowedExtensions().join('، ').toUpperCase() }}
+    — الحد الأقصى: {{ maxAttachmentSizeMb() }} MB
+  } @else {
+    جاري تحميل إعدادات المرفقات...
+  }
+</span>
 
                 </div>
 

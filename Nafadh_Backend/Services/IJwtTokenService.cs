@@ -6,7 +6,7 @@ namespace Nafadh_Backend.Services
    
     public interface IJwtTokenService
     {
-        
-        (string Token, DateTime ExpiresAtUtc) GenerateToken(NFD_User user);
+
+        Task<(string Token, DateTime ExpiresAtUtc)> GenerateTokenAsync(NFD_User user);
     }
 }
