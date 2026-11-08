@@ -52,5 +52,13 @@ namespace Nafadh_Backend.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<bool> ModuleExistsAsync(int moduleId)
+        {
+            return await _context.NFD_Modules
+                .AnyAsync(m =>
+                    m.ModuleId == moduleId &&
+                    !m.IsArchived);
+        }
     }
 }

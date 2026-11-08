@@ -1136,6 +1136,10 @@ namespace Nafadh_Backend
                     .WithMany()
                     .HasForeignKey(e => e.TrainerId)
                     .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Module)
+       .WithMany()
+       .HasForeignKey(e => e.ModuleId)
+       .OnDelete(DeleteBehavior.Restrict);
 
                 entity.Property(e => e.QuestionText)
                     .IsRequired();

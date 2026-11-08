@@ -15,6 +15,10 @@ namespace Nafadh_Backend.Models
 
         public NFD_QuestionDifficulty Difficulty { get; set; }
 
+        public int? ModuleId { get; set; }
+
+        public NFD_Module? Module { get; set; }
+
         [Range(0.1, 100)]
         public decimal Points { get; set; } = 1;
 

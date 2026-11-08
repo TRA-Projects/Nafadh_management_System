@@ -2224,6 +2224,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("ModuleId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Points")
                         .HasColumnType("decimal(18,2)");
 
@@ -2238,6 +2241,8 @@ namespace Nafadh_Backend.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("QuestionId");
+
+                    b.HasIndex("ModuleId");
 
                     b.HasIndex("TrainerId");
 
@@ -4643,11 +4648,18 @@ namespace Nafadh_Backend.Migrations
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuestionBank", b =>
                 {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Module", "Module")
+                        .WithMany()
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
                         .WithMany()
                         .HasForeignKey("TrainerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Module");
 
                     b.Navigation("Trainer");
                 });

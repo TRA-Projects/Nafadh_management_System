@@ -10,6 +10,8 @@ namespace Nafadh_Backend.Repositories
         Task<NFD_QuestionBank?>
             GetByIdAsync(int questionId);
 
+        Task<bool> ModuleExistsAsync(int moduleId);
+
         Task AddAsync(
             NFD_QuestionBank question);
 
