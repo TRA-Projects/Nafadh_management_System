@@ -811,7 +811,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 10px;
 
-  select,
+  :is(select, app-catalog-picker),
   input {
     padding: 10px 12px;
     border: 1px solid #d1d5db;
@@ -820,7 +820,7 @@ textarea:focus-visible {
     min-width: 0;
   }
 
-  select {
+  :is(select, app-catalog-picker) {
     flex: 1;
   }
 
@@ -838,7 +838,7 @@ textarea:focus-visible {
     flex-direction: column;
     align-items: stretch;
 
-    select,
+    :is(select, app-catalog-picker),
     input,
     button {
       width: 100%;
