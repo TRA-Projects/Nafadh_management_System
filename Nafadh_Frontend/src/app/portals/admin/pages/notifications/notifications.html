@@ -250,7 +250,16 @@
 
           <p class="section-title">الفئة المستهدفة الرئيسية:</p>
           
-          <app-catalog-picker caption="الفئة المستهدفة الرئيسية" [options]="audienceChoices" [value]="scopeByAudience[newAnnounceData.mainAudience]" (valueChange)="chooseAudience($event)" />
+          <app-catalog-picker class="custom-select" caption="الفئة المستهدفة الرئيسية" [options]="audienceChoices" [value]="scopeByAudience[newAnnounceData.mainAudience]" (valueChange)="chooseAudience($event)" />
+          <div class="audience-cards">
+            @for (option of audienceChoices; track option.value) {
+              <div class="aud-card" role="button" tabindex="0" [class.selected]="scopeByAudience[newAnnounceData.mainAudience] === option.value" (click)="chooseAudience(option.value)" (keydown.enter)="chooseAudience(option.value)" (keydown.space)="$event.preventDefault(); chooseAudience(option.value)">
+                <span style="font-size:24px">{{ option.value === 'Platform' ? '👥' : option.value === 'Admin' ? '🛡️' : option.value === 'Trainer' ? '🎓' : option.value === 'Company' ? '🏢' : '👨‍🎓' }}</span>
+                <span class="aud-title">{{ option.label }}</span>
+                <span class="aud-sub">{{ option.value === 'Platform' ? 'كامل المنظومة' : option.value === 'Admin' ? 'فريق الإشراف' : option.value === 'Trainer' ? 'كلي أو محددين' : 'تخصيص متقدم' }}</span>
+              </div>
+            }
+          </div>
 
           <!-- إعدادات التخصيص للشركات (التصميم الجديد) -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'companies'">
