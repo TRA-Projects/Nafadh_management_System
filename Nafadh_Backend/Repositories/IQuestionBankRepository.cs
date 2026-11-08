@@ -1,4 +1,5 @@
-﻿using Nafadh_Backend.Models;
+﻿using Nafadh_Backend.Enums;
+using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -11,6 +12,13 @@ namespace Nafadh_Backend.Repositories
             GetByIdAsync(int questionId);
 
         Task<bool> ModuleExistsAsync(int moduleId);
+
+        Task<List<NFD_QuestionBank>> GetRandomQuestionsAsync(
+    int trainerId,
+    int moduleId,
+    NFD_QuestionDifficulty difficulty,
+    int count,
+    HashSet<int> excludedQuestionIds);
 
         Task AddAsync(
             NFD_QuestionBank question);
