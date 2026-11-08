@@ -503,7 +503,7 @@
 }
 
 .filter-input-ctrl:focus,
-.filter-select-ctrl:focus,
+.filter-select-ctrl:focus-within,
 .filter-date-ctrl:focus {
   border-color: #0D1C8C;
   box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.12);
