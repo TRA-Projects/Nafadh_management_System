@@ -2,6 +2,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import { getRuntimeApiBaseUrl } from '../portals/admin/external-system/legacy/core/runtime-config';
 
 export interface SystemVariableDto {
   id: number;
@@ -17,7 +18,8 @@ export interface SystemVariableDto {
 })
 export class SystemVariablesService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = '/api/system-variables';
+private readonly apiUrl =
+  `${getRuntimeApiBaseUrl().replace(/\/$/, '')}/api/system-variables`;
 
   // جلب جميع إعدادات النظام
   getAllVariables(): Observable<SystemVariableDto[]> {
