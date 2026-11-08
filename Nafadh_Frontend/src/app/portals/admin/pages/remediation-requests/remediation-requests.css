@@ -368,7 +368,7 @@
 }
 
 
-.nfd-select:focus {
+.nfd-select:focus-within {
 
   border-color: #6366f1;
 
