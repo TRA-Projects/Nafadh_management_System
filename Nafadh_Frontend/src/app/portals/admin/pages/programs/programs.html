@@ -449,23 +449,13 @@
 
   <div class="action-header-bar">
     <div class="filter-buttons-group">
-      <app-catalog-picker caption="تصفية حالة الدفعة" [options]="batchFilterChoices" [value]="batchFilterKey" (valueChange)="chooseBatchFilter($event)" />
-      <span>
-        <span class="filter-badge">{{ batches().length }}</span>
-        <span>الدفعات</span>
-      </span>
-      <span>
-        <span class="filter-badge">{{ getCountByStatus('جارية') }}</span>
-        <span>جارية</span>
-      </span>
-      <span>
-        <span class="filter-badge">{{ getCountByStatus('قادمة') }}</span>
-        <span>قادمة</span>
-      </span>
-      <span>
-        <span class="filter-badge">{{ getCountByStatus('مكتملة') }}</span>
-        <span>مكتملة</span>
-      </span>
+      <app-catalog-picker class="filter-btn" caption="تصفية حالة الدفعة" [options]="batchFilterChoices" [value]="batchFilterKey" (valueChange)="chooseBatchFilter($event)" />
+      @for (option of batchFilterChoices; track option.value) {
+        <button type="button" class="filter-btn" [class.active]="batchFilterKey === option.value" (click)="chooseBatchFilter(option.value)">
+          <span class="filter-badge">{{ option.value === 'all' ? batches().length : getCountByStatus(option.value === 'Ongoing' ? 'جارية' : option.value === 'Upcoming' ? 'قادمة' : 'مكتملة') }}</span>
+          <span>{{ option.label }}</span>
+        </button>
+      }
     </div>
 
     <!-- أزرار الإجراءات -->
@@ -535,7 +525,7 @@
       <div class="filter-col">
         <label class="filter-field-label">خطة التدريب (الشركة)</label>
         <div class="filter-input-wrapper">
-          <app-catalog-picker caption="حالة اعتماد خطة التدريب" [options]="planPickerChoices" [value]="planPickerKey" (valueChange)="choosePlanFilter($event)" />
+          <app-catalog-picker class="filter-select-ctrl filter-plan-select" [showArrow]="false" caption="حالة اعتماد خطة التدريب" [options]="planPickerChoices" [value]="planPickerKey" (valueChange)="choosePlanFilter($event)" />
           <i class="fa-solid fa-chevron-down filter-icon-left select-chevron"></i>
         </div>
       </div>
@@ -2406,7 +2396,7 @@
 
       <div class="form-group">
         <label class="form-label">حالة الدفعة <span class="required-star">*</span></label>
-        <app-catalog-picker caption="حالة الدفعة" [options]="batchStatusChoices" [value]="batchStatusKeys[editBatchForm.controls['status'].value]" [fallbackLabel]="batchStatusFallback[batchStatusKeys[editBatchForm.controls['status'].value]] || ''" (valueChange)="editBatchForm.controls['status'].setValue(batchStatusKeys.indexOf($event))" />
+        <app-catalog-picker class="form-select text-right" caption="حالة الدفعة" [options]="batchStatusChoices" [value]="batchStatusKeys[editBatchForm.controls['status'].value]" [fallbackLabel]="batchStatusFallback[batchStatusKeys[editBatchForm.controls['status'].value]] || ''" (valueChange)="editBatchForm.controls['status'].setValue(batchStatusKeys.indexOf($event))" />
       </div>
 
       
