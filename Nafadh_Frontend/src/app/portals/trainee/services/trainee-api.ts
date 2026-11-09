@@ -329,7 +329,7 @@ export class TraineeApi {
     moduleId: number
   ): Observable<LessonDto[]> {
     return this.http.get<LessonDto[]>(
-      `${this.base}/Module/${moduleId}/lessons`
+      `${this.base}/Lesson/module/${moduleId}`
     );
   }
 
@@ -364,28 +364,46 @@ export class TraineeApi {
     );
   }
 
-  getTrainingMaterialDownloadUrl(
+   getTrainingMaterialDownloadUrl(
     materialId: number
-  ): Observable<{ DownloadUrl: string }> {
-    return this.http.get<{ DownloadUrl: string }>(
+  ): Observable<{
+    DownloadUrl?: string;
+    downloadUrl?: string;
+  }> {
+    return this.http.get<{
+      DownloadUrl?: string;
+      downloadUrl?: string;
+    }>(
       `${this.base}/TrainingMaterial/${materialId}/download`
     );
   }
 
-  getFileUrl(fileUrl: string): string {
-    if (!fileUrl) {
+ getFileUrl(fileUrl: string): string {
+    if (!fileUrl || !fileUrl.trim()) {
       return '';
     }
 
-    if (/^https?:\/\//i.test(fileUrl)) {
-      return fileUrl;
+    const url = fileUrl.trim();
+
+    // Absolute URLs
+    if (/^https?:\/\//i.test(url)) {
+      return url;
     }
 
-    const apiRoot = this.base.replace(/\/api\/?$/i, '');
+    // Protocol-relative URLs
+    if (url.startsWith('//')) {
+      return `${window.location.protocol}${url}`;
+    }
 
-    const normalizedPath = fileUrl.startsWith('/')
-      ? fileUrl
-      : `/${fileUrl}`;
+    // API root, e.g. https://localhost:7082
+    const apiRoot = this.base
+      .replace(/\/api\/?$/i, '')
+      .replace(/\/$/, '');
+
+    // Normalize relative file paths
+    const normalizedPath = url.startsWith('/')
+      ? url
+      : `/${url}`;
 
     return `${apiRoot}${normalizedPath}`;
   }
@@ -479,13 +497,13 @@ export class TraineeApi {
     );
   }
 
+  
   getLessons(
     moduleId: number
   ): Observable<LessonDto[]> {
-    return this.http.get<LessonDto[]>(
-      `${this.base}/Module/${moduleId}/lessons`
-    );
+    return this.getModuleLessons(moduleId);
   }
+
 
   checkPrerequisite(
     moduleId: number,
