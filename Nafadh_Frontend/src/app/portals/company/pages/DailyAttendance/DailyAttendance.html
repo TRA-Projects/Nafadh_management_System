@@ -6,9 +6,10 @@
 
         <div class="head-text">
 
+            <span class="page-eyebrow">إدارة الحضور والمتابعة</span>
             <h2>سجل حضور المدربين</h2>
 
-            <p>تسجيل حضور المدربين — {{ todayLabel }}</p>
+            <p>متابعة حالات الحضور ومراجعة أعذار المدربين — {{ todayLabel }}</p>
 
         </div>
 
@@ -53,6 +54,13 @@
 
 
 
+    @if (successMessage()) {
+    <div class="alert alert-success" role="status" aria-live="polite">
+        <span>{{ successMessage() }}</span>
+        <button type="button" aria-label="إغلاق" (click)="dismissNotice()">×</button>
+    </div>
+    }
+
     <div class="card">
 
         <!-- Tabs + summary chips -->
@@ -95,13 +103,35 @@
 
 
 
+        @if (view() === 'week' && !loading() && !loadError() && rows().length) {
+        <div class="weekly-overview" data-guide="company-attendance-week-summary">
+                <div class="stats">
+
+                    <span class="stat"><i class="dot blue"></i>حاضر <strong>{{ weekStats(currentWeek()).Present
+                            }}</strong></span>
+
+                    <span class="stat"><i class="dot yellow"></i>متأخر <strong>{{ weekStats(currentWeek()).Late
+                            }}</strong></span>
+
+                    <span class="stat"><i class="dot red"></i>غائب <strong>{{ weekStats(currentWeek()).Absent }}</strong></span>
+
+                    <span class="stat"><i class="dot teal"></i>انصراف مبكر <strong>{{ weekStats(currentWeek()).EarlyLeave
+                            }}</strong></span>
+
+                    <span class="stat rate">نسبة الالتزام <strong>{{ weekStats(currentWeek()).rate === null ? '—' :
+                            weekStats(currentWeek()).rate + '%' }}</strong></span>
+
+                </div>
+        </div>
+        }
+
         <!-- Sub heading -->
 
         <div class="sub">
 
             @if (view() === 'day') {
 
-            <h3>سجل حضور اليوم — {{ todayLabel }}</h3>
+            <div class="section-heading"><h3>سجل حضور اليوم — {{ todayLabel }}</h3><p>تسجيل حالات المدربين وتأكيد سجل اليوم</p></div>
 
             <div class="daily-confirm-actions" data-guide="company-attendance-confirm">
                 @if (isConfirmed()) {
@@ -141,7 +171,22 @@
 
             } @else {
 
-            <h3>{{ view() === 'week' ? 'السجل الأسبوعي' : 'السجل الشهري' }} — {{ rangeLabel() }}</h3>
+            <div class="section-heading"><h3>{{ view() === 'week' ? 'السجل الأسبوعي' : 'السجل الشهري' }} — {{ rangeLabel() }}</h3><p>{{ view() === 'week' ? 'مراجعة الحالات والأعذار المقدمة من المدربين' : 'استعراض سجل الحضور والالتزام خلال الشهر' }}</p></div>
+            @if (view() === 'week') {
+                <div class="attendance-legend" data-guide="company-attendance-week-legend">
+                    <span class="legend-item legend-present">ح = حاضر</span>
+                    <span class="legend-item legend-late">ت = متأخر</span>
+                    <span class="legend-item legend-absent">غ = غائب</span>
+                    <span class="legend-item legend-early">م = انصراف مبكر</span>
+                    <span class="legend-item legend-empty">— = لم يُسجّل</span>
+                </div>
+            }
+            @if (view() === 'month') {
+            <div class="monthly-summary" aria-live="polite" data-guide="company-attendance-month-summary">
+                <span>معدل الالتزام الشهري للشركة</span>
+                <strong>{{ monthlyAttendanceRate() === null ? '—' : monthlyAttendanceRate() + '%' }}</strong>
+            </div>
+            }
 
             }
 
@@ -253,10 +298,7 @@
                         </th>
 
                         <th>حالة اليوم</th>
-
-                        <th>السبب / الملاحظة</th>
-
-                        <th>إثبات العذر</th>
+                        <th class="daily-note-heading">السبب / الملاحظة</th>
 
                     </tr>
 
@@ -317,7 +359,7 @@
 
                                 <label class="time">
 
-                                    وقت الوصول
+                                    وقت الدخول
 
                                     <!-- تم إصلاح الخطأ هنا -->
                                     <input type="time" [value]="timeValue(row.record?.checkInTime)"
@@ -345,82 +387,27 @@
 
                         </td>
 
-                        <td [attr.data-guide]="$first ? 'company-attendance-note' : null">
-
-                            @if (canManageAttendance() && noteEditingId() === row.trainer.trainerId) {
-
-                            <div class="note-edit">
-
-                                <input type="text" maxlength="500" placeholder="اكتب السبب أو الملاحظة"
-                                    [(ngModel)]="noteDraft" (keydown.enter)="saveNote(row)" />
-
-                                <button type="button" class="mini ok" (click)="saveNote(row)">حفظ</button>
-
-                                <button type="button" class="mini" (click)="cancelNote()">إلغاء</button>
-
-                            </div>
-
-                            } @else if (row.record?.reason) {
-
-                            <button type="button" class="note-text"
-                                [disabled]="!canManageAttendance() || row.record?.status === 'Present' || isConfirmed()"
-                                [title]="row.record?.reason" (click)="startNote(row)">
-
-                                {{ row.record?.reason }}
-
-                            </button> } @else {
-
-                            <button type="button" class="note-add"
-                                [disabled]="!canManageAttendance() || !row.record || row.record?.status === 'Present' || isConfirmed()"
-                                [title]="row.record ? '' : 'سجّل الحالة أولًا'" (click)="startNote(row)">+ إضافة
-
-                                سبب</button>
-
-                            }
-
-                        </td>
-
-                        <td [attr.data-guide]="$first ? 'company-attendance-proof' : null">
-
-                            @if (row.record?.excuseProofUrl) {
-
-                            <span class="proof-chip">
-
-                                <a class="proof-name" [href]="fileUrl($any(row.record).excuseProofUrl)" target="_blank"
-                                    rel="noopener">{{ proofName($any(row.record).excuseProofUrl) }}</a>
-
-                                <button type="button" aria-label="حذف الإثبات"
-                                    [disabled]="!canManageAttendance() || row.record?.status === 'Present' || isConfirmed() || isSaving(row.trainer.trainerId)"
-                                    (click)="removeProof(row)">×</button>
-
-                            </span>
-
+                        <td class="daily-note-cell" [attr.data-guide]="$first ? 'company-attendance-note' : null">
+                            @if (!row.record || row.record.status === 'Present') {
+                            <span class="daily-note-present">حاضر</span>
+                            } @else if (!hasExcuse(row.record)) {
+                            <span class="daily-note-waiting">بانتظار إرفاق العذر من المدرب</span>
                             } @else {
-
-                            <label class="proof-btn"
-                                [class.disabled]="!canManageAttendance() || !row.record || row.record?.status === 'Present' || isConfirmed() || isSaving(row.trainer.trainerId)"
-                                [title]="row.record ? '' : 'سجّل الحالة أولًا'">
-
-                                إثبات
-
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-
-                                    <path d="M12 19V5" />
-
-                                    <path d="M5 12l7-7 7 7" />
-
-                                </svg>
-
-                                <input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" hidden
-                                    [disabled]="!canManageAttendance() || !row.record || isConfirmed() || isSaving(row.trainer.trainerId)"
-                                    (change)="onProofSelected(row, $event)" />
-
-                            </label>
-
+                            <div class="daily-note-submitted">
+                                <span class="daily-note-review" [class.approved]="row.record.excuseReviewStatus === 'Approved'"
+                                    [class.rejected]="row.record.excuseReviewStatus === 'Rejected'">
+                                    {{ reviewLabel(row.record) }}
+                                </span>
+                                @if (row.record.reason) {
+                                <span class="daily-note-reason" [title]="row.record.reason">{{ row.record.reason }}</span>
+                                } @else if (row.record.excuseProofUrl) {
+                                <span class="daily-note-reason">إثبات مرفق من المدرب</span>
+                                }
+                            </div>
                             }
-
                         </td>
+
+
 
                     </tr>
 
@@ -437,11 +424,6 @@
         <ng-container *ngTemplateOutlet="weekTable; context: { $implicit: currentWeek() }"></ng-container>
 
         } @else {
-
-        <div class="monthly-summary" aria-live="polite" data-guide="company-attendance-month-summary">
-            <span>معدل الالتزام الشهري للشركة</span>
-            <strong>{{ monthlyAttendanceRate() === null ? '—' : monthlyAttendanceRate() + '%' }}</strong>
-        </div>
 
         <div class="month-weeks" data-guide="company-attendance-month-weeks">
 
@@ -478,6 +460,7 @@
 
         <ng-template #weekTable let-week>
 
+            @if (view() === 'month') {
             <div class="week-summary" [attr.data-guide]="view() === 'week' ? 'company-attendance-week-summary' : null">
 
                 <div class="stats">
@@ -507,6 +490,8 @@
                 </div>
 
             </div>
+
+            }
 
             <div class="table-wrap" [attr.data-guide]="view() === 'week' ? 'company-attendance-week-table' : 'company-attendance-month-table'">
 
@@ -626,19 +611,22 @@
 
                                     </span>
 
-                                    @if (day.record && (day.record.status === 'Absent' || day.record.status === 'Late'
-                                    || day.record.status === 'EarlyLeave') && (view() === 'week' ||
-                                    hasExcuse(day.record))) {
-
-                                    <button type="button" class="weekly-excuse-btn"
-                                        [class.has-excuse]="hasExcuse(day.record)"
-                                        (click)="openWeeklyExcuse(day.record!)">
-
-                                        {{ view() === 'month' || hasExcuse(day.record) ? 'عرض السبب / الإثبات' : '+ سبب
-                                        / إثبات' }}
-
+                                    @if (day.record && hasExcuse(day.record)) {
+                                    <button type="button" class="weekly-excuse-btn has-excuse"
+                                        [class.review-completed]="isExcuseReviewed(day.record)"
+                                        (click)="openWeeklyExcuse(day.record)"
+                                        [attr.aria-label]="isExcuseReviewed(day.record) ? 'عرض العذر وقرار المشرف' : 'مراجعة العذر واتخاذ القرار'">
+                                        {{ isExcuseReviewed(day.record) ? 'عرض العذر' : 'مراجعة العذر' }}
                                     </button>
-
+                                    @if (isExcuseReviewed(day.record)) {
+                                    <span class="weekly-review-status"
+                                        [class.approved]="day.record.excuseReviewStatus === 'Approved'"
+                                        [class.rejected]="day.record.excuseReviewStatus === 'Rejected'">
+                                        {{ reviewLabel(day.record) }}
+                                    </span>
+                                    }
+                                    } @else if (view() === 'week' && day.record && day.record.status !== 'Present') {
+                                    <span class="weekly-no-excuse">بانتظار عذر المدرب</span>
                                     }
 
                                 </div>
@@ -700,48 +688,32 @@
             </div>
 
             <div class="weekly-excuse-detail">
-                <strong>السبب / الملاحظة</strong>
-                @if (weeklyExcuseEditing()) {
-                <textarea id="weeklyReason" rows="3" maxlength="500" [(ngModel)]="weeklyReason"
-                    [disabled]="weeklyExcuseSaving()" aria-label="السبب أو الملاحظة"
-                    placeholder="اكتبي السبب أو الملاحظة..."></textarea>
-                } @else {
-                <p class="weekly-excuse-reason-text">{{ excuse.reason || 'لم تتم إضافة سبب بعد' }}</p>
-                }
+                <strong>السبب / الملاحظة (من المدرب)</strong>
+                <p class="weekly-excuse-reason-text">{{ excuse.reason || 'لم يقدّم المدرب سببًا' }}</p>
             </div>
 
             <div class="weekly-excuse-proof">
                 @if (excuse.excuseProofUrl) {
-                <a [href]="fileUrl(excuse.excuseProofUrl)" target="_blank" rel="noopener noreferrer">عرض الإثبات</a>
-                @if (weeklyExcuseEditing()) {
-                <button type="button" (click)="removeWeeklyProof()" [disabled]="weeklyExcuseSaving()">حذف
-                    الإثبات</button>
-                }
+                <a [href]="fileUrl(excuse.excuseProofUrl)" target="_blank" rel="noopener noreferrer">عرض إثبات المدرب</a>
                 } @else {
-                <span>لم يُرفق إثبات</span>
-                }
-                @if (weeklyExcuseEditing()) {
-                <label class="weekly-excuse-upload">
-                    {{ excuse.excuseProofUrl ? 'استبدال الإثبات' : '+ رفع صورة أو PDF' }}
-                    <input type="file" hidden accept=".jpg,.jpeg,.png,.webp,.pdf" [disabled]="weeklyExcuseSaving()"
-                        (change)="uploadWeeklyProof($event)" />
-                </label>
+                <span>لم يرفق المدرب إثباتًا</span>
                 }
             </div>
 
-            @if (weeklyExcuseEditing()) {
-            <div class="weekly-excuse-footer">
-                <button type="button" class="weekly-excuse-action" (click)="saveWeeklyReason()"
-                    [disabled]="weeklyExcuseSaving()">{{ weeklyExcuseSaving() ? 'جاري الحفظ...' : 'حفظ السبب'
-                    }}</button>
-                @if (hasExcuse(excuse)) {
-                <button type="button" class="weekly-excuse-cancel" (click)="cancelWeeklyExcuseEdit()"
-                    [disabled]="weeklyExcuseSaving()">إلغاء التعديل</button>
+            <div class="review-block review-dialog-actions">
+                <strong>قرار المشرف</strong>
+                <span class="review-state">{{ reviewLabel(excuse) }}</span>
+                @if (canManageAttendance() && !isExcuseReviewed(excuse)) {
+                <div class="review-actions">
+                    <button type="button" class="review-approve"
+                        [disabled]="reviewingExcuseId() !== null || excuse.excuseReviewStatus === 'Approved'"
+                        (click)="reviewExcuse(excuse, 'Approved')">قبول العذر</button>
+                    <button type="button" class="review-reject"
+                        [disabled]="reviewingExcuseId() !== null || excuse.excuseReviewStatus === 'Rejected'"
+                        (click)="reviewExcuse(excuse, 'Rejected')">رفض العذر</button>
+                </div>
                 }
             </div>
-            } @else if (view() === 'week' && canEditWeeklyExcuse(excuse)) {
-            <button type="button" class="weekly-excuse-edit" (click)="startWeeklyExcuseEdit()">تعديل</button>
-            }
 
         </section>
 
