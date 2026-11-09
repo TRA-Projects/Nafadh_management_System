@@ -1168,9 +1168,25 @@
 
                         }
 
-                        <p class="chat-bubble-text">
-                          {{ message.content }}
-                        </p>
+                        
+<p>
+  {{ message.content }}
+</p>
+
+@if (message.attachmentUrl) {
+  <div class="message-attachment">
+    <a
+      [href]="message.attachmentUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="attachment-link"
+    >
+      <i class="fas fa-paperclip"></i>
+      {{ message.attachmentFileName || 'عرض المرفق' }}
+    </a>
+  </div>
+}
+
 
                         <small class="chat-bubble-time">
                           {{ formatTime(message.sentDate) }}
