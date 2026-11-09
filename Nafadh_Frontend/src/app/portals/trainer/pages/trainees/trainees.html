@@ -1565,5 +1565,56 @@
   </div>
 
   }
+ @if (showQuizResults()) {
+  <div class="nfd-modal-bg" (click)="closeQuizResults()">
+    <div class="nfd-modal quiz-results-modal"
+         (click)="$event.stopPropagation()">
+
+      <div class="quiz-results-header">
+        <div>
+          <h3>نتائج الاختبارات</h3>
+          <p>عرض نتائج الاختبارات الخاصة بالمتدرب</p>
+        </div>
+
+        <button type="button"
+                class="quiz-results-close"
+                (click)="closeQuizResults()">
+          ×
+        </button>
+      </div>
+
+      <div class="quiz-results-body">
+        @if (selectedQuizResults().length === 0) {
+          <div class="quiz-results-empty">
+            لا توجد نتائج اختبارات لهذا المتدرب.
+          </div>
+        } @else {
+          @for (result of selectedQuizResults(); track $index) {
+            <div class="quiz-result-card">
+              <div class="quiz-result-info">
+                <span>الاختبار</span>
+                <strong>{{ result.quizTitle }}</strong>
+              </div>
+
+              <div class="quiz-result-score">
+                <span>الدرجة</span>
+                <strong>{{ result.score }}</strong>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="quiz-results-footer">
+        <button type="button"
+                class="nfd-btn secondary"
+                (click)="closeQuizResults()">
+          إغلاق
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
 
 </div>

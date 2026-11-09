@@ -1511,10 +1511,10 @@ closeQuizResults(): void {
 
         next: (report) => {
 
-          this.api
-            .downloadReport(
-              report.reportId
-            )
+        this.api
+  .getTrainerTraineesReportFile(
+    report.reportId
+  )
             .subscribe({
 
               next: (blob) => {
