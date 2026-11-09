@@ -637,6 +637,35 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("UserTypes");
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_AdminProjectScore", b =>
+                {
+                    b.Property<int>("AdminProjectScoreId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AdminProjectScoreId"));
+
+                    b.Property<int>("EnrollmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal>("Score")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("AdminProjectScoreId");
+
+                    b.HasIndex("EnrollmentId")
+                        .IsUnique();
+
+                    b.ToTable("NFD_AdminProjectScores", (string)null);
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Announcement", b =>
                 {
                     b.Property<int>("AnnouncementId")
@@ -775,6 +804,12 @@ namespace Nafadh_Backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BatchId"));
 
+                    b.Property<decimal>("AtRiskMinAttendance")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("AttendanceWeight")
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<string>("BatchName")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -789,14 +824,38 @@ namespace Nafadh_Backend.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("ExcellentMinAttendance")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("ExcellentMinScore")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("GoodMinScore")
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<int>("ProgramId")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("ProjectsWeight")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("QuizzesWeight")
+                        .HasColumnType("decimal(5,2)");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("TasksWeight")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("VeryGoodMinAttendance")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("VeryGoodMinScore")
+                        .HasColumnType("decimal(5,2)");
 
                     b.HasKey("BatchId");
 
@@ -3929,6 +3988,17 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("UserType");
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_AdminProjectScore", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Enrollment", "Enrollment")
+                        .WithOne("AdminProjectScore")
+                        .HasForeignKey("Nafadh_Backend.Models.NFD_AdminProjectScore", "EnrollmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Enrollment");
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Announcement", b =>
                 {
                     b.HasOne("Nafadh_Backend.Models.NFD_User", "User")
@@ -5312,6 +5382,8 @@ namespace Nafadh_Backend.Migrations
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Enrollment", b =>
                 {
+                    b.Navigation("AdminProjectScore");
+
                     b.Navigation("Certificates");
 
                     b.Navigation("DailyAttendances");
