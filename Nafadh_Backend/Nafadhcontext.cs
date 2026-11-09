@@ -51,6 +51,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_Enrollment> NFD_Enrollments { get; set; }
         public DbSet<NFD_Module> NFD_Modules { get; set; }
         public DbSet<NFD_Lesson> NFD_Lessons { get; set; }
+        public DbSet<NFD_AdminProjectScore> NFD_AdminProjectScores { get; set; }
         public DbSet<NFD_TrainingMaterial> NFD_TrainingMaterials { get; set; }
         public DbSet<NFD_TraineeModuleProgress> NFD_TraineeModuleProgresses { get; set; }
         public DbSet<NFD_Session> NFD_Sessions { get; set; }
@@ -190,6 +191,24 @@ namespace Nafadh_Backend
 
                 entity.Property(e => e.VariableNameEn)
                     .HasMaxLength(256);
+            });
+
+            modelBuilder.Entity<NFD_AdminProjectScore>(entity =>
+            {
+                entity.ToTable("NFD_AdminProjectScores");
+
+                entity.HasKey(e => e.AdminProjectScoreId);
+
+                entity.Property(e => e.Score)
+                    .HasColumnType("decimal(5,2)");
+
+                entity.HasIndex(e => e.EnrollmentId)
+                    .IsUnique();
+
+                entity.HasOne(e => e.Enrollment)
+                    .WithOne(e => e.AdminProjectScore)
+                    .HasForeignKey<NFD_AdminProjectScore>(e => e.EnrollmentId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // ---- NFD_User ----
