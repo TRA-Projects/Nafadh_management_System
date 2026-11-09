@@ -19,6 +19,7 @@ namespace Nafadh_Backend.DTOs
 
         public string? Reason { get; set; }
         public string? ExcuseProofUrl { get; set; }
+        public string? ExcuseReviewStatus { get; set; }
 
         public bool IsConfirmed { get; set; }
     }

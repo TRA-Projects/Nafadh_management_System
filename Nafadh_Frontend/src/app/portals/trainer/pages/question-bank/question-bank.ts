@@ -55,6 +55,7 @@ interface QuestionForm {
     points: number;
     explanation: string;
     options: QuestionOptionForm[];
+    attachmentFile: File | null;
 }
 
 @Component({
@@ -105,7 +106,14 @@ export class QuestionBank implements OnInit {
     questionForm: QuestionForm = this.emptyQuestionForm();
 
     // Stable enum values must be preserved: Easy=0, Medium=1, Hard=2.
-    readonly typeKeys = ['MultipleChoice', 'TrueFalse', 'Essay'];
+readonly typeKeys = ['MultipleChoice', 'TrueFalse', 'Essay', 'FileUpload'];
+
+readonly typeChoices = () => [
+    { value: 'MultipleChoice', label: 'اختيار من متعدد' },
+    { value: 'TrueFalse', label: 'صح أو خطأ' },
+    { value: 'Essay', label: 'مقالي' },
+    { value: 'FileUpload', label: 'رفع ملف' }
+];
     private originalQuestionType: number | null = null;
     readonly typeFilterChoices = computed(() => [
         { value: 'all', label: 'كل الأنواع' },
@@ -568,73 +576,73 @@ export class QuestionBank implements OnInit {
         this.randomQuestionsModalOpen.set(false);
     }
     addRandomQuestions(): void {
-    const quizId = this.quizId();
-    const trainerId = this.trainer()?.trainerId;
+        const quizId = this.quizId();
+        const trainerId = this.trainer()?.trainerId;
 
-    const { moduleId, difficulty, count } =
-        this.randomQuestionsForm;
+        const { moduleId, difficulty, count } =
+            this.randomQuestionsForm;
 
-    if (!quizId || !trainerId) {
-        this.errorMessage.set(
-            'تعذر تحديد الاختبار أو المدرب.'
-        );
-        return;
-    }
-
-    if (!moduleId || moduleId <= 0) {
-        this.errorMessage.set(
-            'يرجى اختيار الوحدة.'
-        );
-        return;
-    }
-
-    if (count < 1 || count > 100) {
-        this.errorMessage.set(
-            'عدد الأسئلة يجب أن يكون بين 1 و100.'
-        );
-        return;
-    }
-
-    this.randomQuestionsSaving.set(true);
-    this.errorMessage.set('');
-    this.successMessage.set('');
-
-    this.api.addRandomQuestionsToQuiz(
-        quizId,
-        trainerId,
-        {
-            moduleId: Number(moduleId),
-            difficulty: Number(difficulty),
-            count: Number(count)
-        }
-    ).subscribe({
-        next: response => {
-            this.randomQuestionsSaving.set(false);
-            this.randomQuestionsModalOpen.set(false);
-
-            this.successMessage.set(
-                response?.message ||
-                'تمت إضافة الأسئلة العشوائية إلى الاختبار بنجاح.'
-            );
-
-            this.loadQuizQuestions(trainerId);
-        },
-
-        error: error => {
-            console.error(
-                'Error adding random questions:',
-                error
-            );
-
-            this.randomQuestionsSaving.set(false);
-
+        if (!quizId || !trainerId) {
             this.errorMessage.set(
-                error?.error?.message ||
-                'تعذر إضافة الأسئلة العشوائية.'
+                'تعذر تحديد الاختبار أو المدرب.'
             );
+            return;
         }
-    });
-}
+
+        if (!moduleId || moduleId <= 0) {
+            this.errorMessage.set(
+                'يرجى اختيار الوحدة.'
+            );
+            return;
+        }
+
+        if (count < 1 || count > 100) {
+            this.errorMessage.set(
+                'عدد الأسئلة يجب أن يكون بين 1 و100.'
+            );
+            return;
+        }
+
+        this.randomQuestionsSaving.set(true);
+        this.errorMessage.set('');
+        this.successMessage.set('');
+
+        this.api.addRandomQuestionsToQuiz(
+            quizId,
+            trainerId,
+            {
+                moduleId: Number(moduleId),
+                difficulty: Number(difficulty),
+                count: Number(count)
+            }
+        ).subscribe({
+            next: response => {
+                this.randomQuestionsSaving.set(false);
+                this.randomQuestionsModalOpen.set(false);
+
+                this.successMessage.set(
+                    response?.message ||
+                    'تمت إضافة الأسئلة العشوائية إلى الاختبار بنجاح.'
+                );
+
+                this.loadQuizQuestions(trainerId);
+            },
+
+            error: error => {
+                console.error(
+                    'Error adding random questions:',
+                    error
+                );
+
+                this.randomQuestionsSaving.set(false);
+
+                this.errorMessage.set(
+                    error?.error?.message ||
+                    'تعذر إضافة الأسئلة العشوائية.'
+                );
+            }
+        });
+    }
 
     addSelectedQuestions(): void {
 
@@ -723,7 +731,8 @@ export class QuestionBank implements OnInit {
         const questionTypeMap: Record<string, number> = {
             MultipleChoice: 0,
             TrueFalse: 1,
-            Essay: 2
+            Essay: 2,
+            FileUpload: 3
         };
 
         const difficultyMap: Record<string, number> = {
@@ -760,6 +769,7 @@ export class QuestionBank implements OnInit {
             difficulty,
             points: Number(question.points),
             explanation: question.explanation ?? '',
+            attachmentFile: null,
             options: [...(question.options ?? [])]
                 .sort((a, b) => a.sortOrder - b.sortOrder)
                 .map(option => ({
@@ -885,7 +895,7 @@ export class QuestionBank implements OnInit {
             return;
         }
 
-        if (type === 2) {
+        if (type === 2 || type === 3) {
             this.questionForm.options = [];
 
             this.questionForm = {
@@ -893,7 +903,30 @@ export class QuestionBank implements OnInit {
             };
         }
     }
+    onQuestionAttachmentSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
 
+        if (!input.files || input.files.length === 0) {
+            this.questionForm.attachmentFile = null;
+            return;
+        }
+
+        const file = input.files[0];
+
+        // حد أقصى 200 MB
+        if (file.size > 200 * 1024 * 1024) {
+            this.questionError.set(
+                'حجم الملف يجب ألا يتجاوز 200 ميجابايت.'
+            );
+
+            input.value = '';
+            this.questionForm.attachmentFile = null;
+            return;
+        }
+
+        this.questionForm.attachmentFile = file;
+        this.questionError.set('');
+    }
     saveQuestion(): void {
         if (!(this.editingQuestionId() !== null && this.questionForm.questionType === this.originalQuestionType) &&
             !this.constants.isSelectable('NFD_QUE_TYPE', this.typeKeys[this.questionForm.questionType])) {
@@ -968,7 +1001,7 @@ export class QuestionBank implements OnInit {
                 form.explanation.trim() || null,
 
             options:
-                form.questionType === 2
+                form.questionType === 2 || form.questionType === 3
                     ? []
                     : form.options.map((option, index) => ({
                         optionText: option.optionText.trim(),
@@ -985,15 +1018,61 @@ export class QuestionBank implements OnInit {
 
         if (questionId === null) {
             this.api.createQuestion(trainerId, payload).subscribe({
-                next: () => {
-                    this.questionSaving.set(false);
-                    this.questionFormOpen.set(false);
+                next: (createdQuestion) => {
 
-                    this.questionSuccess.set(
-                        'تمت إضافة السؤال بنجاح.'
-                    );
+                    const attachmentFile =
+                        this.questionForm.attachmentFile;
 
-                    this.loadQuestions(trainerId);
+                    if (!attachmentFile) {
+                        this.questionSaving.set(false);
+                        this.questionFormOpen.set(false);
+
+                        this.questionSuccess.set(
+                            'تمت إضافة السؤال بنجاح.'
+                        );
+
+                        this.loadQuestions(trainerId);
+                        return;
+                    }
+
+                    this.api
+                        .uploadQuestionAttachment(
+                            createdQuestion.questionId,
+                            attachmentFile
+                        )
+                        .subscribe({
+
+                            next: () => {
+
+                                this.questionSaving.set(false);
+                                this.questionFormOpen.set(false);
+
+                                this.questionSuccess.set(
+                                    'تمت إضافة السؤال وإرفاق الملف بنجاح.'
+                                );
+
+                                this.loadQuestions(trainerId);
+                            },
+
+                            error: (error: any) => {
+
+                                console.error(
+                                    'Error uploading question attachment:',
+                                    error
+                                );
+
+                                // السؤال تم إنشاؤه بالفعل،
+                                // لكن رفع المرفق فشل.
+                                this.questionSaving.set(false);
+                                this.questionFormOpen.set(false);
+
+                                this.questionSuccess.set(
+                                    'تمت إضافة السؤال، لكن تعذر رفع المرفق.'
+                                );
+
+                                this.loadQuestions(trainerId);
+                            }
+                        });
                 },
 
                 error: (error: any) => {
@@ -1020,14 +1099,58 @@ export class QuestionBank implements OnInit {
             payload
         ).subscribe({
             next: () => {
-                this.questionSaving.set(false);
-                this.questionFormOpen.set(false);
 
-                this.questionSuccess.set(
-                    'تم تحديث السؤال بنجاح.'
-                );
+                const attachmentFile =
+                    this.questionForm.attachmentFile;
 
-                this.loadQuestions(trainerId);
+                if (!attachmentFile) {
+                    this.questionSaving.set(false);
+                    this.questionFormOpen.set(false);
+
+                    this.questionSuccess.set(
+                        'تم تحديث السؤال بنجاح.'
+                    );
+
+                    this.loadQuestions(trainerId);
+                    return;
+                }
+
+                this.api
+                    .uploadQuestionAttachment(
+                        questionId,
+                        attachmentFile
+                    )
+                    .subscribe({
+
+                        next: () => {
+
+                            this.questionSaving.set(false);
+                            this.questionFormOpen.set(false);
+
+                            this.questionSuccess.set(
+                                'تم تحديث السؤال وإرفاق الملف بنجاح.'
+                            );
+
+                            this.loadQuestions(trainerId);
+                        },
+
+                        error: (error: any) => {
+
+                            console.error(
+                                'Error uploading question attachment:',
+                                error
+                            );
+
+                            this.questionSaving.set(false);
+                            this.questionFormOpen.set(false);
+
+                            this.questionSuccess.set(
+                                'تم تحديث السؤال، لكن تعذر رفع المرفق.'
+                            );
+
+                            this.loadQuestions(trainerId);
+                        }
+                    });
             },
 
             error: (error: any) => {
@@ -1105,6 +1228,7 @@ export class QuestionBank implements OnInit {
             difficulty: 0,
             points: 1,
             explanation: '',
+            attachmentFile: null,
             options: [
                 {
                     optionText: '',

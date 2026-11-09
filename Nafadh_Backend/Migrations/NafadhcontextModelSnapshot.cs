@@ -2459,6 +2459,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<decimal>("AwardedPoints")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("FileUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool?>("IsCorrect")
                         .HasColumnType("bit");
 
@@ -2467,6 +2470,9 @@ namespace Nafadh_Backend.Migrations
 
                     b.Property<bool>("IsMarkedForReview")
                         .HasColumnType("bit");
+
+                    b.Property<string>("OriginalFileName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("SelectedOptionId")
                         .HasColumnType("int");
@@ -3454,6 +3460,10 @@ namespace Nafadh_Backend.Migrations
                     b.Property<string>("ExcuseProofUrl")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("ExcuseReviewStatus")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
 
                     b.Property<bool>("IsConfirmed")
                         .HasColumnType("bit");

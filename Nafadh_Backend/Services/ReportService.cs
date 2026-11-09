@@ -1564,10 +1564,16 @@ namespace Nafadh_Backend.Services
             // ======================================================
 
             var reportsFolder =
-                Path.Combine(
-                    @"C:\NafadhStorage",
-                    "Reports"
+      _configuration["Storage:TrainerReportsPath"];
+
+            if (string.IsNullOrWhiteSpace(reportsFolder))
+            {
+                throw new InvalidOperationException(
+                    "Trainer reports storage path is not configured."
                 );
+            }
+
+            Directory.CreateDirectory(reportsFolder);
 
 
             Directory.CreateDirectory(

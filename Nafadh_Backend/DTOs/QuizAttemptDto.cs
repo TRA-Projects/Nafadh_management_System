@@ -82,11 +82,19 @@ namespace Nafadh_Backend.DTOs
 
         public decimal Points { get; set; }
 
+        // ملف السؤال الذي رفعه المدرب
+        public int? AttachmentId { get; set; }
+        public string? AttachmentFileName { get; set; }
+        public string? AttachmentFileUrl { get; set; }
         public List<QuestionOptionDto> Options { get; set; } = new();
+      
 
         // الخصائص الخاصة بإجابة المتدرب التي تمت إضافتها لحل الخطأ
         public int? SelectedOptionId { get; set; }
         public string? TextAnswer { get; set; }
+        // ملف إجابة المتدرب
+        public string? AnswerFileUrl { get; set; }
+        public string? AnswerOriginalFileName { get; set; }
         public bool IsMarkedForReview { get; set; }
     }
 
