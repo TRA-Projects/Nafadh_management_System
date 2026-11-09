@@ -14,6 +14,7 @@ using Nafadh_Backend.Services;
 using Nafadh_Backend.Settings;
 using QuestPDF.Infrastructure;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 using System.Text;
 
 
@@ -71,7 +72,20 @@ namespace Nafadh_Backend
             builder.Services.AddDbContext<Nafadhcontext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            builder.Services.AddScoped<Nafadh_Backend.IdentityAccess.IIdentityAccessAdminService, Nafadh_Backend.IdentityAccess.IdentityAccessAdminService>();
+            // ASP.NET Identity services
+            // Keep the existing JWT authentication configuration unchanged.
+            builder.Services
+                .AddIdentityCore<Nafadh_Backend.IdentityAccess.AppUser>(options =>
+                {
+                    options.User.RequireUniqueEmail = true;
+                })
+                .AddRoles<Nafadh_Backend.IdentityAccess.Roles>()
+                .AddEntityFrameworkStores<Nafadhcontext>();
+
+            // Identity Access Administration
+            builder.Services.AddScoped<
+                Nafadh_Backend.IdentityAccess.IIdentityAccessAdminService,
+                Nafadh_Backend.IdentityAccess.IdentityAccessAdminService>();
 
             // ── JWT Authentication ─────────────────────────────────────────────
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();

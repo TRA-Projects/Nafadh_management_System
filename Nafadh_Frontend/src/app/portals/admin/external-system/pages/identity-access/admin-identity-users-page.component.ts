@@ -108,14 +108,12 @@ export class AdminIdentityUsersPageComponent implements OnInit {
     return types.find((t) => t.Id === typeId)?.Groups ?? [];
   });
 
-  /** System (admin organization) groups only — used when creating users from this page. */
-  readonly adminGroups = computed(() => {
-    const system = this.types().find(
-      (t) => (t.Code ?? '').localeCompare(SYSTEM_USER_TYPE_CODE, undefined, { sensitivity: 'accent' }) === 0
-    );
-    return (system?.Groups ?? []).filter((g) => g.IsActive !== false);
-  });
-
+/** All active user groups available for account creation. */
+readonly adminGroups = computed(() => {
+  return this.types()
+    .flatMap((type) => type.Groups ?? [])
+    .filter((group) => group.IsActive !== false);
+});
   readonly advancedFilterCount = computed(() => {
     let count = 0;
     if (this.query().trim()) count += 1;
