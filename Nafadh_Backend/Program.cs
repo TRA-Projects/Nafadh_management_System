@@ -70,7 +70,13 @@ namespace Nafadh_Backend
 
             // EF Core - SQL Server
             builder.Services.AddDbContext<Nafadhcontext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            {
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+                // إخبار EF Core بتجاهل التغييرات المعلقة في جداول لا تخصنا (مثل Profiles)
+                options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+            });
+
 
             // ASP.NET Identity services
             // Keep the existing JWT authentication configuration unchanged.
