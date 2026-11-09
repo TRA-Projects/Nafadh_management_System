@@ -2,17 +2,17 @@
 
   <!-- إشعار التوست العائم -->
   @if (toastMessage()) {
-    <div class="nfd-toast" [attr.data-type]="toastMessage()!.type">
-      <div class="toast-content">
-        <i class="fa-solid" [ngClass]="{
+  <div class="nfd-toast" [attr.data-type]="toastMessage()!.type">
+    <div class="toast-content">
+      <i class="fa-solid" [ngClass]="{
           'fa-circle-check': toastMessage()!.type === 'success',
           'fa-circle-exclamation': toastMessage()!.type === 'error',
           'fa-circle-info': toastMessage()!.type === 'info'
         }"></i>
-        <span>{{ toastMessage()!.text }}</span>
-      </div>
-      <button type="button" class="toast-close" (click)="toastMessage.set(null)">&times;</button>
+      <span>{{ toastMessage()!.text }}</span>
     </div>
+    <button type="button" class="toast-close" (click)="toastMessage.set(null)">&times;</button>
+  </div>
   }
 
   <!-- هيدر الصفحة والأزرار الإجرائية -->
@@ -80,7 +80,8 @@
       </div>
     </div>
 
-    <div class="kpi-card" [class.active]="statusFilter() === 'WITHDRAWAL_PENDING'" (click)="onStatusFilterChange('WITHDRAWAL_PENDING')">
+    <div class="kpi-card" [class.active]="statusFilter() === 'WITHDRAWAL_PENDING'"
+      (click)="onStatusFilterChange('WITHDRAWAL_PENDING')">
       <div class="kpi-icon amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
       <div class="kpi-info">
         <span class="kpi-value">{{ stats().pendingWithdrawals }}</span>
@@ -99,18 +100,18 @@
 
   <!-- شريط طلبات الانسحاب · {{ constants.administrativeLabel('NFD_WDR_STAT', 'Pending') }} -->
   @if (stats().pendingWithdrawals > 0) {
-    <div class="withdrawal-alert-banner">
-      <div class="banner-right">
-        <div class="banner-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <div>
-          <strong>تنبيه طلبات الانسحاب المعلقة</strong>
-          <p>يوجد {{ stats().pendingWithdrawals }} متدرب بانتظار مراجعة واعتماد طلب الانسحاب رسمياً في الهيئة.</p>
-        </div>
+  <div class="withdrawal-alert-banner">
+    <div class="banner-right">
+      <div class="banner-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div>
+        <strong>تنبيه طلبات الانسحاب المعلقة</strong>
+        <p>يوجد {{ stats().pendingWithdrawals }} متدرب بانتظار مراجعة واعتماد طلب الانسحاب رسمياً في الهيئة.</p>
       </div>
-      <button class="btn btn-secondary" (click)="onStatusFilterChange('WITHDRAWAL_PENDING')">
-        عرض الطلبات · {{ constants.administrativeLabel('NFD_WDR_STAT', 'Pending') }}
-      </button>
     </div>
+    <button class="btn btn-secondary" (click)="onStatusFilterChange('WITHDRAWAL_PENDING')">
+      عرض الطلبات · {{ constants.administrativeLabel('NFD_WDR_STAT', 'Pending') }}
+    </button>
+  </div>
   }
 
   <!-- بطاقة الفلاتر والبحث المتقدم -->
@@ -118,13 +119,8 @@
     <div class="filter-grid">
       <div class="search-box">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input
-          type="text"
-          class="search-input"
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
-          placeholder="ابحث بالاسم، الرقم المدني، البريد، أو التخصص..."
-        />
+        <input type="text" class="search-input" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+          placeholder="ابحث بالاسم، الرقم المدني، البريد، أو التخصص..." />
       </div>
 
       <div class="filter-group">
@@ -132,7 +128,7 @@
         <select class="filter-select" [ngModel]="universityFilter()" (ngModelChange)="universityFilter.set($event)">
           <option value="ALL">جميع الجامعات والكليات</option>
           @for (u of availableUniversities(); track u) {
-            <option [value]="u">{{ u }}</option>
+          <option [value]="u">{{ u }}</option>
           }
         </select>
       </div>
@@ -143,7 +139,7 @@
           <option value="ALL">جميع الشركات</option>
           <option value="UNASSIGNED">لم يوزّع على شركة</option>
           @for (c of availableCompanies(); track c) {
-            <option [value]="c">{{ c }}</option>
+          <option [value]="c">{{ c }}</option>
           }
         </select>
       </div>
@@ -153,7 +149,7 @@
         <select class="filter-select" [ngModel]="batchFilter()" (ngModelChange)="batchFilter.set($event)">
           <option value="ALL">جميع الدفعات</option>
           @for (b of availableBatches(); track b) {
-            <option [value]="b">{{ b }}</option>
+          <option [value]="b">{{ b }}</option>
           }
         </select>
       </div>
@@ -172,1055 +168,947 @@
   <!-- جدول المتدربين والبيانات -->
   <div class="table-card">
     @if (isLoading()) {
-      <div style="padding: 40px; text-align: center; color: #64748b;">
-        <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: #0a1172;"></i>
-        <p style="margin-top: 10px; font-weight: 600;">جاري تحميل سجلات المتدربين من قاعدة البيانات...</p>
-      </div>
+    <div style="padding: 40px; text-align: center; color: #64748b;">
+      <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: #0a1172;"></i>
+      <p style="margin-top: 10px; font-weight: 600;">جاري تحميل سجلات المتدربين من قاعدة البيانات...</p>
+    </div>
     } @else {
-      <div class="table-responsive">
-        <table class="trainees-table">
-          <thead>
-            <tr>
-              <th>المتدرب</th>
-              <th>الرقم المدني</th>
-              <th>الجامعة والتخصص</th>
-              <th>الشركة المستضيفة</th>
-              <th>السيرة الذاتية</th>
-              <th>الحالة</th>
-              <th>نسبة الإنجاز</th>
-              <th style="text-align: center;">الإجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (tr of filtered(); track tr.traineeId) {
-              <tr>
-                <td>
-                  <div class="trainee-meta-cell">
-                    <div class="trainee-avatar">
-                      @if (tr.profileImageUrl && !tr.avatarBroken) {
-                        <img [src]="tr.profileImageUrl" [alt]="tr.fullName" (error)="tr.avatarBroken = true">
-                      } @else {
-                        <span>{{ getInitials(tr.fullName) }}</span>
-                      }
-                    </div>
-                    <div class="trainee-name-wrap">
-                      <strong>{{ tr.fullName }}</strong>
-                      <span>{{ tr.email }}</span>
-                    </div>
-                  </div>
-                </td>
-
-                <td>
-                  <span class="national-id-tag">{{ tr.nationalId || '—' }}</span>
-                </td>
-
-                <td>
-                  <strong style="display: block; color: #1e293b;">{{ tr.university || '—' }}</strong>
-                  <span style="font-size: 0.78rem; color: #64748b;">{{ tr.major || 'غير محدد' }}</span>
-                </td>
-
-                <td>
-                  @if (tr.companyName) {
-                    <span style="color: #0f172a; font-weight: 600;">{{ tr.companyName }}</span>
-                    @if (tr.batchName) {
-                      <span style="display: block; font-size: 0.75rem; color: #64748b;">{{ tr.batchName }}</span>
-                    }
+    <div class="table-responsive">
+      <table class="trainees-table">
+        <thead>
+          <tr>
+            <th>المتدرب</th>
+            <th>الرقم المدني</th>
+            <th>الجامعة والتخصص</th>
+            <th>الشركة المستضيفة</th>
+            <th>السيرة الذاتية</th>
+            <th>الحالة</th>
+            <th>نسبة الإنجاز</th>
+            <th style="text-align: center;">الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (tr of filtered(); track tr.traineeId) {
+          <tr>
+            <td>
+              <div class="trainee-meta-cell">
+                <div class="trainee-avatar">
+                  @if (tr.profileImageUrl && !tr.avatarBroken) {
+                  <img [src]="tr.profileImageUrl" [alt]="tr.fullName" (error)="tr.avatarBroken = true">
                   } @else {
-                    <span style="color: #94a3b8; font-style: italic;">لم يوزّع بعد</span>
+                  <span>{{ getInitials(tr.fullName) }}</span>
                   }
-                </td>
+                </div>
+                <div class="trainee-name-wrap">
+                  <strong>{{ tr.fullName }}</strong>
+                  <span>{{ tr.email }}</span>
+                </div>
+              </div>
+            </td>
 
-                <td>
-                  <div style="display: flex; align-items: center; gap: 6px;">
-                    <button
-                      type="button"
-                      class="cv-pill-btn"
-                      [class.muted]="!tr.resumeUrl"
-                      (click)="openCvModal(tr)"
-                      title="معاينة السيرة الذاتية">
-                      <i class="fa-solid fa-file-pdf"></i>
-                      {{ tr.resumeUrl ? 'عرض الـ CV' : 'ملف المتدرب' }}
-                    </button>
+            <td>
+              <span class="national-id-tag">{{ tr.nationalId || '—' }}</span>
+            </td>
 
-                    <button
-                      type="button"
-                      class="action-icon-btn"
-                      style="width: 32px; height: 32px; background: #eff6ff; color: #0284c7; border-color: #bae6fd;"
-                      (click)="downloadCv(tr)"
-                      title="تنزيل السيرة الذاتية على جهازك (Download CV)">
-                      <i class="fa-solid fa-download"></i>
-                    </button>
+            <td>
+              <strong style="display: block; color: #1e293b;">{{ tr.university || '—' }}</strong>
+              <span style="font-size: 0.78rem; color: #64748b;">{{ tr.major || 'غير محدد' }}</span>
+            </td>
+
+            <td>
+              @if (tr.companyName) {
+              <span style="color: #0f172a; font-weight: 600;">{{ tr.companyName }}</span>
+              @if (tr.batchName) {
+              <span style="display: block; font-size: 0.75rem; color: #64748b;">{{ tr.batchName }}</span>
+              }
+              } @else {
+              <span style="color: #94a3b8; font-style: italic;">لم يوزّع بعد</span>
+              }
+            </td>
+
+            <td>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <button type="button" class="cv-pill-btn" [class.muted]="!tr.resumeUrl" (click)="openCvModal(tr)"
+                  title="معاينة السيرة الذاتية">
+                  <i class="fa-solid fa-file-pdf"></i>
+                  {{ tr.resumeUrl ? 'عرض الـ CV' : 'ملف المتدرب' }}
+                </button>
+
+                <button type="button" class="action-icon-btn"
+                  style="width: 32px; height: 32px; background: #eff6ff; color: #0284c7; border-color: #bae6fd;"
+                  (click)="downloadCv(tr)" title="تنزيل السيرة الذاتية على جهازك (Download CV)">
+                  <i class="fa-solid fa-download"></i>
+                </button>
+              </div>
+            </td>
+
+            <td>
+              <div class="status-cell-stack">
+                <span class="status-badge" [ngStyle]="getStatusStyle(tr)">
+                  {{ labelFor(tr) }}
+                </span>
+                @if (tr.withdrawalRequestId && tr.withdrawalStatus !== 'None') {
+                <span class="withdrawal-reason-hint" (click)="openWithdrawalModal(tr)">
+                  <i class="fa-solid fa-bell"></i> طلب الانسحاب · {{ constants.administrativeLabel('NFD_WDR_STAT',
+                  tr.withdrawalStatus) }}
+                </span>
+                }
+              </div>
+            </td>
+
+            <td>
+              <div class="progress-bar-container">
+                <div class="progress-track">
+                  <div class="progress-fill" [class.completed]="getProgressValue(tr) >= 100"
+                    [style.width.%]="getProgressValue(tr)">
                   </div>
-                </td>
+                </div>
+                <span class="progress-text">{{ getProgressValue(tr) }}%</span>
+              </div>
+            </td>
 
-                <td>
-                  <div class="status-cell-stack">
-                    <span class="status-badge" [ngStyle]="getStatusStyle(tr)">
-                      {{ labelFor(tr) }}
-                    </span>
-                    @if (tr.withdrawalRequestId && tr.withdrawalStatus !== 'None') {
-                      <span class="withdrawal-reason-hint" (click)="openWithdrawalModal(tr)">
-                        <i class="fa-solid fa-bell"></i> طلب الانسحاب · {{ constants.administrativeLabel('NFD_WDR_STAT', tr.withdrawalStatus) }}
-                      </span>
-                    }
-                  </div>
-                </td>
+            <td>
+              <div class="actions-group">
+                <button type="button" class="action-icon-btn view" (click)="viewTraineeDetails(tr.traineeId)"
+                  title="عرض الملف الكامل للمتدرب">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
 
-                <td>
-                  <div class="progress-bar-container">
-                    <div class="progress-track">
-                      <div
-                        class="progress-fill"
-                        [class.completed]="getProgressValue(tr) >= 100"
-                        [style.width.%]="getProgressValue(tr)">
-                      </div>
-                    </div>
-                    <span class="progress-text">{{ getProgressValue(tr) }}%</span>
-                  </div>
-                </td>
+                <button type="button" class="action-icon-btn message" style="position: relative;"
+                  (click)="openMessageModal(tr)" title="مراسلة مباشرة مع المتدرب">
+                  <i class="fa-regular fa-comment-dots"></i>
+                  @if (hasUnreadReply(tr)) {
+                  <span title="يوجد رد جديد من المتدرب!"
+                    style="position: absolute; top: -4px; right: -4px; width: 11px; height: 11px; background: #ef4444; border: 2px solid #fff; border-radius: 50%; display: inline-block;">
+                  </span>
+                  }
+                </button>
 
-                <td>
-                  <div class="actions-group">
-                    <button
-                      type="button"
-                      class="action-icon-btn view"
-                      (click)="viewTraineeDetails(tr.traineeId)"
-                      title="عرض الملف الكامل للمتدرب">
-                      <i class="fa-regular fa-eye"></i>
-                    </button>
-
-                    <button
-                      type="button"
-                      class="action-icon-btn message"
-                      style="position: relative;"
-                      (click)="openMessageModal(tr)"
-                      title="مراسلة مباشرة مع المتدرب">
-                      <i class="fa-regular fa-comment-dots"></i>
-                      @if (hasUnreadReply(tr)) {
-                        <span
-                          title="يوجد رد جديد من المتدرب!"
-                          style="position: absolute; top: -4px; right: -4px; width: 11px; height: 11px; background: #ef4444; border: 2px solid #fff; border-radius: 50%; display: inline-block;">
-                        </span>
-                      }
-                    </button>
-
-                    <button
-                      type="button"
-                      class="action-icon-btn withdraw"
-                      [class.pending-pulse]="tr.withdrawalStatus === 'Pending'"
-                      (click)="openWithdrawalModal(tr)"
-                      title="إدارة طلب الانسحاب / اعتماد الهيئة">
-                      <i class="fa-solid fa-user-minus"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="8" class="empty-state">
-                  <div class="empty-box">
-                    <i class="fa-solid fa-folder-open empty-icon"></i>
-                    <span>لا توجد سجلات مطابقة لمعايير البحث أو الفلترة الحالية.</span>
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+                <button type="button" class="action-icon-btn withdraw"
+                  [class.pending-pulse]="tr.withdrawalStatus === 'Pending'" (click)="openWithdrawalModal(tr)"
+                  title="إدارة طلب الانسحاب / اعتماد الهيئة">
+                  <i class="fa-solid fa-user-minus"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="8" class="empty-state">
+              <div class="empty-box">
+                <i class="fa-solid fa-folder-open empty-icon"></i>
+                <span>لا توجد سجلات مطابقة لمعايير البحث أو الفلترة الحالية.</span>
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
     }
 
     <!-- الترقيم (Pagination) مطابق لـ trainees.css -->
     <div class="pagination-container">
       <div>
-        إجمالي السجلات في النظام: <strong>{{ stats().total }}</strong> | الصفحة <strong>{{ currentPage() }}</strong> من <strong>{{ totalPages }}</strong>
+        إجمالي السجلات في النظام: <strong>{{ stats().total }}</strong> | الصفحة <strong>{{ currentPage() }}</strong> من
+        <strong>{{ totalPages }}</strong>
       </div>
       <div class="pagination-controls">
-        <button type="button" class="pagination-btn" [disabled]="currentPage() === 1" (click)="prevPage()">السابق</button>
+        <button type="button" class="pagination-btn" [disabled]="currentPage() === 1"
+          (click)="prevPage()">السابق</button>
         <span class="page-number">{{ currentPage() }}</span>
-        <button type="button" class="pagination-btn" [disabled]="currentPage() >= totalPages" (click)="nextPage()">التالي</button>
+        <button type="button" class="pagination-btn" [disabled]="currentPage() >= totalPages"
+          (click)="nextPage()">التالي</button>
       </div>
     </div>
   </div>
 
   <!-- 1. نافذة المراسلة المباشرة مع المتدرب -->
   @if (showMessageModal() && activeTrainee()) {
-    <div class="modal-backdrop" (click)="closeMessageModal()">
-      <div class="modal-card modal-md" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <div class="modal-title-with-avatar">
-            <div class="avatar sm">{{ getInitials(activeTrainee()!.fullName) }}</div>
-            <div>
-              <h3>مراسلة مباشرة: {{ activeTrainee()!.fullName }}</h3>
-              <span class="modal-sub-text">{{ activeTrainee()!.email }}</span>
+  <div class="modal-backdrop" (click)="closeMessageModal()">
+    <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-with-avatar">
+          <div class="avatar sm">{{ getInitials(activeTrainee()!.fullName) }}</div>
+          <div>
+            <h3>مراسلة مباشرة: {{ activeTrainee()!.fullName }}</h3>
+            <span class="modal-sub-text">{{ activeTrainee()!.email }}</span>
+          </div>
+        </div>
+        <button type="button" class="close-btn" (click)="closeMessageModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="chat-history-box">
+          @if (messageHistory().length === 0) {
+          <div class="chat-empty">
+            <i class="fa-regular fa-comments" style="font-size: 1.5rem; display: block; margin-bottom: 6px;"></i>
+            لا توجد رسائل سابقة مع هذا المتدرب. ابدأ بإرسال توجيه أو إشعار مباشر الآن.
+          </div>
+          } @else {
+          @for (m of messageHistory(); track $index) {
+          <div class="chat-bubble" [class.admin-bubble]="m.isAdmin" [class.trainee-bubble]="!m.isAdmin">
+            <div class="bubble-meta">
+              <strong>{{ m.sender }}</strong>
+              <span>{{ m.date }}</span>
             </div>
+            <p class="bubble-text">{{ m.text }}</p>
           </div>
-          <button type="button" class="close-btn" (click)="closeMessageModal()">&times;</button>
+          }
+          }
         </div>
 
-        <div class="modal-body">
-          <div class="chat-history-box">
-            @if (messageHistory().length === 0) {
-              <div class="chat-empty">
-                <i class="fa-regular fa-comments" style="font-size: 1.5rem; display: block; margin-bottom: 6px;"></i>
-                لا توجد رسائل سابقة مع هذا المتدرب. ابدأ بإرسال توجيه أو إشعار مباشر الآن.
-              </div>
-            } @else {
-              @for (m of messageHistory(); track $index) {
-                <div class="chat-bubble" [class.admin-bubble]="m.isAdmin" [class.trainee-bubble]="!m.isAdmin">
-                  <div class="bubble-meta">
-                    <strong>{{ m.sender }}</strong>
-                    <span>{{ m.date }}</span>
-                  </div>
-                  <p class="bubble-text">{{ m.text }}</p>
-                </div>
-              }
-            }
-          </div>
+        <div class="form-group" style="margin-top: 14px;">
+          <label>عنوان الرسالة / الإشعار</label>
+          <input type="text" class="form-control" [ngModel]="messageSubject()"
+            (ngModelChange)="messageSubject.set($event)"
+            placeholder="مثال: تنبيه بخصوص الحضور / استفسار عن التقدم التدريبي" />
+        </div>
 
-          <div class="form-group" style="margin-top: 14px;">
-            <label>عنوان الرسالة / الإشعار</label>
-            <input
-              type="text"
-              class="form-control"
-              [ngModel]="messageSubject()"
-              (ngModelChange)="messageSubject.set($event)"
-              placeholder="مثال: تنبيه بخصوص الحضور / استفسار عن التقدم التدريبي"
-            />
-          </div>
-
-          <div class="form-group" style="margin-top: 12px;">
-            <label>نص الرسالة المباشرة <span style="color: #dc2626;">*</span></label>
-            <textarea
-              rows="4"
-              class="form-control"
-              [ngModel]="messageBody()"
-              (ngModelChange)="messageBody.set($event)"
-              placeholder="اكتب رسالتك أو توجيهاتك للمتدرب هنا ليتم إرسالها فوراً عبر المنصة...">
+        <div class="form-group" style="margin-top: 12px;">
+          <label>نص الرسالة المباشرة <span style="color: #dc2626;">*</span></label>
+          <textarea rows="4" class="form-control" [ngModel]="messageBody()" (ngModelChange)="messageBody.set($event)"
+            placeholder="اكتب رسالتك أو توجيهاتك للمتدرب هنا ليتم إرسالها فوراً عبر المنصة...">
             </textarea>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeMessageModal()">إغلاق</button>
-          <button type="button" class="btn btn-primary" [disabled]="!messageBody().trim() || isSendingMessage()" (click)="sendDirectMessage()">
-            <i class="fa-solid fa-paper-plane"></i>
-            {{ isSendingMessage() ? 'جاري الإرسال...' : 'إرسال الرسالة للمتدرب' }}
-          </button>
         </div>
       </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeMessageModal()">إغلاق</button>
+        <button type="button" class="btn btn-primary" [disabled]="!messageBody().trim() || isSendingMessage()"
+          (click)="sendDirectMessage()">
+          <i class="fa-solid fa-paper-plane"></i>
+          {{ isSendingMessage() ? 'جاري الإرسال...' : 'إرسال الرسالة للمتدرب' }}
+        </button>
+      </div>
     </div>
+  </div>
   }
 
   <!-- 2. نافذة عرض وتحميل السيرة الذاتية -->
+  <!-- 2. نافذة عرض وتحميل السيرة الذاتية -->
   @if (showCvModal() && activeTrainee()) {
-    <div class="modal-backdrop" (click)="closeCvModal()">
-      <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
-        <div class="modal-header">
+  <div class="modal-backdrop" (click)="closeCvModal()">
+
+    <div class="modal-card modal-lg cv-modal" (click)="$event.stopPropagation()">
+
+      <div class="modal-header cv-modal-header">
+        <div class="cv-modal-title">
+          <div class="cv-modal-icon">
+            <i class="fa-solid fa-file-lines"></i>
+          </div>
+
           <div>
-            <h3>السيرة الذاتية والملف المهني — {{ activeTrainee()!.fullName }}</h3>
-            <span class="modal-sub-text">{{ activeTrainee()!.university || 'جامعة غير محددة' }} — {{ activeTrainee()!.major || 'تخصص غير محدد' }}</span>
-          </div>
-          <button type="button" class="close-btn" (click)="closeCvModal()">&times;</button>
-        </div>
-
-        <div class="modal-body">
-          @if (activeTrainee()!.resumeUrl) {
-            <div class="cv-viewer-wrapper">
-              <iframe [src]="getSafeUrl(activeTrainee()!.resumeUrl!)" class="cv-iframe"></iframe>
-            </div>
-          } @else {
-            <div class="cv-empty-box">
-              <i class="fa-solid fa-file-circle-xmark" style="font-size: 3rem; color: #94a3b8; margin-bottom: 12px;"></i>
-              <p style="font-size: 1rem; color: #475569; font-weight: 600;">لم يتم رفع سيرة ذاتية بصيغة PDF بعد لهذا المتدرب.</p>
-              <span style="font-size: 0.85rem; color: #64748b;">يمكنك الاطلاع على روابط حساباته المهنية أدناه:</span>
-            </div>
-          }
-
-          <div class="social-links-grid" style="margin-top: 16px;">
-            @if (activeTrainee()!.linkedInUrl) {
-              <a [href]="activeTrainee()!.linkedInUrl" target="_blank" class="social-btn linkedin">
-                <i class="fa-brands fa-linkedin"></i> الملف على LinkedIn
-              </a>
-            }
-            @if (activeTrainee()!.gitHubUrl) {
-              <a [href]="activeTrainee()!.gitHubUrl" target="_blank" class="social-btn github">
-                <i class="fa-brands fa-github"></i> الملف على GitHub
-              </a>
-            }
-            @if (activeTrainee()!.phone) {
-              <a [href]="'tel:' + activeTrainee()!.phone" class="social-btn phone">
-                <i class="fa-solid fa-phone"></i> {{ activeTrainee()!.phone }}
-              </a>
-            }
+            <h3>السيرة الذاتية والملف المهني</h3>
+            <span class="modal-sub-text">
+              {{ activeTrainee()!.fullName }}
+            </span>
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeCvModal()">إغلاق</button>
-          @if (activeTrainee()!.resumeUrl) {
-            <button type="button" class="btn btn-primary" (click)="downloadCv(activeTrainee()!)">
-              <i class="fa-solid fa-download"></i> تنزيل السيرة الذاتية (PDF)
-            </button>
-          }
+        <button type="button" class="close-btn" (click)="closeCvModal()">
+          &times;
+        </button>
+      </div>
+
+      <div class="modal-body cv-modal-body">
+        <div class="cv-viewer-wrapper">
+          <iframe [src]="getSafeUrl('')" class="cv-iframe" title="معاينة السيرة الذاتية">
+          </iframe>
         </div>
       </div>
+
+      <div class="modal-footer cv-modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeCvModal()">
+          إغلاق
+        </button>
+
+        <button type="button" class="btn btn-primary" (click)="downloadCv(activeTrainee()!)">
+          <i class="fa-solid fa-download"></i>
+          تنزيل السيرة الذاتية
+        </button>
+      </div>
+
     </div>
+  </div>
   }
 
   <!-- 3. نافذة إدارة طلب الانسحاب -->
   @if (showWithdrawalModal() && activeTrainee()) {
-    <div class="modal-backdrop" (click)="closeWithdrawalModal()">
-      <div class="modal-card modal-md" (click)="$event.stopPropagation()">
-        <div class="modal-header">
+  <div class="modal-backdrop" (click)="closeWithdrawalModal()">
+    <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>إدارة طلب الانسحاب والطي التدريبي</h3>
+          <span class="modal-sub-text">المتدرب: {{ activeTrainee()!.fullName }} ({{ activeTrainee()!.companyName || 'غير
+            مرتبط بشركة' }})</span>
+        </div>
+        <button type="button" class="close-btn" (click)="closeWithdrawalModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        @if (activeTrainee()!.withdrawalRequestId && activeTrainee()!.withdrawalStatus !== 'None') {
+        <p>حالة طلب الانسحاب · {{ constants.administrativeLabel('NFD_WDR_STAT', activeTrainee()!.withdrawalStatus) }}
+        </p>
+        }
+        @if (activeTrainee()!.withdrawalStatus === 'Pending') {
+        <div class="alert-box-warning">
+          <i class="fa-solid fa-bell"></i>
           <div>
-            <h3>إدارة طلب الانسحاب والطي التدريبي</h3>
-            <span class="modal-sub-text">المتدرب: {{ activeTrainee()!.fullName }} ({{ activeTrainee()!.companyName || 'غير مرتبط بشركة' }})</span>
+            <strong>طلب انسحاب مقدم من المتدرب</strong>
+            <p style="margin: 2px 0 0; font-size: 0.85rem;">سبب المتدرب: {{ activeTrainee()!.withdrawalReason || 'لم
+              يحدد سبب' }}</p>
           </div>
-          <button type="button" class="close-btn" (click)="closeWithdrawalModal()">&times;</button>
         </div>
+        }
 
-        <div class="modal-body">
-          @if (activeTrainee()!.withdrawalRequestId && activeTrainee()!.withdrawalStatus !== 'None') {
-            <p>حالة طلب الانسحاب · {{ constants.administrativeLabel('NFD_WDR_STAT', activeTrainee()!.withdrawalStatus) }}</p>
-          }
-          @if (activeTrainee()!.withdrawalStatus === 'Pending') {
-            <div class="alert-box-warning">
-              <i class="fa-solid fa-bell"></i>
-              <div>
-                <strong>طلب انسحاب مقدم من المتدرب</strong>
-                <p style="margin: 2px 0 0; font-size: 0.85rem;">سبب المتدرب: {{ activeTrainee()!.withdrawalReason || 'لم يحدد سبب' }}</p>
-              </div>
-            </div>
-          }
-
-          <div class="form-group" style="margin-top: 12px;">
-            <label>سبب الانسحاب أو الرفض بالتفصيل</label>
-            <textarea
-              rows="3"
-              class="form-control"
-              [ngModel]="withdrawalReasonInput()"
-              (ngModelChange)="withdrawalReasonInput.set($event)"
-              placeholder="اكتب سبب القرار النظامي هنا...">
+        <div class="form-group" style="margin-top: 12px;">
+          <label>سبب الانسحاب أو الرفض بالتفصيل</label>
+          <textarea rows="3" class="form-control" [ngModel]="withdrawalReasonInput()"
+            (ngModelChange)="withdrawalReasonInput.set($event)" placeholder="اكتب سبب القرار النظامي هنا...">
             </textarea>
-          </div>
-
-          <div class="presets-wrap" style="margin-top: 10px;">
-            <span style="font-size: 0.78rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 6px;">
-              أسباب نظامية مقترحة:
-            </span>
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-              @for (reason of presetRejectionReasons; track reason) {
-                <button
-                  type="button"
-                  class="preset-reason-btn"
-                  (click)="withdrawalReasonInput.set(reason)">
-                  <i class="fa-solid fa-angles-left"></i> {{ reason }}
-                </button>
-              }
-            </div>
-          </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeWithdrawalModal()">إلغاء</button>
-          
-          @if (activeTrainee()!.withdrawalStatus === 'Pending') {
-            <button
-              type="button"
-              class="btn"
-              style="background-color: #dc2626; color: #fff;"
-              [disabled]="isProcessingWithdrawal()"
-              (click)="rejectWithdrawal()">
-              <i class="fa-solid fa-ban"></i> رفض الطلب
+        <div class="presets-wrap" style="margin-top: 10px;">
+          <span style="font-size: 0.78rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 6px;">
+            أسباب نظامية مقترحة:
+          </span>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            @for (reason of presetRejectionReasons; track reason) {
+            <button type="button" class="preset-reason-btn" (click)="withdrawalReasonInput.set(reason)">
+              <i class="fa-solid fa-angles-left"></i> {{ reason }}
             </button>
-            <button
-              type="button"
-              class="btn"
-              style="background-color: #10b981; color: #fff;"
-              [disabled]="isProcessingWithdrawal()"
-              (click)="approveWithdrawal()">
-              <i class="fa-solid fa-check"></i> اعتماد الانسحاب
-            </button>
-          } @else {
-            <button
-              type="button"
-              class="btn"
-              style="background-color: #dc2626; color: #fff;"
-              [disabled]="isProcessingWithdrawal()"
-              (click)="createDirectWithdrawal()">
-              <i class="fa-solid fa-user-xmark"></i> طي قيد المتدرب رسمياً
-            </button>
-          }
+            }
+          </div>
         </div>
       </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeWithdrawalModal()">إلغاء</button>
+
+        @if (activeTrainee()!.withdrawalStatus === 'Pending') {
+        <button type="button" class="btn" style="background-color: #dc2626; color: #fff;"
+          [disabled]="isProcessingWithdrawal()" (click)="rejectWithdrawal()">
+          <i class="fa-solid fa-ban"></i> رفض الطلب
+        </button>
+        <button type="button" class="btn" style="background-color: #10b981; color: #fff;"
+          [disabled]="isProcessingWithdrawal()" (click)="approveWithdrawal()">
+          <i class="fa-solid fa-check"></i> اعتماد الانسحاب
+        </button>
+        } @else {
+        <button type="button" class="btn" style="background-color: #dc2626; color: #fff;"
+          [disabled]="isProcessingWithdrawal()" (click)="createDirectWithdrawal()">
+          <i class="fa-solid fa-user-xmark"></i> طي قيد المتدرب رسمياً
+        </button>
+        }
+      </div>
     </div>
+  </div>
   }
 
   <!-- 4. نافذة استيراد المتدربين من Excel -->
   @if (showImportModal()) {
-    <div class="modal-backdrop" (click)="closeImportModal()">
-      <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h3>استيراد المتدربين دفعة واحدة عبر ملف Excel</h3>
-          <button type="button" class="close-btn" (click)="closeImportModal()">&times;</button>
+  <div class="modal-backdrop" (click)="closeImportModal()">
+    <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>استيراد المتدربين دفعة واحدة عبر ملف Excel</h3>
+        <button type="button" class="close-btn" (click)="closeImportModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        @if (importStep() === 1) {
+        <div class="file-drop-area">
+          <i class="fa-solid fa-file-excel" style="font-size: 3rem; color: #10b981; margin-bottom: 12px;"></i>
+          <p style="font-weight: 700; color: #1e293b; margin: 0 0 6px;">اختر ملف Excel (.xlsx أو .xls)</p>
+          <span style="font-size: 0.8rem; color: #64748b;">يجب أن يحتوي الملف على الأعمدة التالية: الاسم الكامل، البريد،
+            الهاتف، الرقم المدني، الجامعة، التخصص</span>
+          <input type="file" (change)="onFileSelected($event)" accept=".xlsx, .xls" style="margin-top: 14px;">
         </div>
 
-        <div class="modal-body">
-          @if (importStep() === 1) {
-            <div class="file-drop-area">
-              <i class="fa-solid fa-file-excel" style="font-size: 3rem; color: #10b981; margin-bottom: 12px;"></i>
-              <p style="font-weight: 700; color: #1e293b; margin: 0 0 6px;">اختر ملف Excel (.xlsx أو .xls)</p>
-              <span style="font-size: 0.8rem; color: #64748b;">يجب أن يحتوي الملف على الأعمدة التالية: الاسم الكامل، البريد، الهاتف، الرقم المدني، الجامعة، التخصص</span>
-              <input type="file" (change)="onFileSelected($event)" accept=".xlsx, .xls" style="margin-top: 14px;">
-            </div>
-
-            @if (importError()) {
-              <div class="alert-box-error" style="margin-top: 14px;">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <span>{{ importError() }}</span>
-              </div>
-            }
-          } @else {
-            <div class="preview-import-box">
-              <h4 style="margin: 0 0 10px; color: #0a1172;">معاينة السجلات الجاهزة للاستيراد ({{ importedRecords().length }} متدرب)</h4>
-              <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
-                <table class="trainees-table">
-                  <thead>
-                    <tr>
-                      <th>الاسم</th>
-                      <th>البريد</th>
-                      <th>الهاتف</th>
-                      <th>الرقم المدني</th>
-                      <th>الجامعة</th>
-                      <th>التخصص</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (row of importedRecords(); track row.email) {
-                      <tr>
-                        <td>{{ row.fullName }}</td>
-                        <td>{{ row.email }}</td>
-                        <td>{{ row.phone }}</td>
-                        <td>{{ row.nationalId }}</td>
-                        <td>{{ row.university }}</td>
-                        <td>{{ row.major }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          }
+        @if (importError()) {
+        <div class="alert-box-error" style="margin-top: 14px;">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>{{ importError() }}</span>
         </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeImportModal()">إلغاء</button>
-          @if (importStep() === 2) {
-            <button type="button" class="btn btn-primary" [disabled]="isSubmitting()" (click)="confirmImport()">
-              {{ isSubmitting() ? 'جاري الاستيراد...' : 'تأكيد الحفظ في قاعدة البيانات' }}
-            </button>
-          }
+        }
+        } @else {
+        <div class="preview-import-box">
+          <h4 style="margin: 0 0 10px; color: #0a1172;">معاينة السجلات الجاهزة للاستيراد ({{ importedRecords().length }}
+            متدرب)</h4>
+          <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+            <table class="trainees-table">
+              <thead>
+                <tr>
+                  <th>الاسم</th>
+                  <th>البريد</th>
+                  <th>الهاتف</th>
+                  <th>الرقم المدني</th>
+                  <th>الجامعة</th>
+                  <th>التخصص</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of importedRecords(); track row.email) {
+                <tr>
+                  <td>{{ row.fullName }}</td>
+                  <td>{{ row.email }}</td>
+                  <td>{{ row.phone }}</td>
+                  <td>{{ row.nationalId }}</td>
+                  <td>{{ row.university }}</td>
+                  <td>{{ row.major }}</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeImportModal()">إلغاء</button>
+        @if (importStep() === 2) {
+        <button type="button" class="btn btn-primary" [disabled]="isSubmitting()" (click)="confirmImport()">
+          {{ isSubmitting() ? 'جاري الاستيراد...' : 'تأكيد الحفظ في قاعدة البيانات' }}
+        </button>
+        }
       </div>
     </div>
+  </div>
   }
 
   <!-- 5. نافذة تسجيل متدرب جديد -->
   @if (showRegisterModal()) {
-    <div class="modal-backdrop" (click)="showRegisterModal.set(false)">
-      <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h3>تسجيل متدرب جديد في قاعدة البيانات</h3>
-          <button type="button" class="close-btn" (click)="showRegisterModal.set(false)">&times;</button>
+  <div class="modal-backdrop" (click)="showRegisterModal.set(false)">
+    <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>تسجيل متدرب جديد في قاعدة البيانات</h3>
+        <button type="button" class="close-btn" (click)="showRegisterModal.set(false)">&times;</button>
+      </div>
+
+      <form (ngSubmit)="submitNewTrainee()">
+        <div class="modal-body">
+          @if (errorMessage()) {
+          <div class="alert-box-error" style="margin-bottom: 14px;">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span>{{ errorMessage() }}</span>
+          </div>
+          }
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>الاسم الثلاثي أو الرباعي <span style="color: #dc2626;">*</span></label>
+              <input type="text" name="fullName" [ngModel]="newTrainee().fullName"
+                (ngModelChange)="updateFormField('fullName', $event)" (blur)="markFieldTouched('fullName')"
+                class="form-control" [class.is-invalid]="touchedFields()['fullName'] && formErrors()['fullName']"
+                placeholder="الاسم الكامل كما في الهوية">
+              @if (touchedFields()['fullName'] && formErrors()['fullName']) {
+              <small class="field-error">{{ formErrors()['fullName'] }}</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>البريد الإلكتروني الرسمي <span style="color: #dc2626;">*</span></label>
+              <input type="email" name="email" [ngModel]="newTrainee().email"
+                (ngModelChange)="updateFormField('email', $event)" (blur)="markFieldTouched('email')"
+                class="form-control" [class.is-invalid]="touchedFields()['email'] && formErrors()['email']"
+                placeholder="example@domain.com">
+              @if (touchedFields()['email'] && formErrors()['email']) {
+              <small class="field-error">{{ formErrors()['email'] }}</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>رقم الهاتف / الواتساب <span style="color: #dc2626;">*</span></label>
+              <input type="text" name="phone" [ngModel]="newTrainee().phone"
+                (ngModelChange)="updateFormField('phone', $event)" (blur)="markFieldTouched('phone')"
+                class="form-control" [class.is-invalid]="touchedFields()['phone'] && formErrors()['phone']"
+                placeholder="968XXXXXXXX+">
+              @if (touchedFields()['phone'] && formErrors()['phone']) {
+              <small class="field-error">{{ formErrors()['phone'] }}</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>الرقم المدني (National ID)</label>
+              <input type="number" name="nationalId" [ngModel]="newTrainee().nationalId"
+                (ngModelChange)="updateFormField('nationalId', $event)" class="form-control"
+                placeholder="الرقم المدني العُماني">
+            </div>
+
+            <div class="form-group">
+              <label>الجامعة / الكلية</label>
+              <input type="text" name="university" [ngModel]="newTrainee().university"
+                (ngModelChange)="updateFormField('university', $event)" class="form-control"
+                placeholder="اسم المؤسسة الأكاديمية">
+            </div>
+
+            <div class="form-group">
+              <label>التخصص الأكاديمي</label>
+              <input type="text" name="major" [ngModel]="newTrainee().major"
+                (ngModelChange)="updateFormField('major', $event)" class="form-control"
+                placeholder="علوم الحاسب، نظم المعلومات، هندسة البرمجيات...">
+            </div>
+
+            <div class="form-group">
+              <label>المستوى الأكاديمي / المؤهل</label>
+              <input type="text" name="academicLevel" [ngModel]="newTrainee().academicLevel"
+                (ngModelChange)="updateFormField('academicLevel', $event)" class="form-control"
+                placeholder="بكالوريوس / دبلوم / ماجستير">
+            </div>
+
+            <div class="form-group">
+              <label>رابط السيرة الذاتية (PDF URL)</label>
+              <input type="url" name="resumeUrl" [ngModel]="newTrainee().resumeUrl"
+                (ngModelChange)="updateFormField('resumeUrl', $event)" class="form-control"
+                placeholder="https://domain.com/cv.pdf">
+            </div>
+
+            <div class="form-group">
+              <label>رابط حساب LinkedIn</label>
+              <input type="url" name="linkedInUrl" [ngModel]="newTrainee().linkedInUrl"
+                (ngModelChange)="updateFormField('linkedInUrl', $event)" (blur)="markFieldTouched('linkedInUrl')"
+                class="form-control" [class.is-invalid]="touchedFields()['linkedInUrl'] && formErrors()['linkedInUrl']"
+                placeholder="https://linkedin.com/in/username">
+              @if (touchedFields()['linkedInUrl'] && formErrors()['linkedInUrl']) {
+              <small class="field-error">{{ formErrors()['linkedInUrl'] }}</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>رابط حساب GitHub</label>
+              <input type="url" name="gitHubUrl" [ngModel]="newTrainee().gitHubUrl"
+                (ngModelChange)="updateFormField('gitHubUrl', $event)" (blur)="markFieldTouched('gitHubUrl')"
+                class="form-control" [class.is-invalid]="touchedFields()['gitHubUrl'] && formErrors()['gitHubUrl']"
+                placeholder="https://github.com/username">
+              @if (touchedFields()['gitHubUrl'] && formErrors()['gitHubUrl']) {
+              <small class="field-error">{{ formErrors()['gitHubUrl'] }}</small>
+              }
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 14px;">
+            <label>المهارات التقنية (مفصولة بفاصلة)</label>
+            <input type="text" name="skills" [ngModel]="newTrainee().skills"
+              (ngModelChange)="updateFormField('skills', $event)" class="form-control"
+              placeholder="مثال: Angular, .NET, SQL...">
+          </div>
         </div>
 
-        <form (ngSubmit)="submitNewTrainee()">
-          <div class="modal-body">
-            @if (errorMessage()) {
-              <div class="alert-box-error" style="margin-bottom: 14px;">
-                <i class="fa-solid fa-circle-exclamation"></i>
-                <span>{{ errorMessage() }}</span>
-              </div>
-            }
-
-            <div class="form-grid">
-              <div class="form-group">
-                <label>الاسم الثلاثي أو الرباعي <span style="color: #dc2626;">*</span></label>
-                <input
-                  type="text"
-                  name="fullName"
-                  [ngModel]="newTrainee().fullName"
-                  (ngModelChange)="updateFormField('fullName', $event)"
-                  (blur)="markFieldTouched('fullName')"
-                  class="form-control"
-                  [class.is-invalid]="touchedFields()['fullName'] && formErrors()['fullName']"
-                  placeholder="الاسم الكامل كما في الهوية">
-                @if (touchedFields()['fullName'] && formErrors()['fullName']) {
-                  <small class="field-error">{{ formErrors()['fullName'] }}</small>
-                }
-              </div>
-
-              <div class="form-group">
-                <label>البريد الإلكتروني الرسمي <span style="color: #dc2626;">*</span></label>
-                <input
-                  type="email"
-                  name="email"
-                  [ngModel]="newTrainee().email"
-                  (ngModelChange)="updateFormField('email', $event)"
-                  (blur)="markFieldTouched('email')"
-                  class="form-control"
-                  [class.is-invalid]="touchedFields()['email'] && formErrors()['email']"
-                  placeholder="example@domain.com">
-                @if (touchedFields()['email'] && formErrors()['email']) {
-                  <small class="field-error">{{ formErrors()['email'] }}</small>
-                }
-              </div>
-
-              <div class="form-group">
-                <label>رقم الهاتف / الواتساب <span style="color: #dc2626;">*</span></label>
-                <input
-                  type="text"
-                  name="phone"
-                  [ngModel]="newTrainee().phone"
-                  (ngModelChange)="updateFormField('phone', $event)"
-                  (blur)="markFieldTouched('phone')"
-                  class="form-control"
-                  [class.is-invalid]="touchedFields()['phone'] && formErrors()['phone']"
-                  placeholder="968XXXXXXXX+">
-                @if (touchedFields()['phone'] && formErrors()['phone']) {
-                  <small class="field-error">{{ formErrors()['phone'] }}</small>
-                }
-              </div>
-
-              <div class="form-group">
-                <label>الرقم المدني (National ID)</label>
-                <input
-                  type="number"
-                  name="nationalId"
-                  [ngModel]="newTrainee().nationalId"
-                  (ngModelChange)="updateFormField('nationalId', $event)"
-                  class="form-control"
-                  placeholder="الرقم المدني العُماني">
-              </div>
-
-              <div class="form-group">
-                <label>الجامعة / الكلية</label>
-                <input
-                  type="text"
-                  name="university"
-                  [ngModel]="newTrainee().university"
-                  (ngModelChange)="updateFormField('university', $event)"
-                  class="form-control"
-                  placeholder="اسم المؤسسة الأكاديمية">
-              </div>
-
-              <div class="form-group">
-                <label>التخصص الأكاديمي</label>
-                <input
-                  type="text"
-                  name="major"
-                  [ngModel]="newTrainee().major"
-                  (ngModelChange)="updateFormField('major', $event)"
-                  class="form-control"
-                  placeholder="علوم الحاسب، نظم المعلومات، هندسة البرمجيات...">
-              </div>
-
-              <div class="form-group">
-                <label>المستوى الأكاديمي / المؤهل</label>
-                <input
-                  type="text"
-                  name="academicLevel"
-                  [ngModel]="newTrainee().academicLevel"
-                  (ngModelChange)="updateFormField('academicLevel', $event)"
-                  class="form-control"
-                  placeholder="بكالوريوس / دبلوم / ماجستير">
-              </div>
-
-              <div class="form-group">
-                <label>رابط السيرة الذاتية (PDF URL)</label>
-                <input
-                  type="url"
-                  name="resumeUrl"
-                  [ngModel]="newTrainee().resumeUrl"
-                  (ngModelChange)="updateFormField('resumeUrl', $event)"
-                  class="form-control"
-                  placeholder="https://domain.com/cv.pdf">
-              </div>
-
-              <div class="form-group">
-                <label>رابط حساب LinkedIn</label>
-                <input
-                  type="url"
-                  name="linkedInUrl"
-                  [ngModel]="newTrainee().linkedInUrl"
-                  (ngModelChange)="updateFormField('linkedInUrl', $event)"
-                  (blur)="markFieldTouched('linkedInUrl')"
-                  class="form-control"
-                  [class.is-invalid]="touchedFields()['linkedInUrl'] && formErrors()['linkedInUrl']"
-                  placeholder="https://linkedin.com/in/username">
-                @if (touchedFields()['linkedInUrl'] && formErrors()['linkedInUrl']) {
-                  <small class="field-error">{{ formErrors()['linkedInUrl'] }}</small>
-                }
-              </div>
-
-              <div class="form-group">
-                <label>رابط حساب GitHub</label>
-                <input
-                  type="url"
-                  name="gitHubUrl"
-                  [ngModel]="newTrainee().gitHubUrl"
-                  (ngModelChange)="updateFormField('gitHubUrl', $event)"
-                  (blur)="markFieldTouched('gitHubUrl')"
-                  class="form-control"
-                  [class.is-invalid]="touchedFields()['gitHubUrl'] && formErrors()['gitHubUrl']"
-                  placeholder="https://github.com/username">
-                @if (touchedFields()['gitHubUrl'] && formErrors()['gitHubUrl']) {
-                  <small class="field-error">{{ formErrors()['gitHubUrl'] }}</small>
-                }
-              </div>
-            </div>
-
-            <div class="form-group" style="margin-top: 14px;">
-              <label>المهارات التقنية (مفصولة بفاصلة)</label>
-              <input
-                type="text"
-                name="skills"
-                [ngModel]="newTrainee().skills"
-                (ngModelChange)="updateFormField('skills', $event)"
-                class="form-control"
-                placeholder="مثال: Angular, .NET, SQL...">
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="showRegisterModal.set(false)">إلغاء</button>
-            <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
-              {{ isSubmitting() ? 'جاري الحفظ...' : 'حفظ المتدرب في قاعدة البيانات' }}
-            </button>
-          </div>
-        </form>
-      </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="showRegisterModal.set(false)">إلغاء</button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'جاري الحفظ...' : 'حفظ المتدرب في قاعدة البيانات' }}
+          </button>
+        </div>
+      </form>
     </div>
+  </div>
   }
 
   <!-- ===================================================================== -->
   <!-- 🌟 6. صفحة تسجيل ومتابعة حضور المتدربين الكاملة على الشاشة (Fullscreen)  -->
   <!-- ===================================================================== -->
   @if (showBatchAttendanceModal()) {
-    <div class="fullscreen-attendance-overlay">
-      
-      <!-- الهيدر العلوي الشامل الكحلي الفاخر مع زر الرجوع المطلوب -->
-      <div class="fullscreen-attendance-header">
-        <div class="fullscreen-header-info">
-          <div class="fullscreen-icon-badge">
-            <i class="fa-solid fa-id-badge"></i>
-          </div>
-          <div>
-            <h2 class="fullscreen-title">تسجيل ومتابعة حضور المتدربين</h2>
-            <p class="fullscreen-subtitle">
-              @if (attendanceStep() === 1) {
-                الخطوة 1: حدد الدفعة التدريبية المراد استعراض ومتابعة سجل حضورها
-              } @else {
-                الخطوة 2: استعراض ومتابعة سجل حضور متدربي ({{ selectedAttendanceBatch()?.name }}) — الرصد مسجل بواسطة المدرب
+  <div class="fullscreen-attendance-overlay">
+
+    <!-- الهيدر العلوي الشامل الكحلي الفاخر مع زر الرجوع المطلوب -->
+    <div class="fullscreen-attendance-header">
+      <div class="fullscreen-header-info">
+        <div class="fullscreen-icon-badge">
+          <i class="fa-solid fa-id-badge"></i>
+        </div>
+        <div>
+          <h2 class="fullscreen-title">تسجيل ومتابعة حضور المتدربين</h2>
+          <p class="fullscreen-subtitle">
+            @if (attendanceStep() === 1) {
+            الخطوة 1: حدد الدفعة التدريبية المراد استعراض ومتابعة سجل حضورها
+            } @else {
+            الخطوة 2: استعراض ومتابعة سجل حضور متدربي ({{ selectedAttendanceBatch()?.name }}) — الرصد مسجل بواسطة المدرب
+            }
+          </p>
+        </div>
+      </div>
+
+      <!-- 🌟 زر الرجوع للصفحة السابقة في أعلى الهيدر -->
+      <button type="button" class="btn-fullscreen-close" (click)="closeBatchAttendanceModal()"
+        title="الرجوع للصفحة السابقة">
+        <i class="fa-solid fa-arrow-right"></i>
+        <span>الرجوع للصفحة السابقة</span>
+      </button>
+    </div>
+
+    <!-- جسم الصفحة الكاملة القابل للتمرير -->
+    <div class="fullscreen-attendance-body" id="attendanceModalBody">
+
+      <!-- ================================================================= -->
+      <!-- محتوى الخطوة 1: بطاقات الدفعات التدريبية + القائمة المنسدلة للدفعة    -->
+      <!-- ================================================================= -->
+      @if (attendanceStep() === 1) {
+
+      <!-- 👈 شريط الفلاتر: يحتوي على قائمة الدفعات المنسدلة المطلوبة + البحث + التاريخ -->
+      <div class="batch-controls-bar">
+
+        <div class="batch-controls-right">
+
+          <!-- 👈 الزر والقائمة المنسدلة لاختيار الدفعة مباشرة بجانب البحث كما في صورتك -->
+          <div class="batch-dropdown-wrap">
+            <select class="batch-select-dropdown" [ngModel]="attendanceBatchDropdownFilter()"
+              (ngModelChange)="onBatchDropdownFilterChange($event)">
+              <option value="">جميع الدفعات التدريبية</option>
+              @for (b of availableAttendanceBatches(); track b.name) {
+              <option [value]="b.name">{{ b.name }}</option>
               }
-            </p>
+            </select>
+            <i class="fa-solid fa-chevron-down select-chevron"></i>
+          </div>
+
+          <!-- حقل البحث بالاسم والمسار -->
+          <div class="batch-search-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" class="batch-search-input" [ngModel]="attendanceBatchSearch()"
+              (ngModelChange)="onBatchSearchChange($event)" placeholder="ابحث باسم الدفعة، المسار...">
+          </div>
+
+        </div>
+
+        <!-- منتقي تاريخ الحضور -->
+        <div class="batch-date-wrap">
+          <label class="batch-date-label">
+            <i class="fa-regular fa-calendar-check" style="color: #0284c7;"></i> تاريخ الحضور:
+          </label>
+          <input type="date" class="batch-date-input" [ngModel]="attendanceDate()"
+            (ngModelChange)="onAttendanceDateChange($event)">
+        </div>
+
+      </div>
+
+      <!-- 👈 شبكة بطاقات الدفعات التدريبية كاملة (تظهر جميع الدفعات المعتمدة) -->
+      <div class="portal-batch-grid">
+        @for (batch of pagedAttendanceBatches(); track batch.name) {
+        <div class="portal-batch-card">
+
+          <div class="portal-card-header">
+            <div>
+              <h3 class="portal-batch-title">{{ batch.name }}</h3>
+              <span class="portal-batch-track">{{ batch.track }}</span>
+            </div>
+            <div class="portal-icon-box">
+              <i class="fa-solid fa-building-columns"></i>
+            </div>
+          </div>
+
+          <!-- شبكة الإحصائيات الأربعة المطابقة للتصميم الرسمي -->
+          <div class="portal-stats-grid">
+            <div class="portal-stat-item">
+              <span class="stat-num">{{ batch.rating ?? '—' }}</span>
+              <span class="stat-lbl">التقييم</span>
+            </div>
+            <div class="portal-stat-item">
+              <span class="stat-num">{{ batch.count ?? '—' }}</span>
+              <span class="stat-lbl">متدرب</span>
+            </div>
+            <div class="portal-stat-item">
+              <span class="stat-num">{{ batch.companies ?? '—' }}</span>
+              <span class="stat-lbl">الشركات</span>
+            </div>
+            <div class="portal-stat-item">
+              <span class="stat-num">{{ batch.programs ?? '—' }}</span>
+              <span class="stat-lbl">البرامج</span>
+            </div>
+          </div>
+
+          <!-- شريط المشرف ورقم التواصل -->
+          <div class="portal-supervisor-bar">
+            <span class="supervisor-text">المدرب الراصد: <strong>{{ trainerFor(batch) }}</strong></span>
+            <a href="tel:+96824000000" class="supervisor-phone">
+              <i class="fa-solid fa-phone"></i> +968 24000000
+            </a>
+          </div>
+
+          <!-- زر تسجيل حضور الدفعة والانتقال للصفحة التالية -->
+          <button type="button" class="btn-portal-primary" (click)="selectBatchForAttendance(batch)">
+            تسجيل حضور الدفعة <i class="fa-solid fa-arrow-left"></i>
+          </button>
+
+        </div>
+        } @empty {
+        <div style="grid-column: 1 / -1; text-align: center; padding: 50px; background: #fff; border-radius: 14px;">
+          <i class="fa-solid fa-folder-open" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 10px;"></i>
+          <p style="color: #64748b; font-weight: 700;">لا توجد دفعات مطابقة لبحثك</p>
+        </div>
+        }
+      </div>
+
+      <!-- شريط التصفح والانتقال للصفحة التالية والسابقة للبطاقات -->
+      <div class="nfd-pagination-bar">
+        <div class="pagination-info">
+          عرض الصفحة <strong>{{ batchCurrentPage() }}</strong> من <strong>{{ batchTotalPages() }}</strong>
+          <span class="total-badge">(إجمالي {{ filteredAttendanceBatches().length }} دفعة)</span>
+        </div>
+
+        <div class="pagination-actions">
+          <button type="button" class="btn-scroll-top" (click)="scrollToTop()" title="الصعود لأعلى الصفحة">
+            <i class="fa-solid fa-arrow-up"></i>
+          </button>
+
+          <button type="button" class="btn-pager-nav" [disabled]="batchCurrentPage() === 1" (click)="prevBatchPage()">
+            السابق
+          </button>
+
+          <span class="pager-counter">
+            {{ batchCurrentPage() }} / {{ batchTotalPages() }}
+          </span>
+
+          <button type="button" class="btn-pager-nav" [disabled]="batchCurrentPage() >= batchTotalPages()"
+            (click)="nextBatchPage()">
+            التالي
+          </button>
+        </div>
+      </div>
+
+      }
+
+      <!-- ================================================================= -->
+      <!-- محتوى الخطوة 2: رصد حضور المتدربين + جدول التحضير (بدون منسدلة المسار)  -->
+      <!-- ================================================================= -->
+      @if (attendanceStep() === 2) {
+
+      <!-- شريط التنقل العلوي ومعلومات الدفعة -->
+      <div class="step2-top-bar">
+        <button type="button" class="btn-back-link" (click)="backToBatchSelection()">
+          <i class="fa-solid fa-arrow-right"></i> العودة لاختيار دفعة أخرى
+        </button>
+
+        <div class="step2-batch-info-tag">
+          <span class="tag-label">الدفعة المحددة:</span>
+          <span class="tag-value">{{ selectedAttendanceBatch()?.name }}</span>
+          <span class="tag-date"><i class="fa-regular fa-calendar"></i> {{ attendanceDate() }}</span>
+        </div>
+      </div>
+
+      <!-- شريط توجيهي إداري: يوضح أن التسجيل يتم عبر المدرب وأن الصفحة للاطلاع والمتابعة -->
+      <div class="admin-notice-banner">
+        <div class="notice-right">
+          <div class="notice-icon"><i class="fa-solid fa-user-shield"></i></div>
+          <div>
+            <strong>لوحة متابعة الإدارة (استعراض واطلاع فقط):</strong>
           </div>
         </div>
 
-        <!-- 🌟 زر الرجوع للصفحة السابقة في أعلى الهيدر -->
-        <button type="button" class="btn-fullscreen-close" (click)="closeBatchAttendanceModal()" title="الرجوع للصفحة السابقة">
-          <i class="fa-solid fa-arrow-right"></i>
-          <span>الرجوع للصفحة السابقة</span>
-        </button>
+        <!-- 👈 المدرب الراصد: يظهر تلقائياً حسب الدفعة المحددة -->
+        <div class="notice-left">
+          <span class="trainer-tag">
+            <i class="fa-solid fa-chalkboard-user"></i> المدرب الراصد:
+            <strong>{{ isLoadingTrainers() ? 'جاري التحميل...' : currentBatchTrainer() }}</strong>
+          </span>
+        </div>
       </div>
 
-      <!-- جسم الصفحة الكاملة القابل للتمرير -->
-      <div class="fullscreen-attendance-body" id="attendanceModalBody">
-        
-        <!-- ================================================================= -->
-        <!-- محتوى الخطوة 1: بطاقات الدفعات التدريبية + القائمة المنسدلة للدفعة    -->
-        <!-- ================================================================= -->
-        @if (attendanceStep() === 1) {
-          
-          <!-- 👈 شريط الفلاتر: يحتوي على قائمة الدفعات المنسدلة المطلوبة + البحث + التاريخ -->
-          <div class="batch-controls-bar">
-            
-            <div class="batch-controls-right">
-              
-              <!-- 👈 الزر والقائمة المنسدلة لاختيار الدفعة مباشرة بجانب البحث كما في صورتك -->
-              <div class="batch-dropdown-wrap">
-                <select 
-                  class="batch-select-dropdown" 
-                  [ngModel]="attendanceBatchDropdownFilter()" 
-                  (ngModelChange)="onBatchDropdownFilterChange($event)">
-                  <option value="">جميع الدفعات التدريبية</option>
-                  @for (b of availableAttendanceBatches(); track b.name) {
-                    <option [value]="b.name">{{ b.name }}</option>
-                  }
-                </select>
-                <i class="fa-solid fa-chevron-down select-chevron"></i>
-              </div>
+      <!-- شريط الفلاتر: البحث + تبويبات الحالة + زر تصدير سريع (بدون منسدلة المسارات) -->
+      <div class="attendance-filter-row">
 
-              <!-- حقل البحث بالاسم والمسار -->
-              <div class="batch-search-wrap">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input 
-                  type="text" 
-                  class="batch-search-input"
-                  [ngModel]="attendanceBatchSearch()" 
-                  (ngModelChange)="onBatchSearchChange($event)"
-                  placeholder="ابحث باسم الدفعة، المسار...">
-              </div>
-
-            </div>
-
-            <!-- منتقي تاريخ الحضور -->
-            <div class="batch-date-wrap">
-              <label class="batch-date-label">
-                <i class="fa-regular fa-calendar-check" style="color: #0284c7;"></i> تاريخ الحضور:
-              </label>
-              <input 
-                type="date" 
-                class="batch-date-input" 
-                [ngModel]="attendanceDate()" 
-                (ngModelChange)="attendanceDate.set($event)">
-            </div>
-
+        <!-- حقل البحث بالاسم أو الرقم المدني -->
+        <div class="trainee-search-group">
+          <label class="track-dropdown-label">بحث في المتدربين</label>
+          <div class="trainee-search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" [ngModel]="attendanceSearchQuery()" (ngModelChange)="onAttendanceSearchChange($event)"
+              placeholder="ابحث بإسم المتدرب">
           </div>
+        </div>
 
-          <!-- 👈 شبكة بطاقات الدفعات التدريبية كاملة (تظهر جميع الدفعات المعتمدة) -->
-          <div class="portal-batch-grid">
-            @for (batch of pagedAttendanceBatches(); track batch.name) {
-              <div class="portal-batch-card">
-                
-                <div class="portal-card-header">
-                  <div>
-                    <h3 class="portal-batch-title">{{ batch.name }}</h3>
-                    <span class="portal-batch-track">{{ batch.track }}</span>
-                  </div>
-                  <div class="portal-icon-box">
-                    <i class="fa-solid fa-building-columns"></i>
-                  </div>
-                </div>
-
-                <!-- شبكة الإحصائيات الأربعة المطابقة للتصميم الرسمي -->
-                <div class="portal-stats-grid">
-                  <div class="portal-stat-item">
-                    <span class="stat-num">{{ batch.rating || '4.9' }}</span>
-                    <span class="stat-lbl">التقييم</span>
-                  </div>
-                  <div class="portal-stat-item">
-                    <span class="stat-num">{{ batch.count }}</span>
-                    <span class="stat-lbl">متدرب</span>
-                  </div>
-                  <div class="portal-stat-item">
-                    <span class="stat-num">{{ batch.companies }}</span>
-                    <span class="stat-lbl">الشركات</span>
-                  </div>
-                  <div class="portal-stat-item">
-                    <span class="stat-num">{{ batch.programs || '1' }}</span>
-                    <span class="stat-lbl">البرامج</span>
-                  </div>
-                </div>
-
-                <!-- شريط المشرف ورقم التواصل -->
-                <div class="portal-supervisor-bar">
-                  <span class="supervisor-text">المدرب الراصد: <strong>{{ trainerFor(batch) }}</strong></span>
-                  <a href="tel:+96824000000" class="supervisor-phone">
-                    <i class="fa-solid fa-phone"></i> +968 24000000
-                  </a>
-                </div>
-
-                <!-- زر تسجيل حضور الدفعة والانتقال للصفحة التالية -->
-                <button type="button" class="btn-portal-primary" (click)="selectBatchForAttendance(batch)">
-                  تسجيل حضور الدفعة <i class="fa-solid fa-arrow-left"></i>
-                </button>
-
-              </div>
-            } @empty {
-              <div style="grid-column: 1 / -1; text-align: center; padding: 50px; background: #fff; border-radius: 14px;">
-                <i class="fa-solid fa-folder-open" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 10px;"></i>
-                <p style="color: #64748b; font-weight: 700;">لا توجد دفعات مطابقة لبحثك</p>
-              </div>
+        <!-- تبويبات الحالة السريعة -->
+        <div class="status-tabs-group">
+          <label class="track-dropdown-label">تصفية بحالة الحضور</label>
+          <div class="status-tabs-wrap">
+            <app-catalog-picker class="filter-select" caption="تصفية حضور المتدرب" [options]="attendancePickerChoices"
+              [value]="attendanceStatusFilter()" (valueChange)="onAttendanceStatusFilterChange($event)" />
+            @for (option of attendancePickerChoices; track option.value) {
+            <button type="button" class="status-tab" [class.present]="option.value === 'Present'"
+              [class.late]="option.value === 'Late'" [class.absent]="option.value === 'Absent'"
+              [class.excused]="option.value === 'Excused'" [class.active]="attendanceStatusFilter() === option.value"
+              (click)="onAttendanceStatusFilterChange(option.value)">
+              {{ option.label }} ({{ option.value === 'ALL' ? attendanceSummary().total : option.value === 'Present' ?
+              attendanceSummary().present : option.value === 'Late' ? attendanceSummary().late : option.value ===
+              'Absent' ? attendanceSummary().absent : option.value === 'Excused' ? attendanceSummary().excused :
+              attendanceSummary().notRecorded }})
+            </button>
             }
           </div>
-
-          <!-- شريط التصفح والانتقال للصفحة التالية والسابقة للبطاقات -->
-          <div class="nfd-pagination-bar">
-            <div class="pagination-info">
-              عرض الصفحة <strong>{{ batchCurrentPage() }}</strong> من <strong>{{ batchTotalPages() }}</strong>
-              <span class="total-badge">(إجمالي {{ filteredAttendanceBatches().length }} دفعة)</span>
-            </div>
-
-            <div class="pagination-actions">
-              <button type="button" class="btn-scroll-top" (click)="scrollToTop()" title="الصعود لأعلى الصفحة">
-                <i class="fa-solid fa-arrow-up"></i>
-              </button>
-
-              <button 
-                type="button" 
-                class="btn-pager-nav" 
-                [disabled]="batchCurrentPage() === 1" 
-                (click)="prevBatchPage()">
-                السابق
-              </button>
-
-              <span class="pager-counter">
-                {{ batchCurrentPage() }} / {{ batchTotalPages() }}
-              </span>
-
-              <button 
-                type="button" 
-                class="btn-pager-nav" 
-                [disabled]="batchCurrentPage() >= batchTotalPages()" 
-                (click)="nextBatchPage()">
-                التالي
-              </button>
-            </div>
-          </div>
-
-        }
-
-        <!-- ================================================================= -->
-        <!-- محتوى الخطوة 2: رصد حضور المتدربين + جدول التحضير (بدون منسدلة المسار)  -->
-        <!-- ================================================================= -->
-        @if (attendanceStep() === 2) {
-          
-          <!-- شريط التنقل العلوي ومعلومات الدفعة -->
-          <div class="step2-top-bar">
-            <button type="button" class="btn-back-link" (click)="backToBatchSelection()">
-              <i class="fa-solid fa-arrow-right"></i> العودة لاختيار دفعة أخرى
-            </button>
-
-            <div class="step2-batch-info-tag">
-              <span class="tag-label">الدفعة المحددة:</span>
-              <span class="tag-value">{{ selectedAttendanceBatch()?.name }}</span>
-              <span class="tag-date"><i class="fa-regular fa-calendar"></i> {{ attendanceDate() }}</span>
-            </div>
-          </div>
-
-          <!-- شريط توجيهي إداري: يوضح أن التسجيل يتم عبر المدرب وأن الصفحة للاطلاع والمتابعة -->
-          <div class="admin-notice-banner">
-            <div class="notice-right">
-              <div class="notice-icon"><i class="fa-solid fa-user-shield"></i></div>
-              <div>
-                <strong>لوحة متابعة الإدارة (استعراض واطلاع فقط):</strong>
-              </div>
-            </div>
-
-            <!-- 👈 المدرب الراصد: يظهر تلقائياً حسب الدفعة المحددة -->
-            <div class="notice-left">
-              <span class="trainer-tag">
-                <i class="fa-solid fa-chalkboard-user"></i> المدرب الراصد:
-                <strong>{{ isLoadingTrainers() ? 'جاري التحميل...' : currentBatchTrainer() }}</strong>
-              </span>
-            </div>
-          </div>
-
-          <!-- شريط الفلاتر: البحث + تبويبات الحالة + زر تصدير سريع (بدون منسدلة المسارات) -->
-          <div class="attendance-filter-row">
-            
-            <!-- حقل البحث بالاسم أو الرقم المدني -->
-            <div class="trainee-search-group">
-              <label class="track-dropdown-label">بحث في المتدربين</label>
-              <div class="trainee-search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input 
-                  type="text" 
-                  [ngModel]="attendanceSearchQuery()" 
-                  (ngModelChange)="onAttendanceSearchChange($event)"
-                  placeholder="ابحث بإسم المتدرب">
-              </div>
-            </div>
-
-            <!-- تبويبات الحالة السريعة -->
-            <div class="status-tabs-group">
-              <label class="track-dropdown-label">تصفية بحالة الحضور</label>
-              <div class="status-tabs-wrap">
-              <app-catalog-picker class="filter-select" caption="تصفية حضور المتدرب" [options]="attendancePickerChoices" [value]="attendanceStatusFilter()" (valueChange)="onAttendanceStatusFilterChange($event)" />
-                @for (option of attendancePickerChoices; track option.value) {
-                  <button type="button" class="status-tab" [class.present]="option.value === 'Present'" [class.late]="option.value === 'Late'" [class.absent]="option.value === 'Absent'" [class.excused]="option.value === 'Excused'" [class.active]="attendanceStatusFilter() === option.value" (click)="onAttendanceStatusFilterChange(option.value)">
-                    {{ option.label }} ({{ option.value === 'ALL' ? attendanceSummary().total : option.value === 'Present' ? attendanceSummary().present : option.value === 'Late' ? attendanceSummary().late : option.value === 'Absent' ? attendanceSummary().absent : attendanceSummary().excused }})
-                  </button>
-                }
-              </div>
-            </div>
-
-            <!-- أزرار الإجراءات العلوية: تصدير الكشف + طباعة الكشف في نفس المسار بالأعلى -->
-            <div class="top-actions-group">
-              <button type="button" class="btn-export-quick" (click)="exportAttendanceToExcel()" title="تصدير بيانات الحضور الحالية إلى Excel">
-                <i class="fa-solid fa-file-excel"></i> تصدير الكشف (Excel)
-              </button>
-
-              <button type="button" class="btn-print-quick" (click)="printAttendanceReport()" title="طباعة كشف الحضور الرسمي">
-                <i class="fa-solid fa-print"></i> طباعة الكشف
-              </button>
-            </div>
-
-          </div>
-
-          <!-- جدول استعراض معلومات المتدربين وسجل الحضور المرصود من المدرب -->
-          <div class="attendance-table-container">
-            <table class="att-table">
-              <thead>
-                <tr>
-                  <th style="width: 48px;">#</th>
-                  <th>المتدرب</th>
-                  <th>المسار التدريبي</th>
-                  <th>الشركة المستضيفة</th>
-                  <th style="width: 140px; text-align: center;">حالة الحضور (رصد المدرب)</th>
-                  <th>ملاحظات / عذر المدرب</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (record of pagedAttendanceList(); track record.traineeId; let i = $index) {
-                  <tr>
-                    <td class="text-muted">{{ (attendanceCurrentPage() - 1) * attendancePageSize() + i + 1 }}</td>
-                    
-                    <!-- معلومات المتدرب: الصورة والاسم والبريد -->
-                    <td>
-                      <div class="att-trainee-cell">
-                        <div class="att-avatar">
-                          @if (record.profileImageUrl) {
-                            <img [src]="record.profileImageUrl" [alt]="record.fullName">
-                          } @else {
-                            <span>{{ record.fullName.charAt(0) }}</span>
-                          }
-                        </div>
-                        <div>
-                          <strong class="att-name">{{ record.fullName }}</strong>
-                          <span class="att-subtext">{{ record.email || record.phone || '—' }}</span>
-                        </div>
-                      </div>
-                    </td>
-
-                    <!-- المسار التدريبي -->
-                    <td>
-                      <span class="att-track-badge">{{ record.track }}</span>
-                    </td>
-
-                    <!-- الشركة المستضيفة -->
-                    <td>
-                      <span class="att-company-badge">{{ record.companyName || 'مجموعة أفق التقنية' }}</span>
-                    </td>
-
-                    <!-- حالة الحضور المسجلة من قِبل المدرب (عرض فقط على شكل بادج رسمي) -->
-                    <td style="text-align: center;">
-                      @switch (record.status) {
-                        @case ('Present') {
-                          <span class="att-status-pill status-present">
-                            <i class="fa-solid fa-circle-check"></i> حاضر
-                          </span>
-                        }
-                        @case ('Late') {
-                          <span class="att-status-pill status-late">
-                            <i class="fa-regular fa-clock"></i> متأخر
-                          </span>
-                        }
-                        @case ('Absent') {
-                          <span class="att-status-pill status-absent">
-                            <i class="fa-solid fa-circle-xmark"></i> غائب
-                          </span>
-                        }
-                        @case ('Excused') {
-                          <span class="att-status-pill status-excused">
-                            <i class="fa-solid fa-file-circle-check"></i> بعذر
-                          </span>
-                        }
-                        @default {
-                          <span class="att-status-pill status-pending">
-                            <i class="fa-regular fa-hourglass-half"></i> قيد الرصد
-                          </span>
-                        }
-                      }
-                    </td>
-
-                    <!-- ملاحظات المدرب المسجلة كنص رسمي -->
-                    <td>
-                      <span class="att-notes-display" [class.empty]="!record.notes">
-                        {{ record.notes || 'لا توجد ملاحظات مسجلة' }}
-                      </span>
-                    </td>
-
-                  </tr>
-                } @empty {
-                  <tr>
-                    <td colspan="6" class="att-empty-row">
-                      <i class="fa-solid fa-user-slash"></i>
-                      <p>لا توجد بيانات متدربين مطابقة للفلتر المحدد في هذه الدفعة</p>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-
-          <!-- شريط التصفح والانتقال للصفحة التالية والسابقة لسجل الحضور -->
-          <div class="nfd-pagination-bar">
-            <div class="pagination-info">
-              عرض الصفحة <strong>{{ attendanceCurrentPage() }}</strong> من <strong>{{ attendanceTotalPages() }}</strong>
-              <span class="total-badge">(إجمالي {{ filteredAttendanceList().length }} متدرب)</span>
-            </div>
-
-            <div class="pagination-actions">
-              <button type="button" class="btn-scroll-top" (click)="scrollToTop()" title="الصعود لأعلى الصفحة">
-                <i class="fa-solid fa-arrow-up"></i>
-              </button>
-
-              <button 
-                type="button" 
-                class="btn-pager-nav" 
-                [disabled]="attendanceCurrentPage() === 1" 
-                (click)="prevAttendancePage()">
-                السابق
-              </button>
-
-              <span class="pager-counter">
-                {{ attendanceCurrentPage() }} / {{ attendanceTotalPages() }}
-              </span>
-
-              <button 
-                type="button" 
-                class="btn-pager-nav" 
-                [disabled]="attendanceCurrentPage() >= attendanceTotalPages()" 
-                (click)="nextAttendancePage()">
-                التالي
-              </button>
-            </div>
-          </div>
-
-          <!-- شريط ملخص الإحصائيات الفوري في الأسفل -->
-          <div class="att-summary-strip">
-            <div class="summary-pill total">الإجمالي: <strong>{{ attendanceSummary().total }}</strong></div>
-            <div class="summary-pill present">حاضر: <strong>{{ attendanceSummary().present }}</strong></div>
-            <div class="summary-pill late">متأخر: <strong>{{ attendanceSummary().late }}</strong></div>
-            <div class="summary-pill absent">غائب: <strong>{{ attendanceSummary().absent }}</strong></div>
-            <div class="summary-pill excused">بعذر: <strong>{{ attendanceSummary().excused }}</strong></div>
-            <div class="summary-pill rate">نسبة الحضور: <strong>{{ attendanceSummary().rate }}%</strong></div>
-          </div>
-
-        }
-
-      </div>
-
-      <!-- فوتر الصفحة الكاملة: شريط ملخص إرشادي -->
-      <div class="fullscreen-attendance-footer">
-        <div class="footer-actions">
-          @if (attendanceStep() === 1) {
-            
-          }
         </div>
-        <span class="footer-hint">
-          @if (attendanceStep() === 1) {
-            اختر دفعة تدريبية لاستعراض سجل الحضور الخاص بمتدربيها
-          } @else {
-            سجل حضور المتدربين مُعتمد ومُرصد بواسطة مدرب الدفعة — أزرار التصدير والطباعة متاحة في شريط الإجراءات بالأعلى
-          }
-        </span>
+
+        <!-- أزرار الإجراءات العلوية: تصدير الكشف + طباعة الكشف في نفس المسار بالأعلى -->
+        <div class="top-actions-group">
+          <button type="button" class="btn-export-quick" (click)="exportAttendanceToExcel()"
+            title="تصدير بيانات الحضور الحالية إلى Excel">
+            <i class="fa-solid fa-file-excel"></i> تصدير الكشف (Excel)
+          </button>
+
+          <button type="button" class="btn-print-quick" (click)="printAttendanceReport()"
+            title="طباعة كشف الحضور الرسمي">
+            <i class="fa-solid fa-print"></i> طباعة الكشف
+          </button>
+        </div>
+
       </div>
+
+      <!-- جدول استعراض معلومات المتدربين وسجل الحضور المرصود من المدرب -->
+      <div class="attendance-table-container">
+        <table class="att-table">
+          <thead>
+            <tr>
+              <th style="width: 48px;">#</th>
+              <th>المتدرب</th>
+              <th>المسار التدريبي</th>
+              <th>الشركة المستضيفة</th>
+              <th style="width: 140px; text-align: center;">حالة الحضور (رصد المدرب)</th>
+              <th>ملاحظات / عذر المدرب</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (record of pagedAttendanceList(); track record.traineeId; let i = $index) {
+            <tr>
+              <td class="text-muted">{{ (attendanceCurrentPage() - 1) * attendancePageSize() + i + 1 }}</td>
+
+              <!-- معلومات المتدرب: الصورة والاسم والبريد -->
+              <td>
+                <div class="att-trainee-cell">
+                  <div class="att-avatar">
+                    @if (record.profileImageUrl) {
+                    <img [src]="record.profileImageUrl" [alt]="record.fullName">
+                    } @else {
+                    <span>{{ record.fullName.charAt(0) }}</span>
+                    }
+                  </div>
+                  <div>
+                    <strong class="att-name">{{ record.fullName }}</strong>
+                    <span class="att-subtext">{{ record.email || record.phone || '—' }}</span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- المسار التدريبي -->
+              <td>
+                <span class="att-track-badge">{{ record.track }}</span>
+              </td>
+
+              <!-- الشركة المستضيفة -->
+              <td>
+                <span class="att-company-badge">{{ record.companyName || 'مجموعة أفق التقنية' }}</span>
+              </td>
+
+              <!-- حالة الحضور المسجلة من قِبل المدرب (عرض فقط على شكل بادج رسمي) -->
+              <td style="text-align: center;">
+                @switch (record.status) {
+                @case ('Present') {
+                <span class="att-status-pill status-present">
+                  <i class="fa-solid fa-circle-check"></i> حاضر
+                </span>
+                }
+                @case ('Late') {
+                <span class="att-status-pill status-late">
+                  <i class="fa-regular fa-clock"></i> متأخر
+                </span>
+                }
+                @case ('Absent') {
+                <span class="att-status-pill status-absent">
+                  <i class="fa-solid fa-circle-xmark"></i> غائب
+                </span>
+                }
+                @case ('Excused') {
+                <span class="att-status-pill status-excused">
+                  <i class="fa-solid fa-file-circle-check"></i> بعذر
+                </span>
+                }
+                @default {
+                <span class="att-status-pill status-pending">
+                  <i class="fa-regular fa-hourglass-half"></i> قيد الرصد
+                </span>
+                }
+                }
+              </td>
+
+              <!-- ملاحظات المدرب المسجلة كنص رسمي -->
+              <td>
+                <span class="att-notes-display" [class.empty]="!record.notes">
+                  {{ record.notes || 'لا توجد ملاحظات مسجلة' }}
+                </span>
+              </td>
+
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="6" class="att-empty-row">
+                <i class="fa-solid fa-user-slash"></i>
+                <p>لا توجد بيانات متدربين مطابقة للفلتر المحدد في هذه الدفعة</p>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- شريط التصفح والانتقال للصفحة التالية والسابقة لسجل الحضور -->
+      <div class="nfd-pagination-bar">
+        <div class="pagination-info">
+          عرض الصفحة <strong>{{ attendanceCurrentPage() }}</strong> من <strong>{{ attendanceTotalPages() }}</strong>
+          <span class="total-badge">(إجمالي {{ filteredAttendanceList().length }} متدرب)</span>
+        </div>
+
+        <div class="pagination-actions">
+          <button type="button" class="btn-scroll-top" (click)="scrollToTop()" title="الصعود لأعلى الصفحة">
+            <i class="fa-solid fa-arrow-up"></i>
+          </button>
+
+          <button type="button" class="btn-pager-nav" [disabled]="attendanceCurrentPage() === 1"
+            (click)="prevAttendancePage()">
+            السابق
+          </button>
+
+          <span class="pager-counter">
+            {{ attendanceCurrentPage() }} / {{ attendanceTotalPages() }}
+          </span>
+
+          <button type="button" class="btn-pager-nav" [disabled]="attendanceCurrentPage() >= attendanceTotalPages()"
+            (click)="nextAttendancePage()">
+            التالي
+          </button>
+        </div>
+      </div>
+
+      <!-- شريط ملخص الإحصائيات الفوري في الأسفل -->
+      <div class="att-summary-strip">
+        <div class="summary-pill total">الإجمالي: <strong>{{ attendanceSummary().total }}</strong></div>
+        <div class="summary-pill present">حاضر: <strong>{{ attendanceSummary().present }}</strong></div>
+        <div class="summary-pill late">متأخر: <strong>{{ attendanceSummary().late }}</strong></div>
+        <div class="summary-pill absent">غائب: <strong>{{ attendanceSummary().absent }}</strong></div>
+        <div class="summary-pill excused">بعذر: <strong>{{ attendanceSummary().excused }}</strong></div>
+        <div class="summary-pill">قيد الرصد: <strong>{{ attendanceSummary().notRecorded }}</strong></div>
+        <div class="summary-pill rate">نسبة الحضور: <strong>{{ attendanceSummary().rate }}%</strong></div>
+      </div>
+
+      }
 
     </div>
+
+    <!-- فوتر الصفحة الكاملة: شريط ملخص إرشادي -->
+    <div class="fullscreen-attendance-footer">
+      <div class="footer-actions">
+        @if (attendanceStep() === 1) {
+
+        }
+      </div>
+      <span class="footer-hint">
+        @if (attendanceStep() === 1) {
+        اختر دفعة تدريبية لاستعراض سجل الحضور الخاص بمتدربيها
+        } @else {
+        سجل حضور المتدربين مُعتمد ومُرصد بواسطة مدرب الدفعة — أزرار التصدير والطباعة متاحة في شريط الإجراءات بالأعلى
+        }
+      </span>
+    </div>
+
+  </div>
   }
 
 </div>
