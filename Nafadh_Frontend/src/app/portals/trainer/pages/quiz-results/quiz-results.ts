@@ -467,9 +467,17 @@ closeSnapshot(): void {
       result.score ?? '',
       `${result.percentage ?? 0}%`,
       this.getResultStatusLabel(result),
-      result.submittedAt
-        ? new Date(result.submittedAt).toLocaleString('ar-OM')
-        : 'لم يُسلّم'
+     result.submittedAt
+  ? new Date(result.submittedAt).toLocaleString('ar-OM', {
+      timeZone: 'Asia/Muscat',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    })
+  : 'لم يُسلّم'
     ]);
 
     const csv = [

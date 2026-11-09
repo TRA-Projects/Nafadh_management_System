@@ -27,6 +27,7 @@ namespace Nafadh_Backend.DTOs
         public string? Reason { get; set; }
         public string? ExcuseProofUrl { get; set; }
         public bool IsConfirmed { get; set; }
+        public string? ExcuseReviewStatus { get; set; }
     }
 
     // Creates the record for (company, trainer, date) or updates it if it already exists.
@@ -49,6 +50,19 @@ namespace Nafadh_Backend.DTOs
 
         public TimeSpan? CheckInTime { get; set; }
         public TimeSpan? CheckOutTime { get; set; }
+    }
+
+    public class TrainerAttendanceReviewDto
+    {
+        [Required]
+        [RegularExpression("^(Approved|Rejected)$")]
+        public string Decision { get; set; } = string.Empty;
+    }
+
+    public class TrainerAttendanceExcuseSubmissionDto
+    {
+        [MaxLength(500)]
+        public string? Reason { get; set; }
     }
 
     public class TrainerAttendanceConfirmDto

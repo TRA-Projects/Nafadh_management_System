@@ -1,4 +1,3 @@
-
 <div class="quizzes-page" dir="rtl">
 
   <!-- ========================================== -->
@@ -113,7 +112,6 @@
                   <button type="button" class="secondary-btn full-width" disabled><i class="fa-solid fa-hourglass-half"></i> بانتظار التصحيح</button>
                 }
                 @case ('Completed') {
-                  <!-- تم التعديل: يفتح سجل المحاولات -->
                   <button type="button" class="primary-btn full-width" (click)="openAttemptsModal(quiz)"><i class="fa-solid fa-chart-column"></i> عرض النتائج</button>
                   @if (quiz.attemptsRemaining > 0) {
                     <button type="button" class="secondary-btn full-width" (click)="onRetryQuiz(quiz)"><i class="fa-solid fa-rotate-right"></i> إعادة المحاولة</button>
@@ -174,7 +172,7 @@
 
         @if (selectedQuiz()?.cameraRequired) {
           <div class="camera-preview-box">
-            <video #videoElement autoplay playsinline [class.active]="isCameraReady()"></video>
+            <video #previewVideo autoplay playsinline [class.active]="isCameraReady()"></video>
             @if (!isCameraReady()) {
               <div class="camera-overlay">
                 <i class="fa-solid fa-video-slash"></i>
@@ -208,7 +206,7 @@
     <!-- Floating Camera -->
     @if (selectedQuiz()?.cameraRequired) {
       <div class="floating-camera">
-        <video #videoElement autoplay playsinline muted class="floating-video"></video>
+        <video #floatingVideo autoplay playsinline muted class="floating-video"></video>
         <div class="camera-indicator">
           <i class="fa-solid fa-circle text-danger fa-fade"></i> جاري المراقبة
         </div>

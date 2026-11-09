@@ -2,500 +2,194 @@
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { moduleProgressKey } from '../../../../core/models/administrative-constants';
 import {
-
   Component,
-
   OnInit,
-
   signal,
-
   computed,
-
   inject
-
 } from '@angular/core';
 
-
-
 import { CommonModule } from '@angular/common';
-
 import { Router } from '@angular/router';
-
-
-
 import { TraineeApi } from '../../services/trainee-api';
-
 import { AuthService } from '../../../../core/auth/auth.service';
-
-
-
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
-
-
 import {
-
   ProgramDto,
-
   ModuleDto,
-
   LessonDto,
-
   TraineeModuleProgressDto,
-
   EnrollmentDto,
-
   ProgressSummaryDto,
-
   TraineeProfileDto,
-
   TrainingMaterialDto,
-
   SessionDto
-
 } from '../../../../core/models/dtos';
 
-
-
-
-
-
-
-
-
 // =====================================================
-
 // Extended DTOs
-
 // =====================================================
-
-
 
 export interface LessonWithProgressDto extends LessonDto {
-
   progressPercentage?: number;
-
   trainingMaterials?: TrainingMaterialDto[];
-
 }
-
-
 
 export interface ModuleWithLessonsDto extends ModuleDto {
-
   progressPercentage?: number;
-
   lessons?: LessonWithProgressDto[];
-
   isLocked?: boolean;
-
   prerequisitePassed?: boolean;
-
 }
-
-
 
 export interface ProgramStatsDto {
-
   totalModules: number;
-
   completedModules: number;
-
   totalLessons: number;
-
   completedLessons: number;
-
   overallProgress: number;
-
   totalDays: number;
-
   totalAssignments: number;
-
   experienceYears: number;
-
 }
 
-
-
-
-
 // =====================================================
-
 // COMPONENT
-
 // =====================================================
-
-
 
 @Component({
-
   selector: 'app-trainee-program',
-
   standalone: true,
-
   imports: [CommonModule],
-
   templateUrl: './program.html',
-
   styleUrl: './program.scss',
-
 })
-
 export class TraineeProgram implements OnInit {
 
-
-
   // =====================================================
-
   // INJECT
-
   // =====================================================
-
-
 
   private api = inject(TraineeApi);
   readonly constants = inject(NafadhConstantsService);
-
   private auth = inject(AuthService);
-
   private router = inject(Router);
-
   private sanitizer = inject(DomSanitizer);
 
-
-
-
-
   // =====================================================
-
   // IDs
-
   // =====================================================
-
-
 
   programId = signal<number | null>(null);
-
-
-
   userId = signal<number | null>(null);
-
-
-
   traineeId = signal<number | null>(null);
-
-
-
   batchId = signal<number | null>(null);
-
-
-
   enrollmentId = signal<number | null>(null);
 
-
-
-
-
   // =====================================================
-
   // SESSION / TRAINING MATERIALS
-
   // =====================================================
-
-
 
   sessions = signal<SessionDto[]>([]);
 
-
-
   lessonMaterials =
-
     signal<Record<number, TrainingMaterialDto[]>>({});
 
-
-
-
-
   // =====================================================
-
   // USER / TRAINEE
-
   // =====================================================
 
-
-
-  traineeData =
-
-    signal<TraineeProfileDto | null>(null);
-
-
-
-
+  traineeData = signal<TraineeProfileDto | null>(null);
 
   // =====================================================
-
   // MAIN DATA
-
   // =====================================================
 
-
-
-  program =
-
-    signal<ProgramDto | null>(null);
-
-
-
-  modules =
-
-    signal<ModuleWithLessonsDto[]>([]);
-
-
-
-  enrollment =
-
-    signal<EnrollmentDto | null>(null);
-
-
-
-  progress =
-
-    signal<ProgressSummaryDto | null>(null);
-
-
-
-  moduleProgress =
-
-    signal<TraineeModuleProgressDto[]>([]);
-
-
-
-
+  program = signal<ProgramDto | null>(null);
+  modules = signal<ModuleWithLessonsDto[]>([]);
+  enrollment = signal<EnrollmentDto | null>(null);
+  progress = signal<ProgressSummaryDto | null>(null);
+  moduleProgress = signal<TraineeModuleProgressDto[]>([]);
 
   // =====================================================
-
   // STATE
-
   // =====================================================
-
-
 
   loading = signal(true);
-
-
-
-  error =
-
-    signal<string | null>(null);
-
-
-
-
+  error = signal<string | null>(null);
 
   // =====================================================
-
   // TOAST NOTIFICATION
-
   // =====================================================
 
+  notificationMessage = signal('');
+  notificationType = signal<'success' | 'error'>('success');
+  notificationVisible = signal(false);
 
-
-  notificationMessage =
-
-    signal('');
-
-
-
-  notificationType =
-
-    signal<'success' | 'error'>('success');
-
-
-
-  notificationVisible =
-
-    signal(false);
-
-
-
-  private notificationTimer?:
-
-    ReturnType<typeof setTimeout>;
-
-
-
-
+  private notificationTimer?: ReturnType<typeof setTimeout>;
 
   // =====================================================
-
   // STATISTICS
-
   // =====================================================
 
-
-
-  stats =
-
-    signal<ProgramStatsDto>({
-
-      totalModules: 0,
-
-      completedModules: 0,
-
-      totalLessons: 0,
-
-      completedLessons: 0,
-
-      overallProgress: 0,
-
-      totalDays: 0,
-
-      totalAssignments: 0,
-
-      experienceYears: 0
-
-    });
-
-
-
-
+  stats = signal<ProgramStatsDto>({
+    totalModules: 0,
+    completedModules: 0,
+    totalLessons: 0,
+    completedLessons: 0,
+    overallProgress: 0,
+    totalDays: 0,
+    totalAssignments: 0,
+    experienceYears: 0
+  });
 
   // =====================================================
-
   // COMPUTED
-
   // =====================================================
-
-
 
   overallProgress = computed(() =>
-
     this.stats().overallProgress || 0
-
   );
-
-
 
   totalModules = computed(() =>
-
     this.stats().totalModules || 0
-
   );
-
-
 
   completedModules = computed(() =>
-
     this.stats().completedModules || 0
-
   );
-
-
 
   totalLessons = computed(() =>
-
     this.stats().totalLessons || 0
-
   );
 
-
-
   completedLessons = computed(() =>
-
     this.stats().completedLessons || 0
-
   );
 
   // =====================================================
   // LESSON SIDEBAR / VIEWER
   // =====================================================
 
-  showLessonSidebar =
+  showLessonSidebar = signal(false);
+  lessonViewerVisible = signal(false);
+  lessonViewerUrl = signal<SafeUrl | null>(null);
+  lessonViewerTitle = signal('');
 
-    signal(false);
+  selectedLesson = signal<LessonWithProgressDto | null>(null);
+  selectedModule = signal<ModuleWithLessonsDto | null>(null);
 
+  lessonSidebarTab = signal<'notes' | 'rating'>('notes');
+  lessonNote = signal('');
+  lessonRating = signal(0);
+  lessonVideoCompleted = signal(false);
 
-
-  lessonViewerVisible =
-
-    signal(false);
-
-
-
-  lessonViewerUrl =
-
-    signal<SafeUrl | null>(null);
-
-
-
-  lessonViewerTitle =
-
-    signal('');
-
-
-
-  selectedLesson =
-
-    signal<LessonWithProgressDto | null>(null);
-
-
-
-  selectedModule =
-
-    signal<ModuleWithLessonsDto | null>(null);
-
-
-
-  lessonSidebarTab =
-
-    signal<'notes' | 'rating'>('notes');
-
-
-
-  lessonNote =
-
-    signal('');
-
-
-
-  lessonRating =
-
-    signal(0);
-
-
-
-  /*
-   * Indicates that the currently opened lesson video
-   * has been watched until the end.
-   *
-   * Notes are available immediately after opening
-   * the video, while rating is available only after
-   * the video ends.
-   */
-
-  lessonVideoCompleted =
-
-    signal(false);
-
-
-  // Lesson rating button tooltip
   ratingTooltipLessonId = signal<number | null>(null);
-
   private ratingTooltipTimer?: ReturnType<typeof setTimeout>;
 
-
-
-  lessonFeedbackExists =
-
-    signal(false);
-
-
-
-  lessonFeedbackLoading =
-
-    signal(false);
-
-
+  lessonFeedbackExists = signal(false);
+  lessonFeedbackLoading = signal(false);
 
   // =====================================================
   // INIT
@@ -503,66 +197,32 @@ export class TraineeProgram implements OnInit {
 
   ngOnInit(): void {
     this.constants.ensure('NFD_MOD_STAT');
-
-    console.log('====================================');
-
     console.log('🎓 Trainee Program Page');
-
-    console.log('====================================');
-
     this.loadCurrentTrainee();
-
   }
-
-
 
   // =====================================================
   // SHOW NOTIFICATION
   // =====================================================
 
   showNotification(
-
     message: string,
-
     type: 'success' | 'error' = 'success'
-
   ): void {
-
-    this.notificationMessage.set(
-      message
-    );
-
-    this.notificationType.set(
-      type
-    );
-
-    this.notificationVisible.set(
-      true
-    );
+    this.notificationMessage.set(message);
+    this.notificationType.set(type);
+    this.notificationVisible.set(true);
 
     if (this.notificationTimer) {
-
-      clearTimeout(
-        this.notificationTimer
-      );
-
+      clearTimeout(this.notificationTimer);
     }
 
-    this.notificationTimer =
-      setTimeout(() => {
-
-        this.notificationVisible.set(
-          false
-        );
-
-      }, 7000);
-
+    this.notificationTimer = setTimeout(() => {
+      this.notificationVisible.set(false);
+    }, 7000);
   }
 
-
-  // Tooltip above the lesson rating button
   private showRatingTooltip(lessonId: number): void {
-
     this.ratingTooltipLessonId.set(Number(lessonId));
 
     if (this.ratingTooltipTimer) {
@@ -572,681 +232,252 @@ export class TraineeProgram implements OnInit {
     this.ratingTooltipTimer = setTimeout(() => {
       this.ratingTooltipLessonId.set(null);
     }, 3000);
-
   }
-
-
 
   // =====================================================
   // LOAD CURRENT TRAINEE
   // =====================================================
 
   private loadCurrentTrainee(): void {
-
-    const session =
-      this.auth.session?.();
-
-    console.log(
-      '🔐 Auth session:',
-      session
-    );
+    const session = this.auth.session?.();
 
     let currentUserId: number | null = null;
 
     if (session?.userId) {
-
-      currentUserId =
-        Number(session.userId);
-
+      currentUserId = Number(session.userId);
     } else {
-
-      currentUserId =
-        this.getUserIdFromStorage();
-
+      currentUserId = this.getUserIdFromStorage();
     }
 
-    if (
-      !currentUserId ||
-      Number.isNaN(currentUserId)
-    ) {
-
-      console.error(
-        '❌ User ID not found'
-      );
-
-      this.error.set(
-        'يرجى تسجيل الدخول أولاً.'
-      );
-
+    if (!currentUserId || Number.isNaN(currentUserId)) {
+      this.error.set('يرجى تسجيل الدخول أولاً.');
       this.loading.set(false);
-
       return;
     }
 
-    this.userId.set(
-      currentUserId
-    );
-
-    console.log(
-      '✅ Current User ID:',
-      currentUserId
-    );
-
-    this.loadTrainee(
-      currentUserId
-    );
-
+    this.userId.set(currentUserId);
+    this.loadTrainee(currentUserId);
   }
-
-
 
   // =====================================================
   // LOAD TRAINEE
   // =====================================================
 
-  private loadTrainee(
-    userId: number
-  ): void {
+  private loadTrainee(userId: number): void {
+    this.api.getTrainee(userId).subscribe({
+      next: (trainee: TraineeProfileDto) => {
+        this.traineeData.set(trainee);
 
-    this.api
-      .getTrainee(userId)
-      .subscribe({
+        const id = Number(trainee.traineeId);
 
-        next:
-          (
-            trainee: TraineeProfileDto
-          ) => {
+        if (!id || Number.isNaN(id)) {
+          this.error.set('لم يتم العثور على معرف المتدرب.');
+          this.loading.set(false);
+          return;
+        }
 
-            console.log(
-              '✅ Trainee:',
-              trainee
-            );
+        this.traineeId.set(id);
+        this.loadEnrollment(id);
+      },
 
-            this.traineeData.set(
-              trainee
-            );
-
-            const id =
-              Number(
-                trainee.traineeId
-              );
-
-            if (
-              !id ||
-              Number.isNaN(id)
-            ) {
-
-              console.error(
-                '❌ Invalid traineeId:',
-                trainee
-              );
-
-              this.error.set(
-                'لم يتم العثور على معرف المتدرب.'
-              );
-
-              this.loading.set(false);
-
-              return;
-            }
-
-            this.traineeId.set(
-              id
-            );
-
-            console.log(
-              '✅ Trainee ID:',
-              id
-            );
-
-            this.loadEnrollment(id);
-
-          },
-
-        error:
-          error => {
-
-            console.error(
-              '❌ Trainee API Error:',
-              error
-            );
-
-            this.error.set(
-              'تعذر تحميل بيانات المتدرب.'
-            );
-
-            this.loading.set(false);
-
-          }
-
-      });
-
+      error: error => {
+        console.error('Trainee API Error:', error);
+        this.error.set('تعذر تحميل بيانات المتدرب.');
+        this.loading.set(false);
+      }
+    });
   }
 
   // =====================================================
   // LOAD ENROLLMENT
   // =====================================================
 
-  private loadEnrollment(
+  private loadEnrollment(traineeId: number): void {
+    console.log('Loading enrollments for trainee:', traineeId);
 
-    traineeId: number
+    this.api.getEnrollmentsByTrainee(traineeId).subscribe({
+      next: (enrollments: EnrollmentDto[]) => {
+        if (!enrollments || enrollments.length === 0) {
+          this.error.set('لا توجد تسجيلات للمتدرب.');
+          this.loading.set(false);
+          return;
+        }
 
-  ): void {
+        const activeEnrollment =
+          enrollments.find(e => {
+            const status = String(
+              e.completionStatus ?? ''
+            ).toLowerCase();
 
-    console.log(
-      '📚 Loading enrollments for trainee:',
-      traineeId
-    );
+            return status === 'active' || status === 'inprogress';
+          }) ?? enrollments[0];
 
-    this.api
-      .getEnrollmentsByTrainee(
-        traineeId
-      )
-      .subscribe({
+        this.enrollment.set(activeEnrollment);
+        this.enrollmentId.set(
+          Number(activeEnrollment.enrollmentId)
+        );
 
-        next:
-          (
-            enrollments: EnrollmentDto[]
-          ) => {
+        const batchId = Number(activeEnrollment.batchId);
+        this.batchId.set(batchId);
 
-            console.log(
-              '✅ Enrollments:',
-              enrollments
-            );
+        this.loadBatchSessions(batchId);
+        this.loadBatchAndProgram(batchId);
+      },
 
-            if (
-              !enrollments ||
-              enrollments.length === 0
-            ) {
-
-              this.error.set(
-                'لا توجد تسجيلات للمتدرب.'
-              );
-
-              this.loading.set(false);
-
-              return;
-            }
-
-            const activeEnrollment =
-              enrollments.find(
-                e => {
-
-                  const status =
-                    String(
-                      e.completionStatus ?? ''
-                    ).toLowerCase();
-
-                  return (
-                    status === 'active' ||
-                    status === 'inprogress'
-                  );
-
-                }
-              ) ||
-              enrollments[0];
-
-            console.log(
-              '✅ Selected enrollment:',
-              activeEnrollment
-            );
-
-            this.enrollment.set(
-              activeEnrollment
-            );
-
-            this.enrollmentId.set(
-              Number(
-                activeEnrollment.enrollmentId
-              )
-            );
-
-            const batchId =
-              Number(
-                activeEnrollment.batchId
-              );
-
-            this.batchId.set(
-              batchId
-            );
-
-            this.loadBatchSessions(
-              batchId
-            );
-
-            this.loadBatchAndProgram(
-              batchId
-            );
-
-          },
-
-        error:
-          error => {
-
-            console.error(
-              '❌ Enrollment API Error:',
-              error
-            );
-
-            this.error.set(
-              'تعذر تحميل تسجيل المتدرب.'
-            );
-
-            this.loading.set(false);
-
-          }
-
-      });
-
+      error: error => {
+        console.error('Enrollment API Error:', error);
+        this.error.set('تعذر تحميل تسجيل المتدرب.');
+        this.loading.set(false);
+      }
+    });
   }
-
-
 
   // =====================================================
   // LOAD BATCH
   // =====================================================
 
-  private loadBatchAndProgram(
-
-    batchId: number
-
-  ): void {
-
-    if (
-      !batchId ||
-      Number.isNaN(Number(batchId))
-    ) {
-
-      console.error(
-        '❌ Invalid batchId:',
-        batchId
-      );
-
-      this.error.set(
-        'لم يتم العثور على الدفعة.'
-      );
-
+  private loadBatchAndProgram(batchId: number): void {
+    if (!batchId || Number.isNaN(batchId)) {
+      this.error.set('لم يتم العثور على الدفعة.');
       this.loading.set(false);
-
       return;
     }
 
-    console.log(
-      '📦 Loading batch:',
-      batchId
-    );
+    this.api.getBatch(batchId).subscribe({
+      next: batch => {
+        const programId = Number(batch.programId);
 
-    this.api
-      .getBatch(batchId)
-      .subscribe({
+        if (!programId || Number.isNaN(programId)) {
+          this.error.set(
+            'لم يتم العثور على البرنامج المرتبط بالدفعة.'
+          );
+          this.loading.set(false);
+          return;
+        }
 
-        next:
-          batch => {
+        this.programId.set(programId);
+        this.loadProgramData(programId);
+      },
 
-            console.log(
-              '✅ Batch:',
-              batch
-            );
-
-            const programId =
-              Number(
-                batch.programId
-              );
-
-            if (
-              !programId ||
-              Number.isNaN(programId)
-            ) {
-
-              console.error(
-                '❌ Invalid programId from batch:',
-                batch
-              );
-
-              this.error.set(
-                'لم يتم العثور على البرنامج المرتبط بالدفعة.'
-              );
-
-              this.loading.set(false);
-
-              return;
-            }
-
-            this.programId.set(
-              programId
-            );
-
-            console.log(
-              '🎯 Program ID:',
-              programId
-            );
-
-            this.loadProgramData(
-              programId
-            );
-
-          },
-
-        error:
-          error => {
-
-            console.error(
-              '❌ Batch API Error:',
-              error
-            );
-
-            this.error.set(
-              'تعذر تحميل بيانات الدفعة.'
-            );
-
-            this.loading.set(false);
-
-          }
-
-      });
-
+      error: error => {
+        console.error('Batch API Error:', error);
+        this.error.set('تعذر تحميل بيانات الدفعة.');
+        this.loading.set(false);
+      }
+    });
   }
-
-
 
   // =====================================================
   // LOAD PROGRAM
   // =====================================================
 
-  loadProgramData(
+  loadProgramData(programId?: number): void {
+    const id = programId ?? this.programId();
 
-    programId?: number
-
-  ): void {
-
-    const id =
-      programId ??
-      this.programId();
-
-    if (
-      !id ||
-      Number.isNaN(Number(id))
-    ) {
-
-      console.error(
-        '❌ Program ID is invalid:',
-        id
-      );
-
-      this.error.set(
-        'لم يتم العثور على معرف البرنامج.'
-      );
-
+    if (!id || Number.isNaN(Number(id))) {
+      this.error.set('لم يتم العثور على معرف البرنامج.');
       this.loading.set(false);
-
       return;
     }
 
-    this.programId.set(
-      Number(id)
-    );
+    this.programId.set(Number(id));
 
-    console.log(
-      '🎓 Loading Program:',
-      id
-    );
+    this.api.getProgram(Number(id)).subscribe({
+      next: program => {
+        this.program.set(program);
+        this.loadModules();
+      },
 
-    this.api
-      .getProgram(Number(id))
-      .subscribe({
-
-        next:
-          program => {
-
-            console.log(
-              '✅ Program loaded:',
-              program
-            );
-
-            this.program.set(
-              program
-            );
-
-            this.loadModules();
-
-          },
-
-        error:
-          error => {
-
-            console.error(
-              '❌ Program API Error:',
-              error
-            );
-
-            this.error.set(
-              'تعذر تحميل بيانات البرنامج.'
-            );
-
-            this.loading.set(false);
-
-          }
-
-      });
-
+      error: error => {
+        console.error('Program API Error:', error);
+        this.error.set('تعذر تحميل بيانات البرنامج.');
+        this.loading.set(false);
+      }
+    });
   }
-
-
 
   // =====================================================
   // LOAD MODULES
   // =====================================================
 
   private loadModules(): void {
+    const programId = this.programId();
 
-    const programId =
-      this.programId();
-
-    if (
-      !programId ||
-      Number.isNaN(Number(programId))
-    ) {
-
-      console.error(
-        '❌ Cannot load modules. Program ID missing.'
-      );
-
+    if (!programId) {
       this.loading.set(false);
-
       return;
     }
 
-    console.log(
-      '📚 Loading modules for program:',
-      programId
-    );
+    this.api.getProgramModules(programId).subscribe({
+      next: (modules: ModuleDto[]) => {
+        if (!modules || modules.length === 0) {
+          this.modules.set([]);
+          this.loadModuleProgress();
+          return;
+        }
 
-    this.api
-      .getProgramModules(programId)
-      .subscribe({
+        this.loadModuleLessons(modules);
+      },
 
-        next:
-          (
-            modules: ModuleDto[]
-          ) => {
-
-            console.log(
-              '✅ Modules:',
-              modules
-            );
-
-            if (
-              !modules ||
-              modules.length === 0
-            ) {
-
-              this.modules.set([]);
-
-              this.loadModuleProgress();
-
-              return;
-            }
-
-            this.loadModuleLessons(
-              modules
-            );
-
-          },
-
-        error:
-          error => {
-
-            console.error(
-              '❌ Modules API Error:',
-              error
-            );
-
-            this.modules.set([]);
-
-            this.loadModuleProgress();
-
-          }
-
-      });
-
+      error: error => {
+        console.error('Modules API Error:', error);
+        this.modules.set([]);
+        this.loadModuleProgress();
+      }
+    });
   }
-
-
 
   // =====================================================
   // LOAD LESSONS
   // =====================================================
 
-  private loadModuleLessons(
-
-    modules: ModuleDto[]
-
-  ): void {
-
-    if (
-      !modules ||
-      modules.length === 0
-    ) {
-
+  private loadModuleLessons(modules: ModuleDto[]): void {
+    if (!modules.length) {
       this.modules.set([]);
-
       this.loadModuleProgress();
-
       return;
     }
 
-    const requests =
-      modules.map(
-        module =>
-          this.api.getModuleLessons(
-            module.moduleId
-          )
-      );
+    const requests = modules.map(module =>
+      this.api.getModuleLessons(module.moduleId)
+    );
 
-    import('rxjs')
-      .then(({ forkJoin }) => {
+    import('rxjs').then(({ forkJoin }) => {
+      forkJoin(requests).subscribe({
+        next: lessonsData => {
+          const result: ModuleWithLessonsDto[] =
+            modules.map((module, index) => ({
+              ...module,
+              progressPercentage: 0,
+              prerequisitePassed: true,
+              isLocked: false,
+              lessons: (lessonsData[index] ?? []).map(lesson => ({
+                ...lesson,
+                progressPercentage: 0
+              }))
+            }));
 
-        forkJoin(requests)
-          .subscribe({
+          this.modules.set(result);
+          this.loadModuleProgress();
+        },
 
-            next:
-              lessonsData => {
+        error: error => {
+          console.error('Lessons API Error:', error);
 
-                const result:
-                  ModuleWithLessonsDto[] =
-                    modules.map(
-                      (
-                        module,
-                        index
-                      ) => {
+          this.modules.set(
+            modules.map(module => ({
+              ...module,
+              progressPercentage: 0,
+              prerequisitePassed: true,
+              isLocked: false,
+              lessons: []
+            }))
+          );
 
-                        const lessons =
-                          lessonsData[index] ?? [];
-
-                        return {
-
-                          ...module,
-
-                          progressPercentage:
-                            0,
-
-                          prerequisitePassed:
-                            true,
-
-                          isLocked:
-                            false,
-
-                          lessons:
-                            lessons.map(
-                              lesson => ({
-
-                                ...lesson,
-
-                                progressPercentage:
-                                  0
-
-                              })
-                            )
-
-                        };
-
-                      }
-                    );
-
-                this.modules.set(
-                  result
-                );
-
-                console.log(
-                  '✅ Modules + Lessons:',
-                  result
-                );
-
-                this.loadModuleProgress();
-
-              },
-
-            error:
-              error => {
-
-                console.error(
-                  '❌ Lessons API Error:',
-                  error
-                );
-
-                const result =
-                  modules.map(
-                    module => ({
-
-                      ...module,
-
-                      progressPercentage:
-                        0,
-
-                      prerequisitePassed:
-                        true,
-
-                      isLocked:
-                        false,
-
-                      lessons:
-                        []
-
-                    })
-                  );
-
-                this.modules.set(
-                  result
-                );
-
-                this.loadModuleProgress();
-
-              }
-
-          });
-
+          this.loadModuleProgress();
+        }
       });
-
+    });
   }
 
   // =====================================================
@@ -1256,8 +487,7 @@ export class TraineeProgram implements OnInit {
   private loadModuleProgress(): void {
     const traineeId = this.traineeId();
 
-    if (!traineeId || Number.isNaN(Number(traineeId))) {
-      console.warn('⚠️ traineeId missing.');
+    if (!traineeId) {
       this.calculateStats();
       this.loading.set(false);
       return;
@@ -1265,13 +495,14 @@ export class TraineeProgram implements OnInit {
 
     this.api.getModuleProgress(traineeId).subscribe({
       next: (progressData: TraineeModuleProgressDto[]) => {
-        console.log('✅ Module Progress:', progressData);
         this.moduleProgress.set(progressData ?? []);
         this.updateModulesWithProgress(progressData ?? []);
         this.loadEnrollmentProgress();
       },
+
       error: error => {
-        console.error('❌ Module Progress API Error:', error);
+        console.error('Module Progress API Error:', error);
+        this.moduleProgress.set([]);
         this.calculateStats();
         this.loading.set(false);
       }
@@ -1279,36 +510,7 @@ export class TraineeProgram implements OnInit {
   }
 
   // =====================================================
-  // LOAD ENROLLMENT PROGRESS
-  // =====================================================
-
-  private loadEnrollmentProgress(): void {
-    const enrollmentId = this.enrollmentId();
-
-    if (!enrollmentId || Number.isNaN(Number(enrollmentId))) {
-      console.warn('⚠️ Enrollment ID missing.');
-      this.calculateStats();
-      this.loading.set(false);
-      return;
-    }
-
-    this.api.getEnrollmentProgress(enrollmentId).subscribe({
-      next: (summary: ProgressSummaryDto) => {
-        console.log('✅ Progress Summary:', summary);
-        this.progress.set(summary);
-        this.calculateStats();
-        this.loading.set(false);
-      },
-      error: error => {
-        console.error('❌ Progress Summary Error:', error);
-        this.calculateStats();
-        this.loading.set(false);
-      }
-    });
-  }
-
-  // =====================================================
-  // UPDATE MODULE PROGRESS
+  // UPDATE MODULES WITH PROGRESS
   // =====================================================
 
   private updateModulesWithProgress(
@@ -1316,7 +518,7 @@ export class TraineeProgram implements OnInit {
   ): void {
     const updatedModules = this.modules().map(module => {
       const progress = progressData.find(
-        p => p.moduleId === module.moduleId
+        p => Number(p.moduleId) === Number(module.moduleId)
       );
 
       let percentage = 0;
@@ -1326,12 +528,8 @@ export class TraineeProgram implements OnInit {
 
         if (status === 'Completed') {
           percentage = 100;
-        } else if (
-          status === 'InProgress'
-        ) {
+        } else if (status === 'InProgress') {
           percentage = 50;
-        } else {
-          percentage = 0;
         }
       }
 
@@ -1356,69 +554,39 @@ export class TraineeProgram implements OnInit {
       };
     });
 
-    this.modules.set(updatedModules);
-    this.checkModulePrerequisites();
+    this.modules.set(this.restoreLocallyCompletedLessons(updatedModules));
   }
 
   // =====================================================
-  // PREREQUISITES
+  // LOAD ENROLLMENT PROGRESS
   // =====================================================
 
-  private checkModulePrerequisites(): void {
-    const traineeId = this.traineeId();
+  private loadEnrollmentProgress(): void {
+    const enrollmentId = this.enrollmentId();
 
-    if (!traineeId) {
+    if (!enrollmentId) {
+      this.calculateStats();
+      this.loading.set(false);
       return;
     }
 
-    const modules = this.modules();
+    this.api.getEnrollmentProgress(enrollmentId).subscribe({
+      next: progress => {
+        this.progress.set(progress);
+        this.calculateStats();
+        this.loading.set(false);
+      },
 
-    modules.forEach((module, index) => {
-      if (index === 0) {
-        this.updateModuleLock(module.moduleId, true);
-        return;
+      error: error => {
+        console.error('Enrollment Progress API Error:', error);
+        this.calculateStats();
+        this.loading.set(false);
       }
-
-      this.api
-        .checkPrerequisite(module.moduleId, traineeId)
-        .subscribe({
-          next: passed => {
-            this.updateModuleLock(module.moduleId, passed);
-          },
-          error: error => {
-            console.warn(
-              `⚠️ Prerequisite API failed for module ${module.moduleId}`,
-              error
-            );
-            this.updateModuleLock(module.moduleId, true);
-          }
-        });
     });
   }
 
   // =====================================================
-  // UPDATE LOCK
-  // =====================================================
-
-  private updateModuleLock(
-    moduleId: number,
-    passed: boolean
-  ): void {
-    this.modules.update(modules =>
-      modules.map(module =>
-        module.moduleId === moduleId
-          ? {
-              ...module,
-              prerequisitePassed: passed,
-              isLocked: !passed
-            }
-          : module
-      )
-    );
-  }
-
-  // =====================================================
-  // CALCULATE STATS
+  // CALCULATE STATISTICS
   // =====================================================
 
   private calculateStats(): void {
@@ -1444,16 +612,13 @@ export class TraineeProgram implements OnInit {
       0
     );
 
-    let overallProgress = 0;
     const summary = this.progress();
 
-    if (summary) {
-      overallProgress = Number(summary.progressPercentage ?? 0);
-    } else if (totalModules > 0) {
-      overallProgress = Math.round(
-        (completedModules / totalModules) * 100
-      );
-    }
+    const overallProgress = summary
+      ? Number(summary.progressPercentage ?? 0)
+      : totalModules > 0
+        ? Math.round((completedModules / totalModules) * 100)
+        : 0;
 
     this.stats.set({
       totalModules,
@@ -1467,25 +632,15 @@ export class TraineeProgram implements OnInit {
     });
   }
 
-  // =====================================================
-  // TOTAL DAYS
-  // =====================================================
-
   private calculateTotalDays(): number {
     const durationHours = Number(
       this.program()?.durationHours ?? 0
     );
 
-    if (durationHours > 0) {
-      return Math.ceil(durationHours / 8);
-    }
-
-    return this.modules().length * 2;
+    return durationHours > 0
+      ? Math.ceil(durationHours / 8)
+      : this.modules().length * 2;
   }
-
-  // =====================================================
-  // TOTAL ASSIGNMENTS
-  // =====================================================
 
   private calculateTotalAssignments(): number {
     return this.modules().reduce(
@@ -1494,29 +649,11 @@ export class TraineeProgram implements OnInit {
     );
   }
 
-  // =====================================================
-  // EXPERIENCE
-  // =====================================================
-
-  private calculateExperienceYears(
-    progress: number
-  ): number {
-    if (progress >= 100) {
-      return 10;
-    }
-
-    if (progress >= 75) {
-      return 7;
-    }
-
-    if (progress >= 50) {
-      return 5;
-    }
-
-    if (progress >= 25) {
-      return 3;
-    }
-
+  private calculateExperienceYears(progress: number): number {
+    if (progress >= 100) return 10;
+    if (progress >= 75) return 7;
+    if (progress >= 50) return 5;
+    if (progress >= 25) return 3;
     return 1;
   }
 
@@ -1524,20 +661,16 @@ export class TraineeProgram implements OnInit {
   // LOAD BATCH SESSIONS
   // =====================================================
 
-  private loadBatchSessions(
-    batchId: number
-  ): void {
-    if (!batchId || Number.isNaN(Number(batchId))) {
-      return;
-    }
+  private loadBatchSessions(batchId: number): void {
+    if (!batchId || Number.isNaN(batchId)) return;
 
     this.api.getSessionsByBatch(batchId).subscribe({
       next: sessions => {
-        console.log('✅ Batch Sessions:', sessions);
         this.sessions.set(sessions ?? []);
       },
+
       error: error => {
-        console.error('❌ Sessions API Error:', error);
+        console.error('Sessions API Error:', error);
         this.sessions.set([]);
       }
     });
@@ -1550,8 +683,18 @@ export class TraineeProgram implements OnInit {
   private isVideoMaterial(
     material: TrainingMaterialDto
   ): boolean {
+    const rawType = material.fileType as string | number;
+
+    if (
+      rawType === 1 ||
+      String(rawType).toLowerCase() === 'video'
+    ) {
+      return true;
+    }
+
     const fileUrl = String(material.fileUrl ?? '')
       .split('?')[0]
+      .split('#')[0]
       .toLowerCase();
 
     return /\.(mp4|webm|mov|m4v|ogg)$/i.test(fileUrl);
@@ -1564,15 +707,9 @@ export class TraineeProgram implements OnInit {
       this.isVideoMaterial(material)
     );
 
-    if (videos.length === 0) {
-      return null;
-    }
+    if (!videos.length) return null;
 
-    /*
-     * If there is more than one video,
-     * use the latest uploaded video.
-     */
-    return videos.sort(
+    return [...videos].sort(
       (a, b) =>
         new Date(b.uploadDate).getTime() -
         new Date(a.uploadDate).getTime()
@@ -1581,7 +718,6 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // VIEW LESSON
-  // OPEN VIDEO INSIDE SAME PAGE
   // =====================================================
 
   viewLesson(
@@ -1599,10 +735,7 @@ export class TraineeProgram implements OnInit {
     const lessonId = Number(lesson.lessonId);
 
     if (!lessonId || Number.isNaN(lessonId)) {
-      this.showNotification(
-        'معرف الدرس غير صالح.',
-        'error'
-      );
+      this.showNotification('معرف الدرس غير صالح.', 'error');
       return;
     }
 
@@ -1612,20 +745,23 @@ export class TraineeProgram implements OnInit {
     this.lessonViewerVisible.set(false);
     this.lessonViewerUrl.set(null);
 
-    /*
-     * Every time a new lesson is opened,
-     * its video completion state starts as false.
-     */
-    this.lessonVideoCompleted.set(false);
+    this.lessonVideoCompleted.set(
+      lesson.progressPercentage === 100
+    );
     this.lessonSidebarTab.set('notes');
+    this.lessonNote.set('');
+    this.lessonRating.set(0);
+    this.lessonFeedbackExists.set(false);
 
-    /*
-     * Get the actual training materials
-     * uploaded for this lesson.
-     */
+    this.loadLessonFeedback(lessonId);
+
     this.api.getTrainingMaterials(lessonId).subscribe({
-      next: materials => {
-        console.log('✅ Lesson Training Materials:', materials);
+      next: (materials: TrainingMaterialDto[]) => {
+        if (
+          Number(this.selectedLesson()?.lessonId) !== lessonId
+        ) {
+          return;
+        }
 
         this.lessonMaterials.update(current => ({
           ...current,
@@ -1640,22 +776,9 @@ export class TraineeProgram implements OnInit {
           return;
         }
 
-        /*
-         * Find the real video based on
-         * the file extension.
-         *
-         * We intentionally do NOT rely on
-         * fileType because some existing records
-         * have incorrect fileType values.
-         */
         const videoMaterial = this.findVideoMaterial(materials);
 
-        if (!videoMaterial || !videoMaterial.fileUrl) {
-          console.warn(
-            '⚠️ No video material found:',
-            materials
-          );
-
+        if (!videoMaterial?.fileUrl) {
           this.showNotification(
             'لا يوجد فيديو مرفوع لهذا الدرس حاليًا.',
             'error'
@@ -1675,17 +798,11 @@ export class TraineeProgram implements OnInit {
           return;
         }
 
-        console.log('🎥 Video Material:', videoMaterial);
-        console.log('🎬 Video URL:', videoUrl);
-
         this.openLessonViewer(videoUrl, lesson);
       },
-      error: error => {
-        console.error(
-          '❌ Training Material API Error:',
-          error
-        );
 
+      error: error => {
+        console.error('Training Material API Error:', error);
         this.showNotification(
           'تعذر تحميل فيديو الدرس حاليًا.',
           'error'
@@ -1696,7 +813,6 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // OPEN LESSON VIEWER
-  // SAME PAGE
   // =====================================================
 
   private openLessonViewer(
@@ -1711,30 +827,16 @@ export class TraineeProgram implements OnInit {
       return;
     }
 
-    console.log(
-      '🎬 Opening lesson video inside same page:',
-      url
-    );
-
     this.selectedLesson.set(lesson);
     this.lessonViewerTitle.set(lesson.title || 'الدرس');
 
-    /*
-     * Video uses a normal URL context,
-     * not an iframe ResourceUrl context.
-     */
     this.lessonViewerUrl.set(
       this.sanitizer.bypassSecurityTrustUrl(url)
     );
 
-    /*
-     * The video has just been opened.
-     *
-     * Notes are available immediately,
-     * but rating will remain unavailable
-     * until the video fires the "ended" event.
-     */
-    this.lessonVideoCompleted.set(false);
+    this.lessonVideoCompleted.set(
+      lesson.progressPercentage === 100
+    );
     this.lessonViewerVisible.set(true);
     this.lessonSidebarTab.set('notes');
     this.showLessonSidebar.set(true);
@@ -1742,30 +844,14 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // VIDEO ENDED
-  // ENABLE RATING AFTER FULL VIDEO WATCH
   // =====================================================
 
   onLessonVideoEnded(): void {
     const lesson = this.selectedLesson();
 
-    if (!lesson) {
-      return;
-    }
+    if (!lesson) return;
 
-    console.log(
-      '🎬 Lesson video completed:',
-      lesson.lessonId
-    );
-
-    /*
-     * Mark the video as fully watched.
-     */
     this.lessonVideoCompleted.set(true);
-
-    /*
-     * Mark the lesson as viewed/completed
-     * only after the video reaches the end.
-     */
     this.markLessonAsViewed(lesson.lessonId);
 
     this.showNotification(
@@ -1776,17 +862,14 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // MARK LESSON AS VIEWED
-  // FRONTEND ONLY
   // =====================================================
 
-  private markLessonAsViewed(
-    lessonId: number
-  ): void {
+  private markLessonAsViewed(lessonId: number): void {
     const id = Number(lessonId);
 
-    if (!id || Number.isNaN(id)) {
-      return;
-    }
+    if (!id || Number.isNaN(id)) return;
+
+    this.saveLocallyCompletedLesson(id);
 
     this.modules.update(modules =>
       modules.map(module => ({
@@ -1802,12 +885,19 @@ export class TraineeProgram implements OnInit {
       }))
     );
 
-    this.calculateStats();
+    const selectedLesson = this.selectedLesson();
 
-    console.log(
-      '✅ Lesson marked as viewed:',
-      id
-    );
+    if (
+      selectedLesson &&
+      Number(selectedLesson.lessonId) === id
+    ) {
+      this.selectedLesson.set({
+        ...selectedLesson,
+        progressPercentage: 100
+      });
+    }
+
+    this.calculateStats();
   }
 
   // =====================================================
@@ -1819,8 +909,6 @@ export class TraineeProgram implements OnInit {
     module: ModuleWithLessonsDto
   ): void {
     if (module.isLocked) {
-      console.warn('🔒 Module is locked');
-
       this.showNotification(
         'هذا المحتوى غير متاح حاليًا.',
         'error'
@@ -1828,9 +916,6 @@ export class TraineeProgram implements OnInit {
       return;
     }
 
-    /*
-     * Lesson must be watched first.
-     */
     if (lesson.progressPercentage !== 100) {
       this.showNotification(
         'يجب مشاهدة الدرس أولاً قبل تحميل الفيديو.',
@@ -1842,24 +927,12 @@ export class TraineeProgram implements OnInit {
     const lessonId = Number(lesson.lessonId);
 
     if (!lessonId || Number.isNaN(lessonId)) {
-      this.showNotification(
-        'تعذر تحديد الدرس.',
-        'error'
-      );
+      this.showNotification('تعذر تحديد الدرس.', 'error');
       return;
     }
 
-    /*
-     * Get the same training materials used
-     * by "مشاهدة الدرس".
-     */
     this.api.getTrainingMaterials(lessonId).subscribe({
-      next: materials => {
-        console.log(
-          '✅ Lesson Training Materials for Download:',
-          materials
-        );
-
+      next: (materials: TrainingMaterialDto[]) => {
         if (!materials || materials.length === 0) {
           this.showNotification(
             'لا يوجد فيديو متاح لهذا الدرس.',
@@ -1873,91 +946,69 @@ export class TraineeProgram implements OnInit {
           [lessonId]: materials
         }));
 
-        /*
-         * Find the exact same video selected
-         * by viewLesson().
-         *
-         * We use the file extension instead of
-         * fileType because some existing records
-         * have incorrect fileType values.
-         */
         const videoMaterial = this.findVideoMaterial(materials);
 
-        if (!videoMaterial || !videoMaterial.fileUrl) {
-          console.warn(
-            '⚠️ No video material found:',
-            materials
-          );
-
+        if (!videoMaterial) {
           this.showNotification(
-            'لا يوجد فيديو مرفوع لهذا الدرس حاليًا.',
+            'لا يوجد فيديو متاح للتحميل.',
             'error'
           );
           return;
         }
 
-        console.log(
-          '🎥 Video Material for Download:',
-          videoMaterial
-        );
+        const materialId = Number(videoMaterial.materialId);
 
-        const videoUrl = this.api.getFileUrl(
-          videoMaterial.fileUrl
-        );
-
-        if (!videoUrl) {
+        if (!materialId || Number.isNaN(materialId)) {
           this.showNotification(
-            'رابط فيديو الدرس غير متوفر حاليًا.',
+            'معرف المادة التدريبية غير صالح.',
             'error'
           );
           return;
         }
 
-        console.log(
-          '⬇️ Video Download URL:',
-          videoUrl
-        );
+        this.api.getTrainingMaterialDownloadUrl(materialId).subscribe({
+          next: (response: {
+            DownloadUrl?: string;
+            downloadUrl?: string;
+          }) => {
+            const downloadUrl =
+              response?.downloadUrl ?? response?.DownloadUrl;
 
-        /*
-         * Use the original video filename.
-         * Example:
-         * 40a3b138-e6c8-40b9-ba0c-cb9c71ccf324.mp4
-         */
-        const fileName =
-          videoMaterial.fileUrl
-            ?.split('/')
-            .pop()
-            ?.split('?')[0]
-          || `lesson-${lessonId}.mp4`;
+            if (!downloadUrl) {
+              this.showNotification(
+                'رابط تحميل المادة التدريبية غير متوفر.',
+                'error'
+              );
+              return;
+            }
 
-        /*
-         * Create a temporary download link
-         * for the exact same video used by
-         * the lesson viewer.
-         */
-        const link = document.createElement('a');
+            const fullUrl = this.api.getFileUrl(downloadUrl);
 
-        link.href = videoUrl;
-        link.download = fileName;
-        link.style.display = 'none';
+            window.open(fullUrl, '_blank');
+          },
 
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+          error: (error: unknown) => {
+            console.error(
+              'Training material download failed:',
+              error
+            );
 
-        this.showNotification(
-          'بدأ تحميل فيديو الدرس بنجاح.',
-          'success'
-        );
+            this.showNotification(
+              'حدث خطأ أثناء تحميل المادة التدريبية.',
+              'error'
+            );
+          }
+        });
       },
-      error: error => {
+
+      error: (error: unknown) => {
         console.error(
-          '❌ Training Material API Error:',
+          'Lesson materials loading failed:',
           error
         );
 
         this.showNotification(
-          'تعذر تحميل فيديو الدرس حاليًا.',
+          'تعذر تحميل مواد الدرس حاليًا.',
           'error'
         );
       }
@@ -1966,8 +1017,6 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // OPEN LESSON NOTES
-  // NOTES ARE AVAILABLE IMMEDIATELY AFTER
-  // OPENING THE VIDEO
   // =====================================================
 
   openLessonNotes(
@@ -1982,15 +1031,18 @@ export class TraineeProgram implements OnInit {
       return;
     }
 
-    /*
-     * Notes do not require the video to be completed.
-     * They are available once the lesson has been opened.
-     */
     this.selectedLesson.set(lesson);
     this.selectedModule.set(module);
     this.lessonSidebarTab.set('notes');
     this.lessonViewerVisible.set(false);
     this.lessonViewerUrl.set(null);
+
+    this.lessonVideoCompleted.set(
+      lesson.progressPercentage === 100
+    );
+    this.lessonNote.set('');
+    this.lessonRating.set(0);
+    this.lessonFeedbackExists.set(false);
 
     this.loadLessonFeedback(lesson.lessonId);
     this.showLessonSidebar.set(true);
@@ -1998,7 +1050,6 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // OPEN LESSON RATING
-  // RATING IS AVAILABLE ONLY AFTER VIDEO ENDS
   // =====================================================
 
   openLessonRating(
@@ -2013,22 +1064,26 @@ export class TraineeProgram implements OnInit {
       return;
     }
 
-    /*
-     * Rating is only available after the
-     * current video has been watched until the end.
-     */
-    if (!this.lessonVideoCompleted()) {
+    const completed =
+      this.lessonVideoCompleted() ||
+      lesson.progressPercentage === 100;
+
+    if (!completed) {
       this.showRatingTooltip(lesson.lessonId);
       return;
     }
 
     this.ratingTooltipLessonId.set(null);
-
     this.selectedLesson.set(lesson);
     this.selectedModule.set(module);
+    this.lessonVideoCompleted.set(true);
     this.lessonSidebarTab.set('rating');
     this.lessonViewerVisible.set(false);
     this.lessonViewerUrl.set(null);
+
+    this.lessonNote.set('');
+    this.lessonRating.set(0);
+    this.lessonFeedbackExists.set(false);
 
     this.loadLessonFeedback(lesson.lessonId);
     this.showLessonSidebar.set(true);
@@ -2038,45 +1093,40 @@ export class TraineeProgram implements OnInit {
   // LOAD LESSON FEEDBACK
   // =====================================================
 
-  private loadLessonFeedback(
-    lessonId: number
-  ): void {
+  private loadLessonFeedback(lessonId: number): void {
     const id = Number(lessonId);
 
-    if (!id || Number.isNaN(id)) {
-      console.warn(
-        '⚠️ Invalid lesson ID:',
-        lessonId
-      );
-      return;
-    }
+    if (!id || Number.isNaN(id)) return;
 
     this.lessonFeedbackLoading.set(true);
 
     this.api.getLessonFeedback(id).subscribe({
       next: feedback => {
-        console.log('✅ Lesson Feedback:', feedback);
+        if (
+          Number(this.selectedLesson()?.lessonId) !== id
+        ) {
+          return;
+        }
 
         this.lessonFeedbackExists.set(true);
         this.lessonNote.set(feedback.note ?? '');
-        this.lessonRating.set(feedback.rating ?? 0);
+        this.lessonRating.set(Number(feedback.rating ?? 0));
         this.lessonFeedbackLoading.set(false);
       },
+
       error: error => {
-        console.log(
-          'ℹ️ No existing feedback for lesson:',
-          id
-        );
+        if (
+          Number(this.selectedLesson()?.lessonId) !== id
+        ) {
+          return;
+        }
 
         if (error?.status === 404) {
           this.lessonFeedbackExists.set(false);
           this.lessonNote.set('');
           this.lessonRating.set(0);
         } else {
-          console.error(
-            '❌ Lesson Feedback API Error:',
-            error
-          );
+          console.error('Lesson Feedback API Error:', error);
         }
 
         this.lessonFeedbackLoading.set(false);
@@ -2093,20 +1143,13 @@ export class TraineeProgram implements OnInit {
   ): void {
     const lesson = this.selectedLesson();
 
-    if (!lesson) {
-      return;
-    }
+    if (!lesson) return;
 
-    /*
-     * Notes are available immediately.
-     *
-     * Rating requires the video to have
-     * reached the end.
-     */
-    if (
-      tab === 'rating' &&
-      !this.lessonVideoCompleted()
-    ) {
+    const completed =
+      this.lessonVideoCompleted() ||
+      lesson.progressPercentage === 100;
+
+    if (tab === 'rating' && !completed) {
       this.showNotification(
         'يجب إكمال مشاهدة الفيديو أولاً قبل تقييم الدرس.',
         'error'
@@ -2139,31 +1182,20 @@ export class TraineeProgram implements OnInit {
   // UPDATE NOTE
   // =====================================================
 
-  updateLessonNote(
-    event: Event
-  ): void {
+  updateLessonNote(event: Event): void {
     const textarea = event.target as HTMLTextAreaElement;
     this.lessonNote.set(textarea.value);
   }
 
   // =====================================================
   // SAVE NOTE
-  // NOTES CAN BE SAVED IMMEDIATELY
-  // AFTER OPENING THE LESSON
   // =====================================================
 
   saveLessonNote(): void {
     const lesson = this.selectedLesson();
 
-    if (!lesson) {
-      return;
-    }
+    if (!lesson) return;
 
-    /*
-     * No video completion check here.
-     * Notes can be saved immediately after
-     * opening the lesson.
-     */
     const note = this.lessonNote().trim();
     const rating = this.lessonRating();
 
@@ -2176,7 +1208,7 @@ export class TraineeProgram implements OnInit {
     }
 
     const dto = {
-      note: note,
+      note,
       rating: rating > 0 ? rating : null
     };
 
@@ -2186,27 +1218,18 @@ export class TraineeProgram implements OnInit {
 
     request.subscribe({
       next: feedback => {
-        console.log(
-          '✅ Lesson feedback saved:',
-          feedback
-        );
-
         this.lessonFeedbackExists.set(true);
         this.lessonNote.set(feedback.note ?? '');
-        this.lessonRating.set(feedback.rating ?? 0);
+        this.lessonRating.set(Number(feedback.rating ?? 0));
 
         this.showNotification(
           'تم حفظ ملاحظتك بنجاح.',
           'success'
         );
-
-        this.closeLessonSidebar();
       },
+
       error: error => {
-        console.error(
-          '❌ Save Lesson Feedback Error:',
-          error
-        );
+        console.error('Save Lesson Feedback Error:', error);
 
         if (error?.status === 409) {
           this.showNotification(
@@ -2227,17 +1250,14 @@ export class TraineeProgram implements OnInit {
   // SELECT RATING
   // =====================================================
 
-  selectLessonRating(
-    rating: number
-  ): void {
+  selectLessonRating(rating: number): void {
     const lesson = this.selectedLesson();
 
-    /*
-     * Extra protection:
-     * Do not allow rating selection before
-     * the video has ended.
-     */
-    if (lesson && !this.lessonVideoCompleted()) {
+    const completed =
+      this.lessonVideoCompleted() ||
+      lesson?.progressPercentage === 100;
+
+    if (lesson && !completed) {
       this.showNotification(
         'يجب إكمال مشاهدة الفيديو أولاً قبل تقييم الدرس.',
         'error'
@@ -2256,15 +1276,13 @@ export class TraineeProgram implements OnInit {
     const lesson = this.selectedLesson();
     const rating = this.lessonRating();
 
-    if (!lesson) {
-      return;
-    }
+    if (!lesson) return;
 
-    /*
-     * Rating can only be saved after
-     * the video has completely ended.
-     */
-    if (!this.lessonVideoCompleted()) {
+    const completed =
+      this.lessonVideoCompleted() ||
+      lesson.progressPercentage === 100;
+
+    if (!completed) {
       this.showNotification(
         'يجب إكمال مشاهدة الفيديو أولاً قبل تقييم الدرس.',
         'error'
@@ -2283,8 +1301,8 @@ export class TraineeProgram implements OnInit {
     const note = this.lessonNote().trim();
 
     const dto = {
-      note: note ? note : null,
-      rating: rating
+      note: note || null,
+      rating
     };
 
     const request = this.lessonFeedbackExists()
@@ -2293,14 +1311,9 @@ export class TraineeProgram implements OnInit {
 
     request.subscribe({
       next: feedback => {
-        console.log(
-          '✅ Lesson rating saved:',
-          feedback
-        );
-
         this.lessonFeedbackExists.set(true);
         this.lessonNote.set(feedback.note ?? '');
-        this.lessonRating.set(feedback.rating ?? 0);
+        this.lessonRating.set(Number(feedback.rating ?? rating));
 
         this.showNotification(
           'تم إرسال تقييمك بنجاح.',
@@ -2309,11 +1322,9 @@ export class TraineeProgram implements OnInit {
 
         this.closeLessonSidebar();
       },
+
       error: error => {
-        console.error(
-          '❌ Save Lesson Rating Error:',
-          error
-        );
+        console.error('Save Lesson Rating Error:', error);
 
         if (error?.status === 409) {
           this.showNotification(
@@ -2331,23 +1342,106 @@ export class TraineeProgram implements OnInit {
   }
 
   // =====================================================
+  // LOCAL LESSON COMPLETION STORAGE
+  // =====================================================
+
+  private getCompletedLessonsStorageKey(): string | null {
+    const traineeId = this.traineeId();
+    const programId = this.programId();
+
+    if (!traineeId || !programId) {
+      return null;
+    }
+
+    return `nafadh_completed_lessons_${traineeId}_${programId}`;
+  }
+
+  private getLocallyCompletedLessonIds(): number[] {
+    const key = this.getCompletedLessonsStorageKey();
+
+    if (!key) return [];
+
+    try {
+      const saved = localStorage.getItem(key);
+
+      if (!saved) return [];
+
+      const parsed: unknown = JSON.parse(saved);
+
+      if (!Array.isArray(parsed)) return [];
+
+      return parsed
+        .map(value => Number(value))
+        .filter(value =>
+          Number.isInteger(value) && value > 0
+        );
+    } catch (error) {
+      console.warn(
+        'Unable to restore completed lessons:',
+        error
+      );
+      return [];
+    }
+  }
+
+  private saveLocallyCompletedLesson(lessonId: number): void {
+    const key = this.getCompletedLessonsStorageKey();
+
+    if (!key) return;
+
+    try {
+      const completedIds = new Set(
+        this.getLocallyCompletedLessonIds()
+      );
+
+      completedIds.add(Number(lessonId));
+
+      localStorage.setItem(
+        key,
+        JSON.stringify([...completedIds])
+      );
+    } catch (error) {
+      console.warn(
+        'Unable to save completed lesson locally:',
+        error
+      );
+    }
+  }
+
+  private restoreLocallyCompletedLessons(
+    modules: ModuleWithLessonsDto[]
+  ): ModuleWithLessonsDto[] {
+    const completedIds = new Set(
+      this.getLocallyCompletedLessonIds()
+    );
+
+    if (!completedIds.size) {
+      return modules;
+    }
+
+    return modules.map(module => ({
+      ...module,
+      lessons: module.lessons?.map(lesson => ({
+        ...lesson,
+        progressPercentage:
+          completedIds.has(Number(lesson.lessonId))
+            ? 100
+            : lesson.progressPercentage
+      }))
+    }));
+  }
+
+  // =====================================================
   // OPEN MODULE
   // =====================================================
 
-  openModule(
-    module: ModuleWithLessonsDto
-  ): void {
+  openModule(module: ModuleWithLessonsDto): void {
     if (module.isLocked) {
-      console.warn(
-        '🔒 Prerequisite not completed'
-      );
+      console.warn('Prerequisite not completed');
       return;
     }
 
-    console.log(
-      '📚 Module selected:',
-      module.moduleId
-    );
+    console.log('Module selected:', module.moduleId);
   }
 
   // =====================================================
@@ -2358,33 +1452,19 @@ export class TraineeProgram implements OnInit {
     const traineeId = this.traineeId();
     const programId = this.programId();
 
-    if (!traineeId) {
-      console.warn('⚠️ No trainee ID');
-      return;
-    }
-
-    if (!programId) {
-      console.warn('⚠️ No program ID');
-      return;
-    }
+    if (!traineeId || !programId) return;
 
     this.api.markAchievement(
       traineeId,
       programId
     ).subscribe({
       next: response => {
-        console.log(
-          '✅ Achievement marked:',
-          response
-        );
-
+        console.log('Achievement marked:', response);
         this.loadProgramData(programId);
       },
+
       error: error => {
-        console.error(
-          '❌ Achievement Error:',
-          error
-        );
+        console.error('Achievement Error:', error);
       }
     });
   }
@@ -2419,18 +1499,13 @@ export class TraineeProgram implements OnInit {
     if (userData) {
       try {
         const user = JSON.parse(userData);
-
-        const id = Number(
-          user.userId ?? user.id
-        );
+        const id = Number(user.userId ?? user.id);
 
         if (id && !Number.isNaN(id)) {
           return id;
         }
       } catch {
-        console.warn(
-          '⚠️ Invalid userData'
-        );
+        console.warn('Invalid userData');
       }
     }
 

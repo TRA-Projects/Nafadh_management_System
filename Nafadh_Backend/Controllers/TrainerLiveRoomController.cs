@@ -106,6 +106,7 @@ namespace Nafadh_Backend.Controllers
 
         // GET: api/trainer/live-sessions/5/room
         // Trainer Portal - Read room state and participant count.
+
         [HttpGet]
         public async Task<IActionResult> GetRoom(int sessionId)
         {
@@ -115,13 +116,25 @@ namespace Nafadh_Backend.Controllers
             if (session == null)
                 return NotFound();
 
-            var room = await _liveKit.GetRoomDetailsAsync(
-                sessionId, HttpContext.RequestAborted);
+            try
+            {
+                var room = await _liveKit.GetRoomDetailsAsync(
+                    sessionId, HttpContext.RequestAborted);
 
-            // Trainer Portal - Obtain session topic from Nafadh.
-            room.Topic = session.Topic ?? string.Empty;
+                room.Topic = session.Topic ?? string.Empty;
 
-            return Ok(room);
+                return Ok(room);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(
+                    $"GetRoom failed for session {sessionId}: {ex}");
+
+                return StatusCode(500, new
+                {
+                    message = "Unable to retrieve live room details."
+                });
+            }
         }
 
 

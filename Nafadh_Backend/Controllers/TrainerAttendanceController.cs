@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
@@ -18,9 +19,11 @@ namespace Nafadh_Backend.Controllers
         }
 
         // Get all trainers assigned to a company.
+        [Authorize(Roles = "CompanySupervisor")]
         [HttpGet("company/{companyId:int}/trainers")]
         public async Task<IActionResult> GetCompanyTrainers(int companyId)
         {
+            if (!TryCompanyId(out var authorizedCompany) || authorizedCompany != companyId) return Forbid();
             var items = await _service.GetCompanyTrainersAsync(companyId);
             return Ok(items);
         }
@@ -28,6 +31,7 @@ namespace Nafadh_Backend.Controllers
         // Get attendance records within a date range.
         // Example:
         // GET api/TrainerAttendance/company/3?from=2026-10-01&to=2026-10-07
+        [Authorize(Roles = "CompanySupervisor")]
         [HttpGet("company/{companyId:int}")]
         public async Task<IActionResult> GetRange(
             int companyId,
@@ -35,6 +39,7 @@ namespace Nafadh_Backend.Controllers
             [FromQuery] DateTime to,
             [FromQuery] int? trainerId)
         {
+            if (!TryCompanyId(out var authorizedCompany) || authorizedCompany != companyId) return Forbid();
             try
             {
                 var items = await _service.GetRangeAsync(
@@ -58,8 +63,8 @@ namespace Nafadh_Backend.Controllers
         public async Task<IActionResult> Upsert(
             [FromBody] TrainerAttendanceUpsertDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!TryCompanyId(out var authorizedCompany) || authorizedCompany != dto.CompanyId) return Forbid();
 
             try
             {
@@ -77,7 +82,7 @@ namespace Nafadh_Backend.Controllers
         }
 
         // Upload attendance proof.
-        [Authorize(Roles = "CompanySupervisor")]
+        [Authorize(Roles = "Trainer")]
         [HttpPost("{id:int}/proof")]
         [Consumes("multipart/form-data")]
         [RequestSizeLimit(6 * 1024 * 1024)]
@@ -87,6 +92,8 @@ namespace Nafadh_Backend.Controllers
         {
             try
             {
+                if (!TryTrainerId(out var trainerId)) return Forbid();
+                if (!await _service.TrainerOwnsAttendanceAsync(id, trainerId)) return NotFound();
                 var url = await _service.UploadProofAsync(
                     id,
                     dto.File
@@ -123,12 +130,14 @@ namespace Nafadh_Backend.Controllers
         }
 
         // Remove attendance proof.
-        [Authorize(Roles = "CompanySupervisor")]
+        [Authorize(Roles = "Trainer")]
         [HttpDelete("{id:int}/proof")]
         public async Task<IActionResult> RemoveProof(int id)
         {
             try
             {
+                if (!TryTrainerId(out var trainerId)) return Forbid();
+                if (!await _service.TrainerOwnsAttendanceAsync(id, trainerId)) return NotFound();
                 var found = await _service.RemoveProofAsync(id);
 
                 if (!found)
@@ -147,14 +156,49 @@ namespace Nafadh_Backend.Controllers
             }
         }
 
+        // Claim names must match authenticated JWT issuance. Missing claims always deny access.
+        private bool TryTrainerId(out int id) => int.TryParse(
+            User.FindFirst("trainerId")?.Value ?? User.FindFirst("TrainerId")?.Value, out id) && id > 0;
+        private bool TryCompanyId(out int id) => int.TryParse(
+            User.FindFirst("companyId")?.Value ?? User.FindFirst("CompanyId")?.Value, out id) && id > 0;
+
+        [Authorize(Roles = "Trainer")]
+        [HttpPut("{id:int}/excuse")]
+        public async Task<IActionResult> SubmitExcuse(int id, [FromBody] TrainerAttendanceExcuseSubmissionDto dto)
+        {
+            if (!TryTrainerId(out var trainerId)) return Forbid();
+            try
+            {
+                var result = await _service.SubmitExcuseAsync(id, trainerId, dto.Reason);
+                return result == null ? NotFound() : Ok(result);
+            }
+            catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        }
+
+        [Authorize(Roles = "CompanySupervisor")]
+        [HttpPut("{id:int}/excuse-review")]
+        public async Task<IActionResult> ReviewExcuse(int id, [FromBody] TrainerAttendanceReviewDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            // Company identity comes from verified authentication, not a client-supplied companyId.
+            if (!TryCompanyId(out var companyId)) return Forbid();
+            try
+            {
+                var result = await _service.ReviewExcuseAsync(id, companyId, dto.Decision);
+                return result == null ? NotFound() : Ok(result);
+            }
+            catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+        }
+
         // Confirm daily attendance for all company trainers.
         [Authorize(Roles = "CompanySupervisor")]
         [HttpPost("confirm")]
         public async Task<IActionResult> ConfirmDay(
             [FromBody] TrainerAttendanceConfirmDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!TryCompanyId(out var authorizedCompany) || authorizedCompany != dto.CompanyId) return Forbid();
 
             try
             {

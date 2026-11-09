@@ -26,13 +26,17 @@ namespace Nafadh_Backend.Models
         // Optional departure time (used mainly with EarlyLeave).
         public TimeSpan? CheckOutTime { get; set; }
 
-        // Reason / note written by the company.
+        // Reason / note submitted by the trainer (never updated by the company supervisor).
         [MaxLength(500)]
         public string? Reason { get; set; }
 
         // Public URL of the uploaded excuse proof (image or PDF).
         [MaxLength(300)]
         public string? ExcuseProofUrl { get; set; }
+
+        // Null = no excuse submitted; Pending/Approved/Rejected = review workflow.
+        [MaxLength(16)]
+        public string? ExcuseReviewStatus { get; set; }
 
         // Once the company confirms the day, the record becomes read-only.
         public bool IsConfirmed { get; set; }

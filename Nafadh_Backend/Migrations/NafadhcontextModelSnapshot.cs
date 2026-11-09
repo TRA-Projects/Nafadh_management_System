@@ -380,6 +380,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<string>("CompanyNameWithLegalEnglish")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Contact_Mobile")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("CrNumber")
                         .HasColumnType("nvarchar(max)");
 
@@ -392,8 +395,32 @@ namespace Nafadh_Backend.Migrations
                     b.Property<string>("ExpiryDate")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("InsertedById")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("InsertedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("IsHead")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsOmani")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPostOpertunity")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsVerifiedInMol")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("JoinDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
@@ -402,6 +429,12 @@ namespace Nafadh_Backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("ParentProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProfileStatus")
                         .HasColumnType("int");
 
                     b.Property<int>("ProfileType")
@@ -415,6 +448,9 @@ namespace Nafadh_Backend.Migrations
 
                     b.Property<string>("SubjectToForeignInvestment")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TotalExperience")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -1662,6 +1698,10 @@ namespace Nafadh_Backend.Migrations
                     b.Property<string>("Comment")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("EvaluationPeriod")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
                     b.Property<int>("ModuleId")
                         .HasColumnType("int");
 
@@ -2204,6 +2244,40 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_ProjectMembers", (string)null);
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuestionAttachment", b =>
+                {
+                    b.Property<int>("QuestionAttachmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("QuestionAttachmentId"));
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UploadedByUserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("QuestionAttachmentId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("NFD_QuestionAttachments", (string)null);
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuestionBank", b =>
                 {
                     b.Property<int>("QuestionId")
@@ -2224,6 +2298,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("ModuleId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Points")
                         .HasColumnType("decimal(18,2)");
 
@@ -2238,6 +2315,8 @@ namespace Nafadh_Backend.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("QuestionId");
+
+                    b.HasIndex("ModuleId");
 
                     b.HasIndex("TrainerId");
 
@@ -2380,6 +2459,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<decimal>("AwardedPoints")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("FileUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool?>("IsCorrect")
                         .HasColumnType("bit");
 
@@ -2388,6 +2470,9 @@ namespace Nafadh_Backend.Migrations
 
                     b.Property<bool>("IsMarkedForReview")
                         .HasColumnType("bit");
+
+                    b.Property<string>("OriginalFileName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("SelectedOptionId")
                         .HasColumnType("int");
@@ -3375,6 +3460,10 @@ namespace Nafadh_Backend.Migrations
                     b.Property<string>("ExcuseProofUrl")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("ExcuseReviewStatus")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
 
                     b.Property<bool>("IsConfirmed")
                         .HasColumnType("bit");
@@ -4641,13 +4730,31 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Trainee");
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuestionAttachment", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_QuestionBank", "Question")
+                        .WithMany("Attachments")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuestionBank", b =>
                 {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Module", "Module")
+                        .WithMany()
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
                         .WithMany()
                         .HasForeignKey("TrainerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Module");
 
                     b.Navigation("Trainer");
                 });
@@ -5346,6 +5453,8 @@ namespace Nafadh_Backend.Migrations
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuestionBank", b =>
                 {
+                    b.Navigation("Attachments");
+
                     b.Navigation("Options");
 
                     b.Navigation("QuizQuestions");

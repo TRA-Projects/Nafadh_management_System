@@ -19,6 +19,15 @@ namespace Nafadh_Backend.Services
         // Returns false when the record does not exist.
         Task<bool> RemoveProofAsync(int attendanceId);
 
+        // Trainer-only: verify ownership before changing an excuse or proof.
+        Task<bool> TrainerOwnsAttendanceAsync(int attendanceId, int trainerId);
+
+        // Trainer-only: submit the explanation within the Sunday–Saturday window.
+        Task<TrainerAttendanceDto?> SubmitExcuseAsync(int attendanceId, int trainerId, string? reason);
+
+        // Supervisor-only: make a single decision on a submitted excuse.
+        Task<TrainerAttendanceDto?> ReviewExcuseAsync(int attendanceId, int companyId, string decision);
+
         // Confirms the whole day for the company. Returns how many records the day contains.
         Task<int> ConfirmDayAsync(TrainerAttendanceConfirmDto dto);
     }

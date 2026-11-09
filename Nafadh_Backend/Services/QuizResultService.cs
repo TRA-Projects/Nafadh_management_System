@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +24,8 @@ namespace Nafadh_Backend.Services
 
         Task<List<QuizResultDto>> GetAdminTraineeResultsAsync(
             int traineeId);
+
+        Task<List<QuizResultDto>> GetCompanyEnrollmentResultsAsync(int enrollmentId);
 
         Task<QuizAttemptDetailsDto> GetTrainerAttemptDetailsAsync(
             int attemptId,
@@ -201,6 +203,17 @@ namespace Nafadh_Backend.Services
                     traineeId);
 
             return attempts
+                .Select(MapResult)
+                .ToList();
+        }
+
+        // Company Portal: show only completed, fully graded results from
+        // quizzes in the enrollment's batch (not other batches for the trainee).
+        public async Task<List<QuizResultDto>> GetCompanyEnrollmentResultsAsync(int enrollmentId)
+        {
+            var attempts = await _repository.GetCompanyEnrollmentResultsAsync(enrollmentId);
+            return attempts
+                .Where(a => IsGradingCompleted(a))
                 .Select(MapResult)
                 .ToList();
         }

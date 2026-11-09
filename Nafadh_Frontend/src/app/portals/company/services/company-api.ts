@@ -182,6 +182,20 @@ export class CompanyApi {
     );
   }
 
+  getTrainerProfile(trainerId: number): Observable<{
+    email?: string | null;
+    phone?: string | null;
+    experienceYears?: number | null;
+    biography?: string | null;
+  }> {
+    return this.http.get<{
+      email?: string | null;
+      phone?: string | null;
+      experienceYears?: number | null;
+      biography?: string | null;
+    }>(`${this.base}/Trainer/${trainerId}`);
+  }
+
   addTrainer(dto: unknown): Observable<unknown> {
     return this.http.post<unknown>(`${this.base}/Trainer`, dto);
   }
@@ -827,11 +841,37 @@ getAttachmentSettings(): Observable<{
   getTrainerAttendance(
     companyId: number,
     from: string,
-    to: string
+    to: string,
+    trainerId?: number
   ): Observable<TrainerAttendanceDto[]> {
+    let params = new HttpParams().set('from', from).set('to', to);
+    if (trainerId !== undefined) {
+      params = params.set('trainerId', String(trainerId));
+    }
+
     return this.http.get<TrainerAttendanceDto[]>(
       `${this.base}/TrainerAttendance/company/${companyId}`,
-      { params: { from, to } }
+      { params }
+    );
+  }
+
+  saveSupervisorTrainerEvaluation(supervisorId: number, trainerId: number, rating: number, comment: string): Observable<unknown> {
+    return this.http.put(
+      `${this.base}/CompanySupervisor/${supervisorId}/trainer-evaluations/${trainerId}`,
+      { rating, comment }
+    );
+  }
+
+  getSupervisorTrainerEvaluations(supervisorId: number): Observable<{
+    trainerId: number;
+    rating: number;
+    comment?: string | null;
+    evaluatedAt?: string;
+    updatedAt?: string;
+    createdAt?: string;
+  }[]> {
+    return this.http.get<{ trainerId: number; rating: number; comment?: string | null; evaluatedAt?: string; updatedAt?: string; createdAt?: string }[]>(
+      `${this.base}/CompanySupervisor/${supervisorId}/trainer-evaluations`
     );
   }
 
@@ -860,6 +900,17 @@ getAttachmentSettings(): Observable<{
   removeTrainerAttendanceProof(attendanceId: number): Observable<unknown> {
     return this.http.delete(
       `${this.base}/TrainerAttendance/${attendanceId}/proof`
+    );
+  }
+
+  /** Only a company supervisor can accept/reject a trainer-submitted excuse. */
+  reviewTrainerAttendanceExcuse(
+    attendanceId: number,
+    decision: 'Approved' | 'Rejected'
+  ): Observable<TrainerAttendanceDto> {
+    return this.http.put<TrainerAttendanceDto>(
+      `${this.base}/TrainerAttendance/${attendanceId}/excuse-review`,
+      { decision }
     );
   }
 

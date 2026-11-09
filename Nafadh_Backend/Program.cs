@@ -267,6 +267,8 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
 
             builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
+            builder.Services.AddScoped<IQuestionAttachmentRepository, QuestionAttachmentRepository>();
+            builder.Services.AddScoped<IQuestionAttachmentService, QuestionAttachmentService>();
             builder.Services.AddScoped<IQuizQuestionRepository, QuizQuestionRepository>();
 
             builder.Services.AddScoped<IQuizQuestionService, QuizQuestionService>();
@@ -365,6 +367,32 @@ namespace Nafadh_Backend
 
             var app = builder.Build();
 
+            app.UseExceptionHandler(errorApp =>
+            {
+                errorApp.Run(async context =>
+                {
+                    var logger = context.RequestServices
+                        .GetRequiredService<ILogger<Program>>();
+
+                    var error = context.Features.Get<
+                        Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+
+                    if (error != null)
+                    {
+                        logger.LogError(
+                            error.Error,
+                            "Unhandled error at {Path}",
+                            context.Request.Path);
+                    }
+
+                    context.Response.StatusCode = 500;
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        message = "An unexpected server error occurred."
+                    });
+                });
+            });
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -405,6 +433,35 @@ namespace Nafadh_Backend
                 }
                 );
             }
+            // =====================================================
+            // EXTERNAL QUESTION ATTACHMENTS
+            // =====================================================
+
+            var questionAttachmentsPath =
+                builder.Configuration["Storage:QuestionAttachmentsPath"];
+
+            var questionAttachmentsRequestPath =
+                builder.Configuration[
+                    "Storage:QuestionAttachmentsRequestPath"]
+                ?? "/uploads/question-attachments";
+
+            if (!string.IsNullOrWhiteSpace(questionAttachmentsPath))
+            {
+                Directory.CreateDirectory(questionAttachmentsPath);
+
+                app.UseStaticFiles(
+                    new StaticFileOptions
+                    {
+                        FileProvider =
+                            new PhysicalFileProvider(
+                                questionAttachmentsPath),
+
+                        RequestPath =
+                            questionAttachmentsRequestPath
+                    }
+                );
+            }
+
             // =====================================================
             // EXTERNAL TRAINER PROFILE IMAGES
             // =====================================================

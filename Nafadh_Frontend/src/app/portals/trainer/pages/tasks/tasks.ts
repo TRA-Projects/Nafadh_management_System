@@ -552,51 +552,49 @@ export class TrainerTasks implements OnInit {
   // =====================================================
   // OPEN SUBMISSION FILE
   // =====================================================
+openSubmissionFile(submission: SubmissionDto): void {
+  this.submissionsModalError.set('');
 
-  openSubmissionFile(submission: SubmissionDto): void {
-    this.submissionsModalError.set('');
+  const url = submission.fileUrl?.trim();
 
-    if (!submission.submissionId) {
-      this.submissionsModalError.set('تعذر تحديد ملف التسليم.');
-      return;
-    }
+  if (!url) {
+    this.submissionsModalError.set('لا يوجد رابط لهذا التسليم.');
+    return;
+  }
 
-    if (!submission.fileUrl) {
-      this.submissionsModalError.set('لا يوجد رابط تسليم لهذه المهمة.');
-      return;
-    }
+  try {
+    const parsedUrl = new URL(url);
+    if (
+  parsedUrl.hostname === 'drive.nafadh.test' ||
+  parsedUrl.hostname.endsWith('.nafadh.test')
+) {
+  this.submissionsModalError.set(
+    'رابط التسليم تجريبي وغير متاح للعرض.'
+  );
+  return;
+}
 
-    const url = submission.fileUrl.trim();
-
-    if (!url) {
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       this.submissionsModalError.set('رابط التسليم غير صالح.');
       return;
     }
 
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      this.submissionsModalError.set(
-        'رابط التسليم غير صحيح. يجب أن يبدأ بـ https:// أو http://'
-      );
+    const previewWindow = window.open(
+      parsedUrl.href,
+      '_blank',
+      'noopener,noreferrer'
+    );
+
+    if (!previewWindow) {
+      // بعض المتصفحات ترجع null مع noopener رغم فتح التبويب.
+      // لذلك لا نعتبرها فشلًا مؤكدًا.
       return;
     }
-
-    try {
-      const previewWindow = window.open(url, '_blank');
-
-      if (!previewWindow) {
-        this.submissionsModalError.set(
-          'تعذر فتح الرابط. تأكدي من السماح بالنوافذ المنبثقة.'
-        );
-        return;
-      }
-
-      previewWindow.opener = null;
-    } catch (error) {
-      console.error('Error opening submission link:', error);
-      this.submissionsModalError.set('تعذر فتح رابط التسليم.');
-    }
+  } catch (error) {
+    console.error('Invalid submission URL:', error);
+    this.submissionsModalError.set('رابط التسليم غير صالح.');
   }
-
+}
 
   // =====================================================
   // FILTER
