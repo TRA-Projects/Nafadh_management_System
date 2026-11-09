@@ -441,7 +441,18 @@
 
 
       <div class="quiz-actions">
-
+<!-- نشر الاختبار -->
+@if (getStatusNumber(quiz.status) === 0) {
+  <button
+    type="button"
+    class="primary-btn"
+    (click)="publishQuiz(quiz)"
+    [disabled]="saving()"
+  >
+    <i class="fa-solid fa-paper-plane"></i>
+    نشر الاختبار
+  </button>
+}
   <!-- إدارة الأسئلة -->
   @if (canManageQuestions(quiz.status)) {
 
@@ -859,5 +870,66 @@
 
   }
 
+<!-- نافذة تأكيد نشر الاختبار -->
+@if (quizToPublish(); as quiz) {
+  <div class="modal-backdrop" (click)="cancelPublishQuiz()">
 
+    <section
+    class="quiz-modal publish-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="publish-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+
+      <header class="modal-header">
+        <h2 id="publish-modal-title">
+          تأكيد نشر الاختبار
+        </h2>
+
+        <button
+          type="button"
+          class="close-btn"
+          (click)="cancelPublishQuiz()"
+          [disabled]="saving()"
+          aria-label="إغلاق"
+        >
+          ×
+        </button>
+      </header>
+
+      <p>
+       هل أنتِ متأكدة من نشر
+<strong>«{{ quiz.title }}»</strong>؟
+      </p>
+
+      <p>
+        بعد النشر سيصبح الاختبار متاحًا للمتدربين
+        حسب الموعد المحدد.
+      </p>
+
+      <footer class="modal-actions">
+        <button
+          type="button"
+          class="secondary-btn"
+          (click)="cancelPublishQuiz()"
+          [disabled]="saving()"
+        >
+          إلغاء
+        </button>
+
+        <button
+          type="button"
+          class="primary-btn"
+          (click)="confirmPublishQuiz()"
+          [disabled]="saving()"
+        >
+          <i class="fa-solid fa-paper-plane"></i>
+          {{ saving() ? 'جاري النشر...' : 'نعم، نشر الاختبار' }}
+        </button>
+      </footer>
+
+    </section>
+  </div>
+}
 </div>

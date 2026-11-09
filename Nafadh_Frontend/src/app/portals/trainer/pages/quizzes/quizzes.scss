@@ -514,6 +514,26 @@
   background: #fff;
   box-shadow: 0 24px 70px rgba(0, 20, 50, .25);
 }
+/* نافذة تأكيد نشر الاختبار */
+.publish-modal {
+  width: min(460px, 95%);
+  padding: 28px;
+}
+
+.publish-modal .modal-header h2 {
+  font-size: 21px;
+}
+
+.publish-modal p {
+  font-size: 15px;
+  line-height: 1.9;
+  color: #475569;
+  margin: 16px 0;
+}
+
+.publish-modal .modal-actions {
+  margin-top: 24px;
+}
 
 .modal-header {
   display: flex;
