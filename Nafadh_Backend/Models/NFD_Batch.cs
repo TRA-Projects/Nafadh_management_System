@@ -24,6 +24,20 @@ namespace Nafadh_Backend.Models
         public DateTime EndDate { get; set; }
         [Column(TypeName = "decimal(18,2)")]
         public decimal Capacity { get; set; }
+
+        // Dynamic evaluation weights: each batch has its own contribution percentages.
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal AttendanceWeight { get; set; } = 30m;
+
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal QuizzesWeight { get; set; } = 20m;
+
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal TasksWeight { get; set; } = 50m;
+
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal ProjectsWeight { get; set; } = 0m;
+
         public NFD_BatchStatus Status { get; set; }
 
         public int ProgramId { get; set; }
