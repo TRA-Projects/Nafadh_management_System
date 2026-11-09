@@ -52,6 +52,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_Module> NFD_Modules { get; set; }
         public DbSet<NFD_Lesson> NFD_Lessons { get; set; }
         public DbSet<NFD_AdminProjectScore> NFD_AdminProjectScores { get; set; }
+        public DbSet<NFD_TrainerProjectGrade> NFD_TrainerProjectGrades { get; set; }
         public DbSet<NFD_TrainingMaterial> NFD_TrainingMaterials { get; set; }
         public DbSet<NFD_TraineeModuleProgress> NFD_TraineeModuleProgresses { get; set; }
         public DbSet<NFD_Session> NFD_Sessions { get; set; }
@@ -826,6 +827,54 @@ namespace Nafadh_Backend
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            // ---- NFD_TrainerProjectGrade ----
+            modelBuilder.Entity<NFD_TrainerProjectGrade>(entity =>
+            {
+                entity.ToTable("NFD_TrainerProjectGrades");
+
+                entity.HasKey(e => e.TrainerProjectGradeId);
+
+                entity.Property(e => e.Score)
+                    .HasColumnType("decimal(5,2)")
+                    .IsRequired();
+
+                entity.Property(e => e.Feedback)
+                    .HasMaxLength(1000);
+
+                entity.Property(e => e.GradedAt)
+                    .HasColumnType("datetime2")
+                    .IsRequired();
+
+                entity.Property(e => e.UpdatedAt)
+                    .HasColumnType("datetime2");
+
+                // Each trainee can have only one grade
+                // per project within their enrollment.
+                entity.HasIndex(e => new
+                {
+                    e.ProjectId,
+                    e.EnrollmentId
+                }).IsUnique();
+
+                // Project relationship
+                entity.HasOne(e => e.Project)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProjectId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Trainee enrollment relationship
+                entity.HasOne(e => e.Enrollment)
+                    .WithMany()
+                    .HasForeignKey(e => e.EnrollmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Trainer who graded the project
+                entity.HasOne(e => e.Trainer)
+                    .WithMany()
+                    .HasForeignKey(e => e.TrainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
             // ---- NFD_Project ----
             modelBuilder.Entity<NFD_Project>(entity =>
             {
@@ -835,6 +884,8 @@ namespace Nafadh_Backend
                     .HasForeignKey(e => e.ProgramId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+
 
             // ---- NFD_ProjectMember ----
             modelBuilder.Entity<NFD_ProjectMember>(entity =>
