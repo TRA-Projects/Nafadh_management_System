@@ -1508,4 +1508,28 @@
   .qr-code-line {
     font-size: 10px !important;
   }
+
+  
+/* Certificate PDF export dimensions */
+
+.official-certificate-paper {
+  width: 100%;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.official-certificate-paper,
+.cert-outer-border,
+.cert-inner-gold-border {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+@media print {
+  .official-certificate-paper {
+    width: 100% !important;
+    box-shadow: none !important;
+  }
+}
+
 }

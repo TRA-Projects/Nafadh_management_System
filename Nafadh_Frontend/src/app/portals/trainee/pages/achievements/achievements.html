@@ -236,14 +236,16 @@
           مشاهدة الشهادة
         </button>
 
-        <button
-          type="button"
-          class="download-btn enabled"
-          [disabled]="loading()"
-          (click)="downloadCertificate()">
-          <i class="fas fa-download"></i>
-          تحميل الشهادة
-        </button>
+        
+<button
+  type="button"
+  class="download-btn enabled"
+  [disabled]="!canDownloadCertificate()"
+  (click)="downloadCertificate()">
+  <i class="fas fa-download"></i>
+  تحميل الشهادة
+</button>
+
       </div>
     } @else {
       <button

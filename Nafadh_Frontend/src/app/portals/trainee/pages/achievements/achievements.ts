@@ -8,6 +8,8 @@ import { FormsModule } from '@angular/forms';
 import { TraineeApi } from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 
+import html2pdf from 'html2pdf.js';
+
 import {
   BadgeDto,
   CertificateDto,
@@ -2862,45 +2864,127 @@ next: (batch: BatchDto) => {
   // OFFICIAL CERTIFICATE - DOWNLOAD
   // ============================================================
 
-  downloadCertificate(): void {
-    const certificate = this.issuedCertificate();
 
-    if (!certificate) {
-      this.showCertificateMessage(
-        'الشهادة بانتظار إصدار الإدارة.'
-      );
-      return;
-    }
 
-    this.certificatePreviewOpen.set(true);
+async downloadCertificate(): Promise<void> {
+  const certificate = this.issuedCertificate();
 
-    // Wait for Angular to render the certificate modal.
- 
-this.waitForCertificateAndPrint();
-
-  }
-
-private waitForCertificateAndPrint(attempt = 0): void {
-  const certificateElement = document.getElementById(
-    this.certificatePrintId
-  );
-
-  if (certificateElement) {
-    this.printIssuedCertificate();
-    return;
-  }
-
-  if (attempt >= 10) {
+  if (!certificate) {
     this.showCertificateMessage(
-      'تعذر تجهيز معاينة الشهادة للطباعة.'
+      'لا توجد شهادة صادرة لهذا التسجيل.'
     );
     return;
   }
 
-  setTimeout(
-    () => this.waitForCertificateAndPrint(attempt + 1),
-    100
-  );
+  // Display the certificate template if it is not open.
+  this.certificatePreviewOpen.set(true);
+
+  try {
+    const certificateElement =
+      await this.waitForCertificateElement();
+
+    if (!certificateElement) {
+      this.showCertificateMessage(
+        'تعذر تجهيز الشهادة للتنزيل.'
+      );
+      return;
+    }
+
+    // Wait for fonts to load.
+    await document.fonts.ready;
+
+    // Wait for certificate images to load.
+    const images = Array.from(
+      certificateElement.querySelectorAll('img')
+    );
+
+    await Promise.all(
+      images.map(image => {
+        if (image.complete) {
+          return Promise.resolve();
+        }
+
+        return new Promise<void>(resolve => {
+          image.addEventListener('load', () => resolve(), {
+            once: true
+          });
+
+          image.addEventListener('error', () => resolve(), {
+            once: true
+          });
+        });
+      })
+    );
+
+    const fileName =
+      `Nafadh-Certificate-${certificate.certificateId}.pdf`;
+
+    const options = {
+      margin: 0,
+      filename: fileName,
+      image: {
+        type: 'jpeg' as const,
+        quality: 0.98
+      },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        scrollX: 0,
+        scrollY: 0
+      },
+      jsPDF: {
+        unit: 'mm' as const,
+        format: 'a4',
+        orientation: 'landscape' as const
+      },
+      pagebreak: {
+        mode: ['avoid-all', 'css', 'legacy']
+      }
+    };
+
+    await html2pdf()
+      .set(options)
+      .from(certificateElement)
+      .save();
+
+  } catch (error) {
+    console.error(
+      'Certificate PDF download failed:',
+      error
+    );
+
+    this.showCertificateMessage(
+      'حدث خطأ أثناء تنزيل الشهادة.'
+    );
+  }
+}
+
+private waitForCertificateElement(
+  attempt = 0
+): Promise<HTMLElement | null> {
+
+  return new Promise(resolve => {
+    const element = document.getElementById(
+      this.certificatePrintId
+    );
+
+    if (element) {
+      resolve(element);
+      return;
+    }
+
+    if (attempt >= 20) {
+      resolve(null);
+      return;
+    }
+
+    setTimeout(async () => {
+      resolve(
+        await this.waitForCertificateElement(attempt + 1)
+      );
+    }, 100);
+  });
 }
 
 
