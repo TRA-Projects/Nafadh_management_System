@@ -167,7 +167,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AppPages", (string)null);
+                    b.ToTable("AppPages");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.AppUser", b =>
@@ -354,7 +354,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Organizations", (string)null);
+                    b.ToTable("Organizations");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.Profile", b =>
@@ -380,6 +380,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<string>("CompanyNameWithLegalEnglish")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Contact_Mobile")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("CrNumber")
                         .HasColumnType("nvarchar(max)");
 
@@ -392,8 +395,32 @@ namespace Nafadh_Backend.Migrations
                     b.Property<string>("ExpiryDate")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("InsertedById")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("InsertedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("IsHead")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsOmani")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPostOpertunity")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsVerifiedInMol")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("JoinDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
@@ -402,6 +429,12 @@ namespace Nafadh_Backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("ParentProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProfileStatus")
                         .HasColumnType("int");
 
                     b.Property<int>("ProfileType")
@@ -416,9 +449,12 @@ namespace Nafadh_Backend.Migrations
                     b.Property<string>("SubjectToForeignInvestment")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("TotalExperience")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.ToTable("Profiles", (string)null);
+                    b.ToTable("Profiles");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.RolePage", b =>
@@ -448,7 +484,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRolePages", (string)null);
+                    b.ToTable("AspNetRolePages");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.Roles", b =>
@@ -552,7 +588,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SystemAuditTrails", (string)null);
+                    b.ToTable("SystemAuditTrails");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.UserGroup", b =>
@@ -597,7 +633,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("UserTypeId");
 
-                    b.ToTable("UserGroups", (string)null);
+                    b.ToTable("UserGroups");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.UserType", b =>
@@ -634,7 +670,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserTypes", (string)null);
+                    b.ToTable("UserTypes");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Announcement", b =>
@@ -1128,7 +1164,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("NFD_ConversationGroupMembers", (string)null);
+                    b.ToTable("NFD_ConversationGroupMembers");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlan", b =>
@@ -1661,6 +1697,10 @@ namespace Nafadh_Backend.Migrations
 
                     b.Property<string>("Comment")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EvaluationPeriod")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<int>("ModuleId")
                         .HasColumnType("int");
@@ -3338,7 +3378,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("TraineeId");
 
-                    b.ToTable("NFD_TraineeSkills", (string)null);
+                    b.ToTable("NFD_TraineeSkills");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Trainer", b =>
@@ -3437,7 +3477,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("TrainerId");
 
-                    b.ToTable("NFD_TrainerAttendances", (string)null);
+                    b.ToTable("NFD_TrainerAttendances");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerCertificate", b =>
@@ -3696,7 +3736,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("TraineeId");
 
-                    b.ToTable("NFD_WithdrawalRequests", (string)null);
+                    b.ToTable("NFD_WithdrawalRequests");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.RemediationRequest", b =>
