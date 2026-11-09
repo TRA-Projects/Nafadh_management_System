@@ -207,10 +207,13 @@ namespace Nafadh_Backend.Controllers
 
             return await _context.NFD_Trainers
                 .AsNoTracking()
-                .Where(t => t.UserId == userId)
+                .Where(t =>
+                    t.UserId == userId &&
+                    t.User.Role.RoleName == "Trainer")
                 .Select(t => (int?)t.TrainerId)
                 .FirstOrDefaultAsync();
         }
+
     }
 
     public class SaveTrainerProjectGradeDto
