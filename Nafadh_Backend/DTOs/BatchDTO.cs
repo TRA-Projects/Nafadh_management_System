@@ -9,6 +9,12 @@ namespace Nafadh_Backend.DTOs
         public int ProgramId { get; set; }
         public string BatchName { get; set; } = string.Empty;
 
+        // Returns the evaluation weights configured for this batch.
+        public decimal AttendanceWeight { get; set; }
+        public decimal QuizzesWeight { get; set; }
+        public decimal TasksWeight { get; set; }
+        public decimal ProjectsWeight { get; set; }
+
         // الشركة المالكة للدفعة
         public int? CompanyId { get; set; }
         public string CompanyName { get; set; } = string.Empty;
@@ -49,6 +55,12 @@ namespace Nafadh_Backend.DTOs
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public decimal Capacity { get; set; }
+
+        // Allows Admin to configure evaluation weights when creating a batch.
+        public decimal AttendanceWeight { get; set; } = 30m;
+        public decimal QuizzesWeight { get; set; } = 20m;
+        public decimal TasksWeight { get; set; } = 50m;
+        public decimal ProjectsWeight { get; set; } = 0m;
     }
 
     public class UpdateBatchDto
@@ -60,6 +72,12 @@ namespace Nafadh_Backend.DTOs
         public DateTime EndDate { get; set; }
         public decimal Capacity { get; set; }
         public NFD_BatchStatus Status { get; set; }
+
+        // Nullable to preserve existing weights when older clients update batch details.
+        public decimal? AttendanceWeight { get; set; }
+        public decimal? QuizzesWeight { get; set; }
+        public decimal? TasksWeight { get; set; }
+        public decimal? ProjectsWeight { get; set; }
     }
 
     // 🟢 تم توسيعه ليرسل كل بيانات المتدرب الحقيقية للجدول
