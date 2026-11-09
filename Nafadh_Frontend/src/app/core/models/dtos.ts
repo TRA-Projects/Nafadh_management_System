@@ -228,7 +228,7 @@ export interface TrainerDto {
   experienceYears: number;
   biography?: string;
   cvUrl?: string;
-  linkedinUrl?: string | null;
+  linkedInUrl?: string | null;
   // Public URL of the trainer profile image.
 profileImageUrl?: string | null;
   status: TrainerStatus;

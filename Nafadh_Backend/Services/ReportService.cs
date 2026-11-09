@@ -170,68 +170,57 @@ namespace Nafadh_Backend.Services
             // Trainer KPIs
             // ======================================================
 
-            var kpis =
-                await _repository
-                    .GetTrainerKpisAsync(
-                        trainerId
-                    );
-
-
-            // ======================================================
-            // Attendance Rows
-            //
-            // Loaded only when the trainer requests
-            // an Attendance report.
-            // ======================================================
+            // Read and validate Trainer Portal filters.
+            int? selectedBatchId = null;
             int? selectedTraineeId = null;
 
             if (!string.IsNullOrWhiteSpace(dto.FiltersJson))
             {
-                try
+                using var filtersDoc =
+                    System.Text.Json.JsonDocument.Parse(dto.FiltersJson);
+
+                var root = filtersDoc.RootElement;
+
+                if (root.ValueKind != System.Text.Json.JsonValueKind.Object)
+                    throw new ArgumentException("Invalid report filters.");
+
+                int? ReadId(string camelCase, string pascalCase)
                 {
-                    using var filtersDoc =
-                        System.Text.Json.JsonDocument.Parse(dto.FiltersJson);
+                    if (!root.TryGetProperty(camelCase, out var value) &&
+                        !root.TryGetProperty(pascalCase, out value))
+                        return null;
 
-                    var root = filtersDoc.RootElement;
+                    if (value.ValueKind == System.Text.Json.JsonValueKind.Null)
+                        return null;
 
-                    System.Text.Json.JsonElement traineeIdElement;
+                    if (value.ValueKind != System.Text.Json.JsonValueKind.Number ||
+                        !value.TryGetInt32(out var id) || id <= 0)
+                        throw new ArgumentException($"Invalid {camelCase}.");
 
-                    if (
-                        root.TryGetProperty("traineeId", out traineeIdElement) ||
-                        root.TryGetProperty("TraineeId", out traineeIdElement)
-                    )
-                    {
-                        if (
-                            traineeIdElement.ValueKind ==
-                                System.Text.Json.JsonValueKind.Number &&
-                            traineeIdElement.TryGetInt32(out var parsedId) &&
-                            parsedId > 0
-                        )
-                        {
-                            selectedTraineeId = parsedId;
-                        }
-                    }
+                    return id;
                 }
-                catch (System.Text.Json.JsonException)
-                {
-                    selectedTraineeId = null;
-                }
+
+                selectedBatchId = ReadId("batchId", "BatchId");
+                selectedTraineeId = ReadId("traineeId", "TraineeId");
             }
-            var attendanceRows =
-    (
-        dto.Type ==
-            NFD_ReportType.Attendance ||
 
-        dto.Type ==
-            NFD_ReportType.Custom
-    )
-        ? await _repository
-          .GetTrainerTraineesReportRowsAsync(
-    trainerId,
-    null,
-    selectedTraineeId
-)
-        : null;
+            // Calculate KPIs using the selected filters.
+            var kpis = await _repository.GetTrainerReportKpisAsync(
+                trainerId,
+                selectedBatchId,
+                selectedTraineeId
+            );
+
+            // Load filtered attendance rows.
+            var attendanceRows =
+                dto.Type == NFD_ReportType.Attendance ||
+                dto.Type == NFD_ReportType.Custom
+                    ? await _repository.GetTrainerTraineesReportRowsAsync(
+                        trainerId,
+                        selectedBatchId,
+                        selectedTraineeId
+                    )
+                    : null;
 
 
             // ======================================================
@@ -1564,15 +1553,19 @@ namespace Nafadh_Backend.Services
             // ======================================================
 
             var reportsFolder =
-                Path.Combine(
-                    @"C:\NafadhStorage",
-                    "Reports"
+      _configuration["Storage:TrainerReportsPath"];
+
+            if (string.IsNullOrWhiteSpace(reportsFolder))
+            {
+                throw new InvalidOperationException(
+                    "Trainer reports storage path is not configured."
                 );
+            }
+
+            Directory.CreateDirectory(reportsFolder);
 
 
-            Directory.CreateDirectory(
-                reportsFolder
-            );
+          
 
 
             var generatedAt =
@@ -2144,6 +2137,88 @@ namespace Nafadh_Backend.Services
                 return null;
             }
 
+
+            return filePath;
+        }
+
+        // ==========================================================
+        // Trainer Trainees Report File
+        // ==========================================================
+
+        public async Task<string?>
+            GetTrainerTraineesReportFilePathAsync(
+                int reportId
+            )
+        {
+            var report =
+                await GetReportByIdAsync(reportId);
+
+            if (
+                report == null ||
+                string.IsNullOrWhiteSpace(report.FileUrl)
+            )
+            {
+                return null;
+            }
+
+            var reportsFolder =
+                _configuration["Storage:TrainerReportsPath"];
+
+            if (string.IsNullOrWhiteSpace(reportsFolder))
+            {
+                return null;
+            }
+
+            var reportsRoot =
+                Path.GetFullPath(reportsFolder);
+
+            var filePath =
+                Path.GetFullPath(report.FileUrl);
+
+            var rootWithSeparator =
+                reportsRoot.TrimEnd(
+                    Path.DirectorySeparatorChar,
+                    Path.AltDirectorySeparatorChar
+                ) + Path.DirectorySeparatorChar;
+
+            if (
+                !filePath.StartsWith(
+                    rootWithSeparator,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return null;
+            }
+
+            var fileName =
+                Path.GetFileName(filePath);
+
+            if (
+                !fileName.StartsWith(
+                    "trainer-trainees-",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return null;
+            }
+
+            if (
+                !string.Equals(
+                    Path.GetExtension(fileName),
+                    ".pdf",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return null;
+            }
+
+            if (!File.Exists(filePath))
+            {
+                return null;
+            }
 
             return filePath;
         }

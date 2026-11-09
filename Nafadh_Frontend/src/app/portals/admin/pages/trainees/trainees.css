@@ -1811,3 +1811,184 @@
 }
 
 .trainer-use-btn:hover { background: #dbeafe; }
+
+/* ============================================
+   ADMIN TRAINEES - CV PREVIEW MODAL
+   ============================================ */
+
+.cv-modal {
+  width: min(95vw, 1100px) !important;
+  max-width: 1100px !important;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2);
+}
+
+/* Header */
+
+.cv-modal .cv-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.cv-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cv-modal-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #eef2ff;
+  color: #0a1172;
+  font-size: 20px;
+}
+
+.cv-modal-title h3 {
+  margin: 0 0 5px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.cv-modal-title .modal-sub-text {
+  display: block;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Body */
+
+.cv-modal .cv-modal-body {
+  flex: 1;
+  min-height: 0;
+  padding: 20px !important;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+
+/* CV Preview */
+
+.cv-modal .cv-viewer-wrapper {
+  width: 100%;
+  height: min(72vh, 800px);
+  min-height: 450px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06);
+}
+
+.cv-modal .cv-iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: none;
+  background: #ffffff;
+}
+
+/* Footer */
+
+.cv-modal .cv-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+}
+
+.cv-modal-footer .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 10px 20px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cv-modal-footer .btn-primary {
+  background: #0a1172;
+  color: #ffffff;
+  border: 1px solid #0a1172;
+}
+
+.cv-modal-footer .btn-primary:hover {
+  background: #151f91;
+}
+
+.cv-modal-footer .btn-secondary {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.cv-modal-footer .btn-secondary:hover {
+  background: #f8fafc;
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+  .cv-modal {
+    width: 98vw !important;
+    max-height: 96vh;
+    border-radius: 12px;
+  }
+
+  .cv-modal .cv-modal-header {
+    padding: 14px 16px;
+  }
+
+  .cv-modal-title h3 {
+    font-size: 15px;
+  }
+
+  .cv-modal-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .cv-modal .cv-modal-body {
+    padding: 8px !important;
+  }
+
+  .cv-modal .cv-viewer-wrapper {
+    height: 65vh;
+    min-height: 320px;
+  }
+
+  .cv-modal .cv-modal-footer {
+    padding: 12px;
+    flex-wrap: wrap;
+  }
+
+  .cv-modal-footer .btn {
+    flex: 1;
+    min-width: 120px;
+  }
+}

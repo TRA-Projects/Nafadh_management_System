@@ -238,7 +238,31 @@
       <div class="record-header-actions">
 
         <div class="attendance-filters">
-              <app-catalog-picker class="attendance-filter-button filter-all" caption="تصفية حضور المتدرب" [options]="attendancePickerChoices" [value]="attendanceFilter()" (valueChange)="setAttendanceFilter($event)" />
+      
+<div class="attendance-dropdown">
+
+  <select
+    class="attendance-dropdown-select"
+    aria-label="تصفية حضور المتدرب"
+    [ngModel]="attendanceFilter()"
+    (ngModelChange)="setAttendanceFilter($event)"
+    [class.selected-all]="attendanceFilter() === 'All'"
+    [class.selected-present]="attendanceFilter() === 'Present'"
+    [class.selected-late]="attendanceFilter() === 'Late'"
+    [class.selected-absent]="attendanceFilter() === 'Absent'">
+
+    @for (option of attendancePickerChoices; track option.value) {
+      <option [value]="option.value">
+        {{ option.label }}
+      </option>
+    }
+
+  </select>
+
+  <span class="attendance-dropdown-arrow"></span>
+
+</div>
+
           @for (option of attendancePickerChoices; track option.value) {
             <button type="button" class="attendance-filter-button" [class.filter-all]="option.value === 'All'" [class.filter-present]="option.value === 'Present'" [class.filter-late]="option.value === 'Late'" [class.filter-absent]="option.value === 'Absent'" [class.active]="attendanceFilter() === option.value" (click)="setAttendanceFilter(option.value)">
               <span class="filter-text">{{ option.label }}</span><span class="filter-count">{{ getFilterCount(option.value) }}</span>

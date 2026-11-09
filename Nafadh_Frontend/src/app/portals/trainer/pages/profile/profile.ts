@@ -1102,8 +1102,8 @@ getCertificateFileUrl(fileUrl: string): string {
 cvUrl:
   trainer.cvUrl?.trim() ?? '',
 
-linkedinUrl:
-  trainer.linkedinUrl?.trim() || null
+linkedInUrl:
+  trainer.linkedInUrl?.trim() || null
 
     };
 
