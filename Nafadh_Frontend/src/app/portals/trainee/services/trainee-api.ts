@@ -1080,7 +1080,7 @@ export class TraineeApi {
     data: FormData
   ): Observable<any> {
     return this.http.post<any>(
-      `${this.base}/quiz-proctoring/attempts/${attemptId}/events`,
+      `${this.base}/quiz-attempts/${attemptId}/proctoring`,
       data
     );
   }

@@ -867,6 +867,7 @@
 >
   <div
     class="proctoring-viewer"
+    dir="rtl"
     (click)="$event.stopPropagation()"
   >
 
@@ -901,55 +902,364 @@
     <!-- Summary -->
     <div class="proctoring-viewer-summary">
 
+      <!-- Snapshots -->
       <div class="proctoring-summary-card">
+
         <i class="fa-solid fa-camera"></i>
 
         <div>
           <span>اللقطات</span>
-          <strong>—</strong>
+
+          <strong>
+            {{ proctoringSnapshots().length }}
+          </strong>
         </div>
+
       </div>
 
+
+      <!-- Events -->
       <div class="proctoring-summary-card">
+
         <i class="fa-solid fa-list-check"></i>
 
         <div>
           <span>الأحداث</span>
-          <strong>—</strong>
+
+          <strong>
+            {{ proctoringEvents().length }}
+          </strong>
         </div>
+
       </div>
 
+
+      <!-- Camera -->
       <div class="proctoring-summary-card">
+
         <i class="fa-solid fa-video"></i>
 
         <div>
           <span>حالة الكاميرا</span>
-          <strong>غير متاحة</strong>
+
+          <strong
+            [class.camera-available]="proctoringSnapshots().length > 0"
+            [class.camera-unavailable]="proctoringSnapshots().length === 0"
+          >
+            {{
+              proctoringSnapshots().length > 0
+                ? 'متاحة'
+                : 'غير متاحة'
+            }}
+          </strong>
         </div>
+
       </div>
 
     </div>
 
 
-    <!-- Content -->
-    <div class="proctoring-viewer-body">
+    <!-- Loading -->
+    <div
+      class="proctoring-loading"
+      *ngIf="proctoringLoading()"
+    >
 
-      <div class="proctoring-pending">
+      <i class="fa-solid fa-spinner fa-spin"></i>
 
-        <div class="proctoring-pending-icon">
-          <i class="fa-solid fa-camera"></i>
+      <h3>جاري تحميل بيانات المراقبة...</h3>
+
+      <p>
+        يتم تحميل اللقطات والأحداث الخاصة بمحاولة المتدرب.
+      </p>
+
+    </div>
+
+
+    <!-- Error -->
+    <div
+      class="proctoring-error"
+      *ngIf="!proctoringLoading() && proctoringError()"
+    >
+
+      <i class="fa-solid fa-circle-exclamation"></i>
+
+      <span>
+        {{ proctoringError() }}
+      </span>
+
+    </div>
+
+
+    <!-- Main Content -->
+    <div
+      class="proctoring-viewer-body"
+      *ngIf="!proctoringLoading() && !proctoringError()"
+    >
+
+      <!-- =================================
+           SNAPSHOTS
+      ================================== -->
+
+      <section class="proctoring-section">
+
+        <div class="proctoring-section-header">
+
+          <div>
+            <span class="proctoring-section-icon">
+              <i class="fa-solid fa-camera"></i>
+            </span>
+
+            <div>
+              <h3>لقطات المراقبة</h3>
+
+              <p>
+                الصور التي تم التقاطها أثناء محاولة المتدرب
+              </p>
+            </div>
+          </div>
+
+          <span class="proctoring-section-count">
+            {{ proctoringSnapshots().length }} لقطة
+          </span>
+
         </div>
 
-        <h3>بانتظار بيانات المراقبة</h3>
 
-        <p>
-          سيتم عرض لقطات المراقبة وأحداثها هنا عند توفر
-          بيانات الـProctoring من النظام.
-        </p>
+        <!-- No snapshots -->
+        <div
+          class="proctoring-empty"
+          *ngIf="proctoringSnapshots().length === 0"
+        >
+
+          <i class="fa-solid fa-camera-slash"></i>
+
+          <h4>لا توجد لقطات</h4>
+
+          <p>
+            لم يتم تسجيل أي لقطة مراقبة لهذه المحاولة.
+          </p>
+
+        </div>
+
+
+        <!-- Snapshots Grid -->
+        <div
+          class="snapshots-grid"
+          *ngIf="proctoringSnapshots().length > 0"
+        >
+
+          <div
+            class="snapshot-card"
+            *ngFor="let snapshot of proctoringSnapshots()"
+            (click)="selectedSnapshot.set(snapshot)"
+          >
+
+            <div class="snapshot-image-wrapper">
+
+              <img
+                [src]="snapshot.imageUrl"
+                alt="لقطة مراقبة"
+                class="snapshot-image"
+              />
+
+              <div class="snapshot-overlay">
+                <i class="fa-solid fa-expand"></i>
+                عرض الصورة
+              </div>
+
+            </div>
+
+            <div class="snapshot-info">
+
+              <span class="snapshot-event">
+                {{ snapshot.eventType }}
+              </span>
+
+              <span class="snapshot-date">
+                <i class="fa-regular fa-clock"></i>
+
+                {{ snapshot.createdAt | date:'dd/MM/yyyy, h:mm:ss a' }}
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================
+           EVENTS
+      ================================== -->
+
+      <section class="proctoring-section">
+
+        <div class="proctoring-section-header">
+
+          <div>
+            <span class="proctoring-section-icon">
+              <i class="fa-solid fa-list-check"></i>
+            </span>
+
+            <div>
+              <h3>أحداث المراقبة</h3>
+
+              <p>
+                جميع الأحداث التي تم تسجيلها أثناء الاختبار
+              </p>
+            </div>
+          </div>
+
+          <span class="proctoring-section-count">
+            {{ proctoringEvents().length }} حدث
+          </span>
+
+        </div>
+
+
+        <!-- No events -->
+        <div
+          class="proctoring-empty"
+          *ngIf="proctoringEvents().length === 0"
+        >
+
+          <i class="fa-solid fa-list"></i>
+
+          <h4>لا توجد أحداث</h4>
+
+          <p>
+            لم يتم تسجيل أحداث مراقبة لهذه المحاولة.
+          </p>
+
+        </div>
+
+
+        <!-- Events -->
+        <div
+          class="proctoring-events-list"
+          *ngIf="proctoringEvents().length > 0"
+        >
+
+          <div
+            class="proctoring-event"
+            *ngFor="let event of proctoringEvents()"
+          >
+
+            <div class="event-icon">
+
+              <i
+                class="fa-solid"
+                [ngClass]="
+                  event.hasSnapshot
+                    ? 'fa-camera'
+                    : 'fa-shield-halved'
+                "
+              ></i>
+
+            </div>
+
+
+            <div class="event-content">
+
+              <div class="event-header">
+
+                <strong>
+                  {{ event.eventType }}
+                </strong>
+
+                <span>
+                  {{ event.createdAt | date:'dd/MM/yyyy, h:mm:ss a' }}
+                </span>
+
+              </div>
+
+
+              <p *ngIf="event.details">
+                {{ event.details }}
+              </p>
+
+              <span
+                class="event-snapshot-badge"
+                *ngIf="event.hasSnapshot"
+              >
+                <i class="fa-solid fa-camera"></i>
+                تحتوي على لقطة
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+
+    <!-- =================================
+         FULL IMAGE MODAL
+    ================================== -->
+
+    <div
+      class="snapshot-preview-overlay"
+      *ngIf="selectedSnapshot()"
+      (click)="closeSnapshot()"
+    >
+
+      <div
+        class="snapshot-preview"
+        (click)="$event.stopPropagation()"
+      >
+
+        <button
+          type="button"
+          class="snapshot-preview-close"
+          (click)="closeSnapshot()"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <img
+          [src]="selectedSnapshot()?.imageUrl"
+          alt="لقطة المراقبة"
+        />
+
+        <div class="snapshot-preview-info">
+
+          <strong>
+            {{ selectedSnapshot()?.eventType }}
+          </strong>
+
+          <span>
+            {{ selectedSnapshot()?.createdAt | date:'dd/MM/yyyy, h:mm:ss a' }}
+          </span>
+
+        </div>
 
       </div>
+
+    </div>
+
+
+    <!-- Footer -->
+    <div class="proctoring-viewer-footer">
+
+      <button
+        type="button"
+        class="close-modal-btn"
+        (click)="closeProctoringViewer()"
+      >
+        <i class="fa-solid fa-xmark"></i>
+        إغلاق
+      </button>
 
     </div>
 
   </div>
+
 </div>
+ 
