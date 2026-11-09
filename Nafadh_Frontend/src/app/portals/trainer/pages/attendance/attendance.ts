@@ -517,7 +517,41 @@ filteredMonthlyRows = computed(() => {
 
     return `${backendOrigin}/${relativePath}`;
   }
+openExcuseProof(ex: Excuse): void {
+  const url = ex.proofUrl?.trim();
 
+  if (!url) {
+    this.notify('لا يوجد مرفق لهذا العذر.', 'err');
+    return;
+  }
+
+  // الروابط التجريبية ليست ملفات فعلية متاحة
+  if (new URL(url, window.location.origin).hostname === 'cdn.nafadh.test') {
+    this.notify('تعذّر فتح المرفق، الملف غير متاح.', 'err');
+    return;
+  }
+
+  this.http.get(url, { responseType: 'blob' }).subscribe({
+    next: (blob) => {
+      if (!blob.size || blob.type.includes('text/html')) {
+        this.notify('تعذّر فتح المرفق، الملف غير متاح.', 'err');
+        return;
+      }
+
+      const fileUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = fileUrl;
+      link.download = `excuse-proof-${ex.excuseId}`;
+      link.click();
+
+      setTimeout(() => URL.revokeObjectURL(fileUrl), 60000);
+    },
+    error: () => {
+      this.notify('تعذّر فتح المرفق، الملف غير متاح.', 'err');
+    }
+  });
+}
   private loadRepeatedAbsenceForRows(rows: Row[]): void {
     this.repeatedAbsenceIds.set(new Set<number>());
 
