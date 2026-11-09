@@ -38,6 +38,25 @@ namespace Nafadh_Backend.Models
         [Column(TypeName = "decimal(5,2)")]
         public decimal ProjectsWeight { get; set; } = 0m;
 
+        // Admin-only classification thresholds for this batch.
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal ExcellentMinScore { get; set; } = 80m;
+
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal ExcellentMinAttendance { get; set; } = 90m;
+
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal VeryGoodMinScore { get; set; } = 70m;
+
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal VeryGoodMinAttendance { get; set; } = 80m;
+
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal GoodMinScore { get; set; } = 60m;
+
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal AtRiskMinAttendance { get; set; } = 80m;
+
         public NFD_BatchStatus Status { get; set; }
 
         public int ProgramId { get; set; }
