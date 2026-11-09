@@ -462,15 +462,35 @@
                     <!-- معلومات السؤال -->
 
                     <div class="form-grid">
+                        <div class="field">
+                            <label for="moduleId">
+                                الوحدة
+                                <span>*</span>
+                            </label>
 
+                            <select id="moduleId" name="moduleId" [(ngModel)]="questionForm.moduleId" required>
+
+                                <option [ngValue]="0">
+                                    اختر الوحدة
+                                </option>
+
+                                @for (module of modules(); track module.moduleId) {
+                                <option [ngValue]="module.moduleId">
+                                    {{ module.title }}
+                                </option>
+                                }
+                            </select>
+                        </div>
                         <div class="field">
 
                             <label for="questionType">
                                 نوع السؤال
                             </label>
 
-                            <app-catalog-picker inputId="questionType" caption="نوع السؤال" [options]="constants.choices('NFD_QUE_TYPE')"
-                                [value]="typeKeys[questionForm.questionType]" [fallbackLabel]="editingQuestionId() ? getQuestionTypeLabel(questionForm.questionType) : ''"
+                            <app-catalog-picker inputId="questionType" caption="نوع السؤال"
+                                [options]="constants.choices('NFD_QUE_TYPE')"
+                                [value]="typeKeys[questionForm.questionType]"
+                                [fallbackLabel]="editingQuestionId() ? getQuestionTypeLabel(questionForm.questionType) : ''"
                                 (valueChange)="questionForm.questionType = typeKeys.indexOf($event); questionTypeChanged()" />
 
                         </div>
@@ -482,11 +502,12 @@
                                 مستوى الصعوبة
                             </label>
 
-                            <app-catalog-picker inputId="difficulty" caption="صعوبة السؤال" [options]="activeDifficultyChoices()"
-                                [value]="difficultyKeys[questionForm.difficulty]"
+                            <app-catalog-picker inputId="difficulty" caption="صعوبة السؤال"
+                                [options]="activeDifficultyChoices()" [value]="difficultyKeys[questionForm.difficulty]"
                                 [fallbackLabel]="editingQuestionId() ? getDifficultyLabel(questionForm.difficulty) : ''"
                                 (valueChange)="questionForm.difficulty = difficultyKeys.indexOf($event)" />
-                            <small *ngIf="difficultyOptionsError()">تعذر تحميل مستويات الصعوبة من الثوابت؛ لا يمكن اختيار مستوى حتى يعود الاتصال.</small>
+                            <small *ngIf="difficultyOptionsError()">تعذر تحميل مستويات الصعوبة من الثوابت؛ لا يمكن
+                                اختيار مستوى حتى يعود الاتصال.</small>
 
                         </div>
 
@@ -756,7 +777,167 @@
         </div>
 
         }
+        <!-- ============================= -->
+        <!-- Random Questions Modal -->
+        <!-- ============================= -->
 
+        @if (randomQuestionsModalOpen()) {
+
+        <div class="question-form-backdrop">
+
+            <section class="question-form-modal" role="dialog" aria-modal="true">
+
+                <header class="question-form-header">
+
+                    <div>
+                        <span class="page-kicker">
+                            بنك الأسئلة
+                        </span>
+
+                        <h2>
+                            إضافة أسئلة عشوائية
+                        </h2>
+
+                        <p>
+                            اختاري الوحدة ومستوى الصعوبة وعدد الأسئلة
+                        </p>
+                    </div>
+
+                    <button type="button" class="close-btn" (click)="closeRandomQuestionsModal()"
+                        [disabled]="randomQuestionsSaving()">
+
+                        <i class="fa-solid fa-xmark"></i>
+
+                    </button>
+
+                </header>
+
+
+                <form class="question-form" (ngSubmit)="addRandomQuestions()">
+
+                    <div class="form-grid">
+
+                        <!-- الوحدة -->
+                        <div class="field">
+
+                            <label for="randomModuleId">
+                                الوحدة
+                                <span>*</span>
+                            </label>
+
+                            <select id="randomModuleId" name="randomModuleId" [(ngModel)]="randomQuestionsForm.moduleId"
+                                required>
+
+                                <option [ngValue]="0">
+                                    اختر الوحدة
+                                </option>
+
+                                @for (
+                                module of modules();
+                                track module.moduleId
+                                ) {
+
+                                <option [ngValue]="module.moduleId">
+                                    {{ module.title }}
+                                </option>
+
+                                }
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- الصعوبة -->
+                        <div class="field">
+
+                            <label for="randomDifficulty">
+                                مستوى الصعوبة
+                                <span>*</span>
+                            </label>
+
+                            <app-catalog-picker inputId="randomDifficulty" caption="مستوى الصعوبة"
+                                [options]="activeDifficultyChoices()"
+                                [value]="difficultyKeys[randomQuestionsForm.difficulty]" (valueChange)="
+                                randomQuestionsForm.difficulty =
+                                    difficultyKeys.indexOf($event)
+                            " />
+
+                        </div>
+
+
+                        <!-- عدد الأسئلة -->
+                        <div class="field">
+
+                            <label for="randomCount">
+                                عدد الأسئلة
+                                <span>*</span>
+                            </label>
+
+                            <input id="randomCount" type="number" name="randomCount"
+                                [(ngModel)]="randomQuestionsForm.count" min="1" max="100" step="1" required />
+
+                            <small>
+                                يمكنك اختيار من 1 إلى 100 سؤال.
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    @if (errorMessage()) {
+
+                    <div class="form-message error-message">
+
+                        <i class="fa-solid fa-circle-exclamation"></i>
+
+                        <span>
+                            {{ errorMessage() }}
+                        </span>
+
+                    </div>
+
+                    }
+
+
+                    <footer class="question-form-actions">
+
+                        <button type="button" class="secondary-btn" (click)="closeRandomQuestionsModal()"
+                            [disabled]="randomQuestionsSaving()">
+
+                            إلغاء
+
+                        </button>
+
+
+                        <button type="submit" class="primary-btn" [disabled]="randomQuestionsSaving()">
+
+                            @if (randomQuestionsSaving()) {
+
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+
+                            جاري إضافة الأسئلة...
+
+                            } @else {
+
+                            <i class="fa-solid fa-shuffle"></i>
+
+                            إضافة الأسئلة
+
+                            }
+
+                        </button>
+
+                    </footer>
+
+                </form>
+
+            </section>
+
+        </div>
+
+        }
 
         <!-- ============================= -->
         <!-- Bottom Actions -->
@@ -786,6 +967,11 @@
                     <i class="fa-solid fa-link"></i>
                     إضافة المحدد للاختبار
                     }
+                </button>
+                <button type="button" class="secondary-btn" [disabled]="saving()" (click)="openRandomQuestionsModal()">
+
+                    <i class="fa-solid fa-shuffle"></i>
+                    إضافة أسئلة عشوائية
                 </button>
 
                 @if (quizQuestions().length > 0) {
