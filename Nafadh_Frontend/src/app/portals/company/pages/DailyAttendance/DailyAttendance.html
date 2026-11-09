@@ -14,6 +14,19 @@
 
         <div class="head-actions">
 
+            <div class="period-selectors" aria-label="تحديد فترة الحضور">
+                <label class="period-field">الشهر
+                    <input type="month" [value]="selectedAttendanceMonth()" [min]="minAttendanceMonth"
+                        [max]="maxAttendanceMonth" (change)="onAttendanceMonthChange($event)" />
+                </label>
+                <label class="period-field">الأسبوع
+                    <select [value]="selectedExportWeek()" (change)="onExportWeekChange($event)">
+                        @for (week of monthWeeks(); track week.index) {
+                        <option [value]="week.index">الأسبوع {{ week.index + 1 }} — {{ week.label }}</option>
+                        }
+                    </select>
+                </label>
+            </div>
             <div class="export-actions" data-guide="company-attendance-export">
                 <div class="export-group">
                     <button type="button" class="btn ghost" (click)="toggleExportMenu('week')"
@@ -422,6 +435,18 @@
 
                         </td>
 
+                    </tr>
+
+                    } @empty {
+
+                    <tr>
+                        <td colspan="5" class="trainer-filter-no-rows" aria-live="polite">
+                            <p>لا يوجد مدرب يطابق التخصص واسم المدرب المحددين.</p>
+                            <button type="button" class="btn ghost"
+                                (click)="selectedDayTrainerId.set(null); selectedDaySpecialty.set(null); trainerSearch.set(''); specialtySearch.set('')">
+                                مسح الفلاتر
+                            </button>
+                        </td>
                     </tr>
 
                     }
