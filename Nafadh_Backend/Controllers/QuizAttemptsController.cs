@@ -158,7 +158,60 @@ namespace Nafadh_Backend.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        // رفع ملف إجابة سؤال من نوع FileUpload
+        [HttpPost("{attemptId:int}/answers/file")]
+        [Authorize(Roles = "Trainee")]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(200 * 1024 * 1024)]
+        public async Task<IActionResult> UploadFileAnswer(
+            int attemptId,
+            [FromForm] int attemptQuestionId,
+            [FromForm] IFormFile file)
+        {
+            if (!await _access.TraineeOwnsAttemptAsync(User, attemptId))
+            {
+                return Forbid();
+            }
 
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new
+                {
+                    message = "ملف الإجابة مطلوب."
+                });
+            }
+
+            try
+            {
+                var result = await _service.UploadFileAnswerAsync(
+                    attemptId,
+                    attemptQuestionId,
+                    file);
+
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
         // تسليم الاختبار وحساب الدرجة
         [HttpPost("submit")]
         [Authorize(Roles = "Trainee")]

@@ -487,8 +487,7 @@
                                 نوع السؤال
                             </label>
 
-                            <app-catalog-picker inputId="questionType" caption="نوع السؤال"
-                                [options]="constants.choices('NFD_QUE_TYPE')"
+                            <app-catalog-picker inputId="questionType" caption="نوع السؤال" [options]="typeChoices()"
                                 [value]="typeKeys[questionForm.questionType]"
                                 [fallbackLabel]="editingQuestionId() ? getQuestionTypeLabel(questionForm.questionType) : ''"
                                 (valueChange)="questionForm.questionType = typeKeys.indexOf($event); questionTypeChanged()" />
@@ -635,8 +634,37 @@
                     </section>
 
                     }
+                    <!-- مرفق السؤال -->
 
+                    @if (questionForm.questionType === 3) {
 
+                    <div class="field full-width question-attachment-field">
+
+                        <label for="questionAttachment">
+                            ملف الاختبار
+                            <span>*</span>
+                        </label>
+
+                        <input id="questionAttachment" type="file" name="questionAttachment"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg"
+                            (change)="onQuestionAttachmentSelected($event)" [disabled]="questionSaving()" />
+
+                        @if (questionForm.attachmentFile) {
+
+                        <small class="attachment-selected">
+                            <i class="fa-solid fa-paperclip"></i>
+                            {{ questionForm.attachmentFile.name }}
+                        </small>
+
+                        }
+
+                        <small class="field-hint">
+                            ارفعي ملف الاختبار الذي سيقوم المتدرب بتحميله وحله ثم رفع إجابته.
+                        </small>
+
+                    </div>
+
+                    }
                     <!-- شرح الإجابة -->
 
                     <div class="field full-width">

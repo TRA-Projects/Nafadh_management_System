@@ -21,6 +21,7 @@ export interface TrainerAttendanceDto {
   reason?: string | null;
   excuseProofUrl?: string | null;
   isConfirmed: boolean;
+  excuseReviewStatus?: 'Pending' | 'Approved' | 'Rejected' | null;
 }
 
 export interface TrainerAttendanceUpsertDto {
