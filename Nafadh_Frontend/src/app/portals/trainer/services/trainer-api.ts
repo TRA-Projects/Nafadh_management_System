@@ -126,6 +126,20 @@ export interface CreateQuestionDto {
   explanation?: string | null;
   options: CreateQuestionOptionDto[];
 }
+export interface QuestionAttachmentDto {
+  questionAttachmentId: number;
+  questionId: number;
+  fileName: string;
+  fileUrl: string;
+  uploadedAt: string;
+  uploadedByUserId: number | null;
+}
+
+export interface CreateQuestionAttachmentDto {
+  questionId: number;
+  file: File;
+  fileUrl?: string;
+}
 
 export interface GradeQuizAnswerDto {
   answerId: number;
@@ -1549,7 +1563,56 @@ export class TrainerApi {
       { params }
     );
   }
+  // =====================================
+  // QUESTION ATTACHMENTS - مرفقات الأسئلة
+  // =====================================
 
+  getQuestionAttachments(
+    questionId: number
+  ): Observable<QuestionAttachmentDto[]> {
+    return this.http.get<QuestionAttachmentDto[]>(
+      `${this.base}/QuestionAttachment/question/${questionId}`
+    );
+  }
+
+  uploadQuestionAttachment(
+    questionId: number,
+    file: File
+  ): Observable<QuestionAttachmentDto> {
+
+    const formData = new FormData();
+
+    formData.append(
+      'QuestionId',
+      questionId.toString()
+    );
+
+    formData.append(
+      'File',
+      file
+    );
+
+    return this.http.post<QuestionAttachmentDto>(
+      `${this.base}/QuestionAttachment/upload`,
+      formData
+    );
+  }
+
+  deleteQuestionAttachment(
+    attachmentId: number
+  ): Observable<void> {
+    return this.http.delete<void>(
+      `${this.base}/QuestionAttachment/${attachmentId}`
+    );
+  }
+
+  getQuestionAttachmentDownloadUrl(
+    attachmentId: number
+  ): Observable<{ DownloadUrl: string }> {
+    return this.http.get<{ DownloadUrl: string }>(
+      `${this.base}/QuestionAttachment/${attachmentId}/download`
+    );
+  }
   addQuestionsToQuiz(
     quizId: number,
     trainerId: number,

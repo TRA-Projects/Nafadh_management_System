@@ -15,6 +15,11 @@ namespace Nafadh_Backend.Services
     int attemptId,
     SubmitQuizAnswerDto dto);
 
+        Task<object> UploadFileAnswerAsync(
+    int attemptId,
+    int attemptQuestionId,
+    IFormFile file);
+
         Task SubmitAttemptAsync(
             SubmitQuizDto dto);
 
@@ -101,13 +106,16 @@ namespace Nafadh_Backend.Services
     {
         private readonly IQuizAttemptRepository _repository;
         private readonly Nafadhcontext _context;
+        private readonly IConfiguration _configuration;
 
         public QuizAttemptService(
-            IQuizAttemptRepository repository,
-            Nafadhcontext context)
+    IQuizAttemptRepository repository,
+    Nafadhcontext context,
+    IConfiguration configuration)
         {
             _repository = repository;
             _context = context;
+            _configuration = configuration;
         }
 
         private static void RecalculateScore(NFD_QuizAttempt attempt)
@@ -281,6 +289,17 @@ namespace Nafadh_Backend.Services
                         QuestionType =
                             x.Question.QuestionType,
                         Points = x.Points,
+                        AttachmentId = x.Question.Attachments
+    .Select(a => (int?)a.QuestionAttachmentId)
+    .FirstOrDefault(),
+
+                        AttachmentFileName = x.Question.Attachments
+    .Select(a => a.FileName)
+    .FirstOrDefault(),
+
+                        AttachmentFileUrl = x.Question.Attachments
+    .Select(a => a.FileUrl)
+    .FirstOrDefault(),
                         Options = x.Question.Options
                             .OrderBy(o => o.SortOrder)
                             .Select(o =>
@@ -430,6 +449,156 @@ namespace Nafadh_Backend.Services
 
             await _repository.SaveChangesAsync();
         }
+        public async Task<object> UploadFileAnswerAsync(
+    int attemptId,
+    int attemptQuestionId,
+    IFormFile file)
+{
+    if (file == null || file.Length == 0)
+    {
+        throw new ArgumentException("ملف الإجابة مطلوب.");
+    }
+
+    var attempt =
+        await _repository.GetAttemptForAnswerAsync(attemptId);
+
+    if (attempt == null)
+    {
+        throw new KeyNotFoundException(
+            "المحاولة غير موجودة.");
+    }
+
+    if (attempt.Status != "InProgress")
+    {
+        throw new InvalidOperationException(
+            "لا يمكن رفع ملف في محاولة منتهية.");
+    }
+
+    var now = DateTime.UtcNow;
+
+    var quizEndTime =
+        attempt.StartedAt.AddMinutes(
+            attempt.Quiz.DurationMinutes);
+
+    if (now > quizEndTime)
+    {
+        attempt.Status = "Expired";
+        attempt.SubmittedAt = now;
+
+        await _repository.SaveChangesAsync();
+
+        throw new InvalidOperationException(
+            "انتهى وقت الاختبار.");
+    }
+
+    var attemptQuestion =
+        attempt.AttemptQuestions.FirstOrDefault(
+            x => x.AttemptQuestionId == attemptQuestionId);
+
+    if (attemptQuestion == null)
+    {
+        throw new KeyNotFoundException(
+            "سؤال المحاولة غير موجود.");
+    }
+
+    if (attemptQuestion.Question.QuestionType !=
+        NFD_QuizQuestionType.FileUpload)
+    {
+        throw new InvalidOperationException(
+            "رفع الملفات متاح فقط لأسئلة رفع الملفات.");
+    }
+
+    var existingAnswer =
+        await _repository.GetAnswerAsync(
+            attemptQuestionId);
+
+    if (existingAnswer != null &&
+        !string.IsNullOrWhiteSpace(existingAnswer.FileUrl))
+    {
+        throw new InvalidOperationException(
+            "تم رفع ملف الإجابة لهذا السؤال مسبقًا.");
+    }
+
+    var storagePath =
+        _configuration["Storage:QuizAnswersPath"];
+
+    if (string.IsNullOrWhiteSpace(storagePath))
+    {
+        throw new InvalidOperationException(
+            "مسار تخزين إجابات الاختبارات غير مضبوط.");
+    }
+
+    Directory.CreateDirectory(storagePath);
+
+    var extension =
+        Path.GetExtension(file.FileName);
+
+    var fileName =
+        $"{Guid.NewGuid()}{extension}";
+
+    var fullPath =
+        Path.Combine(
+            storagePath,
+            fileName);
+
+    await using (
+        var stream =
+            new FileStream(
+                fullPath,
+                FileMode.Create))
+    {
+        await file.CopyToAsync(stream);
+    }
+
+    var requestPath =
+        _configuration[
+            "Storage:QuizAnswersRequestPath"];
+
+    if (string.IsNullOrWhiteSpace(requestPath))
+    {
+        requestPath =
+            "/uploads/quiz-answers";
+    }
+
+    requestPath =
+        requestPath.TrimEnd('/');
+
+    var fileUrl =
+        $"{requestPath}/{fileName}";
+
+    var answer = existingAnswer;
+
+    if (answer == null)
+    {
+        answer = new NFD_QuizAnswer
+        {
+            AttemptQuestionId =
+                attemptQuestionId
+        };
+
+        await _repository.AddAnswerAsync(answer);
+    }
+
+    answer.FileUrl = fileUrl;
+    answer.OriginalFileName =
+        Path.GetFileName(file.FileName);
+
+    answer.AnsweredAt = now;
+    answer.IsCorrect = null;
+    answer.AwardedPoints = 0;
+    answer.IsManuallyGraded = false;
+
+    await _repository.SaveChangesAsync();
+
+    return new
+    {
+        answerId = answer.AnswerId,
+        attemptQuestionId = answer.AttemptQuestionId,
+        fileUrl = answer.FileUrl,
+        originalFileName = answer.OriginalFileName,
+        answeredAt = answer.AnsweredAt
+    };
+}
 
         public async Task SubmitAttemptAsync(
             SubmitQuizDto dto)
@@ -609,8 +778,21 @@ namespace Nafadh_Backend.Services
                             QuestionText = x.Question.QuestionText,
                             QuestionType = x.Question.QuestionType,
                             Points = x.Points,
+                            AttachmentId = x.Question.Attachments
+    .Select(a => (int?)a.QuestionAttachmentId)
+    .FirstOrDefault(),
+
+                            AttachmentFileName = x.Question.Attachments
+    .Select(a => a.FileName)
+    .FirstOrDefault(),
+
+                            AttachmentFileUrl = x.Question.Attachments
+    .Select(a => a.FileUrl)
+    .FirstOrDefault(),
                             SelectedOptionId = ans?.SelectedOptionId,
                             TextAnswer = ans?.TextAnswer,
+                            AnswerFileUrl = ans?.FileUrl,
+                            AnswerOriginalFileName = ans?.OriginalFileName,
                             IsMarkedForReview = ans?.IsMarkedForReview ?? false,
                             Options = x.Question.Options
                                 .OrderBy(o => o.SortOrder)
