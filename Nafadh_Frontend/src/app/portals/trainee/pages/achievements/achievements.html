@@ -484,7 +484,7 @@
             @if (evaluationPeriod() === 'Weekly') {
               التقييم الأسبوعي متاح للإرسال مرة واحدة أسبوعيًا.
             } @else {
-              التقييم الشهري متاح للإرسال مرة واحدة في نهاية الشهر.
+             التقييم الشهري متاح للإرسال مرة واحدة شهريًا.
             }
           </div>
 
@@ -795,10 +795,9 @@
             type="button"
             class="submit-feedback-btn"
             (click)="submitFeedback()"
-            [disabled]="
-              isSubmitting() ||
-              !canSubmitCurrentFeedback()
-            ">
+            
+[disabled]="isSubmitting()"
+>
 
             @if (isSubmitting()) {
               <i class="fas fa-spinner fa-pulse"></i>

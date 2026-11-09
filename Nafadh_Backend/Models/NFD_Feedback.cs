@@ -40,6 +40,9 @@ namespace Nafadh_Backend.Models
         public int? BatchId { get; set; }
         public NFD_Batch? Batch { get; set; }
 
+        [MaxLength(10)]
+        public string? EvaluationPeriod { get; set; }
+
         public ICollection<NFD_FeedbackScore> Scores { get; set; } = new List<NFD_FeedbackScore>();
 
     }
