@@ -58,6 +58,38 @@ namespace Nafadh_Backend.Services
             return result;
         }
 
+        private static void ValidateClassificationSettings(
+    decimal excellentScore,
+    decimal excellentAttendance,
+    decimal veryGoodScore,
+    decimal veryGoodAttendance,
+    decimal goodScore,
+    decimal atRiskAttendance)
+        {
+            var values = new[]
+            {
+        excellentScore,
+        excellentAttendance,
+        veryGoodScore,
+        veryGoodAttendance,
+        goodScore,
+        atRiskAttendance
+    };
+
+            if (values.Any(v => v < 0 || v > 100))
+                throw new InvalidOperationException(
+                    "يجب أن تكون جميع حدود التصنيف بين 0 و100.");
+
+            if (excellentScore < veryGoodScore ||
+                veryGoodScore < goodScore)
+                throw new InvalidOperationException(
+                    "يجب أن تكون حدود الدرجات مرتبة من متميز إلى جيد.");
+
+            if (excellentAttendance < veryGoodAttendance)
+                throw new InvalidOperationException(
+                    "نسبة حضور المتميز يجب ألا تقل عن نسبة حضور جيد جداً.");
+        }
+
         public async Task<BatchDto> CreateAsync(CreateBatchDto dto)
         {
             if (dto.ProgramId <= 0 || dto.EndDate.Date < dto.StartDate.Date)
@@ -69,6 +101,16 @@ namespace Nafadh_Backend.Services
                 dto.QuizzesWeight,
                 dto.TasksWeight,
                 dto.ProjectsWeight);
+
+            // Validate the classification thresholds.
+            ValidateClassificationSettings(
+                dto.ExcellentMinScore,
+                dto.ExcellentMinAttendance,
+                dto.VeryGoodMinScore,
+                dto.VeryGoodMinAttendance,
+                dto.GoodMinScore,
+                dto.AtRiskMinAttendance);
+
 
             var entity = new NFD_Batch
             {
@@ -84,7 +126,18 @@ namespace Nafadh_Backend.Services
                 AttendanceWeight = dto.AttendanceWeight,
                 QuizzesWeight = dto.QuizzesWeight,
                 TasksWeight = dto.TasksWeight,
-                ProjectsWeight = dto.ProjectsWeight
+                ProjectsWeight = dto.ProjectsWeight,
+
+                // Save the classification thresholds separately for each batch.
+
+                ExcellentMinScore = dto.ExcellentMinScore,
+                ExcellentMinAttendance = dto.ExcellentMinAttendance,
+
+                VeryGoodMinScore = dto.VeryGoodMinScore,
+                VeryGoodMinAttendance = dto.VeryGoodMinAttendance,
+
+                GoodMinScore = dto.GoodMinScore,
+                AtRiskMinAttendance = dto.AtRiskMinAttendance
             };
 
             // Persist the assignment and its in-app notifications in one transaction.
@@ -141,6 +194,47 @@ namespace Nafadh_Backend.Services
                 batch.QuizzesWeight = dto.QuizzesWeight.Value;
                 batch.TasksWeight = dto.TasksWeight.Value;
                 batch.ProjectsWeight = dto.ProjectsWeight.Value;
+            }
+
+            // Update classification settings independently of evaluation weights.
+            bool hasClassificationSettings =
+                dto.ExcellentMinScore.HasValue ||
+                dto.ExcellentMinAttendance.HasValue ||
+                dto.VeryGoodMinScore.HasValue ||
+                dto.VeryGoodMinAttendance.HasValue ||
+                dto.GoodMinScore.HasValue ||
+                dto.AtRiskMinAttendance.HasValue;
+
+            if (hasClassificationSettings)
+            {
+                // All six classification thresholds must be supplied together.
+                if (!dto.ExcellentMinScore.HasValue ||
+                    !dto.ExcellentMinAttendance.HasValue ||
+                    !dto.VeryGoodMinScore.HasValue ||
+                    !dto.VeryGoodMinAttendance.HasValue ||
+                    !dto.GoodMinScore.HasValue ||
+                    !dto.AtRiskMinAttendance.HasValue)
+                {
+                    throw new InvalidOperationException(
+                        "يجب إرسال معايير التصنيف الستة معاً.");
+                }
+
+                ValidateClassificationSettings(
+                    dto.ExcellentMinScore.Value,
+                    dto.ExcellentMinAttendance.Value,
+                    dto.VeryGoodMinScore.Value,
+                    dto.VeryGoodMinAttendance.Value,
+                    dto.GoodMinScore.Value,
+                    dto.AtRiskMinAttendance.Value);
+
+                batch.ExcellentMinScore = dto.ExcellentMinScore.Value;
+                batch.ExcellentMinAttendance = dto.ExcellentMinAttendance.Value;
+
+                batch.VeryGoodMinScore = dto.VeryGoodMinScore.Value;
+                batch.VeryGoodMinAttendance = dto.VeryGoodMinAttendance.Value;
+
+                batch.GoodMinScore = dto.GoodMinScore.Value;
+                batch.AtRiskMinAttendance = dto.AtRiskMinAttendance.Value;
             }
 
             if (batch.Status != dto.Status)
@@ -212,6 +306,8 @@ namespace Nafadh_Backend.Services
 
             return true;
         }
+
+
         // RelatedEntity = BatchAssignment:{batchId} allows Company to open the
         // specific Admin assignment directly from its own notifications.
         private async Task NotifyCompanyAssignmentAsync(NFD_Batch batch, int companyId,
@@ -362,6 +458,16 @@ namespace Nafadh_Backend.Services
                 TasksWeight = b.TasksWeight,
                 ProjectsWeight = b.ProjectsWeight,
 
+                ExcellentMinScore = b.ExcellentMinScore,
+                ExcellentMinAttendance = b.ExcellentMinAttendance,
+
+                VeryGoodMinScore = b.VeryGoodMinScore,
+                VeryGoodMinAttendance = b.VeryGoodMinAttendance,
+
+                GoodMinScore = b.GoodMinScore,
+                AtRiskMinAttendance = b.AtRiskMinAttendance,
+
+
                 TotalTraineesCount = totalTrainees,
                 IssuedCertificatesCount = completedCount,
                 Status = finalStatus,
@@ -373,6 +479,8 @@ namespace Nafadh_Backend.Services
                 CoursePlanStatus = "لم تُرفع بعد",
                 HasCoursePlan = false
             };
+
+
         }
 
         private async Task PopulatePlanStatusesAsync(List<BatchDto> batches)
