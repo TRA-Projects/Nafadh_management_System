@@ -1576,9 +1576,7 @@ namespace Nafadh_Backend.Services
             Directory.CreateDirectory(reportsFolder);
 
 
-            Directory.CreateDirectory(
-                reportsFolder
-            );
+          
 
 
             var generatedAt =
@@ -2150,6 +2148,88 @@ namespace Nafadh_Backend.Services
                 return null;
             }
 
+
+            return filePath;
+        }
+
+        // ==========================================================
+        // Trainer Trainees Report File
+        // ==========================================================
+
+        public async Task<string?>
+            GetTrainerTraineesReportFilePathAsync(
+                int reportId
+            )
+        {
+            var report =
+                await GetReportByIdAsync(reportId);
+
+            if (
+                report == null ||
+                string.IsNullOrWhiteSpace(report.FileUrl)
+            )
+            {
+                return null;
+            }
+
+            var reportsFolder =
+                _configuration["Storage:TrainerReportsPath"];
+
+            if (string.IsNullOrWhiteSpace(reportsFolder))
+            {
+                return null;
+            }
+
+            var reportsRoot =
+                Path.GetFullPath(reportsFolder);
+
+            var filePath =
+                Path.GetFullPath(report.FileUrl);
+
+            var rootWithSeparator =
+                reportsRoot.TrimEnd(
+                    Path.DirectorySeparatorChar,
+                    Path.AltDirectorySeparatorChar
+                ) + Path.DirectorySeparatorChar;
+
+            if (
+                !filePath.StartsWith(
+                    rootWithSeparator,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return null;
+            }
+
+            var fileName =
+                Path.GetFileName(filePath);
+
+            if (
+                !fileName.StartsWith(
+                    "trainer-trainees-",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return null;
+            }
+
+            if (
+                !string.Equals(
+                    Path.GetExtension(fileName),
+                    ".pdf",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return null;
+            }
+
+            if (!File.Exists(filePath))
+            {
+                return null;
+            }
 
             return filePath;
         }
