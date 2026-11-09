@@ -2237,6 +2237,30 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_Projects", (string)null);
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_ProjectBatch", b =>
+                {
+                    b.Property<int>("ProjectBatchId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProjectBatchId"));
+
+                    b.Property<int>("BatchId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProjectBatchId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("ProjectId", "BatchId")
+                        .IsUnique();
+
+                    b.ToTable("NFD_ProjectBatches", (string)null);
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_ProjectMember", b =>
                 {
                     b.Property<int>("MemberId")
@@ -4771,6 +4795,25 @@ namespace Nafadh_Backend.Migrations
                         .IsRequired();
 
                     b.Navigation("Program");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_ProjectBatch", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Batch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_ProjectMember", b =>
