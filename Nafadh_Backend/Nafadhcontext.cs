@@ -76,6 +76,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_Submission> NFD_Submissions { get; set; }
         public DbSet<NFD_Project> NFD_Projects { get; set; }
         public DbSet<NFD_ProjectMember> NFD_ProjectMembers { get; set; }
+        public DbSet<NFD_ProjectBatch> NFD_ProjectBatches { get; set; }
         public DbSet<NFD_EvaluationTemplate> NFD_EvaluationTemplates { get; set; }
         public DbSet<NFD_EvaluationCriterion> NFD_EvaluationCriteria { get; set; }
         public DbSet<NFD_EvaluationCriterionScore> NFD_EvaluationCriterionScores { get; set; }
@@ -885,6 +886,30 @@ namespace Nafadh_Backend
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+
+            // ---- NFD_ProjectBatch ----
+            modelBuilder.Entity<NFD_ProjectBatch>(entity =>
+            {
+                entity.ToTable("NFD_ProjectBatches");
+
+                entity.HasKey(e => e.ProjectBatchId);
+
+                entity.HasIndex(e => new
+                {
+                    e.ProjectId,
+                    e.BatchId
+                }).IsUnique();
+
+                entity.HasOne(e => e.Project)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProjectId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Batch)
+                    .WithMany()
+                    .HasForeignKey(e => e.BatchId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
 
             // ---- NFD_ProjectMember ----
