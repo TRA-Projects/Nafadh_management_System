@@ -1038,22 +1038,12 @@
             <div class="status-tabs-group">
               <label class="track-dropdown-label">تصفية بحالة الحضور</label>
               <div class="status-tabs-wrap">
-              <app-catalog-picker caption="تصفية حضور المتدرب" [options]="attendancePickerChoices" [value]="attendanceStatusFilter()" (valueChange)="onAttendanceStatusFilterChange($event)" />
-                <span>
-                  الكل ({{ attendanceSummary().total }})
-                </span>
-                <span>
-                  حاضر ({{ attendanceSummary().present }})
-                </span>
-                <span>
-                  متأخر ({{ attendanceSummary().late }})
-                </span>
-                <span>
-                  غائب ({{ attendanceSummary().absent }})
-                </span>
-                <span>
-                  بعذر ({{ attendanceSummary().excused }})
-                </span>
+              <app-catalog-picker class="filter-select" caption="تصفية حضور المتدرب" [options]="attendancePickerChoices" [value]="attendanceStatusFilter()" (valueChange)="onAttendanceStatusFilterChange($event)" />
+                @for (option of attendancePickerChoices; track option.value) {
+                  <button type="button" class="status-tab" [class.present]="option.value === 'Present'" [class.late]="option.value === 'Late'" [class.absent]="option.value === 'Absent'" [class.excused]="option.value === 'Excused'" [class.active]="attendanceStatusFilter() === option.value" (click)="onAttendanceStatusFilterChange(option.value)">
+                    {{ option.label }} ({{ option.value === 'ALL' ? attendanceSummary().total : option.value === 'Present' ? attendanceSummary().present : option.value === 'Late' ? attendanceSummary().late : option.value === 'Absent' ? attendanceSummary().absent : attendanceSummary().excused }})
+                  </button>
+                }
               </div>
             </div>
 

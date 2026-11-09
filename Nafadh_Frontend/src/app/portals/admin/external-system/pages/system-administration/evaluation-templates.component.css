@@ -89,7 +89,7 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.form-control:focus {
+.form-control:focus-within {
   border-color: var(--primary-color, #176b57);
   box-shadow: 0 0 0 2px rgb(23 107 87 / 10%);
 }

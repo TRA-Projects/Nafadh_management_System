@@ -77,8 +77,14 @@
       <div
         style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
         <div class="nfd-chips">
-          <app-catalog-picker caption="حالة الشركة" [options]="companyChoices" [value]="statusFilter()" (valueChange)="setFilter($event)" />
-          <span *ngIf="rejectedCompaniesCount() > 0">{{ statusLabel('Rejected') }}: {{ rejectedCompaniesCount() }}</span>
+          <app-catalog-picker class="custom-filter-select" caption="حالة الشركة" [options]="companyChoices" [value]="statusFilter()" (valueChange)="setFilter($event)" />
+          @for (option of companyChoices; track option.value) {
+            <button type="button" [class]="option.value === 'Rejected' ? 'btn-outline-red' : 'filter-btn'" [class.active]="statusFilter() === option.value" (click)="setFilter(option.value)">
+              @if (option.value === 'Rejected') { <span class="btn-icon">✕</span> }
+              <span>{{ option.label }}</span>
+              @if (option.value === 'Rejected' && rejectedCompaniesCount() > 0) { <span class="rejected-counter-badge">{{ rejectedCompaniesCount() }}</span> }
+            </button>
+          }
         </div>
 
         <div class="results-count-text">

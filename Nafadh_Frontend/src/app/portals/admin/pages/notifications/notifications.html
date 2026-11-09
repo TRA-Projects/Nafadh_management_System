@@ -250,7 +250,7 @@
 
           <p class="section-title">الفئة المستهدفة الرئيسية:</p>
           
-          <app-catalog-picker caption="الفئة المستهدفة الرئيسية" [options]="audienceChoices" [value]="scopeByAudience[newAnnounceData.mainAudience]" (valueChange)="chooseAudience($event)" />
+          <app-catalog-picker class="custom-select" caption="الفئة المستهدفة الرئيسية" [options]="audienceChoices" [value]="scopeByAudience[newAnnounceData.mainAudience]" (valueChange)="chooseAudience($event)" />
 
           <!-- إعدادات التخصيص للشركات (التصميم الجديد) -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'companies'">

@@ -110,7 +110,10 @@
       role="group"
       aria-label="تصفية الخطط والكورسات">
 
-      <app-catalog-picker caption="تصفية الخطط والكورسات" [options]="planChoices" [value]="filter()" (valueChange)="setFilter($event)" />
+      <app-catalog-picker class="catalog-filter" caption="تصفية الخطط والكورسات" [options]="planChoices" [value]="filter()" (valueChange)="setFilter($event)" />
+      @for (option of planChoices; track option.value) {
+        <button type="button" [class.active]="filter() === option.value" (click)="setFilter(option.value)">{{ option.label }}</button>
+      }
 
       <input
         type="search"

@@ -102,12 +102,18 @@
 
       <!-- الحالة (محدث بالـ 4 حالات) -->
       <div *ngIf="activeFilterTab === 'STATUS'" class="chips-group">
-        <app-catalog-picker caption="حالة الإنذار" [options]="filterStatusChoices" [value]="selectedStatus" (valueChange)="selectFilterOption('STATUS', $event)" />
+        <app-catalog-picker class="filter-chip" caption="حالة الإنذار" [options]="filterStatusChoices" [value]="selectedStatus" (valueChange)="selectFilterOption('STATUS', $event)" />
+        @for (option of filterStatusChoices; track option.value) {
+          <button type="button" class="filter-chip" [class.selected]="selectedStatus === option.value" (click)="selectFilterOption('STATUS', option.value)">{{ option.label }}</button>
+        }
       </div>
 
       <!-- المستوى -->
       <div *ngIf="activeFilterTab === 'LEVEL'" class="chips-group">
-        <app-catalog-picker caption="مستوى الإنذار" [options]="filterLevelChoices" [value]="selectedLevel" (valueChange)="selectFilterOption('LEVEL', $event)" />
+        <app-catalog-picker class="filter-chip" caption="مستوى الإنذار" [options]="filterLevelChoices" [value]="selectedLevel" (valueChange)="selectFilterOption('LEVEL', $event)" />
+        @for (option of filterLevelChoices; track option.value) {
+          <button type="button" class="filter-chip" [class.selected]="selectedLevel === option.value" (click)="selectFilterOption('LEVEL', option.value)">{{ option.label }}</button>
+        }
       </div>
     </div>
 

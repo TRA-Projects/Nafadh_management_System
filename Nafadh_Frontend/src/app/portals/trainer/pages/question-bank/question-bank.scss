@@ -211,7 +211,7 @@
 }
 
 .search-box input,
-.toolbar select {
+.toolbar :is(select, app-catalog-picker) {
   width: 100%;
   height: 46px;
 
@@ -236,7 +236,7 @@
 }
 
 .search-box input:focus,
-.toolbar select:focus {
+.toolbar :is(select, app-catalog-picker):focus-within {
   border-color: #0b79b8;
 
   box-shadow:
@@ -799,7 +799,7 @@
 
 .field textarea,
 .field input,
-.field select {
+.field :is(select, app-catalog-picker) {
   width: 100%;
 
   box-sizing: border-box;
@@ -830,7 +830,7 @@
 
 .field textarea:focus,
 .field input:focus,
-.field select:focus {
+.field :is(select, app-catalog-picker):focus-within {
   border-color: #0878b5;
 
   box-shadow:
