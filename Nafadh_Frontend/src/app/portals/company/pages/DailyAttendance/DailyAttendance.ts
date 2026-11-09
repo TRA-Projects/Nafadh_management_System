@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 
 import { Component, ElementRef, HostListener, OnInit, QueryList, ViewChildren, computed, inject, signal } from '@angular/core';
 
@@ -1187,6 +1187,20 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
     if (!this.canManageAttendance()) return;
     if (!this.canConfirm()) return;
     if (!this.showConfirmPopover()) return;
+
+    const missingArrival = this.rows().find(row => row.record?.status === 'Late' && !row.record.checkInTime);
+    if (missingArrival) {
+      this.showConfirmPopover.set(false);
+      this.errorMessage.set('يجب تحديد وقت الوصول للمدرب المتأخر قبل تأكيد سجل الحضور.');
+      return;
+    }
+    const missingDeparture = this.rows().find(row => row.record?.status === 'EarlyLeave' && !row.record.checkOutTime);
+    if (missingDeparture) {
+      this.showConfirmPopover.set(false);
+      this.errorMessage.set('يجب تحديد وقت الانصراف المبكر قبل تأكيد سجل الحضور.');
+      return;
+    }
+
     this.showConfirmPopover.set(false);
     this.confirming.set(true);
     // Persist the default Present status only for trainers without a record.
