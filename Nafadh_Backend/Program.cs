@@ -600,6 +600,30 @@ namespace Nafadh_Backend
                 });
             }
 
+            // =====================================================
+            // EXTERNAL QUIZ ANSWER FILES
+            // =====================================================
+            var quizAnswersPath =
+                builder.Configuration["Storage:QuizAnswersPath"];
+
+            var quizAnswersRequestPath =
+                builder.Configuration["Storage:QuizAnswersRequestPath"]
+                ?? "/uploads/quiz-answers";
+
+            if (!string.IsNullOrWhiteSpace(quizAnswersPath))
+            {
+                Directory.CreateDirectory(quizAnswersPath);
+
+                app.UseStaticFiles(new StaticFileOptions
+                {
+                    FileProvider = new PhysicalFileProvider(quizAnswersPath),
+                    RequestPath = quizAnswersRequestPath
+                });
+            }
+
+            // Enable CORS middleware here
+            app.UseCors("AllowAll");
+
             // Enable CORS middleware here
             app.UseCors("AllowAll");
             app.UseStaticFiles();
