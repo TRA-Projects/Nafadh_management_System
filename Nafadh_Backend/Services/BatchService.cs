@@ -60,9 +60,15 @@ namespace Nafadh_Backend.Services
 
         public async Task<BatchDto> CreateAsync(CreateBatchDto dto)
         {
-
             if (dto.ProgramId <= 0 || dto.EndDate.Date < dto.StartDate.Date)
                 throw new InvalidOperationException("يجب تحديد برنامج صحيح ومدة تدريب صالحة.");
+
+            // Validate that the four evaluation weights form a valid 100% distribution.
+            ValidateEvaluationWeights(
+                dto.AttendanceWeight,
+                dto.QuizzesWeight,
+                dto.TasksWeight,
+                dto.ProjectsWeight);
 
             var entity = new NFD_Batch
             {
@@ -72,21 +78,29 @@ namespace Nafadh_Backend.Services
                 StartDate = dto.StartDate,
                 EndDate = dto.EndDate,
                 Capacity = dto.Capacity,
-                Status = NFD_BatchStatus.Upcoming
+                Status = NFD_BatchStatus.Upcoming,
+
+                // Save the evaluation weights separately for each batch.
+                AttendanceWeight = dto.AttendanceWeight,
+                QuizzesWeight = dto.QuizzesWeight,
+                TasksWeight = dto.TasksWeight,
+                ProjectsWeight = dto.ProjectsWeight
             };
 
             // Persist the assignment and its in-app notifications in one transaction.
             await using var transaction = await _context.Database.BeginTransactionAsync();
             var created = await _repository.AddAsync(entity);
+
             if (created.CompanyId.HasValue)
                 await NotifyCompanyAssignmentAsync(created, created.CompanyId.Value, cancelled: false);
+
             await transaction.CommitAsync();
+
             var savedBatch = await _repository.GetByIdAsync(created.BatchId);
 
             return MapToDto(savedBatch ?? created, 0);
         }
 
-        
 
         public async Task<bool> UpdateAsync(int id, UpdateBatchDto dto)
         {
@@ -96,8 +110,42 @@ namespace Nafadh_Backend.Services
             if (dto.EndDate.Date < dto.StartDate.Date)
                 throw new InvalidOperationException("مدة الدفعة غير صالحة.");
 
+            // Update evaluation weights only when the request includes weight settings.
+            bool hasAnyEvaluationWeight =
+                dto.AttendanceWeight.HasValue ||
+                dto.QuizzesWeight.HasValue ||
+                dto.TasksWeight.HasValue ||
+                dto.ProjectsWeight.HasValue;
+
+            if (hasAnyEvaluationWeight)
+            {
+                // All four weights must be supplied together to avoid partial configurations.
+                if (!dto.AttendanceWeight.HasValue ||
+                    !dto.QuizzesWeight.HasValue ||
+                    !dto.TasksWeight.HasValue ||
+                    !dto.ProjectsWeight.HasValue)
+                {
+                    throw new InvalidOperationException(
+                        "يجب إرسال أوزان التقييم الأربعة معاً.");
+                }
+
+                // Validate that the total evaluation weight equals 100%.
+                ValidateEvaluationWeights(
+                    dto.AttendanceWeight.Value,
+                    dto.QuizzesWeight.Value,
+                    dto.TasksWeight.Value,
+                    dto.ProjectsWeight.Value);
+
+                // Apply the new evaluation weights to this batch only.
+                batch.AttendanceWeight = dto.AttendanceWeight.Value;
+                batch.QuizzesWeight = dto.QuizzesWeight.Value;
+                batch.TasksWeight = dto.TasksWeight.Value;
+                batch.ProjectsWeight = dto.ProjectsWeight.Value;
+            }
+
             if (batch.Status != dto.Status)
                 await CatalogSelectionPolicy.RequireActiveAsync(_constants, dto.Status);
+
             var previousCompanyId = batch.CompanyId;
             var previousProgramId = batch.ProgramId;
             var assignmentChanged = previousCompanyId != dto.CompanyId ||
@@ -111,16 +159,19 @@ namespace Nafadh_Backend.Services
             var batchPlan = await _context.NFD_CoursePlans
                 .Include(p => p.Stages)
                 .SingleOrDefaultAsync(p => p.BatchId == id);
+
             if (scheduleChanged && batchPlan is not null)
             {
                 if (batchPlan.ApprovalStatus != NFD_CoursePlanApprovalStatus.Draft &&
                     batchPlan.ApprovalStatus != NFD_CoursePlanApprovalStatus.Rejected)
                     throw new InvalidOperationException(
                         "لا يمكن تغيير مدة دفعة لها خطة مقدمة أو معتمدة. أعد الخطة للمراجعة أولاً.");
+
                 if (batchPlan.Stages.Any(s => s.StartDate.Date < dto.StartDate.Date ||
                                              s.EndDate.Date > dto.EndDate.Date))
                     throw new InvalidOperationException(
                         "مدة الدفعة الجديدة لا تشمل مراحل الخطة الحالية. صحح المراحل قبل تغيير المدة.");
+
                 batchPlan.StartDate = dto.StartDate.Date;
                 batchPlan.EndDate = dto.EndDate.Date;
                 batchPlan.UpdatedAt = DateTime.Now;
@@ -147,16 +198,20 @@ namespace Nafadh_Backend.Services
             batch.Status = dto.Status;
 
             await using var transaction = await _context.Database.BeginTransactionAsync();
+
             await _repository.UpdateAsync(batch);
+
             if (previousCompanyId.HasValue && previousCompanyId != batch.CompanyId)
                 await NotifyCompanyAssignmentAsync(batch, previousCompanyId.Value, cancelled: true);
+
             if (batch.CompanyId.HasValue && (assignmentChanged || scheduleChanged))
                 await NotifyCompanyAssignmentAsync(batch, batch.CompanyId.Value, cancelled: false,
                     updated: !assignmentChanged);
+
             await transaction.CommitAsync();
+
             return true;
         }
-
         // RelatedEntity = BatchAssignment:{batchId} allows Company to open the
         // specific Admin assignment directly from its own notifications.
         private async Task NotifyCompanyAssignmentAsync(NFD_Batch batch, int companyId,
@@ -187,9 +242,12 @@ namespace Nafadh_Backend.Services
             foreach (var recipient in recipients)
                 _context.NFD_Notifications.Add(new NFD_Notification
                 {
-                    UserId = recipient, Title = title, Message = message,
+                    UserId = recipient,
+                    Title = title,
+                    Message = message,
                     RelatedEntity = cancelled ? $"BatchCancelled:{batch.BatchId}" : $"BatchAssignment:{batch.BatchId}",
-                    IsRead = false, CreatedAt = now
+                    IsRead = false,
+                    CreatedAt = now
                 });
             await _context.SaveChangesAsync();
         }
@@ -297,6 +355,13 @@ namespace Nafadh_Backend.Services
                 StartDate = b.StartDate,
                 EndDate = b.EndDate,
                 Capacity = b.Capacity,
+
+                // Return the evaluation weights saved for this specific batch.
+                AttendanceWeight = b.AttendanceWeight,
+                QuizzesWeight = b.QuizzesWeight,
+                TasksWeight = b.TasksWeight,
+                ProjectsWeight = b.ProjectsWeight,
+
                 TotalTraineesCount = totalTrainees,
                 IssuedCertificatesCount = completedCount,
                 Status = finalStatus,
@@ -346,5 +411,29 @@ namespace Nafadh_Backend.Services
         {
             return await _repository.GetProgressAsync(batchId);
         }
+
+        // Validates that all evaluation weights are within the allowed range
+        // and their total equals 100%.
+        private static void ValidateEvaluationWeights(
+            decimal attendance,
+            decimal quizzes,
+            decimal tasks,
+            decimal projects)
+        {
+            var weights = new[] { attendance, quizzes, tasks, projects };
+
+            if (weights.Any(weight => weight < 0 || weight > 100))
+            {
+                throw new InvalidOperationException(
+                    "يجب أن تكون نسبة كل عنصر بين 0 و100.");
+            }
+
+            if (weights.Sum() != 100m)
+            {
+                throw new InvalidOperationException(
+                    "مجموع أوزان التقييم يجب أن يساوي 100%.");
+            }
+        }
     }
 }
+    
