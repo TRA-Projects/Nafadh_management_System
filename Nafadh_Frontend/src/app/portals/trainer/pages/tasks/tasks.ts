@@ -80,6 +80,8 @@ export class TrainerTasks implements OnInit {
 
   updatingTaskId = signal<number | null>(null);
   deletingTaskId = signal<number | null>(null);
+  showDeleteModal = signal(false);
+taskToDelete = signal<TaskDto | null>(null);
 
 
   // =====================================================
@@ -645,54 +647,61 @@ openSubmissionFile(submission: SubmissionDto): void {
   // =====================================================
   // DELETE TASK
   // =====================================================
-
-  deleteTask(task: TaskDto): void {
-    if (this.deletingTaskId() !== null || this.updatingTaskId() !== null) {
-      return;
-    }
-
-    this.errorMessage.set('');
-
-    this.api.getSubmissionsByTask(task.taskId).subscribe({
-      next: (submissions) => {
-        if (submissions && submissions.length > 0) {
-          this.errorMessage.set(
-            'لا يمكن حذف هذه المهمة لأنها تحتوي على تسليمات من المتدربين.'
-          );
-          return;
-        }
-
-        const confirmed = window.confirm(
-          `هل أنت متأكد من حذف المهمة "${task.title}"؟`
-        );
-
-        if (!confirmed) {
-          return;
-        }
-
-        this.deletingTaskId.set(task.taskId);
-
-        this.api.deleteTask(task.taskId).subscribe({
-          next: () => {
-            this.deletingTaskId.set(null);
-            this.loadTasks();
-          },
-
-          error: (error) => {
-            console.error('Error deleting task:', error);
-            this.deletingTaskId.set(null);
-            this.errorMessage.set('تعذر حذف المهمة.');
-          }
-        });
-      },
-
-      error: (error) => {
-        console.error('Error checking task submissions:', error);
-        this.errorMessage.set('تعذر التحقق من تسليمات المهمة.');
-      }
-    });
+deleteTask(task: TaskDto): void {
+  if (this.deletingTaskId() !== null || this.updatingTaskId() !== null) {
+    return;
   }
 
+  this.errorMessage.set('');
+
+  this.api.getSubmissionsByTask(task.taskId).subscribe({
+    next: (submissions) => {
+      if (submissions && submissions.length > 0) {
+        this.errorMessage.set(
+          'لا يمكن حذف هذه المهمة لأنها تحتوي على تسليمات من المتدربين.'
+        );
+        return;
+      }
+
+      this.taskToDelete.set(task);
+      this.showDeleteModal.set(true);
+    },
+
+    error: (error) => {
+      console.error('Error checking task submissions:', error);
+      this.errorMessage.set('تعذر التحقق من تسليمات المهمة.');
+    }
+  });
+
+  }
+closeDeleteModal(): void {
+  this.showDeleteModal.set(false);
+  this.taskToDelete.set(null);
+}
+
+confirmDeleteTask(): void {
+  const task = this.taskToDelete();
+
+  if (!task || this.deletingTaskId() !== null) {
+    return;
+  }
+
+  this.deletingTaskId.set(task.taskId);
+
+  this.api.deleteTask(task.taskId).subscribe({
+    next: () => {
+      this.deletingTaskId.set(null);
+      this.closeDeleteModal();
+      this.loadTasks();
+    },
+    error: (error) => {
+      console.error('Error deleting task:', error);
+      this.deletingTaskId.set(null);
+      this.errorMessage.set('تعذر حذف المهمة.');
+      this.closeDeleteModal();
+    }
+  });
+}
 
   // =====================================================
   // OPEN / CLOSE CREATE MODAL

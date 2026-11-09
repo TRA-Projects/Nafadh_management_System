@@ -849,5 +849,53 @@
     </div>
 
   }
+<!-- DELETE CONFIRMATION MODAL -->
+@if (showDeleteModal()) {
+  <div
+    class="delete-modal-overlay"
+    (click)="closeDeleteModal()"
+    style="position:fixed;inset:0;z-index:2000;background:rgba(15,23,42,0.5);display:flex;align-items:center;justify-content:center;padding:20px;"
+  >
+    <div
+      (click)="$event.stopPropagation()"
+      style="background:white;border-radius:16px;padding:28px;width:100%;max-width:420px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2);"
+    >
+      <div style="font-size:36px;margin-bottom:12px;">🗑️</div>
 
+      <h3 style="margin-bottom:12px;color:#0f172a;">
+        تأكيد حذف المهمة
+      </h3>
+
+      <p style="color:#64748b;line-height:1.8;">
+        هل أنت متأكد من حذف المهمة
+        <strong>{{ taskToDelete()?.title }}</strong>؟
+      </p>
+
+      <div style="display:flex;gap:12px;justify-content:center;margin-top:24px;">
+        <button
+          type="button"
+          class="nfd-btn"
+          (click)="closeDeleteModal()"
+          [disabled]="deletingTaskId() !== null"
+        >
+          إلغاء
+        </button>
+
+        <button
+          type="button"
+          class="nfd-btn"
+          (click)="confirmDeleteTask()"
+          [disabled]="deletingTaskId() !== null"
+          style="background:#dc2626;color:white;border:none;"
+        >
+          @if (deletingTaskId() !== null) {
+            جاري الحذف...
+          } @else {
+            تأكيد الحذف
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
 </div>
