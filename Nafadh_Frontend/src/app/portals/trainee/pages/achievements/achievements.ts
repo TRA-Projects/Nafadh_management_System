@@ -989,6 +989,7 @@ export class TraineeAchievements implements OnInit {
   allBadges = signal<BadgeDto[]>([]);
   myBadges = signal<TraineeBadgeDto[]>([]);
 
+
   // ============================================================
   // CERTIFICATES - ADMIN ISSUED ONLY
   // ============================================================
@@ -997,23 +998,31 @@ export class TraineeAchievements implements OnInit {
 
   certificates = signal<CertificateDto[]>([]);
 
-  issuedCertificate = computed<CertificateDto | null>(() => {
-    const currentEnrollmentId =
-      this.enrollment()?.enrollmentId;
+  readonly certificateBatch = signal<BatchDto | null>(null);
 
-    if (!currentEnrollmentId) {
+  readonly certificatePreviewOpen = signal(false);
+
+  readonly certificatePrintId =
+    'trainee-printable-certificate';
+
+  issuedCertificate = computed<CertificateDto | null>(() => {
+    const enrollmentId = Number(
+      this.enrollment()?.enrollmentId ??
+      this.enrollmentId() ??
+      0
+    );
+
+    if (!enrollmentId) {
       return null;
     }
 
-    return (
-      this.certificates().find(
-        cert =>
-          cert.enrollmentId === currentEnrollmentId &&
-          typeof cert.fileUrl === 'string' &&
-          cert.fileUrl.trim().length > 0
-      ) ?? null
-    );
+    return this.certificates().find(
+      certificate =>
+        Number(certificate.enrollmentId) === enrollmentId &&
+        Number(certificate.certificateId) > 0
+    ) ?? null;
   });
+
 
   // ============================================================
   // FEEDBACK
@@ -1074,17 +1083,16 @@ export class TraineeAchievements implements OnInit {
     return this.stats().overallProgress || 0;
   });
 
+
   // ============================================================
   // CERTIFICATE AVAILABILITY
   // ============================================================
 
   canDownloadCertificate = computed(() => {
-    const completed = this.progressPercentage() >= 100;
-
-    const issued = this.issuedCertificate() !== null;
-
-    return completed && issued;
+    return this.issuedCertificate() !== null;
   });
+
+
 
   // ============================================================
   // TRAINEE NAME
@@ -1328,7 +1336,11 @@ export class TraineeAchievements implements OnInit {
     this.errorMessage.set('');
 
     // Reset certificate state before loading new data.
-    this.certificates.set([]);
+    
+this.certificates.set([]);
+this.certificateBatch.set(null);
+this.certificatePreviewOpen.set(false);
+
 
     // ==========================================================
     // LOAD TRAINEE PROFILE
@@ -1555,12 +1567,13 @@ export class TraineeAchievements implements OnInit {
       .getBatch(batchId)
       .subscribe({
 
-        next: (
-          batch: BatchDto
-        ) => {
+        
+next: (batch: BatchDto) => {
 
-          const programId =
-            Number(batch.programId);
+  // Store the batch information for the official certificate.
+  this.certificateBatch.set(batch);
+
+  const programId = Number(batch.programId);
 
           if (
             !programId ||
@@ -2815,116 +2828,222 @@ export class TraineeAchievements implements OnInit {
 
 
   // ============================================================
-  // OFFICIAL CERTIFICATE - VIEW / DOWNLOAD
+  // OFFICIAL CERTIFICATE - VIEW
   // ============================================================
 
   private showCertificateMessage(message: string): void {
     this.successMessage.set(message);
     this.showSuccessToast.set(true);
-    setTimeout(() => this.showSuccessToast.set(false), 4000);
-  }
 
-  private async validateCertificatePdf(blob: Blob): Promise<Blob> {
-    if (!blob || blob.size < 5) {
-      throw new Error('Certificate PDF is empty');
-    }
-
-    const header = new Uint8Array(await blob.slice(0, 5).arrayBuffer());
-    const valid = header[0] === 0x25 && header[1] === 0x50 &&
-      header[2] === 0x44 && header[3] === 0x46 && header[4] === 0x2d;
-    if (!valid) throw new Error('Response is not a PDF');
-
-    return new Blob([blob], { type: 'application/pdf' });
-  }
-
-  downloadCertificate(): void {
-    const cert = this.issuedCertificate();
-    if (!this.canDownloadCertificate() || !cert) {
-      this.showCertificateMessage(
-        '⚠️ يجب إكمال البرنامج وإصدار الشهادة من الإدارة أولاً.'
-      );
-      return;
-    }
-    if (this.loading()) return;
-
-    this.loading.set(true);
-    this.api.downloadCertificate(cert.certificateId).subscribe({
-      next: async (blob: Blob) => {
-        try {
-          const pdf = await this.validateCertificatePdf(blob);
-          const url = URL.createObjectURL(pdf);
-          const anchor = document.createElement('a');
-          anchor.href = url;
-          anchor.download =
-            `${certificateDocument(cert.type).ar}_${cert.certificateId}.pdf`;
-          document.body.appendChild(anchor);
-          anchor.click();
-          anchor.remove();
-          setTimeout(() => URL.revokeObjectURL(url), 60000);
-        } catch (error) {
-          console.error('Invalid official certificate PDF:', error);
-          this.showCertificateMessage(
-            '⚠️ ملف الشهادة الرسمي غير متاح أو غير صالح. يرجى التواصل مع الإدارة.'
-          );
-        } finally {
-          this.loading.set(false);
-        }
-      },
-      error: (error: unknown) => {
-        console.error('Certificate download failed:', error);
-        this.loading.set(false);
-        this.showCertificateMessage(
-          '⚠️ تعذر تحميل الشهادة الرسمية. يرجى التواصل مع الإدارة.'
-        );
-      }
-    });
+    setTimeout(() => {
+      this.showSuccessToast.set(false);
+    }, 4000);
   }
 
   viewCertificate(): void {
-    const cert = this.issuedCertificate();
-    if (!this.canDownloadCertificate() || !cert) {
-      this.showCertificateMessage(
-        '⚠️ يجب إكمال البرنامج وإصدار الشهادة من الإدارة أولاً.'
-      );
-      return;
-    }
-    if (this.loading()) return;
+    const certificate = this.issuedCertificate();
 
-    // Open synchronously on click to avoid popup blockers.
-    const previewWindow = window.open('', '_blank');
-    if (!previewWindow) {
+    if (!certificate) {
       this.showCertificateMessage(
-        '⚠️ يرجى السماح بالنوافذ المنبثقة لمشاهدة الشهادة.'
+        'الشهادة بانتظار إصدار الإدارة.'
       );
       return;
     }
 
-    this.loading.set(true);
-    this.api.downloadCertificate(cert.certificateId).subscribe({
-      next: async (blob: Blob) => {
-        try {
-          const pdf = await this.validateCertificatePdf(blob);
-          const url = URL.createObjectURL(pdf);
-          previewWindow.location.href = url;
-          setTimeout(() => URL.revokeObjectURL(url), 60000);
-        } catch (error) {
-          console.error('Certificate preview failed:', error);
-          previewWindow.close();
-          this.showCertificateMessage(
-            '⚠️ تعذرت مشاهدة الشهادة. ملف PDF الرسمي غير متاح.'
-          );
-        } finally {
-          this.loading.set(false);
-        }
-      },
-      error: (error: unknown) => {
-        console.error('Certificate preview API failed:', error);
-        previewWindow.close();
-        this.loading.set(false);
-        this.showCertificateMessage(
-          '⚠️ تعذر فتح الشهادة الرسمية. يرجى التواصل مع الإدارة.'
-        );
-      }
-    });
+    this.certificatePreviewOpen.set(true);
   }
+
+  closeCertificatePreview(): void {
+    this.certificatePreviewOpen.set(false);
+  }
+
+
+  // ============================================================
+  // OFFICIAL CERTIFICATE - DOWNLOAD
+  // ============================================================
+
+  downloadCertificate(): void {
+    const certificate = this.issuedCertificate();
+
+    if (!certificate) {
+      this.showCertificateMessage(
+        'الشهادة بانتظار إصدار الإدارة.'
+      );
+      return;
+    }
+
+    this.certificatePreviewOpen.set(true);
+
+    // Wait for Angular to render the certificate modal.
+ 
+this.waitForCertificateAndPrint();
+
+  }
+
+private waitForCertificateAndPrint(attempt = 0): void {
+  const certificateElement = document.getElementById(
+    this.certificatePrintId
+  );
+
+  if (certificateElement) {
+    this.printIssuedCertificate();
+    return;
+  }
+
+  if (attempt >= 10) {
+    this.showCertificateMessage(
+      'تعذر تجهيز معاينة الشهادة للطباعة.'
+    );
+    return;
+  }
+
+  setTimeout(
+    () => this.waitForCertificateAndPrint(attempt + 1),
+    100
+  );
+}
+
+
+  // ============================================================
+  // OFFICIAL CERTIFICATE - PRINT / SAVE AS PDF
+  // ============================================================
+
+  printIssuedCertificate(): void {
+    const certEl = document.getElementById(
+      this.certificatePrintId
+    );
+
+    if (!certEl) {
+      this.showCertificateMessage(
+        'تعذر العثور على قالب الشهادة.'
+      );
+      return;
+    }
+
+    const frame = document.createElement('iframe');
+
+    frame.style.cssText =
+      'position:fixed;width:0;height:0;border:0;right:0;bottom:0';
+
+    document.body.appendChild(frame);
+
+    const doc = frame.contentDocument;
+
+    if (!doc) {
+      frame.remove();
+      return;
+    }
+
+    const styles = Array.from(
+      document.querySelectorAll(
+        'style,link[rel="stylesheet"]'
+      )
+    )
+      .map(element => element.outerHTML)
+      .join('\n');
+
+    doc.open();
+
+    doc.write(`
+      <!doctype html>
+      <html lang="ar" dir="rtl">
+      <head>
+        <meta charset="utf-8">
+        <title>شهادة نفاذ</title>
+
+        ${styles}
+
+        <style>
+          @page {
+            size: A4 landscape;
+            margin: 6mm;
+          }
+
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            box-sizing: border-box;
+          }
+
+          html,
+          body {
+            margin: 0;
+            padding: 0;
+            background: white;
+            direction: rtl;
+            overflow: hidden;
+          }
+
+          .official-certificate-paper {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-shadow: none !important;
+            break-inside: avoid;
+          }
+
+          .cert-outer-border {
+            padding: 10px !important;
+          }
+
+          .cert-inner-gold-border {
+            padding: 16px 24px !important;
+          }
+
+          .official-cert-header {
+            padding-bottom: 10px !important;
+          }
+
+          .official-cert-body {
+            padding: 10px 6px !important;
+          }
+
+          .cert-trainee-full-name {
+            margin: 4px 0 8px !important;
+            font-size: 24px !important;
+          }
+
+          .cert-completion-paragraph {
+            margin: 0 auto 10px !important;
+            line-height: 1.65 !important;
+          }
+
+          .cert-scores-strip {
+            margin: 0 auto 10px !important;
+          }
+
+          .official-cert-footer {
+            padding-top: 10px !important;
+          }
+        </style>
+      </head>
+
+      <body>
+        ${certEl.outerHTML}
+      </body>
+      </html>
+    `);
+
+    doc.close();
+
+    const printWindow = frame.contentWindow;
+
+    if (!printWindow) {
+      frame.remove();
+      return;
+    }
+
+    const print = () => {
+      try {
+        printWindow.focus();
+        printWindow.print();
+      } finally {
+        setTimeout(() => {
+          frame.remove();
+        }, 3000);
+      }
+    };
+
+    setTimeout(print, 650);
+  }
+
 }
