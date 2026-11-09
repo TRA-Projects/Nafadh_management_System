@@ -37,6 +37,8 @@ namespace Nafadh_Backend.Models
 
         public ICollection<NFD_QuizQuestion> QuizQuestions { get; set; }
             = new List<NFD_QuizQuestion>();
+        public ICollection<NFD_QuestionAttachment> Attachments { get; set; }
+    = new List<NFD_QuestionAttachment>();
 
     }
 }
