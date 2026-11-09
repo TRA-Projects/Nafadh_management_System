@@ -424,6 +424,18 @@
 
                     </tr>
 
+                    } @empty {
+
+                    <tr>
+                        <td colspan="5" class="trainer-filter-no-rows" aria-live="polite">
+                            <p>لا يوجد مدرب يطابق التخصص واسم المدرب المحددين.</p>
+                            <button type="button" class="btn ghost"
+                                (click)="selectedDayTrainerId.set(null); selectedDaySpecialty.set(null); trainerSearch.set(''); specialtySearch.set('')">
+                                مسح الفلاتر
+                            </button>
+                        </td>
+                    </tr>
+
                     }
 
                 </tbody>
