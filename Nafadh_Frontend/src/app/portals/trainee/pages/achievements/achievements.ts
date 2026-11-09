@@ -1991,90 +1991,43 @@ export class TraineeAchievements implements OnInit {
   // FEEDBACK AVAILABILITY
   // ============================================================
 
-  // التقييم الأسبوعي متاح يوم الجمعة فقط
-  isWeeklyEvaluationDay():
-    boolean {
+  
+  // ============================================================
+  // FEEDBACK AVAILABILITY
+  // ============================================================
 
-    const today = new Date();
-
-    // Sunday = 0
-    // Monday = 1
-    // Tuesday = 2
-    // Wednesday = 3
-    // Thursday = 4
-    // Friday = 5
-    // Saturday = 6
-
-    return today.getDay() === 5;
-
+  // Weekly evaluation is available on any day.
+  // Duplicate submissions are validated by the backend.
+  isWeeklyEvaluationDay(): boolean {
+    return true;
   }
 
+  // Monthly evaluation is available on any day.
+  // Duplicate submissions are validated by the backend.
+  isMonthlyEvaluationDay(): boolean {
+    return true;
+  }
 
-  // التقييم الشهري متاح في آخر يوم من الشهر فقط
-  isMonthlyEvaluationDay():
-    boolean {
-
-    const today = new Date();
-
-    const tomorrow =
-      new Date(today);
-
-    tomorrow.setDate(
-      today.getDate() + 1
-    );
-
+  // Trainer evaluation supports Weekly and Monthly periods.
+  canSubmitTrainerEvaluation(): boolean {
     return (
-      tomorrow.getMonth() !==
-      today.getMonth()
+      this.evaluationPeriod() === 'Weekly' ||
+      this.evaluationPeriod() === 'Monthly'
     );
-
   }
 
-
-  // تحديد إمكانية إرسال تقييم المدرب
-  // الأسبوعي = الجمعة
-  // الشهري = آخر يوم من الشهر
-  canSubmitTrainerEvaluation():
-    boolean {
-
-    if (
-      this.evaluationPeriod() ===
-      'Weekly'
-    ) {
-
-      return this.isWeeklyEvaluationDay();
-
-    }
-
-    return this.isMonthlyEvaluationDay();
-
-  }
-
-
-  // تقييم البرنامج متاح فقط بعد إكمال البرنامج 100%
-  canSubmitProgramFeedback():
-    boolean {
-
+  // Final program evaluation requires 100% completion.
+  canSubmitProgramFeedback(): boolean {
     return this.progressPercentage() >= 100;
-
   }
 
-
-  // تحديد شرط الإرسال حسب نوع التقييم
-  canSubmitCurrentFeedback():
-    boolean {
-
-    if (
-      this.feedbackType() ===
-      'TrainerRating'
-    ) {
-
+  // Determine submission availability by feedback type.
+  canSubmitCurrentFeedback(): boolean {
+    if (this.feedbackType() === 'TrainerRating') {
       return this.canSubmitTrainerEvaluation();
-
     }
 
     return this.canSubmitProgramFeedback();
-
   }
 
 
@@ -2488,583 +2441,276 @@ export class TraineeAchievements implements OnInit {
   // SUBMIT FEEDBACK
   // ============================================================
 
-  submitFeedback() {
+ 
+  // ============================================================
+  // SUBMIT FEEDBACK
+  // ============================================================
 
+  submitFeedback(): void {
     const isTrainer =
-      this.feedbackType() ===
-      'TrainerRating';
+      this.feedbackType() === 'TrainerRating';
 
     const isProgram =
-      this.feedbackType() ===
-      'BatchExperienceRating';
+      this.feedbackType() === 'BatchExperienceRating';
 
-
-    // ==========================================================
-    // VALIDATE TRAINER EVALUATION AVAILABILITY
-    // ==========================================================
-
-    if (isTrainer) {
-
-      if (!this.canSubmitTrainerEvaluation()) {
-
-        this.showSuccessToast.set(true);
-
-        this.successMessage.set(
-          this.evaluationPeriod() === 'Weekly'
-            ? '⚠️ التقييم الأسبوعي متاح يوم الجمعة فقط'
-            : '⚠️ التقييم الشهري متاح في آخر يوم من الشهر فقط'
-        );
-
-        setTimeout(
-          () =>
-            this.showSuccessToast.set(false),
-          3000
-        );
-
-        return;
-
-      }
-
+    // Prevent multiple submissions
+    if (this.isSubmitting()) {
+      return;
     }
 
+    // Final program evaluation requires 100% completion
+    if (isProgram && !this.canSubmitProgramFeedback()) {
+      this.showSuccessToast.set(true);
+      this.successMessage.set(
+        '⚠️ التقييم النهائي متاح بعد إكمال البرنامج التدريبي بنسبة 100%.'
+      );
 
-    // ==========================================================
-    // VALIDATE PROGRAM EVALUATION AVAILABILITY
-    // ==========================================================
+      setTimeout(() => {
+        this.showSuccessToast.set(false);
+      }, 3000);
 
-    if (isProgram) {
-
-      if (!this.canSubmitProgramFeedback()) {
-
-        this.showSuccessToast.set(true);
-
-        this.successMessage.set(
-          `⚠️ ${this.constants.administrativeLabel('NFD_FBK_TYPE', 'BatchExperienceRating')} متاح بعد إكمال البرنامج بالكامل 100%`
-        );
-
-        setTimeout(
-          () =>
-            this.showSuccessToast.set(false),
-          3000
-        );
-
-        return;
-
-      }
-
+      return;
     }
 
+    // Validate trainee
+    const traineeId = Number(this.traineeId() ?? 0);
 
-    // ==========================================================
-    // TRAINEE ID
-    // ==========================================================
-
-    const traineeId =
-      Number(
-        this.traineeId() ?? 0
-      );
-
-
-    if (
-      !traineeId ||
-      Number.isNaN(traineeId)
-    ) {
-
-      this.showSuccessToast.set(
-        true
-      );
-
+    if (!traineeId || Number.isNaN(traineeId)) {
+      this.showSuccessToast.set(true);
       this.successMessage.set(
         '⚠️ لم يتم العثور على رقم المتدرب'
       );
 
-      setTimeout(
-        () =>
-          this.showSuccessToast.set(
-            false
-          ),
-        3000
-      );
+      setTimeout(() => {
+        this.showSuccessToast.set(false);
+      }, 3000);
 
       return;
-
     }
-
-
-    // ==========================================================
-    // VARIABLES
-    // ==========================================================
 
     let moduleId = 0;
     let trainerId = 0;
     let batchId = 0;
 
-
-    // ==========================================================
-    // TRAINER FEEDBACK
-    // ==========================================================
+    // ============================================================
+    // TRAINER EVALUATION
+    // ============================================================
 
     if (isTrainer) {
+      moduleId = Number(this.selectedModuleId() ?? 0);
 
-      moduleId =
-        Number(
-          this.selectedModuleId() ?? 0
-        );
-
-
-      if (
-        !moduleId ||
-        Number.isNaN(moduleId)
-      ) {
-
-        this.showSuccessToast.set(
-          true
-        );
-
+      if (!moduleId || Number.isNaN(moduleId)) {
+        this.showSuccessToast.set(true);
         this.successMessage.set(
           '⚠️ يرجى اختيار الكورس'
         );
 
-        setTimeout(
-          () =>
-            this.showSuccessToast.set(
-              false
-            ),
-          3000
-        );
+        setTimeout(() => {
+          this.showSuccessToast.set(false);
+        }, 3000);
 
         return;
-
       }
 
+      trainerId = Number(this.selectedTrainerId() ?? 0);
 
-      trainerId =
-        Number(
-          this.selectedTrainerId() ?? 0
-        );
-
-
-      if (
-        !trainerId ||
-        Number.isNaN(trainerId)
-      ) {
-
-        this.showSuccessToast.set(
-          true
-        );
-
+      if (!trainerId || Number.isNaN(trainerId)) {
+        this.showSuccessToast.set(true);
         this.successMessage.set(
-          '⚠️ لم يتم تحديد المدرب المرتبط بهذا الكورس، يرجى التأكد من بيانات ربط المدرب بالكورس'
+          '⚠️ لم يتم تحديد المدرب المرتبط بهذا الكورس'
         );
 
-        setTimeout(
-          () =>
-            this.showSuccessToast.set(
-              false
-            ),
-          3000
-        );
+        setTimeout(() => {
+          this.showSuccessToast.set(false);
+        }, 3000);
 
         return;
-
       }
-
     }
 
-
-    // ==========================================================
-    // PROGRAM / BATCH FEEDBACK
-    // ==========================================================
+    // ============================================================
+    // FINAL PROGRAM EVALUATION
+    // ============================================================
 
     if (isProgram) {
+      batchId = Number(this.batchId() ?? 0);
 
-      batchId =
-        Number(
-          this.batchId() ?? 0
-        );
-
-
-      if (
-        !batchId ||
-        Number.isNaN(batchId)
-      ) {
-
-        this.showSuccessToast.set(
-          true
-        );
-
+      if (!batchId || Number.isNaN(batchId)) {
+        this.showSuccessToast.set(true);
         this.successMessage.set(
           '⚠️ لم يتم العثور على رقم الدفعة'
         );
 
-        setTimeout(
-          () =>
-            this.showSuccessToast.set(
-              false
-            ),
-          3000
-        );
+        setTimeout(() => {
+          this.showSuccessToast.set(false);
+        }, 3000);
 
         return;
-
       }
 
+      const availableModules = this.modules();
 
-      const availableModules =
-        this.modules();
-
-
-      if (
-        availableModules &&
-        availableModules.length > 0
-      ) {
-
-        moduleId =
-          Number(
-            availableModules[0].moduleId
-          );
-
+      if (availableModules.length > 0) {
+        moduleId = Number(availableModules[0].moduleId);
       }
 
+      if (!moduleId || Number.isNaN(moduleId)) {
+        this.showSuccessToast.set(true);
+        this.successMessage.set(
+          '⚠️ لم يتم العثور على وحدة تدريبية مرتبطة بالبرنامج'
+        );
 
-      if (
-        !moduleId ||
-        Number.isNaN(moduleId)
-      ) {
+        setTimeout(() => {
+          this.showSuccessToast.set(false);
+        }, 3000);
 
-        moduleId = 1;
-
+        return;
       }
-
-
-      console.log(
-        '🧪 Program feedback ModuleId:',
-        moduleId
-      );
-
     }
 
-
-    // ==========================================================
-    // PREVENT DOUBLE SUBMISSION
-    // ==========================================================
-
-    if (
-      this.isSubmitting()
-    ) {
-
-      return;
-
-    }
-
-    this.isSubmitting.set(
-      true
-    );
-
-
-    // ==========================================================
-    // COMMENT
-    // ==========================================================
-
-    const comment =
-      this.buildFeedbackComment();
-
-
-    // ==========================================================
-    // SCORES
-    // ==========================================================
-
-    const scores =
-      this.buildFeedbackScores();
-
-
-    // ==========================================================
+    // ============================================================
     // VALIDATE SCORES
-    // ==========================================================
+    // ============================================================
 
-    if (
-      !scores ||
-      scores.length === 0
-    ) {
+    const comment = this.buildFeedbackComment();
+    const scores = this.buildFeedbackScores();
 
-      this.isSubmitting.set(
-        false
-      );
-
-      this.showSuccessToast.set(
-        true
-      );
-
+    if (!scores.length) {
+      this.showSuccessToast.set(true);
       this.successMessage.set(
         '⚠️ يرجى اختيار درجة التقييم'
       );
 
-      setTimeout(
-        () =>
-          this.showSuccessToast.set(
-            false
-          ),
-        3000
-      );
+      setTimeout(() => {
+        this.showSuccessToast.set(false);
+      }, 3000);
 
       return;
-
     }
 
-
-    // ==========================================================
-    // FINAL PAYLOAD
-    // ==========================================================
+    // ============================================================
+    // PREPARE PAYLOAD
+    // ============================================================
 
     const feedbackData: any = {
+      type: isTrainer ? 0 : 1,
+      traineeId: traineeId,
+      moduleId: moduleId,
+      trainerId: isTrainer ? trainerId : null,
+      batchId: isProgram ? batchId : null,
 
-      type:
-        isTrainer
-          ? 0
-          : 1,
+      // Weekly or Monthly for trainer evaluation
+      evaluationPeriod: isTrainer
+        ? this.evaluationPeriod()
+        : null,
 
-      traineeId:
-        traineeId,
-
-      moduleId:
-        moduleId,
-
-      trainerId:
-        isTrainer
-          ? trainerId
-          : null,
-
-      batchId:
-        isProgram
-          ? batchId
-          : null,
-
-      comment:
-        comment,
-
-      scores:
-        scores,
-
+      comment: comment,
+      scores: scores
     };
 
-
-    // ==========================================================
-    // DEBUG
-    // ==========================================================
-
     console.log(
-      '========================================'
-    );
-
-    console.log(
-      '📤 Feedback Data:',
+      '📤 Submitting Feedback:',
       feedbackData
     );
 
-    console.log(
-      '📤 Feedback Type:',
-      isTrainer
-        ? 'TrainerRating'
-        : 'BatchExperienceRating'
-    );
+    // ============================================================
+    // SEND REQUEST
+    // ============================================================
 
-    console.log(
-      '📤 Trainee ID:',
-      feedbackData.traineeId
-    );
+    this.isSubmitting.set(true);
 
-    console.log(
-      '📤 Module ID:',
-      feedbackData.moduleId
-    );
+    this.api.submitFeedback(feedbackData).subscribe({
+      next: (response: any) => {
+        console.log(
+          '✅ Feedback submitted successfully:',
+          response
+        );
 
-    console.log(
-      '📤 Trainer ID:',
-      feedbackData.trainerId
-    );
+        this.isSubmitting.set(false);
+        this.showFeedback.set(false);
 
-    console.log(
-      '📤 Batch ID:',
-      feedbackData.batchId
-    );
+        // Reset evaluation form
+        this.scores = {};
+        this.criterionComments = {};
+        this.selectedModuleId.set(null);
+        this.selectedTrainerId.set(null);
+        this.trainers.set([]);
 
-    console.log(
-      '📤 Scores:',
-      feedbackData.scores
-    );
+        this.showSuccessToast.set(true);
+        this.successMessage.set(
+          'تم إرسال التقييم بنجاح!'
+        );
 
-    console.log(
-      '========================================'
-    );
+        setTimeout(() => {
+          this.showSuccessToast.set(false);
+        }, 3000);
 
+        // Refresh pending feedback
+        const userId = this.userId();
 
-    // ==========================================================
-    // API
-    // ==========================================================
-
-    this.api
-      .submitFeedback(
-        feedbackData
-      )
-      .subscribe({
-
-        // ======================================================
-        // SUCCESS
-        // ======================================================
-
-        next: (
-          response: any
-        ) => {
-
-          console.log(
-            '========================================'
-          );
-
-          console.log(
-            '✅ Feedback submitted successfully:',
-            response
-          );
-
-          console.log(
-            '========================================'
-          );
-
-
-          this.isSubmitting.set(
-            false
-          );
-
-          this.showFeedback.set(
-            false
-          );
-
-
-          this.scores = {};
-
-          this.criterionComments = {};
-
-          this.selectedModuleId.set(
-            null
-          );
-
-          this.selectedTrainerId.set(
-            null
-          );
-
-          this.trainers.set([]);
-
-
-          this.showSuccessToast.set(
-            true
-          );
-
-          this.successMessage.set(
-            'تم إرسال التقييم بنجاح!'
-          );
-
-
-          setTimeout(
-            () => {
-
-              this.showSuccessToast.set(
-                false
-              );
-
-            },
-            3000
-          );
-
-
+        if (userId && moduleId > 0) {
           this.api
-            .getFeedbackPending(
-              1,
-              this.traineeId() || 0
-            )
+            .getFeedbackPending(moduleId, userId)
             .subscribe({
-
-              next: (d) => {
-
-                this.pendingFeedback.set(
-                  d ?? null
-                );
-
+              next: (data) => {
+                this.pendingFeedback.set(data ?? null);
               },
-
-              error: () => {},
-
+              error: (err: any) => {
+                console.warn(
+                  '⚠️ Failed to refresh feedback:',
+                  err
+                );
+              }
             });
+        }
+      },
 
-        },
+      error: (err: any) => {
+        console.error(
+          '❌ Feedback submission failed:',
+          err
+        );
 
+        this.isSubmitting.set(false);
 
-        // ======================================================
-        // ERROR
-        // ======================================================
+        let errorMessage =
+          'حدث خطأ في إرسال التقييم، يرجى المحاولة مرة أخرى.';
 
-        error: (
-          err: any
-        ) => {
+        const serverError = err?.error;
 
-          console.error(
-            '========================================'
-          );
+        // Display backend validation messages
+        if (
+          typeof serverError?.message === 'string' &&
+          serverError.message.trim()
+        ) {
+          errorMessage = serverError.message;
+        } else if (
+          typeof serverError?.title === 'string' &&
+          serverError.title.trim()
+        ) {
+          errorMessage = serverError.title;
+        } else if (
+          typeof serverError === 'string' &&
+          serverError.trim()
+        ) {
+          errorMessage = serverError;
+        } else if (err?.status === 409) {
+          errorMessage =
+            'تم إرسال هذا التقييم مسبقًا خلال الفترة المحددة.';
+        }
 
-          console.error(
-            '❌ خطأ في إرسال التقييم:',
-            err
-          );
+        this.showSuccessToast.set(true);
+        this.successMessage.set(
+          '⚠️ ' + errorMessage
+        );
 
-          console.error(
-            '📤 Feedback Data:',
-            feedbackData
-          );
-
-          console.error(
-            '❌ HTTP Status:',
-            err?.status
-          );
-
-          console.error(
-            '❌ Error Message:',
-            err?.message
-          );
-
-          console.error(
-            '❌ Server Error:',
-            err?.error
-          );
-
-          console.error(
-            '========================================'
-          );
-
-
-          this.isSubmitting.set(
-            false
-          );
-
-          this.showSuccessToast.set(
-            true
-          );
-
-          this.successMessage.set(
-            '❌ حدث خطأ في إرسال التقييم، يرجى المحاولة مرة أخرى'
-          );
-
-
-          setTimeout(
-            () =>
-              this.showSuccessToast.set(
-                false
-              ),
-            3000
-          );
-
-        },
-
-      });
-
+        setTimeout(() => {
+          this.showSuccessToast.set(false);
+        }, 4000);
+      }
+    });
   }
+
 
 // ============================================================
 // CERTIFICATE DOWNLOAD
