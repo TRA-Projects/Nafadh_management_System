@@ -34,7 +34,8 @@ namespace Nafadh_Backend.Services
         {
             _context = context;
             _root = config["Storage:ProctoringSnapshotsPath"]
-                    ?? @"C:\NafadhStorage\Proctoring";
+                    ?? config["ProctoringSnapshotsPath"]
+                    ?? Path.Combine(AppContext.BaseDirectory, "Proctoring");
         }
 
         public async Task<ProctoringEventDto> AddEventAsync(int attemptId, CreateProctoringEventDto dto)
@@ -65,8 +66,11 @@ namespace Nafadh_Backend.Services
                 if (dto.Snapshot.Length > MaxSnapshotBytes)
                     throw new ArgumentException("حجم اللقطة أكبر من المسموح (300KB).");
 
-                if (dto.Snapshot.ContentType != "image/jpeg")
-                    throw new ArgumentException("اللقطة يجب أن تكون بصيغة JPEG.");
+                var contentType = (dto.Snapshot.ContentType ?? string.Empty)
+                .Split(';')[0].Trim().ToLowerInvariant();
+
+                if (contentType != "image/jpeg" && contentType != "image/jpg")
+                    throw new ArgumentException($"اللقطة يجب أن تكون بصيغة JPEG. النوع المستلم: {dto.Snapshot.ContentType}");
 
                 var snapsCount = await _context.NFD_QuizProctoringEvents
                     .CountAsync(e => e.AttemptId == attemptId && e.SnapshotFileName != null);
@@ -75,7 +79,9 @@ namespace Nafadh_Backend.Services
 
                 // التحقق من ترويسة JPEG الفعلية (FF D8 FF)
                 var header = new byte[3];
-                await using (var s = dto.Snapshot.OpenReadStream())
+
+                // 🔴 تم إصلاح الخطأ هنا: إزالة await using لمنع إغلاق الـ Stream قبل النسخ
+                using (var s = dto.Snapshot.OpenReadStream())
                 {
                     var read = await s.ReadAsync(header, 0, 3);
                     if (read < 3 || header[0] != 0xFF || header[1] != 0xD8 || header[2] != 0xFF)
@@ -86,8 +92,13 @@ namespace Nafadh_Backend.Services
                 Directory.CreateDirectory(dir);
                 fileName = $"{Guid.NewGuid():N}.jpg";
 
-                await using var fs = new FileStream(Path.Combine(dir, fileName), FileMode.Create);
-                await dto.Snapshot.CopyToAsync(fs);
+                var fullPath = Path.Combine(dir, fileName);
+
+                // 🔴 تم إصلاح الخطأ هنا أيضاً: استخدام using عادية بدلاً من await using
+                using (var fs = new FileStream(fullPath, FileMode.Create))
+                {
+                    await dto.Snapshot.CopyToAsync(fs);
+                }
             }
 
             var ev = new NFD_QuizProctoringEvent
