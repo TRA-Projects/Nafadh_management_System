@@ -769,6 +769,8 @@ export interface ConversationMessageDto {
   senderName?: string;
   receiverId?: number;
   ticketId?: number;
+  attachmentUrl?: string | null;
+attachmentFileName?: string | null;
 }
 
 export interface ConversationDetailDto extends ConversationListItemDto {

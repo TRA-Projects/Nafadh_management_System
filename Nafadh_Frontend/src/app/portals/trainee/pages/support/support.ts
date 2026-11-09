@@ -568,21 +568,16 @@ export class TraineeSupport implements OnInit {
           return;
         }
 
-        const activeEnrollment = enrollments.find(
-          (item: EnrollmentDto) => {
-            const status = String(
-              item.completionStatus ?? ''
-            )
-              .trim()
-              .toLowerCase();
+    
+const activeEnrollment =
+  enrollments.find(
+    (e: EnrollmentDto) =>
+      e.completionStatus === 'Active' ||
+      e.completionStatus === 'InProgress'
+  ) || enrollments[0];
 
-            return (
-              status === 'active' ||
-              status === 'inprogress' ||
-              status === 'in_progress'
-            );
-          }
-        ) ?? enrollments[0];
+console.log('Support - Selected Enrollment:', activeEnrollment);
+
 
         this.enrollment.set(activeEnrollment);
 
@@ -634,74 +629,102 @@ export class TraineeSupport implements OnInit {
   // TRAINERS BY BATCH
   // =========================================================
 
-  private loadTrainersByBatch(batchId: number): void {
-    this.loadingTrainers.set(true);
-    this.trainers.set([]);
+  
 
-    this.api.getBatchTrainers(batchId).subscribe({
-      next: (batchTrainers: TrainerDto[]) => {
-        if (
-          !Array.isArray(batchTrainers) ||
-          batchTrainers.length === 0
-        ) {
-          this.trainers.set([]);
-          this.loadingTrainers.set(false);
-          return;
+private loadTrainersByBatch(batchId: number): void {
+  this.loadingTrainers.set(true);
+  this.trainers.set([]);
+
+  console.log('Support - Selected Batch ID:', batchId);
+
+  this.api.getBatchTrainers(batchId).subscribe({
+    next: (response: TrainerDto[]) => {
+      const assigned = Array.isArray(response) ? response : [];
+
+      console.log('Support - Batch Trainers:', assigned);
+
+      if (assigned.length === 0) {
+        this.loadingTrainers.set(false);
+        return;
+      }
+
+      const requests = assigned.map(item => {
+        const trainerId = Number(item.trainerId);
+
+        if (!Number.isFinite(trainerId) || trainerId <= 0) {
+          return of(item);
         }
 
-        const requests = batchTrainers.map(
-          (trainer: TrainerDto) => {
-            const trainerId = Number(
-              trainer.trainerId
-            );
-
-            if (
-              !Number.isFinite(trainerId) ||
-              trainerId <= 0
-            ) {
-              return of(trainer);
-            }
-
-            return this.api.getTrainer(trainerId).pipe(
-              catchError(() => of(trainer))
-            );
-          }
-        );
-
-        forkJoin(requests).subscribe({
-          next: (fullTrainers: TrainerDto[]) => {
-            const validTrainers = fullTrainers.filter(
-              (trainer): trainer is TrainerDto =>
-                trainer != null
-            );
-
-            this.trainers.set(validTrainers);
-            this.loadingTrainers.set(false);
-          },
-
-          error: (error: any) => {
-            console.error(
-              'Error loading trainer details:',
+        return this.api.getTrainer(trainerId).pipe(
+          catchError(error => {
+            console.warn(
+              'Failed to load trainer:',
+              trainerId,
               error
             );
 
-            this.trainers.set(batchTrainers);
-            this.loadingTrainers.set(false);
-          }
-        });
-      },
-
-      error: (error: any) => {
-        console.error(
-          'Error loading batch trainers:',
-          error
+            return of(item);
+          })
         );
+      });
 
-        this.trainers.set([]);
-        this.loadingTrainers.set(false);
-      }
-    });
-  }
+      forkJoin(requests).subscribe({
+        next: (details: TrainerDto[]) => {
+          const trainers: TrainerDto[] = details
+            .map((detail, index) => {
+              const assignedTrainer = assigned[index];
+
+              return {
+                ...assignedTrainer,
+                ...detail,
+                trainerId: Number(assignedTrainer.trainerId),
+                fullName: String(
+                  detail.fullName ||
+                  assignedTrainer.fullName ||
+                  (assignedTrainer as any).trainerName ||
+                  ''
+                ).trim()
+              } as TrainerDto;
+            })
+            .filter(trainer =>
+              Number.isFinite(trainer.trainerId) &&
+              trainer.trainerId > 0
+            );
+
+          this.trainers.set(trainers);
+          this.loadingTrainers.set(false);
+
+          console.table(
+            trainers.map(trainer => ({
+              trainerId: trainer.trainerId,
+              fullName: trainer.fullName,
+              userId: trainer.userId
+            }))
+          );
+        },
+
+        error: error => {
+          console.error('Trainer loading error:', error);
+          this.trainers.set([]);
+          this.loadingTrainers.set(false);
+        }
+      });
+    },
+
+    error: error => {
+      console.error('Batch trainers API error:', error);
+
+      this.trainers.set([]);
+      this.loadingTrainers.set(false);
+
+      this.errorMessage.set(
+        'تعذر تحميل المدربين المرتبطين بالدفعة'
+      );
+    }
+  });
+}
+
+
 
   // =========================================================
   // OPEN CONVERSATION OR WITHDRAWAL REQUEST
@@ -872,7 +895,12 @@ export class TraineeSupport implements OnInit {
 
     this.api.getBatchTrainers(batchId).subscribe({
       next: (trainers: TrainerDto[]) => {
-        this.batchTrainers.set(trainers ?? []);
+       this.batchTrainers.set(
+  (trainers ?? []).map((trainer: any) => ({
+    ...trainer,
+    fullName: trainer.trainerName ?? trainer.fullName ?? ''
+  }))
+);
       },
       error: (error: any) => {
         console.error('Error loading batch trainers:', error);
@@ -1516,17 +1544,41 @@ export class TraineeSupport implements OnInit {
   // RECEIVER CHANGE
   // =========================================================
 
-  onReceiverChange(): void {
-    this.newConv.trainerId = null;
-    this.newConv.subject = '';
-    this.newConv.note = '';
-    this.newConv.firstMessage = '';
+ 
+onReceiverChange(): void {
+  this.newConv.trainerId = null;
+  this.newConv.subject = '';
+  this.newConv.note = '';
+  this.newConv.firstMessage = '';
 
-    this.selectedFile = null;
+  this.selectedFile = null;
 
-    this.errorMessage.set('');
-    this.successMessage.set('');
+  this.errorMessage.set('');
+  this.successMessage.set('');
+
+  if (this.newConv.receiverType === 'Trainer') {
+    const batchId = Number(this.enrollment()?.batchId);
+
+    if (Number.isFinite(batchId) && batchId > 0) {
+      this.loadTrainersByBatch(batchId);
+    } else {
+      this.trainers.set([]);
+      this.errorMessage.set(
+        'لا توجد دفعة تدريبية مرتبطة بالمتدرب'
+      );
+    }
   }
+
+  if (
+    this.newConv.receiverType === 'Company' &&
+    !this.companyName().trim()
+  ) {
+    this.errorMessage.set(
+      'لا توجد شركة مرتبطة بالتسجيل التدريبي الحالي'
+    );
+  }
+}
+
 
   // =========================================================
   // FILE SIZE FORMAT
