@@ -3415,6 +3415,10 @@ namespace Nafadh_Backend.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
+                    b.Property<string>("ExcuseReviewStatus")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
                     b.Property<bool>("IsConfirmed")
                         .HasColumnType("bit");
 
