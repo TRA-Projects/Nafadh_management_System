@@ -886,6 +886,11 @@
 
 
           <!-- ACTIONS -->
+           @if (sessionFormError()) {
+  <div class="session-validation-error" role="alert">
+    {{ sessionFormError() }}
+  </div>
+}
 
           <div class="session-modal-actions">
 
