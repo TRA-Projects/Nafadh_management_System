@@ -1,3 +1,4 @@
+
 import { traineeAttendanceKey } from '../../../../core/models/enums';
 import { Component, OnInit, signal, computed, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -19,7 +20,11 @@ import {
   DailyAttendanceDto,
   WarningDto,
 } from '../../../../core/models/dtos';
-import { AnnouncementScopeType, TRAINEE_STATUS_LABELS, TaskStatus } from '../../../../core/models/enums';
+import {
+  AnnouncementScopeType,
+  TRAINEE_STATUS_LABELS,
+  TaskStatus
+} from '../../../../core/models/enums';
 
 type SubmissionStatus = SubmissionDto['status'];
 
@@ -40,7 +45,6 @@ export class TraineeDashboard implements OnInit {
   public auth = inject(AuthService);
 
   currentUserId = signal<number | null>(null);
-
   traineeId = signal<number | null>(null);
   companyId = signal<number | null>(null);
   batchId = signal<number | null>(null);
@@ -61,7 +65,6 @@ export class TraineeDashboard implements OnInit {
 
   summary = signal<TraineeDashboardSummaryDto | null>(null);
   tasks = signal<TaskWithSubmissionDto[]>([]);
-
   announcements = signal<(AnnouncementDto & { source: string })[]>([]);
   notifications = signal<NotificationDto[]>([]);
 
@@ -89,13 +92,13 @@ export class TraineeDashboard implements OnInit {
   openAnnouncementPopup(ann: any) {
     this.selectedAnnouncement.set(ann);
 
-    // تسجيل الإعلان كمقروء
     if (
       ann?.announcementId !== undefined &&
       ann?.announcementId !== null &&
       ann?.announcementId !== ''
     ) {
       const id = Number(ann.announcementId);
+
       this.readAnnouncementIds.update((set) => {
         const newSet = new Set(set);
         newSet.add(id);
@@ -117,21 +120,30 @@ export class TraineeDashboard implements OnInit {
     this.selectedAnnouncement.set(null);
   }
 
-  isAnnouncementRead(announcementId: number | string | undefined | null): boolean {
-    if (announcementId === undefined || announcementId === null || announcementId === '') {
+  isAnnouncementRead(
+    announcementId: number | string | undefined | null
+  ): boolean {
+    if (
+      announcementId === undefined ||
+      announcementId === null ||
+      announcementId === ''
+    ) {
       return false;
     }
+
     return this.readAnnouncementIds().has(Number(announcementId));
   }
 
   calculatedStatus = computed(() => {
     const status = this.summary()?.status;
+
     if (status && TRAINEE_STATUS_LABELS[status]) {
       return TRAINEE_STATUS_LABELS[status];
     }
 
     const today = new Date();
     const endDate = new Date(this.programEndDate() || Date.now());
+
     return today > endDate ? 'منتهي' : 'قيد التدريب';
   });
 
@@ -143,6 +155,7 @@ export class TraineeDashboard implements OnInit {
 
   latestNotifications = computed(() => {
     const notifs = this.notifications();
+
     if (!notifs || notifs.length === 0) return [];
 
     const sorted = [...notifs].sort((a, b) => {
@@ -161,35 +174,33 @@ export class TraineeDashboard implements OnInit {
 
   displayAnnouncements = computed(() => {
     const all = this.announcements();
-    if (this.showAllAnnouncements()) {
-      return all;
-    }
-    return all.slice(0, 3);
+    return this.showAllAnnouncements() ? all : all.slice(0, 3);
   });
 
   displayNotifications = computed(() => {
     const all = this.latestNotifications();
-    if (this.showAllNotifications()) {
-      return all;
-    }
-    return all.slice(0, 3);
+    return this.showAllNotifications() ? all : all.slice(0, 3);
   });
 
   // =========================================================
-  // حالة التقويم الشهري للمهام
+  // Calendar
   // =========================================================
 
   calendarTasks = signal<TaskWithSubmissionDto[]>([]);
   calendarMonth = signal<number>(new Date().getMonth());
   calendarYear = signal<number>(new Date().getFullYear());
-  selectedCalendarDay = signal<{ day: number; tasks: TaskWithSubmissionDto[] } | null>(null);
+
+  selectedCalendarDay = signal<{
+    day: number;
+    tasks: TaskWithSubmissionDto[];
+  } | null>(null);
 
   weekDays = ['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
 
   calendarMonthName = computed(() => {
     const months = [
       'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
     ];
     return months[this.calendarMonth()];
   });
@@ -215,7 +226,12 @@ export class TraineeDashboard implements OnInit {
     }[] = [];
 
     for (let i = 0; i < startDayOfWeek; i++) {
-      days.push({ day: null, hasTask: false, tasks: [], isToday: false });
+      days.push({
+        day: null,
+        hasTask: false,
+        tasks: [],
+        isToday: false
+      });
     }
 
     for (let d = 1; d <= daysInMonth; d++) {
@@ -224,8 +240,10 @@ export class TraineeDashboard implements OnInit {
 
       const dayTasks = tasks.filter((t) => {
         if (!t.dueDate) return false;
+
         const due = new Date(t.dueDate);
         due.setHours(0, 0, 0, 0);
+
         return due.getTime() === date.getTime();
       });
 
@@ -233,7 +251,7 @@ export class TraineeDashboard implements OnInit {
         day: d,
         hasTask: dayTasks.length > 0,
         tasks: dayTasks,
-        isToday: date.getTime() === today.getTime(),
+        isToday: date.getTime() === today.getTime()
       });
     }
 
@@ -242,6 +260,7 @@ export class TraineeDashboard implements OnInit {
 
   prevMonth(): void {
     const m = this.calendarMonth();
+
     if (m === 0) {
       this.calendarMonth.set(11);
       this.calendarYear.update((y) => y - 1);
@@ -252,6 +271,7 @@ export class TraineeDashboard implements OnInit {
 
   nextMonth(): void {
     const m = this.calendarMonth();
+
     if (m === 11) {
       this.calendarMonth.set(0);
       this.calendarYear.update((y) => y + 1);
@@ -266,8 +286,14 @@ export class TraineeDashboard implements OnInit {
     tasks: TaskWithSubmissionDto[];
     isToday: boolean;
   }): void {
-    if (day.day === null || !day.tasks || day.tasks.length === 0) return;
-    this.selectedCalendarDay.set({ day: day.day, tasks: day.tasks });
+    if (day.day === null || !day.tasks || day.tasks.length === 0) {
+      return;
+    }
+
+    this.selectedCalendarDay.set({
+      day: day.day,
+      tasks: day.tasks
+    });
   }
 
   closeCalendarDay(): void {
@@ -292,7 +318,6 @@ export class TraineeDashboard implements OnInit {
     if (statusStr === 'graded') return 'مكتمل';
     if (statusStr === 'inprogress' || statusStr === 'in_progress') return 'قيد التنفيذ';
     if (statusStr === 'overdue') return 'منتهي';
-
     if (statusStr === 'submitted') return 'تم التسليم';
     if (statusStr === 'underreview' || statusStr === 'under_review') return 'قيد المراجعة';
     if (statusStr === 'returnedforrevision' || statusStr === 'returned') return 'مطلوب تعديل';
@@ -303,8 +328,12 @@ export class TraineeDashboard implements OnInit {
     return status;
   }
 
-  getTaskStatusStyle(status: any): { background: string; color: string } {
-    if (!status) return { background: '#f1f5f9', color: '#64748b' };
+  getTaskStatusStyle(
+    status: any
+  ): { background: string; color: string } {
+    if (!status) {
+      return { background: '#f1f5f9', color: '#64748b' };
+    }
 
     const statusStr = String(status).toLowerCase();
 
@@ -320,14 +349,16 @@ export class TraineeDashboard implements OnInit {
     if (statusStr === 'overdue') {
       return { background: '#fef2f2', color: '#dc2626' };
     }
-
     if (statusStr === 'submitted') {
       return { background: '#fef3c7', color: '#d97706' };
     }
     if (statusStr === 'underreview' || statusStr === 'under_review') {
       return { background: '#ede9fe', color: '#7c3aed' };
     }
-    if (statusStr === 'returnedforrevision' || statusStr === 'returned') {
+    if (
+      statusStr === 'returnedforrevision' ||
+      statusStr === 'returned'
+    ) {
       return { background: '#fef2f2', color: '#dc2626' };
     }
     if (statusStr === 'late') {
@@ -346,6 +377,7 @@ export class TraineeDashboard implements OnInit {
   constructor() {
     effect(() => {
       const session = this.auth.session?.();
+
       if (session?.userId) {
         this.currentUserId.set(session.userId);
         this.loadTraineeData();
@@ -357,11 +389,13 @@ export class TraineeDashboard implements OnInit {
     this.loadReadAnnouncementsFromStorage();
 
     const session = this.auth.session?.();
+
     if (session?.userId) {
       this.currentUserId.set(session.userId);
       this.loadTraineeData();
     } else {
       const userId = this.getUserIdFromStorage();
+
       if (userId) {
         this.currentUserId.set(userId);
         this.loadTraineeData();
@@ -428,6 +462,7 @@ export class TraineeDashboard implements OnInit {
 
   loadAttendanceRate(userId: number): void {
     this.loadingAttendance.set(true);
+
     this.api.getAttendanceRateByUserId(userId).subscribe({
       next: (rate: number) => {
         this.attendanceRate.set(rate);
@@ -443,6 +478,7 @@ export class TraineeDashboard implements OnInit {
 
   private loadAttendanceRateFallback(): void {
     const traineeId = this.traineeId();
+
     if (traineeId) {
       this.api.getAttendance(traineeId).subscribe({
         next: (attendanceList: DailyAttendanceDto[]) => {
@@ -451,6 +487,7 @@ export class TraineeDashboard implements OnInit {
             const present = attendanceList.filter(
               (a) => traineeAttendanceKey(a.status) === 'Present'
             ).length;
+
             const rate = total > 0 ? (present / total) * 100 : 0;
             this.attendanceRate.set(rate);
           }
@@ -467,6 +504,7 @@ export class TraineeDashboard implements OnInit {
 
   loadWarningsCount(userId: number): void {
     this.loadingWarnings.set(true);
+
     this.api.getUserWarningsCount(userId).subscribe({
       next: (count: number) => {
         this.warningsCount.set(count);
@@ -493,21 +531,33 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
+  // =========================================================
+  // Enrollments
+  // =========================================================
+
   loadEnrollments(traineeId: number): void {
     this.api.getEnrollmentsByTrainee(traineeId).subscribe({
       next: (enrollments: EnrollmentDto[]) => {
         if (enrollments && enrollments.length > 0) {
           const activeEnrollment =
             enrollments.find(
-              (e) => e.completionStatus === 'Active' || e.completionStatus === 'InProgress',
+              (e) =>
+                e.completionStatus === 'Active' ||
+                e.completionStatus === 'InProgress'
             ) || enrollments[0];
 
           this.enrollmentData.set(activeEnrollment);
           this.enrollmentId.set(activeEnrollment.enrollmentId);
           this.batchId.set(activeEnrollment.batchId);
 
-          if (activeEnrollment.supervisorId) {
+          // Get supervisor assigned to enrollment
+          if (activeEnrollment.supervisorId != null) {
             this.supervisorId.set(activeEnrollment.supervisorId);
+            this.loadSupervisorById(activeEnrollment.supervisorId);
+          } else {
+            this.supervisorId.set(null);
+            this.supervisorData.set(null);
+            this.loadingSupervisor.set(false);
           }
 
           if (activeEnrollment.batchName) {
@@ -515,14 +565,13 @@ export class TraineeDashboard implements OnInit {
           }
 
           this.loadBatchData(activeEnrollment.batchId);
+
+          // Get trainer assigned to this batch
           this.loadTrainerByBatch(activeEnrollment.batchId);
 
-          const userId = this.currentUserId();
-          if (userId) {
-            this.loadSupervisorByUserId(userId);
-          }
-
           this.loadTasks(activeEnrollment.batchId);
+
+          const userId = this.currentUserId();
 
           if (userId) {
             this.loadUserAnnouncements(userId);
@@ -545,55 +594,94 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
+  // =========================================================
+  // Trainer - UPDATED
+  // =========================================================
+
   loadTrainerByBatch(batchId: number): void {
     this.loadingTrainer.set(true);
+    this.trainerData.set(null);
+
+    console.log('Loading trainer for batch:', batchId);
 
     this.api.getBatchTrainers(batchId).subscribe({
-      next: (trainers: TrainerDto[]) => {
-        if (trainers && trainers.length > 0) {
-          const firstTrainer = trainers[0];
+      next: (trainers) => {
+        console.log('Batch trainers API response:', trainers);
 
-          if (firstTrainer.trainerId) {
-            this.api.getTrainer(firstTrainer.trainerId).subscribe({
-              next: (trainer: TrainerDto) => {
-                this.trainerData.set(trainer);
-                this.loadingTrainer.set(false);
-              },
-              error: () => {
-                this.trainerData.set(null);
-                this.loadingTrainer.set(false);
-              },
+        if (trainers && trainers.length > 0) {
+          const firstTrainer = trainers.find(
+            (trainer) =>
+              trainer.trainerId != null &&
+              typeof trainer.trainerName === 'string' &&
+              trainer.trainerName.trim().length > 0
+          );
+
+          if (firstTrainer) {
+            const trainerName = firstTrainer.trainerName.trim();
+
+            this.trainerData.set({
+              trainerId: firstTrainer.trainerId,
+              fullName: trainerName,
+              userId: 0,
+              experienceYears: 0,
+              status: 'Active' as TrainerDto['status'],
+            });
+
+            console.log('Dashboard trainer loaded:', {
+              batchId,
+              trainerId: firstTrainer.trainerId,
+              trainerName
             });
           } else {
-            this.trainerData.set(firstTrainer);
-            this.loadingTrainer.set(false);
+            console.warn(
+              'Batch trainer response contains no valid trainer name:',
+              trainers
+            );
+            this.trainerData.set(null);
           }
         } else {
+          console.warn('No trainers returned for batch:', batchId);
           this.trainerData.set(null);
-          this.loadingTrainer.set(false);
         }
+
+        this.loadingTrainer.set(false);
       },
-      error: () => {
+      error: (error: any) => {
+        console.error(
+          'Failed to load trainers for batch:',
+          batchId,
+          error
+        );
+
         this.trainerData.set(null);
         this.loadingTrainer.set(false);
       },
     });
   }
 
-  loadSupervisorByUserId(userId: number): void {
+  // =========================================================
+  // Supervisor
+  // =========================================================
+
+  loadSupervisorById(supervisorId: number): void {
     this.loadingSupervisor.set(true);
 
-    this.api.getCompanySupervisorByUserId(userId).subscribe({
+    this.api.getCompanySupervisor(supervisorId).subscribe({
       next: (supervisor: CompanySupervisorDto) => {
         this.supervisorData.set(supervisor);
         this.loadingSupervisor.set(false);
       },
-      error: () => {
+      error: (error: any) => {
+        console.error('Error loading supervisor:', error);
         this.supervisorData.set(null);
         this.loadingSupervisor.set(false);
       },
     });
   }
+
+  // =========================================================
+  // Batch and Program
+  // =========================================================
 
   loadBatchData(batchId: number): void {
     this.api.getBatch(batchId).subscribe({
@@ -633,6 +721,10 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
+  // =========================================================
+  // Tasks
+  // =========================================================
+
   loadTasks(batchId: number): void {
     this.loadingTasks.set(true);
     const traineeId = this.traineeId();
@@ -642,7 +734,9 @@ export class TraineeDashboard implements OnInit {
         if (tasks && tasks.length > 0 && traineeId) {
           this.api.getTraineeSubmissions(traineeId).subscribe({
             next: (submissions: SubmissionDto[]) => {
-              const enrichedTasks = this.enrichTasksWithSubmission(tasks, submissions);
+              const enrichedTasks =
+                this.enrichTasksWithSubmission(tasks, submissions);
+
               this.processAndSetTasks(enrichedTasks);
             },
             error: () => {
@@ -669,7 +763,7 @@ export class TraineeDashboard implements OnInit {
       return;
     }
 
-    let enrichedTasks = tasks as TaskWithSubmissionDto[];
+    const enrichedTasks = tasks as TaskWithSubmissionDto[];
     this.calendarTasks.set(enrichedTasks);
 
     const today = new Date();
@@ -678,7 +772,9 @@ export class TraineeDashboard implements OnInit {
     const sortedTasks = enrichedTasks
       .filter((task) => {
         const isCompleted =
-          (task.status as string) === 'Completed' || (task.status as string) === 'Graded';
+          (task.status as string) === 'Completed' ||
+          (task.status as string) === 'Graded';
+
         if (isCompleted) return false;
 
         if (task.dueDate) {
@@ -686,10 +782,11 @@ export class TraineeDashboard implements OnInit {
           dueDate.setHours(0, 0, 0, 0);
 
           const daysDiff = Math.floor(
-            (today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
+            (today.getTime() - dueDate.getTime()) /
+              (1000 * 60 * 60 * 24)
           );
-          if (daysDiff > 7) return false;
 
+          if (daysDiff > 7) return false;
           return true;
         }
 
@@ -702,6 +799,7 @@ export class TraineeDashboard implements OnInit {
 
         const dateA = new Date(a.dueDate || Date.now());
         const dateB = new Date(b.dueDate || Date.now());
+
         return dateA.getTime() - dateB.getTime();
       });
 
@@ -718,19 +816,30 @@ export class TraineeDashboard implements OnInit {
     }
 
     return tasks.map((task) => {
-      const submission = submissions.find((s) => s.taskId === task.taskId);
+      const submission = submissions.find(
+        (s) => s.taskId === task.taskId
+      );
+
       if (submission) {
         return {
           ...task,
           submissionStatus: submission.status,
           submissionId: submission.submissionId,
           grade: submission.grade,
-          status: submission.status === 'Graded' ? ('Completed' as TaskStatus) : task.status,
+          status:
+            submission.status === 'Graded'
+              ? ('Completed' as TaskStatus)
+              : task.status,
         };
       }
+
       return task as TaskWithSubmissionDto;
     });
   }
+
+  // =========================================================
+  // Announcements
+  // =========================================================
 
   loadUserAnnouncements(userId: number): void {
     this.loadingAnnouncements.set(true);
@@ -743,8 +852,10 @@ export class TraineeDashboard implements OnInit {
             ...item,
             source: 'الهيئة',
           }));
+
           this.announcements.set(mappedItems);
         }
+
         this.loadingAnnouncements.set(false);
       },
       error: (error: any) => {
@@ -754,15 +865,22 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-  private getAnnouncementSource(scopeType: AnnouncementScopeType): string {
+  private getAnnouncementSource(
+    scopeType: AnnouncementScopeType
+  ): string {
     const scopeMap: Record<string, string> = {
       Platform: 'الهيئة',
       Company: 'الشركة',
       Batch: 'المدرب',
       Program: 'البرنامج',
     };
+
     return scopeMap[scopeType] || 'عام';
   }
+
+  // =========================================================
+  // Notifications
+  // =========================================================
 
   loadUserNotifications(userId: number): void {
     this.loadingNotifications.set(true);
@@ -781,7 +899,10 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-  markNotificationAsRead(notificationId: number, event?: Event): void {
+  markNotificationAsRead(
+    notificationId: number,
+    event?: Event
+  ): void {
     if (event) {
       event.stopPropagation();
     }
@@ -803,9 +924,7 @@ export class TraineeDashboard implements OnInit {
         console.log('Notification marked as read:', notificationId);
       },
       error: () => {
-        if (userId) {
-          this.loadUserNotifications(userId);
-        }
+        this.loadUserNotifications(userId);
       },
     });
   }
@@ -819,7 +938,10 @@ export class TraineeDashboard implements OnInit {
     if (!userId) return;
 
     this.notifications.update((notifs) => {
-      return notifs.map((notif) => ({ ...notif, isRead: true }));
+      return notifs.map((notif) => ({
+        ...notif,
+        isRead: true
+      }));
     });
 
     this.api.markAllNotificationsAsRead(userId).subscribe({
@@ -827,9 +949,7 @@ export class TraineeDashboard implements OnInit {
         console.log('All notifications marked as read');
       },
       error: () => {
-        if (userId) {
-          this.loadUserNotifications(userId);
-        }
+        this.loadUserNotifications(userId);
       },
     });
   }
@@ -838,19 +958,29 @@ export class TraineeDashboard implements OnInit {
     return this.notifications().filter((n) => !n.isRead).length;
   }
 
+  // =========================================================
+  // Storage
+  // =========================================================
+
   private getUserIdFromStorage(): number | null {
     const userIdFromStorage = localStorage.getItem('userId');
+
     if (userIdFromStorage) {
       return parseInt(userIdFromStorage, 10);
     }
 
     const userIdFromSession = sessionStorage.getItem('userId');
+
     if (userIdFromSession) {
       return parseInt(userIdFromSession, 10);
     }
 
     return null;
   }
+
+  // =========================================================
+  // Refresh
+  // =========================================================
 
   refreshData(): void {
     const traineeId = this.traineeId();
@@ -866,6 +996,12 @@ export class TraineeDashboard implements OnInit {
       this.loadTrainerByBatch(batchId);
     }
 
+    const supervisorId = this.supervisorId();
+
+    if (supervisorId != null) {
+      this.loadSupervisorById(supervisorId);
+    }
+
     if (userId) {
       this.loadUserAnnouncements(userId);
       this.loadUserNotifications(userId);
@@ -873,6 +1009,10 @@ export class TraineeDashboard implements OnInit {
       this.loadWarningsCount(userId);
     }
   }
+
+  // =========================================================
+  // Status
+  // =========================================================
 
   getStatusColor(status: string): string {
     const statusMap: Record<string, string> = {
@@ -883,6 +1023,7 @@ export class TraineeDashboard implements OnInit {
       Dropped: 'var(--status-new-bg)',
       Suspended: 'var(--status-new-bg)',
     };
+
     return statusMap[status] || 'var(--status-new-bg)';
   }
 
@@ -895,24 +1036,30 @@ export class TraineeDashboard implements OnInit {
       Dropped: 'var(--status-new-fg)',
       Suspended: 'var(--status-new-fg)',
     };
+
     return statusMap[status] || 'var(--status-new-fg)';
   }
 
   getInitial(name: string | undefined): string {
     if (!name) return 'م';
+
     const trimmed = name.trim();
     return trimmed.length > 0 ? trimmed[0] : 'م';
   }
 
   getTrainerSpecialty(): string {
     const trainer = this.trainerData();
+
     if (!trainer) return '';
 
     if (trainer.specialty) {
       return trainer.specialty;
     }
 
-    if (trainer.experienceYears !== undefined && trainer.experienceYears > 0) {
+    if (
+      trainer.experienceYears !== undefined &&
+      trainer.experienceYears > 0
+    ) {
       return `خبرة ${trainer.experienceYears} سنوات`;
     }
 
@@ -927,65 +1074,88 @@ export class TraineeDashboard implements OnInit {
 
   getSupervisorRole(): string {
     const supervisor = this.supervisorData();
+
     if (!supervisor) return 'مشرف التدريب';
 
     if (supervisor.position) {
       return supervisor.position;
     }
+
     if (supervisor.department) {
       return supervisor.department;
     }
+
     return 'مشرف التدريب';
   }
 
+  // =========================================================
+  // Task Helpers
+  // =========================================================
+
   isTaskOverdue(dueDate: string | Date): boolean {
     if (!dueDate) return false;
+
     const due = new Date(dueDate);
     const today = new Date();
+
     return due < today;
   }
 
   contactTrainer(): void {
     const trainer = this.trainerData();
+
     if (!trainer) return;
+
     console.log('Contact trainer:', trainer);
   }
 
   contactSupervisor(): void {
     const supervisor = this.supervisorData();
+
     if (!supervisor) return;
+
     console.log('Contact supervisor:', supervisor);
   }
 
   getDaysRemaining(dueDate: string | Date): number {
     if (!dueDate) return 0;
+
     const due = new Date(dueDate);
     const today = new Date();
+
     today.setHours(0, 0, 0, 0);
     due.setHours(0, 0, 0, 0);
 
     const diffTime = due.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil(
+      diffTime / (1000 * 60 * 60 * 24)
+    );
+
     return diffDays;
   }
 
   getDaysRemainingText(dueDate: string | Date): string {
     const days = this.getDaysRemaining(dueDate);
+
     if (days < 0) {
       return `منتهية منذ ${Math.abs(days)} يوم`;
     }
+
     if (days === 0) {
       return 'تنتهي اليوم';
     }
+
     if (days === 1) {
       return 'تتبقى يوم واحد';
     }
+
     return `تتبقى ${days} أيام`;
   }
 
   private loadReadAnnouncementsFromStorage(): void {
     try {
       const saved = localStorage.getItem('readAnnouncementIds');
+
       if (saved) {
         const ids = JSON.parse(saved) as number[];
         this.readAnnouncementIds.set(new Set(ids));
