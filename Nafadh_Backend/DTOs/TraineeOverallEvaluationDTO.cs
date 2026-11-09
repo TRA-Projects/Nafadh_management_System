@@ -14,5 +14,7 @@
         // Final evaluation
         public double FinalScore { get; set; }
         public string FinalGrade { get; set; } = string.Empty;
+        public bool IsComplete { get; set; }
+        public string EvaluationStatus { get; set; } = string.Empty;
     }
 }
