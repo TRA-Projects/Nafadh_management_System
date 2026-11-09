@@ -16,7 +16,7 @@ export class CompanyLayout {
 
   private readonly allNavItems: NavItemWithPermission<ShellNavItem>[] = [
     { path: 'dashboard', label: 'لوحة التحكم', icon: 'home', pageCode: 'nf.company.dashboard' },
-    { path: 'supervisors', label: 'إدارة المشرفين', icon: 'shield', pageCode: 'nf.company.supervisors' },
+    { path: 'supervisors', label: 'إدارة الموظفين', icon: 'shield', pageCode: 'nf.company.supervisors' },
     { path: 'trainees', label: 'المتدربون', icon: 'graduation', pageCode: 'nf.company.trainees' },
     { path: 'specialties', label: 'البرامج', icon: 'book', pageCode: 'nf.company.programs' },
     { path: 'tasks', label: 'المهام والمشروعات', icon: 'clip', pageCode: 'nf.company.tasks-projects' },

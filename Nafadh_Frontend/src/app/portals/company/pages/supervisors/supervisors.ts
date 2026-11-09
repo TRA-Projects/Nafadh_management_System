@@ -1,7 +1,7 @@
-
 import { CommonModule } from '@angular/common';
 import { Component, ChangeDetectorRef, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, map, of, switchMap } from 'rxjs';
 import { CompanyApi } from '../../services/company-api';
 
 interface SupervisorStats {
@@ -40,6 +40,15 @@ interface Trainee {
   batch: string;
 }
 
+interface CompanyTrainer {
+  id: number;
+  name: string;
+  specialty: string;
+  status: string;
+  email: string;
+  phone: string;
+}
+
 interface EvaluationTrainer {
   id: number;
   name: string;
@@ -65,13 +74,17 @@ export class CompanySupervisors implements OnInit {
   private readonly companyApi = inject(CompanyApi);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  companyId = 1;
+  /** رقم شركة المستخدم الحالي، يُحمَّل من حسابه (CompanyAccount/me) ولا يوجد له قيمة افتراضية. */
+  companyId = 0;
   loading = false;
   errorMessage = '';
 
-  activeView: 'supervisors' | 'evaluations' = 'supervisors';
+  activeView: 'supervisors' | 'evaluations' | 'trainers' = 'supervisors';
   evaluationSearch = '';
   editingSavedEvaluation = false;
+  evaluationTrainerId: number | null = null;
+  evaluationSaved = false;
+  savingEvaluation = false;
 
   supervisors: Supervisor[] = [];
 
@@ -99,6 +112,43 @@ export class CompanySupervisors implements OnInit {
   // نافذة إضافة مدرب مستقلة
   showTrainerModal = false;
   savingTrainer = false;
+  companyTrainers: CompanyTrainer[] = [];
+  trainerAttendanceSummary: { rate: number; recorded: number; absent: number } | null = null;
+  trainerSummaryLoading = false;
+  trainerSearch = '';
+  trainerSpecialtyFilter = '';
+  trainerIdFilter: number | null = null;
+  trainerColumnFilter: 'name' | 'specialty' | null = null;
+  trainerPageSize = 5;
+  trainerPage = 1;
+  selectedTrainerDetails: CompanyTrainer | null = null;
+  selectedCompanyTrainer: CompanyTrainer | null = null;
+  trainerAttendanceRates: Partial<Record<number, number>> = {};
+  trainerEvaluationsById: Partial<Record<number, { supervisorId: number; supervisorName: string; rating: number; comment?: string | null; savedAt?: string }[]>> = {};
+  private trainerEvaluationsRequestId = 0;
+  trainerEvaluationsState: 'loading' | 'ready' | 'error' = 'loading';
+  trainerAttendance: {
+    trainerAttendanceId: number;
+    trainerId?: number | string | null;
+    date: string;
+    status: string;
+    checkInTime?: string | null;
+    checkOutTime?: string | null;
+    reason?: string | null;
+  }[] = [];
+  private recentTrainerAttendance: {
+    companyId: number;
+    from: string;
+    to: string;
+    records: CompanySupervisors['trainerAttendance'];
+  } | null = null;
+  trainerAttendanceFrom = '';
+  trainerAttendanceTo = '';
+  trainerAttendanceState: 'loading' | 'ready' | 'error' = 'loading';
+  private attendanceRequestId = 0;
+  trainersLoading = false;
+  trainersLoadFailed = false;
+  private trainersRequestId = 0;
 
   newTrainer = {
     userId: 0,
@@ -156,7 +206,46 @@ export class CompanySupervisors implements OnInit {
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
-    this.loadSupervisors();
+    this.loadCurrentCompany();
+  }
+
+  /** تحديد شركة المستخدم الحالي من حسابه ثم تحميل بياناتها. */
+  private loadCurrentCompany(): void {
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.companyApi.getCurrentAccount().subscribe({
+      next: (account: any) => {
+        const id = Number(
+          account?.companyId ??
+          account?.CompanyId ??
+          account?.company?.companyId ??
+          account?.company?.id ??
+          0
+        );
+
+        if (!Number.isFinite(id) || id <= 0) {
+          this.loading = false;
+          this.errorMessage = 'تعذر تحديد الشركة المرتبطة بحسابك';
+          this.cdr.detectChanges();
+          return;
+        }
+
+        this.companyId = id;
+        this.loadSupervisors();
+      },
+      error: (error: unknown) => {
+        console.error('Error loading current company account:', error);
+        this.loading = false;
+        this.errorMessage = 'تعذر تحميل بيانات حساب الشركة';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /** مفاتيح التخزين المحلي مفصولة لكل شركة حتى لا تختلط البيانات. */
+  private storageKey(base: string): string {
+    return `${base}:company-${this.companyId}`;
   }
 
   private normalizeTrainers(response: any): any[] {
@@ -201,6 +290,11 @@ export class CompanySupervisors implements OnInit {
 
   // تحميل المشرفين
   loadSupervisors(): void {
+    if (!this.companyId) {
+      this.loadCurrentCompany();
+      return;
+    }
+
     this.loading = true;
     this.errorMessage = '';
 
@@ -210,21 +304,10 @@ export class CompanySupervisors implements OnInit {
           ? response
           : (response?.items ?? response?.data ?? []);
 
-        const fakeStats: SupervisorStats[] = [
-          { monthlyEvaluations: 4, attendanceRate: 94, assignedTrainees: 0 },
-          { monthlyEvaluations: 3, attendanceRate: 88, assignedTrainees: 0 },
-          { monthlyEvaluations: 6, attendanceRate: 96, assignedTrainees: 0 },
-          { monthlyEvaluations: 2, attendanceRate: 72, assignedTrainees: 0 },
-          { monthlyEvaluations: 5, attendanceRate: 91, assignedTrainees: 0 },
-          { monthlyEvaluations: 3, attendanceRate: 79, assignedTrainees: 0 },
-          { monthlyEvaluations: 7, attendanceRate: 97, assignedTrainees: 0 },
-          { monthlyEvaluations: 4, attendanceRate: 85, assignedTrainees: 0 }
-        ];
-
         this.supervisors = data.map((item, index) => {
           const id = Number(item.supervisorId ?? item.id ?? index + 1);
           const status = item.status ?? 'Active';
-          const stats = item.stats ?? fakeStats[index % fakeStats.length];
+          const stats = item.stats ?? { monthlyEvaluations: 0, attendanceRate: 0, assignedTrainees: 0 };
 
           return {
             supervisorId: id,
@@ -246,7 +329,7 @@ export class CompanySupervisors implements OnInit {
               'مجمد'
             ].includes(status),
             showMenu: false,
-            lastActivity: item.lastActivity ?? 'نشط مؤخراً',
+            lastActivity: item.lastActivity,
             stats: {
               monthlyEvaluations: Number(stats.monthlyEvaluations ?? 0),
               attendanceRate: Number(stats.attendanceRate ?? 0),
@@ -254,6 +337,19 @@ export class CompanySupervisors implements OnInit {
             }
           } as Supervisor;
         });
+
+        for (const supervisor of this.supervisors) {
+          const id = supervisor.supervisorId;
+          const previous = this.distributionMap[id];
+          this.companyApi.getSupervisorTrainers(id).subscribe({
+            next: response => {
+              if (!this.supervisors.includes(supervisor) || this.distributionMap[id] !== previous) return;
+              this.updateSupervisorDistribution(supervisor, this.assignedTrainerIds(response));
+              this.cdr.detectChanges();
+            },
+            error: error => console.error('Error restoring trainer distribution:', error)
+          });
+        }
 
         this.calculateStatistics();
         this.loading = false;
@@ -273,7 +369,326 @@ export class CompanySupervisors implements OnInit {
   }
 
   refreshData(): void {
+    if (this.activeView === 'trainers') {
+      this.loadCompanyTrainers();
+      return;
+    }
+
     this.loadSupervisors();
+  }
+
+  showTrainersView(): void {
+    this.activeView = 'trainers';
+    this.loadCompanyTrainers();
+  }
+
+  readonly trainerStatusLabels: Record<string, string> = {
+    Active: 'نشط', Inactive: 'غير نشط', Suspended: 'موقوف'
+  };
+
+  toggleTrainerColumnFilter(column: 'name' | 'specialty'): void {
+    this.trainerColumnFilter = this.trainerColumnFilter === column ? null : column;
+
+  }
+
+  closeTrainerFilterOnOutsideClick(event: MouseEvent): void {
+    if (this.trainerColumnFilter === null) return;
+
+    const target = event.target;
+    if (target instanceof Element && target.closest('.trainer-filter-menu, .trainer-filter-toggle')) return;
+
+    this.trainerColumnFilter = null;
+  }
+
+  get hasTrainerFilters(): boolean {
+    return !!this.trainerSearch.trim() || this.trainerIdFilter !== null || !!this.trainerSpecialtyFilter;
+  }
+
+  clearTrainerFilters(): void {
+    this.trainerSearch = '';
+    this.trainerIdFilter = null;
+    this.trainerSpecialtyFilter = '';
+    this.trainerColumnFilter = null;
+    this.trainerPage = 1;
+  }
+
+  get trainerSpecialties(): string[] {
+    return [...new Set(this.companyTrainers.map(trainer => trainer.specialty))]
+      .sort((a, b) => a.localeCompare(b, 'ar'));
+  }
+
+  get filteredCompanyTrainers(): CompanyTrainer[] {
+    const query = this.trainerSearch.trim().toLowerCase();
+    return this.companyTrainers.filter(trainer =>
+      (this.trainerIdFilter === null || trainer.id === this.trainerIdFilter) &&
+      (!this.trainerSpecialtyFilter || trainer.specialty === this.trainerSpecialtyFilter) &&
+      (trainer.name.toLowerCase().includes(query) ||
+        trainer.specialty.toLowerCase().includes(query))
+    );
+  }
+
+  get trainerPageCount(): number {
+    return Math.max(1, Math.ceil(this.filteredCompanyTrainers.length / this.trainerPageSize));
+  }
+
+  get visibleTrainerPage(): number {
+    return Math.min(this.trainerPage, this.trainerPageCount);
+  }
+
+  get pagedCompanyTrainers(): CompanyTrainer[] {
+    const start = (this.visibleTrainerPage - 1) * this.trainerPageSize;
+    return this.filteredCompanyTrainers.slice(start, start + this.trainerPageSize);
+  }
+
+  openTrainerProfile(trainer: CompanyTrainer): void {
+    this.selectedCompanyTrainer = { ...trainer };
+    const range = this.currentAttendanceWeek();
+    this.trainerAttendanceFrom = range.from;
+    this.trainerAttendanceTo = range.to;
+    this.loadTrainerAttendance();
+    this.loadCompanyTrainerEvaluations();
+  }
+
+  private loadCompanyTrainerEvaluations(): void {
+    const requestId = ++this.trainerEvaluationsRequestId;
+    this.trainerEvaluationsState = 'loading';
+    this.companyApi.getSupervisors(this.companyId).pipe(
+      switchMap(supervisors => {
+        const requests = supervisors.flatMap(supervisor => {
+          const id = Number(supervisor.supervisorId ?? supervisor.id);
+          if (!Number.isSafeInteger(id) || id <= 0) return [];
+
+          const supervisorName = supervisor.fullName?.trim() || 'مشرف غير محدد';
+          return [this.companyApi.getSupervisorTrainerEvaluations(id).pipe(
+            map(records => records.map(record => ({
+              ...record,
+              supervisorId: id,
+              supervisorName,
+              savedAt: record.evaluatedAt ?? record.updatedAt ?? record.createdAt
+            })))
+          )];
+        });
+
+        return requests.length ? forkJoin(requests) : of([]);
+      })
+    ).subscribe({
+      next: groups => {
+        if (requestId !== this.trainerEvaluationsRequestId) return;
+        this.trainerEvaluationsById = {};
+        for (const evaluation of groups.flat()) {
+          (this.trainerEvaluationsById[Number(evaluation.trainerId)] ??= []).push(evaluation);
+        }
+        this.trainerEvaluationsState = 'ready';
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        if (requestId !== this.trainerEvaluationsRequestId) return;
+        this.trainerEvaluationsState = 'error';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  get selectedTrainerEvaluationRecords(): {
+    supervisorId: number; supervisorName: string; rating: number; comment?: string | null; savedAt?: string;
+  }[] {
+    return this.selectedCompanyTrainer ? this.trainerEvaluationRecords(this.selectedCompanyTrainer.id) : [];
+  }
+
+  trainerEvaluationCount(trainerId: number): number | string {
+    const count = this.trainerEvaluationRecords(trainerId).length;
+    return count || this.trainerEvaluationsState === 'ready' ? count : '—';
+  }
+
+  private trainerEvaluationRecords(trainerId: number) {
+    const records = this.trainerEvaluationsById[trainerId] ?? [];
+    const sharedSupervisorIds = new Set(records.map(record => record.supervisorId));
+    const localRecords = this.readLocalEvaluations()
+      .filter(record => Number(record.trainerId) === trainerId &&
+        !sharedSupervisorIds.has(Number(record.supervisorId)))
+      .map(record => ({
+        supervisorId: Number(record.supervisorId),
+        supervisorName: record.supervisorName || 'مشرف غير محدد',
+        rating: Number(this.getHistoryAverage(record)),
+        comment: record.evaluationComment,
+        savedAt: record.savedAt
+      }));
+
+    return [...records, ...localRecords];
+  }
+
+  private storeTrainerEvaluation(trainerId: number, evaluation: {
+    supervisorId: number; supervisorName: string; rating: number; comment?: string | null; savedAt?: string;
+  }): void {
+    const records = this.trainerEvaluationsById[trainerId] ?? [];
+    this.trainerEvaluationsById[trainerId] = [
+      ...records.filter(record => record.supervisorId !== evaluation.supervisorId),
+      evaluation
+    ];
+  }
+
+  loadTrainerAttendance(): void {
+    const trainer = this.selectedCompanyTrainer;
+    if (!trainer || !this.trainerAttendanceFrom || !this.trainerAttendanceTo ||
+      this.trainerAttendanceFrom > this.trainerAttendanceTo) return;
+
+    const requestId = ++this.attendanceRequestId;
+    const cached = this.recentTrainerAttendance;
+    if (cached && cached.companyId === this.companyId &&
+      cached.from === this.trainerAttendanceFrom && cached.to === this.trainerAttendanceTo) {
+      this.showTrainerAttendance(cached.records, trainer.id);
+      return;
+    }
+
+    this.trainerAttendance = [];
+    this.trainerAttendanceState = 'loading';
+    this.companyApi.getTrainerAttendance(
+      this.companyId, this.trainerAttendanceFrom, this.trainerAttendanceTo, trainer.id
+    ).subscribe({
+      next: records => {
+        if (this.selectedCompanyTrainer !== trainer || requestId !== this.attendanceRequestId) return;
+        this.showTrainerAttendance(records, trainer.id);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        if (this.selectedCompanyTrainer !== trainer || requestId !== this.attendanceRequestId) return;
+        this.trainerAttendanceState = 'error';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private showTrainerAttendance(records: CompanySupervisors['trainerAttendance'], trainerId: number): void {
+    this.trainerAttendance = records.filter(record => Number(record.trainerId) === trainerId)
+      .sort((a, b) => b.date.localeCompare(a.date));
+    this.trainerAttendanceState = 'ready';
+  }
+
+  readonly attendanceLabels: Record<string, string> = {
+    Present: 'حاضر', Late: 'متأخر', Absent: 'غائب', EarlyLeave: 'انصراف مبكر'
+  };
+
+  closeTrainerProfile(): void {
+    this.selectedCompanyTrainer = null;
+  }
+
+  private currentAttendanceWeek(): { from: string; to: string } {
+    const today = new Date();
+    const sunday = today.getDate() - today.getDay();
+    const start = new Date(today.getFullYear(), today.getMonth(), sunday);
+    const end = new Date(today.getFullYear(), today.getMonth(), sunday + 4);
+    const format = new Intl.DateTimeFormat('sv-SE', {
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    });
+    return { from: format.format(start), to: format.format(end) };
+  }
+
+  private recentAttendanceRange(): { from: string; to: string } {
+    const today = new Date();
+    const from = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29);
+    const dateFormat = new Intl.DateTimeFormat('sv-SE', {
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    });
+    return { from: dateFormat.format(from), to: dateFormat.format(today) };
+  }
+
+  loadCompanyTrainers(): void {
+    if (!this.companyId) {
+      return;
+    }
+
+    const requestId = ++this.trainersRequestId;
+    this.trainersLoading = true;
+    this.trainersLoadFailed = false;
+
+    this.loadCompanyTrainerEvaluations();
+    this.trainerAttendanceRates = {};
+    this.trainerAttendanceSummary = null;
+    this.trainerSummaryLoading = true;
+    this.recentTrainerAttendance = null;
+    const { from, to } = this.recentAttendanceRange();
+    const companyId = this.companyId;
+    this.companyApi.getTrainerAttendance(companyId, from, to).subscribe({
+      next: records => {
+        if (requestId !== this.trainersRequestId) return;
+
+        this.recentTrainerAttendance = { companyId, from, to, records };
+        let present = 0;
+        let absent = 0;
+        const totalsByTrainer = new Map<number, { present: number; total: number }>();
+        for (const record of records) {
+          const attended = record.status === 'Present' || record.status === 'Late' || record.status === 'EarlyLeave';
+          if (!attended && record.status !== 'Absent') continue;
+
+          const totals = totalsByTrainer.get(record.trainerId) ?? { present: 0, total: 0 };
+          totals.total++;
+          if (attended) {
+            totals.present++;
+            present++;
+          } else {
+            absent++;
+          }
+          totalsByTrainer.set(record.trainerId, totals);
+        }
+        for (const [id, totals] of totalsByTrainer) {
+          this.trainerAttendanceRates[id] = Math.round(totals.present * 100 / totals.total);
+        }
+        const recorded = present + absent;
+        this.trainerAttendanceSummary = {
+          rate: recorded ? Math.round(present * 100 / recorded) : 0,
+          recorded,
+          absent
+        };
+        this.trainerSummaryLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        if (requestId !== this.trainersRequestId) return;
+
+        this.trainerSummaryLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+
+    this.companyApi.getCompanyTrainers(this.companyId).subscribe({
+      next: (response: unknown) => {
+        if (requestId !== this.trainersRequestId) return;
+
+        this.companyTrainers = this.normalizeTrainers(response)
+          .filter(item => item != null)
+          .map(item => {
+            const id = this.trainerId(item);
+            return {
+              id,
+              name: this.trainerName(item).trim() || `مدرب رقم ${id}`,
+              specialty: String(item.specialty ?? item.Specialty ?? '').trim() || 'التخصص غير محدد',
+              status: String(item.status ?? item.Status ?? ''),
+              email: String(item.email ?? item.Email ?? '').trim(),
+              phone: String(item.phoneNumber ?? item.PhoneNumber ?? item.phone ?? item.Phone ?? '').trim()
+            };
+          })
+          .filter(trainer => Number.isSafeInteger(trainer.id) && trainer.id > 0);
+
+        if (!this.companyTrainers.some(trainer => trainer.id === this.trainerIdFilter)) {
+          this.trainerIdFilter = null;
+        }
+        if (!this.trainerSpecialties.includes(this.trainerSpecialtyFilter)) {
+          this.trainerSpecialtyFilter = '';
+        }
+
+        this.trainersLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (error: unknown) => {
+        if (requestId !== this.trainersRequestId) return;
+
+        console.error('Error loading company trainers:', error);
+        this.companyTrainers = [];
+        this.trainersLoadFailed = true;
+        this.trainersLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   get filteredSupervisors(): Supervisor[] {
@@ -347,13 +762,16 @@ export class CompanySupervisors implements OnInit {
 
   // إغلاق نافذة إضافة مدرب
   closeTrainerModal(): void {
+    if (this.savingTrainer) return;
+
     this.showTrainerModal = false;
-    this.savingTrainer = false;
   }
 
   // إرسال بيانات المدرب إلى API
   submitTrainer(): void {
-    if (!this.newTrainer.userId || this.newTrainer.userId <= 0) {
+    if (this.savingTrainer) return;
+
+    if (!Number.isSafeInteger(this.newTrainer.userId) || this.newTrainer.userId <= 0) {
       this.showToast('error', 'يرجى إدخال رقم حساب المستخدم الصحيح');
       return;
     }
@@ -391,6 +809,7 @@ export class CompanySupervisors implements OnInit {
           'تم إنشاء ملف المدرب بنجاح'
         );
 
+        this.loadCompanyTrainers();
         this.cdr.detectChanges();
       },
 
@@ -435,6 +854,10 @@ export class CompanySupervisors implements OnInit {
   }
 
   // فتح تقييمات مدرب تابع لمشرف
+  get evaluationTrainer(): EvaluationTrainer | undefined {
+    return this.supervisorTrainers.find(trainer => trainer.id === this.evaluationTrainerId);
+  }
+
   openSupervisorEvaluations(supervisor: Supervisor, event?: Event): void {
     event?.stopPropagation();
 
@@ -442,26 +865,14 @@ export class CompanySupervisors implements OnInit {
     supervisor.showMenu = false;
 
     this.editingSavedEvaluation = false;
+    this.resetEvaluationSelection();
     this.isEvaluationModalOpen = true;
     this.evaluationLoading = true;
     this.supervisorTrainers = [];
 
-    const assignedIds = this.distributionMap[supervisor.supervisorId];
-
-    if (!assignedIds) {
-      this.evaluationLoading = false;
-
-      this.showToast(
-        'info',
-        'يجب تحميل توزيع المدربين لهذا المشرف أولاً. التوزيع المحلي غير متوفر بعد تحديث الصفحة.'
-      );
-
-      this.cdr.detectChanges();
-      return;
-    }
-
-    this.companyApi.getCompanyTrainers(this.companyId).subscribe({
+    this.companyApi.getSupervisorTrainers(supervisor.supervisorId).subscribe({
       next: (response: any) => {
+        if (!this.isEvaluationModalOpen || this.selectedSupervisor !== supervisor) return;
         this.supervisorTrainers = this.normalizeTrainers(response)
           .map((item, index): EvaluationTrainer => {
             const name = this.trainerName(item);
@@ -499,8 +910,7 @@ export class CompanySupervisors implements OnInit {
           })
           .filter(
             t => Number.isFinite(t.id) &&
-              t.id > 0 &&
-              assignedIds.includes(t.id)
+              t.id > 0
           );
 
         const savedEvaluations = this.readLocalEvaluations();
@@ -555,7 +965,23 @@ export class CompanySupervisors implements OnInit {
     });
   }
 
+  startNewTrainerEvaluation(): void {
+    if (this.editingSavedEvaluation && this.selectedSupervisor) {
+      this.openSupervisorEvaluations(this.selectedSupervisor);
+      return;
+    }
+
+    this.resetEvaluationSelection();
+  }
+
+  private resetEvaluationSelection(): void {
+    this.evaluationSaved = false;
+    this.evaluationTrainerId = null;
+  }
+
   closeEvaluationModal(): void {
+    if (this.savingEvaluation) return;
+    this.resetEvaluationSelection();
     this.isEvaluationModalOpen = false;
     this.supervisorTrainers = [];
     this.editingSavedEvaluation = false;
@@ -654,6 +1080,8 @@ export class CompanySupervisors implements OnInit {
       )
     }];
 
+    this.evaluationSaved = false;
+    this.evaluationTrainerId = this.supervisorTrainers[0].id;
     this.editingSavedEvaluation = true;
     this.isEvaluationModalOpen = true;
     this.evaluationLoading = false;
@@ -673,18 +1101,15 @@ export class CompanySupervisors implements OnInit {
 
   private readLocalEvaluations(): any[] {
     try {
+      if (!this.companyId) {
+        return [];
+      }
+
       const current = JSON.parse(
-        localStorage.getItem('company_supervisor_evaluations') || '[]'
+        localStorage.getItem(this.storageKey('company_supervisor_evaluations')) || '[]'
       );
 
-      const legacy = JSON.parse(
-        localStorage.getItem('nafadh_company_supervisor_evaluations') || '[]'
-      );
-
-      const records = [
-        ...(Array.isArray(current) ? current : []),
-        ...(Array.isArray(legacy) ? legacy : [])
-      ];
+      const records = Array.isArray(current) ? current : [];
 
       const unique = new Map<string, any>();
 
@@ -711,6 +1136,8 @@ export class CompanySupervisors implements OnInit {
   }
 
   saveTrainerEvaluation(trainer: EvaluationTrainer): void {
+    if (this.savingEvaluation) return;
+
     if (!this.selectedSupervisor || !trainer.currentRating) {
       this.showToast(
         'error',
@@ -758,75 +1185,82 @@ export class CompanySupervisors implements OnInit {
       savedAt
     };
 
-    try {
-      const evaluations = this.readLocalEvaluations();
+    const rating = Math.round(averageRating);
+    this.savingEvaluation = true;
+    this.companyApi.saveSupervisorTrainerEvaluation(
+      supervisor.supervisorId, trainer.id, rating, evaluation.evaluationComment
+    ).subscribe({
+      next: () => {
+        try {
+          const evaluations = this.readLocalEvaluations();
 
-      const existingIndex = evaluations.findIndex(item =>
-        Number(item.trainerId) === trainer.id &&
-        Number(item.supervisorId) === supervisor.supervisorId
-      );
+          const existingIndex = evaluations.findIndex(item =>
+            Number(item.trainerId) === trainer.id &&
+            Number(item.supervisorId) === supervisor.supervisorId
+          );
 
-      if (existingIndex >= 0) {
-        evaluations[existingIndex] = evaluation;
-      } else {
-        evaluations.unshift(evaluation);
+          if (existingIndex >= 0) {
+            evaluations[existingIndex] = evaluation;
+          } else {
+            evaluations.unshift(evaluation);
+          }
+
+          localStorage.setItem(
+            this.storageKey('company_supervisor_evaluations'),
+            JSON.stringify(evaluations)
+          );
+
+          const key = this.storageKey('company_supervisor_activities');
+
+          let previous: unknown;
+
+          try {
+            previous = JSON.parse(localStorage.getItem(key) || '[]');
+          } catch {
+            previous = [];
+          }
+
+          const activities = Array.isArray(previous)
+            ? previous as any[]
+            : [];
+
+          activities.unshift({
+            message:
+              `تم تقييم المدرب (${trainer.name}) بتقدير: ` +
+              `[${trainer.currentRating}] بواسطة المشرف: ` +
+              `(${supervisor.fullName})`,
+            date: new Date(savedAt).toLocaleString('ar-OM'),
+            type: 'evaluation',
+            ...evaluation
+          });
+
+          localStorage.setItem(
+            key,
+            JSON.stringify(activities)
+          );
+        } catch (error) {
+          console.warn('Could not update local evaluation history:', error);
+        }
+
+        this.storeTrainerEvaluation(trainer.id, {
+          supervisorId: supervisor.supervisorId,
+          supervisorName: supervisor.fullName,
+          rating,
+          comment: evaluation.evaluationComment,
+          savedAt
+        });
+        this.savingEvaluation = false;
+        this.evaluationTrainerId = null;
+        this.evaluationSaved = true;
+        this.showToast('success', 'تم حفظ التقييم بنجاح.');
+        this.cdr.detectChanges();
+      },
+      error: error => {
+        this.savingEvaluation = false;
+        this.showToast('error', error?.error?.message || 'تعذر حفظ التقييم في النظام.');
+        this.cdr.detectChanges();
       }
-
-      localStorage.setItem(
-        'company_supervisor_evaluations',
-        JSON.stringify(evaluations)
-      );
-
-      localStorage.setItem(
-        'nafadh_company_supervisor_evaluations',
-        JSON.stringify(evaluations)
-      );
-
-      const key = 'company_supervisor_activities';
-
-      let previous: unknown;
-
-      try {
-        previous = JSON.parse(localStorage.getItem(key) || '[]');
-      } catch {
-        previous = [];
-      }
-
-      const activities = Array.isArray(previous)
-        ? previous as any[]
-        : [];
-
-      activities.unshift({
-        message:
-          `تم تقييم المدرب (${trainer.name}) بتقدير: ` +
-          `[${trainer.currentRating}] بواسطة المشرف: ` +
-          `(${supervisor.fullName})`,
-        date: new Date(savedAt).toLocaleString('ar-OM'),
-        type: 'evaluation',
-        ...evaluation
-      });
-
-      localStorage.setItem(
-        key,
-        JSON.stringify(activities)
-      );
-
-      this.editingSavedEvaluation = false;
-
-      this.showToast(
-        'success',
-        'تم حفظ التقييم بنجاح. يمكنك مراجعته وتعديله من تبويب سجل التقييمات.'
-      );
-
-      this.cdr.detectChanges();
-    } catch (error) {
-      console.error('Evaluation local save failed:', error);
-
-      this.showToast(
-        'error',
-        'تعذر حفظ التقييم في التخزين المحلي'
-      );
-    }
+    });
   }
 
   // قائمة خيارات المشرف
@@ -994,6 +1428,20 @@ export class CompanySupervisors implements OnInit {
   }
 
   // فتح نافذة توزيع المدربين
+  private assignedTrainerIds(response: unknown): number[] {
+    return [...new Set(this.normalizeTrainers(response)
+      .map(item => this.trainerId(item))
+      .filter(id => Number.isSafeInteger(id) && id > 0))];
+  }
+
+  private updateSupervisorDistribution(supervisor: Supervisor, ids: number[]): void {
+    this.distributionMap[supervisor.supervisorId] = ids;
+    const current = this.supervisors.find(item => item.supervisorId === supervisor.supervisorId);
+    if (supervisor.stats) supervisor.stats.assignedTrainees = ids.length;
+    if (current?.stats) current.stats.assignedTrainees = ids.length;
+    this.calculateStatistics();
+  }
+
   openDistributeModal(s: Supervisor): void {
     this.selectedSupervisor = s;
     this.isDistributeModalOpen = true;
@@ -1001,11 +1449,15 @@ export class CompanySupervisors implements OnInit {
     this.traineesList = [];
     s.showMenu = false;
 
-    const selected = this.distributionMap[s.supervisorId] ?? [];
-
-    this.companyApi.getCompanyTrainers(this.companyId).subscribe({
-      next: (response: any) => {
-        this.traineesList = this.normalizeTrainers(response)
+    forkJoin({
+      assigned: this.companyApi.getSupervisorTrainers(s.supervisorId),
+      trainers: this.companyApi.getCompanyTrainers(this.companyId)
+    }).subscribe({
+      next: ({ assigned, trainers }) => {
+        if (!this.isDistributeModalOpen || this.selectedSupervisor !== s) return;
+        const selected = this.assignedTrainerIds(assigned);
+        this.updateSupervisorDistribution(s, selected);
+        this.traineesList = this.normalizeTrainers(trainers)
           .map((item, index): Trainee => {
             const id = this.trainerId(item);
             const name = this.trainerName(item);
@@ -1091,17 +1543,11 @@ export class CompanySupervisors implements OnInit {
       selectedIds
     ).subscribe({
       next: () => {
-        this.distributionMap[id] = [...selectedIds];
-
-        if (supervisor.stats) {
-          supervisor.stats.assignedTrainees = selectedIds.length;
-        }
-
-        this.calculateStatistics();
+        this.updateSupervisorDistribution(supervisor, selectedIds);
 
         this.showToast(
           'success',
-          'تم حفظ توزيع المدربين في الباك إند بنجاح'
+          'تم حفظ توزيع المدربين بنجاح'
         );
 
         this.closeDistributeModal();
