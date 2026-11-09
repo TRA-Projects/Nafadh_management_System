@@ -1,4 +1,10 @@
-import { Component, OnInit, signal, computed, ElementRef, ViewChild, HostListener, OnDestroy } from '@angular/core';
+import {
+  Component, OnInit, OnDestroy,
+  AfterViewChecked,
+  signal, computed,
+  ElementRef, ViewChild,
+  HostListener
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TraineeApi } from '../../services/trainee-api';
@@ -13,8 +19,10 @@ import {
 } from '../../../../core/models/dtos';
 
 type Step = 1 | 2 | 3 | 4;
-
 type StateFilter = 'all' | 'Available' | 'InProgress' | 'PendingGrading' | 'Completed' | 'Upcoming' | 'Missed';
+
+const SNAPSHOT_INTERVAL_MS = 60_000;   // كل 60 ثانية
+const FIRST_SNAPSHOT_DELAY_MS = 3_000; // انتظار 3 ثواني لضمان ربط الفيديو
 
 @Component({
   selector: 'app-trainee-quizzes',
@@ -23,9 +31,9 @@ type StateFilter = 'all' | 'Available' | 'InProgress' | 'PendingGrading' | 'Comp
   templateUrl: './trainee-quizzes.html',
   styleUrl: './trainee-quizzes.scss',
 })
-export class TraineeQuizzes implements OnInit, OnDestroy {
-  @ViewChild('videoElement') videoElement!: ElementRef<HTMLVideoElement>;
-  @ViewChild('hiddenVideo') hiddenVideo!: ElementRef<HTMLVideoElement>;
+export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
+  @ViewChild('previewVideo')  previewVideo?:  ElementRef<HTMLVideoElement>;
+  @ViewChild('floatingVideo') floatingVideo?: ElementRef<HTMLVideoElement>;
 
   currentStep = signal<Step>(1);
   loading = signal(false);
@@ -35,31 +43,32 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
   searchTerm = signal('');
   stateFilter = signal<StateFilter>('all');
 
-  // Step 2: Terms & Camera
   selectedQuiz = signal<TraineeQuizListItemDto | null>(null);
   isCameraReady = signal(false);
   cameraError = signal('');
   agreedToTerms = false;
-  private mediaStream: MediaStream | null = null;
-  private snapshotInterval: any;
-  private hiddenCanvas: HTMLCanvasElement;
 
-  // Step 3: Exam
+  private mediaStream: MediaStream | null = null;
+  private snapshotInterval: any = null;
+  private hiddenCanvas: HTMLCanvasElement;
+  private lastBoundStep: 0 | 2 | 3 = 0;
+
   attempt = signal<QuizAttemptDto | null>(null);
   questions = signal<AttemptQuestionDto[]>([]);
   answers: Record<number, { selectedOptionId: number | null, textAnswer: string | null }> = {};
   timeRemaining = signal<number>(0);
   private timerInterval: any;
 
-  // Modals
   showSubmitModal = signal(false);
   showAutoSubmitModal = signal(false);
   showViolationModal = signal(false);
 
-  // Step 4: Result
   result = signal<any>(null);
 
-  // Computed
+  showAttemptsModal = signal(false);
+  quizAttempts = signal<any[]>([]);
+  selectedQuizForAttempts = signal<TraineeQuizListItemDto | null>(null);
+
   quizzes = computed(() => this.overview()?.quizzes ?? []);
   availableCount = computed(() => this.overview()?.available ?? 0);
   upcomingCount = computed(() => this.overview()?.upcoming ?? 0);
@@ -98,7 +107,23 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.stopCamera();
     this.clearTimer();
-    if (this.snapshotInterval) clearInterval(this.snapshotInterval);
+  }
+
+  ngAfterViewChecked(): void {
+    if (!this.isCameraReady() || !this.mediaStream) return;
+    const step = this.currentStep();
+    if (this.lastBoundStep === step) return;
+
+    console.log(`[Camera] Attempting to bind camera at Step ${step}`);
+    if (step === 2 && this.previewVideo?.nativeElement) {
+      this.previewVideo.nativeElement.srcObject = this.mediaStream;
+      this.lastBoundStep = 2;
+      console.log('[Camera] Bound to previewVideo');
+    } else if (step === 3 && this.floatingVideo?.nativeElement) {
+      this.floatingVideo.nativeElement.srcObject = this.mediaStream;
+      this.lastBoundStep = 3;
+      console.log('[Camera] Bound to floatingVideo');
+    }
   }
 
   private loadTrainee(): void {
@@ -178,7 +203,8 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
     const date = new Date(hasTz ? value : value + 'Z');
     if (Number.isNaN(date.getTime())) return '—';
     return new Intl.DateTimeFormat('ar-OM', {
-      year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: true,
     }).format(date);
   }
 
@@ -186,10 +212,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
     if (quiz.maxAttempts <= 0) return 0;
     return Math.min(100, Math.round((quiz.attemptsUsed / quiz.maxAttempts) * 100));
   }
-
-  // =====================================================
-  // Actions (Step 2)
-  // =====================================================
 
   onStartQuiz(quiz: TraineeQuizListItemDto): void {
     this.selectedQuiz.set(quiz);
@@ -202,6 +224,14 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
     const attemptId = quiz.inProgressAttemptId;
     const tId = this.traineeId();
     if (!attemptId || !tId) return;
+
+    if (quiz.cameraRequired && !this.isCameraReady()) {
+      this.selectedQuiz.set(quiz);
+      this.agreedToTerms = false;
+      this.cameraError.set('');
+      this.currentStep.set(2);
+      return;
+    }
 
     this.loading.set(true);
     this.api.getQuizAttempt(attemptId, tId).subscribe({
@@ -258,48 +288,69 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
   }
 
   goToQuizzesList() {
+    this.stopCamera();
     this.currentStep.set(1);
     this.result.set(null);
     this.attempt.set(null);
     this.refresh();
   }
 
-  // =====================================================
-  // Camera & Snapshot Logic
-  // =====================================================
-
   async turnOnCamera() {
     try {
       this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (this.videoElement) {
-        this.videoElement.nativeElement.srcObject = this.mediaStream;
+      if (this.previewVideo) {
+        this.previewVideo.nativeElement.srcObject = this.mediaStream;
       }
       this.isCameraReady.set(true);
       this.cameraError.set('');
-      
-      // أخذ لقطة فورية عند التشغيل
-      setTimeout(() => this.takeSnapshot('IdentityVerified'), 2000);
+      this.lastBoundStep = 2;
+      console.log('[Camera] Camera turned on and bound to preview');
     } catch (err) {
       this.cameraError.set('تعذر الوصول إلى الكاميرا. يرجى التأكد من إعطاء الصلاحيات.');
       this.isCameraReady.set(false);
+      console.error('[Camera] getUserMedia failed:', err);
     }
   }
 
   stopCamera() {
+    if (this.snapshotInterval) {
+      clearInterval(this.snapshotInterval);
+      this.snapshotInterval = null;
+    }
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => track.stop());
       this.mediaStream = null;
-      this.isCameraReady.set(false);
     }
-    if (this.snapshotInterval) clearInterval(this.snapshotInterval);
+    if (this.previewVideo?.nativeElement) {
+      this.previewVideo.nativeElement.srcObject = null;
+    }
+    if (this.floatingVideo?.nativeElement) {
+      this.floatingVideo.nativeElement.srcObject = null;
+    }
+    this.isCameraReady.set(false);
+    this.lastBoundStep = 0;
   }
 
   private takeSnapshot(eventType: string = 'Snapshot') {
     const attemptId = this.attempt()?.attemptId;
-    if (!attemptId || !this.isCameraReady()) return;
+    if (!attemptId || !this.isCameraReady()) {
+      console.warn(`[Snapshot] Skipped: attemptId=${attemptId}, isCameraReady=${this.isCameraReady()}`);
+      return;
+    }
 
-    const video = this.videoElement?.nativeElement;
-    if (!video || video.videoWidth === 0) return;
+    const video = this.currentStep() === 3
+      ? this.floatingVideo?.nativeElement
+      : this.previewVideo?.nativeElement;
+
+    if (!video) {
+      console.warn(`[Snapshot] Skipped: video element not found for step ${this.currentStep()}`);
+      return;
+    }
+
+    if (video.videoWidth === 0) {
+      console.warn(`[Snapshot] Skipped: videoWidth is 0 (video not ready)`);
+      return;
+    }
 
     this.hiddenCanvas.width = video.videoWidth;
     this.hiddenCanvas.height = video.videoHeight;
@@ -307,26 +358,38 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
     if (!ctx) return;
 
     ctx.drawImage(video, 0, 0);
+
     this.hiddenCanvas.toBlob((blob) => {
-      if (!blob) return;
+      if (!blob) {
+        console.error('[Snapshot] Failed to create blob');
+        return;
+      }
       const formData = new FormData();
       formData.append('EventType', eventType);
       formData.append('Snapshot', blob, 'snapshot.jpg');
-      
+
+      console.log(`[Snapshot] Sending ${eventType} (size: ${blob.size} bytes)`);
+
       this.api.sendProctoringEvent(attemptId, formData).subscribe({
-        error: (err) => console.error('Snapshot failed:', err)
+        next: () => console.log(`[Snapshot] ✅ ${eventType} saved successfully for attempt #${attemptId}`),
+        error: (err) => console.error(`[Snapshot] ❌ Failed to save ${eventType}:`, err)
       });
     }, 'image/jpeg', 0.8);
   }
 
-  // =====================================================
-  // Begin Attempt
-  // =====================================================
+  private startSnapshotLoop() {
+    if (this.snapshotInterval) clearInterval(this.snapshotInterval);
+    this.snapshotInterval = setInterval(() => {
+      if (this.currentStep() === 3) {
+        this.takeSnapshot('Snapshot');
+      }
+    }, SNAPSHOT_INTERVAL_MS);
+    console.log('[Snapshot] Loop started (every 60s)');
+  }
 
   beginAttempt() {
     const quiz = this.selectedQuiz();
     const tId = this.traineeId();
-    
     if (!quiz || !tId) return;
     if (quiz.cameraRequired && !this.isCameraReady()) return;
     if (!this.agreedToTerms) return;
@@ -362,10 +425,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
     });
   }
 
-  // =====================================================
-  // Step 3: Exam Logic
-  // =====================================================
-
   private setupQuestions(res: QuizAttemptDto) {
     this.questions.set(res.questions);
     res.questions.forEach(q => {
@@ -375,14 +434,23 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
       };
     });
 
-    const seconds = res.remainingSeconds > 0 ? res.remainingSeconds : res.durationMinutes * 60;
+    const seconds = res.remainingSeconds > 0
+      ? res.remainingSeconds
+      : res.durationMinutes * 60;
     this.startTimer(seconds);
-    
-    // أخذ لقطة كل دقيقة أثناء الاختبار
-    if (this.snapshotInterval) clearInterval(this.snapshotInterval);
-    this.snapshotInterval = setInterval(() => this.takeSnapshot('Snapshot'), 60000);
 
+    // الانتقال لخطوة 3
     this.currentStep.set(3);
+
+    // بعد الانتقال لخطوة 3، ننتظر 3 ثوانٍ لضمان ربط الفيديو العائم
+    if (this.isCameraReady() && this.selectedQuiz()?.cameraRequired) {
+      console.log('[Setup] Waiting for floating video to bind...');
+      setTimeout(() => {
+        console.log('[Setup] Taking first snapshot (IdentityVerified)');
+        this.takeSnapshot('IdentityVerified');
+        this.startSnapshotLoop();
+      }, FIRST_SNAPSHOT_DELAY_MS);
+    }
   }
 
   private startTimer(totalSeconds: number) {
@@ -401,7 +469,10 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
   }
 
   private clearTimer() {
-    if (this.timerInterval) clearInterval(this.timerInterval);
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
   }
 
   formatTime(seconds: number): string {
@@ -440,13 +511,9 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
     });
   }
 
-  // =====================================================
-  // Submit & Violations
-  // =====================================================
-
   submitQuiz() { this.showSubmitModal.set(true); }
   cancelSubmit() { this.showSubmitModal.set(false); }
-  
+
   confirmSubmit() {
     this.showSubmitModal.set(false);
     this.finalSubmit();
@@ -462,7 +529,7 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
     if (!attemptId) return;
     this.loading.set(true);
     this.clearTimer();
-    
+
     this.api.submitQuizAttempt({ attemptId }).subscribe({
       next: () => {
         this.loading.set(false);
@@ -477,16 +544,12 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
     });
   }
 
-  // =====================================================
-  // Step 4: Result
-  // =====================================================
-  
   private loadResult() {
     const attemptId = this.attempt()?.attemptId;
     const tId = this.traineeId();
     if (!attemptId || !tId) return;
     this.loading.set(true);
-    
+
     this.api.getAttemptDetails(attemptId).subscribe({
       next: (details) => {
         this.api.getMyResults(tId).subscribe({
@@ -509,10 +572,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
       }
     });
   }
-
-  // =====================================================
-  // Anti-Cheat & Tab Switching (Violation)
-  // =====================================================
 
   @HostListener('document:visibilitychange')
   onVisibilityChange() {
@@ -547,12 +606,7 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
       error: (err) => console.error('Violation error', err)
     });
   }
-    // في قسم State (أسفل المتغيرات)
-  showAttemptsModal = signal(false);
-  quizAttempts = signal<any[]>([]);
-  selectedQuizForAttempts = signal<TraineeQuizListItemDto | null>(null);
 
-  // دالة لجلب المحاولات
   openAttemptsModal(quiz: TraineeQuizListItemDto) {
     const tId = this.traineeId();
     if (!tId) return;
@@ -560,10 +614,10 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
     this.selectedQuizForAttempts.set(quiz);
     this.loading.set(true);
 
-    // جلب كل النتائج ثم فلترتها لهذا الاختبار
     this.api.getMyResults(tId).subscribe({
       next: (results) => {
-        const filtered = results.filter(r => r.quizId === quiz.quizId)
+        const filtered = results
+          .filter(r => r.quizId === quiz.quizId)
           .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
         this.quizAttempts.set(filtered);
         this.loading.set(false);
@@ -576,12 +630,11 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
     });
   }
 
-  // دالة لعرض تفاصيل محاولة محددة
   viewSpecificAttempt(attemptId: number) {
     this.showAttemptsModal.set(false);
     const tId = this.traineeId();
     if (!tId) return;
-    
+
     this.loading.set(true);
     this.api.getAttemptDetails(attemptId).subscribe({
       next: (details) => {

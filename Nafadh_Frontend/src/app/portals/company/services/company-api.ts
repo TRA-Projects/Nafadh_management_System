@@ -903,6 +903,17 @@ getAttachmentSettings(): Observable<{
     );
   }
 
+  /** Only a company supervisor can accept/reject a trainer-submitted excuse. */
+  reviewTrainerAttendanceExcuse(
+    attendanceId: number,
+    decision: 'Approved' | 'Rejected'
+  ): Observable<TrainerAttendanceDto> {
+    return this.http.put<TrainerAttendanceDto>(
+      `${this.base}/TrainerAttendance/${attendanceId}/excuse-review`,
+      { decision }
+    );
+  }
+
   confirmTrainerAttendanceDay(
     dto: TrainerAttendanceConfirmDto
   ): Observable<{ confirmedRecords: number }> {

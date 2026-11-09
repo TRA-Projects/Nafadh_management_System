@@ -14,6 +14,8 @@ namespace Nafadh_Backend.Models
 
         // يستخدم لاحقاً للأسئلة الوصفية
         public string? TextAnswer { get; set; }
+        public string? FileUrl { get; set; }
+        public string? OriginalFileName { get; set; }
 
         public bool? IsCorrect { get; set; }
 

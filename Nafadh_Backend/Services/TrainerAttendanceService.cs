@@ -18,7 +18,7 @@ namespace Nafadh_Backend.Services
         private static readonly HashSet<string> AllowedExtensions = new() { ".jpg", ".jpeg", ".png", ".webp", ".pdf" };
         private static readonly HashSet<string> AllowedContentTypes = new() { "image/jpeg", "image/png", "image/webp", "application/pdf" };
 
-        // Oman business week: Sunday through Thursday. Edits close Friday 00:00 Oman time.
+        // Excuses for a Sunday-Saturday calendar week close at Sunday 00:00 Oman time.
         private static readonly TimeZoneInfo OmanTimeZone = ResolveOmanTimeZone();
 
         private static TimeZoneInfo ResolveOmanTimeZone()
@@ -34,9 +34,12 @@ namespace Nafadh_Backend.Services
             var today = OmanToday();
             var date = attendanceDate.Date;
             if (date > today) return false;
-            // Sunday = 0, Thursday = 4, Friday = 5, Saturday = 6.
-            var sunday = today.AddDays(-(int)today.DayOfWeek);
-            return today.DayOfWeek <= DayOfWeek.Thursday && date >= sunday && date <= today;
+            // The deadline belongs to the attendance date's week, NOT today's workweek.
+            // For a Thursday absence, Friday and Saturday remain available.
+            // At Sunday 00:00 (Oman local time), the previous week's window closes.
+            var weekStart = date.AddDays(-(int)date.DayOfWeek); // Sunday 00:00
+            var nextSunday = weekStart.AddDays(7);
+            return today >= weekStart && today < nextSunday;
         }
 
         private static void RequireExcuseWindow(NFD_TrainerAttendance record)
@@ -45,6 +48,8 @@ namespace Nafadh_Backend.Services
                 throw new InvalidOperationException("Reasons and proofs are only allowed for Late, Absent, or EarlyLeave.");
             if (!IsWithinExcuseWindow(record.Date))
                 throw new InvalidOperationException("The excuse submission period for this week has ended.");
+            if (record.ExcuseReviewStatus == "Approved" || record.ExcuseReviewStatus == "Rejected")
+                throw new InvalidOperationException("The supervisor has already reviewed this excuse; it is read-only.");
         }
 
         private readonly ITrainerAttendanceRepository _repository;
@@ -131,7 +136,8 @@ namespace Nafadh_Backend.Services
 
                 Reason = a.Reason,
                 ExcuseProofUrl = a.ExcuseProofUrl,
-                IsConfirmed = a.IsConfirmed
+                IsConfirmed = a.IsConfirmed,
+                ExcuseReviewStatus = a.ExcuseReviewStatus
             }).ToList();
         }
 
@@ -166,28 +172,20 @@ namespace Nafadh_Backend.Services
             {
                 if (record.IsConfirmed)
                 {
-                    // After confirmation, ONLY the reason can change during the current workweek.
-                    // Status and recorded times remain immutable.
-                    RequireExcuseWindow(record);
-                    if (record.Status != dto.Status || record.CheckInTime != dto.CheckInTime || record.CheckOutTime != dto.CheckOutTime)
-                        throw new InvalidOperationException("Confirmed attendance status and times cannot be changed.");
-                    record.Reason = string.IsNullOrWhiteSpace(dto.Reason) ? null : dto.Reason.Trim();
-                    record.UpdatedAt = DateTime.UtcNow;
-                    await _repository.SaveChangesAsync();
-                    return ToDto(record);
+                    throw new InvalidOperationException("Confirmed attendance cannot be edited by the supervisor.");
                 }
 
                 record.UpdatedAt = DateTime.UtcNow;
             }
 
+            if (record.Reason != null || record.ExcuseProofUrl != null)
+            {
+                if (record.Status != dto.Status)
+                    throw new InvalidOperationException("Attendance status cannot change after a trainer submitted an excuse.");
+            }
             record.Status = dto.Status;
-            // Prevent adding new reasons for earlier weeks even when the day is unconfirmed.
-            if (!string.IsNullOrWhiteSpace(dto.Reason) && !IsWithinExcuseWindow(date))
-                throw new InvalidOperationException("The excuse submission period for this week has ended.");
-            if (dto.Status == NFD_TrainerAttendanceStatus.Present && !string.IsNullOrWhiteSpace(dto.Reason))
-                throw new ArgumentException("A Present record cannot have an excuse reason.");
-            record.Reason = string.IsNullOrWhiteSpace(dto.Reason) ? null : dto.Reason.Trim();
-
+            // Supervisor changes attendance status and times only; trainer-owned excuse stays untouched.
+            // Never overwrite Reason, ExcuseProofUrl, or the review decision here.
             // An absent trainer has no arrival / departure time.
             var isAbsent = dto.Status == NFD_TrainerAttendanceStatus.Absent;
             record.CheckInTime = isAbsent ? null : dto.CheckInTime;
@@ -277,6 +275,7 @@ namespace Nafadh_Backend.Services
 
             var url = $"{requestPath}/{fileName}";
             record.ExcuseProofUrl = url;
+            record.ExcuseReviewStatus = "Pending";
             record.UpdatedAt = DateTime.UtcNow;
 
             try
@@ -304,6 +303,7 @@ namespace Nafadh_Backend.Services
 
             var oldUrl = record.ExcuseProofUrl;
             record.ExcuseProofUrl = null;
+            record.ExcuseReviewStatus = string.IsNullOrWhiteSpace(record.Reason) ? null : "Pending";
             record.UpdatedAt = DateTime.UtcNow;
             await _repository.SaveChangesAsync();
 
@@ -312,6 +312,45 @@ namespace Nafadh_Backend.Services
                 DeletePhysicalFile(storagePath, oldUrl);
 
             return true;
+        }
+
+        /// <summary>Check trainer's identity; never trust an attendance ID alone.</summary>
+        public async Task<bool> TrainerOwnsAttendanceAsync(int attendanceId, int trainerId)
+        {
+            var record = await _repository.GetByIdAsync(attendanceId);
+            return record != null && record.TrainerId == trainerId;
+        }
+
+        public async Task<TrainerAttendanceDto?> SubmitExcuseAsync(int attendanceId, int trainerId, string? reason)
+        {
+            var record = await _repository.GetByIdAsync(attendanceId);
+            if (record == null || record.TrainerId != trainerId) return null;
+            RequireExcuseWindow(record);
+            if (reason?.Length > 500)
+                throw new ArgumentException("Reason cannot exceed 500 characters.");
+            record.Reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+            record.ExcuseReviewStatus = string.IsNullOrWhiteSpace(record.Reason) &&
+                string.IsNullOrWhiteSpace(record.ExcuseProofUrl) ? null : "Pending";
+            record.UpdatedAt = DateTime.UtcNow;
+            await _repository.SaveChangesAsync();
+            return ToDto(record);
+        }
+
+        public async Task<TrainerAttendanceDto?> ReviewExcuseAsync(int attendanceId, int companyId, string decision)
+        {
+            if (decision != "Approved" && decision != "Rejected")
+                throw new ArgumentException("Invalid review decision.");
+            var record = await _repository.GetByIdAsync(attendanceId);
+            if (record == null || record.CompanyId != companyId) return null;
+            if (record.Status == NFD_TrainerAttendanceStatus.Present ||
+                (string.IsNullOrWhiteSpace(record.Reason) && string.IsNullOrWhiteSpace(record.ExcuseProofUrl)))
+                throw new InvalidOperationException("No trainer excuse exists for review.");
+            if (record.ExcuseReviewStatus == "Approved" || record.ExcuseReviewStatus == "Rejected")
+                throw new InvalidOperationException("This excuse has already been reviewed.");
+            record.ExcuseReviewStatus = decision;
+            record.UpdatedAt = DateTime.UtcNow;
+            await _repository.SaveChangesAsync();
+            return ToDto(record);
         }
 
         public async Task<int> ConfirmDayAsync(TrainerAttendanceConfirmDto dto)
@@ -373,7 +412,8 @@ namespace Nafadh_Backend.Services
             CheckOutTime = a.CheckOutTime,
             Reason = a.Reason,
             ExcuseProofUrl = a.ExcuseProofUrl,
-            IsConfirmed = a.IsConfirmed
+            IsConfirmed = a.IsConfirmed,
+            ExcuseReviewStatus = a.ExcuseReviewStatus
         };
     }
 }
