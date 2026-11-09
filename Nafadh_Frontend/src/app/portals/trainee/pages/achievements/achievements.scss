@@ -955,4 +955,21 @@
   .certificate-text small {
     font-size: 11px;
   }
+  
+.certificate-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.certificate-actions .download-btn {
+  flex: 1;
+  min-width: 170px;
+}
+
+.certificate-actions .download-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 }

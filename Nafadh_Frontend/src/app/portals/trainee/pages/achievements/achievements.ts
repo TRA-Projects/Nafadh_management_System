@@ -1,3 +1,4 @@
+
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { certificateDocument } from '../../../../core/models/enums';
 import { moduleProgressKey } from '../../../../core/models/administrative-constants';
@@ -6,7 +7,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TraineeApi } from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { jsPDF } from 'jspdf';
 
 import {
   BadgeDto,
@@ -367,6 +367,10 @@ export interface TrainerOptionDto {
         color: #475569;
       }
 
+      /* =====================================================
+         BADGES CARD
+      ===================================================== */
+
       .badges-card {
         padding: 15px;
       }
@@ -490,6 +494,10 @@ export interface TrainerOptionDto {
         color: #94a3b8;
       }
 
+      /* =====================================================
+         CERTIFICATE CARD
+      ===================================================== */
+
       .certificate-card {
         padding: 13px 15px;
       }
@@ -498,6 +506,7 @@ export interface TrainerOptionDto {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 12px;
         margin-bottom: 9px;
       }
 
@@ -529,13 +538,22 @@ export interface TrainerOptionDto {
         font-size: 12px;
         font-weight: 500;
         color: #64748b;
+        line-height: 1.6;
       }
 
+      /* =====================================================
+         CERTIFICATE STATUS
+      ===================================================== */
+
       .certificate-status span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
         padding: 5px 10px;
         border-radius: 15px;
         font-size: 12px;
         font-weight: 700;
+        white-space: nowrap;
       }
 
       .certificate-status .available {
@@ -547,6 +565,10 @@ export interface TrainerOptionDto {
         background: #fef3c7;
         color: #b45309;
       }
+
+      /* =====================================================
+         CERTIFICATE PREVIEW
+      ===================================================== */
 
       .certificate-preview {
         min-height: 70px;
@@ -560,6 +582,7 @@ export interface TrainerOptionDto {
             transparent 30%
           ),
           linear-gradient(120deg, #0b1f64, #030b2e);
+
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -601,6 +624,18 @@ export interface TrainerOptionDto {
         color: #cbd5e1;
       }
 
+      /* =====================================================
+         CERTIFICATE ACTION BUTTONS
+      ===================================================== */
+
+      .certificate-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+
       .download-btn {
         width: 100%;
         height: 35px;
@@ -614,6 +649,13 @@ export interface TrainerOptionDto {
         transition: 0.2s;
       }
 
+      .certificate-actions .download-btn {
+        flex: 1;
+        min-width: 150px;
+        width: auto;
+        margin-top: 0;
+      }
+
       .download-btn.enabled {
         background: #0d9488;
         cursor: pointer;
@@ -622,11 +664,18 @@ export interface TrainerOptionDto {
       .download-btn.enabled:hover {
         background: #0f766e;
         transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(13, 148, 136, 0.18);
       }
 
       .download-btn:disabled {
+        opacity: 0.6;
         cursor: not-allowed;
+        transform: none;
       }
+
+      /* =====================================================
+         EMPTY STATE
+      ===================================================== */
 
       .empty-state {
         width: 100%;
@@ -645,6 +694,10 @@ export interface TrainerOptionDto {
         font-size: 13px;
         font-weight: 500;
       }
+
+      /* =====================================================
+         MODAL BACKGROUND
+      ===================================================== */
 
       .nfd-modal-bg {
         position: fixed;
@@ -703,6 +756,10 @@ export interface TrainerOptionDto {
         line-height: 1;
         padding: 0;
       }
+
+      /* =====================================================
+         FEEDBACK FORM
+      ===================================================== */
 
       .criterion-row {
         display: flex;
@@ -781,6 +838,10 @@ export interface TrainerOptionDto {
         cursor: not-allowed;
       }
 
+      /* =====================================================
+         SUCCESS TOAST
+      ===================================================== */
+
       .toast-success {
         position: fixed;
         bottom: 30px;
@@ -808,6 +869,10 @@ export interface TrainerOptionDto {
           opacity: 1;
         }
       }
+
+      /* =====================================================
+         RESPONSIVE DESIGN
+      ===================================================== */
 
       @media (max-width: 1000px) {
         .page-header {
@@ -867,15 +932,40 @@ export interface TrainerOptionDto {
         .certificate-preview {
           padding: 10px;
         }
+
+        .certificate-info {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .certificate-actions {
+          flex-direction: column;
+        }
+
+        .certificate-actions .download-btn {
+          width: 100%;
+          min-width: 0;
+          flex: none;
+        }
       }
     `,
   ],
 })
+
+/* ============================================================
+   TRAINEE ACHIEVEMENTS COMPONENT
+============================================================ */
+
 export class TraineeAchievements implements OnInit {
+
   readonly constants = inject(NafadhConstantsService);
 
   private api = inject(TraineeApi);
   public auth = inject(AuthService);
+
+  // ============================================================
+  // USER AND ENROLLMENT
+  // ============================================================
 
   userId = signal<number | null>(null);
   traineeId = signal<number | null>(null);
@@ -885,17 +975,49 @@ export class TraineeAchievements implements OnInit {
 
   traineeProfile = signal<TraineeProfileDto | null>(null);
   program = signal<ProgramDto | null>(null);
+
   modules = signal<ModuleWithLessonsDto[]>([]);
   enrollment = signal<EnrollmentDto | null>(null);
   moduleProgress = signal<TraineeModuleProgressDto[]>([]);
 
-  // ⬇️ تمت إضافة الـ signal الخاص بالتقييم الكلي هنا ⬇️
   overallEvaluation = signal<any | null>(null);
+
+  // ============================================================
+  // BADGES
+  // ============================================================
 
   allBadges = signal<BadgeDto[]>([]);
   myBadges = signal<TraineeBadgeDto[]>([]);
+
+  // ============================================================
+  // CERTIFICATES - ADMIN ISSUED ONLY
+  // ============================================================
+
   readonly certificateDocument = certificateDocument;
+
   certificates = signal<CertificateDto[]>([]);
+
+  issuedCertificate = computed<CertificateDto | null>(() => {
+    const currentEnrollmentId =
+      this.enrollment()?.enrollmentId;
+
+    if (!currentEnrollmentId) {
+      return null;
+    }
+
+    return (
+      this.certificates().find(
+        cert =>
+          cert.enrollmentId === currentEnrollmentId &&
+          typeof cert.fileUrl === 'string' &&
+          cert.fileUrl.trim().length > 0
+      ) ?? null
+    );
+  });
+
+  // ============================================================
+  // FEEDBACK
+  // ============================================================
 
   showFeedback = signal(false);
 
@@ -926,10 +1048,19 @@ export class TraineeAchievements implements OnInit {
   trainers =
     signal<TrainerOptionDto[]>([]);
 
+  // ============================================================
+  // UI STATES
+  // ============================================================
+
   showSuccessToast = signal(false);
   successMessage = signal('');
+
   loading = signal(false);
   errorMessage = signal('');
+
+  // ============================================================
+  // PROGRESS STATISTICS
+  // ============================================================
 
   stats = signal({
     totalModules: 0,
@@ -939,17 +1070,27 @@ export class TraineeAchievements implements OnInit {
     overallProgress: 0,
   });
 
-  progressPercentage =
-    computed(() =>
-      this.stats().overallProgress || 0
-    );
-
-  canDownloadCertificate = computed(() => {
-    return this.progressPercentage() >= 85;
+  progressPercentage = computed(() => {
+    return this.stats().overallProgress || 0;
   });
 
-  traineeName = computed(() => {
+  // ============================================================
+  // CERTIFICATE AVAILABILITY
+  // ============================================================
 
+  canDownloadCertificate = computed(() => {
+    const completed = this.progressPercentage() >= 100;
+
+    const issued = this.issuedCertificate() !== null;
+
+    return completed && issued;
+  });
+
+  // ============================================================
+  // TRAINEE NAME
+  // ============================================================
+
+  traineeName = computed(() => {
     const enrollment = this.enrollment();
     const profile = this.traineeProfile();
 
@@ -958,7 +1099,6 @@ export class TraineeAchievements implements OnInit {
     }
 
     if (profile) {
-
       if (profile.fullName) {
         return profile.fullName;
       }
@@ -981,8 +1121,11 @@ export class TraineeAchievements implements OnInit {
     return 'اسم المتدرب';
   });
 
-  programTitle = computed(() => {
+  // ============================================================
+  // PROGRAM TITLE
+  // ============================================================
 
+  programTitle = computed(() => {
     const enrollment = this.enrollment();
     const program = this.program();
 
@@ -1005,10 +1148,12 @@ export class TraineeAchievements implements OnInit {
     return 'التدريب';
   });
 
+  // ============================================================
+  // DISPLAY MODULES
+  // ============================================================
+
   displayModules = computed(() => {
-
     return this.modules().map((module) => ({
-
       moduleId: module.moduleId,
 
       title:
@@ -1020,22 +1165,28 @@ export class TraineeAchievements implements OnInit {
 
       progress:
         module.progressPercentage || 0,
-
     }));
-
   });
 
-  totalBadges =
-    computed(() => this.allBadges().length);
+  // ============================================================
+  // BADGES STATISTICS
+  // ============================================================
 
-  earnedBadgesCount =
-    computed(() => this.myBadges().length);
+  totalBadges = computed(() => {
+    return this.allBadges().length;
+  });
 
+  earnedBadgesCount = computed(() => {
+    return this.myBadges().length;
+  });
+
+  // ============================================================
+  // MODULE STATUS
+  // ============================================================
 
   private getModuleStatus(
     module: ModuleWithLessonsDto
   ): string {
-
     const progress =
       module.progressPercentage || 0;
 
@@ -1050,23 +1201,25 @@ export class TraineeAchievements implements OnInit {
     return 'NotStarted';
   }
 
+  // ============================================================
+  // CHECK IF BADGE IS EARNED
+  // ============================================================
 
   isEarned = (
     badgeId: number
   ): boolean => {
-
     return this.myBadges().some(
-      (b) =>
-        b.badgeId === badgeId
+      (badge) => badge.badgeId === badgeId
     );
-
   };
 
+  // ============================================================
+  // PROGRESS BAR COLOR
+  // ============================================================
 
   getBarColor = (
     progress: number
   ): string => {
-
     if (progress >= 80) {
       return '#22c55e';
     }
@@ -1078,197 +1231,151 @@ export class TraineeAchievements implements OnInit {
     return '#3b82f6';
   };
 
+  // ============================================================
+  // COMPONENT INITIALIZATION
+  // ============================================================
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.constants.ensure('NFD_FBK_TYPE');
 
-    const session =
-      this.auth.session?.();
+    const session = this.auth.session?.();
 
     if (session?.userId) {
-
-      this.userId.set(
-        session.userId
-      );
-
+      this.userId.set(session.userId);
       this.loadAllData();
-
-    } else {
-
-      const userIdFromStorage =
-        this.getUserIdFromStorage();
-
-      if (userIdFromStorage) {
-
-        this.userId.set(
-          userIdFromStorage
-        );
-
-        this.loadAllData();
-
-      } else {
-
-        this.errorMessage.set(
-          'يرجى تسجيل الدخول أولاً.'
-        );
-
-      }
-
+      return;
     }
 
+    const userIdFromStorage =
+      this.getUserIdFromStorage();
+
+    if (userIdFromStorage) {
+      this.userId.set(userIdFromStorage);
+      this.loadAllData();
+    } else {
+      this.errorMessage.set(
+        'يرجى تسجيل الدخول أولاً.'
+      );
+    }
   }
 
+  // ============================================================
+  // GET USER ID FROM STORAGE
+  // ============================================================
 
-  private getUserIdFromStorage():
-    number | null {
-
+  private getUserIdFromStorage(): number | null {
     const localUserId =
       localStorage.getItem('userId');
 
     if (localUserId) {
+      const id = Number(localUserId);
 
-      const id =
-        Number(localUserId);
-
-      if (
-        id &&
-        !Number.isNaN(id)
-      ) {
+      if (id && !Number.isNaN(id)) {
         return id;
       }
     }
-
 
     const sessionUserId =
       sessionStorage.getItem('userId');
 
     if (sessionUserId) {
+      const id = Number(sessionUserId);
 
-      const id =
-        Number(sessionUserId);
-
-      if (
-        id &&
-        !Number.isNaN(id)
-      ) {
+      if (id && !Number.isNaN(id)) {
         return id;
       }
     }
-
 
     const userData =
       localStorage.getItem('userData');
 
     if (userData) {
-
       try {
+        const user = JSON.parse(userData);
 
-        const user =
-          JSON.parse(userData);
+        const id = Number(
+          user.userId ?? user.id
+        );
 
-        const id =
-          Number(
-            user.userId ??
-            user.id
-          );
-
-        if (
-          id &&
-          !Number.isNaN(id)
-        ) {
+        if (id && !Number.isNaN(id)) {
           return id;
         }
-
       } catch {
-
         console.warn(
           '⚠️ Invalid userData'
         );
-
       }
-
     }
 
     return null;
   }
 
+  // ============================================================
+  // LOAD ALL TRAINEE DATA
+  // ============================================================
 
-  loadAllData() {
-
-    const userId =
-      this.userId();
+  loadAllData(): void {
+    const userId = this.userId();
 
     if (!userId) {
-
       this.errorMessage.set(
         'يرجى تسجيل الدخول أولاً.'
       );
-
       return;
     }
 
     this.loading.set(true);
     this.errorMessage.set('');
 
+    // Reset certificate state before loading new data.
+    this.certificates.set([]);
+
+    // ==========================================================
+    // LOAD TRAINEE PROFILE
+    // ==========================================================
 
     this.api
       .getTrainee(userId)
       .subscribe({
-
         next: (
           trainee: TraineeProfileDto
         ) => {
-
-          this.traineeProfile.set(
-            trainee
-          );
-
+          this.traineeProfile.set(trainee);
           this.traineeId.set(
             trainee.traineeId
           );
 
+          // Load current enrollment.
           this.loadEnrollment(
             trainee.traineeId
           );
 
-
+          // Load certificates issued for this trainee.
           this.api
             .getCertificates(
               trainee.traineeId
             )
             .subscribe({
-
               next: (
                 certs: CertificateDto[]
               ) => {
-
                 this.certificates.set(
                   certs ?? []
                 );
-
               },
 
-              error: (
-                err: any
-              ) => {
-
+              error: (err: any) => {
                 console.warn(
                   '⚠️ فشل جلب الشهادات:',
                   err
                 );
 
                 this.certificates.set([]);
-
               },
-
             });
-
         },
 
-        error: (
-          err: any
-        ) => {
-
+        error: (err: any) => {
           console.error(
             '❌ فشل جلب بيانات المتدرب:',
             err
@@ -1279,67 +1386,58 @@ export class TraineeAchievements implements OnInit {
           this.errorMessage.set(
             'تعذر تحميل بيانات المتدرب.'
           );
-
         },
-
       });
 
+    // ==========================================================
+    // LOAD ALL BADGES
+    // ==========================================================
 
     this.api
       .getAllBadges()
       .subscribe({
-
         next: (
           badges: BadgeDto[]
         ) => {
-
           this.allBadges.set(
             badges ?? []
           );
-
         },
 
-        error: (
-          err: any
-        ) => {
-
+        error: (err: any) => {
           console.warn(
             '⚠️ فشل جلب الأوسمة:',
             err
           );
-
         },
-
       });
 
+    // ==========================================================
+    // LOAD TRAINEE BADGES
+    // ==========================================================
 
     this.api
       .getMyBadges(userId)
       .subscribe({
-
         next: (
           badges: TraineeBadgeDto[]
         ) => {
-
           this.myBadges.set(
             badges ?? []
           );
-
         },
 
-        error: (
-          err: any
-        ) => {
-
+        error: (err: any) => {
           console.warn(
             '⚠️ فشل جلب أوسمة المتدرب:',
             err
           );
-
         },
-
       });
 
+    // ==========================================================
+    // LOAD PENDING FEEDBACK
+    // ==========================================================
 
     this.api
       .getFeedbackPending(
@@ -1347,65 +1445,55 @@ export class TraineeAchievements implements OnInit {
         userId
       )
       .subscribe({
-
-        next: (d) =>
+        next: (data) => {
           this.pendingFeedback.set(
-            d ?? null
-          ),
+            data ?? null
+          );
+        },
 
         error: () => {},
-
       });
-
   }
 
+  // ============================================================
+  // LOAD TRAINEE ENROLLMENT
+  // ============================================================
 
   private loadEnrollment(
     traineeId: number
   ): void {
-
     this.api
       .getEnrollmentsByTrainee(
         traineeId
       )
       .subscribe({
-
         next: (
           enrollments: EnrollmentDto[]
         ) => {
-
           if (
             !enrollments ||
             enrollments.length === 0
           ) {
-
             this.errorMessage.set(
               'لا توجد تسجيلات للمتدرب.'
             );
 
             this.loading.set(false);
-
             return;
           }
 
-
+          // Prefer an active enrollment.
           const activeEnrollment =
-            enrollments.find(
-              (e) => {
+            enrollments.find((e) => {
+              const status = String(
+                e.completionStatus ?? ''
+              ).toLowerCase();
 
-                const status =
-                  String(
-                    e.completionStatus ?? ''
-                  ).toLowerCase();
-
-                return (
-                  status === 'active' ||
-                  status === 'inprogress'
-                );
-
-              }
-            ) || enrollments[0];
-
+              return (
+                status === 'active' ||
+                status === 'inprogress'
+              );
+            }) || enrollments[0];
 
           this.enrollment.set(
             activeEnrollment
@@ -1419,19 +1507,18 @@ export class TraineeAchievements implements OnInit {
             activeEnrollment.batchId
           );
 
-          // ⬇️ تمت إضافة استدعاء التقييم الكلي هنا ⬇️
-          this.loadOverallEvaluation(activeEnrollment.enrollmentId);
+          // Load overall evaluation.
+          this.loadOverallEvaluation(
+            activeEnrollment.enrollmentId
+          );
 
+          // Load batch and training program.
           this.loadBatchAndProgram(
             activeEnrollment.batchId
           );
-
         },
 
-        error: (
-          err: any
-        ) => {
-
+        error: (err: any) => {
           console.error(
             '❌ فشل جلب التسجيلات:',
             err
@@ -1442,13 +1529,9 @@ export class TraineeAchievements implements OnInit {
           );
 
           this.loading.set(false);
-
         },
-
       });
-
   }
-
 
   private loadBatchAndProgram(
     batchId: number
@@ -1467,7 +1550,6 @@ export class TraineeAchievements implements OnInit {
 
       return;
     }
-
 
     this.api
       .getBatch(batchId)
@@ -1632,7 +1714,6 @@ export class TraineeAchievements implements OnInit {
           )
       );
 
-
     import('rxjs').then(
       ({ forkJoin }) => {
 
@@ -1680,7 +1761,6 @@ export class TraineeAchievements implements OnInit {
                   }
                 );
 
-
               this.modules.set(
                 result
               );
@@ -1695,7 +1775,8 @@ export class TraineeAchievements implements OnInit {
 
               console.error(
                 '❌ فشل جلب الدروس:',
-                err              );
+                err
+              );
 
               const result =
                 modules.map(
@@ -1749,7 +1830,6 @@ export class TraineeAchievements implements OnInit {
 
       return;
     }
-
 
     this.api
       .getModuleProgress(
@@ -1816,7 +1896,10 @@ export class TraineeAchievements implements OnInit {
 
           if (progress) {
 
-            const status = moduleProgressKey(progress.status);
+            const status =
+              moduleProgressKey(
+                progress.status
+              );
 
             if (
               status === 'Completed'
@@ -1834,10 +1917,8 @@ export class TraineeAchievements implements OnInit {
 
           }
 
-
           const lessons =
             module.lessons ?? [];
-
 
           const completedCount =
             percentage === 100
@@ -1848,7 +1929,6 @@ export class TraineeAchievements implements OnInit {
                   lessons.length
                 )
               : 0;
-
 
           const updatedLessons =
             lessons.map(
@@ -1867,7 +1947,6 @@ export class TraineeAchievements implements OnInit {
               })
             );
 
-
           return {
 
             ...module,
@@ -1882,7 +1961,6 @@ export class TraineeAchievements implements OnInit {
 
         }
       );
-
 
     this.modules.set(
       updatedModules
@@ -1906,7 +1984,6 @@ export class TraineeAchievements implements OnInit {
           m.progressPercentage === 100
       ).length;
 
-
     const totalLessons =
       modules.reduce(
         (
@@ -1920,7 +1997,6 @@ export class TraineeAchievements implements OnInit {
           ),
         0
       );
-
 
     const completedLessons =
       modules.reduce(
@@ -1941,7 +2017,6 @@ export class TraineeAchievements implements OnInit {
         0
       );
 
-
     let overallProgress = 0;
 
     if (totalModules > 0) {
@@ -1955,7 +2030,6 @@ export class TraineeAchievements implements OnInit {
         );
 
     }
-
 
     this.stats.set({
 
@@ -1973,42 +2047,67 @@ export class TraineeAchievements implements OnInit {
 
   }
 
-  // ⬇️ تمت إضافة دالة جلب التقييم الكلي هنا ⬇️
-  private loadOverallEvaluation(enrollmentId: number): void {
-    this.api.getOverallEvaluation(enrollmentId).subscribe({
-      next: (data) => {
-        this.overallEvaluation.set(data);
-      },
-      error: (err) => {
-        console.warn('⚠️ لم يتم العثور على التقييم الكلي أو حدث خطأ:', err);
-        this.overallEvaluation.set(null);
-      }
-    });
+
+  // ============================================================
+  // OVERALL EVALUATION
+  // ============================================================
+
+  private loadOverallEvaluation(
+    enrollmentId: number
+  ): void {
+
+    this.api
+      .getOverallEvaluation(
+        enrollmentId
+      )
+      .subscribe({
+
+        next: (data) => {
+
+          this.overallEvaluation.set(
+            data
+          );
+
+        },
+
+        error: (err) => {
+
+          console.warn(
+            '⚠️ لم يتم العثور على التقييم الكلي أو حدث خطأ:',
+            err
+          );
+
+          this.overallEvaluation.set(
+            null
+          );
+
+        },
+
+      });
+
   }
 
 
-  // ============================================================
-  // FEEDBACK AVAILABILITY
-  // ============================================================
-
-  
   // ============================================================
   // FEEDBACK AVAILABILITY
   // ============================================================
 
   // Weekly evaluation is available on any day.
   // Duplicate submissions are validated by the backend.
+
   isWeeklyEvaluationDay(): boolean {
     return true;
   }
 
   // Monthly evaluation is available on any day.
   // Duplicate submissions are validated by the backend.
+
   isMonthlyEvaluationDay(): boolean {
     return true;
   }
 
   // Trainer evaluation supports Weekly and Monthly periods.
+
   canSubmitTrainerEvaluation(): boolean {
     return (
       this.evaluationPeriod() === 'Weekly' ||
@@ -2017,19 +2116,27 @@ export class TraineeAchievements implements OnInit {
   }
 
   // Final program evaluation requires 100% completion.
+
   canSubmitProgramFeedback(): boolean {
     return this.progressPercentage() >= 100;
   }
 
   // Determine submission availability by feedback type.
+
   canSubmitCurrentFeedback(): boolean {
-    if (this.feedbackType() === 'TrainerRating') {
+
+    if (
+      this.feedbackType() ===
+      'TrainerRating'
+    ) {
+
       return this.canSubmitTrainerEvaluation();
+
     }
 
     return this.canSubmitProgramFeedback();
-  }
 
+  }
 
   getTrainerId(
     trainer: TrainerOptionDto
@@ -2441,11 +2548,6 @@ export class TraineeAchievements implements OnInit {
   // SUBMIT FEEDBACK
   // ============================================================
 
- 
-  // ============================================================
-  // SUBMIT FEEDBACK
-  // ============================================================
-
   submitFeedback(): void {
     const isTrainer =
       this.feedbackType() === 'TrainerRating';
@@ -2712,660 +2814,117 @@ export class TraineeAchievements implements OnInit {
   }
 
 
-// ============================================================
-// CERTIFICATE DOWNLOAD
-// ============================================================
-// ============================================================
-// CERTIFICATE DOWNLOAD
-// ============================================================
+  // ============================================================
+  // OFFICIAL CERTIFICATE - VIEW / DOWNLOAD
+  // ============================================================
 
-downloadCertificate() {
-
-  if (!this.canDownloadCertificate()) {
-
+  private showCertificateMessage(message: string): void {
+    this.successMessage.set(message);
     this.showSuccessToast.set(true);
-
-    this.successMessage.set(
-      '⚠️ الشهادة غير متاحة بعد'
-    );
-
-    setTimeout(
-      () =>
-        this.showSuccessToast.set(false),
-      3000
-    );
-
-    return;
-
+    setTimeout(() => this.showSuccessToast.set(false), 4000);
   }
 
-  const cert =
-    this.certificates()[0];
+  private async validateCertificatePdf(blob: Blob): Promise<Blob> {
+    if (!blob || blob.size < 5) {
+      throw new Error('Certificate PDF is empty');
+    }
 
-  if (!cert) {
+    const header = new Uint8Array(await blob.slice(0, 5).arrayBuffer());
+    const valid = header[0] === 0x25 && header[1] === 0x50 &&
+      header[2] === 0x44 && header[3] === 0x46 && header[4] === 0x2d;
+    if (!valid) throw new Error('Response is not a PDF');
 
-    this.showSuccessToast.set(true);
-
-    this.successMessage.set(
-      '⚠️ لم يتم العثور على شهادة، يرجى التواصل مع الدعم'
-    );
-
-    setTimeout(
-      () =>
-        this.showSuccessToast.set(false),
-      3000
-    );
-
-    return;
-
+    return new Blob([blob], { type: 'application/pdf' });
   }
 
-  this.loading.set(true);
+  downloadCertificate(): void {
+    const cert = this.issuedCertificate();
+    if (!this.canDownloadCertificate() || !cert) {
+      this.showCertificateMessage(
+        '⚠️ يجب إكمال البرنامج وإصدار الشهادة من الإدارة أولاً.'
+      );
+      return;
+    }
+    if (this.loading()) return;
 
-  this.api
-    .downloadCertificate(
-      cert.certificateId
-    )
-    .subscribe({
-
-      next: (
-        blob: Blob
-      ) => {
-
+    this.loading.set(true);
+    this.api.downloadCertificate(cert.certificateId).subscribe({
+      next: async (blob: Blob) => {
         try {
-
-          const reader =
-            new FileReader();
-
-          reader.onload = () => {
-
-            const result =
-              reader.result;
-
-            const bytes =
-              result instanceof ArrayBuffer
-                ? new Uint8Array(result)
-                : null;
-
-            let isValidPdf = false;
-
-            if (bytes && bytes.length >= 4) {
-
-              isValidPdf =
-                bytes[0] === 0x25 &&
-                bytes[1] === 0x50 &&
-                bytes[2] === 0x44 &&
-                bytes[3] === 0x46;
-
-            }
-
-            /*
-             * إذا كان الملف PDF صالحًا
-             * يتم تنزيله مباشرة.
-             */
-            if (isValidPdf) {
-
-              const pdfBlob =
-                new Blob(
-                  [blob],
-                  {
-                    type: 'application/pdf'
-                  }
-                );
-
-              const url =
-                window.URL.createObjectURL(
-                  pdfBlob
-                );
-
-              const a =
-                document.createElement('a');
-
-              a.href = url;
-
-              a.download =
-                `${certificateDocument(cert.type).ar}_${Date.now()}.pdf`;
-
-              document.body.appendChild(a);
-
-              a.click();
-
-              document.body.removeChild(a);
-
-              setTimeout(
-                () =>
-                  window.URL.revokeObjectURL(url),
-                100
-              );
-
-              this.loading.set(false);
-
-              return;
-
-            }
-
-            /*
-             * إذا لم يكن الملف القادم من الـ API
-             * PDF صالحًا، يتم إنشاء PDF من Frontend.
-             */
-            this.generateCertificatePdf(cert);
-
-            this.loading.set(false);
-
-          };
-
-          reader.onerror = () => {
-
-            console.warn(
-              '⚠️ تعذر قراءة ملف الشهادة، سيتم إنشاء PDF من الواجهة.'
-            );
-
-            this.generateCertificatePdf(cert);
-
-            this.loading.set(false);
-
-          };
-
-          reader.readAsArrayBuffer(blob);
-
+          const pdf = await this.validateCertificatePdf(blob);
+          const url = URL.createObjectURL(pdf);
+          const anchor = document.createElement('a');
+          anchor.href = url;
+          anchor.download =
+            `${certificateDocument(cert.type).ar}_${cert.certificateId}.pdf`;
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
         } catch (error) {
-
-          console.error(
-            '❌ خطأ أثناء معالجة ملف الشهادة:',
-            error
+          console.error('Invalid official certificate PDF:', error);
+          this.showCertificateMessage(
+            '⚠️ ملف الشهادة الرسمي غير متاح أو غير صالح. يرجى التواصل مع الإدارة.'
           );
-
-          this.generateCertificatePdf(cert);
-
+        } finally {
           this.loading.set(false);
-
         }
-
       },
-
-      error: (
-        err: any
-      ) => {
-
-        console.error(
-          '❌ فشل تحميل الشهادة من API:',
-          err
-        );
-
-        /*
-         * في حالة فشل الـ API بالكامل،
-         * يتم إنشاء الشهادة من Frontend.
-         */
-        this.generateCertificatePdf(cert);
-
+      error: (error: unknown) => {
+        console.error('Certificate download failed:', error);
         this.loading.set(false);
-
-      },
-
+        this.showCertificateMessage(
+          '⚠️ تعذر تحميل الشهادة الرسمية. يرجى التواصل مع الإدارة.'
+        );
+      }
     });
-
-}
-
-
-// ============================================================
-// GENERATE CERTIFICATE PDF - FRONTEND
-// ============================================================
-
-private generateCertificatePdf(
-  cert: CertificateDto
-): void {
-
-  try {
-
-    const doc =
-      new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-    const documentType = certificateDocument(cert.type);
-    doc.setProperties({ title: documentType.en });
-    const pageWidth =
-      doc.internal.pageSize.getWidth();
-
-    const pageHeight =
-      doc.internal.pageSize.getHeight();
-
-    const certificate =
-      cert as any;
-
-    const traineeName =
-      certificate.traineeName ??
-      certificate.fullName ??
-      certificate.studentName ??
-      this.traineeName() ??
-      'Trainee';
-
-    const programName =
-      certificate.programTitle ??
-      certificate.programName ??
-      certificate.trainingProgramName ??
-      this.programTitle() ??
-      'Training Program';
-
-    const certificateNumber =
-      certificate.certificateNumber ??
-      certificate.certificateCode ??
-      certificate.number ??
-      certificate.certificateId ??
-      '';
-
-    const issuedDate =
-      certificate.issuedAt ??
-      certificate.issueDate ??
-      certificate.createdAt ??
-      null;
-
-    let formattedDate = '';
-
-    if (issuedDate) {
-
-      const date =
-        new Date(issuedDate);
-
-      if (!Number.isNaN(date.getTime())) {
-
-        formattedDate =
-          date.toLocaleDateString(
-            'en-GB'
-          );
-
-      }
-
-    }
-
-    // ========================================================
-    // BACKGROUND
-    // ========================================================
-
-    doc.setFillColor(
-      248,
-      250,
-      252
-    );
-
-    doc.rect(
-      0,
-      0,
-      pageWidth,
-      pageHeight,
-      'F'
-    );
-
-    // ========================================================
-    // OUTER BORDER
-    // ========================================================
-
-    doc.setDrawColor(
-      11,
-      31,
-      100
-    );
-
-    doc.setLineWidth(1.5);
-
-    doc.rect(
-      10,
-      10,
-      pageWidth - 20,
-      pageHeight - 20
-    );
-
-    // ========================================================
-    // INNER BORDER
-    // ========================================================
-
-    doc.setDrawColor(
-      13,
-      148,
-      136
-    );
-
-    doc.setLineWidth(0.6);
-
-    doc.rect(
-      14,
-      14,
-      pageWidth - 28,
-      pageHeight - 28
-    );
-
-    // ========================================================
-    // HEADER
-    // ========================================================
-
-    doc.setTextColor(
-      11,
-      31,
-      100
-    );
-
-    doc.setFont(
-      'helvetica',
-      'bold'
-    );
-
-    doc.setFontSize(26);
-
-    doc.text(
-      'NAFADH',
-      pageWidth / 2,
-      38,
-      {
-        align: 'center'
-      }
-    );
-
-    doc.setTextColor(
-      71,
-      85,
-      105
-    );
-
-    doc.setFont(
-      'helvetica',
-      'normal'
-    );
-
-    doc.setFontSize(12);
-
-    doc.text(
-      'TRAINING AND ACADEMY MANAGEMENT PLATFORM',
-      pageWidth / 2,
-      46,
-      {
-        align: 'center'
-      }
-    );
-
-    // ========================================================
-    // CERTIFICATE TITLE
-    // ========================================================
-
-    doc.setTextColor(
-      13,
-      148,
-      136
-    );
-
-    doc.setFont(
-      'helvetica',
-      'bold'
-    );
-
-    doc.setFontSize(25);
-
-    doc.text(
-      documentType.en,
-      pageWidth / 2,
-      66,
-      {
-        align: 'center'
-      }
-    );
-
-    // ========================================================
-    // DESCRIPTION
-    // ========================================================
-
-    doc.setTextColor(
-      71,
-      85,
-      105
-    );
-
-    doc.setFont(
-      'helvetica',
-      'normal'
-    );
-
-    doc.setFontSize(12);
-
-    doc.text(
-      'This certificate is proudly presented to',
-      pageWidth / 2,
-      82,
-      {
-        align: 'center'
-      }
-    );
-
-    // ========================================================
-    // TRAINEE NAME
-    // ========================================================
-
-    doc.setTextColor(
-      23,
-      37,
-      84
-    );
-
-    doc.setFont(
-      'helvetica',
-      'bold'
-    );
-
-    doc.setFontSize(23);
-
-    doc.text(
-      String(traineeName),
-      pageWidth / 2,
-      96,
-      {
-        align: 'center',
-        maxWidth: pageWidth - 50
-      }
-    );
-
-    // ========================================================
-    // UNDERLINE
-    // ========================================================
-
-    doc.setDrawColor(
-      13,
-      148,
-      136
-    );
-
-    doc.setLineWidth(0.8);
-
-    doc.line(
-      65,
-      101,
-      pageWidth - 65,
-      101
-    );
-
-    // ========================================================
-    // PROGRAM
-    // ========================================================
-
-    doc.setTextColor(
-      71,
-      85,
-      105
-    );
-
-    doc.setFont(
-      'helvetica',
-      'normal'
-    );
-
-    doc.setFontSize(12);
-
-    doc.text(
-      documentType.completion ? 'for successfully completing the training program' : 'for the training program',
-      pageWidth / 2,
-      116,
-      {
-        align: 'center'
-      }
-    );
-
-    doc.setTextColor(
-      11,
-      31,
-      100
-    );
-
-    doc.setFont(
-      'helvetica',
-      'bold'
-    );
-
-    doc.setFontSize(18);
-
-    doc.text(
-      String(programName),
-      pageWidth / 2,
-      130,
-      {
-        align: 'center',
-        maxWidth: pageWidth - 60
-      }
-    );
-
-    // ========================================================
-    // CERTIFICATE DETAILS
-    // ========================================================
-
-    doc.setTextColor(
-      71,
-      85,
-      105
-    );
-
-    doc.setFont(
-      'helvetica',
-      'normal'
-    );
-
-    doc.setFontSize(10);
-
-    if (certificateNumber) {
-
-      doc.text(
-        `Certificate No: ${certificateNumber}`,
-        pageWidth / 2,
-        148,
-        {
-          align: 'center'
-        }
-      );
-
-    }
-
-    if (formattedDate) {
-
-      doc.text(
-        `Issue Date: ${formattedDate}`,
-        pageWidth / 2,
-        156,
-        {
-          align: 'center'
-        }
-      );
-
-    }
-
-    // ========================================================
-    // FOOTER
-    // ========================================================
-
-    doc.setDrawColor(
-      226,
-      232,
-      240
-    );
-
-    doc.setLineWidth(0.4);
-
-    doc.line(
-      45,
-      171,
-      pageWidth - 45,
-      171
-    );
-
-    doc.setTextColor(
-      100,
-      116,
-      139
-    );
-
-    doc.setFont(
-      'helvetica',
-      'normal'
-    );
-
-    doc.setFontSize(9);
-
-    doc.text(
-      'Nafadh Training & Academy Management Platform',
-      pageWidth / 2,
-      181,
-      {
-        align: 'center'
-      }
-    );
-
-    doc.setTextColor(
-      13,
-      148,
-      136
-    );
-
-    doc.setFont(
-      'helvetica',
-      'bold'
-    );
-
-    doc.setFontSize(9);
-
-    doc.text(
-      'Official Training Certificate',
-      pageWidth / 2,
-      188,
-      {
-        align: 'center'
-      }
-    );
-
-    // ========================================================
-    // SAVE PDF
-    // ========================================================
-
-    doc.save(
-      `${certificateDocument(cert.type).ar}_${Date.now()}.pdf`
-    );
-
-  } catch (error) {
-
-    console.error(
-      '❌ فشل إنشاء ملف PDF:',
-      error
-    );
-
-    this.showSuccessToast.set(true);
-
-    this.successMessage.set(
-      '❌ تعذر إنشاء الشهادة، يرجى المحاولة مرة أخرى'
-    );
-
-    setTimeout(
-      () =>
-        this.showSuccessToast.set(false),
-      3000
-    );
-
   }
 
-}
+  viewCertificate(): void {
+    const cert = this.issuedCertificate();
+    if (!this.canDownloadCertificate() || !cert) {
+      this.showCertificateMessage(
+        '⚠️ يجب إكمال البرنامج وإصدار الشهادة من الإدارة أولاً.'
+      );
+      return;
+    }
+    if (this.loading()) return;
 
+    // Open synchronously on click to avoid popup blockers.
+    const previewWindow = window.open('', '_blank');
+    if (!previewWindow) {
+      this.showCertificateMessage(
+        '⚠️ يرجى السماح بالنوافذ المنبثقة لمشاهدة الشهادة.'
+      );
+      return;
+    }
+
+    this.loading.set(true);
+    this.api.downloadCertificate(cert.certificateId).subscribe({
+      next: async (blob: Blob) => {
+        try {
+          const pdf = await this.validateCertificatePdf(blob);
+          const url = URL.createObjectURL(pdf);
+          previewWindow.location.href = url;
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
+        } catch (error) {
+          console.error('Certificate preview failed:', error);
+          previewWindow.close();
+          this.showCertificateMessage(
+            '⚠️ تعذرت مشاهدة الشهادة. ملف PDF الرسمي غير متاح.'
+          );
+        } finally {
+          this.loading.set(false);
+        }
+      },
+      error: (error: unknown) => {
+        console.error('Certificate preview API failed:', error);
+        previewWindow.close();
+        this.loading.set(false);
+        this.showCertificateMessage(
+          '⚠️ تعذر فتح الشهادة الرسمية. يرجى التواصل مع الإدارة.'
+        );
+      }
+    });
+  }
 }

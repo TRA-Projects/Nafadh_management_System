@@ -169,12 +169,17 @@
     </div>
   </div>
 
+
+<!-- =========================================================
+     CERTIFICATE
+========================================================== -->
+
+
   <!-- =========================================================
        CERTIFICATE
   ========================================================== -->
 
   <div class="certificate-card nfd-card">
-
     <div class="certificate-info">
       <div class="certificate-title">
         <div class="certificate-icon">
@@ -183,89 +188,94 @@
 
         <div>
           <h3>
-            {{ certificateDocument(certificates()[0]?.type).ar }}
+            {{ certificateDocument(issuedCertificate()?.type).ar }}
           </h3>
 
           <p>
-            @if (
-              progressPercentage() >= 85 &&
-              certificates().length > 0
-            ) {
-              <i class="fas fa-graduation-cap"></i>
-              🎉 أصبحت الشهادة متاحة للتحميل
-            } @else if (
-              progressPercentage() >= 85 &&
-              certificates().length === 0
-            ) {
-              <i class="fas fa-spinner fa-pulse"></i>
-              ⏳ جاري تجهيز الشهادة...
-            } @else {
+            @if (progressPercentage() < 100) {
               <i class="fas fa-hourglass-half"></i>
-              أكمل 85% من البرنامج للحصول على الشهادة
+              أكمل البرنامج التدريبي بنسبة 85% لتصبح الشهادة متاحة بعد إصدارها من الإدارة.
+            } @else if (!issuedCertificate()) {
+              <i class="fas fa-clock"></i>
+              لقد أكملت البرنامج التدريبي، والشهادة بانتظار إصدارها من الإدارة.
+            } @else {
+              <i class="fas fa-check-circle"></i>
+              تم إصدار الشهادة من الإدارة، ويمكنك مشاهدتها وتحميلها.
             }
           </p>
         </div>
       </div>
 
       <div class="certificate-status">
-        @if (
-          progressPercentage() >= 85 &&
-          certificates().length > 0
-        ) {
+        @if (canDownloadCertificate()) {
           <span class="available">
             <i class="fas fa-check-circle"></i>
-            متاحة للتحميل
+            الشهادة متاحة
           </span>
         } @else {
           <span class="pending">
             <i class="fas fa-clock"></i>
-            {{ progressPercentage() }}% مكتمل
+            @if (progressPercentage() < 100) {
+              {{ progressPercentage() }}% مكتمل
+            } @else {
+              بانتظار إصدار الإدارة
+            }
           </span>
         }
       </div>
     </div>
 
     <div class="certificate-preview">
-      <div class="certificate-brand">
-        NAFADH
-      </div>
+      <div class="certificate-brand">NAFADH</div>
 
       <div class="certificate-text">
         <span>
-          {{ certificateDocument(certificates()[0]?.type).ar }}
+          {{ certificateDocument(issuedCertificate()?.type).ar }}
         </span>
 
-        <strong>
-          {{ traineeName() }}
-        </strong>
-
-        <small>
-          {{ certificateDocument(certificates()[0]?.type).completion ? 'أتم برنامج' : 'البرنامج' }} {{ programTitle() }}
-        </small>
+        <strong>{{ traineeName() }}</strong>
+        <small>{{ programTitle() }}</small>
       </div>
     </div>
 
-    <button
-      type="button"
-      class="download-btn"
-      [class.enabled]="canDownloadCertificate()"
-      [disabled]="!canDownloadCertificate()"
-      (click)="downloadCertificate()">
+    @if (canDownloadCertificate()) {
+      <div class="certificate-actions">
+        <button
+          type="button"
+          class="download-btn enabled"
+          [disabled]="loading()"
+          (click)="viewCertificate()">
+          <i class="fas fa-eye"></i>
+          مشاهدة الشهادة
+        </button>
 
-      @if (canDownloadCertificate()) {
-        <span>
+        <button
+          type="button"
+          class="download-btn enabled"
+          [disabled]="loading()"
+          (click)="downloadCertificate()">
           <i class="fas fa-download"></i>
-          تنزيل الشهادة
-        </span>
-      } @else {
-        <span>
-          <i class="fas fa-lock"></i>
-          الشهادة غير متاحة بعد
-        </span>
-      }
+          تحميل الشهادة
+        </button>
+      </div>
+    } @else {
+      <button
+        type="button"
+        class="download-btn"
+        disabled>
+        <i class="fas fa-lock"></i>
 
-    </button>
+        @if (progressPercentage() < 100) {
+          الشهادة غير متاحة بعد
+        } @else {
+          بانتظار إصدار الشهادة
+        }
+      </button>
+    }
   </div>
+
+ 
+
 
   <!-- =========================================================
        FEEDBACK MODAL
