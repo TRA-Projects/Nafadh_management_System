@@ -1,36 +1,41 @@
+
 import { administrativeValue } from '../../../../core/models/administrative-constants';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
-import { inject,
+
+import {
   Component,
   OnInit,
   signal,
-  computed
+  computed,
+  inject
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { forkJoin, of, firstValueFrom } from 'rxjs';
+import {
+  forkJoin,
+  of,
+  firstValueFrom
+} from 'rxjs';
+
 import { catchError } from 'rxjs/operators';
 
 import { TraineeApi } from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { SystemVariablesService } from '../../../../services/system-variables.service';
+
 import {
   ConversationDetailDto,
-  ConversationListItemDto,
   ConversationMessageDto,
   TraineeProfileDto,
   EnrollmentDto,
   TrainerDto,
   BatchDto,
-  WithdrawalRequestDto,
-  WithdrawalRequestStatus
+  WithdrawalRequestDto
 } from '../../../../core/models/dtos';
 
-
 type SupportTab = 'messages' | 'batch';
-
 
 @Component({
   selector: 'app-trainee-support',
@@ -43,87 +48,76 @@ type SupportTab = 'messages' | 'batch';
   styleUrl: './support.scss'
 })
 export class TraineeSupport implements OnInit {
+
   readonly constants = inject(NafadhConstantsService);
 
   // =========================================================
-  // Active Tab
+  // ACTIVE TAB
   // =========================================================
 
   activeTab = signal<SupportTab>('messages');
 
-
   // =========================================================
-  // Conversations
+  // CONVERSATIONS
   // =========================================================
 
   conversations = signal<any[]>([]);
 
-  active =
-    signal<ConversationDetailDto | null>(null);
-
+  active = signal<ConversationDetailDto | null>(null);
 
   // =========================================================
-  // Withdrawal Requests
+  // WITHDRAWAL REQUESTS
   // =========================================================
 
   withdrawalRequests = signal<WithdrawalRequestDto[]>([]);
 
-
   // =========================================================
-  // Trainee
-  // =========================================================
-
-  traineeId =
-    signal<number | null>(null);
-    
-  traineeName =
-    signal<string>('المتدرب');
-
-  enrollment =
-    signal<EnrollmentDto | null>(null);
-
-
-  // =========================================================
-  // Company
+  // TRAINEE
   // =========================================================
 
-  companyName =
-    signal('');
+  traineeId = signal<number | null>(null);
 
+  traineeName = signal<string>('المتدرب');
 
-  // =========================================================
-  // Trainers
-  // =========================================================
-
-  trainers =
-    signal<TrainerDto[]>([]);
-
-  loadingTrainers =
-    signal(false);
-
+  enrollment = signal<EnrollmentDto | null>(null);
 
   // =========================================================
-  // UI
+  // COMPANY
   // =========================================================
 
-  isSubmitting =
-    signal(false);
-
-  errorMessage =
-    signal('');
-
-  successMessage =
-    signal('');
-
+  companyName = signal('');
 
   // =========================================================
-  // Reply
+  // TRAINERS
+  // =========================================================
+
+  trainers = signal<TrainerDto[]>([]);
+
+  loadingTrainers = signal(false);
+
+  // =========================================================
+  // UI STATE
+  // =========================================================
+
+  isSubmitting = signal(false);
+
+  errorMessage = signal('');
+
+  successMessage = signal('');
+
+  // Prevent duplicate message submissions
+  isSendingReply = false;
+  isSendingBatchMessage = false;
+  isSendingPrivateMessage = false;
+
+  // =========================================================
+  // REPLY
   // =========================================================
 
   replyText = '';
 
   // =========================================================
-  // New Request
+  // NEW REQUEST
   // =========================================================
 
   newConv = {
@@ -135,18 +129,23 @@ export class TraineeSupport implements OnInit {
   };
 
   // =========================================================
-  // File
+  // ATTACHMENTS
   // =========================================================
 
   selectedFile: File | null = null;
+
   allowedExtensions = signal<string[]>([]);
-maxAttachmentSizeMb = signal<number>(0);
-attachmentSettingsLoaded = signal(false);
-attachmentSizeError = signal('');
-attachmentTypeError = signal('');
+
+  maxAttachmentSizeMb = signal<number>(0);
+
+  attachmentSettingsLoaded = signal(false);
+
+  attachmentSizeError = signal('');
+
+  attachmentTypeError = signal('');
 
   // =========================================================
-  // Authority Subjects
+  // AUTHORITY SUBJECTS
   // =========================================================
 
   subjects = [
@@ -162,277 +161,478 @@ attachmentTypeError = signal('');
   // BATCH GROUP STATE
   // =========================================================
 
-  batchName =
-    signal('');
+  batchName = signal('');
 
-  batchGroupConversationId =
-    signal<number | null>(null);
+  batchGroupConversationId = signal<number | null>(null);
 
-  batchGroupMessages =
-    signal<ConversationMessageDto[]>([]);
+  batchGroupMessages = signal<ConversationMessageDto[]>([]);
 
-  batchTrainers =
-    signal<TrainerDto[]>([]);
+  batchTrainers = signal<TrainerDto[]>([]);
 
-  batchTrainees =
-    signal<TraineeProfileDto[]>([]);
+  batchTrainees = signal<TraineeProfileDto[]>([]);
 
-  loadingBatch =
-    signal(false);
+  loadingBatch = signal(false);
 
-  batchLoaded =
-    signal(false);
+  batchLoaded = signal(false);
 
   batchMessageText = '';
 
   showMembersPanel = false;
 
-
   // =========================================================
   // PRIVATE CHAT STATE
   // =========================================================
 
-  privateChatOpen =
-    signal(false);
+  privateChatOpen = signal(false);
 
-  privateChatWith =
-    signal<{
-      userId: number;
-      name: string;
-      role: 'trainer' | 'trainee';
-    } | null>(null);
+  privateChatWith = signal<{
+    userId: number;
+    name: string;
+    role: 'trainer' | 'trainee';
+  } | null>(null);
 
-  privateConversationId =
-    signal<number | null>(null);
+  privateConversationId = signal<number | null>(null);
 
-  privateMessages =
-    signal<ConversationMessageDto[]>([]);
+  privateMessages = signal<ConversationMessageDto[]>([]);
 
   privateMessageText = '';
 
-  loadingPrivate =
-    signal(false);
-
+  loadingPrivate = signal(false);
 
   // =========================================================
-  // Constructor & Init
+  // CONSTRUCTOR
   // =========================================================
 
- constructor(
-  private api: TraineeApi,
-  public auth: AuthService,
-  private systemVariablesService: SystemVariablesService
-) {}
-ngOnInit(): void {
-  this.constants.ensure('NFD_WDR_STAT', 'NFD_TIC_STAT');
-  this.loadConversations();
-  this.loadCurrentTraineeData();
-  this.loadAttachmentSettings();
-}
-private async loadAttachmentSettings(): Promise<void> {
-  this.attachmentSettingsLoaded.set(false);
+  constructor(
+    private api: TraineeApi,
+    public auth: AuthService,
+    private systemVariablesService: SystemVariablesService
+  ) {}
 
-  try {
-    const [extensions, maxSize, sizeError, typeError] =
-      await Promise.all([
-        firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
-        firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb()),
-        firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_SIZE_ERROR')),
-        firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_TYPE_ERROR'))
-      ]);
+  // =========================================================
+  // INITIALIZATION
+  // =========================================================
 
-    if (extensions.length === 0 || maxSize <= 0) {
-      throw new Error('Invalid attachment settings');
-    }
+  ngOnInit(): void {
+    this.constants.ensure(
+      'NFD_WDR_STAT',
+      'NFD_TIC_STAT'
+    );
 
-    this.allowedExtensions.set(extensions);
-    this.maxAttachmentSizeMb.set(maxSize);
-    this.attachmentSizeError.set(sizeError);
-    this.attachmentTypeError.set(typeError);
-    this.attachmentSettingsLoaded.set(true);
+    this.loadConversations();
+    this.loadCurrentTraineeData();
+    void this.loadAttachmentSettings();
+  }
 
-  } catch (error) {
-    console.error('فشل تحميل إعدادات المرفقات:', error);
+  // =========================================================
+  // ATTACHMENT SETTINGS
+  // =========================================================
 
-    this.allowedExtensions.set([]);
-    this.maxAttachmentSizeMb.set(0);
+  private async loadAttachmentSettings(): Promise<void> {
+
     this.attachmentSettingsLoaded.set(false);
 
-    this.errorMessage.set(
-      'تعذر تحميل إعدادات المرفقات، يرجى تحديث الصفحة والمحاولة مجددًا'
-    );
-  }
-}
+    try {
+      const [extensions, maxSize] = await Promise.all([
+        firstValueFrom(
+          this.systemVariablesService.getAllowedExtensions()
+        ),
+        firstValueFrom(
+          this.systemVariablesService.getMaxAttachmentSizeMb()
+        )
+      ]);
 
+      const normalizedExtensions = (
+        Array.isArray(extensions) ? extensions : []
+      )
+        .map(extension =>
+          String(extension).trim().replace(/^\./, '').toLowerCase()
+        )
+        .filter(extension => extension.length > 0);
+
+      const normalizedMaxSize = Number(maxSize);
+
+      if (
+        normalizedExtensions.length === 0 ||
+        !Number.isFinite(normalizedMaxSize) ||
+        normalizedMaxSize <= 0
+      ) {
+        throw new Error('Invalid attachment settings');
+      }
+
+      this.allowedExtensions.set(normalizedExtensions);
+
+      this.maxAttachmentSizeMb.set(normalizedMaxSize);
+
+      this.attachmentSizeError.set(
+        `حجم الملف يتجاوز الحد المسموح (${normalizedMaxSize} MB)`
+      );
+
+      this.attachmentTypeError.set(
+        'نوع الملف غير مسموح. الامتدادات المقبولة: ' +
+        normalizedExtensions.join(', ')
+      );
+
+      this.attachmentSettingsLoaded.set(true);
+
+      // Optional custom error messages
+      const [sizeMessage, typeMessage] = await Promise.all([
+        firstValueFrom(
+          this.systemVariablesService
+            .getErrorMessage('ATTACHMENT_SIZE_ERROR')
+            .pipe(catchError(() => of('')))
+        ),
+        firstValueFrom(
+          this.systemVariablesService
+            .getErrorMessage('ATTACHMENT_TYPE_ERROR')
+            .pipe(catchError(() => of('')))
+        )
+      ]);
+
+      if (typeof sizeMessage === 'string' && sizeMessage.trim()) {
+        this.attachmentSizeError.set(sizeMessage);
+      }
+
+      if (typeof typeMessage === 'string' && typeMessage.trim()) {
+        this.attachmentTypeError.set(typeMessage);
+      }
+
+      if (
+        this.errorMessage() ===
+        'تعذر تحميل إعدادات المرفقات، يرجى تحديث الصفحة والمحاولة مجددًا'
+      ) {
+        this.errorMessage.set('');
+      }
+
+    } catch (error) {
+
+      console.error(
+        'Error loading attachment settings:',
+        error
+      );
+
+      this.allowedExtensions.set([]);
+      this.maxAttachmentSizeMb.set(0);
+      this.attachmentSettingsLoaded.set(false);
+
+      // Do not block text-only support requests.
+      // File validation will block attachments until settings load.
+      this.errorMessage.set(
+        'تعذر تحميل إعدادات المرفقات، يرجى تحديث الصفحة والمحاولة مجددًا'
+      );
+    }
+  }
+
+  // NEXT PART CONTINUES INSIDE THIS CLASS
 
   // =========================================================
-  // Tabs
+  // TABS
   // =========================================================
 
   setTab(tab: SupportTab): void {
     this.activeTab.set(tab);
+    this.errorMessage.set('');
 
     if (
       tab === 'batch' &&
       !this.batchLoaded() &&
       !this.loadingBatch()
     ) {
-      this.loadBatchGroup();
+      if (this.enrollment()) {
+        this.loadBatchGroup();
+      }
+      // If enrollment is still loading, the enrollment
+      // loader will initialize the batch group later.
     }
   }
 
   // =========================================================
-  // Withdrawal Request Helpers
+  // WITHDRAWAL REQUEST HELPERS
   // =========================================================
 
   isWithdrawalRequest(conversation: any): boolean {
-    return conversation?.isWithdrawal === true && conversation.originalRequest != null;
+    return (
+      conversation?.isWithdrawal === true &&
+      conversation?.originalRequest != null
+    );
   }
 
   getWithdrawalStatus(
     conversation: any
   ): 'pending' | 'approved' | 'rejected' | null {
-    if (!this.isWithdrawalRequest(conversation)) return null;
 
-    const req = conversation.originalRequest;
-    if (!req) return null;
-    const key = administrativeValue('NFD_WDR_STAT', req.status)?.key;
-    if (key === 'Pending') return 'pending';
-    if (key === 'Approved') return 'approved';
-    if (key === 'Rejected') return 'rejected';
-    return null;
+    if (!this.isWithdrawalRequest(conversation)) {
+      return null;
+    }
+
+    const request = conversation.originalRequest;
+
+    if (!request) {
+      return null;
+    }
+
+    const status = administrativeValue(
+      'NFD_WDR_STAT',
+      request.status
+    )?.key;
+
+    switch (status) {
+      case 'Pending':
+        return 'pending';
+
+      case 'Approved':
+        return 'approved';
+
+      case 'Rejected':
+        return 'rejected';
+
+      default:
+        return null;
+    }
   }
 
   // =========================================================
-  // Data Loaders
+  // CURRENT TRAINEE DATA
   // =========================================================
 
   private loadCurrentTraineeData(): void {
-    const uid = this.auth.userId;
-    if (!uid) return;
+    const userId = this.auth.userId;
 
-    this.api.getTrainee(uid).subscribe({
+    if (!userId) {
+      this.errorMessage.set(
+        'تعذر تحديد المستخدم الحالي'
+      );
+      return;
+    }
+
+    this.api.getTrainee(userId).subscribe({
       next: (trainee: TraineeProfileDto) => {
-        const traineeId = Number(trainee.traineeId);
-        if (!traineeId || Number.isNaN(traineeId)) return;
+        const id = Number(trainee?.traineeId);
 
-        this.traineeId.set(traineeId);
-        
-        if (trainee.fullName) {
+        if (!Number.isFinite(id) || id <= 0) {
+          this.errorMessage.set(
+            'تعذر تحديد بيانات المتدرب'
+          );
+          return;
+        }
+
+        this.traineeId.set(id);
+
+        if (trainee.fullName?.trim()) {
           this.traineeName.set(trainee.fullName);
         }
 
-        this.loadTraineeEnrollment(traineeId);
-        this.loadWithdrawalRequests(traineeId);
+        this.loadTraineeEnrollment(id);
+        this.loadWithdrawalRequests(id);
       },
-      error: (err: any) => {
-        console.error('Error loading trainee:', err);
+
+      error: (error: any) => {
+        console.error(
+          'Error loading trainee:',
+          error
+        );
+
         this.companyName.set('');
         this.trainers.set([]);
+
+        this.errorMessage.set(
+          'تعذر تحميل بيانات المتدرب'
+        );
       }
     });
   }
 
+  // =========================================================
+  // WITHDRAWAL REQUESTS
+  // =========================================================
 
   private loadWithdrawalRequests(traineeId: number): void {
-    (this.api as any).getTraineeWithdrawalRequests(traineeId).subscribe({
+    this.api.getTraineeWithdrawalRequests(traineeId).subscribe({
       next: (requests: WithdrawalRequestDto[]) => {
-        this.withdrawalRequests.set(requests ?? []);
+        this.withdrawalRequests.set(
+          Array.isArray(requests) ? requests : []
+        );
+
         this.updateConversationsList();
       },
-      error: (err: any) => {
-        console.error('Error loading withdrawal requests:', err);
+
+      error: (error: any) => {
+        console.error(
+          'Error loading withdrawal requests:',
+          error
+        );
+
         this.withdrawalRequests.set([]);
+
+        // Keep the complaints visible even if the
+        // withdrawal endpoint fails.
         this.updateConversationsList();
       }
     });
+  }
+
+  // =========================================================
+  // CONVERSATIONS
+  // =========================================================
+
+  private loadConversations(): void {
+    this.updateConversationsList();
   }
 
   private updateConversationsList(): void {
-    const uid = this.auth.userId;
-    if (!uid) return;
+    const userId = this.auth.userId;
 
-    this.api.getConversations(uid).subscribe({
-      next: (data) => {
-        const all = data ?? [];
+    if (!userId) {
+      this.errorMessage.set(
+        'تعذر تحديد المستخدم الحالي'
+      );
+      return;
+    }
 
-        const complaints = all.filter(
-          (c: any) =>
-            c.type === 'TraineeComplaint' ||
-            c.conversationType === 'TraineeComplaint'
+    this.api.getConversations(userId).subscribe({
+      next: (data: any[]) => {
+        const allConversations = Array.isArray(data)
+          ? data
+          : [];
+
+        const complaints = allConversations.filter(
+          (conversation: any) =>
+            conversation.type === 'TraineeComplaint' ||
+            conversation.conversationType === 'TraineeComplaint'
         );
 
-        const withdrawalItems = this.withdrawalRequests().map(w => ({
-          conversationId: w.id + 1000000,
-          subject: 'طلب انسحاب',
-          startedByName: this.traineeName(),
-          lastMessagePreview: w.reason,
-          isWithdrawal: true,
-          originalRequest: w
-        }));
+        const withdrawalItems = this.withdrawalRequests().map(
+          (request: WithdrawalRequestDto) => ({
+            conversationId: Number(request.id) + 1000000,
+            subject: 'طلب انسحاب',
+            startedByName: this.traineeName(),
+            lastMessagePreview: request.reason ?? '',
+            isWithdrawal: true,
+            originalRequest: request
+          })
+        );
 
-        this.conversations.set([...withdrawalItems, ...complaints]);
+        this.conversations.set([
+          ...withdrawalItems,
+          ...complaints
+        ]);
 
         const current = this.active();
+
         if (current) {
-          const exists = this.conversations().some(
-            (c: any) =>
-              Number(c.conversationId) === Number(current.conversationId)
+          const stillExists = this.conversations().some(
+            (conversation: any) =>
+              Number(conversation.conversationId) ===
+              Number(current.conversationId)
           );
-          if (!exists) this.active.set(null);
+
+          if (!stillExists) {
+            this.active.set(null);
+            this.replyText = '';
+          }
         }
       },
-      error: (err: any) => {
-        console.error('Error loading conversations:', err);
-        this.errorMessage.set('تعذر تحميل الشكاوى');
+
+      error: (error: any) => {
+        console.error(
+          'Error loading conversations:',
+          error
+        );
+
+        this.errorMessage.set(
+          'تعذر تحميل الشكاوى والمراسلات'
+        );
       }
     });
   }
 
-
   // =========================================================
-  // Enrollment
+  // TRAINEE ENROLLMENT
   // =========================================================
 
   private loadTraineeEnrollment(traineeId: number): void {
     this.api.getEnrollmentsByTrainee(traineeId).subscribe({
       next: (enrollments: EnrollmentDto[]) => {
-
-        if (!enrollments || enrollments.length === 0) {
+        if (
+          !Array.isArray(enrollments) ||
+          enrollments.length === 0
+        ) {
           this.enrollment.set(null);
           this.companyName.set('');
           this.trainers.set([]);
+
+          if (this.activeTab() === 'batch') {
+            this.batchLoaded.set(true);
+          }
+
           return;
         }
 
-        const activeEnrollment =
-          enrollments.find(e => {
-            const status = String(e.completionStatus ?? '').toLowerCase();
+        const activeEnrollment = enrollments.find(
+          (item: EnrollmentDto) => {
+            const status = String(
+              item.completionStatus ?? ''
+            )
+              .trim()
+              .toLowerCase();
+
             return (
               status === 'active' ||
               status === 'inprogress' ||
               status === 'in_progress'
             );
-          }) || enrollments[0];
+          }
+        ) ?? enrollments[0];
 
         this.enrollment.set(activeEnrollment);
-        this.companyName.set(activeEnrollment.companyName ?? '');
 
-        const batchId = Number(activeEnrollment.batchId);
-        if (batchId && !Number.isNaN(batchId)) {
+        this.companyName.set(
+          activeEnrollment.companyName ?? ''
+        );
+
+        const batchId = Number(
+          activeEnrollment.batchId
+        );
+
+        if (Number.isFinite(batchId) && batchId > 0) {
           this.loadTrainersByBatch(batchId);
+
+          if (
+            this.activeTab() === 'batch' &&
+            !this.loadingBatch()
+          ) {
+            this.batchLoaded.set(false);
+            this.loadBatchGroup();
+          }
         } else {
           this.trainers.set([]);
+
+          if (this.activeTab() === 'batch') {
+            this.batchLoaded.set(true);
+          }
         }
       },
-      error: (err: any) => {
-        console.error('Error loading enrollment:', err);
+
+      error: (error: any) => {
+        console.error(
+          'Error loading enrollment:',
+          error
+        );
+
         this.enrollment.set(null);
         this.companyName.set('');
         this.trainers.set([]);
+
+        if (this.activeTab() === 'batch') {
+          this.batchLoaded.set(true);
+        }
       }
     });
   }
+
+  // =========================================================
+  // TRAINERS BY BATCH
+  // =========================================================
 
   private loadTrainersByBatch(batchId: number): void {
     this.loadingTrainers.set(true);
@@ -440,170 +640,221 @@ private async loadAttachmentSettings(): Promise<void> {
 
     this.api.getBatchTrainers(batchId).subscribe({
       next: (batchTrainers: TrainerDto[]) => {
-
-        if (!batchTrainers || batchTrainers.length === 0) {
+        if (
+          !Array.isArray(batchTrainers) ||
+          batchTrainers.length === 0
+        ) {
           this.trainers.set([]);
           this.loadingTrainers.set(false);
           return;
         }
 
-        const requests = batchTrainers.map(bt => {
-          const trainerId = Number(bt.trainerId);
-          if (!trainerId || Number.isNaN(trainerId)) {
-            return of(bt);
+        const requests = batchTrainers.map(
+          (trainer: TrainerDto) => {
+            const trainerId = Number(
+              trainer.trainerId
+            );
+
+            if (
+              !Number.isFinite(trainerId) ||
+              trainerId <= 0
+            ) {
+              return of(trainer);
+            }
+
+            return this.api.getTrainer(trainerId).pipe(
+              catchError(() => of(trainer))
+            );
           }
-          return this.api.getTrainer(trainerId).pipe(
-            catchError(() => of(bt))
-          );
-        });
+        );
 
         forkJoin(requests).subscribe({
-          next: (fullTrainers) => {
+          next: (fullTrainers: TrainerDto[]) => {
             const validTrainers = fullTrainers.filter(
-              t => t != null
-            ) as TrainerDto[];
+              (trainer): trainer is TrainerDto =>
+                trainer != null
+            );
+
             this.trainers.set(validTrainers);
             this.loadingTrainers.set(false);
           },
-          error: () => {
+
+          error: (error: any) => {
+            console.error(
+              'Error loading trainer details:',
+              error
+            );
+
             this.trainers.set(batchTrainers);
             this.loadingTrainers.set(false);
           }
         });
       },
-      error: (err: any) => {
-        console.error('Error loading trainers:', err);
+
+      error: (error: any) => {
+        console.error(
+          'Error loading batch trainers:',
+          error
+        );
+
         this.trainers.set([]);
         this.loadingTrainers.set(false);
       }
     });
   }
 
-
   // =========================================================
-  // Conversations
-  // =========================================================
-
-  private loadConversations(): void {
-    const uid = this.auth.userId;
-    if (!uid) {
-      this.errorMessage.set('تعذر تحديد المستخدم الحالي');
-      return;
-    }
-
-    this.api.getConversations(uid).subscribe({
-      next: (data) => {
-        const all = data ?? [];
-        const complaints = all.filter(
-          (c: any) =>
-            c.type === 'TraineeComplaint' ||
-            c.conversationType === 'TraineeComplaint'
-        );
-        this.conversations.set(complaints);
-
-        const current = this.active();
-        if (current) {
-          const exists = complaints.some(
-            (c: any) =>
-              Number(c.conversationId) === Number(current.conversationId)
-          );
-          if (!exists) this.active.set(null);
-        }
-      },
-      error: (err: any) => {
-        console.error('Error loading conversations:', err);
-        this.errorMessage.set('تعذر تحميل الشكاوى');
-      }
-    });
-  }
-
-
-  // =========================================================
-  // Open Item (Conversation or Withdrawal)
+  // OPEN CONVERSATION OR WITHDRAWAL REQUEST
   // =========================================================
 
   open(id: number): void {
     this.errorMessage.set('');
+    this.replyText = '';
 
-    if (id >= 1000000) {
-      const actualId = id - 1000000;
-      const req = this.withdrawalRequests().find(r => r.id === actualId);
+    const listItem = this.conversations().find(
+      (conversation: any) =>
+        Number(conversation.conversationId) === Number(id)
+    );
 
-      if (req) {
-        const messages: any[] = [
-          {
-            messageId: req.id,
-            senderName: this.traineeName(), 
-            senderId: this.auth.userId,
-            content: req.reason
-          }
-        ];
-
-        // إظهار رد الإدارة فقط إذا كان مختلفاً عن سبب المتدرب (تجنب التكرار)
-        // وتم تثبيت الاسم هنا ليكون "مدير النظام"
-        if (req.adminNotes && req.adminNotes.trim() !== req.reason.trim()) {
-          messages.push({
-            messageId: req.id + 999,
-            senderName: 'مدير النظام',
-            senderId: 0,
-            content: req.adminNotes
-          });
-        }
-
-        this.active.set({
-          conversationId: id,
-          subject: 'طلب انسحاب',
-          receiverType: 'Authority',
-          messages: messages,
-          originalRequest: req,
-          isWithdrawal: true
-        } as any);
-      }
+    if (!listItem) {
+      this.errorMessage.set(
+        'المحادثة المطلوبة غير موجودة'
+      );
       return;
     }
 
-    const listConversation: any = this.conversations().find(
-      c => Number(c.conversationId) === Number(id)
-    );
+    // Withdrawal requests are displayed as virtual
+    // conversations. Their messages are not persisted
+    // through the normal conversation API.
+    if (this.isWithdrawalRequest(listItem)) {
+      const request = listItem.originalRequest as WithdrawalRequestDto;
 
+      const messages: any[] = [];
+
+      const reason = String(
+        request.reason ?? ''
+      ).trim();
+
+      if (reason) {
+        messages.push({
+          messageId: Number(request.id),
+          senderName: this.traineeName(),
+          senderId: this.auth.userId,
+          content: reason
+        });
+      }
+
+      const adminNotes = String(
+        request.adminNotes ?? ''
+      ).trim();
+
+      if (
+        adminNotes &&
+        adminNotes !== reason
+      ) {
+        messages.push({
+          messageId: Number(request.id) + 999,
+          senderName: 'مدير النظام',
+          senderId: 0,
+          content: adminNotes
+        });
+      }
+
+      this.active.set({
+        conversationId: id,
+        subject: 'طلب انسحاب',
+        receiverType: 'Authority',
+        messages,
+        originalRequest: request,
+        isWithdrawal: true
+      } as any);
+
+      return;
+    }
+
+    // Normal conversation
     this.api.getConversation(id).subscribe({
       next: (conversation: any) => {
         const merged = {
-          ...(listConversation ?? {}),
+          ...listItem,
           ...(conversation ?? {})
         };
-        this.active.set(merged as ConversationDetailDto);
+
+        if (Array.isArray(merged.messages)) {
+          merged.messages = [...merged.messages].sort(
+            (a: any, b: any) =>
+              new Date(a.sentDate ?? 0).getTime() -
+              new Date(b.sentDate ?? 0).getTime()
+          );
+        }
+
+        this.active.set(
+          merged as ConversationDetailDto
+        );
+
+        const userId = this.auth.userId;
+
+        if (userId) {
+          this.api.markConversationAsRead(
+            id,
+            userId
+          ).subscribe({
+            error: (error: any) => {
+              console.warn(
+                'Could not mark conversation as read:',
+                error
+              );
+            }
+          });
+        }
       },
-      error: () => {
-        this.errorMessage.set('تعذر فتح المحادثة');
+
+      error: (error: any) => {
+        console.error(
+          'Error opening conversation:',
+          error
+        );
+
+        this.errorMessage.set(
+          'تعذر فتح المحادثة'
+        );
       }
     });
   }
 
+  // NEXT PART: BATCH GROUP AND PRIVATE CHAT
 
   // =========================================================
   // BATCH GROUP — LOAD
   // =========================================================
 
   loadBatchGroup(): void {
-    const uid = this.auth.userId;
+    if (this.loadingBatch()) {
+      return;
+    }
+
+    const userId = this.auth.userId;
     const currentEnrollment = this.enrollment();
 
-    if (!uid) {
+    if (!userId) {
       this.errorMessage.set('تعذر تحديد المستخدم الحالي');
       return;
     }
 
     const batchId = Number(currentEnrollment?.batchId);
 
-    if (!batchId || Number.isNaN(batchId)) {
+    if (!Number.isFinite(batchId) || batchId <= 0) {
       this.loadingBatch.set(false);
       this.batchLoaded.set(true);
+      this.batchGroupConversationId.set(null);
+      this.batchGroupMessages.set([]);
       return;
     }
 
     this.loadingBatch.set(true);
+    this.batchLoaded.set(false);
     this.errorMessage.set('');
+
     this.batchGroupConversationId.set(null);
     this.batchGroupMessages.set([]);
     this.batchTrainees.set([]);
@@ -613,26 +864,38 @@ private async loadAttachmentSettings(): Promise<void> {
       next: (batch: BatchDto) => {
         this.batchName.set(batch?.batchName ?? '');
       },
-      error: () => this.batchName.set('')
+      error: (error: any) => {
+        console.error('Error loading batch:', error);
+        this.batchName.set('');
+      }
     });
 
     this.api.getBatchTrainers(batchId).subscribe({
-      next: (t: TrainerDto[]) => this.batchTrainers.set(t ?? []),
-      error: () => this.batchTrainers.set([])
+      next: (trainers: TrainerDto[]) => {
+        this.batchTrainers.set(trainers ?? []);
+      },
+      error: (error: any) => {
+        console.error('Error loading batch trainers:', error);
+        this.batchTrainers.set([]);
+      }
     });
 
     this.api.getBatchTrainees(batchId).subscribe({
-      next: (t: TraineeProfileDto[]) => this.batchTrainees.set(t ?? []),
-      error: () => this.batchTrainees.set([])
+      next: (trainees: TraineeProfileDto[]) => {
+        this.batchTrainees.set(trainees ?? []);
+      },
+      error: (error: any) => {
+        console.error('Error loading batch trainees:', error);
+        this.batchTrainees.set([]);
+      }
     });
 
-    this.api.getAllParticipantConversations(uid).subscribe({
-      next: (all) => {
-
+    this.api.getAllParticipantConversations(userId).subscribe({
+      next: (all: any[]) => {
         const group = (all ?? []).find(
-          (c: any) =>
-            c.category === 'BatchGroup' &&
-            Number(c.batchId) === batchId
+          (conversation: any) =>
+            conversation.category === 'BatchGroup' &&
+            Number(conversation.batchId) === batchId
         );
 
         if (!group) {
@@ -641,104 +904,179 @@ private async loadAttachmentSettings(): Promise<void> {
           return;
         }
 
-        this.batchGroupConversationId.set(group.conversationId);
+        const conversationId = Number(group.conversationId);
 
-        this.api.getConversation(group.conversationId).subscribe({
+        if (!Number.isFinite(conversationId) || conversationId <= 0) {
+          this.loadingBatch.set(false);
+          this.batchLoaded.set(true);
+          return;
+        }
+
+        this.batchGroupConversationId.set(conversationId);
+
+        this.api.getConversation(conversationId).subscribe({
           next: (conversation: any) => {
+            const messages = [
+              ...(conversation?.messages ?? [])
+            ].sort(
+              (a: any, b: any) =>
+                new Date(a.sentDate ?? 0).getTime() -
+                new Date(b.sentDate ?? 0).getTime()
+            );
 
-            const sorted = [...(conversation?.messages ?? [])]
-              .sort(
-                (a, b) =>
-                  new Date(a.sentDate).getTime() -
-                  new Date(b.sentDate).getTime()
-              );
+            this.batchGroupMessages.set(messages);
 
-            this.batchGroupMessages.set(sorted);
-
-            this.api
-              .markConversationAsRead(group.conversationId, uid)
-              .subscribe({ error: () => {} });
+            this.api.markConversationAsRead(
+              conversationId,
+              userId
+            ).subscribe({
+              error: (error: any) => {
+                console.warn(
+                  'Could not mark batch conversation as read:',
+                  error
+                );
+              }
+            });
 
             this.loadingBatch.set(false);
             this.batchLoaded.set(true);
           },
-          error: () => {
+
+          error: (error: any) => {
+            console.error(
+              'Error loading batch conversation:',
+              error
+            );
+
             this.loadingBatch.set(false);
             this.batchLoaded.set(true);
+
+            this.errorMessage.set(
+              'تعذر تحميل رسائل مجموعة الدفعة'
+            );
           }
         });
       },
-      error: (err: any) => {
-        console.error('Error loading batch group:', err);
+
+      error: (error: any) => {
+        console.error(
+          'Error loading participant conversations:',
+          error
+        );
+
         this.loadingBatch.set(false);
         this.batchLoaded.set(true);
+
+        this.errorMessage.set(
+          'تعذر تحميل محادثة مجموعة الدفعة'
+        );
       }
     });
   }
 
+  // =========================================================
+  // BATCH GROUP — REFRESH
+  // =========================================================
 
   refreshBatchGroup(): void {
+    if (this.loadingBatch()) {
+      return;
+    }
+
     this.batchLoaded.set(false);
     this.loadBatchGroup();
   }
 
-
   // =========================================================
-  // BATCH GROUP — SEND
+  // BATCH GROUP — SEND MESSAGE
   // =========================================================
 
   sendBatchMessage(): void {
-    const text = this.batchMessageText.trim();
-    const conversationId = this.batchGroupConversationId();
-    const uid = this.auth.userId;
+    if (this.isSendingBatchMessage) {
+      return;
+    }
 
-    if (!text || !conversationId || !uid) return;
+    const content = this.batchMessageText.trim();
+    const conversationId = this.batchGroupConversationId();
+    const userId = this.auth.userId;
+
+    if (!content || !conversationId || !userId) {
+      return;
+    }
+
+    this.errorMessage.set('');
+    this.isSendingBatchMessage = true;
 
     this.api.sendMessage(conversationId, {
-      senderId: uid,
-      content: text
+      senderId: userId,
+      content
     }).subscribe({
-      next: (saved: any) => {
-        const current = this.batchGroupMessages();
-        this.batchGroupMessages.set([
-          ...current,
-          saved
-        ]);
-        this.batchMessageText = '';
+      next: (saved: ConversationMessageDto) => {
+        this.batchGroupMessages.update(
+          messages => [...messages, saved]
+        );
+
+        // Do not erase text entered while the request was pending.
+        if (this.batchMessageText.trim() === content) {
+          this.batchMessageText = '';
+        }
+
+        this.isSendingBatchMessage = false;
       },
-      error: (err: any) => {
-        console.error('Error sending batch message:', err);
-        this.errorMessage.set('تعذر إرسال الرسالة');
+
+      error: (error: any) => {
+        console.error(
+          'Error sending batch message:',
+          error
+        );
+
+        this.errorMessage.set(
+          'تعذر إرسال الرسالة إلى مجموعة الدفعة'
+        );
+
+        this.isSendingBatchMessage = false;
       }
     });
   }
 
-
   // =========================================================
-  // PRIVATE CHAT
+  // PRIVATE CHAT — OPEN
   // =========================================================
 
   openPrivateChat(
     member: any,
     role: 'trainer' | 'trainee'
   ): void {
+    const userId = this.auth.userId;
 
-    const uid = this.auth.userId;
-    if (!uid) return;
+    if (!userId) {
+      this.errorMessage.set('تعذر تحديد المستخدم الحالي');
+      return;
+    }
 
     const memberUserId = Number(member?.userId);
 
-    if (!memberUserId || Number.isNaN(memberUserId)) {
-      this.errorMessage.set('لا يمكن تحديد المستخدم');
+    if (
+      !Number.isFinite(memberUserId) ||
+      memberUserId <= 0
+    ) {
+      this.errorMessage.set(
+        'لا يمكن تحديد المستخدم المطلوب'
+      );
       return;
     }
 
-    if (memberUserId === uid) {
-      this.errorMessage.set('لا يمكنك مراسلة نفسك');
+    if (memberUserId === Number(userId)) {
+      this.errorMessage.set(
+        'لا يمكنك مراسلة نفسك'
+      );
       return;
     }
 
-    const memberName = member?.fullName ?? 'عضو';
+    const memberName =
+      String(member?.fullName ?? '').trim() || 'عضو';
+
+    this.errorMessage.set('');
 
     this.privateChatWith.set({
       userId: memberUserId,
@@ -748,32 +1086,66 @@ private async loadAttachmentSettings(): Promise<void> {
 
     this.privateChatOpen.set(true);
     this.loadingPrivate.set(true);
+
     this.privateMessages.set([]);
     this.privateConversationId.set(null);
+    this.privateMessageText = '';
 
-    this.api.getAllParticipantConversations(uid).subscribe({
-      next: (all) => {
-
-        const candidates = (all ?? []).filter(
-          (c: any) =>
-            c.category !== 'BatchGroup' &&
-            c.type !== 'TraineeComplaint' &&
-            c.category !== 'TraineeComplaint'
-        );
-
-        if (candidates.length === 0) {
-          this.createPrivateConversation(memberUserId, memberName, role);
+    this.api.getAllParticipantConversations(userId).subscribe({
+      next: (all: any[]) => {
+        // Ignore stale responses if the user switched chats.
+        if (
+          this.privateChatWith()?.userId !== memberUserId ||
+          !this.privateChatOpen()
+        ) {
           return;
         }
 
-        this.findOrCreatePrivate(memberUserId, memberName, role, candidates);
+        const candidates = (all ?? []).filter(
+          (conversation: any) =>
+            conversation.category !== 'BatchGroup' &&
+            conversation.type !== 'TraineeComplaint' &&
+            conversation.conversationType !== 'TraineeComplaint' &&
+            conversation.category !== 'TraineeComplaint'
+        );
+
+        if (candidates.length === 0) {
+          this.createPrivateConversation(
+            memberUserId,
+            memberName,
+            role
+          );
+          return;
+        }
+
+        this.findOrCreatePrivate(
+          memberUserId,
+          memberName,
+          role,
+          candidates
+        );
       },
-      error: () => {
-        this.createPrivateConversation(memberUserId, memberName, role);
+
+      error: (error: any) => {
+        console.error(
+          'Error loading private conversations:',
+          error
+        );
+
+        if (this.privateChatWith()?.userId === memberUserId) {
+          this.loadingPrivate.set(false);
+
+          this.errorMessage.set(
+            'تعذر التحقق من المحادثات الخاصة، يرجى المحاولة مجددًا'
+          );
+        }
       }
     });
   }
 
+  // =========================================================
+  // PRIVATE CHAT — FIND EXISTING OR CREATE
+  // =========================================================
 
   private findOrCreatePrivate(
     memberUserId: number,
@@ -781,85 +1153,168 @@ private async loadAttachmentSettings(): Promise<void> {
     role: 'trainer' | 'trainee',
     candidates: any[]
   ): void {
+    const userId = this.auth.userId;
 
-    const uid = this.auth.userId;
-    if (!uid) return;
+    if (!userId) {
+      this.loadingPrivate.set(false);
+      return;
+    }
 
-    const tryNext = (index: number) => {
+    const tryNext = (index: number): void => {
+      if (
+        !this.privateChatOpen() ||
+        this.privateChatWith()?.userId !== memberUserId
+      ) {
+        return;
+      }
 
       if (index >= candidates.length) {
-        this.createPrivateConversation(memberUserId, memberName, role);
+        this.createPrivateConversation(
+          memberUserId,
+          memberName,
+          role
+        );
         return;
       }
 
       const candidate = candidates[index];
+      const conversationId = Number(
+        candidate?.conversationId
+      );
 
-      this.api.getConversation(candidate.conversationId).subscribe({
+      if (
+        !Number.isFinite(conversationId) ||
+        conversationId <= 0
+      ) {
+        tryNext(index + 1);
+        return;
+      }
+
+      this.api.getConversation(conversationId).subscribe({
         next: (conversation: any) => {
+          if (
+            !this.privateChatOpen() ||
+            this.privateChatWith()?.userId !== memberUserId
+          ) {
+            return;
+          }
 
           const messages = conversation?.messages ?? [];
 
+          // Preserve the existing matching logic.
+          // The backend should ideally expose participant IDs
+          // so the match can be verified independently of messages.
           const involvesMember = messages.some(
-            (m: any) =>
-              Number(m.senderId) === memberUserId ||
-              Number(m.receiverId) === memberUserId
+            (message: any) =>
+              Number(message.senderId) === memberUserId ||
+              Number(message.receiverId) === memberUserId
           );
 
           if (involvesMember) {
-            this.loadPrivateConversation(candidate.conversationId);
+            this.loadPrivateConversation(conversationId);
             return;
           }
 
           tryNext(index + 1);
         },
-        error: () => tryNext(index + 1)
+
+        error: (error: any) => {
+          console.error(
+            'Error checking private conversation:',
+            error
+          );
+
+          // Do not create a duplicate conversation when
+          // an existing conversation cannot be inspected.
+          this.loadingPrivate.set(false);
+
+          this.errorMessage.set(
+            'تعذر التحقق من المحادثات الخاصة'
+          );
+        }
       });
     };
 
     tryNext(0);
   }
 
+  // =========================================================
+  // PRIVATE CHAT — LOAD CONVERSATION
+  // =========================================================
 
-  private loadPrivateConversation(conversationId: number): void {
-    const uid = this.auth.userId;
+  private loadPrivateConversation(
+    conversationId: number
+  ): void {
+    const userId = this.auth.userId;
+    const requestedMemberId = this.privateChatWith()?.userId;
 
     this.api.getConversation(conversationId).subscribe({
       next: (conversation: any) => {
+        if (
+          !this.privateChatOpen() ||
+          this.privateChatWith()?.userId !== requestedMemberId
+        ) {
+          return;
+        }
+
+        const messages = [
+          ...(conversation?.messages ?? [])
+        ].sort(
+          (a: any, b: any) =>
+            new Date(a.sentDate ?? 0).getTime() -
+            new Date(b.sentDate ?? 0).getTime()
+        );
+
         this.privateConversationId.set(conversationId);
+        this.privateMessages.set(messages);
 
-        const sorted = [...(conversation?.messages ?? [])]
-          .sort(
-            (a, b) =>
-              new Date(a.sentDate).getTime() -
-              new Date(b.sentDate).getTime()
-          );
-
-        this.privateMessages.set(sorted);
-
-        if (uid) {
-          this.api
-            .markConversationAsRead(conversationId, uid)
-            .subscribe({ error: () => {} });
+        if (userId) {
+          this.api.markConversationAsRead(
+            conversationId,
+            userId
+          ).subscribe({
+            error: (error: any) => {
+              console.warn(
+                'Could not mark private conversation as read:',
+                error
+              );
+            }
+          });
         }
 
         this.loadingPrivate.set(false);
       },
-      error: () => {
+
+      error: (error: any) => {
+        console.error(
+          'Error loading private conversation:',
+          error
+        );
+
         this.loadingPrivate.set(false);
-        this.errorMessage.set('تعذر فتح المحادثة');
+
+        this.errorMessage.set(
+          'تعذر فتح المحادثة الخاصة'
+        );
       }
     });
   }
 
+  // =========================================================
+  // PRIVATE CHAT — CREATE
+  // =========================================================
 
   private createPrivateConversation(
     memberUserId: number,
     memberName: string,
     role: 'trainer' | 'trainee'
   ): void {
+    const userId = this.auth.userId;
 
-    const uid = this.auth.userId;
-    if (!uid) return;
+    if (!userId) {
+      this.loadingPrivate.set(false);
+      return;
+    }
 
     const category =
       role === 'trainer'
@@ -867,101 +1322,178 @@ private async loadAttachmentSettings(): Promise<void> {
         : 'TraineeTrainee';
 
     this.api.getOrCreatePrivateConversation({
-      startedByUserId: uid,
+      startedByUserId: userId,
       receiverUserId: memberUserId,
       subject: `محادثة مع ${memberName}`,
       firstMessage: 'مرحبًا 👋',
       category
     }).subscribe({
       next: (conversation: any) => {
-        this.privateConversationId.set(conversation.conversationId);
-        const sorted = [...(conversation.messages ?? [])]
-          .sort(
-            (a, b) =>
-              new Date(a.sentDate).getTime() -
-              new Date(b.sentDate).getTime()
+        if (
+          !this.privateChatOpen() ||
+          this.privateChatWith()?.userId !== memberUserId
+        ) {
+          return;
+        }
+
+        const conversationId = Number(
+          conversation?.conversationId
+        );
+
+        if (
+          !Number.isFinite(conversationId) ||
+          conversationId <= 0
+        ) {
+          this.loadingPrivate.set(false);
+          this.errorMessage.set(
+            'تعذر تحديد المحادثة الجديدة'
           );
-        this.privateMessages.set(sorted);
+          return;
+        }
+
+        const messages = [
+          ...(conversation?.messages ?? [])
+        ].sort(
+          (a: any, b: any) =>
+            new Date(a.sentDate ?? 0).getTime() -
+            new Date(b.sentDate ?? 0).getTime()
+        );
+
+        this.privateConversationId.set(conversationId);
+        this.privateMessages.set(messages);
         this.loadingPrivate.set(false);
       },
-      error: (err: any) => {
-        console.error('Error creating private conversation:', err);
+
+      error: (error: any) => {
+        console.error(
+          'Error creating private conversation:',
+          error
+        );
+
         this.loadingPrivate.set(false);
-        this.errorMessage.set('تعذر بدء المحادثة');
+
+        this.errorMessage.set(
+          'تعذر بدء المحادثة الخاصة'
+        );
       }
     });
   }
 
+  // =========================================================
+  // PRIVATE CHAT — SEND MESSAGE
+  // =========================================================
 
   sendPrivateMessage(): void {
-    const text = this.privateMessageText.trim();
-    const conversationId = this.privateConversationId();
-    const uid = this.auth.userId;
+    if (this.isSendingPrivateMessage) {
+      return;
+    }
 
-    if (!text || !conversationId || !uid) return;
+    const content = this.privateMessageText.trim();
+    const conversationId = this.privateConversationId();
+    const userId = this.auth.userId;
+
+    if (!content || !conversationId || !userId) {
+      return;
+    }
+
+    this.errorMessage.set('');
+    this.isSendingPrivateMessage = true;
 
     this.api.sendMessage(conversationId, {
-      senderId: uid,
-      content: text
+      senderId: userId,
+      content
     }).subscribe({
-      next: (saved: any) => {
-        const current = this.privateMessages();
-        this.privateMessages.set([...current, saved]);
-        this.privateMessageText = '';
+      next: (saved: ConversationMessageDto) => {
+        // Do not append to another chat if the user switched.
+        if (
+          this.privateChatOpen() &&
+          this.privateConversationId() === conversationId
+        ) {
+          this.privateMessages.update(
+            messages => [...messages, saved]
+          );
+
+          if (this.privateMessageText.trim() === content) {
+            this.privateMessageText = '';
+          }
+        }
+
+        this.isSendingPrivateMessage = false;
       },
-      error: (err: any) => {
-        console.error('Error sending private message:', err);
-        this.errorMessage.set('تعذر إرسال الرسالة');
+
+      error: (error: any) => {
+        console.error(
+          'Error sending private message:',
+          error
+        );
+
+        this.errorMessage.set(
+          'تعذر إرسال الرسالة الخاصة'
+        );
+
+        this.isSendingPrivateMessage = false;
       }
     });
   }
 
+  // =========================================================
+  // PRIVATE CHAT — CLOSE
+  // =========================================================
 
   closePrivateChat(): void {
     this.privateChatOpen.set(false);
     this.privateChatWith.set(null);
+
     this.privateConversationId.set(null);
     this.privateMessages.set([]);
+
     this.privateMessageText = '';
+    this.loadingPrivate.set(false);
   }
 
-
   // =========================================================
-  // Members Panel
+  // MEMBERS PANEL
   // =========================================================
 
   toggleMembersPanel(): void {
     this.showMembersPanel = !this.showMembersPanel;
   }
 
-
   // =========================================================
-  // Helpers for batch UI
+  // MESSAGE HELPERS
   // =========================================================
 
   isMine(message: ConversationMessageDto): boolean {
-    return Number(message.senderId) === Number(this.auth.userId);
+    return (
+      Number(message.senderId) ===
+      Number(this.auth.userId)
+    );
   }
 
-
   isMe(userId: number | null | undefined): boolean {
+    if (userId == null || this.auth.userId == null) {
+      return false;
+    }
+
     return Number(userId) === Number(this.auth.userId);
   }
 
-
   formatTime(value: string | Date | undefined): string {
-    if (!value) return '';
+    if (!value) {
+      return '';
+    }
 
-    const date =
-      typeof value === 'string'
-        ? new Date(
-            /[zZ]|[+-]\d{2}:\d{2}$/.test(value)
-              ? value
-              : `${value}Z`
-          )
-        : value;
+    const date = value instanceof Date
+      ? value
+      : new Date(
+          /[zZ]|[+-]\d{2}:\d{2}$/.test(value)
+            ? value
+            : `${value}Z`
+        );
 
-    if (Number.isNaN(date.getTime())) return '';
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
 
     return new Intl.DateTimeFormat('ar-OM', {
       hour: 'numeric',
@@ -969,310 +1501,622 @@ private async loadAttachmentSettings(): Promise<void> {
     }).format(date);
   }
 
+  // =========================================================
+  // BATCH MEMBERS COUNT
+  // =========================================================
 
   batchMembersCount = computed(() =>
-    this.batchTrainers().length + this.batchTrainees().length
+    this.batchTrainers().length +
+    this.batchTrainees().length
   );
 
+  // NEXT PART: FILE VALIDATION, FORM SUBMISSION AND REPLIES
 
   // =========================================================
-  // File & Form Helpers
+  // RECEIVER CHANGE
   // =========================================================
-onReceiverChange(): void {
-  this.newConv.trainerId = null;
-  this.newConv.subject = '';
-  this.newConv.note = '';
-  this.newConv.firstMessage = '';
-  this.selectedFile = null;
-  this.errorMessage.set('');
-}
 
-formatFileSize(bytes: number): string {
-  if (bytes < 1024) {
-    return `${bytes} B`;
+  onReceiverChange(): void {
+    this.newConv.trainerId = null;
+    this.newConv.subject = '';
+    this.newConv.note = '';
+    this.newConv.firstMessage = '';
+
+    this.selectedFile = null;
+
+    this.errorMessage.set('');
+    this.successMessage.set('');
   }
 
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
+  // =========================================================
+  // FILE SIZE FORMAT
+  // =========================================================
+
+  formatFileSize(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes < 0) {
+      return '0 B';
+    }
+
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   }
 
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
+  // =========================================================
+  // FILE SELECTION
+  // =========================================================
 
-removeFile(event: Event): void {
-  event.preventDefault();
-  event.stopPropagation();
-
-  this.selectedFile = null;
-  this.errorMessage.set('');
-}
   onFileSelected(event: Event): void {
-  const input = event.target as HTMLInputElement;
-  if (!input.files || input.files.length === 0) return;
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
 
-  this.selectedFile = null;
-
-  if (!this.attachmentSettingsLoaded()) {
-    this.errorMessage.set('إعدادات المرفقات غير متاحة حاليًا');
-    input.value = '';
-    return;
-  }
-
-  const file = input.files[0];
-  const maxSizeMb = this.maxAttachmentSizeMb();
-  const maxSize = maxSizeMb * 1024 * 1024;
-
-  if (file.size > maxSize) {
-    this.errorMessage.set(
-      this.attachmentSizeError()
-        .replace('{maxSize}', String(maxSizeMb))
-    );
-    input.value = '';
-    return;
-  }
-
-  const extension = file.name
-    .split('.')
-    .pop()
-    ?.toLowerCase() ?? '';
-
-  const allowed = this.allowedExtensions()
-    .map(ext => ext.replace(/^\./, '').toLowerCase());
-
-  if (!allowed.includes(extension)) {
-    this.errorMessage.set(this.attachmentTypeError());
-    input.value = '';
-    return;
-  }
-
-  this.errorMessage.set('');
-  this.selectedFile = file;
-}
-
-  // =========================================================
-  // Validate
-  // =========================================================
-
-  canSubmit(): boolean {
-    if (!this.newConv.receiverType) return false;
-
-    if (this.newConv.receiverType === 'Trainer') {
-      return (
-        !!this.newConv.trainerId &&
-        !!this.newConv.subject.trim() &&
-        !!this.newConv.note.trim()
-      );
+    if (file) {
+      this.validateAndSelectFile(file);
     }
-    if (this.newConv.receiverType === 'Company') {
-      return (
-        !!this.newConv.subject.trim() &&
-        !!this.newConv.note.trim()
-      );
-    }
-    if (this.newConv.receiverType === 'Authority') {
-      return (
-        !!this.newConv.subject.trim() &&
-        !!this.newConv.firstMessage.trim()
-      );
-    }
-    return false;
+
+    // Allow selecting the same file again.
+    input.value = '';
   }
 
   // =========================================================
-  // Send Reply
+  // FILE DRAG AND DROP
   // =========================================================
 
-  send(): void {
-    const conversation = this.active();
-    if (!conversation || !this.replyText.trim()) return;
+  onFileDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
 
-    const uid = this.auth.userId;
-    if (!uid) return;
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }
 
-    if ((conversation as any).isWithdrawal) {
-      const newMessage = {
-        messageId: Date.now(),
-        senderName: this.traineeName(), 
-        senderId: uid,
-        content: this.replyText.trim()
-      };
+  onFileDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
 
-      this.active.update((c: any) => ({
-        ...c,
-        messages: [...c.messages, newMessage]
-      }));
+    const files = event.dataTransfer?.files;
 
-      this.replyText = '';
+    if (!files || files.length === 0) {
       return;
     }
 
-    this.api.sendMessage(conversation.conversationId, {
-      senderId: uid,
-      content: this.replyText.trim()
+    if (files.length > 1) {
+      this.errorMessage.set(
+        'يمكن إرفاق ملف واحد فقط لكل طلب'
+      );
+      return;
+    }
+
+    this.validateAndSelectFile(files[0]);
+  }
+
+  // =========================================================
+  // ATTACHMENT VALIDATION
+  // =========================================================
+
+  private validateAndSelectFile(file: File): void {
+    this.errorMessage.set('');
+
+    if (!this.attachmentSettingsLoaded()) {
+      this.errorMessage.set(
+        'إعدادات المرفقات غير متاحة حاليًا، يرجى تحديث الصفحة والمحاولة مجددًا'
+      );
+      return;
+    }
+
+    const maxSizeMb = this.maxAttachmentSizeMb();
+    const maxBytes = maxSizeMb * 1024 * 1024;
+
+    const fileName = file.name.trim();
+
+    if (!fileName || fileName.startsWith('.')) {
+      this.errorMessage.set(
+        'اسم الملف غير صالح'
+      );
+      return;
+    }
+
+    const extension = fileName.includes('.')
+      ? fileName.split('.').pop()?.toLowerCase() ?? ''
+      : '';
+
+    const allowedExtensions = this.allowedExtensions()
+      .map(ext =>
+        String(ext)
+          .trim()
+          .replace(/^\./, '')
+          .toLowerCase()
+      )
+      .filter(Boolean);
+
+    if (!extension || !allowedExtensions.includes(extension)) {
+      this.errorMessage.set(
+        this.attachmentTypeError() ||
+        `نوع الملف غير مسموح. الامتدادات المقبولة: ${allowedExtensions.join(', ')}`
+      );
+      return;
+    }
+
+    if (file.size === 0) {
+      this.errorMessage.set(
+        'لا يمكن إرفاق ملف فارغ'
+      );
+      return;
+    }
+
+    if (file.size > maxBytes) {
+      const message =
+        this.attachmentSizeError() ||
+        `حجم الملف يتجاوز الحد المسموح (${maxSizeMb} MB)`;
+
+      this.errorMessage.set(
+        message
+          .replace(/\{maxSize\}/g, String(maxSizeMb))
+          .replace(/\{maxSizeMb\}/g, String(maxSizeMb))
+      );
+      return;
+    }
+
+    this.selectedFile = file;
+    this.successMessage.set('');
+  }
+
+  // =========================================================
+  // REMOVE ATTACHMENT
+  // =========================================================
+
+  removeFile(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.selectedFile = null;
+    this.errorMessage.set('');
+  }
+
+  // =========================================================
+  // FORM VALIDATION
+  // =========================================================
+
+  canSubmit(): boolean {
+    if (this.isSubmitting()) {
+      return false;
+    }
+
+    const receiverType = this.newConv.receiverType;
+    const subject = this.newConv.subject.trim();
+    const note = this.newConv.note.trim();
+    const firstMessage = this.newConv.firstMessage.trim();
+
+    if (!receiverType || !subject) {
+      return false;
+    }
+
+    switch (receiverType) {
+      case 'Trainer':
+        return (
+          this.newConv.trainerId != null &&
+          Number(this.newConv.trainerId) > 0 &&
+          note.length > 0
+        );
+
+      case 'Company':
+        return (
+          this.companyName().trim().length > 0 &&
+          note.length > 0
+        );
+
+      case 'Authority':
+        return firstMessage.length > 0;
+
+      default:
+        return false;
+    }
+  }
+
+  // =========================================================
+  // SEND REPLY
+  // =========================================================
+
+  send(): void {
+    if (this.isSendingReply) {
+      return;
+    }
+
+    const conversation = this.active();
+    const content = this.replyText.trim();
+    const userId = this.auth.userId;
+
+    if (!conversation || !content || !userId) {
+      return;
+    }
+
+    this.errorMessage.set('');
+
+    // Withdrawal requests use a separate backend workflow.
+    // Never display an unsaved reply as a persisted message.
+    if ((conversation as any).isWithdrawal === true) {
+      this.errorMessage.set(
+        'الرد على طلب الانسحاب غير متاح من هذه المحادثة. يرجى متابعة حالة الطلب من النظام.'
+      );
+      return;
+    }
+
+    const conversationId = Number(
+      conversation.conversationId
+    );
+
+    if (
+      !Number.isFinite(conversationId) ||
+      conversationId <= 0
+    ) {
+      this.errorMessage.set(
+        'رقم المحادثة غير صالح'
+      );
+      return;
+    }
+
+    this.isSendingReply = true;
+
+    this.api.sendMessage(conversationId, {
+      senderId: userId,
+      content
     }).subscribe({
       next: () => {
-        this.replyText = '';
-        this.open(conversation.conversationId);
+        if (
+          this.active()?.conversationId === conversationId
+        ) {
+          if (this.replyText.trim() === content) {
+            this.replyText = '';
+          }
+
+          this.open(conversationId);
+        }
+
+        this.isSendingReply = false;
       },
-      error: () => this.errorMessage.set('تعذر إرسال الرد')
+
+      error: (error: any) => {
+        console.error(
+          'Error sending reply:',
+          error
+        );
+
+        this.errorMessage.set(
+          error?.error?.message ||
+          'تعذر إرسال الرد، يرجى المحاولة مجددًا'
+        );
+
+        this.isSendingReply = false;
+      }
     });
   }
 
   // =========================================================
-  // Submit Logic
+  // SELECTED TRAINER
   // =========================================================
 
   private getSelectedTrainer(): TrainerDto | undefined {
-  const trainerId = this.newConv.trainerId;
+    const trainerId = this.newConv.trainerId;
 
-  if (!trainerId) return undefined;
+    if (!trainerId) {
+      return undefined;
+    }
 
-  return this.trainers().find(
-    t => Number(t.trainerId) === Number(trainerId)
-  );
-}
+    return this.trainers().find(
+      trainer =>
+        Number(trainer.trainerId) === Number(trainerId)
+    );
+  }
+
+  // =========================================================
+  // START CONVERSATION / SUBMIT REQUEST
+  // =========================================================
+
   startConversation(): void {
-    if (this.isSubmitting()) return;
+    if (this.isSubmitting()) {
+      return;
+    }
 
     this.errorMessage.set('');
     this.successMessage.set('');
 
-    if (!this.newConv.receiverType) {
-      this.errorMessage.set('يرجى اختيار الجهة المستلمة أولاً');
+    const receiverType = this.newConv.receiverType;
+    const subject = this.newConv.subject.trim();
+
+    if (!receiverType) {
+      this.errorMessage.set(
+        'يرجى اختيار الجهة المستلمة أولاً'
+      );
       return;
     }
 
     if (
-      this.newConv.receiverType === 'Trainer' &&
+      !['Trainer', 'Company', 'Authority'].includes(receiverType)
+    ) {
+      this.errorMessage.set(
+        'الجهة المستلمة غير صالحة'
+      );
+      return;
+    }
+
+    if (
+      receiverType === 'Trainer' &&
       !this.newConv.trainerId
     ) {
-      this.errorMessage.set('يرجى اختيار المدرب');
-      return;
-    }
-
-    if (!this.newConv.subject.trim()) {
-      this.errorMessage.set('يرجى كتابة نوع الطلب');
-      return;
-    }
-
-    if (
-      (this.newConv.receiverType === 'Trainer' ||
-        this.newConv.receiverType === 'Company') &&
-      !this.newConv.note.trim()
-    ) {
-      this.errorMessage.set('يرجى كتابة الملاحظة');
+      this.errorMessage.set(
+        'يرجى اختيار المدرب'
+      );
       return;
     }
 
     if (
-      this.newConv.receiverType === 'Authority' &&
-      !this.newConv.firstMessage.trim()
+      receiverType === 'Company' &&
+      !this.companyName().trim()
     ) {
-      this.errorMessage.set('يرجى كتابة تفاصيل الطلب');
+      this.errorMessage.set(
+        'لا توجد شركة مرتبطة بالمتدرب حاليًا'
+      );
       return;
     }
 
-    const uid = this.auth.userId;
-    if (!uid) {
-      this.errorMessage.set('تعذر تحديد المستخدم الحالي');
+    if (!subject) {
+      this.errorMessage.set(
+        'يرجى كتابة نوع الطلب'
+      );
       return;
     }
+
+    const messageContent =
+      receiverType === 'Trainer' ||
+      receiverType === 'Company'
+        ? this.newConv.note.trim()
+        : this.newConv.firstMessage.trim();
+
+    if (!messageContent) {
+      this.errorMessage.set(
+        receiverType === 'Authority'
+          ? 'يرجى كتابة تفاصيل الطلب'
+          : 'يرجى كتابة الملاحظة'
+      );
+      return;
+    }
+
+    const userId = this.auth.userId;
+
+    if (!userId) {
+      this.errorMessage.set(
+        'تعذر تحديد المستخدم الحالي'
+      );
+      return;
+    }
+
+    // =====================================================
+    // WITHDRAWAL REQUEST
+    // =====================================================
 
     if (
-      this.newConv.receiverType === 'Authority' &&
-      this.newConv.subject.trim() === 'طلب انسحاب'
+      receiverType === 'Authority' &&
+      subject === 'طلب انسحاب'
     ) {
+      if (this.selectedFile) {
+        this.errorMessage.set(
+          'إرفاق الملفات مع طلب الانسحاب غير مدعوم حاليًا'
+        );
+        return;
+      }
+
       this.submitWithdrawalRequest();
       return;
     }
 
+    // =====================================================
+    // ATTACHMENT CHECK
+    // =====================================================
+
+    if (
+      this.selectedFile &&
+      !this.attachmentSettingsLoaded()
+    ) {
+      this.errorMessage.set(
+        'إعدادات المرفقات غير متاحة حاليًا'
+      );
+      return;
+    }
+
+    if (this.selectedFile) {
+      const file = this.selectedFile;
+
+      const extension =
+        file.name.split('.').pop()?.toLowerCase() ?? '';
+
+      const allowed = this.allowedExtensions().map(
+        ext => ext.replace(/^\./, '').toLowerCase()
+      );
+
+      if (!allowed.includes(extension)) {
+        this.errorMessage.set(
+          this.attachmentTypeError() ||
+          'نوع الملف غير مسموح'
+        );
+        return;
+      }
+
+      if (
+        file.size === 0 ||
+        file.size >
+          this.maxAttachmentSizeMb() * 1024 * 1024
+      ) {
+        this.errorMessage.set(
+          'حجم الملف غير صالح أو يتجاوز الحد المسموح'
+        );
+        return;
+      }
+    }
+
+    // =====================================================
+    // CREATE REQUEST PAYLOAD
+    // =====================================================
+
     const selectedTrainer = this.getSelectedTrainer();
 
-    const messageContent =
-      this.newConv.receiverType === 'Trainer' ||
-      this.newConv.receiverType === 'Company'
-        ? this.newConv.note.trim()
-        : this.newConv.firstMessage.trim();
-
-        if (this.selectedFile && !this.attachmentSettingsLoaded()) {
-  this.errorMessage.set('إعدادات المرفقات غير متاحة حاليًا');
-  return;
-}
     const payload = {
       type: 'TraineeComplaint',
-      receiverType: this.newConv.receiverType,
+      receiverType,
+
       receiverTrainerId:
-        this.newConv.receiverType === 'Trainer'
+        receiverType === 'Trainer'
           ? this.newConv.trainerId
           : null,
+
       receiverTrainerName:
-        this.newConv.receiverType === 'Trainer'
-          ? (selectedTrainer?.fullName ?? '')
+        receiverType === 'Trainer'
+          ? selectedTrainer?.fullName ?? ''
           : null,
-      subject: this.newConv.subject.trim(),
+
+      subject,
+
       note:
-        this.newConv.receiverType === 'Trainer' ||
-        this.newConv.receiverType === 'Company'
+        receiverType === 'Trainer' ||
+        receiverType === 'Company'
           ? this.newConv.note.trim()
           : '',
+
       firstMessage: messageContent,
-      startedByUserId: uid,
+
+      startedByUserId: userId,
+
       attachment: this.selectedFile
     };
+
+    // =====================================================
+    // SEND TO BACKEND
+    // =====================================================
 
     this.isSubmitting.set(true);
 
     this.api.startConversation(payload).subscribe({
       next: () => {
-        this.successMessage.set('تم إرسال الطلب بنجاح');
-        this.resetForm();
-        this.updateConversationsList();
         this.isSubmitting.set(false);
-        setTimeout(() => this.successMessage.set(''), 4000);
+
+        this.successMessage.set(
+          'تم إرسال الطلب بنجاح'
+        );
+
+        this.resetForm();
+
+        // Reload complaints and withdrawal requests
+        // without losing withdrawal items.
+        this.loadConversations();
+
+        setTimeout(() => {
+          if (
+            this.successMessage() ===
+            'تم إرسال الطلب بنجاح'
+          ) {
+            this.successMessage.set('');
+          }
+        }, 4000);
       },
-      error: (err: any) => {
-        console.error('Error sending request:', err);
-        let message =
-          'حدث خطأ أثناء إرسال الطلب، يرجى المحاولة مرة أخرى';
-        if (err?.error?.message) message = err.error.message;
-        this.errorMessage.set(message);
+
+      error: (error: any) => {
+        console.error(
+          'Error submitting support request:',
+          error
+        );
+
+        const serverMessage = error?.error?.message;
+
+        this.errorMessage.set(
+          typeof serverMessage === 'string' &&
+          serverMessage.trim()
+            ? serverMessage
+            : 'حدث خطأ أثناء إرسال الطلب، يرجى المحاولة مرة أخرى'
+        );
+
         this.isSubmitting.set(false);
       }
     });
   }
 
+  // =========================================================
+  // SUBMIT WITHDRAWAL REQUEST
+  // =========================================================
+
   private submitWithdrawalRequest(): void {
     const traineeId = this.traineeId();
+
     if (!traineeId) {
-      this.errorMessage.set('تعذر تحديد بيانات المتدرب');
+      this.errorMessage.set(
+        'تعذر تحديد بيانات المتدرب'
+      );
       return;
     }
 
-    const hasAnyRequest = this.withdrawalRequests().length > 0;
-    if (hasAnyRequest) {
-      this.errorMessage.set('لا يمكنك تقديم طلب انسحاب جديد. لديك طلب انسحاب مسجل مسبقاً في النظام.');
+    if (this.withdrawalRequests().length > 0) {
+      this.errorMessage.set(
+        'لا يمكنك تقديم طلب انسحاب جديد. لديك طلب انسحاب مسجل مسبقًا في النظام.'
+      );
+      return;
+    }
+
+    const reason = this.newConv.firstMessage.trim();
+
+    if (!reason) {
+      this.errorMessage.set(
+        'يرجى كتابة سبب طلب الانسحاب'
+      );
       return;
     }
 
     this.isSubmitting.set(true);
-    (this.api as any).createWithdrawalRequest({
-      traineeId: traineeId,
-      reason: this.newConv.firstMessage.trim()
+
+    this.api.createWithdrawalRequest({
+      traineeId,
+      reason
     }).subscribe({
-      next: (res: any) => {
-        this.successMessage.set(res?.message ?? 'تم تقديم طلب الانسحاب بنجاح.');
-        this.resetForm();
-        this.loadWithdrawalRequests(traineeId);
+      next: (response: any) => {
         this.isSubmitting.set(false);
-        setTimeout(() => this.successMessage.set(''), 4000);
+
+        this.successMessage.set(
+          response?.message ||
+          'تم تقديم طلب الانسحاب بنجاح'
+        );
+
+        this.resetForm();
+
+        this.loadWithdrawalRequests(traineeId);
+
+        setTimeout(() => {
+          this.successMessage.set('');
+        }, 4000);
       },
-      error: (err: any) => {
-        console.error('Error creating withdrawal request:', err);
-        this.errorMessage.set(err?.error?.message ?? 'حدث خطأ أثناء تقديم طلب الانسحاب');
+
+      error: (error: any) => {
+        console.error(
+          'Error submitting withdrawal request:',
+          error
+        );
+
+        this.errorMessage.set(
+          error?.error?.message ||
+          'حدث خطأ أثناء تقديم طلب الانسحاب'
+        );
+
         this.isSubmitting.set(false);
       }
     });
   }
+
+  // =========================================================
+  // RESET FORM
+  // =========================================================
 
   private resetForm(): void {
     this.newConv = {
@@ -1282,6 +2126,8 @@ removeFile(event: Event): void {
       note: '',
       firstMessage: ''
     };
+
     this.selectedFile = null;
   }
-}
+
+} 
