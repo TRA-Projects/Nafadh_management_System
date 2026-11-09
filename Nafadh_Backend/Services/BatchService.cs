@@ -86,7 +86,7 @@ namespace Nafadh_Backend.Services
             return MapToDto(savedBatch ?? created, 0);
         }
 
-        
+
 
         public async Task<bool> UpdateAsync(int id, UpdateBatchDto dto)
         {
@@ -187,9 +187,12 @@ namespace Nafadh_Backend.Services
             foreach (var recipient in recipients)
                 _context.NFD_Notifications.Add(new NFD_Notification
                 {
-                    UserId = recipient, Title = title, Message = message,
+                    UserId = recipient,
+                    Title = title,
+                    Message = message,
                     RelatedEntity = cancelled ? $"BatchCancelled:{batch.BatchId}" : $"BatchAssignment:{batch.BatchId}",
-                    IsRead = false, CreatedAt = now
+                    IsRead = false,
+                    CreatedAt = now
                 });
             await _context.SaveChangesAsync();
         }
@@ -298,6 +301,7 @@ namespace Nafadh_Backend.Services
                 EndDate = b.EndDate,
                 Capacity = b.Capacity,
                 TotalTraineesCount = totalTrainees,
+                CompaniesCount = b.Enrollments?.Select(e => e.CompanyId).Distinct().Count() ?? 0,
                 IssuedCertificatesCount = completedCount,
                 Status = finalStatus,
                 Department = b.Program?.Category ?? "عام",
