@@ -584,7 +584,7 @@
           </option>
         </select>
 
-        <app-catalog-picker caption="حالة المشرف" [options]="supervisorChoices" [value]="supervisorStatusFilter" (valueChange)="supervisorStatusFilter = $event; applySupervisorFilters()" />
+        <app-catalog-picker class="custom-select-filter" caption="حالة المشرف" [options]="supervisorChoices" [value]="supervisorStatusFilter" (valueChange)="supervisorStatusFilter = $event; applySupervisorFilters()" />
 
         <button class="btn-reset-filters" *ngIf="supervisorSearchTerm ||
                supervisorCompanyFilter !== 'ALL' ||
@@ -1203,7 +1203,7 @@
 
             <!-- Attendance Status Filter -->
             <label for="attendance-status">حالة الحضور:</label>
-            <app-catalog-picker caption="حالة حضور المدرب" [options]="attendanceChoices" [value]="trainerAttendanceStatusFilter" (valueChange)="trainerAttendanceStatusFilter = $event" />
+            <app-catalog-picker class="custom-select-filter" inputId="attendance-status" caption="حالة حضور المدرب" [options]="attendanceChoices" [value]="trainerAttendanceStatusFilter" (valueChange)="trainerAttendanceStatusFilter = $event" />
 
             <!-- Confirmation Filter -->
             <label for="attendance-confirmation">حالة التأكيد:</label>

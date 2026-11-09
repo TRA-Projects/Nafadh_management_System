@@ -14,6 +14,7 @@ using Nafadh_Backend.Services;
 using Nafadh_Backend.Settings;
 using QuestPDF.Infrastructure;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 using System.Text;
 
 
@@ -69,9 +70,28 @@ namespace Nafadh_Backend
 
             // EF Core - SQL Server
             builder.Services.AddDbContext<Nafadhcontext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            {
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 
-            builder.Services.AddScoped<Nafadh_Backend.IdentityAccess.IIdentityAccessAdminService, Nafadh_Backend.IdentityAccess.IdentityAccessAdminService>();
+                // إخبار EF Core بتجاهل التغييرات المعلقة في جداول لا تخصنا (مثل Profiles)
+                options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+            });
+
+
+            // ASP.NET Identity services
+            // Keep the existing JWT authentication configuration unchanged.
+            builder.Services
+                .AddIdentityCore<Nafadh_Backend.IdentityAccess.AppUser>(options =>
+                {
+                    options.User.RequireUniqueEmail = true;
+                })
+                .AddRoles<Nafadh_Backend.IdentityAccess.Roles>()
+                .AddEntityFrameworkStores<Nafadhcontext>();
+
+            // Identity Access Administration
+            builder.Services.AddScoped<
+                Nafadh_Backend.IdentityAccess.IIdentityAccessAdminService,
+                Nafadh_Backend.IdentityAccess.IdentityAccessAdminService>();
 
             // ── JWT Authentication ─────────────────────────────────────────────
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -579,6 +599,30 @@ namespace Nafadh_Backend
                     RequestPath = trainerAttendanceProofsRequestPath
                 });
             }
+
+            // =====================================================
+            // EXTERNAL QUIZ ANSWER FILES
+            // =====================================================
+            var quizAnswersPath =
+                builder.Configuration["Storage:QuizAnswersPath"];
+
+            var quizAnswersRequestPath =
+                builder.Configuration["Storage:QuizAnswersRequestPath"]
+                ?? "/uploads/quiz-answers";
+
+            if (!string.IsNullOrWhiteSpace(quizAnswersPath))
+            {
+                Directory.CreateDirectory(quizAnswersPath);
+
+                app.UseStaticFiles(new StaticFileOptions
+                {
+                    FileProvider = new PhysicalFileProvider(quizAnswersPath),
+                    RequestPath = quizAnswersRequestPath
+                });
+            }
+
+            // Enable CORS middleware here
+            app.UseCors("AllowAll");
 
             // Enable CORS middleware here
             app.UseCors("AllowAll");

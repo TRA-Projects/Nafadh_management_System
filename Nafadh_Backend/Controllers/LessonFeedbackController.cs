@@ -1,5 +1,4 @@
 ﻿
-
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,8 +14,7 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly ILessonFeedbackService _service;
 
-        public LessonFeedbackController(
-            ILessonFeedbackService service)
+        public LessonFeedbackController(ILessonFeedbackService service)
         {
             _service = service;
         }
@@ -24,19 +22,19 @@ namespace Nafadh_Backend.Controllers
         [HttpGet("lesson/{lessonId:int}")]
         public async Task<IActionResult> Get(int lessonId)
         {
-            var userId = GetCurrentUserId();
+            if (!TryGetCurrentUserId(out var userId))
+                return Unauthorized(new
+                {
+                    message = "Valid user ID was not found in the authentication token."
+                });
 
-            var result = await _service.GetAsync(
-                userId,
-                lessonId);
+            var result = await _service.GetAsync(userId, lessonId);
 
             if (result == null)
-            {
                 return NotFound(new
                 {
                     message = "No feedback found for this lesson."
                 });
-            }
 
             return Ok(result);
         }
@@ -46,12 +44,14 @@ namespace Nafadh_Backend.Controllers
             int lessonId,
             [FromBody] LessonFeedbackCreateDTO dto)
         {
-            var userId = GetCurrentUserId();
+            if (!TryGetCurrentUserId(out var userId))
+                return Unauthorized(new
+                {
+                    message = "Valid user ID was not found in the authentication token."
+                });
 
             var result = await _service.CreateAsync(
-                userId,
-                lessonId,
-                dto);
+                userId, lessonId, dto);
 
             return CreatedAtAction(
                 nameof(Get),
@@ -64,28 +64,25 @@ namespace Nafadh_Backend.Controllers
             int lessonId,
             [FromBody] LessonFeedbackUpdateDTO dto)
         {
-            var userId = GetCurrentUserId();
+            if (!TryGetCurrentUserId(out var userId))
+                return Unauthorized(new
+                {
+                    message = "Valid user ID was not found in the authentication token."
+                });
 
             var result = await _service.UpdateAsync(
-                userId,
-                lessonId,
-                dto);
+                userId, lessonId, dto);
 
             return Ok(result);
         }
 
-        private int GetCurrentUserId()
+        private bool TryGetCurrentUserId(out int userId)
         {
             var userIdValue =
                 User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if (!int.TryParse(userIdValue, out var userId))
-            {
-                throw new UnauthorizedAccessException(
-                    "User ID was not found in the authentication token.");
-            }
-
-            return userId;
+            return int.TryParse(userIdValue, out userId)
+                   && userId > 0;
         }
     }
 }

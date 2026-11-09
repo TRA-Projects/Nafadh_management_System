@@ -21,6 +21,9 @@ namespace Nafadh_Backend.Repositories
                 .Include(q => q.QuizQuestions)
                     .ThenInclude(qq => qq.Question)
                         .ThenInclude(q => q.Options)
+                        .Include(q => q.QuizQuestions)
+    .ThenInclude(qq => qq.Question)
+        .ThenInclude(q => q.Attachments)
                 .FirstOrDefaultAsync(q =>
                     q.QuizId == quizId);
         }
@@ -65,6 +68,9 @@ namespace Nafadh_Backend.Repositories
                 .Include(a => a.AttemptQuestions)
                     .ThenInclude(aq => aq.Question)
                         .ThenInclude(q => q.Options)
+                        .Include(a => a.AttemptQuestions)
+    .ThenInclude(aq => aq.Question)
+        .ThenInclude(q => q.Attachments)
                 .Include(a => a.AttemptQuestions)
                     .ThenInclude(aq => aq.Answers)
                 .FirstOrDefaultAsync(a =>

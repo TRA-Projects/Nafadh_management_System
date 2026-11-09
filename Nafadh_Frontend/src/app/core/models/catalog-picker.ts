@@ -17,6 +17,9 @@ export interface CatalogChoice<K extends string = string> {
       [attr.aria-activedescendant]="open && cursor >= 0 ? listId + '-' + cursor : null"
       [value]="open ? query : selectedLabel" (focus)="begin()" (click)="begin()"
       (input)="search($any($event.target).value)" (keydown)="onKey($event)" (blur)="close()" />
+    @if (showArrow) {
+      <svg class="arrow" viewBox="0 0 12 8" aria-hidden="true"><path d="m1 1 5 5 5-5" /></svg>
+    }
     @if (open) {
       <ul role="listbox" [id]="listId" [attr.aria-label]="caption">
         @for (option of results; track option.value; let i = $index) {
@@ -29,10 +32,27 @@ export interface CatalogChoice<K extends string = string> {
       @if (!results.length) { <span role="status">لا توجد نتائج مطابقة</span> }
     }
   `,
-  styles: [`:host{display:block;position:relative}input{width:100%;font:inherit;padding:.45em}
-    ul{position:absolute;z-index:10;max-height:14rem;overflow:auto;background:white;color:#182335;width:100%;
-    margin:0;padding:0;list-style:none;border:1px solid #aaa}li{padding:.4em;cursor:pointer}
-    li:hover,li.highlight{background:#e5f0ff}`]
+  host: { '[class.catalog-disabled]': 'disabled' },
+  styles: [`
+    /* The host keeps the original page's select classes, dimensions and states. */
+    :host{display:inline-flex;align-items:center;position:relative;box-sizing:border-box;min-width:0;text-align:start}
+    input{appearance:none;box-sizing:border-box;display:block;flex:1;width:100%;min-width:0;
+      margin:0;padding:0;border:0;border-radius:0;outline:0;background:transparent;color:inherit;
+      font:inherit;line-height:inherit;text-align:inherit;direction:inherit;box-shadow:none}
+    input::-webkit-search-cancel-button,input::-webkit-search-decoration{appearance:none}
+    .arrow{width:12px;height:8px;flex:none;margin-inline-start:8px;pointer-events:none;fill:none;stroke:currentColor;stroke-width:1.5}
+    :host(.catalog-disabled){opacity:.6;cursor:not-allowed}
+    input:disabled{cursor:not-allowed}
+    ul{position:absolute;inset-inline-start:0;top:100%;z-index:1000;box-sizing:border-box;
+      min-width:100%;width:max-content;max-width:min(32rem,90vw);max-height:14rem;overflow:auto;
+      background:var(--surface,#fff);color:var(--text-primary,#182335);margin:4px 0 0;padding:4px;
+      list-style:none;border:1px solid #cbd5e1;border-radius:inherit;text-align:start;
+      box-shadow:0 4px 12px rgb(15 23 42 / 12%)}
+    li{padding:8px 12px;cursor:pointer;white-space:normal}
+    li:hover,li.highlight{background:#e5f0ff}
+    [role=status]{position:absolute;inset-inline-start:0;top:100%;z-index:1000;background:#fff;
+      color:#475569;padding:8px 12px;border:1px solid #cbd5e1;min-width:100%;box-sizing:border-box}
+  `]
 })
 export class CatalogPicker<K extends string = string> {
   private static nextId = 0;
@@ -43,6 +63,7 @@ export class CatalogPicker<K extends string = string> {
   @Input() caption = 'ابحث واختر قيمة';
   @Input() fallbackLabel = '';
   @Input() disabled = false;
+  @Input() showArrow = true;
   @Output() readonly valueChange = new EventEmitter<K>();
   open = false;
   query = '';

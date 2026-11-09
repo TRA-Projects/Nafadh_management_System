@@ -1,10 +1,14 @@
-
+using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Nafadh_Backend.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.Services
 {
@@ -51,6 +55,27 @@ namespace Nafadh_Backend.Services
                 new("roleId", user.RoleId.ToString()),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+
+            // The company ID must come from the database, not from a client request.
+            if (string.Equals(user.Role?.RoleName, "CompanySupervisor", StringComparison.Ordinal))
+            {
+                // Verify the entity name and properties against your project's actual model.
+                var companyIds = await _context.Set<NFD_CompanySupervisor>()
+                    .AsNoTracking()
+                    .Where(s => s.UserId == user.UserId)
+                    .Select(s => s.CompanyId)
+                    .Distinct()
+                    .Take(2)
+                    .ToListAsync();
+
+                if (companyIds.Count != 1)
+                {
+                    throw new InvalidOperationException(
+                        "Company supervisor must belong to exactly one company.");
+                }
+
+                claims.Add(new Claim("companyId", companyIds[0].ToString()));
+            }
 
             var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
             var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);

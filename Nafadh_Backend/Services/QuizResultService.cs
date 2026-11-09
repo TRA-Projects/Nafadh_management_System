@@ -1,4 +1,3 @@
-﻿
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +23,8 @@ namespace Nafadh_Backend.Services
 
         Task<List<QuizResultDto>> GetAdminTraineeResultsAsync(
             int traineeId);
+
+        Task<List<QuizResultDto>> GetCompanyEnrollmentResultsAsync(int enrollmentId);
 
         Task<QuizAttemptDetailsDto> GetTrainerAttemptDetailsAsync(
             int attemptId,
@@ -205,6 +206,17 @@ namespace Nafadh_Backend.Services
                 .ToList();
         }
 
+        // Company Portal: show only completed, fully graded results from
+        // quizzes in the enrollment's batch (not other batches for the trainee).
+        public async Task<List<QuizResultDto>> GetCompanyEnrollmentResultsAsync(int enrollmentId)
+        {
+            var attempts = await _repository.GetCompanyEnrollmentResultsAsync(enrollmentId);
+            return attempts
+                .Where(a => IsGradingCompleted(a))
+                .Select(MapResult)
+                .ToList();
+        }
+
         // ==========================================
         // 4. تفاصيل المحاولة للمدرب
         // ==========================================
@@ -289,6 +301,10 @@ namespace Nafadh_Backend.Services
                                 answer?.SelectedOption?.OptionText,
 
                             TextAnswer = answer?.TextAnswer,
+
+                            // 🟢 إضافة حقول الملفات هنا
+                            FileUrl = answer?.FileUrl,
+                            OriginalFileName = answer?.OriginalFileName,
 
                             MaxPoints = aq.Points,
 

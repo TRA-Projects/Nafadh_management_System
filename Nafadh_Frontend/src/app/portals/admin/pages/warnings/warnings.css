@@ -615,7 +615,7 @@
   gap: 16px;
 }
 
-.modal-body select, .modal-body input[type="text"], .modal-body textarea {
+.modal-body :is(select, app-catalog-picker), .modal-body input[type="text"], .modal-body textarea {
   width: 100%;
   padding: 10px 14px;
   border: 1px solid #cbd5e1;
@@ -626,7 +626,7 @@
   outline: none;
 }
 
-.modal-body select:focus, .modal-body input:focus, .modal-body textarea:focus {
+.modal-body :is(select, app-catalog-picker):focus-within, .modal-body input:focus, .modal-body textarea:focus {
   border-color: #1d4ed8;
 }
 

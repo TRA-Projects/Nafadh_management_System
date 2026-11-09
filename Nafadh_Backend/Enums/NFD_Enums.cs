@@ -224,7 +224,8 @@ namespace Nafadh_Backend.Enums
     {
         MultipleChoice,
         TrueFalse,
-        Essay
+        Essay,
+        FileUpload
     }
 
     public enum NFD_QuestionDifficulty

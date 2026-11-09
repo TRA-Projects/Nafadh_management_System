@@ -25,7 +25,7 @@
     <div class="filter-grid">
       <div class="filter-group">
         <label for="filterType">نوع التقييم</label>
-        <app-catalog-picker inputId="filterType" caption="نوع التقييم" [options]="filterChoices"
+        <app-catalog-picker class="form-control" inputId="filterType" caption="نوع التقييم" [options]="filterChoices"
           [(value)]="filterType" />
       </div>
 
@@ -224,7 +224,7 @@
       <div class="form-grid">
         <div class="filter-group">
           <label for="formType">نوع التقييم</label>
-          <app-catalog-picker inputId="formType" caption="نوع التقييم" [options]="types"
+          <app-catalog-picker class="form-control" inputId="formType" caption="نوع التقييم" [options]="types"
             [(value)]="form.type" [fallbackLabel]="isEditingInactiveOriginalType() ? typeLabel(form.type) + ' (غير نشط)' : ''" />
         </div>
 

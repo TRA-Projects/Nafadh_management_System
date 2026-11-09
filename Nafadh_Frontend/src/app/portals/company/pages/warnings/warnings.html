@@ -165,7 +165,7 @@
 
       <div class="filter-field">
         <label for="warningStatus">الحالة</label>
-        <app-catalog-picker caption="حالة الإنذار" [options]="warningStatusChoices" [value]="selectedStatus" (valueChange)="selectedStatus = $event" />
+        <app-catalog-picker inputId="warningStatus" caption="حالة الإنذار" [options]="warningStatusChoices" [value]="selectedStatus" (valueChange)="selectedStatus = $event" />
       </div>
 
       <button

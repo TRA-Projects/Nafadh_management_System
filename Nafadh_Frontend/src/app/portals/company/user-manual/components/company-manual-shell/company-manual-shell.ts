@@ -89,6 +89,8 @@ export class CompanyManualShell implements OnDestroy {
     else if (section === 'tasks' && parts.length === 2) key = 'tasks';
     else if (section === 'tasks' && parts.length === 3) key = 'workspace';
     else if (section === 'profile' && parts.length === 2) key = 'profile';
+    else if (section === 'employees' && parts.length === 2) key = 'employees';
+    else if (section === 'supervisors' && parts.length === 2) key = 'supervisors';
     else if (section === 'trainees' && parts.length === 2) key = 'trainees';
     else if (section === 'trainees' && parts.length === 4 && parts[3] === 'progress') key = 'trainee-progress';
     else if (section === 'contact' && parts.length === 2) key = 'contact';

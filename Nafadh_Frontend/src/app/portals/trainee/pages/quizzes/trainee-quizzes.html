@@ -1,4 +1,3 @@
-
 <div class="quizzes-page" dir="rtl">
 
   <!-- ========================================== -->
@@ -113,7 +112,6 @@
                   <button type="button" class="secondary-btn full-width" disabled><i class="fa-solid fa-hourglass-half"></i> بانتظار التصحيح</button>
                 }
                 @case ('Completed') {
-                  <!-- تم التعديل: يفتح سجل المحاولات -->
                   <button type="button" class="primary-btn full-width" (click)="openAttemptsModal(quiz)"><i class="fa-solid fa-chart-column"></i> عرض النتائج</button>
                   @if (quiz.attemptsRemaining > 0) {
                     <button type="button" class="secondary-btn full-width" (click)="onRetryQuiz(quiz)"><i class="fa-solid fa-rotate-right"></i> إعادة المحاولة</button>
@@ -174,7 +172,7 @@
 
         @if (selectedQuiz()?.cameraRequired) {
           <div class="camera-preview-box">
-            <video #videoElement autoplay playsinline [class.active]="isCameraReady()"></video>
+            <video #previewVideo autoplay playsinline [class.active]="isCameraReady()"></video>
             @if (!isCameraReady()) {
               <div class="camera-overlay">
                 <i class="fa-solid fa-video-slash"></i>
@@ -208,7 +206,7 @@
     <!-- Floating Camera -->
     @if (selectedQuiz()?.cameraRequired) {
       <div class="floating-camera">
-        <video #videoElement autoplay playsinline muted class="floating-video"></video>
+        <video #floatingVideo autoplay playsinline muted class="floating-video"></video>
         <div class="camera-indicator">
           <i class="fa-solid fa-circle text-danger fa-fade"></i> جاري المراقبة
         </div>
@@ -232,6 +230,7 @@
             </div>
             <h3 class="q-text">{{ q.questionText }}</h3>
 
+            <!-- 1. Multiple Choice & True False -->
             @if ($any(q.questionType) === 0 || $any(q.questionType) === 1 || $any(q.questionType) === 'MultipleChoice' || $any(q.questionType) === 'TrueFalse') {
               <div class="options-list">
                 @for (opt of q.options; track opt.optionId) {
@@ -246,11 +245,79 @@
               </div>
             }
 
+            <!-- 2. Essay -->
             @if ($any(q.questionType) === 2 || $any(q.questionType) === 'Essay') {
               <textarea class="essay-input" rows="4" placeholder="اكتب إجابتك هنا..."
                         [ngModel]="answers[q.attemptQuestionId]?.textAnswer"
                         (ngModelChange)="onEssayChange(q.attemptQuestionId, $event)"
                         (blur)="onEssayBlur(q.attemptQuestionId)"></textarea>
+            }
+
+            <!-- 3. File Upload -->
+            @if (isFileUploadQuestion(q)) {
+              <div class="file-upload-question">
+
+                <!-- عرض الملف المرفوع مسبقاً (عند استئناف المحاولة) -->
+                @if (answers[q.attemptQuestionId]?.uploadedFile) {
+                  <div class="uploaded-file-preview">
+                    <div class="file-info">
+                      <i class="fa-solid" [ngClass]="getFileIcon(answers[q.attemptQuestionId]?.uploadedFile?.fileName)"></i>
+                      <div>
+                        <strong>{{ answers[q.attemptQuestionId]?.uploadedFile?.fileName }}</strong>
+                        <span>{{ formatFileSize(answers[q.attemptQuestionId]?.uploadedFile?.fileSize) }} - تم الرفع بنجاح</span>
+                      </div>
+                    </div>
+                    <button type="button" class="remove-file-btn"
+                            (click)="removeUploadedFile(q.attemptQuestionId)"
+                            [disabled]="uploadingForQuestion[q.attemptQuestionId]">
+                      <i class="fa-solid fa-xmark"></i>
+                      إزالة
+                    </button>
+                  </div>
+                }
+
+                <!-- منطقة رفع الملف -->
+                @if (!answers[q.attemptQuestionId]?.uploadedFile && !uploadingForQuestion[q.attemptQuestionId]) {
+                  <label class="file-drop-zone"
+                         [class.dragging]="draggingForQuestion[q.attemptQuestionId]"
+                         (dragover)="onFileDragOver($event, q.attemptQuestionId)"
+                         (dragleave)="onFileDragLeave($event, q.attemptQuestionId)"
+                         (drop)="onFileDrop($event, q)"
+                         (click)="allowFileUploadGracePeriod()"> <!-- 🟢 تفعيل فترة السماح -->
+
+                    <input type="file"
+                           [accept]="getAcceptedFileTypes(q)"
+                           (change)="onFileSelected($event, q)"
+                           hidden />
+
+                    <div class="drop-zone-content">
+                      <i class="fa-solid fa-cloud-arrow-up"></i>
+                      <strong>اسحب الملف هنا أو اضغط للاختيار</strong>
+                      <span>{{ getFileUploadHint(q) }}</span>
+                    </div>
+                  </label>
+                }
+
+                <!-- حالة الرفع -->
+                @if (uploadingForQuestion[q.attemptQuestionId]) {
+                  <div class="upload-progress">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <span>جاري رفع الملف...</span>
+                    <div class="progress-bar">
+                      <span [style.width.%]="uploadProgressForQuestion[q.attemptQuestionId] || 0"></span>
+                    </div>
+                  </div>
+                }
+
+                <!-- رسالة خطأ خاصة بالسؤال -->
+                @if (fileErrors[q.attemptQuestionId]) {
+                  <div class="file-error-text">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    {{ fileErrors[q.attemptQuestionId] }}
+                  </div>
+                }
+
+              </div>
             }
           </div>
         }
@@ -260,7 +327,8 @@
         <h3>حالة الأسئلة</h3>
         <div class="q-grid">
           @for (q of questions(); track q.attemptQuestionId; let i = $index) {
-            <div class="q-box" [class.answered]="answers[q.attemptQuestionId]?.selectedOptionId || answers[q.attemptQuestionId]?.textAnswer">
+            <div class="q-box" 
+                 [class.answered]="answers[q.attemptQuestionId]?.selectedOptionId || answers[q.attemptQuestionId]?.textAnswer || answers[q.attemptQuestionId]?.uploadedFile">
               {{ i + 1 }}
             </div>
           }

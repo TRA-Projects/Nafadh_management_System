@@ -184,7 +184,7 @@
   transition: all 0.2s;
 }
 
-.custom-select-filter:focus {
+.custom-select-filter:focus-within {
   border-color: #0D1C8C;
 }
 
@@ -1639,7 +1639,7 @@
   font-size: 12px;
 }
 
-.trainer-attendance-topbar .custom-select-filter:focus {
+.trainer-attendance-topbar .custom-select-filter:focus-within {
   outline: none;
   border-color: #0D1C8C;
   box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.08);

@@ -108,6 +108,7 @@ const values = {
     { key: 'MultipleChoice', label: 'اختيار من متعدد' },
     { key: 'TrueFalse', label: 'صح أو خطأ' },
     { key: 'Essay', label: 'سؤال مقالي' },
+    { key: 'FileUpload', label: 'رفع ملف' },
   ],
   NFD_WRN_LVL: [
     { key: 'Low', label: 'منخفض' },
