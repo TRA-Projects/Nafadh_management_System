@@ -40,6 +40,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_Quiz> NFD_Quizzes { get; set; }
 
         public DbSet<NFD_QuestionBank> NFD_QuestionBanks { get; set; }
+        public DbSet<NFD_QuestionAttachment> NFD_QuestionAttachments { get; set; }
 
         public DbSet<NFD_QuestionOption> NFD_QuestionOptions { get; set; }
 
@@ -1136,9 +1137,36 @@ namespace Nafadh_Backend
                     .WithMany()
                     .HasForeignKey(e => e.TrainerId)
                     .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Module)
+       .WithMany()
+       .HasForeignKey(e => e.ModuleId)
+       .OnDelete(DeleteBehavior.Restrict);
 
                 entity.Property(e => e.QuestionText)
                     .IsRequired();
+            });
+
+            modelBuilder.Entity<NFD_QuestionAttachment>(entity =>
+            {
+                entity.ToTable("NFD_QuestionAttachments");
+
+                entity.HasKey(e => e.QuestionAttachmentId);
+
+                entity.Property(e => e.FileName)
+                    .HasMaxLength(255)
+                    .IsRequired();
+
+                entity.Property(e => e.FileUrl)
+                    .HasMaxLength(1000)
+                    .IsRequired();
+
+                entity.Property(e => e.UploadedAt)
+                    .IsRequired();
+
+                entity.HasOne(e => e.Question)
+                    .WithMany(q => q.Attachments)
+                    .HasForeignKey(e => e.QuestionId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<NFD_QuestionOption>(entity =>

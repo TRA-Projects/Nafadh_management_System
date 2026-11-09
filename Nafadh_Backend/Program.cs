@@ -267,6 +267,8 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
 
             builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
+            builder.Services.AddScoped<IQuestionAttachmentRepository, QuestionAttachmentRepository>();
+            builder.Services.AddScoped<IQuestionAttachmentService, QuestionAttachmentService>();
             builder.Services.AddScoped<IQuizQuestionRepository, QuizQuestionRepository>();
 
             builder.Services.AddScoped<IQuizQuestionService, QuizQuestionService>();
@@ -405,6 +407,35 @@ namespace Nafadh_Backend
                 }
                 );
             }
+            // =====================================================
+            // EXTERNAL QUESTION ATTACHMENTS
+            // =====================================================
+
+            var questionAttachmentsPath =
+                builder.Configuration["Storage:QuestionAttachmentsPath"];
+
+            var questionAttachmentsRequestPath =
+                builder.Configuration[
+                    "Storage:QuestionAttachmentsRequestPath"]
+                ?? "/uploads/question-attachments";
+
+            if (!string.IsNullOrWhiteSpace(questionAttachmentsPath))
+            {
+                Directory.CreateDirectory(questionAttachmentsPath);
+
+                app.UseStaticFiles(
+                    new StaticFileOptions
+                    {
+                        FileProvider =
+                            new PhysicalFileProvider(
+                                questionAttachmentsPath),
+
+                        RequestPath =
+                            questionAttachmentsRequestPath
+                    }
+                );
+            }
+
             // =====================================================
             // EXTERNAL TRAINER PROFILE IMAGES
             // =====================================================
