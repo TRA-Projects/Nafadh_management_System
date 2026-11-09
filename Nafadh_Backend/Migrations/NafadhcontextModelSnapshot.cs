@@ -167,7 +167,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AppPages");
+                    b.ToTable("AppPages", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.AppUser", b =>
@@ -354,7 +354,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Organizations");
+                    b.ToTable("Organizations", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.Profile", b =>
@@ -418,7 +418,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Profiles");
+                    b.ToTable("Profiles", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.RolePage", b =>
@@ -448,7 +448,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRolePages");
+                    b.ToTable("AspNetRolePages", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.Roles", b =>
@@ -552,7 +552,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SystemAuditTrails");
+                    b.ToTable("SystemAuditTrails", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.UserGroup", b =>
@@ -597,7 +597,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("UserTypeId");
 
-                    b.ToTable("UserGroups");
+                    b.ToTable("UserGroups", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.UserType", b =>
@@ -634,7 +634,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserTypes");
+                    b.ToTable("UserTypes", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Announcement", b =>
@@ -1128,7 +1128,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("NFD_ConversationGroupMembers");
+                    b.ToTable("NFD_ConversationGroupMembers", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlan", b =>
@@ -3338,7 +3338,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("TraineeId");
 
-                    b.ToTable("NFD_TraineeSkills");
+                    b.ToTable("NFD_TraineeSkills", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Trainer", b =>
@@ -3437,7 +3437,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("TrainerId");
 
-                    b.ToTable("NFD_TrainerAttendances");
+                    b.ToTable("NFD_TrainerAttendances", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerCertificate", b =>
@@ -3696,7 +3696,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("TraineeId");
 
-                    b.ToTable("NFD_WithdrawalRequests");
+                    b.ToTable("NFD_WithdrawalRequests", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.RemediationRequest", b =>
