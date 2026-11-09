@@ -554,7 +554,7 @@ export class TraineeProgram implements OnInit {
       };
     });
 
-    this.modules.set(updatedModules);
+    this.modules.set(this.restoreLocallyCompletedLessons(updatedModules));
   }
 
   // =====================================================
@@ -745,7 +745,9 @@ export class TraineeProgram implements OnInit {
     this.lessonViewerVisible.set(false);
     this.lessonViewerUrl.set(null);
 
-    this.lessonVideoCompleted.set(false);
+    this.lessonVideoCompleted.set(
+      lesson.progressPercentage === 100
+    );
     this.lessonSidebarTab.set('notes');
     this.lessonNote.set('');
     this.lessonRating.set(0);
@@ -832,7 +834,9 @@ export class TraineeProgram implements OnInit {
       this.sanitizer.bypassSecurityTrustUrl(url)
     );
 
-    this.lessonVideoCompleted.set(false);
+    this.lessonVideoCompleted.set(
+      lesson.progressPercentage === 100
+    );
     this.lessonViewerVisible.set(true);
     this.lessonSidebarTab.set('notes');
     this.showLessonSidebar.set(true);
@@ -865,6 +869,8 @@ export class TraineeProgram implements OnInit {
 
     if (!id || Number.isNaN(id)) return;
 
+    this.saveLocallyCompletedLesson(id);
+
     this.modules.update(modules =>
       modules.map(module => ({
         ...module,
@@ -878,6 +884,18 @@ export class TraineeProgram implements OnInit {
         )
       }))
     );
+
+    const selectedLesson = this.selectedLesson();
+
+    if (
+      selectedLesson &&
+      Number(selectedLesson.lessonId) === id
+    ) {
+      this.selectedLesson.set({
+        ...selectedLesson,
+        progressPercentage: 100
+      });
+    }
 
     this.calculateStats();
   }
@@ -1019,6 +1037,9 @@ export class TraineeProgram implements OnInit {
     this.lessonViewerVisible.set(false);
     this.lessonViewerUrl.set(null);
 
+    this.lessonVideoCompleted.set(
+      lesson.progressPercentage === 100
+    );
     this.lessonNote.set('');
     this.lessonRating.set(0);
     this.lessonFeedbackExists.set(false);
@@ -1043,7 +1064,11 @@ export class TraineeProgram implements OnInit {
       return;
     }
 
-    if (!this.lessonVideoCompleted()) {
+    const completed =
+      this.lessonVideoCompleted() ||
+      lesson.progressPercentage === 100;
+
+    if (!completed) {
       this.showRatingTooltip(lesson.lessonId);
       return;
     }
@@ -1051,6 +1076,7 @@ export class TraineeProgram implements OnInit {
     this.ratingTooltipLessonId.set(null);
     this.selectedLesson.set(lesson);
     this.selectedModule.set(module);
+    this.lessonVideoCompleted.set(true);
     this.lessonSidebarTab.set('rating');
     this.lessonViewerVisible.set(false);
     this.lessonViewerUrl.set(null);
@@ -1084,7 +1110,7 @@ export class TraineeProgram implements OnInit {
 
         this.lessonFeedbackExists.set(true);
         this.lessonNote.set(feedback.note ?? '');
-        this.lessonRating.set(feedback.rating ?? 0);
+        this.lessonRating.set(Number(feedback.rating ?? 0));
         this.lessonFeedbackLoading.set(false);
       },
 
@@ -1119,10 +1145,11 @@ export class TraineeProgram implements OnInit {
 
     if (!lesson) return;
 
-    if (
-      tab === 'rating' &&
-      !this.lessonVideoCompleted()
-    ) {
+    const completed =
+      this.lessonVideoCompleted() ||
+      lesson.progressPercentage === 100;
+
+    if (tab === 'rating' && !completed) {
       this.showNotification(
         'يجب إكمال مشاهدة الفيديو أولاً قبل تقييم الدرس.',
         'error'
@@ -1193,14 +1220,12 @@ export class TraineeProgram implements OnInit {
       next: feedback => {
         this.lessonFeedbackExists.set(true);
         this.lessonNote.set(feedback.note ?? '');
-        this.lessonRating.set(feedback.rating ?? 0);
+        this.lessonRating.set(Number(feedback.rating ?? 0));
 
         this.showNotification(
           'تم حفظ ملاحظتك بنجاح.',
           'success'
         );
-
-        // Keep sidebar open after saving notes.
       },
 
       error: error => {
@@ -1228,7 +1253,11 @@ export class TraineeProgram implements OnInit {
   selectLessonRating(rating: number): void {
     const lesson = this.selectedLesson();
 
-    if (lesson && !this.lessonVideoCompleted()) {
+    const completed =
+      this.lessonVideoCompleted() ||
+      lesson?.progressPercentage === 100;
+
+    if (lesson && !completed) {
       this.showNotification(
         'يجب إكمال مشاهدة الفيديو أولاً قبل تقييم الدرس.',
         'error'
@@ -1249,7 +1278,11 @@ export class TraineeProgram implements OnInit {
 
     if (!lesson) return;
 
-    if (!this.lessonVideoCompleted()) {
+    const completed =
+      this.lessonVideoCompleted() ||
+      lesson.progressPercentage === 100;
+
+    if (!completed) {
       this.showNotification(
         'يجب إكمال مشاهدة الفيديو أولاً قبل تقييم الدرس.',
         'error'
@@ -1280,7 +1313,7 @@ export class TraineeProgram implements OnInit {
       next: feedback => {
         this.lessonFeedbackExists.set(true);
         this.lessonNote.set(feedback.note ?? '');
-        this.lessonRating.set(feedback.rating ?? 0);
+        this.lessonRating.set(Number(feedback.rating ?? rating));
 
         this.showNotification(
           'تم إرسال تقييمك بنجاح.',
@@ -1306,6 +1339,96 @@ export class TraineeProgram implements OnInit {
         }
       }
     });
+  }
+
+  // =====================================================
+  // LOCAL LESSON COMPLETION STORAGE
+  // =====================================================
+
+  private getCompletedLessonsStorageKey(): string | null {
+    const traineeId = this.traineeId();
+    const programId = this.programId();
+
+    if (!traineeId || !programId) {
+      return null;
+    }
+
+    return `nafadh_completed_lessons_${traineeId}_${programId}`;
+  }
+
+  private getLocallyCompletedLessonIds(): number[] {
+    const key = this.getCompletedLessonsStorageKey();
+
+    if (!key) return [];
+
+    try {
+      const saved = localStorage.getItem(key);
+
+      if (!saved) return [];
+
+      const parsed: unknown = JSON.parse(saved);
+
+      if (!Array.isArray(parsed)) return [];
+
+      return parsed
+        .map(value => Number(value))
+        .filter(value =>
+          Number.isInteger(value) && value > 0
+        );
+    } catch (error) {
+      console.warn(
+        'Unable to restore completed lessons:',
+        error
+      );
+      return [];
+    }
+  }
+
+  private saveLocallyCompletedLesson(lessonId: number): void {
+    const key = this.getCompletedLessonsStorageKey();
+
+    if (!key) return;
+
+    try {
+      const completedIds = new Set(
+        this.getLocallyCompletedLessonIds()
+      );
+
+      completedIds.add(Number(lessonId));
+
+      localStorage.setItem(
+        key,
+        JSON.stringify([...completedIds])
+      );
+    } catch (error) {
+      console.warn(
+        'Unable to save completed lesson locally:',
+        error
+      );
+    }
+  }
+
+  private restoreLocallyCompletedLessons(
+    modules: ModuleWithLessonsDto[]
+  ): ModuleWithLessonsDto[] {
+    const completedIds = new Set(
+      this.getLocallyCompletedLessonIds()
+    );
+
+    if (!completedIds.size) {
+      return modules;
+    }
+
+    return modules.map(module => ({
+      ...module,
+      lessons: module.lessons?.map(lesson => ({
+        ...lesson,
+        progressPercentage:
+          completedIds.has(Number(lesson.lessonId))
+            ? 100
+            : lesson.progressPercentage
+      }))
+    }));
   }
 
   // =====================================================
