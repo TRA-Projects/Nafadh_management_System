@@ -3548,6 +3548,48 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_TrainerCertificates", (string)null);
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerProjectGrade", b =>
+                {
+                    b.Property<int>("TrainerProjectGradeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TrainerProjectGradeId"));
+
+                    b.Property<int>("EnrollmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Feedback")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("GradedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Score")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int>("TrainerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("TrainerProjectGradeId");
+
+                    b.HasIndex("EnrollmentId");
+
+                    b.HasIndex("TrainerId");
+
+                    b.HasIndex("ProjectId", "EnrollmentId")
+                        .IsUnique();
+
+                    b.ToTable("NFD_TrainerProjectGrades", (string)null);
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainingMaterial", b =>
                 {
                     b.Property<int>("MaterialId")
@@ -5190,6 +5232,33 @@ namespace Nafadh_Backend.Migrations
                         .HasForeignKey("TrainerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Trainer");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerProjectGrade", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Enrollment", "Enrollment")
+                        .WithMany()
+                        .HasForeignKey("EnrollmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
+                        .WithMany()
+                        .HasForeignKey("TrainerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Enrollment");
+
+                    b.Navigation("Project");
 
                     b.Navigation("Trainer");
                 });
