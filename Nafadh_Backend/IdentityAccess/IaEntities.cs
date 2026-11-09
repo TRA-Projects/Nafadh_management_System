@@ -100,6 +100,27 @@ namespace Nafadh_Backend.IdentityAccess
         public string? EstablishmentDate { get; set; }
         public string? ExpiryDate { get; set; }
         public string? SubjectToForeignInvestment { get; set; }
+
+        // Required database columns for creating a Profile
+        public string InsertedById { get; set; }
+        public DateTime InsertedDate { get; set; }
+
+        public bool IsVerified { get; set; }
+        public bool IsOmani { get; set; }
+
+        public DateTime JoinDate { get; set; }
+        public int TotalExperience { get; set; }
+
+        public bool IsHead { get; set; }
+        public bool IsPostOpertunity { get; set; }
+
+        public int ProfileStatus { get; set; }
+        public bool IsVerifiedInMol { get; set; }
+
+        // Optional profile details
+        public string PhoneNumber { get; set; }
+        public string Contact_Mobile { get; set; }
+
     }
 
     [Table("UserTypes")]

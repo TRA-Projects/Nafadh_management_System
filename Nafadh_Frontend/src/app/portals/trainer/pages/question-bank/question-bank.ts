@@ -26,6 +26,7 @@ interface QuestionBankDto {
     questionText: string;
     questionType: number | string;
     difficulty: number | string;
+    moduleId: number;
     points: number;
     explanation?: string | null;
     isActive: boolean;
@@ -48,6 +49,7 @@ interface QuestionOptionForm {
 
 interface QuestionForm {
     questionText: string;
+    moduleId: number;
     questionType: number;
     difficulty: number;
     points: number;
@@ -73,6 +75,7 @@ export class QuestionBank implements OnInit {
 
     quizStatus = signal<number | string | null>(null);
     questions = signal<QuestionBankDto[]>([]);
+    modules = signal<Array<{ moduleId: number; title: string }>>([]);
 
     quizQuestions = signal<QuizQuestionDto[]>([]);
 
@@ -84,6 +87,15 @@ export class QuestionBank implements OnInit {
 
     saving = signal(false);
     questionFormOpen = signal(false);
+    randomQuestionsModalOpen = signal(false);
+    randomQuestionsSaving = signal(false);
+
+    randomQuestionsForm = {
+        moduleId: 0,
+        difficulty: 0,
+        count: 1
+    };
+
     questionSaving = signal(false);
     editingQuestionId = signal<number | null>(null);
 
@@ -111,8 +123,10 @@ export class QuestionBank implements OnInit {
         { value: 'all', label: 'كل المستويات' },
         ...this.historicalDifficulties().map(option => {
             const key = this.difficultyKeys[option.value];
-            return { value: key, label: option.label,
-                labelEn: this.constants.all('NFD_QUE_DIFF').find(row => row.key === key)?.labelEn };
+            return {
+                value: key, label: option.label,
+                labelEn: this.constants.all('NFD_QUE_DIFF').find(row => row.key === key)?.labelEn
+            };
         })
     ]);
 
@@ -297,6 +311,54 @@ export class QuestionBank implements OnInit {
                     this.loadQuizQuestions(
                         trainer.trainerId
                     );
+
+                    this.api.getMyBatches(trainer.trainerId).subscribe({
+                        next: batches => {
+
+                            if (!batches || batches.length === 0) {
+                                this.modules.set([]);
+                                return;
+                            }
+
+                            const batchId = batches[0].batchId;
+
+                            this.api.getBatch(batchId).subscribe({
+                                next: batch => {
+
+                                    if (!batch?.programId) {
+                                        this.modules.set([]);
+                                        return;
+                                    }
+
+                                    this.loadModules(batch.programId);
+                                },
+
+                                error: error => {
+                                    console.error(
+                                        'Error loading batch:',
+                                        error
+                                    );
+
+                                    this.modules.set([]);
+                                    this.questionError.set(
+                                        'تعذر تحميل بيانات البرنامج.'
+                                    );
+                                }
+                            });
+                        },
+
+                        error: error => {
+                            console.error(
+                                'Error loading trainer batches:',
+                                error
+                            );
+
+                            this.modules.set([]);
+                            this.questionError.set(
+                                'تعذر تحميل دفعات المدرب.'
+                            );
+                        }
+                    });
                 },
 
                 error: error => {
@@ -313,6 +375,24 @@ export class QuestionBank implements OnInit {
                     );
                 }
             });
+    }
+
+    private loadModules(programId: number): void {
+        this.api.getModulesByProgram(programId).subscribe({
+            next: modules => {
+                this.modules.set(
+                    (modules ?? []).map(module => ({
+                        moduleId: Number(module.moduleId),
+                        title: module.title
+                    }))
+                );
+            },
+            error: error => {
+                console.error('Error loading modules:', error);
+                this.modules.set([]);
+                this.questionError.set('تعذر تحميل الوحدات.');
+            }
+        });
     }
 
     private loadQuestions(
@@ -467,6 +547,94 @@ export class QuestionBank implements OnInit {
             new Set()
         );
     }
+    openRandomQuestionsModal(): void {
+        this.randomQuestionsForm = {
+            moduleId: 0,
+            difficulty: 0,
+            count: 1
+        };
+
+        this.errorMessage.set('');
+        this.successMessage.set('');
+
+        this.randomQuestionsModalOpen.set(true);
+    }
+
+    closeRandomQuestionsModal(): void {
+        if (this.randomQuestionsSaving()) {
+            return;
+        }
+
+        this.randomQuestionsModalOpen.set(false);
+    }
+    addRandomQuestions(): void {
+    const quizId = this.quizId();
+    const trainerId = this.trainer()?.trainerId;
+
+    const { moduleId, difficulty, count } =
+        this.randomQuestionsForm;
+
+    if (!quizId || !trainerId) {
+        this.errorMessage.set(
+            'تعذر تحديد الاختبار أو المدرب.'
+        );
+        return;
+    }
+
+    if (!moduleId || moduleId <= 0) {
+        this.errorMessage.set(
+            'يرجى اختيار الوحدة.'
+        );
+        return;
+    }
+
+    if (count < 1 || count > 100) {
+        this.errorMessage.set(
+            'عدد الأسئلة يجب أن يكون بين 1 و100.'
+        );
+        return;
+    }
+
+    this.randomQuestionsSaving.set(true);
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    this.api.addRandomQuestionsToQuiz(
+        quizId,
+        trainerId,
+        {
+            moduleId: Number(moduleId),
+            difficulty: Number(difficulty),
+            count: Number(count)
+        }
+    ).subscribe({
+        next: response => {
+            this.randomQuestionsSaving.set(false);
+            this.randomQuestionsModalOpen.set(false);
+
+            this.successMessage.set(
+                response?.message ||
+                'تمت إضافة الأسئلة العشوائية إلى الاختبار بنجاح.'
+            );
+
+            this.loadQuizQuestions(trainerId);
+        },
+
+        error: error => {
+            console.error(
+                'Error adding random questions:',
+                error
+            );
+
+            this.randomQuestionsSaving.set(false);
+
+            this.errorMessage.set(
+                error?.error?.message ||
+                'تعذر إضافة الأسئلة العشوائية.'
+            );
+        }
+    });
+}
 
     addSelectedQuestions(): void {
 
@@ -587,6 +755,7 @@ export class QuestionBank implements OnInit {
 
         this.questionForm = {
             questionText: question.questionText,
+            moduleId: Number(question.moduleId),
             questionType,
             difficulty,
             points: Number(question.points),
@@ -750,6 +919,11 @@ export class QuestionBank implements OnInit {
             return;
         }
 
+        if (!form.moduleId || form.moduleId <= 0) {
+            this.questionError.set('يرجى اختيار الوحدة.');
+            return;
+        }
+
         if (form.points <= 0 || form.points > 100) {
             this.questionError.set('درجة السؤال يجب أن تكون بين 0.1 و100.');
             return;
@@ -786,13 +960,10 @@ export class QuestionBank implements OnInit {
 
         const payload = {
             questionText: form.questionText.trim(),
-
+            moduleId: Number(form.moduleId),
             questionType: Number(form.questionType),
-
             difficulty: Number(form.difficulty),
-
             points: Number(form.points),
-
             explanation:
                 form.explanation.trim() || null,
 
@@ -929,6 +1100,7 @@ export class QuestionBank implements OnInit {
     private emptyQuestionForm(): QuestionForm {
         return {
             questionText: '',
+            moduleId: 0,
             questionType: 0,
             difficulty: 0,
             points: 1,

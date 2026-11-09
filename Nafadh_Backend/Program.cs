@@ -14,6 +14,7 @@ using Nafadh_Backend.Services;
 using Nafadh_Backend.Settings;
 using QuestPDF.Infrastructure;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 using System.Text;
 
 
@@ -71,7 +72,20 @@ namespace Nafadh_Backend
             builder.Services.AddDbContext<Nafadhcontext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            builder.Services.AddScoped<Nafadh_Backend.IdentityAccess.IIdentityAccessAdminService, Nafadh_Backend.IdentityAccess.IdentityAccessAdminService>();
+            // ASP.NET Identity services
+            // Keep the existing JWT authentication configuration unchanged.
+            builder.Services
+                .AddIdentityCore<Nafadh_Backend.IdentityAccess.AppUser>(options =>
+                {
+                    options.User.RequireUniqueEmail = true;
+                })
+                .AddRoles<Nafadh_Backend.IdentityAccess.Roles>()
+                .AddEntityFrameworkStores<Nafadhcontext>();
+
+            // Identity Access Administration
+            builder.Services.AddScoped<
+                Nafadh_Backend.IdentityAccess.IIdentityAccessAdminService,
+                Nafadh_Backend.IdentityAccess.IdentityAccessAdminService>();
 
             // ── JWT Authentication ─────────────────────────────────────────────
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -253,6 +267,8 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
 
             builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
+            builder.Services.AddScoped<IQuestionAttachmentRepository, QuestionAttachmentRepository>();
+            builder.Services.AddScoped<IQuestionAttachmentService, QuestionAttachmentService>();
             builder.Services.AddScoped<IQuizQuestionRepository, QuizQuestionRepository>();
 
             builder.Services.AddScoped<IQuizQuestionService, QuizQuestionService>();
@@ -391,6 +407,35 @@ namespace Nafadh_Backend
                 }
                 );
             }
+            // =====================================================
+            // EXTERNAL QUESTION ATTACHMENTS
+            // =====================================================
+
+            var questionAttachmentsPath =
+                builder.Configuration["Storage:QuestionAttachmentsPath"];
+
+            var questionAttachmentsRequestPath =
+                builder.Configuration[
+                    "Storage:QuestionAttachmentsRequestPath"]
+                ?? "/uploads/question-attachments";
+
+            if (!string.IsNullOrWhiteSpace(questionAttachmentsPath))
+            {
+                Directory.CreateDirectory(questionAttachmentsPath);
+
+                app.UseStaticFiles(
+                    new StaticFileOptions
+                    {
+                        FileProvider =
+                            new PhysicalFileProvider(
+                                questionAttachmentsPath),
+
+                        RequestPath =
+                            questionAttachmentsRequestPath
+                    }
+                );
+            }
+
             // =====================================================
             // EXTERNAL TRAINER PROFILE IMAGES
             // =====================================================

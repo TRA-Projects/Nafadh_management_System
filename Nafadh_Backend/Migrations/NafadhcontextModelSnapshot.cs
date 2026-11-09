@@ -167,7 +167,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AppPages");
+                    b.ToTable("AppPages", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.AppUser", b =>
@@ -354,7 +354,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Organizations");
+                    b.ToTable("Organizations", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.Profile", b =>
@@ -418,7 +418,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Profiles");
+                    b.ToTable("Profiles", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.RolePage", b =>
@@ -448,7 +448,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRolePages");
+                    b.ToTable("AspNetRolePages", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.Roles", b =>
@@ -552,7 +552,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SystemAuditTrails");
+                    b.ToTable("SystemAuditTrails", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.UserGroup", b =>
@@ -597,7 +597,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("UserTypeId");
 
-                    b.ToTable("UserGroups");
+                    b.ToTable("UserGroups", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.IdentityAccess.UserType", b =>
@@ -634,7 +634,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserTypes");
+                    b.ToTable("UserTypes", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Announcement", b =>
@@ -1128,7 +1128,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("NFD_ConversationGroupMembers");
+                    b.ToTable("NFD_ConversationGroupMembers", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlan", b =>
@@ -2204,6 +2204,40 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_ProjectMembers", (string)null);
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuestionAttachment", b =>
+                {
+                    b.Property<int>("QuestionAttachmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("QuestionAttachmentId"));
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UploadedByUserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("QuestionAttachmentId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("NFD_QuestionAttachments", (string)null);
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuestionBank", b =>
                 {
                     b.Property<int>("QuestionId")
@@ -2224,6 +2258,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("ModuleId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Points")
                         .HasColumnType("decimal(18,2)");
 
@@ -2238,6 +2275,8 @@ namespace Nafadh_Backend.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("QuestionId");
+
+                    b.HasIndex("ModuleId");
 
                     b.HasIndex("TrainerId");
 
@@ -3299,7 +3338,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("TraineeId");
 
-                    b.ToTable("NFD_TraineeSkills");
+                    b.ToTable("NFD_TraineeSkills", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Trainer", b =>
@@ -3398,7 +3437,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("TrainerId");
 
-                    b.ToTable("NFD_TrainerAttendances");
+                    b.ToTable("NFD_TrainerAttendances", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerCertificate", b =>
@@ -3657,7 +3696,7 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("TraineeId");
 
-                    b.ToTable("NFD_WithdrawalRequests");
+                    b.ToTable("NFD_WithdrawalRequests", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.RemediationRequest", b =>
@@ -4641,13 +4680,31 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Trainee");
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuestionAttachment", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_QuestionBank", "Question")
+                        .WithMany("Attachments")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuestionBank", b =>
                 {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Module", "Module")
+                        .WithMany()
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
                         .WithMany()
                         .HasForeignKey("TrainerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Module");
 
                     b.Navigation("Trainer");
                 });
@@ -5346,6 +5403,8 @@ namespace Nafadh_Backend.Migrations
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuestionBank", b =>
                 {
+                    b.Navigation("Attachments");
+
                     b.Navigation("Options");
 
                     b.Navigation("QuizQuestions");

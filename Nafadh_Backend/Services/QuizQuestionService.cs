@@ -12,6 +12,11 @@ namespace Nafadh_Backend.Services
             AddQuizQuestionsDto dto,
             int trainerId);
 
+        Task AddRandomQuestionsToQuizAsync(
+    int quizId,
+    SelectRandomQuizQuestionsDto dto,
+    int trainerId);
+
         Task<List<QuizQuestionListDto>> GetQuizQuestionsAsync(
             int quizId,
             int trainerId);
@@ -31,11 +36,14 @@ namespace Nafadh_Backend.Services
     public class QuizQuestionService : IQuizQuestionService
     {
         private readonly IQuizQuestionRepository _repository;
+        private readonly IQuestionBankRepository _questionBankRepository;
 
         public QuizQuestionService(
-            IQuizQuestionRepository repository)
+    IQuizQuestionRepository repository,
+    IQuestionBankRepository questionBankRepository)
         {
             _repository = repository;
+            _questionBankRepository = questionBankRepository;
         }
 
         private static void EnsureQuizIsDraft(NFD_Quiz quiz)
@@ -108,6 +116,77 @@ namespace Nafadh_Backend.Services
             {
                 throw new ArgumentException(
                     "الأسئلة المختارة موجودة مسبقاً في الاختبار.");
+            }
+
+            var nextOrder = quiz.QuizQuestions.Any()
+                ? quiz.QuizQuestions.Max(q => q.QuestionOrder) + 1
+                : 1;
+
+            var quizQuestions = newQuestions
+                .Select(question => new NFD_QuizQuestion
+                {
+                    QuizId = quizId,
+                    QuestionId = question.QuestionId,
+                    QuestionOrder = nextOrder++,
+                    Points = question.Points
+                })
+                .ToList();
+
+            await _repository.AddRangeAsync(quizQuestions);
+            await _repository.SaveChangesAsync();
+        }
+
+        // إضافة أسئلة عشوائية حسب الوحدة والصعوبة
+        public async Task AddRandomQuestionsToQuizAsync(
+            int quizId,
+            SelectRandomQuizQuestionsDto dto,
+            int trainerId)
+        {
+            var quiz =
+     await _repository.GetQuizWithQuestionsAsync(quizId);
+
+            
+            if (quiz == null)
+            {
+                throw new KeyNotFoundException(
+                    "الاختبار غير موجود.");
+            }
+
+            if (quiz.TrainerId != trainerId)
+            {
+                throw new UnauthorizedAccessException(
+                    "لا تملكين صلاحية تعديل هذا الاختبار.");
+            }
+
+            EnsureQuizIsDraft(quiz);
+
+            if (await _repository.HasQuizAttemptsAsync(quizId))
+            {
+                throw new InvalidOperationException(
+                    "لا يمكن إضافة أسئلة بعد بدء محاولات الاختبار.");
+            }
+
+            // الأسئلة الموجودة حاليًا في الاختبار
+            var existingQuestionIds = quiz.QuizQuestions
+                .Select(q => q.QuestionId)
+                .ToHashSet();
+
+            // جلب أسئلة عشوائية حسب المدرب + الوحدة + الصعوبة
+            var newQuestions =
+    await _questionBankRepository.GetRandomQuestionsAsync(
+        trainerId,
+        dto.ModuleId,
+        dto.Difficulty,
+        dto.Count,
+        existingQuestionIds);
+
+            
+
+            if (newQuestions.Count < dto.Count)
+            {
+                throw new ArgumentException(
+                    $"لا توجد أسئلة كافية غير مضافة بهذه الوحدة ومستوى الصعوبة. " +
+                    $"المطلوب: {dto.Count}، والمتاح: {newQuestions.Count}.");
             }
 
             var nextOrder = quiz.QuizQuestions.Any()

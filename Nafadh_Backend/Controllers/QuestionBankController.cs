@@ -71,6 +71,7 @@ namespace Nafadh_Backend.Controllers
                     Difficulty = dto.Difficulty,
                     Points = dto.Points,
                     Explanation = dto.Explanation,
+                    ModuleId = dto.ModuleId,
 
                     Options = dto.Options?
                         .Select(option =>
@@ -136,6 +137,7 @@ namespace Nafadh_Backend.Controllers
                     Difficulty = dto.Difficulty,
                     Points = dto.Points,
                     Explanation = dto.Explanation,
+                    ModuleId = dto.ModuleId,
 
                     Options = dto.Options?
                         .Select(option =>

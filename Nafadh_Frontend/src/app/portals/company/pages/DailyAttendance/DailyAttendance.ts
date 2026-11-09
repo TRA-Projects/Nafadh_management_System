@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 
 import { Component, ElementRef, HostListener, OnInit, QueryList, ViewChildren, computed, inject, signal } from '@angular/core';
 
@@ -251,8 +251,53 @@ attachmentSettingsLoaded = signal(false);
   // Export menus are independent of the selected display tab.
   exportMenu = signal<'week' | 'month' | null>(null);
 
+  /** Historical attendance period. Defaults to the current month. */
+  readonly maxAttendanceMonth = this.todayKey.slice(0, 7);
+  readonly minAttendanceMonth = (() => {
+    const date = new Date();
+    date.setDate(1);
+    date.setMonth(date.getMonth() - 11);
+    return this.dayKey(date).slice(0, 7);
+  })();
+  selectedAttendanceMonth = signal(this.maxAttendanceMonth);
+  selectedExportWeek = signal(0);
+
+  onAttendanceMonthChange(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(value) ||
+        value < this.minAttendanceMonth || value > this.maxAttendanceMonth) {
+      (event.target as HTMLInputElement).value = this.selectedAttendanceMonth();
+      return;
+    }
+    if (value === this.selectedAttendanceMonth()) return;
+    this.selectedAttendanceMonth.set(value);
+    this.selectedWeek.set(null);
+    this.selectedExportWeek.set(this.initialWeekIndex());
+    this.load();
+  }
+
+  onExportWeekChange(event: Event): void {
+    const value = Number((event.target as HTMLSelectElement).value);
+    if (Number.isInteger(value) && value >= 0 && value < this.monthWeeks().length) {
+      this.selectedExportWeek.set(value);
+    }
+  }
+
+  private initialWeekIndex(): number {
+    if (this.selectedAttendanceMonth() !== this.maxAttendanceMonth) return 0;
+    const index = this.monthWeeks().findIndex(w => this.todayKey >= this.dayKey(w.start) && this.todayKey <= this.dayKey(w.end));
+    return index < 0 ? 0 : index;
+  }
+
+
   toggleExportMenu(mode: 'week' | 'month'): void {
     this.exportMenu.update(current => current === mode ? null : mode);
+  }
+
+  private exportPeriodLabel(mode: 'week' | 'month'): string {
+    if (mode === 'week') return this.currentWeek()?.label ?? '—';
+    const [year, month] = this.selectedAttendanceMonth().split('-').map(Number);
+    return new Date(year, month - 1, 1).toLocaleDateString('ar-OM', { month: 'long', year: 'numeric' });
   }
 
   private exportWeeks(mode: 'week' | 'month') {
@@ -317,7 +362,7 @@ attachmentSettingsLoaded = signal(false);
     excuseSheet['!cols'] = [{ wch: 18 }, { wch: 30 }, { wch: 16 }, { wch: 20 }, { wch: 55 }, { wch: 65 }];
     excuseSheet['!views'] = [{ rightToLeft: true }];
     XLSX.utils.book_append_sheet(book, excuseSheet, 'الأعذار');
-    XLSX.writeFile(book, `TrainerAttendance_${mode}_${this.todayKey}.xlsx`);
+    XLSX.writeFile(book, `TrainerAttendance_${mode}_${this.selectedAttendanceMonth()}${mode === 'week' ? `_week_${this.selectedExportWeek() + 1}` : ''}.xlsx`);
   }
 
   private escapeReport(value: unknown): string {
@@ -351,14 +396,14 @@ attachmentSettingsLoaded = signal(false);
       @media screen{body{max-width:1200px;margin:75px auto 24px;padding:20px}.report-actions{position:fixed;left:20px;top:15px;display:flex;gap:9px;z-index:10}.report-actions button{color:white;border:0;border-radius:7px;padding:10px 16px;cursor:pointer;font-family:inherit;font-weight:bold}.print-btn{background:#172b85}.save-btn{background:#087c63}}
       @media print{.report-actions{display:none!important}}
       #attendance-report{background:#fff;padding:10px} .report-actions button:disabled{opacity:.55;cursor:wait}
-      </style></head><body><div class="report-actions"><button class="print-btn" onclick="window.print()">🖨 طباعة</button><button class="save-btn" onclick="saveAsPdf()">↓ حفظ PDF</button></div><main id="attendance-report"><header><h1>${title}</h1><div>تاريخ إعداد التقرير: ${esc(this.todayKey)} | ${esc(this.rangeLabel())}</div></header>${sections}${excuseTable}<footer>البيانات من سجلات حضور المدربين المحملة في النظام. روابط الإثبات تتطلب صلاحية الوصول للملفات.</footer></main><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script><script>
+      </style></head><body><div class="report-actions"><button class="print-btn" onclick="window.print()">🖨 طباعة</button><button class="save-btn" onclick="saveAsPdf()">↓ حفظ PDF</button></div><main id="attendance-report"><header><h1>${title}</h1><div>تاريخ إعداد التقرير: ${esc(this.todayKey)} | ${esc(this.exportPeriodLabel(mode))}</div></header>${sections}${excuseTable}<footer>البيانات من سجلات حضور المدربين المحملة في النظام. روابط الإثبات تتطلب صلاحية الوصول للملفات.</footer></main><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script><script>
       async function saveAsPdf(){
         const button=document.querySelector(".save-btn");
         if(!window.html2pdf){alert("تعذر تحميل أداة حفظ PDF. تأكدي من الاتصال بالإنترنت ثم أعيدي فتح التقرير.");return;}
         button.disabled=true;button.textContent="جاري تجهيز PDF...";
         try{
           await window.html2pdf().set({
-            margin:8, filename:"TrainerAttendance_${mode}_${this.todayKey}.pdf",
+            margin:8, filename:"TrainerAttendance_${mode}_${this.selectedAttendanceMonth()}${mode === 'week' ? `_week_${this.selectedExportWeek() + 1}` : ''}.pdf",
             image:{type:"jpeg",quality:0.98},
             html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",scrollY:0},
             jsPDF:{unit:"mm",format:"a4",orientation:"landscape"},
@@ -374,10 +419,9 @@ attachmentSettingsLoaded = signal(false);
 
   selectedWeek = signal<number | null>(null);
 
-  /** Company attendance rate for recorded entries in the current month. */
+  /** Company attendance rate for recorded entries in the selected month. */
   monthlyAttendanceRate = computed<number | null>(() => {
-    const now = new Date();
-    const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`;
+    const monthPrefix = `${this.selectedAttendanceMonth()}-`;
     const trainerIds = new Set(this.trainers().map(t => t.trainerId));
     const monthRecords = this.records().filter(record => {
       const date = this.dateOf(record.date);
@@ -543,7 +587,7 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
           this.patchRecord(record.trainerAttendanceId, { excuseProofUrl: returnedPath });
           this.weeklyExcuse.set({ ...record, excuseProofUrl: returnedPath });
         }
-        this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.todayKey).subscribe({
+        this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.loadToKey()).subscribe({
           next: records => {
             const fresh = (records ?? []).find(item => item.trainerAttendanceId === record.trainerAttendanceId);
             if (fresh?.excuseProofUrl) {
@@ -685,96 +729,40 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
   /** Sunday–Thursday workweek, including partial weeks at month boundaries. */
 
   monthWeeks = computed(() => {
-
-    const now = new Date();
-
-    const first = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
+    const [year, month] = this.selectedAttendanceMonth().split('-').map(Number);
+    const first = new Date(year, month - 1, 1);
+    const last = new Date(year, month, 0);
     const weeks: { index: number; start: Date; end: Date; days: { key: string; label: string }[]; label: string }[] = [];
-
     const cursor = new Date(first);
-
     cursor.setDate(cursor.getDate() - cursor.getDay());
-
     const dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
-
     while (cursor <= last) {
-
       const start = new Date(cursor);
-
       const end = new Date(cursor);
-
       end.setDate(end.getDate() + 6);
-
       const days = dayNames.map((label, offset) => {
-
         const date = new Date(start);
-
-        date.setDate(date.getDate() + offset);
-
+        date.setDate(start.getDate() + offset);
         return { key: this.dayKey(date), label };
-
       }).filter(day => day.key >= this.dayKey(first) && day.key <= this.dayKey(last));
-
       if (days.length) {
-
-        const format = (d: Date) => d.toLocaleDateString('ar-OM', { day: 'numeric', month: 'long' });
-
+        const format = (date: Date) => date.toLocaleDateString('ar-OM', { day: 'numeric', month: 'long' });
         weeks.push({ index: weeks.length, start, end, days,
-
           label: `${format(start < first ? first : start)} – ${format(end > last ? last : end)}` });
-
       }
-
       cursor.setDate(cursor.getDate() + 7);
-
     }
-
     return weeks;
-
   });
 
-
-
-  currentWeek = computed(() => {
-
-    const now = new Date();
-
-    const start = new Date(now);
-
-    start.setDate(now.getDate() - now.getDay());
-
-    const end = new Date(start);
-
-    end.setDate(start.getDate() + 6);
-
-    const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'].map((label, i) => {
-
-      const date = new Date(start);
-
-      date.setDate(start.getDate() + i);
-
-      return { key: this.dayKey(date), label };
-
-    });
-
-    const format = (d: Date) => d.toLocaleDateString('ar-OM', { day: 'numeric', month: 'long' });
-
-    return { index: 0, start, end, days, label: `${format(start)} – ${format(end)}` };
-
-  });
-
-
+  currentWeek = computed(() => this.monthWeeks()[this.selectedExportWeek()] ?? this.monthWeeks()[0]);
 
   rangeLabel = computed(() => this.view() === 'week'
-
-    ? this.currentWeek().label
-
-    : new Date().toLocaleDateString('ar-OM', { month: 'long', year: 'numeric' }));
-
-
+    ? (this.currentWeek()?.label ?? '—')
+    : (() => {
+        const [year, month] = this.selectedAttendanceMonth().split('-').map(Number);
+        return new Date(year, month - 1, 1).toLocaleDateString('ar-OM', { month: 'long', year: 'numeric' });
+      })());
 
   /** Returns a status grid for a given week, based only on recorded attendance. */
 
@@ -844,6 +832,7 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
 
 ngOnInit(): void {
   this.companyId = this.auth.companyId ?? 0;
+  this.selectedExportWeek.set(this.initialWeekIndex());
 
   console.log('Company ID:', this.companyId);
 
@@ -880,7 +869,7 @@ ngOnInit(): void {
 
       trainers: this.api.getCompanyTrainers(this.companyId),
 
-      records: this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.todayKey),
+      records: this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.loadToKey()),
 
     }).subscribe({
 
@@ -1187,6 +1176,20 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
     if (!this.canManageAttendance()) return;
     if (!this.canConfirm()) return;
     if (!this.showConfirmPopover()) return;
+
+    const missingArrival = this.rows().find(row => row.record?.status === 'Late' && !row.record.checkInTime);
+    if (missingArrival) {
+      this.showConfirmPopover.set(false);
+      this.errorMessage.set('يجب تحديد وقت الوصول للمدرب المتأخر قبل تأكيد سجل الحضور.');
+      return;
+    }
+    const missingDeparture = this.rows().find(row => row.record?.status === 'EarlyLeave' && !row.record.checkOutTime);
+    if (missingDeparture) {
+      this.showConfirmPopover.set(false);
+      this.errorMessage.set('يجب تحديد وقت الانصراف المبكر قبل تأكيد سجل الحضور.');
+      return;
+    }
+
     this.showConfirmPopover.set(false);
     this.confirming.set(true);
     // Persist the default Present status only for trainers without a record.
@@ -1223,7 +1226,7 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
 
         // Reload so every record carries the confirmed flag from the backend.
 
-        this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.todayKey).subscribe({
+        this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.loadToKey()).subscribe({
 
           next: (records) => {
 
@@ -1520,20 +1523,18 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
 
 
 
-  /** Earliest day needed by any view: the first of the month or 6 days ago, whichever is earlier. */
-
+  /** Fetch both the selected historical period and today's record for the daily tab. */
   private loadFromKey(): string {
+    const selectedFirst = `${this.selectedAttendanceMonth()}-01`;
+    const today = new Date();
+    const currentWeekStart = new Date(today);
+    currentWeekStart.setDate(today.getDate() - today.getDay());
+    const currentMonthFirst = `${this.maxAttendanceMonth}-01`;
+    return [selectedFirst, currentMonthFirst, this.dayKey(currentWeekStart)].sort()[0];
+  }
 
-    const monthStart = new Date();
-
-    monthStart.setDate(1);
-
-    const weekStart = new Date();
-
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-
-    return this.dayKey(monthStart < weekStart ? monthStart : weekStart);
-
+  private loadToKey(): string {
+    return this.todayKey;
   }
 
 }

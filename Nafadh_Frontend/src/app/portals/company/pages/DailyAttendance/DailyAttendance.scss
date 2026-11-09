@@ -1200,3 +1200,33 @@ tbody tr.saving {
   outline: 2px solid #1b56fd;
   outline-offset: 3px;
 }
+/* UAT: historic month/week controls shared by on-screen view and exports. */
+.period-selectors { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 8px; }
+.period-field { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.period-field input, .period-field select {
+  font: inherit; font-size: 12px; padding: 8px 9px; border: 1px solid #dfeaff;
+  border-radius: 9px; color: var(--navy); background: #fff; min-height: 36px; max-width: 260px;
+}
+.period-field input:focus-visible, .period-field select:focus-visible { outline: 2px solid #1b56fd; outline-offset: 2px; }
+
+/* UAT follow-up: align both export buttons with the month/week input boxes. */
+.head-actions {
+  align-items: flex-end;
+}
+
+.head-actions .period-selectors,
+.head-actions .export-actions {
+  align-items: flex-end;
+}
+
+.head-actions .period-field input,
+.head-actions .period-field select,
+.head-actions .export-group > .btn {
+  box-sizing: border-box;
+  height: 38px;
+  min-height: 38px;
+}
+
+.head-actions .export-group > .btn {
+  white-space: nowrap;
+}

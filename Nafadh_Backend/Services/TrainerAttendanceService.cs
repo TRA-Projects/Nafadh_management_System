@@ -331,6 +331,14 @@ namespace Nafadh_Backend.Services
             if (missing > 0)
                 throw new ArgumentException($"Record attendance for all trainers before confirming ({missing} missing).");
 
+            // UAT: time is mandatory before confirmation for Late and EarlyLeave.
+            // Validate on the server as well as in the Company Portal to prevent API bypass.
+            if (day.Any(r => r.Status == NFD_TrainerAttendanceStatus.Late && !r.CheckInTime.HasValue))
+                throw new ArgumentException("Arrival time is required for late attendance before confirmation.");
+
+            if (day.Any(r => r.Status == NFD_TrainerAttendanceStatus.EarlyLeave && !r.CheckOutTime.HasValue))
+                throw new ArgumentException("Departure time is required for early leave before confirmation.");
+
             var now = DateTime.UtcNow;
             foreach (var record in day.Where(r => !r.IsConfirmed))
             {
