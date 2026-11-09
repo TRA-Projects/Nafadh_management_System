@@ -1356,6 +1356,21 @@ export class TrainerApi {
     );
   }
   // =====================================================
+// TRAINER TRAINEES REPORT FILE
+// =====================================================
+
+getTrainerTraineesReportFile(
+  reportId: number
+): Observable<Blob> {
+
+  return this.http.get(
+    `${this.base}/Report/trainer-trainees/${reportId}/file`,
+    {
+      responseType: 'blob'
+    }
+  );
+}
+  // =====================================================
   // Profile
   // =====================================================
 
