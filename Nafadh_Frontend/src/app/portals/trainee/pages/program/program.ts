@@ -2152,76 +2152,67 @@ export class TraineeProgram implements OnInit {
   // AFTER OPENING THE LESSON
   // =====================================================
 
-  saveLessonNote(): void {
-    const lesson = this.selectedLesson();
+ 
+saveLessonNote(): void {
+  const lesson = this.selectedLesson();
 
-    if (!lesson) {
-      return;
-    }
-
-    /*
-     * No video completion check here.
-     * Notes can be saved immediately after
-     * opening the lesson.
-     */
-    const note = this.lessonNote().trim();
-    const rating = this.lessonRating();
-
-    if (!note) {
-      this.showNotification(
-        'يرجى كتابة ملاحظتك أولاً.',
-        'error'
-      );
-      return;
-    }
-
-    const dto = {
-      note: note,
-      rating: rating > 0 ? rating : null
-    };
-
-    const request = this.lessonFeedbackExists()
-      ? this.api.updateLessonFeedback(lesson.lessonId, dto)
-      : this.api.createLessonFeedback(lesson.lessonId, dto);
-
-    request.subscribe({
-      next: feedback => {
-        console.log(
-          '✅ Lesson feedback saved:',
-          feedback
-        );
-
-        this.lessonFeedbackExists.set(true);
-        this.lessonNote.set(feedback.note ?? '');
-        this.lessonRating.set(feedback.rating ?? 0);
-
-        this.showNotification(
-          'تم حفظ ملاحظتك بنجاح.',
-          'success'
-        );
-
-        this.closeLessonSidebar();
-      },
-      error: error => {
-        console.error(
-          '❌ Save Lesson Feedback Error:',
-          error
-        );
-
-        if (error?.status === 409) {
-          this.showNotification(
-            'الملاحظات لهذا الدرس موجودة مسبقًا، يرجى إعادة فتح الدرس.',
-            'error'
-          );
-        } else {
-          this.showNotification(
-            'تعذر حفظ الملاحظة حاليًا.',
-            'error'
-          );
-        }
-      }
-    });
+  if (!lesson) {
+    return;
   }
+
+  const note = this.lessonNote().trim();
+  const rating = this.lessonRating();
+
+  if (!note) {
+    this.showNotification(
+      'يرجى كتابة ملاحظتك أولاً.',
+      'error'
+    );
+    return;
+  }
+
+  const dto = {
+    note: note,
+    rating: rating > 0 ? rating : null
+  };
+
+  const request = this.lessonFeedbackExists()
+    ? this.api.updateLessonFeedback(lesson.lessonId, dto)
+    : this.api.createLessonFeedback(lesson.lessonId, dto);
+
+  request.subscribe({
+    next: feedback => {
+      console.log('Lesson feedback saved:', feedback);
+
+      this.lessonFeedbackExists.set(true);
+      this.lessonNote.set(feedback.note ?? '');
+      this.lessonRating.set(feedback.rating ?? 0);
+
+      this.showNotification(
+        'تم حفظ ملاحظتك بنجاح.',
+        'success'
+      );
+
+      // لا نغلق نافذة الدرس بعد حفظ الملاحظة
+    },
+    error: error => {
+      console.error('Save Lesson Feedback Error:', error);
+
+      if (error?.status === 409) {
+        this.showNotification(
+          'الملاحظات لهذا الدرس موجودة مسبقًا، يرجى إعادة فتح الدرس.',
+          'error'
+        );
+      } else {
+        this.showNotification(
+          'تعذر حفظ الملاحظة حاليًا.',
+          'error'
+        );
+      }
+    }
+  });
+}
+
 
   // =====================================================
   // SELECT RATING
