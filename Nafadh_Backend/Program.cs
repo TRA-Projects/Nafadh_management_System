@@ -367,6 +367,32 @@ namespace Nafadh_Backend
 
             var app = builder.Build();
 
+            app.UseExceptionHandler(errorApp =>
+            {
+                errorApp.Run(async context =>
+                {
+                    var logger = context.RequestServices
+                        .GetRequiredService<ILogger<Program>>();
+
+                    var error = context.Features.Get<
+                        Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+
+                    if (error != null)
+                    {
+                        logger.LogError(
+                            error.Error,
+                            "Unhandled error at {Path}",
+                            context.Request.Path);
+                    }
+
+                    context.Response.StatusCode = 500;
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        message = "An unexpected server error occurred."
+                    });
+                });
+            });
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
