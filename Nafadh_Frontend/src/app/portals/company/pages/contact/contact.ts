@@ -17,6 +17,16 @@ import { ConversationDetailDto, ConversationListItemDto } from '../../../../core
   styleUrls: ['./contact.scss'],
 })
 export class CompanyContact implements OnInit, AfterViewChecked, OnDestroy {
+  /** API stores message timestamps as UTC but SQL DateTime may serialize without a Z suffix. */
+  utcTimestamp(value: string | Date | null | undefined): string | Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    const text = value.trim();
+    if (!text) return null;
+    // Leave explicit timezone offsets untouched; treat timezone-less API timestamps as UTC.
+    return /(?:Z|[+-]\d{2}:?\d{2})$/i.test(text) ? text : `${text}Z`;
+  }
+
   private readonly api = inject(CompanyApi);
   private readonly mailbox = inject(CompanyMailboxApi);
   private readonly summary = inject(NotificationSummaryService);
