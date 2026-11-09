@@ -261,7 +261,7 @@ export class AdminTraineeProfile implements OnInit {
     private route: ActivatedRoute,
     private api: AdminApi,
     private location: Location
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.constants.ensure('NFD_WDR_STAT', 'NFD_WRN_LVL', 'NFD_MOD_STAT');
@@ -459,7 +459,7 @@ export class AdminTraineeProfile implements OnInit {
       const json = JSON.stringify(msgs);
       localStorage.setItem(`nfd_dm_trainee_${traineeId}`, json);
       localStorage.setItem('nafadh_chat_' + traineeId, json);
-    } catch {}
+    } catch { }
   }
 
   private clearUnreadReplyForTrainee(traineeId: number): void {
@@ -469,7 +469,7 @@ export class AdminTraineeProfile implements OnInit {
       const list: any[] = JSON.parse(raw);
       const updated = list.filter((r) => r.traineeId !== traineeId);
       localStorage.setItem('nafadh_unread_replies', JSON.stringify(updated));
-    } catch {}
+    } catch { }
   }
 
   openDirectMessageModal(): void {
@@ -581,10 +581,12 @@ export class AdminTraineeProfile implements OnInit {
     this.api
       .createAnnouncement({
         title: `رسالة مباشرة إلى ${this.fullName()}`,
-        content: text,
+        message: text,   // 👈 الحقل المطلوب في الباك إند
+        Message: text,   // 👈 حرف كبير احتياطاً للـ C# DTO
+        content: text,   // تركناه احتياطاً
         scopeType: 'Platform',
         createdByUserId: 1,
-      })
+      } as any)
       .pipe(catchError(() => of(true)))
       .subscribe(() => {
         const updated = [...this.messageHistory(), newMsg];
@@ -650,7 +652,7 @@ export class AdminTraineeProfile implements OnInit {
             }
             this.showToast(
               res?.message ||
-                `تم اعتماد انسحاب "${this.fullName()}" وإلغاء صلاحية دخوله للمنصة نهائياً وإرسال الإيميل بنجاح.`
+              `تم اعتماد انسحاب "${this.fullName()}" وإلغاء صلاحية دخوله للمنصة نهائياً وإرسال الإيميل بنجاح.`
             );
           } else {
             const meta = { status: 'Rejected' as const, reason: finalReasonToSend, date: new Date().toISOString() };
@@ -658,7 +660,7 @@ export class AdminTraineeProfile implements OnInit {
             this.withdrawalStatus.set('Rejected');
             this.showToast(
               res?.message ||
-                `تم رفض طلب انسحاب "${this.fullName()}" وإرسال سبب الرفض لبريده الإلكتروني.`
+              `تم رفض طلب انسحاب "${this.fullName()}" وإرسال سبب الرفض لبريده الإلكتروني.`
             );
           }
 
@@ -684,7 +686,7 @@ export class AdminTraineeProfile implements OnInit {
         this.withdrawalStatus.set(parsed.status || 'None');
         this.withdrawalReason.set(parsed.reason || '');
       }
-    } catch {}
+    } catch { }
 
     this.api.getTrainee(traineeId).subscribe({
       next: (profile) => {
@@ -835,8 +837,8 @@ export class AdminTraineeProfile implements OnInit {
       const avg =
         moduleEvals.length > 0
           ? Math.round(
-              (moduleEvals.reduce((sum, e) => sum + Number(e.score), 0) / moduleEvals.length) * 10
-            ) / 10
+            (moduleEvals.reduce((sum, e) => sum + Number(e.score), 0) / moduleEvals.length) * 10
+          ) / 10
           : null;
 
       const progressPercent =

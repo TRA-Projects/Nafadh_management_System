@@ -837,7 +837,9 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
           trackName: firstEnr?.trackName || matchedBatch?.trackName || initialView.trackName,
           supervisorName: firstEnr?.supervisorName || initialView.supervisorName,
           trainerName: evalTrainer,
-          moduleProgressPercent: progress?.percentage != null ? Math.round(Number(progress.percentage)) : initialView.moduleProgressPercent,
+          moduleProgressPercent: progress?.percentage != null
+            ? Math.round(Number(progress.percentage) * 100) / 100
+            : initialView.moduleProgressPercent,
           presentDays: attList.length > 0 ? presentCount : initialView.presentDays,
           absentDays: attList.length > 0 ? absentCount : initialView.absentDays,
           lateDays: attList.length > 0 ? lateCount : initialView.lateDays,
@@ -887,13 +889,81 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // Return social links only when valid URLs exist in backend data.
-  getSafeGitHubUrl(url?: string): string {
-    return url && url.startsWith('https://') ? url : '';
+  getSafeGitHubUrl(url?: string | null): string {
+    if (!url || typeof url !== 'string') {
+      return '';
+    }
+
+    const value = url.trim();
+
+    try {
+      const parsed = new URL(value);
+      const hostname = parsed.hostname.toLowerCase();
+
+      const isGitHub =
+        hostname === 'github.com' ||
+        hostname === 'www.github.com';
+
+      const hasProfile =
+        parsed.pathname.split('/').filter(Boolean).length > 0;
+
+      if (
+        parsed.protocol !== 'https:' ||
+        !isGitHub ||
+        !hasProfile
+      ) {
+        return '';
+      }
+
+      return parsed.href;
+    } catch {
+      return '';
+    }
+  }
+  getSafeLinkedInUrl(url?: string | null): string {
+    if (!url || typeof url !== 'string') {
+      return '';
+    }
+
+    const normalizedUrl = url.trim();
+
+    if (
+      !normalizedUrl ||
+      ['null', 'undefined', 'n/a', '-'].includes(
+        normalizedUrl.toLowerCase()
+      )
+    ) {
+      return '';
+    }
+
+    try {
+      const parsedUrl = new URL(normalizedUrl);
+
+      const isHttps = parsedUrl.protocol === 'https:';
+
+      const hostname = parsedUrl.hostname.toLowerCase();
+
+      const isLinkedIn =
+        hostname === 'linkedin.com' ||
+        hostname === 'www.linkedin.com' ||
+        hostname === 'm.linkedin.com';
+
+      const pathSegments = parsedUrl.pathname
+        .split('/')
+        .filter(Boolean);
+
+      const isProfile =
+        pathSegments.length >= 2 &&
+        ['in', 'pub'].includes(pathSegments[0].toLowerCase());
+
+      return isHttps && isLinkedIn && isProfile
+        ? parsedUrl.href
+        : '';
+    } catch {
+      return '';
+    }
   }
 
-  getSafeLinkedInUrl(url?: string): string {
-    return url && url.startsWith('https://') ? url : '';
-  }
 
   ngAfterViewInit() {
     this.initBarChart();
