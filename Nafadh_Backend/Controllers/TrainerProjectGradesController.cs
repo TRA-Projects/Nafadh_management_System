@@ -22,12 +22,10 @@ namespace Nafadh_Backend.Controllers
             _context = context;
         }
 
-        // Get project grades for trainees in a batch.
-        // Only trainers assigned to the batch can access them.
         [HttpGet("batch/{batchId:int}/project/{projectId:int}")]
         public async Task<IActionResult> GetProjectGrades(
-            int batchId,
-            int projectId)
+    int batchId,
+    int projectId)
         {
             var trainerId = await GetCurrentTrainerIdAsync();
 
@@ -42,18 +40,21 @@ namespace Nafadh_Backend.Controllers
             if (!isAssigned)
                 return Forbid();
 
-            var projectExists = await _context.NFD_Projects
-                .AnyAsync(p =>
-                    p.ProjectId == projectId &&
-                    _context.NFD_Batches.Any(b =>
-                        b.BatchId == batchId &&
-                        b.ProgramId == p.ProgramId));
+            // Verify that the project is explicitly linked
+            // to the requested batch and belongs to its program.
+            var projectExists = await _context.NFD_ProjectBatches
+                .AnyAsync(pb =>
+                    pb.ProjectId == projectId &&
+                    pb.BatchId == batchId &&
+                    pb.Project.ProgramId == pb.Batch.ProgramId);
 
             if (!projectExists)
+            {
                 return NotFound(new
                 {
-                    message = "Project not found in this batch program."
+                    message = "Project is not linked to this batch."
                 });
+            }
 
             var grades = await _context.NFD_TrainerProjectGrades
                 .AsNoTracking()
@@ -124,17 +125,19 @@ namespace Nafadh_Backend.Controllers
             if (!isAssigned)
                 return Forbid();
 
-            var project = await _context.NFD_Projects
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p =>
-                    p.ProjectId == projectId &&
-                    p.ProgramId == enrollment.ProgramId);
+            var projectIsLinkedToBatch = await _context.NFD_ProjectBatches
+     .AnyAsync(pb =>
+         pb.ProjectId == projectId &&
+         pb.BatchId == enrollment.BatchId &&
+         pb.Project.ProgramId == enrollment.ProgramId);
 
-            if (project == null)
+            if (!projectIsLinkedToBatch)
+            {
                 return NotFound(new
                 {
-                    message = "Project does not belong to the enrollment program."
+                    message = "Project is not linked to the trainee's batch."
                 });
+            }
 
             var isProjectMember = await _context.NFD_ProjectMembers
                 .AnyAsync(pm =>
