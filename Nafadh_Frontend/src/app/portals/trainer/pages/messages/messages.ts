@@ -116,6 +116,16 @@ closeMeetingDetails(): void {
   }
 }
 
+showChatOptions = false;
+
+toggleChatOptions(): void {
+  this.showChatOptions = !this.showChatOptions;
+}
+
+closeChatOptions(): void {
+  this.showChatOptions = false;
+}
+
 
   ngOnInit(): void {
     const userId = this.auth.userId;
