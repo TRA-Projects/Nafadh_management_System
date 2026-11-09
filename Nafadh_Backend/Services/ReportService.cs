@@ -170,68 +170,57 @@ namespace Nafadh_Backend.Services
             // Trainer KPIs
             // ======================================================
 
-            var kpis =
-                await _repository
-                    .GetTrainerKpisAsync(
-                        trainerId
-                    );
-
-
-            // ======================================================
-            // Attendance Rows
-            //
-            // Loaded only when the trainer requests
-            // an Attendance report.
-            // ======================================================
+            // Read and validate Trainer Portal filters.
+            int? selectedBatchId = null;
             int? selectedTraineeId = null;
 
             if (!string.IsNullOrWhiteSpace(dto.FiltersJson))
             {
-                try
+                using var filtersDoc =
+                    System.Text.Json.JsonDocument.Parse(dto.FiltersJson);
+
+                var root = filtersDoc.RootElement;
+
+                if (root.ValueKind != System.Text.Json.JsonValueKind.Object)
+                    throw new ArgumentException("Invalid report filters.");
+
+                int? ReadId(string camelCase, string pascalCase)
                 {
-                    using var filtersDoc =
-                        System.Text.Json.JsonDocument.Parse(dto.FiltersJson);
+                    if (!root.TryGetProperty(camelCase, out var value) &&
+                        !root.TryGetProperty(pascalCase, out value))
+                        return null;
 
-                    var root = filtersDoc.RootElement;
+                    if (value.ValueKind == System.Text.Json.JsonValueKind.Null)
+                        return null;
 
-                    System.Text.Json.JsonElement traineeIdElement;
+                    if (value.ValueKind != System.Text.Json.JsonValueKind.Number ||
+                        !value.TryGetInt32(out var id) || id <= 0)
+                        throw new ArgumentException($"Invalid {camelCase}.");
 
-                    if (
-                        root.TryGetProperty("traineeId", out traineeIdElement) ||
-                        root.TryGetProperty("TraineeId", out traineeIdElement)
-                    )
-                    {
-                        if (
-                            traineeIdElement.ValueKind ==
-                                System.Text.Json.JsonValueKind.Number &&
-                            traineeIdElement.TryGetInt32(out var parsedId) &&
-                            parsedId > 0
-                        )
-                        {
-                            selectedTraineeId = parsedId;
-                        }
-                    }
+                    return id;
                 }
-                catch (System.Text.Json.JsonException)
-                {
-                    selectedTraineeId = null;
-                }
+
+                selectedBatchId = ReadId("batchId", "BatchId");
+                selectedTraineeId = ReadId("traineeId", "TraineeId");
             }
-            var attendanceRows =
-    (
-        dto.Type ==
-            NFD_ReportType.Attendance ||
 
-        dto.Type ==
-            NFD_ReportType.Custom
-    )
-        ? await _repository
-          .GetTrainerTraineesReportRowsAsync(
-    trainerId,
-    null,
-    selectedTraineeId
-)
-        : null;
+            // Calculate KPIs using the selected filters.
+            var kpis = await _repository.GetTrainerReportKpisAsync(
+                trainerId,
+                selectedBatchId,
+                selectedTraineeId
+            );
+
+            // Load filtered attendance rows.
+            var attendanceRows =
+                dto.Type == NFD_ReportType.Attendance ||
+                dto.Type == NFD_ReportType.Custom
+                    ? await _repository.GetTrainerTraineesReportRowsAsync(
+                        trainerId,
+                        selectedBatchId,
+                        selectedTraineeId
+                    )
+                    : null;
 
 
             // ======================================================
