@@ -25,8 +25,7 @@ namespace Nafadh_Backend.DTOs
         public double AttendanceRate { get; set; }
         public decimal TechnicalScore { get; set; }
         public decimal BehavioralScore { get; set; }
-        public decimal FinalScore { get; set; }
-        // Arabic performance-band labels, matching the original Admin portal demo.
+        public decimal? FinalScore { get; set; }        // Arabic performance-band labels, matching the original Admin portal demo.
         public string Level { get; set; } = string.Empty;
     }
 

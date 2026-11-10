@@ -1,4 +1,3 @@
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -77,6 +76,9 @@ export interface AttemptAnswerDetailsDto {
   questionText: string;
   questionType: string;
   points: number;
+  
+  fileUrl?: string;
+  originalFileName?: string;
 
   selectedOptionId?: number | null;
   selectedOptionText?: string | null;
@@ -157,6 +159,11 @@ export interface QuizAnswerDetailsDto {
   selectedOptionId: number | null;
   selectedOptionText: string | null;
   textAnswer: string | null;
+  
+  // 🟢 التعديل: إضافة الحقلين هنا
+  fileUrl?: string | null;
+  originalFileName?: string | null;
+
   maxPoints: number;
   awardedPoints: number;
   isCorrect: boolean | null;
@@ -358,6 +365,28 @@ export class TrainerApi {
     }>(`${this.base}/management/lookups/question-difficulties`);
   }
 
+
+getTrainerSkills(trainerId: number): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.base}/TrainerSkill/trainer/${trainerId}`
+  );
+}
+
+addTrainerSkill(
+  trainerId: number,
+  skillName: string
+): Observable<any> {
+  return this.http.post<any>(
+    `${this.base}/TrainerSkill/trainer/${trainerId}`,
+    { skillName }
+  );
+}
+
+deleteTrainerSkill(skillId: number): Observable<void> {
+  return this.http.delete<void>(
+    `${this.base}/TrainerSkill/${skillId}`
+  );
+}
 
   // =====================================================
   // Dashboard / Batches
@@ -1926,4 +1955,32 @@ getTrainerTraineesReportFile(
     );
   }
 
+getMyTrainerAttendance(): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.base}/TrainerAttendance/my`
+  );
+}
+uploadTrainerAttendanceProof(
+  attendanceId: number,
+  formData: FormData
+): Observable<any> {
+  return this.http.post<any>(
+    `${this.base}/TrainerAttendance/${attendanceId}/proof`,
+    formData
+  );
+}
+isExcuseWindowOpen(attendanceId: number): Observable<{ isOpen: boolean }> {
+  return this.http.get<{ isOpen: boolean }>(
+    `${this.base}/TrainerAttendance/${attendanceId}/excuse-window`
+  );
+}
+submitTrainerAttendanceExcuse(
+  attendanceId: number,
+  reason: string
+): Observable<any> {
+  return this.http.put<any>(
+    `${this.base}/TrainerAttendance/${attendanceId}/excuse`,
+    { reason }
+  );
+}
 }

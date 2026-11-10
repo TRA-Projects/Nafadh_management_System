@@ -83,6 +83,7 @@ export class TrainerLayout implements OnInit, OnDestroy {
     { path: 'content', label: 'إدارة المحتوى', icon: 'folder', pageCode: 'nf.trainer.curriculum' },
     { path: 'quizzes', label: 'الاختبارات', icon: 'clip', pageCode: 'nf.trainer.quizzes' },
     { path: 'attendance', label: 'تسجيل الحضور', icon: 'check-square', pageCode: 'nf.trainer.attendance' },
+    { path: 'trainer-attendance', label: 'حضوري', icon: 'check-square', pageCode: 'nf.trainer.attendance' },
     { path: 'tasks', label: 'المهام والمشروعات', icon: 'clip', pageCode: 'nf.trainer.tasks-projects' },
     { path: 'trainees', label: 'تقييم ومتابعة المتدربين', icon: 'graduation', pageCode: 'nf.trainer.trainees' },
     { path: 'reports', label: 'التقارير', icon: 'chart', pageCode: 'nf.trainer.reports' },

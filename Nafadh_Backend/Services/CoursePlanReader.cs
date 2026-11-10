@@ -31,7 +31,8 @@ namespace Nafadh_Backend.Services
                 .Include(p => p.CreatedByUser)
                 .Include(p => p.Trainers).ThenInclude(pt => pt.Trainer).ThenInclude(t => t.User)
                 .Include(p => p.Stages).ThenInclude(s => s.Trainers).ThenInclude(st => st.Trainer).ThenInclude(t => t.User)
-                .Include(p => p.Stages).ThenInclude(s => s.Items)
+                .Include(p => p.Stages).ThenInclude(s => s.Trainer).ThenInclude(t => t!.User)
+.Include(p => p.Stages).ThenInclude(s => s.Items).ThenInclude(i => i.Trainer).ThenInclude(t => t!.User)
                 .AsSplitQuery();
         }
 
@@ -136,6 +137,10 @@ namespace Nafadh_Backend.Services
                 .Select(pt => pt.Trainer)
                 .Concat(plan.Stages.SelectMany(st => st.Trainers.Select(x => x.Trainer)))
                 .Concat(plan.Stages.Where(st => st.Trainer is not null).Select(st => st.Trainer!))
+                .Concat(plan.Stages
+    .SelectMany(st => st.Items)
+    .Where(i => i.Trainer != null)
+    .Select(i => i.Trainer!))
                 .GroupBy(t => t.TrainerId)
                 .Select(g => g.First())
                 .OrderBy(t => t.User.FullName)

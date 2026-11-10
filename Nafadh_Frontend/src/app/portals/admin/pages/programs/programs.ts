@@ -1836,46 +1836,115 @@ export class AdminPrograms implements OnInit {
     return null;
   }
 
-  private initBatchForm(): void {
-    this.batchForm = this.fb.group({
-      batchName: ['', [Validators.required]],
-      programId: ['', [Validators.required]],
-      companyId: ['', []],
-      startDate: ['', [Validators.required]],
-      endDate: ['', [Validators.required]],
-      capacity: [null, [
-        Validators.required,
-        Validators.min(1),
-        Validators.pattern(/^[1-9]\d*$/)
-      ]]
-    }, { validators: this.dateRangeValidator });
+  evaluationWeightsValidator(group: FormGroup) {
+  const keys = [
+    'attendanceWeight',
+    'quizzesWeight',
+    'tasksWeight',
+    'projectsWeight'
+  ];
+
+  const values = keys.map(key => {
+    const value = group.get(key)?.value;
+
+    if (value === null || value === undefined || value === '') {
+      return NaN;
+    }
+
+    return Number(value);
+  });
+
+  if (values.some(value => !Number.isFinite(value))) {
+    return { invalidEvaluationWeights: true };
   }
 
-  private initEditBatchForm(): void {
-    this.editBatchForm = this.fb.group({
-      batchName: ['', [Validators.required]],
-      programId: [null, [Validators.required]],
-      companyId: [null],
-      startDate: ['', [Validators.required]],
-      endDate: ['', [Validators.required]],
-      capacity: [
-        null,
-        [Validators.required, Validators.min(1)]
-      ],
-      status: [null, [Validators.required]]
-    }, { validators: this.dateRangeValidator });
-  }
-  private initProgramForm(): void {
-    this.programForm = this.fb.group({
-      title: ['', [Validators.required, Validators.minLength(2)]],
-      trackId: [null, [Validators.required]],
-      durationWeeks: [
-        null,
-        [Validators.required]
-      ],
-      description: ['']
-    });
-  }
+
+  const total = values.reduce((sum, value) => sum + value, 0);
+
+  return Math.abs(total - 100) < 0.001
+    ? null
+    : { evaluationWeightsTotalInvalid: true };
+}
+
+  private initBatchForm(): void {
+  this.batchForm = this.fb.group({
+    batchName: ['', [Validators.required]],
+    programId: ['', [Validators.required]],
+    companyId: ['', []],
+    startDate: ['', [Validators.required]],
+    endDate: ['', [Validators.required]],
+    capacity: [null, [
+      Validators.required,
+      Validators.min(1),
+      Validators.pattern(/^[1-9]\d*$/)
+    ]],
+
+    // Evaluation weights
+    attendanceWeight: [20, [Validators.required, Validators.min(0), Validators.max(100)]],
+    quizzesWeight: [20, [Validators.required, Validators.min(0), Validators.max(100)]],
+    tasksWeight: [30, [Validators.required, Validators.min(0), Validators.max(100)]],
+    projectsWeight: [30, [Validators.required, Validators.min(0), Validators.max(100)]],
+
+    // Evaluation classification thresholds
+    excellentMinScore: [80, [Validators.required, Validators.min(0), Validators.max(100)]],
+    excellentMinAttendance: [90, [Validators.required, Validators.min(0), Validators.max(100)]],
+    veryGoodMinScore: [70, [Validators.required, Validators.min(0), Validators.max(100)]],
+    veryGoodMinAttendance: [80, [Validators.required, Validators.min(0), Validators.max(100)]],
+    goodMinScore: [60, [Validators.required, Validators.min(0), Validators.max(100)]],
+    atRiskMinAttendance: [80, [Validators.required, Validators.min(0), Validators.max(100)]]
+  }, {
+    validators: [
+      this.dateRangeValidator,
+      this.evaluationWeightsValidator
+    ]
+  });
+}
+
+private initEditBatchForm(): void {
+  this.editBatchForm = this.fb.group({
+    batchName: ['', [Validators.required]],
+    programId: [null, [Validators.required]],
+    companyId: [null],
+    startDate: ['', [Validators.required]],
+    endDate: ['', [Validators.required]],
+    capacity: [
+      null,
+      [Validators.required, Validators.min(1)]
+    ],
+    status: [null, [Validators.required]],
+
+    // Evaluation weights
+    attendanceWeight: [20, [Validators.required, Validators.min(0), Validators.max(100)]],
+    quizzesWeight: [20, [Validators.required, Validators.min(0), Validators.max(100)]],
+    tasksWeight: [30, [Validators.required, Validators.min(0), Validators.max(100)]],
+    projectsWeight: [30, [Validators.required, Validators.min(0), Validators.max(100)]],
+
+    // Evaluation classification thresholds
+    excellentMinScore: [80, [Validators.required, Validators.min(0), Validators.max(100)]],
+    excellentMinAttendance: [90, [Validators.required, Validators.min(0), Validators.max(100)]],
+    veryGoodMinScore: [70, [Validators.required, Validators.min(0), Validators.max(100)]],
+    veryGoodMinAttendance: [80, [Validators.required, Validators.min(0), Validators.max(100)]],
+    goodMinScore: [60, [Validators.required, Validators.min(0), Validators.max(100)]],
+    atRiskMinAttendance: [80, [Validators.required, Validators.min(0), Validators.max(100)]]
+  }, {
+    validators: [
+      this.dateRangeValidator,
+      this.evaluationWeightsValidator
+    ]
+  });
+}
+
+private initProgramForm(): void {
+  this.programForm = this.fb.group({
+    title: ['', [Validators.required, Validators.minLength(2)]],
+    trackId: [null, [Validators.required]],
+    durationWeeks: [
+      null,
+      [Validators.required]
+    ],
+    description: ['']
+  });
+}
 
   loadAvailableBatchTrainees(): void {
     this.isLoadingAvailableTrainees.set(true);
@@ -2345,15 +2414,57 @@ export class AdminPrograms implements OnInit {
     }
     this.selectedBatch = batch;
 
-    this.editBatchForm.patchValue({
-      batchName: batch.batchName ?? '',
-      programId: batch.programId ?? null,
-      companyId: batch.companyId ?? null,
-      startDate: batch.startDate ? batch.startDate.split('T')[0] : '',
-      endDate: batch.endDate ? batch.endDate.split('T')[0] : '',
-      capacity: batch.capacity ?? this.setting('BATCH_DEFAULT_CAPACITY'),
-      status: this.getBatchStatusValue(batch.status)
-    });
+
+// Preserve existing custom settings.
+// Apply defaults only to legacy batches with no evaluation configuration.
+const weights = {
+  attendance: Number(batch.attendanceWeight ?? batch.AttendanceWeight ?? 0),
+  quizzes: Number(batch.quizzesWeight ?? batch.QuizzesWeight ?? 0),
+  tasks: Number(batch.tasksWeight ?? batch.TasksWeight ?? 0),
+  projects: Number(batch.projectsWeight ?? batch.ProjectsWeight ?? 0)
+};
+
+const hasConfiguredWeights =
+  weights.attendance + weights.quizzes +
+  weights.tasks + weights.projects > 0;
+
+const thresholds = {
+  excellentScore: batch.excellentMinScore ?? batch.ExcellentMinScore,
+  excellentAttendance: batch.excellentMinAttendance ?? batch.ExcellentMinAttendance,
+  veryGoodScore: batch.veryGoodMinScore ?? batch.VeryGoodMinScore,
+  veryGoodAttendance: batch.veryGoodMinAttendance ?? batch.VeryGoodMinAttendance,
+  goodScore: batch.goodMinScore ?? batch.GoodMinScore,
+  atRiskAttendance: batch.atRiskMinAttendance ?? batch.AtRiskMinAttendance
+};
+
+const hasConfiguredThresholds = Object.values(thresholds)
+  .some(value => value != null && Number(value) !== 0);
+
+this.editBatchForm.patchValue({
+  batchName: batch.batchName ?? batch.BatchName ?? '',
+  programId: batch.programId ?? batch.ProgramId ?? null,
+  companyId: batch.companyId ?? batch.CompanyId ?? null,
+  startDate: (batch.startDate ?? batch.StartDate)
+    ? (batch.startDate ?? batch.StartDate).split('T')[0]
+    : '',
+  endDate: (batch.endDate ?? batch.EndDate)
+    ? (batch.endDate ?? batch.EndDate).split('T')[0]
+    : '',
+  capacity: batch.capacity ?? batch.Capacity ?? this.setting('BATCH_DEFAULT_CAPACITY'),
+  status: this.getBatchStatusValue(batch.status ?? batch.Status),
+
+    attendanceWeight: hasConfiguredWeights ? weights.attendance : 20,
+  quizzesWeight: hasConfiguredWeights ? weights.quizzes : 20,
+  tasksWeight: hasConfiguredWeights ? weights.tasks : 30,
+  projectsWeight: hasConfiguredWeights ? weights.projects : 30,
+
+  excellentMinScore: hasConfiguredThresholds ? thresholds.excellentScore : 80,
+  excellentMinAttendance: hasConfiguredThresholds ? thresholds.excellentAttendance : 90,
+  veryGoodMinScore: hasConfiguredThresholds ? thresholds.veryGoodScore : 70,
+  veryGoodMinAttendance: hasConfiguredThresholds ? thresholds.veryGoodAttendance : 80,
+  goodMinScore: hasConfiguredThresholds ? thresholds.goodScore : 60,
+  atRiskMinAttendance: hasConfiguredThresholds ? thresholds.atRiskAttendance : 80
+});
 
     this.editBatchFormSubmitted = false;
     this.editBatchErrorMessage = null;
@@ -2447,16 +2558,30 @@ export class AdminPrograms implements OnInit {
     }
 
     const payload = {
-      batchName: String(formValue.batchName || '').trim(),
-      programId: Number(formValue.programId),
-      companyId:
-        formValue.companyId === '' || formValue.companyId == null
-          ? null
-          : Number(formValue.companyId),
-      startDate: formValue.startDate,
-      endDate: formValue.endDate,
-      capacity: Number(formValue.capacity)
-    };
+  batchName: String(formValue.batchName || '').trim(),
+  programId: Number(formValue.programId),
+  companyId:
+    formValue.companyId === '' || formValue.companyId == null
+      ? null
+      : Number(formValue.companyId),
+  startDate: formValue.startDate,
+  endDate: formValue.endDate,
+  capacity: Number(formValue.capacity),
+
+  // Evaluation weights
+  attendanceWeight: Number(formValue.attendanceWeight),
+  quizzesWeight: Number(formValue.quizzesWeight),
+  tasksWeight: Number(formValue.tasksWeight),
+  projectsWeight: Number(formValue.projectsWeight),
+
+  // Classification thresholds
+  excellentMinScore: Number(formValue.excellentMinScore),
+  excellentMinAttendance: Number(formValue.excellentMinAttendance),
+  veryGoodMinScore: Number(formValue.veryGoodMinScore),
+  veryGoodMinAttendance: Number(formValue.veryGoodMinAttendance),
+  goodMinScore: Number(formValue.goodMinScore),
+  atRiskMinAttendance: Number(formValue.atRiskMinAttendance)
+};
 
     this.isSubmittingBatch = true;
 
@@ -2688,14 +2813,28 @@ export class AdminPrograms implements OnInit {
     this.editBatchErrorMessage = null;
 
     const payload = {
-      batchName: formValue.batchName,
-      programId: Number(formValue.programId),
-      companyId: companyId,
-      startDate: formValue.startDate,
-      endDate: formValue.endDate,
-      capacity: capacity,
-      status: Number(formValue.status)
-    };
+  batchName: formValue.batchName,
+  programId: Number(formValue.programId),
+  companyId: companyId,
+  startDate: formValue.startDate,
+  endDate: formValue.endDate,
+  capacity: capacity,
+  status: Number(formValue.status),
+
+  // Evaluation weights
+  attendanceWeight: Number(formValue.attendanceWeight),
+  quizzesWeight: Number(formValue.quizzesWeight),
+  tasksWeight: Number(formValue.tasksWeight),
+  projectsWeight: Number(formValue.projectsWeight),
+
+  // Classification thresholds
+  excellentMinScore: Number(formValue.excellentMinScore),
+  excellentMinAttendance: Number(formValue.excellentMinAttendance),
+  veryGoodMinScore: Number(formValue.veryGoodMinScore),
+  veryGoodMinAttendance: Number(formValue.veryGoodMinAttendance),
+  goodMinScore: Number(formValue.goodMinScore),
+  atRiskMinAttendance: Number(formValue.atRiskMinAttendance)
+};
 
     this.adminApi.updateBatch(batchId, payload).subscribe({
       next: () => {

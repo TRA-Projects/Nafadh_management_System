@@ -194,6 +194,36 @@ export class AdminApi {
     );
   }
 
+// Admin Reports - Master Trainees Transcript
+getAdminTraineesTranscript(
+  pageNumber: number = 1,
+  pageSize: number = 1000,
+  companyId?: number,
+  batchId?: number,
+  traineeId?: number
+): Observable<any> {
+  let params = new HttpParams()
+    .set('pageNumber', String(pageNumber))
+    .set('pageSize', String(pageSize));
+
+  if (companyId != null) {
+    params = params.set('companyId', String(companyId));
+  }
+
+  if (batchId != null) {
+    params = params.set('batchId', String(batchId));
+  }
+
+  if (traineeId != null) {
+    params = params.set('traineeId', String(traineeId));
+  }
+
+  return this.http.get<any>(
+    `${this.base}/Report/admin-trainees-transcript`,
+    { params }
+  );
+}
+
 
   getCompany(id: number): Observable<CompanyDto> { return this.http.get<CompanyDto>(`${this.base}/Company/${this.sanitizeId(id)}`); }
   createCompany(dto: unknown) { return this.http.post(`${this.base}/Company`, dto); }

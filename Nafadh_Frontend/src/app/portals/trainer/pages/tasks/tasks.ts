@@ -72,7 +72,12 @@ export class TrainerTasks implements OnInit {
   selectedSubmissionsTask = signal<TaskDto | null>(null);
   modalLoadingSubmissions = signal(false);
   submissionsModalError = signal('');
-
+// TASK SUBMISSION GRADING
+gradingSubmissionId = signal<number | null>(null);
+savingGrade = signal(false);
+gradeInput: number | null = null;
+feedbackInput = '';
+gradeError = signal('');
 
   // =====================================================
   // TASK ACTIONS
@@ -501,18 +506,91 @@ taskToDelete = signal<TaskDto | null>(null);
   // CLOSE SUBMISSIONS MODAL
   // =====================================================
 
-  closeSubmissionsModal(): void {
-    this.showSubmissionsModal.set(false);
-    this.selectedSubmissionsTask.set(null);
-    this.modalLoadingSubmissions.set(false);
-    this.submissionsModalError.set('');
-  }
+ closeSubmissionsModal(): void {
+  if (this.savingGrade()) return;
+
+  this.cancelSubmissionGrading();
+
+  this.showSubmissionsModal.set(false);
+  this.selectedSubmissionsTask.set(null);
+  this.modalLoadingSubmissions.set(false);
+  this.submissionsModalError.set('');
+}
 
 
   // =====================================================
   // SELECTED TASK SUBMISSIONS
   // =====================================================
+// OPEN SUBMISSION GRADING
+openSubmissionGrading(submission: SubmissionDto): void {
+  this.gradingSubmissionId.set(submission.submissionId);
 
+  this.gradeInput =
+    submission.grade !== null &&
+    submission.grade !== undefined &&
+    submission.grade !== ''
+      ? Number(submission.grade)
+      : null;
+
+  this.feedbackInput = submission.feedback ?? '';
+  this.gradeError.set('');
+}
+
+// CANCEL SUBMISSION GRADING
+cancelSubmissionGrading(): void {
+  if (this.savingGrade()) return;
+
+  this.gradingSubmissionId.set(null);
+  this.gradeInput = null;
+  this.feedbackInput = '';
+  this.gradeError.set('');
+}
+// SAVE SUBMISSION GRADE
+saveSubmissionGrade(submission: SubmissionDto): void {
+  this.gradeError.set('');
+
+  if (
+    this.gradeInput === null ||
+    !Number.isFinite(this.gradeInput) ||
+    this.gradeInput < 0 ||
+    this.gradeInput > 100
+  ) {
+    this.gradeError.set('يرجى إدخال درجة صحيحة من 0 إلى 100');
+    return;
+  }
+
+  if (this.savingGrade()) return;
+
+  this.savingGrade.set(true);
+
+  const payload = {
+    grade: this.gradeInput,
+    feedback: this.feedbackInput.trim()
+  };
+
+  this.api.gradeSubmission(
+    submission.submissionId,
+    payload
+  ).subscribe({
+    next: () => {
+      this.savingGrade.set(false);
+
+      const task = this.selectedSubmissionsTask();
+
+      if (task) {
+        this.openSubmissionsModal(task);
+      }
+
+      this.cancelSubmissionGrading();
+    },
+
+    error: (error) => {
+      console.error('Error grading submission:', error);
+      this.savingGrade.set(false);
+      this.gradeError.set('تعذر حفظ التقييم، يرجى المحاولة مرة أخرى');
+    }
+  });
+}
   selectedTaskSubmissions(): SubmissionDto[] {
     const task = this.selectedSubmissionsTask();
 

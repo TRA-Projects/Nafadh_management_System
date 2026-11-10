@@ -1,5 +1,4 @@
-﻿
-namespace Nafadh_Backend.DTOs
+﻿namespace Nafadh_Backend.DTOs
 {
     public class QuizResultDto
     {
@@ -54,14 +53,17 @@ namespace Nafadh_Backend.DTOs
         public int? SelectedOptionId { get; set; }
         public string? SelectedOptionText { get; set; }
         public string? TextAnswer { get; set; }
+
+        // 🟢 التعديل: إضافة هذه الحقول هنا
+        public string? FileUrl { get; set; }
+        public string? OriginalFileName { get; set; }
+
         public decimal MaxPoints { get; set; }
         public decimal AwardedPoints { get; set; }
         public bool? IsCorrect { get; set; }
         public bool IsManuallyGraded { get; set; }
         public bool IsMarkedForReview { get; set; }
         public bool RequiresManualGrading { get; set; }
-
-
     }
 
     // الحفاظ على DTO التصحيح اليدوي الموجود

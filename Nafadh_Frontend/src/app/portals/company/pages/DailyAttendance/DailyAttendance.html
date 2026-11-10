@@ -366,7 +366,9 @@
 
                                 </div>
 
-
+                                @if (isExcusedAbsence(row.record)) {
+                                <span class="attendance-badge badge-Excused" title="تم قبول عذر الغياب">بعذر</span>
+                                }
 
                                 @if (row.record?.status === 'Late') {
 
@@ -629,10 +631,10 @@
 
                                 <div class="weekly-day-cell">
 
-                                    <span class="attendance-badge" [ngClass]="statusClass(day.record?.status)"
-                                        [title]="day.record?.reason || day.record?.status || 'لم يُسجّل'">
+                                    <span class="attendance-badge" [ngClass]="statusClass(day.record)"
+                                        [title]="attendanceDisplayLabel(day.record)">
 
-                                        {{ statusSymbol(day.record?.status) }}
+                                        {{ statusSymbol(day.record) }}
 
                                     </span>
 
@@ -706,7 +708,7 @@
 
             <div class="weekly-excuse-heading">
 
-                <h3>{{ weeklyStatusLabel(excuse.status) }} — {{ excuse.date | date:'yyyy-MM-dd' }}</h3>
+                <h3>{{ weeklyStatusLabel(excuse) }} — {{ excuse.date | date:'yyyy-MM-dd' }}</h3>
 
                 <button type="button" (click)="closeWeeklyExcuse()" aria-label="إغلاق">×</button>
 

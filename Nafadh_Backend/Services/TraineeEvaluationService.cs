@@ -154,10 +154,14 @@ namespace Nafadh_Backend.Services
         // ==========================================
         // 3. التقييم الكلي للمتدرب (ملف الإنجاز - الدرجة النهائية)
         // ==========================================
-        public async Task<TraineeOverallEvaluationDTO> GetTraineeOverallEvaluationAsync(int enrollmentId)
+
+
+
+        public async Task<TraineeOverallEvaluationDTO> GetTraineeOverallEvaluationAsync(
+            int enrollmentId)
         {
             var enrollment = await _context.NFD_Enrollments
-                .Include(e => e.Trainee)
+                .Include(e => e.Batch)
                 .FirstOrDefaultAsync(e => e.EnrollmentId == enrollmentId);
 
             if (enrollment == null)
@@ -165,6 +169,7 @@ namespace Nafadh_Backend.Services
 
             int traineeId = enrollment.TraineeId;
             int batchId = enrollment.BatchId;
+            var batch = enrollment.Batch;
 
             var result = new TraineeOverallEvaluationDTO
             {
@@ -172,60 +177,267 @@ namespace Nafadh_Backend.Services
                 TraineeId = traineeId
             };
 
-            // 1. حساب نسبة الحضور (وزن 30%)
-            var attendances = await _context.NFD_DailyAttendances
+            // 1. Attendance
+            var attendance = await _context.NFD_DailyAttendances
+                .AsNoTracking()
                 .Where(a => a.EnrollmentId == enrollmentId)
                 .ToListAsync();
 
-            int totalDays = attendances.Count;
-            int presentDays = attendances.Count(a => a.Status == Nafadh_Backend.Enums.NFD_AttendanceStatus.Present);
+            var countedAttendance = attendance
+                .Where(a => a.Status !=
+                    Nafadh_Backend.Enums.NFD_AttendanceStatus.Excused)
+                .ToList();
 
-            result.AttendancePercentage = totalDays > 0
-                ? Math.Round((double)presentDays / totalDays * 100, 2)
-                : 0;
+            if (countedAttendance.Any())
+            {
+                result.AttendancePercentage = Math.Round(
+                    countedAttendance.Average(a =>
+                        a.Status == Nafadh_Backend.Enums.NFD_AttendanceStatus.Present
+                            ? 100.0
+                            : a.Status == Nafadh_Backend.Enums.NFD_AttendanceStatus.Late
+                                ? 50.0
+                                : 0.0), 2);
+            }
 
-            // 2. حساب نسبة درجات المهام (وزن 50%)
-            var submissions = await _context.NFD_Submissions
-                .Where(s => s.TraineeId == traineeId && s.Task.BatchId == batchId)
+            // 2. Tasks
+            var batchTasks = await _context.NFD_Tasks
+                .AsNoTracking()
+                .Where(t => t.BatchId == batchId)
+                .Select(t => new
+                {
+                    t.TaskId,
+                    t.DueDate
+                })
                 .ToListAsync();
 
-            double totalEarnedGrades = 0;
-            double maxPossibleGrades = 0;
+            var taskIds = batchTasks.Select(t => t.TaskId).ToList();
 
-            foreach (var sub in submissions)
-            {
-                if (!string.IsNullOrEmpty(sub.Grade) && double.TryParse(sub.Grade, out double grade))
+            var submissions = await _context.NFD_Submissions
+                .AsNoTracking()
+                .Where(s =>
+                    s.TraineeId == traineeId &&
+                    taskIds.Contains(s.TaskId))
+                .OrderByDescending(s => s.SubmittedAt)
+                .Select(s => new
                 {
-                    totalEarnedGrades += grade;
-                    maxPossibleGrades += 100;
+                    s.TaskId,
+                    s.Grade,
+                    s.Status
+                })
+                .ToListAsync();
+
+            var validTaskGrades = new Dictionary<int, double>();
+
+            foreach (var group in submissions.GroupBy(s => s.TaskId))
+            {
+                var gradedSubmission = group.FirstOrDefault(s =>
+                    s.Status == Nafadh_Backend.Enums.NFD_SubmissionStatus.Graded &&
+                    double.TryParse(
+                        s.Grade,
+                        System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        out double grade) &&
+                    grade >= 0 && grade <= 100);
+
+                if (gradedSubmission != null &&
+                    double.TryParse(
+                        gradedSubmission.Grade,
+                        System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        out double score))
+                {
+                    validTaskGrades[group.Key] = score;
                 }
             }
 
-            result.TasksPercentage = maxPossibleGrades > 0
-                ? Math.Round(totalEarnedGrades / maxPossibleGrades * 100, 2)
+            var now = DateTime.UtcNow;
+
+            var resolvedTaskScores = new List<double>();
+
+            foreach (var task in batchTasks)
+            {
+                if (validTaskGrades.TryGetValue(task.TaskId, out double grade))
+                {
+                    resolvedTaskScores.Add(grade);
+                }
+                else if (
+                    !submissions.Any(s => s.TaskId == task.TaskId) &&
+                    task.DueDate <= now)
+                {
+                    // Overdue task without submission = zero.
+                    resolvedTaskScores.Add(0);
+                }
+            }
+
+            result.TasksPercentage = resolvedTaskScores.Any()
+                ? Math.Round(resolvedTaskScores.Average(), 2)
                 : 0;
 
-            // 3. حساب نسبة الاختبارات (وزن 20%)
-            var quizAttempts = await _context.NFD_QuizAttempts
-                .Where(q => q.TraineeId == traineeId)
+            // 3. Quizzes
+            var batchQuizIds = await _context.NFD_Quizzes
+                .AsNoTracking()
+                .Where(q =>
+    q.BatchId == batchId &&
+    q.Status != Nafadh_Backend.Enums.NFD_QuizStatus.Draft)
+                .Select(q => q.QuizId)
                 .ToListAsync();
 
-            result.QuizzesPercentage = quizAttempts.Any()
-                ? (double)quizAttempts.Max(q => q.Percentage)
+            var submittedAttempts = await _context.NFD_QuizAttempts
+                .AsNoTracking()
+                .Where(q =>
+                    q.TraineeId == traineeId &&
+                    batchQuizIds.Contains(q.QuizId) &&
+                    q.SubmittedAt != null &&
+                    q.Status == "Submitted")
+                .OrderByDescending(q => q.AttemptNumber)
+                .Select(q => new
+                {
+                    q.QuizId,
+                    q.Percentage
+                })
+                .ToListAsync();
+
+            var quizGrades = submittedAttempts
+                .GroupBy(q => q.QuizId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (double)g.First().Percentage);
+
+            if (batchQuizIds.Count > 0)
+            {
+                result.QuizzesPercentage = Math.Round(
+                    batchQuizIds
+                        .Where(id => quizGrades.ContainsKey(id))
+                        .Select(id => quizGrades[id])
+                        .DefaultIfEmpty(0)
+                        .Average(), 2);
+            }
+
+
+            // 4. Projects - trainer grades only
+            var assignedProjectIds = await _context.NFD_ProjectBatches
+                .AsNoTracking()
+                .Where(pb =>
+                    pb.BatchId == batchId &&
+                    _context.NFD_ProjectMembers.Any(pm =>
+                        pm.ProjectId == pb.ProjectId &&
+                        pm.TraineeId == traineeId))
+                .Select(pb => pb.ProjectId)
+                .Distinct()
+                .ToListAsync();
+
+            var projectGrades = await _context.NFD_TrainerProjectGrades
+                .AsNoTracking()
+                .Where(g =>
+                    g.EnrollmentId == enrollmentId &&
+                    assignedProjectIds.Contains(g.ProjectId))
+                .Select(g => new
+                {
+                    g.ProjectId,
+                    g.Score
+                })
+                .ToListAsync();
+
+            var validProjectGrades = projectGrades
+                .Where(g => g.Score >= 0 && g.Score <= 100)
+                .GroupBy(g => g.ProjectId)
+                .ToDictionary(g => g.Key, g => (double)g.First().Score);
+
+            result.ProjectsPercentage = validProjectGrades.Any()
+                ? Math.Round(validProjectGrades.Values.Average(), 2)
                 : 0;
 
-            // 4. الحساب النهائي والتصنيف
-            result.FinalScore = Math.Round(
-                (result.AttendancePercentage * 0.30) +
-                (result.TasksPercentage * 0.50) +
-                (result.QuizzesPercentage * 0.20), 2);
 
-            // التصنيف لـ 3 حالات 
-            if (result.FinalScore >= 80)
+            // 5. Check evaluation completeness
+            bool attendanceComplete =
+                batch.AttendanceWeight <= 0 ||
+                countedAttendance.Any();
+
+            bool tasksComplete =
+    batch.TasksWeight <= 0 ||
+    (batchTasks.Count > 0 &&
+     batchTasks.All(task =>
+         validTaskGrades.ContainsKey(task.TaskId) ||
+         (
+             !submissions.Any(s => s.TaskId == task.TaskId) &&
+             task.DueDate <= now
+         )));
+
+            bool quizzesComplete =
+                batch.QuizzesWeight <= 0 ||
+                (batchQuizIds.Count > 0 &&
+                 batchQuizIds.All(id => quizGrades.ContainsKey(id)));
+
+            bool projectsComplete =
+    batch.ProjectsWeight <= 0 ||
+    (assignedProjectIds.Count > 0 &&
+     assignedProjectIds.All(id =>
+         validProjectGrades.ContainsKey(id)));
+
+            result.IsComplete =
+                attendanceComplete &&
+                tasksComplete &&
+                quizzesComplete &&
+                projectsComplete;
+
+            if (!result.IsComplete)
+            {
+                result.EvaluationStatus = "التقييم غير مكتمل";
+                result.FinalGrade = "بانتظار استكمال التقييم";
+                result.FinalScore = 0;
+
+                return result;
+            }
+
+            // 6. Validate weights
+            double attendanceWeight = (double)batch.AttendanceWeight;
+            double tasksWeight = (double)batch.TasksWeight;
+            double quizzesWeight = (double)batch.QuizzesWeight;
+            double projectsWeight = (double)batch.ProjectsWeight;
+
+            double totalWeight =
+                attendanceWeight +
+                tasksWeight +
+                quizzesWeight +
+                projectsWeight;
+
+            if (totalWeight <= 0 ||
+                Math.Abs(totalWeight - 100) > 0.01)
+            {
+                throw new InvalidOperationException(
+                    "يجب أن يكون مجموع أوزان التقييم في الدفعة 100%.");
+            }
+
+            // 7. Final weighted score
+            result.FinalScore = Math.Round(
+                (
+                    result.AttendancePercentage * attendanceWeight +
+                    result.TasksPercentage * tasksWeight +
+                    result.QuizzesPercentage * quizzesWeight +
+                    result.ProjectsPercentage * projectsWeight
+                ) / 100.0, 2);
+
+            // 8. Classification
+            if (result.AttendancePercentage <
+                (double)batch.AtRiskMinAttendance)
+            {
+                result.FinalGrade = "معرض للخطر";
+            }
+            else if (
+                result.FinalScore >= (double)batch.ExcellentMinScore &&
+                result.AttendancePercentage >=
+                    (double)batch.ExcellentMinAttendance)
             {
                 result.FinalGrade = "ممتاز";
             }
-            else if (result.FinalScore >= 60)
+            else if (
+                result.FinalScore >= (double)batch.VeryGoodMinScore &&
+                result.AttendancePercentage >=
+                    (double)batch.VeryGoodMinAttendance)
+            {
+                result.FinalGrade = "جيد جداً";
+            }
+            else if (result.FinalScore >= (double)batch.GoodMinScore)
             {
                 result.FinalGrade = "جيد";
             }
@@ -234,7 +446,10 @@ namespace Nafadh_Backend.Services
                 result.FinalGrade = "يحتاج إلى تحسين";
             }
 
+            result.EvaluationStatus = "مكتمل";
+
             return result;
         }
+
     }
 }

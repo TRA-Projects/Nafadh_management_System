@@ -47,6 +47,12 @@ button {
   --c-border: #bbf0cc;
 }
 
+.cat-excuse {
+  --c: #0f766e;
+  --c-soft: #ccfbf1;
+  --c-border: #99f6e4;
+}
+
 .cat-announcement {
   --c: #d97706;
   --c-soft: #fff4d6;
@@ -1646,3 +1652,22 @@ input:focus-visible {
 .page .read-action:hover:not(:disabled) {
   background: #f8fafc;
 }
+/* Notification detail view; no changes to shared bell or attendance screens. */
+.notification.excuse-clickable { cursor: pointer; }
+.notification.excuse-clickable:focus-visible { outline: 3px solid #255ad6; outline-offset: 3px; }
+.notification-details-overlay {
+  position: fixed; inset: 0; z-index: 1100; display: flex;
+  align-items: center; justify-content: center; padding: 20px;
+  background: rgba(16, 32, 67, .46);
+}
+.notification-details-dialog {
+  width: min(100%, 560px); max-height: 85vh; overflow-y: auto;
+  background: #fff; border-radius: 16px; padding: 22px;
+  color: #1c2b4f; box-shadow: 0 20px 60px rgba(0,0,0,.22); direction: rtl;
+}
+.notification-details-header { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+.notification-details-header h2 { margin: 0; font-size: 19px; }
+.notification-details-close { border: 0; background: transparent; color: inherit; font-size: 30px; cursor: pointer; }
+.notification-details-meta { display: flex; flex-wrap: wrap; gap: 16px; color: #65718b; font-size: 13px; margin: 14px 0; }
+.notification-details-message { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.9; margin: 20px 0; }
+.notification-details-actions { display: flex; justify-content: flex-end; }

@@ -1,6 +1,6 @@
 
 <!-- إدارة المشرفين -->
-<div class="page-header-section">
+<div class="page-header-section" data-guide="company-supervisors-header" [attr.data-guide-loading]="loading ? 'true' : null">
   <div class="page-head-text">
     <div class="title-row">
       <div class="title-icon">
@@ -26,16 +26,16 @@
   </div>
 
   <div class="header-actions">
-    <button class="btn-refresh" type="button" (click)="refreshData()">
+    <button class="btn-refresh" data-guide="company-supervisors-refresh" type="button" (click)="refreshData()">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M3 21v-5h5"/></svg> تحديث
     </button>
 
     @if (activeView === 'supervisors') {
-      <button class="btn-add" type="button" (click)="openAddModal()">
+      <button class="btn-add" data-guide="company-supervisors-add" type="button" (click)="openAddModal()">
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> إضافة مشرف
       </button>
     } @else if (activeView === 'trainers') {
-      <button class="btn-add" type="button" (click)="openAddTrainerModal()">
+      <button class="btn-add" data-guide="company-supervisors-trainer-add" type="button" (click)="openAddTrainerModal()">
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> إضافة مدرب
       </button>
     }
@@ -43,7 +43,7 @@
 </div>
 
 <!-- تبويبات الصفحة -->
-<div class="supervisors-navigation">
+<div class="supervisors-navigation" data-guide="company-supervisors-tabs">
   <div class="supervisors-view-tabs" role="tablist" aria-label="أقسام إدارة المشرفين">
     <button
       type="button"
@@ -77,7 +77,7 @@
 
 <!-- عرض إدارة المشرفين -->
 @if (activeView === 'supervisors') {
-  <div class="top-stats-container">
+  <div class="top-stats-container" data-guide="company-supervisors-stats">
     <div class="top-stat-card">
       <div class="stat-icon navy"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/></svg></div>
       <div class="stat-content">
@@ -112,8 +112,8 @@
   </div>
 
   <!-- البحث والفلاتر -->
-  <div class="filters-bar">
-    <div class="search-box">
+  <div class="filters-bar" data-guide="company-supervisors-filters">
+    <div class="search-box" data-guide="company-supervisors-search">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input
         type="text"
@@ -130,7 +130,7 @@
       }
     </div>
 
-    <div class="department-filters">
+    <div class="department-filters" data-guide="company-supervisors-departments">
       <button
         type="button"
         [class.active]="selectedDept === 'all'"
@@ -176,7 +176,7 @@
       <button type="button" (click)="refreshData()">إعادة المحاولة</button>
     </div>
   } @else if (filteredSupervisors.length > 0) {
-    <div class="grid">
+    <div class="grid" data-guide="company-supervisors-list">
       @for (s of filteredSupervisors; track s.supervisorId) {
         <div class="card" [class.inactive]="s.isInactive">
           <div class="card-cover" [ngClass]="s.avatarColor || 'navy'"></div>
@@ -213,7 +213,7 @@
               </div>
             </div>
 
-            <div class="dropdown-container">
+            <div class="dropdown-container" data-guide="company-supervisors-menu">
               <button
                 class="icon-box"
                 type="button"
@@ -285,7 +285,7 @@
             <span class="chip">الحضور</span>
           </div>
 
-          <div class="card-actions">
+          <div class="card-actions" data-guide="company-supervisors-actions">
             <button
               class="btn btn-primary-soft"
               type="button"
@@ -396,7 +396,7 @@
       <div class="trainers-table-wrap" [class.filters-open]="trainerColumnFilter !== null"
         (keydown.escape)="trainerColumnFilter = null"
         (document:click)="closeTrainerFilterOnOutsideClick($event)">
-        <table class="trainers-table" aria-labelledby="company-trainers-heading">
+        <table data-guide="company-supervisors-trainers-table" class="trainers-table" aria-labelledby="company-trainers-heading">
           <thead>
             <tr>
               <th scope="col">
@@ -495,7 +495,7 @@
           </tbody>
         </table>
       </div>
-      <nav class="trainer-pagination" aria-label="صفحات المدربين">
+      <nav data-guide="company-supervisors-trainers-pagination" class="trainer-pagination" aria-label="صفحات المدربين">
         <label>
           عدد المدربين في الصفحة
           <select class="form-input" [(ngModel)]="trainerPageSize" (ngModelChange)="trainerPage = 1">
@@ -655,7 +655,7 @@
 
 <!-- سجل التقييمات المحفوظة -->
 @if (activeView === 'evaluations') {
-  <section class="evaluation-history-section" dir="rtl">
+  <section data-guide="company-supervisors-evaluations" class="evaluation-history-section" dir="rtl">
     <div class="evaluation-history-heading">
       <div>
         <span class="modal-kicker">متابعة الأداء</span>
@@ -798,6 +798,10 @@
           </div>
         </div>
 
+        @if (!editingSupervisor) {
+          <p class="form-hint">سيتم إنشاء كلمة مرور مؤقتة آليًا وإرسالها إلى البريد الإلكتروني للمشرف.</p>
+        }
+
         @if (editingSupervisor) {
           <div class="status-select-box">
             <div>
@@ -817,8 +821,8 @@
 
         <div class="modal-actions">
           <button type="button" class="btn-cancel-modal" (click)="closeAddModal()">إلغاء</button>
-          <button type="submit" class="btn-save-modal" [disabled]="supervisorForm.invalid">
-            {{ editingSupervisor ? 'حفظ التعديلات' : 'إضافة المشرف' }}
+          <button type="submit" class="btn-save-modal" [disabled]="supervisorForm.invalid || savingSupervisor">
+            {{ savingSupervisor ? 'جارٍ الحفظ...' : (editingSupervisor ? 'حفظ التعديلات' : 'إضافة المشرف') }}
           </button>
         </div>
       </form>
@@ -835,7 +839,7 @@
         <div>
           <span class="modal-kicker">إدارة المدربين</span>
           <h2>إضافة ملف مدرب</h2>
-          <p class="modal-subtext">أدخلي بيانات ملف المدرب وربطيه بحساب مستخدم موجود.</p>
+          <p class="modal-subtext">أدخلي بيانات المدرب لإنشاء حساب وربطه بالشركة.</p>
         </div>
 
         <button
@@ -848,30 +852,28 @@
         </button>
       </div>
 
-      <div class="trainer-form-note">
-        استخدمي رقم حساب موجود في النظام لربط ملف المدرب به.
-      </div>
-
+      <div class="trainer-form-note">سيُنشأ حساب المدرب ويُربط تلقائيًا بشركتك.</div>
       <form (ngSubmit)="submitTrainer()" #trainerForm="ngForm">
-
         <div class="form-group">
-          <label for="trainerUserId">رقم حساب المستخدم <span>*</span></label>
-          <input
-            id="trainerUserId"
-            class="form-input"
-            type="number"
-            min="1"
-            placeholder="أدخلي رقم المستخدم User ID"
-            [(ngModel)]="newTrainer.userId"
-            name="userId"
-            required />
+          <label for="trainerName">اسم المدرب <span>*</span></label>
+          <input id="trainerName" class="form-input" type="text" maxlength="150" [(ngModel)]="newTrainer.fullName" name="fullName" required />
         </div>
+        <div class="form-group">
+          <label for="trainerEmail">البريد الإلكتروني <span>*</span></label>
+          <input id="trainerEmail" class="form-input" type="email" maxlength="150" [(ngModel)]="newTrainer.email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label for="trainerPhone">الهاتف</label>
+          <input id="trainerPhone" class="form-input" type="tel" maxlength="20" [(ngModel)]="newTrainer.phone" name="phone" />
+        </div>
+        <p class="form-hint">سيتم إنشاء كلمة مرور مؤقتة آليًا وإرسالها إلى البريد الإلكتروني للمدرب.</p>
 
         <div class="form-group">
           <label for="trainerSpecialty">التخصص <span>*</span></label>
           <input
             id="trainerSpecialty"
             class="form-input"
+            maxlength="150"
             type="text"
             placeholder="مثال: تقنية المعلومات"
             [(ngModel)]="newTrainer.specialty"
@@ -909,6 +911,7 @@
           <input
             id="trainerCvUrl"
             class="form-input"
+            maxlength="300"
             type="url"
             placeholder="https://example.com/cv.pdf"
             [(ngModel)]="newTrainer.cvUrl"

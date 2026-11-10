@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
@@ -65,10 +65,21 @@ namespace Nafadh_Backend.Services
             _configuration = configuration;
             _context = context;
         }
-
-        public async Task<List<CompanyTrainerDto>> GetCompanyTrainersAsync(int companyId)
+        public async Task<int?> GetTrainerIdByUserIdAsync(int userId)
         {
-            var trainers = await _repository.GetCompanyTrainersAsync(companyId);
+            return await _context.NFD_Trainers
+                .AsNoTracking()
+                .Where(t => t.UserId == userId)
+                .Select(t => (int?)t.TrainerId)
+                .FirstOrDefaultAsync();
+        }
+        public async Task<List<TrainerAttendanceDto>> GetMyAttendanceAsync(int trainerId)
+        {
+            var records = await _repository.GetByTrainerIdAsync(trainerId);
+
+        public async Task<List<CompanyTrainerDto>> GetCompanyTrainersAsync(int companyId, DateTime date)
+        {
+            var trainers = await _repository.GetCompanyTrainersAsync(companyId, date);
 
             return trainers.Select(t => new CompanyTrainerDto
             {
@@ -137,7 +148,9 @@ namespace Nafadh_Backend.Services
                 Reason = a.Reason,
                 ExcuseProofUrl = a.ExcuseProofUrl,
                 IsConfirmed = a.IsConfirmed,
-                ExcuseReviewStatus = a.ExcuseReviewStatus
+                ExcuseReviewStatus = a.ExcuseReviewStatus,
+                ExcuseReviewedByUserId = a.ExcuseReviewedByUserId,
+                ExcuseReviewedAtUtc = a.ExcuseReviewedAtUtc
             }).ToList();
         }
 
@@ -152,7 +165,7 @@ namespace Nafadh_Backend.Services
             if (!Enum.IsDefined(typeof(NFD_TrainerAttendanceStatus), dto.Status))
                 throw new ArgumentException("Invalid attendance status.");
 
-            if (!await _repository.TrainerBelongsToCompanyAsync(dto.CompanyId, dto.TrainerId))
+            if (!await _repository.TrainerBelongsToCompanyAsync(dto.CompanyId, dto.TrainerId, date))
                 throw new ArgumentException("This trainer is not linked to the company.");
 
             var record = await _repository.GetAsync(dto.CompanyId, dto.TrainerId, date);
@@ -266,6 +279,10 @@ namespace Nafadh_Backend.Services
 
             var fileName = $"attendance-{record.TrainerAttendanceId}-{Guid.NewGuid():N}{extension}";
             var fullPath = Path.Combine(storagePath, fileName);
+            // The notification is only for the FIRST non-empty excuse submission.
+            // Later edits / re-uploads must not create another notification.
+            var hadExcuseBeforeUpload = !string.IsNullOrWhiteSpace(record.Reason) ||
+                !string.IsNullOrWhiteSpace(record.ExcuseProofUrl);
             var oldUrl = record.ExcuseProofUrl;
 
             await using (var stream = new FileStream(fullPath, FileMode.CreateNew))
@@ -280,6 +297,9 @@ namespace Nafadh_Backend.Services
 
             try
             {
+                if (!hadExcuseBeforeUpload)
+                    await TrainerExcuseNotificationWriter.QueueFirstSubmissionAsync(_context, record);
+                // Persist proof and notification in the same DbContext save.
                 await _repository.SaveChangesAsync();
             }
             catch
@@ -320,7 +340,23 @@ namespace Nafadh_Backend.Services
             var record = await _repository.GetByIdAsync(attendanceId);
             return record != null && record.TrainerId == trainerId;
         }
+        public async Task<bool> IsExcuseWindowOpenAsync(int attendanceId, int trainerId)
+        {
+            var record = await _repository.GetByIdAsync(attendanceId);
 
+            if (record == null || record.TrainerId != trainerId)
+                return false;
+
+            try
+            {
+                RequireExcuseWindow(record);
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        }
         public async Task<TrainerAttendanceDto?> SubmitExcuseAsync(int attendanceId, int trainerId, string? reason)
         {
             var record = await _repository.GetByIdAsync(attendanceId);
@@ -328,15 +364,20 @@ namespace Nafadh_Backend.Services
             RequireExcuseWindow(record);
             if (reason?.Length > 500)
                 throw new ArgumentException("Reason cannot exceed 500 characters.");
+            var hadExcuseBeforeSubmission = !string.IsNullOrWhiteSpace(record.Reason) ||
+                !string.IsNullOrWhiteSpace(record.ExcuseProofUrl);
             record.Reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
             record.ExcuseReviewStatus = string.IsNullOrWhiteSpace(record.Reason) &&
                 string.IsNullOrWhiteSpace(record.ExcuseProofUrl) ? null : "Pending";
             record.UpdatedAt = DateTime.UtcNow;
+            if (!hadExcuseBeforeSubmission && !string.IsNullOrWhiteSpace(record.Reason))
+                await TrainerExcuseNotificationWriter.QueueFirstSubmissionAsync(_context, record);
+            // Persist reason and notification together.
             await _repository.SaveChangesAsync();
             return ToDto(record);
         }
 
-        public async Task<TrainerAttendanceDto?> ReviewExcuseAsync(int attendanceId, int companyId, string decision)
+        public async Task<TrainerAttendanceDto?> ReviewExcuseAsync(int attendanceId, int companyId, string decision, int reviewerUserId)
         {
             if (decision != "Approved" && decision != "Rejected")
                 throw new ArgumentException("Invalid review decision.");
@@ -347,7 +388,10 @@ namespace Nafadh_Backend.Services
                 throw new InvalidOperationException("No trainer excuse exists for review.");
             if (record.ExcuseReviewStatus == "Approved" || record.ExcuseReviewStatus == "Rejected")
                 throw new InvalidOperationException("This excuse has already been reviewed.");
+            if (reviewerUserId <= 0) throw new ArgumentException("Reviewer identity is required.");
             record.ExcuseReviewStatus = decision;
+            record.ExcuseReviewedByUserId = reviewerUserId;
+            record.ExcuseReviewedAtUtc = DateTime.UtcNow;
             record.UpdatedAt = DateTime.UtcNow;
             await _repository.SaveChangesAsync();
             return ToDto(record);
@@ -360,7 +404,7 @@ namespace Nafadh_Backend.Services
             if (date > OmanToday())
                 throw new ArgumentException("A future day cannot be confirmed.");
 
-            var trainers = await _repository.GetCompanyTrainersAsync(dto.CompanyId);
+            var trainers = await _repository.GetCompanyTrainersAsync(dto.CompanyId, date);
             if (trainers.Count == 0)
                 throw new ArgumentException("The company has no trainers to confirm.");
 
@@ -413,7 +457,9 @@ namespace Nafadh_Backend.Services
             Reason = a.Reason,
             ExcuseProofUrl = a.ExcuseProofUrl,
             IsConfirmed = a.IsConfirmed,
-            ExcuseReviewStatus = a.ExcuseReviewStatus
+            ExcuseReviewStatus = a.ExcuseReviewStatus,
+                ExcuseReviewedByUserId = a.ExcuseReviewedByUserId,
+                ExcuseReviewedAtUtc = a.ExcuseReviewedAtUtc
         };
     }
 }

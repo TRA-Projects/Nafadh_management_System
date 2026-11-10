@@ -281,14 +281,14 @@
                     </span>
                   </div>
 
-                  <button
-                    type="button"
-                    class="nfd-btn primary review-btn tasks-inline-038"
-                    [routerLink]="['/trainer/trainees']"
-                    [queryParams]="{ taskId: t.taskId, batchId: batchIdInput }"
-                  >
-                    مراجعة والتقييم
-                  </button>
+                <button
+  type="button"
+  class="nfd-btn primary review-btn tasks-inline-038"
+  (click)="openSubmissionsModal(t)"
+  [disabled]="modalLoadingSubmissions() || savingGrade()"
+>
+  مراجعة والتقييم
+</button>
 
                   <div class="tasks-inline-034">
                     <button
@@ -676,7 +676,103 @@
                       }
 
                     </div>
+                   <!-- SUBMISSION GRADING BUTTON -->
+<div style="margin-top:14px;">
 
+  <button
+    type="button"
+    class="nfd-btn primary"
+    (click)="openSubmissionGrading(submission)"
+    [disabled]="savingGrade()"
+  >
+    {{ submission.status === 'Graded' ? 'تعديل التقييم' : 'تقييم التسليم' }}
+  </button>
+
+</div>
+<!-- SUBMISSION GRADING FORM -->
+@if (gradingSubmissionId() === submission.submissionId) {
+
+  <div style="margin-top:16px;padding:16px;background:#f8fbff;border:1px solid #bfdbfe;border-radius:12px;">
+
+    <h4 style="margin:0 0 14px;color:#003b82;font-size:14px;">
+      تقييم تسليم المتدرب
+    </h4>
+
+    <!-- GRADE -->
+    <div style="margin-bottom:14px;">
+      <label
+        [for]="'grade-' + submission.submissionId"
+        style="display:block;margin-bottom:6px;font-size:12px;font-weight:700;"
+      >
+        الدرجة (من 100)
+      </label>
+
+      <input
+        [id]="'grade-' + submission.submissionId"
+        type="number"
+        min="0"
+        max="100"
+        step="1"
+        [(ngModel)]="gradeInput"
+        [ngModelOptions]="{standalone: true}"
+        [disabled]="savingGrade()"
+        style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;"
+      />
+    </div>
+
+    <!-- FEEDBACK -->
+    <div style="margin-bottom:14px;">
+      <label
+        [for]="'feedback-' + submission.submissionId"
+        style="display:block;margin-bottom:6px;font-size:12px;font-weight:700;"
+      >
+        ملاحظات المدرب
+      </label>
+
+      <textarea
+        [id]="'feedback-' + submission.submissionId"
+        rows="3"
+        [(ngModel)]="feedbackInput"
+        [ngModelOptions]="{standalone: true}"
+        [disabled]="savingGrade()"
+        placeholder="اكتب ملاحظاتك على تسليم المتدرب..."
+        style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;font-family:inherit;"
+      ></textarea>
+    </div>
+
+    <!-- ERROR -->
+    @if (gradeError()) {
+      <p style="color:#dc2626;font-size:12px;">
+        {{ gradeError() }}
+      </p>
+    }
+
+    <!-- ACTIONS -->
+    <div style="display:flex;gap:10px;">
+
+      <button
+        type="button"
+        class="nfd-btn primary"
+        (click)="saveSubmissionGrade(submission)"
+        [disabled]="savingGrade()"
+      >
+        {{ savingGrade() ? 'جاري الحفظ...' : 'حفظ التقييم' }}
+      </button>
+
+      <button
+        type="button"
+        class="nfd-btn"
+        (click)="cancelSubmissionGrading()"
+        [disabled]="savingGrade()"
+      >
+        إلغاء
+      </button>
+
+    </div>
+
+  </div>
+
+}
                   </div> <!-- نهاية submission-item -->
 
                 } <!-- نهاية @for -->

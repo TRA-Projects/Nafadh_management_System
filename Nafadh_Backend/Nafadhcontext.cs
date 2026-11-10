@@ -51,6 +51,8 @@ namespace Nafadh_Backend
         public DbSet<NFD_Enrollment> NFD_Enrollments { get; set; }
         public DbSet<NFD_Module> NFD_Modules { get; set; }
         public DbSet<NFD_Lesson> NFD_Lessons { get; set; }
+        public DbSet<NFD_AdminProjectScore> NFD_AdminProjectScores { get; set; }
+        public DbSet<NFD_TrainerProjectGrade> NFD_TrainerProjectGrades { get; set; }
         public DbSet<NFD_TrainingMaterial> NFD_TrainingMaterials { get; set; }
         public DbSet<NFD_TraineeModuleProgress> NFD_TraineeModuleProgresses { get; set; }
         public DbSet<NFD_Session> NFD_Sessions { get; set; }
@@ -74,6 +76,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_Submission> NFD_Submissions { get; set; }
         public DbSet<NFD_Project> NFD_Projects { get; set; }
         public DbSet<NFD_ProjectMember> NFD_ProjectMembers { get; set; }
+        public DbSet<NFD_ProjectBatch> NFD_ProjectBatches { get; set; }
         public DbSet<NFD_EvaluationTemplate> NFD_EvaluationTemplates { get; set; }
         public DbSet<NFD_EvaluationCriterion> NFD_EvaluationCriteria { get; set; }
         public DbSet<NFD_EvaluationCriterionScore> NFD_EvaluationCriterionScores { get; set; }
@@ -117,6 +120,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_CoursePlanStageTrainer> NFD_CoursePlanStageTrainers { get; set; }
         public DbSet<NFD_LessonFeedback> NFD_LessonFeedbacks { get; set; }
         public DbSet<NFD_TraineeSkill> NFD_TraineeSkills { get; set; }
+        public virtual DbSet<NFD_TrainerSkill> NFD_TrainerSkills { get; set; }
         public DbSet<NFD_WithdrawalRequest> NFD_WithdrawalRequests { get; set; }
         public DbSet<NFD_NotificationTemplate> NFD_NotificationTemplates
         { get; set; }
@@ -192,6 +196,24 @@ namespace Nafadh_Backend
                     .HasMaxLength(256);
             });
 
+            modelBuilder.Entity<NFD_AdminProjectScore>(entity =>
+            {
+                entity.ToTable("NFD_AdminProjectScores");
+
+                entity.HasKey(e => e.AdminProjectScoreId);
+
+                entity.Property(e => e.Score)
+                    .HasColumnType("decimal(5,2)");
+
+                entity.HasIndex(e => e.EnrollmentId)
+                    .IsUnique();
+
+                entity.HasOne(e => e.Enrollment)
+                    .WithOne(e => e.AdminProjectScore)
+                    .HasForeignKey<NFD_AdminProjectScore>(e => e.EnrollmentId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             // ---- NFD_User ----
             modelBuilder.Entity<NFD_User>(entity =>
             {
@@ -253,6 +275,11 @@ namespace Nafadh_Backend
             {
                 entity.ToTable("NFD_Companies");
                 entity.HasIndex(e => e.UserId).IsUnique();
+                entity.HasIndex(e => e.CompanyId);
+                entity.HasOne<NFD_Company>()
+                    .WithMany()
+                    .HasForeignKey(e => e.CompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(e => e.User)
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
@@ -274,6 +301,11 @@ namespace Nafadh_Backend
             {
                 entity.ToTable("NFD_CompanySupervisors");
                 entity.HasIndex(e => e.UserId).IsUnique();
+                entity.HasIndex(e => e.CompanyId);
+                entity.HasOne<NFD_Company>()
+                    .WithMany()
+                    .HasForeignKey(e => e.CompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(e => e.User)
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
@@ -807,6 +839,54 @@ namespace Nafadh_Backend
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            // ---- NFD_TrainerProjectGrade ----
+            modelBuilder.Entity<NFD_TrainerProjectGrade>(entity =>
+            {
+                entity.ToTable("NFD_TrainerProjectGrades");
+
+                entity.HasKey(e => e.TrainerProjectGradeId);
+
+                entity.Property(e => e.Score)
+                    .HasColumnType("decimal(5,2)")
+                    .IsRequired();
+
+                entity.Property(e => e.Feedback)
+                    .HasMaxLength(1000);
+
+                entity.Property(e => e.GradedAt)
+                    .HasColumnType("datetime2")
+                    .IsRequired();
+
+                entity.Property(e => e.UpdatedAt)
+                    .HasColumnType("datetime2");
+
+                // Each trainee can have only one grade
+                // per project within their enrollment.
+                entity.HasIndex(e => new
+                {
+                    e.ProjectId,
+                    e.EnrollmentId
+                }).IsUnique();
+
+                // Project relationship
+                entity.HasOne(e => e.Project)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProjectId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Trainee enrollment relationship
+                entity.HasOne(e => e.Enrollment)
+                    .WithMany()
+                    .HasForeignKey(e => e.EnrollmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Trainer who graded the project
+                entity.HasOne(e => e.Trainer)
+                    .WithMany()
+                    .HasForeignKey(e => e.TrainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
             // ---- NFD_Project ----
             modelBuilder.Entity<NFD_Project>(entity =>
             {
@@ -816,6 +896,32 @@ namespace Nafadh_Backend
                     .HasForeignKey(e => e.ProgramId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+
+            // ---- NFD_ProjectBatch ----
+            modelBuilder.Entity<NFD_ProjectBatch>(entity =>
+            {
+                entity.ToTable("NFD_ProjectBatches");
+
+                entity.HasKey(e => e.ProjectBatchId);
+
+                entity.HasIndex(e => new
+                {
+                    e.ProjectId,
+                    e.BatchId
+                }).IsUnique();
+
+                entity.HasOne(e => e.Project)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProjectId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Batch)
+                    .WithMany()
+                    .HasForeignKey(e => e.BatchId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
 
             // ---- NFD_ProjectMember ----
             modelBuilder.Entity<NFD_ProjectMember>(entity =>
