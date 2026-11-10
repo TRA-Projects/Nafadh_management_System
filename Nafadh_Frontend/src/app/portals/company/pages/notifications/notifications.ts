@@ -1,18 +1,18 @@
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { finalize } from 'rxjs';
 import { NotificationDto, NotificationService } from '../../../../shared/services/notification.service';
 import { NotificationSummaryService } from '../../../../shared/services/notification-summary.service';
 
 type Filter = 'all' | 'unread' | 'read';
-type Category = 'task' | 'message' | 'warning' | 'evaluation' | 'attendance' | 'announcement' | 'payment' | 'achievement' | 'system';
+type Category = 'task' | 'message' | 'warning' | 'evaluation' | 'attendance' | 'excuse' | 'announcement' | 'payment' | 'achievement' | 'system';
 type SortOrder = 'newest' | 'oldest';
 interface Group { label: string; items: NotificationDto[]; }
 const CATEGORIES: { key: Category; label: string }[] = [
   { key: 'task', label: 'المهام' }, { key: 'message', label: 'المحادثات' },
   { key: 'warning', label: 'التحذيرات' }, { key: 'evaluation', label: 'التقييمات' },
-  { key: 'attendance', label: 'الحضور' }, { key: 'announcement', label: 'الإعلانات' },
+  { key: 'attendance', label: 'الحضور' }, { key: 'excuse', label: 'الأعذار' }, { key: 'announcement', label: 'الإعلانات' },
   { key: 'payment', label: 'المدفوعات' }, { key: 'achievement', label: 'الإنجازات' },
   { key: 'system', label: 'عام' },
 ];
@@ -20,7 +20,8 @@ const ENTITY_RULES: { key: Category; pattern: RegExp }[] = [
   { key: 'warning', pattern: /warning/i }, { key: 'task', pattern: /courseplan|batchassignment|task|submission|project/i },
   { key: 'message', pattern: /conversation|message|ticket|support/i },
   { key: 'evaluation', pattern: /evaluation|feedback|rubric/i },
-  { key: 'attendance', pattern: /attendance|session|excuse/i },
+  { key: 'excuse', pattern: /^TrainerExcuse(?:Reason|Proof)?:[1-9]\d*$/i },
+  { key: 'attendance', pattern: /attendance|session/i },
   { key: 'announcement', pattern: /announcement/i },
   { key: 'payment', pattern: /payment|schedule|invoice/i },
   { key: 'achievement', pattern: /badge|certificate/i },
@@ -29,7 +30,8 @@ const TEXT_RULES: { key: Category; pattern: RegExp }[] = [
   { key: 'warning', pattern: /تحذير|إنذار|انذار/ }, { key: 'task', pattern: /مهمة|مهام|تسليم|مشروع/ },
   { key: 'message', pattern: /محادثة|رسالة|رسائل|دعم|تذكرة/ },
   { key: 'evaluation', pattern: /تقييم|تقييمات/ },
-  { key: 'attendance', pattern: /حضور|غياب|جلسة|عذر|أعذار/ },
+  { key: 'excuse', pattern: /عذر|أعذار|إثبات مرفق|إرفاق إثبات|إرفاق عذر/ },
+  { key: 'attendance', pattern: /حضور|غياب|جلسة/ },
   { key: 'announcement', pattern: /إعلان|اعلان|تعميم/ },
   { key: 'payment', pattern: /دفع|مدفوع|سداد|فاتورة|قسط/ },
   { key: 'achievement', pattern: /شهادة|وسام|إنجاز|انجاز/ },
@@ -45,7 +47,9 @@ const TEXT_RULES: { key: Category; pattern: RegExp }[] = [
 export class CompanyNotifications implements OnInit {
   private readonly notificationService = inject(NotificationService);
   private readonly summaryService = inject(NotificationSummaryService);
+  private readonly router = inject(Router);
   notifications = signal<NotificationDto[]>([]);
+  readonly selectedNotification = signal<NotificationDto | null>(null);
   activeFilter = signal<Filter>('all');
   activeCategory = signal<Category | 'all'>('all');
   search = signal('');
@@ -69,7 +73,9 @@ export class CompanyNotifications implements OnInit {
       const category = this.categoryOf(item);
       counts.set(category, (counts.get(category) ?? 0) + 1);
     }
-    return CATEGORIES.filter(c => counts.has(c.key)).map(c => ({ ...c, count: counts.get(c.key) ?? 0 }));
+    // Keep the Excuses filter visible even before the first trainer excuse arrives.
+    return CATEGORIES.filter(c => c.key === 'excuse' || counts.has(c.key))
+      .map(c => ({ ...c, count: counts.get(c.key) ?? 0 }));
   });
   readonly filteredNotifications = computed(() => {
     const query = this.search().trim().toLocaleLowerCase();
@@ -172,6 +178,118 @@ export class CompanyNotifications implements OnInit {
       },
     });
   }
+  /** Only notifications created by the trainer-excuse workflow are navigable. */
+  excuseAttendanceId(item: NotificationDto): number | null {
+    const match = /^TrainerExcuse(?:(?:Reason|Proof))?:([1-9]\d*)$/.exec(
+      (item.relatedEntity ?? '').trim());
+    return match ? Number(match[1]) : null;
+  }
+
+  /** The server includes the attendance date in the notification message. */
+  private excuseDate(item: NotificationDto): string | null {
+    const match = /\b(\d{4}-\d{2}-\d{2})\b/.exec(item.message ?? '');
+    if (!match) return null;
+    const date = new Date(`${match[1]}T12:00:00Z`);
+    return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === match[1]
+      ? match[1] : null;
+  }
+
+  /** Every notification opens either a trusted portal route or a detail panel. */
+  openNotification(item: NotificationDto): void {
+    if (this.isPending(item.notificationId) || this.markingAll()) return;
+
+    const attendanceId = this.excuseAttendanceId(item);
+    if (attendanceId !== null) {
+      this.openExcuseNotification(item);
+      return;
+    }
+
+    const related = (item.relatedEntity ?? '').trim();
+    const coursePlan = this.coursePlanLink(item);
+    // Only navigate to known, existing company routes; never navigate to
+    // arbitrary paths supplied in notification text or relatedEntity.
+    let target: string | null = coursePlan;
+    let params: Record<string, string | number> | undefined;
+    if (related.startsWith('BatchAssignment:') && target) {
+      const batchId = this.batchAssignmentId(item);
+      if (batchId) params = { batchId };
+    } else if (/^(Conversation|DirectMessage|Message)(?::[1-9]\d*)?$/i.test(related)) {
+      target = '/company/contact';
+    } else if (/^Warning(?::[1-9]\d*)?$/i.test(related)) {
+      target = '/company/warnings';
+    } else if (/^Task(?::[1-9]\d*)?$/i.test(related)) {
+      target = '/company/tasks';
+    }
+
+    const perform = () => {
+      if (target) {
+        void this.router.navigate([target], { queryParams: params });
+      } else {
+        this.selectedNotification.set(item);
+      }
+    };
+    if (item.isRead) { perform(); return; }
+
+    this.pendingIds.update(ids => new Set([...ids, item.notificationId]));
+    this.notificationService.markAsRead(item.notificationId).pipe(finalize(() => {
+      this.pendingIds.update(ids => {
+        const next = new Set(ids);
+        next.delete(item.notificationId);
+        return next;
+      });
+    })).subscribe({
+      next: () => {
+        const readItem = { ...item, isRead: true };
+        this.notifications.update(items => items.map(n =>
+          n.notificationId === item.notificationId ? readItem : n));
+        this.summaryService.refresh();
+        if (target) perform();
+        else this.selectedNotification.set(readItem);
+      },
+      error: err => {
+        console.error('Failed to mark notification as read', err);
+        this.actionError.set('تعذر تحديث حالة قراءة الإشعار.');
+        perform();
+      },
+    });
+  }
+
+  closeNotificationDetails(): void {
+    this.selectedNotification.set(null);
+  }
+
+  /** Open the existing attendance page; never make excuse decisions here. */
+  openExcuseNotification(item: NotificationDto): void {
+    const attendanceId = this.excuseAttendanceId(item);
+    if (attendanceId === null) return;
+    if (this.isPending(item.notificationId) || this.markingAll()) return;
+
+    const date = this.excuseDate(item);
+    const navigate = () => void this.router.navigate(['/company/daily-attendance'], {
+      queryParams: { attendanceId, ...(date ? { date } : {}) },
+    });
+
+    if (item.isRead) { navigate(); return; }
+    this.pendingIds.update(ids => new Set([...ids, item.notificationId]));
+    this.notificationService.markAsRead(item.notificationId).pipe(finalize(() => {
+      this.pendingIds.update(ids => {
+        const next = new Set(ids); next.delete(item.notificationId); return next;
+      });
+    })).subscribe({
+      next: () => {
+        this.notifications.update(items => items.map(n =>
+          n.notificationId === item.notificationId ? { ...n, isRead: true } : n));
+        this.summaryService.refresh();
+        navigate();
+      },
+      error: err => {
+        console.error('Failed to mark excuse notification as read', err);
+        this.actionError.set('تعذر تحديث حالة قراءة الإشعار.');
+        navigate();
+      },
+    });
+  }
+
   /** Only link course-plan notifications to a plan, never to an arbitrary URL. */
   coursePlanLink(item: NotificationDto): string | null {
     const match = /^CoursePlan:([1-9]\d*)$/.exec((item.relatedEntity ?? '').trim());
