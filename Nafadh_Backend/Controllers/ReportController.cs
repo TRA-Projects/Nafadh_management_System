@@ -291,14 +291,50 @@ namespace Nafadh_Backend.Controllers
             return result;
         }
 
-        // ==========================================================
-        // Admin Reports - Companies Summary
-        // GET: api/Report/admin-companies-summary
-        // ==========================================================
         [HttpGet("admin-companies-summary")]
         public async Task<IActionResult> GetAdminCompaniesSummary()
         {
             var result = await _service.GetAdminCompaniesSummaryAsync();
+            return Ok(result);
+        }
+
+        // ==========================================================
+        // Admin Reports - Master Trainees Transcript
+        // GET: api/Report/admin-trainees-transcript
+        // ==========================================================
+        [HttpGet("admin-trainees-transcript")]
+        public async Task<IActionResult> GetAdminTraineesTranscript(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 15,
+            [FromQuery] int? companyId = null,
+            [FromQuery] int? batchId = null,
+            [FromQuery] int? traineeId = null
+        )
+        {
+            if (pageNumber < 1 || pageSize < 1 || pageSize > 1000)
+            {
+                return BadRequest(
+                    "pageNumber must be >= 1 and pageSize must be between 1 and 1000."
+                );
+            }
+
+            if (companyId.HasValue && companyId.Value <= 0)
+                return BadRequest("Invalid companyId.");
+
+            if (batchId.HasValue && batchId.Value <= 0)
+                return BadRequest("Invalid batchId.");
+
+            if (traineeId.HasValue && traineeId.Value <= 0)
+                return BadRequest("Invalid traineeId.");
+
+            var result = await _service.GetAdminTraineesTranscriptAsync(
+                pageNumber,
+                pageSize,
+                companyId,
+                batchId,
+                traineeId
+            );
+
             return Ok(result);
         }
 
