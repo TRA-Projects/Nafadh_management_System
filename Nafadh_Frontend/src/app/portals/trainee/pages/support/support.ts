@@ -21,7 +21,7 @@ import {
 
 import { catchError } from 'rxjs/operators';
 
-import { TraineeApi } from '../../services/trainee-api';
+import { TraineeApi, TrainerInBatchDto } from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { SystemVariablesService } from '../../../../services/system-variables.service';
 
@@ -94,6 +94,8 @@ export class TraineeSupport implements OnInit {
   trainers = signal<TrainerDto[]>([]);
 
   loadingTrainers = signal(false);
+
+  private trainersBatchId: number | null = null;
 
   // =========================================================
   // UI STATE
@@ -553,6 +555,7 @@ export class TraineeSupport implements OnInit {
   private loadTraineeEnrollment(traineeId: number): void {
     this.api.getEnrollmentsByTrainee(traineeId).subscribe({
       next: (enrollments: EnrollmentDto[]) => {
+
         if (
           !Array.isArray(enrollments) ||
           enrollments.length === 0
@@ -560,6 +563,8 @@ export class TraineeSupport implements OnInit {
           this.enrollment.set(null);
           this.companyName.set('');
           this.trainers.set([]);
+          this.batchTrainers.set([]);
+          this.trainersBatchId = null;
 
           if (this.activeTab() === 'batch') {
             this.batchLoaded.set(true);
@@ -568,28 +573,39 @@ export class TraineeSupport implements OnInit {
           return;
         }
 
-    
-const activeEnrollment =
-  enrollments.find(
-    (e: EnrollmentDto) =>
-      e.completionStatus === 'Active' ||
-      e.completionStatus === 'InProgress'
-  ) || enrollments[0];
+        // Select the current active enrollment.
+        // If there is no active enrollment, preserve
+        // the existing fallback to the first enrollment.
+        const activeEnrollment =
+          enrollments.find(
+            (e: EnrollmentDto) =>
+              e.completionStatus === 'Active' ||
+              e.completionStatus === 'InProgress'
+          ) || enrollments[0];
 
-console.log('Support - Selected Enrollment:', activeEnrollment);
-
+        console.log(
+          'Support - Selected Enrollment:',
+          activeEnrollment
+        );
 
         this.enrollment.set(activeEnrollment);
 
-        this.companyName.set(
+        // Company must belong to the selected enrollment.
+        const selectedCompanyName = String(
           activeEnrollment.companyName ?? ''
-        );
+        ).trim();
 
+        this.companyName.set(selectedCompanyName);
+
+        // Trainers must belong to the selected batch.
         const batchId = Number(
           activeEnrollment.batchId
         );
 
-        if (Number.isFinite(batchId) && batchId > 0) {
+        if (
+          Number.isFinite(batchId) &&
+          batchId > 0
+        ) {
           this.loadTrainersByBatch(batchId);
 
           if (
@@ -599,8 +615,11 @@ console.log('Support - Selected Enrollment:', activeEnrollment);
             this.batchLoaded.set(false);
             this.loadBatchGroup();
           }
+
         } else {
           this.trainers.set([]);
+          this.batchTrainers.set([]);
+          this.trainersBatchId = null;
 
           if (this.activeTab() === 'batch') {
             this.batchLoaded.set(true);
@@ -617,6 +636,8 @@ console.log('Support - Selected Enrollment:', activeEnrollment);
         this.enrollment.set(null);
         this.companyName.set('');
         this.trainers.set([]);
+        this.batchTrainers.set([]);
+        this.trainersBatchId = null;
 
         if (this.activeTab() === 'batch') {
           this.batchLoaded.set(true);
@@ -629,102 +650,123 @@ console.log('Support - Selected Enrollment:', activeEnrollment);
   // TRAINERS BY BATCH
   // =========================================================
 
-  
+  private loadTrainersByBatch(batchId: number): void {
+    if (
+      this.trainersBatchId === batchId &&
+      (this.loadingTrainers() || this.trainers().length > 0)
+    ) {
+      return;
+    }
 
-private loadTrainersByBatch(batchId: number): void {
-  this.loadingTrainers.set(true);
-  this.trainers.set([]);
+    this.trainersBatchId = batchId;
+    this.loadingTrainers.set(true);
+    this.trainers.set([]);
 
-  console.log('Support - Selected Batch ID:', batchId);
-
-  this.api.getBatchTrainers(batchId).subscribe({
-    next: (response: TrainerDto[]) => {
-      const assigned = Array.isArray(response) ? response : [];
-
-      console.log('Support - Batch Trainers:', assigned);
-
-      if (assigned.length === 0) {
-        this.loadingTrainers.set(false);
-        return;
-      }
-
-      const requests = assigned.map(item => {
-        const trainerId = Number(item.trainerId);
-
-        if (!Number.isFinite(trainerId) || trainerId <= 0) {
-          return of(item);
+    this.api.getBatchTrainers(batchId).subscribe({
+      next: (response: TrainerInBatchDto[]) => {
+        if (this.trainersBatchId !== batchId) {
+          return;
         }
 
-        return this.api.getTrainer(trainerId).pipe(
-          catchError(error => {
-            console.warn(
-              'Failed to load trainer:',
-              trainerId,
+        // Remove duplicate trainers from the selected batch.
+        const unique = new Map<number, TrainerInBatchDto>();
+
+        for (const trainer of Array.isArray(response) ? response : []) {
+          const id = Number(trainer.trainerId);
+
+          if (
+            Number.isFinite(id) &&
+            id > 0 &&
+            !unique.has(id)
+          ) {
+            unique.set(id, trainer);
+          }
+        }
+
+        const assigned = [...unique.values()];
+
+        if (!assigned.length) {
+          this.trainers.set([]);
+          this.batchTrainers.set([]);
+          this.loadingTrainers.set(false);
+          return;
+        }
+
+        // Load trainer details to obtain full names and user IDs.
+        forkJoin(
+          assigned.map(trainer =>
+            this.api.getTrainer(Number(trainer.trainerId)).pipe(
+              catchError(error => {
+                console.warn(
+                  'Could not load trainer details:',
+                  trainer.trainerId,
+                  error
+                );
+
+                return of(null);
+              })
+            )
+          )
+        ).subscribe({
+          next: details => {
+            if (this.trainersBatchId !== batchId) {
+              return;
+            }
+
+            const resolved = assigned.map(
+              (assignedTrainer, index) => {
+                const detail = details[index];
+
+                return {
+                  ...assignedTrainer,
+                  ...(detail ?? {}),
+                  trainerId: Number(assignedTrainer.trainerId),
+                  fullName: String(
+                    detail?.fullName ||
+                    assignedTrainer.trainerName ||
+                    assignedTrainer.fullName ||
+                    `مدرب رقم ${assignedTrainer.trainerId}`
+                  ).trim()
+                } as TrainerDto;
+              }
+            );
+
+            this.trainers.set(resolved);
+            this.batchTrainers.set(resolved);
+            this.loadingTrainers.set(false);
+          },
+
+          error: error => {
+            console.error(
+              'Error resolving batch trainers:',
               error
             );
 
-            return of(item);
-          })
+            if (this.trainersBatchId === batchId) {
+              this.trainers.set([]);
+              this.loadingTrainers.set(false);
+            }
+          }
+        });
+      },
+
+      error: error => {
+        console.error(
+          'Batch trainers API error:',
+          error
         );
-      });
 
-      forkJoin(requests).subscribe({
-        next: (details: TrainerDto[]) => {
-          const trainers: TrainerDto[] = details
-            .map((detail, index) => {
-              const assignedTrainer = assigned[index];
-
-              return {
-                ...assignedTrainer,
-                ...detail,
-                trainerId: Number(assignedTrainer.trainerId),
-                fullName: String(
-                  detail.fullName ||
-                  assignedTrainer.fullName ||
-                  (assignedTrainer as any).trainerName ||
-                  ''
-                ).trim()
-              } as TrainerDto;
-            })
-            .filter(trainer =>
-              Number.isFinite(trainer.trainerId) &&
-              trainer.trainerId > 0
-            );
-
-          this.trainers.set(trainers);
-          this.loadingTrainers.set(false);
-
-          console.table(
-            trainers.map(trainer => ({
-              trainerId: trainer.trainerId,
-              fullName: trainer.fullName,
-              userId: trainer.userId
-            }))
-          );
-        },
-
-        error: error => {
-          console.error('Trainer loading error:', error);
+        if (this.trainersBatchId === batchId) {
           this.trainers.set([]);
           this.loadingTrainers.set(false);
+
+          this.errorMessage.set(
+            'تعذر تحميل المدربين المرتبطين بالدفعة'
+          );
         }
-      });
-    },
-
-    error: error => {
-      console.error('Batch trainers API error:', error);
-
-      this.trainers.set([]);
-      this.loadingTrainers.set(false);
-
-      this.errorMessage.set(
-        'تعذر تحميل المدربين المرتبطين بالدفعة'
-      );
-    }
-  });
-}
-
-
+      }
+    });
+  }
 
   // =========================================================
   // OPEN CONVERSATION OR WITHDRAWAL REQUEST
@@ -750,7 +792,8 @@ private loadTrainersByBatch(batchId: number): void {
     // conversations. Their messages are not persisted
     // through the normal conversation API.
     if (this.isWithdrawalRequest(listItem)) {
-      const request = listItem.originalRequest as WithdrawalRequestDto;
+      const request =
+        listItem.originalRequest as WithdrawalRequestDto;
 
       const messages: any[] = [];
 
@@ -871,6 +914,8 @@ private loadTrainersByBatch(batchId: number): void {
       this.batchLoaded.set(true);
       this.batchGroupConversationId.set(null);
       this.batchGroupMessages.set([]);
+      this.batchTrainers.set([]);
+      this.batchTrainees.set([]);
       return;
     }
 
@@ -881,46 +926,81 @@ private loadTrainersByBatch(batchId: number): void {
     this.batchGroupConversationId.set(null);
     this.batchGroupMessages.set([]);
     this.batchTrainees.set([]);
-    this.batchTrainers.set([]);
+
+    // Use the trainers resolved for the selected batch.
+    // Do not clear the trainer list unnecessarily.
+    if (this.trainersBatchId === batchId) {
+      this.batchTrainers.set(this.trainers());
+    } else {
+      this.batchTrainers.set([]);
+    }
+
+    // =====================================================
+    // LOAD BATCH DETAILS
+    // =====================================================
 
     this.api.getBatch(batchId).subscribe({
       next: (batch: BatchDto) => {
+        if (Number(this.enrollment()?.batchId) !== batchId) {
+          return;
+        }
+
         this.batchName.set(batch?.batchName ?? '');
       },
+
       error: (error: any) => {
         console.error('Error loading batch:', error);
-        this.batchName.set('');
+
+        if (Number(this.enrollment()?.batchId) === batchId) {
+          this.batchName.set('');
+        }
       }
     });
 
-    this.api.getBatchTrainers(batchId).subscribe({
-      next: (trainers: TrainerDto[]) => {
-       this.batchTrainers.set(
-  (trainers ?? []).map((trainer: any) => ({
-    ...trainer,
-    fullName: trainer.trainerName ?? trainer.fullName ?? ''
-  }))
-);
-      },
-      error: (error: any) => {
-        console.error('Error loading batch trainers:', error);
-        this.batchTrainers.set([]);
-      }
-    });
+    // =====================================================
+    // LOAD BATCH TRAINERS
+    // =====================================================
+
+    this.loadTrainersByBatch(batchId);
+
+    // =====================================================
+    // LOAD BATCH TRAINEES
+    // =====================================================
 
     this.api.getBatchTrainees(batchId).subscribe({
       next: (trainees: TraineeProfileDto[]) => {
-        this.batchTrainees.set(trainees ?? []);
+        if (Number(this.enrollment()?.batchId) !== batchId) {
+          return;
+        }
+
+        this.batchTrainees.set(
+          Array.isArray(trainees) ? trainees : []
+        );
       },
+
       error: (error: any) => {
-        console.error('Error loading batch trainees:', error);
-        this.batchTrainees.set([]);
+        console.error(
+          'Error loading batch trainees:',
+          error
+        );
+
+        if (Number(this.enrollment()?.batchId) === batchId) {
+          this.batchTrainees.set([]);
+        }
       }
     });
 
+    // =====================================================
+    // FIND BATCH GROUP CONVERSATION
+    // =====================================================
+
     this.api.getAllParticipantConversations(userId).subscribe({
       next: (all: any[]) => {
-        const group = (all ?? []).find(
+        if (Number(this.enrollment()?.batchId) !== batchId) {
+          return;
+        }
+
+        const group = (Array.isArray(all) ? all : []).find(
           (conversation: any) =>
             conversation.category === 'BatchGroup' &&
             Number(conversation.batchId) === batchId
@@ -934,7 +1014,10 @@ private loadTrainersByBatch(batchId: number): void {
 
         const conversationId = Number(group.conversationId);
 
-        if (!Number.isFinite(conversationId) || conversationId <= 0) {
+        if (
+          !Number.isFinite(conversationId) ||
+          conversationId <= 0
+        ) {
           this.loadingBatch.set(false);
           this.batchLoaded.set(true);
           return;
@@ -942,8 +1025,19 @@ private loadTrainersByBatch(batchId: number): void {
 
         this.batchGroupConversationId.set(conversationId);
 
+        // =================================================
+        // LOAD GROUP MESSAGES
+        // =================================================
+
         this.api.getConversation(conversationId).subscribe({
           next: (conversation: any) => {
+            if (
+              Number(this.enrollment()?.batchId) !== batchId ||
+              this.batchGroupConversationId() !== conversationId
+            ) {
+              return;
+            }
+
             const messages = [
               ...(conversation?.messages ?? [])
             ].sort(
@@ -976,12 +1070,14 @@ private loadTrainersByBatch(batchId: number): void {
               error
             );
 
-            this.loadingBatch.set(false);
-            this.batchLoaded.set(true);
+            if (Number(this.enrollment()?.batchId) === batchId) {
+              this.loadingBatch.set(false);
+              this.batchLoaded.set(true);
 
-            this.errorMessage.set(
-              'تعذر تحميل رسائل مجموعة الدفعة'
-            );
+              this.errorMessage.set(
+                'تعذر تحميل رسائل مجموعة الدفعة'
+              );
+            }
           }
         });
       },
@@ -992,12 +1088,14 @@ private loadTrainersByBatch(batchId: number): void {
           error
         );
 
-        this.loadingBatch.set(false);
-        this.batchLoaded.set(true);
+        if (Number(this.enrollment()?.batchId) === batchId) {
+          this.loadingBatch.set(false);
+          this.batchLoaded.set(true);
 
-        this.errorMessage.set(
-          'تعذر تحميل محادثة مجموعة الدفعة'
-        );
+          this.errorMessage.set(
+            'تعذر تحميل محادثة مجموعة الدفعة'
+          );
+        }
       }
     });
   }
@@ -1066,6 +1164,8 @@ private loadTrainersByBatch(batchId: number): void {
       }
     });
   }
+
+  // NEXT PART: PRIVATE CHAT
 
   // =========================================================
   // PRIVATE CHAT — OPEN
@@ -1328,6 +1428,8 @@ private loadTrainersByBatch(batchId: number): void {
     });
   }
 
+  // NEXT PART: PRIVATE CHAT — CREATE, SEND AND CLOSE
+
   // =========================================================
   // PRIVATE CHAT — CREATE
   // =========================================================
@@ -1544,41 +1646,39 @@ private loadTrainersByBatch(batchId: number): void {
   // RECEIVER CHANGE
   // =========================================================
 
- 
-onReceiverChange(): void {
-  this.newConv.trainerId = null;
-  this.newConv.subject = '';
-  this.newConv.note = '';
-  this.newConv.firstMessage = '';
+  onReceiverChange(): void {
+    this.newConv.trainerId = null;
+    this.newConv.subject = '';
+    this.newConv.note = '';
+    this.newConv.firstMessage = '';
 
-  this.selectedFile = null;
+    this.selectedFile = null;
 
-  this.errorMessage.set('');
-  this.successMessage.set('');
+    this.errorMessage.set('');
+    this.successMessage.set('');
 
-  if (this.newConv.receiverType === 'Trainer') {
-    const batchId = Number(this.enrollment()?.batchId);
+    if (this.newConv.receiverType === 'Trainer') {
+      const batchId = Number(this.enrollment()?.batchId);
 
-    if (Number.isFinite(batchId) && batchId > 0) {
-      this.loadTrainersByBatch(batchId);
-    } else {
-      this.trainers.set([]);
+      if (Number.isFinite(batchId) && batchId > 0) {
+        this.loadTrainersByBatch(batchId);
+      } else {
+        this.trainers.set([]);
+        this.errorMessage.set(
+          'لا توجد دفعة تدريبية مرتبطة بالمتدرب'
+        );
+      }
+    }
+
+    if (
+      this.newConv.receiverType === 'Company' &&
+      !this.companyName().trim()
+    ) {
       this.errorMessage.set(
-        'لا توجد دفعة تدريبية مرتبطة بالمتدرب'
+        'لا توجد شركة مرتبطة بالتسجيل التدريبي الحالي'
       );
     }
   }
-
-  if (
-    this.newConv.receiverType === 'Company' &&
-    !this.companyName().trim()
-  ) {
-    this.errorMessage.set(
-      'لا توجد شركة مرتبطة بالتسجيل التدريبي الحالي'
-    );
-  }
-}
-
 
   // =========================================================
   // FILE SIZE FORMAT
@@ -1754,7 +1854,11 @@ onReceiverChange(): void {
       case 'Trainer':
         return (
           this.newConv.trainerId != null &&
-          Number(this.newConv.trainerId) > 0 &&
+          this.trainers().some(
+            trainer =>
+              Number(trainer.trainerId) ===
+              Number(this.newConv.trainerId)
+          ) &&
           note.length > 0
         );
 
@@ -1771,6 +1875,8 @@ onReceiverChange(): void {
         return false;
     }
   }
+
+  // NEXT PART: SEND REPLY AND SUBMIT REQUEST
 
   // =========================================================
   // SEND REPLY
@@ -1898,15 +2004,31 @@ onReceiverChange(): void {
       return;
     }
 
-    if (
-      receiverType === 'Trainer' &&
-      !this.newConv.trainerId
-    ) {
-      this.errorMessage.set(
-        'يرجى اختيار المدرب'
-      );
-      return;
+    // =====================================================
+    // VALIDATE SELECTED TRAINER
+    // =====================================================
+
+    if (receiverType === 'Trainer') {
+      if (!this.newConv.trainerId) {
+        this.errorMessage.set(
+          'يرجى اختيار المدرب'
+        );
+        return;
+      }
+
+      const selectedTrainer = this.getSelectedTrainer();
+
+      if (!selectedTrainer) {
+        this.errorMessage.set(
+          'المدرب المختار غير مرتبط بالدفعة التدريبية الحالية'
+        );
+        return;
+      }
     }
+
+    // =====================================================
+    // VALIDATE COMPANY
+    // =====================================================
 
     if (
       receiverType === 'Company' &&
@@ -1918,12 +2040,20 @@ onReceiverChange(): void {
       return;
     }
 
+    // =====================================================
+    // VALIDATE SUBJECT
+    // =====================================================
+
     if (!subject) {
       this.errorMessage.set(
         'يرجى كتابة نوع الطلب'
       );
       return;
     }
+
+    // =====================================================
+    // VALIDATE MESSAGE CONTENT
+    // =====================================================
 
     const messageContent =
       receiverType === 'Trainer' ||
@@ -1969,7 +2099,7 @@ onReceiverChange(): void {
     }
 
     // =====================================================
-    // ATTACHMENT CHECK
+    // ATTACHMENT SETTINGS CHECK
     // =====================================================
 
     if (
@@ -1981,6 +2111,10 @@ onReceiverChange(): void {
       );
       return;
     }
+
+    // =====================================================
+    // ATTACHMENT VALIDATION
+    // =====================================================
 
     if (this.selectedFile) {
       const file = this.selectedFile;
@@ -2097,6 +2231,8 @@ onReceiverChange(): void {
     });
   }
 
+  // NEXT PART: WITHDRAWAL REQUEST AND RESET FORM
+
   // =========================================================
   // SUBMIT WITHDRAWAL REQUEST
   // =========================================================
@@ -2182,4 +2318,4 @@ onReceiverChange(): void {
     this.selectedFile = null;
   }
 
-} 
+}
