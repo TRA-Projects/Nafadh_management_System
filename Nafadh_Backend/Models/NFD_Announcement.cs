@@ -21,6 +21,10 @@ namespace Nafadh_Backend.Models
         public int? ScopeId { get; set; }
         [Required]
         public string Message { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(20)]
+        public string Priority { get; set; } = "normal";
         public DateTime Date { get; set; }
 
         public int CreatedByUserId { get; set; }
