@@ -1915,7 +1915,13 @@ const traineeId =
                 return current;
 
               }
+input.value = '';
 
+this.openPopup(
+  'تم رفع السيرة الذاتية بنجاح.',
+  'success',
+  'تم الرفع'
+);
 
               return {
 
@@ -1959,14 +1965,18 @@ const traineeId =
         },
 
 
-        error: (error) => {
+    error: (error) => {
+  console.error('CV upload failed:', error);
 
-          console.error(
-            'CV upload failed:',
-            error
-          );
+  input.value = '';
 
-        }
+  this.openPopup(
+    error?.error?.message ||
+      'تعذر رفع السيرة الذاتية. يرجى المحاولة مرة أخرى.',
+    'error',
+    'فشل رفع السيرة الذاتية'
+  );
+}
 
       });
 
@@ -1993,7 +2003,30 @@ const traineeId =
     );
 
   }
+  downloadCv(resumeUrl: string): void {
+  if (!resumeUrl) {
+    this.openPopup(
+      'لا توجد سيرة ذاتية متاحة للتنزيل.',
+      'error',
+      'تعذر التنزيل'
+    );
+    return;
+  }
 
+  const fileUrl = this.api.getFileUrl(resumeUrl);
+
+  // Open the file directly without HttpClient
+  // to avoid cross-origin request issues.
+  const link = document.createElement('a');
+
+  link.href = fileUrl;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
 
   // =========================================================
   // SKILL POPUP
