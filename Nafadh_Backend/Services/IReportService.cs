@@ -37,6 +37,11 @@ namespace Nafadh_Backend.Services
         // NEW: analytics/aggregation endpoints — see DTOs/ReportAnalyticsDTOs.cs
         Task<DashboardChartsDTO> GetDashboardChartsAsync();
         Task<AdminDashboardSummaryDTO> GetAdminDashboardSummaryAsync();
+        // Admin Portal only - dashboard performance period filtering.
+        Task<AdminDashboardSummaryDTO> GetAdminDashboardSummaryByPeriodAsync(
+            DateTime? startDate,
+            DateTime? endDate
+        );
         Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(int batchId, int pageNumber, int pageSize);
         // Admin Reports - Company Batch Performance
         Task<AdminCompanyBatchPerformanceDTO?> GetAdminCompanyBatchPerformanceAsync(
