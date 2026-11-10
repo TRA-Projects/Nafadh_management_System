@@ -1206,3 +1206,57 @@
     font-size: 9px;
   }
 }
+.delete-member-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  direction: rtl;
+}
+
+.delete-member-modal {
+  background: white;
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+
+  h3 {
+    color: #10166f;
+  }
+
+  p {
+    color: #64748b;
+  }
+}
+
+.delete-member-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 25px;
+}
+
+.delete-confirm-btn,
+.delete-cancel-btn {
+  padding: 12px 24px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.delete-confirm-btn {
+  background: #dc2626;
+  color: white;
+}
+
+.delete-cancel-btn {
+  background: #f1f5f9;
+  color: #334155;
+}
