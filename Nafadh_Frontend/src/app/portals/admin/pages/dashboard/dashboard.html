@@ -245,7 +245,8 @@
               @for (w of tp.warnings; track w.warningId) {
               <div class="tp-warn-item">
                 <div>
-                  <div class="tp-warn-title">{{ warningTypes.label(w.type) }} · المستوى: {{ constants.administrativeLabel('NFD_WRN_LVL', w.level) }}</div>
+                  <div class="tp-warn-title">{{ warningTypes.label(w.type) }} · المستوى: {{
+                    constants.administrativeLabel('NFD_WRN_LVL', w.level) }}</div>
                   <div class="tp-warn-reason">{{ w.reason }}</div>
                 </div>
                 <div class="tp-warn-date">
@@ -345,7 +346,8 @@
         <div class="stat-icon icon-purple">📌</div>
         <div class="stat-info">
           <div class="stat-label">مستوى الإنذار</div>
-          <div class="stat-value" style="font-size: 20px;">{{ constants.administrativeLabel('NFD_WRN_LVL', wd.level) }}</div>
+          <div class="stat-value" style="font-size: 20px;">{{ constants.administrativeLabel('NFD_WRN_LVL', wd.level) }}
+          </div>
         </div>
       </div>
 
@@ -785,7 +787,7 @@
           style="display:flex; align-items:center; justify-content:space-between; width:100%;">
           <div class="person-right" style="display:flex; align-items:center; gap:12px;">
             <span class="tp-rank-badge" style="background:#fef2f2; color:#dc2626; border-color:#fecaca;">
-#{{ (riskPage() - 1) * riskPageSize + idx + 1 }}            </span>
+              #{{ (riskPage() - 1) * riskPageSize + idx + 1 }} </span>
             <div class="person-avatar" [style.background-color]="getAvatarColor(idx)">
               {{ getInitials(t.fullName) }}
             </div>
@@ -870,577 +872,635 @@
     </div>
     }
 
- </div>
+  </div>
   }
 
-    <!-- =========================================================================
+  <!-- =========================================================================
        5) صفحة لوحة التحكم التنفيذية (تبقى محفوظة في الـ DOM لعدم ضياع الشارتات)
        ========================================================================= -->
 
-    <!-- 5) لوحة التحكم الرئيسية -->
+  <!-- 5) لوحة التحكم الرئيسية -->
 
-    <div
-      [hidden]="selectedTraineeProfile() !== null || selectedWarningDetail() !== null || showAllTopPerformersPage() || showAllAtRiskPage()">
+  <div
+    [hidden]="selectedTraineeProfile() !== null || selectedWarningDetail() !== null || showAllTopPerformersPage() || showAllAtRiskPage()">
 
-      <!-- Hero Banner -->
-      <div class="hero-banner">
-        <div class="hero-overlay"></div>
-        <div class="hero-content">
-          <h1 class="hero-title">بوابة الإدارة المركزية</h1>
-          <p class="hero-subtitle">منظومة نفاذ للتدريب - هيئة تنظيم الاتصالات</p>
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <h1 class="hero-title">بوابة الإدارة المركزية</h1>
+        <p class="hero-subtitle">منظومة نفاذ للتدريب - هيئة تنظيم الاتصالات</p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; z-index: 2;">
+        @if (showRefreshToast()) {
+        <span
+          style="background: rgba(16, 185, 129, 0.92); color: #fff; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 8px;">
+          ✓ تم تحديث البيانات من قاعدة البيانات
+        </span>
+        }
+        <button type="button" class="refresh-hero-btn" [disabled]="isLoading()" (click)="refreshData()">
+          <span>↻</span>
+          <span>{{ isLoading() ? 'جاري التحديث...' : 'تحديث البيانات' }}</span>
+        </button>
+      </div>
+    </div>
+    <!-- Admin Dashboard Performance Period Filter -->
+    <div style="
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    margin: 16px 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+  ">
+      <label for="performancePeriod" style="font-weight: 700; color: #334155;">
+        فترة تقييم المتميزين والمتعثرين:
+      </label>
+
+      <select id="performancePeriod" [value]="performancePeriod()"
+        (change)="changePerformancePeriod($any($event.target).value)" style="
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: white;
+    ">
+        <option value="month">هذا الشهر</option>
+        <option value="year">هذه السنة</option>
+        <option value="all">جميع الفترات</option>
+        <option value="custom">فترة مخصصة</option>
+      </select>
+
+      @if (performancePeriod() === 'custom') {
+      <label for="performanceStartDate">من</label>
+
+      <input id="performanceStartDate" type="date" [value]="performanceStartDate()"
+        (change)="performanceStartDate.set($any($event.target).value)" />
+
+      <label for="performanceEndDate">إلى</label>
+
+      <input id="performanceEndDate" type="date" [value]="performanceEndDate()"
+        (change)="performanceEndDate.set($any($event.target).value)" />
+
+      <button type="button" (click)="applyCustomPerformancePeriod()" [disabled]="performancePeriodLoading()">
+        تطبيق
+      </button>
+      }
+
+      @if (performancePeriodLoading()) {
+      <span style="color: #64748b;">
+        جاري تحميل النتائج...
+      </span>
+      }
+
+      @if (performancePeriodError()) {
+      <span style="color: #dc2626;" role="alert">
+        {{ performancePeriodError() }}
+      </span>
+      }
+    </div>
+
+    <!-- إعلانات المنصة -->
+    @if (announcements().length > 0) {
+    <div class="announcements-panel">
+      <div class="announcements-header">
+        <div class="announcements-title-wrap">
+          <div class="ann-header-icon">📄</div>
+          <h3 class="announcements-title">إعلانات الهيئة والمنصة</h3>
         </div>
-
-        <div style="display: flex; align-items: center; gap: 10px; z-index: 2;">
-          @if (showRefreshToast()) {
-          <span
-            style="background: rgba(16, 185, 129, 0.92); color: #fff; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 8px;">
-            ✓ تم تحديث البيانات من قاعدة البيانات
-          </span>
-          }
-          <button type="button" class="refresh-hero-btn" [disabled]="isLoading()" (click)="refreshData()">
-            <span>↻</span>
-            <span>{{ isLoading() ? 'جاري التحديث...' : 'تحديث البيانات' }}</span>
+        <div class="announcements-actions">
+          <span class="ann-count-badge">{{ announcements().length }}</span>
+          <button type="button" class="ann-close-btn" (click)="toggleAnnouncements()">
+            {{ showAnnouncements() ? '✕' : '▼' }}
           </button>
         </div>
       </div>
 
-      <!-- إعلانات المنصة -->
-      @if (announcements().length > 0) {
-      <div class="announcements-panel">
-        <div class="announcements-header">
-          <div class="announcements-title-wrap">
-            <div class="ann-header-icon">📄</div>
-            <h3 class="announcements-title">إعلانات الهيئة والمنصة</h3>
+      @if (showAnnouncements()) {
+      <div class="announcements-list">
+        @for (ann of announcements(); track ann.announcementId ?? ann.id ?? $index) {
+        <div class="announcement-row">
+          <div class="ann-main">
+            <div class="ann-title">{{ ann.title || 'إعلان رسمي' }}</div>
+            <div class="ann-body">{{ ann.content || ann.body || ann.message }}</div>
           </div>
-          <div class="announcements-actions">
-            <span class="ann-count-badge">{{ announcements().length }}</span>
-            <button type="button" class="ann-close-btn" (click)="toggleAnnouncements()">
-              {{ showAnnouncements() ? '✕' : '▼' }}
-            </button>
-          </div>
-        </div>
-
-        @if (showAnnouncements()) {
-        <div class="announcements-list">
-          @for (ann of announcements(); track ann.announcementId ?? ann.id ?? $index) {
-          <div class="announcement-row">
-            <div class="ann-main">
-              <div class="ann-title">{{ ann.title || 'إعلان رسمي' }}</div>
-              <div class="ann-body">{{ ann.content || ann.body || ann.message }}</div>
+          <div class="ann-meta">
+            <div class="ann-tag-col">
+              <span class="ann-tag">إعلان</span>
+              <span class="ann-date">{{ (ann.createdAt || ann.publishedAt || ann.date) | date:'yyyy-MM-dd' }}</span>
             </div>
-            <div class="ann-meta">
-              <div class="ann-tag-col">
-                <span class="ann-tag">إعلان</span>
-                <span class="ann-date">{{ (ann.createdAt || ann.publishedAt || ann.date) | date:'yyyy-MM-dd' }}</span>
-              </div>
-              <div class="ann-row-icon">📄</div>
-            </div>
+            <div class="ann-row-icon">📄</div>
           </div>
-          }
         </div>
         }
       </div>
       }
+    </div>
+    }
 
-      <!-- إحصائيات المنظومة الأساسية -->
-      <div class="stat-cards-grid four-cols">
-        <div class="stat-card clickable-card" (click)="goToTraineesList()" role="button" tabindex="0">
-          <div class="stat-icon icon-blue">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-              <path d="M6 12v5c3 3 9 3 12 0v-5" />
-            </svg>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">إجمالي المتدربين</div>
-            <div class="stat-value">{{ traineeCount() | number }}</div>
-            <div class="stat-subtext active-trainees">{{ summary()?.activeTrainees ?? 0 }} متدرب نشط حالياً</div>
-          </div>
+    <!-- إحصائيات المنظومة الأساسية -->
+    <div class="stat-cards-grid four-cols">
+      <div class="stat-card clickable-card" (click)="goToTraineesList()" role="button" tabindex="0">
+        <div class="stat-icon icon-blue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+            <path d="M6 12v5c3 3 9 3 12 0v-5" />
+          </svg>
         </div>
-
-        <div class="stat-card clickable-card" (click)="goToCompaniesList()" role="button" tabindex="0">
-          <div class="stat-icon icon-teal">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2">
-              <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
-              <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
-              <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
-            </svg>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">الشركات المستضيفة</div>
-            <div class="stat-value">{{ companyCount() | number }}</div>
-            <div class="stat-subtext">شركة معتمدة</div>
-          </div>
-        </div>
-
-        <div class="stat-card clickable-card" (click)="goToProgramsList()" role="button" tabindex="0">
-          <div class="stat-icon icon-purple">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2">
-              <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-              <line x1="16" x2="16" y1="2" y2="6" />
-              <line x1="8" x2="8" y1="2" y2="6" />
-              <line x1="3" x2="21" y1="10" y2="10" />
-            </svg>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">إجمالي الدفعات</div>
-            <div class="stat-value">{{ batchCount() | number }}</div>
-            <div class="stat-subtext">عبر جميع السنوات</div>
-          </div>
-        </div>
-
-        <div class="stat-card clickable-card" (click)="goToCertificatesList()" role="button" tabindex="0">
-          <div class="stat-icon icon-amber">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="8" r="6" />
-              <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
-            </svg>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">الشهادات الصادرة</div>
-            <div class="stat-value">{{ (summary()?.totalCertificates ?? 0) | number }}</div>
-            <div class="stat-subtext">شهادة تدريبية معتمدة</div>
-          </div>
+        <div class="stat-info">
+          <div class="stat-label">إجمالي المتدربين</div>
+          <div class="stat-value">{{ traineeCount() | number }}</div>
+          <div class="stat-subtext active-trainees">{{ summary()?.activeTrainees ?? 0 }} متدرب نشط حالياً</div>
         </div>
       </div>
 
-      <!-- مؤشرات الأداء -->
-      <div class="stat-cards-grid four-cols">
-        <div class="stat-card">
-          <div class="stat-icon icon-indigo">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2">
-              <line x1="18" x2="18" y1="20" y2="10" />
-              <line x1="12" x2="12" y1="20" y2="4" />
-              <line x1="6" x2="6" y1="20" y2="14" />
-            </svg>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">متوسط الحضور</div>
-            <div class="stat-value">{{ summary()?.overallAttendanceRate ?? 0 }}%</div>
-            <div class="stat-subtext">من الأسابيع المتاحة</div>
-          </div>
+      <div class="stat-card clickable-card" (click)="goToCompaniesList()" role="button" tabindex="0">
+        <div class="stat-icon icon-teal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+            <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
+            <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
+          </svg>
         </div>
-
-        <div class="stat-card clickable-card" (click)="openTopPerformersPage()" role="button" tabindex="0">
-          <div class="stat-icon icon-purple">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2">
-              <polygon
-                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">المتدربون المتميزون</div>
-            <div class="stat-value">{{ summary()?.topPerformersCount ?? 0 }}</div>
-            <div class="stat-subtext">أعلى النتائج (اضغط للعرض)</div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon icon-teal">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2">
-              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-              <polyline points="16 7 22 7 22 13" />
-            </svg>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label">متوسط أداء المتميزين</div>
-            <div class="stat-value">{{ summary()?.topPerformersAvgScore ?? 0 }}%</div>
-            <div class="stat-subtext">محسوب من بيانات الأداء الحقيقية</div>
-          </div>
-        </div>
-
-        <div class="stat-card card-danger clickable-card" (click)="openAtRiskPage()" role="button" tabindex="0">
-          <div class="stat-icon icon-red">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2">
-              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-              <line x1="12" x2="12" y1="9" y2="13" />
-              <line x1="12" x2="12.01" y1="17" y2="17" />
-            </svg>
-          </div>
-          <div class="stat-info">
-            <div class="stat-label text-danger">متعثرون بحاجة لمتابعة</div>
-            <div class="stat-value">{{ summary()?.atRiskCount ?? 0 }}</div>
-            <div class="stat-subtext">اضغط لعرض قائمة المتعثرين</div>
-          </div>
+        <div class="stat-info">
+          <div class="stat-label">الشركات المستضيفة</div>
+          <div class="stat-value">{{ companyCount() | number }}</div>
+          <div class="stat-subtext">شركة معتمدة</div>
         </div>
       </div>
 
-      <!-- لوحة تشغيل الاستضافة -->
-      <div class="section-heading-row">
-        <div>
-          <h2 class="section-main-title">لوحة تشغيل الاستضافة والتدريب</h2>
-          <p class="section-main-subtitle">متابعة أداء المتدربين، الطاقة الاستيعابية والإنذارات عبر المنظومة</p>
+      <div class="stat-card clickable-card" (click)="goToProgramsList()" role="button" tabindex="0">
+        <div class="stat-icon icon-purple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+            <line x1="16" x2="16" y1="2" y2="6" />
+            <line x1="8" x2="8" y1="2" y2="6" />
+            <line x1="3" x2="21" y1="10" y2="10" />
+          </svg>
         </div>
+        <div class="stat-info">
+          <div class="stat-label">إجمالي الدفعات</div>
+          <div class="stat-value">{{ batchCount() | number }}</div>
+          <div class="stat-subtext">عبر جميع السنوات</div>
+        </div>
+      </div>
 
-        <div style="display: flex; align-items: center; gap: 12px;">
-          @if (lastUpdated()) {
-          <span style="font-size: 11px; color: #64748b;">
-            آخر تحديث: {{ lastUpdated() | date:'hh:mm a' }}
+      <div class="stat-card clickable-card" (click)="goToCertificatesList()" role="button" tabindex="0">
+        <div class="stat-icon icon-amber">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="6" />
+            <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">الشهادات الصادرة</div>
+          <div class="stat-value">{{ (summary()?.totalCertificates ?? 0) | number }}</div>
+          <div class="stat-subtext">شهادة تدريبية معتمدة</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- مؤشرات الأداء -->
+    <div class="stat-cards-grid four-cols">
+      <div class="stat-card">
+        <div class="stat-icon icon-indigo">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <line x1="18" x2="18" y1="20" y2="10" />
+            <line x1="12" x2="12" y1="20" y2="4" />
+            <line x1="6" x2="6" y1="20" y2="14" />
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">متوسط الحضور</div>
+          <div class="stat-value">{{ summary()?.overallAttendanceRate ?? 0 }}%</div>
+          <div class="stat-subtext">من الأسابيع المتاحة</div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable-card" (click)="openTopPerformersPage()" role="button" tabindex="0">
+        <div class="stat-icon icon-purple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <polygon
+              points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">المتدربون المتميزون</div>
+          <div class="stat-value">{{ summary()?.topPerformersCount ?? 0 }}</div>
+          <div class="stat-subtext">أعلى النتائج (اضغط للعرض)</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon icon-teal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+            <polyline points="16 7 22 7 22 13" />
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">متوسط أداء المتميزين</div>
+          <div class="stat-value">{{ summary()?.topPerformersAvgScore ?? 0 }}%</div>
+          <div class="stat-subtext">محسوب من بيانات الأداء الحقيقية</div>
+        </div>
+      </div>
+
+      <div class="stat-card card-danger clickable-card" (click)="openAtRiskPage()" role="button" tabindex="0">
+        <div class="stat-icon icon-red">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+            <line x1="12" x2="12" y1="9" y2="13" />
+            <line x1="12" x2="12.01" y1="17" y2="17" />
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label text-danger">متعثرون بحاجة لمتابعة</div>
+          <div class="stat-value">{{ summary()?.atRiskCount ?? 0 }}</div>
+          <div class="stat-subtext">اضغط لعرض قائمة المتعثرين</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- لوحة تشغيل الاستضافة -->
+    <div class="section-heading-row">
+      <div>
+        <h2 class="section-main-title">لوحة تشغيل الاستضافة والتدريب</h2>
+        <p class="section-main-subtitle">متابعة أداء المتدربين، الطاقة الاستيعابية والإنذارات عبر المنظومة</p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        @if (lastUpdated()) {
+        <span style="font-size: 11px; color: #64748b;">
+          آخر تحديث: {{ lastUpdated() | date:'hh:mm a' }}
+        </span>
+        }
+        <button type="button" class="btn-outline-refresh" [disabled]="isLoading()" (click)="refreshData()">
+          <span>↻</span>
+          <span>{{ isLoading() ? 'جاري التحديث...' : 'تحديث البيانات' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="capacity-card">
+      <div class="capacity-header">
+        <span class="capacity-title">الطاقة الاستيعابية الكلية للشركات المستضيفة</span>
+        <span class="capacity-meta">
+          المستخدم: {{ summary()?.capacity?.used ?? 0 }} من {{ summary()?.capacity?.total ?? 0 }}
+        </span>
+      </div>
+
+      <div class="capacity-bar-track">
+        <div class="capacity-bar-fill" [style.width.%]="capacityPercent()"></div>
+      </div>
+
+      <div class="capacity-footer">
+        <div class="capacity-stats-right">
+          <span>{{ capacityPercent() }}% مستخدم</span>
+          <span>المتبقية: {{ summary()?.capacity?.remaining ?? 0 }} مقعداً</span>
+        </div>
+        <div class="capacity-legend-left">
+          <span class="legend-item">
+            <span class="legend-dot used-dot"></span>
+            مستخدم {{ summary()?.capacity?.used ?? 0 }}
           </span>
-          }
-          <button type="button" class="btn-outline-refresh" [disabled]="isLoading()" (click)="refreshData()">
-            <span>↻</span>
-            <span>{{ isLoading() ? 'جاري التحديث...' : 'تحديث البيانات' }}</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="capacity-card">
-        <div class="capacity-header">
-          <span class="capacity-title">الطاقة الاستيعابية الكلية للشركات المستضيفة</span>
-          <span class="capacity-meta">
-            المستخدم: {{ summary()?.capacity?.used ?? 0 }} من {{ summary()?.capacity?.total ?? 0 }}
+          <span class="legend-item">
+            <span class="legend-dot remaining-dot"></span>
+            متبقي {{ summary()?.capacity?.remaining ?? 0 }}
           </span>
         </div>
-
-        <div class="capacity-bar-track">
-          <div class="capacity-bar-fill" [style.width.%]="capacityPercent()"></div>
-        </div>
-
-        <div class="capacity-footer">
-          <div class="capacity-stats-right">
-            <span>{{ capacityPercent() }}% مستخدم</span>
-            <span>المتبقية: {{ summary()?.capacity?.remaining ?? 0 }} مقعداً</span>
-          </div>
-          <div class="capacity-legend-left">
-            <span class="legend-item">
-              <span class="legend-dot used-dot"></span>
-              مستخدم {{ summary()?.capacity?.used ?? 0 }}
-            </span>
-            <span class="legend-item">
-              <span class="legend-dot remaining-dot"></span>
-              متبقي {{ summary()?.capacity?.remaining ?? 0 }}
-            </span>
-          </div>
-        </div>
       </div>
+    </div>
 
-      <!-- أشرطة التقدم الأفقية -->
-      <div class="horizontal-bars-grid">
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3 class="chart-title">متوسط الحضور الأسبوعي للمتدربين</h3>
-            <span class="chart-subtitle">المعدل العام: {{ summary()?.overallAttendanceRate ?? 0 }}%</span>
-          </div>
-
-          <div class="h-bars-list">
-            @for (w of summary()?.attendanceWeeks || []; track w.label) {
-            <div class="h-bar-row">
-              <div class="h-bar-label">{{ w.label }}</div>
-              <div class="h-bar-track">
-                <div class="h-bar-fill" [style.width.%]="w.value">
-                  <span class="h-bar-inside-val">{{ w.value }}%</span>
-                </div>
-              </div>
-              <div class="h-bar-value">{{ w.value }}%</div>
-            </div>
-            } @empty {
-            <div class="empty-state">لا توجد سجلات حضور أسبوعية مسجلة حالياً</div>
-            }
-          </div>
+    <!-- أشرطة التقدم الأفقية -->
+    <div class="horizontal-bars-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">متوسط الحضور الأسبوعي للمتدربين</h3>
+          <span class="chart-subtitle">المعدل العام: {{ summary()?.overallAttendanceRate ?? 0 }}%</span>
         </div>
 
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3 class="chart-title">توزيع المتدربين حسب البرنامج</h3>
-            <span class="chart-subtitle">أعلى البرامج التدريبية التحاقاً</span>
-          </div>
-
-          <div class="h-bars-list">
-            @for (prog of summary()?.programDistribution || []; track prog.label) {
-            <div class="h-bar-row">
-              <div class="h-bar-label truncate-text" [title]="prog.label">{{ prog.label }}</div>
-              <div class="h-bar-track">
-                <div class="h-bar-fill" [style.width.%]="getBarWidth(prog.value)">
-                  <span class="h-bar-inside-val">{{ prog.value }}</span>
-                </div>
-              </div>
-              <div class="h-bar-value">{{ prog.value }} متدرب</div>
-            </div>
-            } @empty {
-            <div class="empty-state">لا توجد بيانات توزيع برامج حالياً</div>
-            }
-          </div>
-        </div>
-      </div>
-
-      <!-- الرسوم البيانية -->
-      <div class="charts-grid">
-        <div class="chart-card">
-          <div class="chart-header">
-            <div>
-              <h3 class="chart-title">عدد الدفعات بالسنوات</h3>
-              <p class="chart-subtitle">توزيع الدفعات التدريبية المنفذة سنوياً</p>
-            </div>
-          </div>
-          <div class="chart-body bar-body">
-            <canvas id="batchesBarChart"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <div class="chart-header">
-            <div>
-              <h3 class="chart-title">تقسيم المسارات</h3>
-              <p class="chart-subtitle">توزيع جميع الدفعات حسب المسار</p>
-            </div>
-
-          </div>
-          <div class="chart-body donut-body">
-            <canvas id="tracksDonutChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- القوائم السفلية -->
-      <div class="bottom-three-cols">
-        <!-- المتدربون المتميزون -->
-        <div class="list-panel-card">
-          <div class="list-panel-header">
-            <h3 class="list-panel-title">⭐ المتدربون الأعلى أداءً</h3>
-            <button type="button" class="panel-link-btn" (click)="openTopPerformersPage()">عرض الكل</button>
-          </div>
-
-          <div class="list-panel-body">
-            @for (t of (summary()?.topPerformers || []).slice(0, 5); track t.traineeId; let idx = $index) {
-            <div class="person-item-row"
-              style="display:flex; align-items:center; justify-content:space-between; width:100%;">
-              <div class="person-right" style="display:flex; align-items:center; gap:12px;">
-                <div class="person-avatar" [style.background-color]="getAvatarColor(idx)">
-                  {{ getInitials(t.fullName) }}
-                </div>
-                <div class="person-text" style="display:flex; flex-direction:column; gap:3px; text-align:right;">
-                  <div class="person-name">{{ t.fullName }}</div>
-                  <div class="person-sub">{{ t.major }}</div>
-                </div>
-              </div>
-
-              <div class="person-left-actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                <div class="score-badge">
-                  <span class="score-val">{{ t.performancePercent }}%</span>
-                  <span class="score-lbl">أداء</span>
-                </div>
-
-                <button type="button" class="icon-action-btn eye-btn" (click)="openTraineePreview(t, idx)"
-                  [title]="'معاينة ملف ' + t.fullName">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                </button>
-
-                <a [href]="getSafeGitHubUrl(t.gitHubUrl)" target="_blank" rel="noopener" class="icon-action-btn gh-btn"
-                  title="حساب GitHub">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path
-                      d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-                    <path d="M9 18c-4.51 2-5-2-7-2" />
-                  </svg>
-                </a>
-
-                <a [href]="getSafeLinkedInUrl(t.linkedInUrl)" target="_blank" rel="noopener"
-                  class="icon-action-btn in-btn" title="ملف LinkedIn">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-                    <rect width="4" height="12" x="2" y="9" />
-                    <circle cx="4" cy="4" r="2" />
-                  </svg>
-                </a>
+        <div class="h-bars-list">
+          @for (w of summary()?.attendanceWeeks || []; track w.label) {
+          <div class="h-bar-row">
+            <div class="h-bar-label">{{ w.label }}</div>
+            <div class="h-bar-track">
+              <div class="h-bar-fill" [style.width.%]="w.value">
+                <span class="h-bar-inside-val">{{ w.value }}%</span>
               </div>
             </div>
-            } @empty {
-            <div class="empty-state">لا توجد بيانات تقييم حالياً</div>
-            }
+            <div class="h-bar-value">{{ w.value }}%</div>
           </div>
-        </div>
-
-        <!-- المتدربون المتعثرون -->
-        <div class="list-panel-card">
-          <div class="list-panel-header">
-            <h3 class="list-panel-title">⚠️ المتدربون المتعثرون</h3>
-            <button type="button" class="panel-link-btn" (click)="openAtRiskPage()">عرض الكل</button>
-          </div>
-
-          <div class="list-panel-body">
-@for (t of (summary()?.atRiskTrainees || []).slice(0, 5); track t.traineeId; let idx = $index) {            <div class="person-item-row"
-              style="display:flex; align-items:center; justify-content:space-between; width:100%;">
-              <div class="person-right" style="display:flex; align-items:center; gap:12px;">
-                <div class="person-avatar" [style.background-color]="getAvatarColor(idx)">
-                  {{ getInitials(t.fullName) }}
-                </div>
-                <div class="person-text" style="display:flex; flex-direction:column; gap:3px; text-align:right;">
-                  <div class="person-name" style="line-height:1.3;">{{ t.fullName }}</div>
-                  <div class="person-sub" style="line-height:1.3;">{{ t.major }}</div>
-                  <div class="person-sub danger-sub" style="line-height:1.3; margin-top:1px;">انخفاض الحضور ({{
-                    t.attendancePercent }}%)</div>
-                </div>
-              </div>
-
-              <div class="person-left-actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                <button type="button" class="icon-action-btn eye-btn" (click)="openTraineePreview(t, idx)"
-                  [title]="'معاينة ملف ' + t.fullName">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                </button>
-
-                <a [href]="getSafeGitHubUrl(t.gitHubUrl)" target="_blank" rel="noopener" class="icon-action-btn gh-btn"
-                  title="حساب GitHub">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path
-                      d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-                    <path d="M9 18c-4.51 2-5-2-7-2" />
-                  </svg>
-                </a>
-
-                <a [href]="getSafeLinkedInUrl(t.linkedInUrl)" target="_blank" rel="noopener"
-                  class="icon-action-btn in-btn" title="ملف LinkedIn">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-                    <rect width="4" height="12" x="2" y="9" />
-                    <circle cx="4" cy="4" r="2" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-            } @empty {
-            <div class="empty-state">لا يوجد متدربون متعثرون</div>
-            }
-          </div>
-        </div>
-
-        <!-- أحدث الإنذارات -->
-        <div class="list-panel-card">
-          <div class="list-panel-header">
-            <h3 class="list-panel-title">🔔 أحدث الإنذارات</h3>
-            <button type="button" class="panel-link-btn" (click)="goToWarningsList()">عرض الكل</button>
-          </div>
-
-          <div class="list-panel-body">
-            @for (w of summary()?.recentWarnings || []; track w.warningId; let idx = $index) {
-            <div class="person-item-row"
-              style="display:flex; align-items:center; justify-content:space-between; width:100%;">
-              <div class="person-right" style="display:flex; align-items:center; gap:12px;">
-                <div class="warning-icon-box" [class.company-warn]="w.scope === 'Company'">
-                  🔔
-                </div>
-                <div class="person-text" style="display:flex; flex-direction:column; gap:3px; text-align:right;">
-                  <div class="person-name">{{ warningTypes.label(w.type) }}</div>
-                  <div class="person-sub">{{ w.targetName }}</div>
-                  <div class="warning-date-meta">{{ w.issuedDate | date:'yyyy-MM-dd' }} · #{{ w.warningId }}</div>
-                </div>
-              </div>
-
-              <div class="person-left-actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                <button type="button" class="icon-action-btn eye-btn" (click)="onWarningItemPreview(w, idx)"
-                  [title]="'معاينة تفاصيل الإنذار #' + w.warningId">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            } @empty {
-            <div class="empty-state">لا توجد إنذارات مسجلة</div>
-            }
-          </div>
-        </div>
-      </div>
-
-      <!-- سجل الأنشطة الأخيرة -->
-      <div class="activity-card">
-        <div class="list-panel-header" style="margin-bottom: 14px;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <h3 class="list-panel-title">🕒 سجل الأنشطة الأخيرة</h3>
-            <span class="tp-trainer-badge" style="font-size:11px; padding:3px 10px;">
-              {{ allActivity().length | number }} نشاط مسجل
-            </span>
-          </div>
-
-          @if (allActivity().length > 8) {
-          <button type="button" class="panel-link-btn" (click)="toggleShowAllActivity()">
-            {{ showAllActivity() ? 'عرض مختصر' : 'عرض الكل' }}
-          </button>
+          } @empty {
+          <div class="empty-state">لا توجد سجلات حضور أسبوعية مسجلة حالياً</div>
           }
         </div>
+      </div>
 
-        <div class="activity-list">
-          @for (item of recentActivity(); track item.logId ?? item.id ?? $index) {
-          <div class="activity-item">
-            <div class="activity-content">
-              <div class="activity-action-title">
-                <span class="status-dot" [ngClass]="getActivityClass(item.action, item.entityName)"></span>
-                <span>{{ item.action }}</span>
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">توزيع المتدربين حسب البرنامج</h3>
+          <span class="chart-subtitle">أعلى البرامج التدريبية التحاقاً</span>
+        </div>
+
+        <div class="h-bars-list">
+          @for (prog of summary()?.programDistribution || []; track prog.label) {
+          <div class="h-bar-row">
+            <div class="h-bar-label truncate-text" [title]="prog.label">{{ prog.label }}</div>
+            <div class="h-bar-track">
+              <div class="h-bar-fill" [style.width.%]="getBarWidth(prog.value)">
+                <span class="h-bar-inside-val">{{ prog.value }}</span>
               </div>
-              <div class="activity-meta">
-                <span>{{ item.userName }}</span>
-                <span>•</span>
-                <span class="activity-entity-pill">{{ item.entityName }}</span>
+            </div>
+            <div class="h-bar-value">{{ prog.value }} متدرب</div>
+          </div>
+          } @empty {
+          <div class="empty-state">لا توجد بيانات توزيع برامج حالياً</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- الرسوم البيانية -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h3 class="chart-title">عدد الدفعات بالسنوات</h3>
+            <p class="chart-subtitle">توزيع الدفعات التدريبية المنفذة سنوياً</p>
+          </div>
+        </div>
+        <div class="chart-body bar-body">
+          <canvas id="batchesBarChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h3 class="chart-title">تقسيم المسارات</h3>
+            <p class="chart-subtitle">توزيع جميع الدفعات حسب المسار</p>
+          </div>
+
+        </div>
+        <div class="chart-body donut-body">
+          <canvas id="tracksDonutChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- القوائم السفلية -->
+    <div class="bottom-three-cols">
+      <!-- المتدربون المتميزون -->
+      <div class="list-panel-card">
+        <div class="list-panel-header">
+          <h3 class="list-panel-title">⭐ المتدربون الأعلى أداءً</h3>
+          <button type="button" class="panel-link-btn" (click)="openTopPerformersPage()">عرض الكل</button>
+        </div>
+
+        <div class="list-panel-body">
+          @for (t of (summary()?.topPerformers || []).slice(0, 5); track t.traineeId; let idx = $index) {
+          <div class="person-item-row"
+            style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+            <div class="person-right" style="display:flex; align-items:center; gap:12px;">
+              <div class="person-avatar" [style.background-color]="getAvatarColor(idx)">
+                {{ getInitials(t.fullName) }}
+              </div>
+              <div class="person-text" style="display:flex; flex-direction:column; gap:3px; text-align:right;">
+                <div class="person-name">{{ t.fullName }}</div>
+                <div class="person-sub">{{ t.major }}</div>
               </div>
             </div>
 
-            <div class="activity-time" dir="ltr">
-              {{ (item.timestamp || item.createdAt) | date:'MMM d, y · h:mm a' }}
+            <div class="person-left-actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+              <div class="score-badge">
+                <span class="score-val">{{ t.performancePercent }}%</span>
+                <span class="score-lbl">أداء</span>
+              </div>
+
+              <button type="button" class="icon-action-btn eye-btn" (click)="openTraineePreview(t, idx)"
+                [title]="'معاينة ملف ' + t.fullName">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+
+              <a [href]="getSafeGitHubUrl(t.gitHubUrl)" target="_blank" rel="noopener" class="icon-action-btn gh-btn"
+                title="حساب GitHub">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path
+                    d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+                  <path d="M9 18c-4.51 2-5-2-7-2" />
+                </svg>
+              </a>
+
+              <a [href]="getSafeLinkedInUrl(t.linkedInUrl)" target="_blank" rel="noopener"
+                class="icon-action-btn in-btn" title="ملف LinkedIn">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                  <rect width="4" height="12" x="2" y="9" />
+                  <circle cx="4" cy="4" r="2" />
+                </svg>
+              </a>
             </div>
           </div>
           } @empty {
-          <div class="empty-state">لا يوجد نشاط بعد</div>
+          <div class="empty-state">لا توجد بيانات تقييم حالياً</div>
           }
         </div>
+      </div>
 
-        @if (showAllActivity() && totalActivityPages() > 1) {
-        <div class="activity-pagination">
-          <div class="pagination-info">
-            الصفحة <strong>{{ activityPage() }}</strong> من <strong>{{ totalActivityPages() }}</strong>
-            <span style="color:#94a3b8; margin:0 6px;">|</span>
-            <span>عرض {{ ((activityPage() - 1) * activityPageSize) + 1 }} – {{ ((activityPage() - 1) *
-              activityPageSize) + recentActivity().length }} من أصل {{ allActivity().length }}</span>
-          </div>
-
-          <div class="pagination-controls">
-            <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === 1"
-              (click)="goToActivityPage(1)" title="الصفحة الأولى">
-              «
-            </button>
-            <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === 1"
-              (click)="goToActivityPage(activityPage() - 1)">
-              السابق
-            </button>
-
-            @for (p of visibleActivityPages(); track p) {
-            <button type="button" class="page-btn" [class.active]="p === activityPage()" (click)="goToActivityPage(p)">
-              {{ p }}
-            </button>
-            }
-
-            <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === totalActivityPages()"
-              (click)="goToActivityPage(activityPage() + 1)">
-              التالي
-            </button>
-            <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === totalActivityPages()"
-              (click)="goToActivityPage(totalActivityPages())" title="الصفحة الأخيرة">
-              »
-            </button>
-          </div>
+      <!-- المتدربون المتعثرون -->
+      <div class="list-panel-card">
+        <div class="list-panel-header">
+          <h3 class="list-panel-title">⚠️ المتدربون المتعثرون</h3>
+          <button type="button" class="panel-link-btn" (click)="openAtRiskPage()">عرض الكل</button>
         </div>
+
+        <div class="list-panel-body">
+          @for (t of (summary()?.atRiskTrainees || []).slice(0, 5); track t.traineeId; let idx = $index) { <div
+            class="person-item-row"
+            style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+            <div class="person-right" style="display:flex; align-items:center; gap:12px;">
+              <div class="person-avatar" [style.background-color]="getAvatarColor(idx)">
+                {{ getInitials(t.fullName) }}
+              </div>
+              <div class="person-text" style="display:flex; flex-direction:column; gap:3px; text-align:right;">
+                <div class="person-name" style="line-height:1.3;">{{ t.fullName }}</div>
+                <div class="person-sub" style="line-height:1.3;">{{ t.major }}</div>
+                <div class="person-sub danger-sub" style="line-height:1.3; margin-top:1px;">انخفاض الحضور ({{
+                  t.attendancePercent }}%)</div>
+              </div>
+            </div>
+
+            <div class="person-left-actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+              <button type="button" class="icon-action-btn eye-btn" (click)="openTraineePreview(t, idx)"
+                [title]="'معاينة ملف ' + t.fullName">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+
+              <a [href]="getSafeGitHubUrl(t.gitHubUrl)" target="_blank" rel="noopener" class="icon-action-btn gh-btn"
+                title="حساب GitHub">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path
+                    d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+                  <path d="M9 18c-4.51 2-5-2-7-2" />
+                </svg>
+              </a>
+
+              <a [href]="getSafeLinkedInUrl(t.linkedInUrl)" target="_blank" rel="noopener"
+                class="icon-action-btn in-btn" title="ملف LinkedIn">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                  <rect width="4" height="12" x="2" y="9" />
+                  <circle cx="4" cy="4" r="2" />
+                </svg>
+              </a>
+            </div>
+          </div>
+          } @empty {
+          <div class="empty-state">لا يوجد متدربون متعثرون</div>
+          }
+        </div>
+      </div>
+
+      <!-- أحدث الإنذارات -->
+      <div class="list-panel-card">
+        <div class="list-panel-header">
+          <h3 class="list-panel-title">🔔 أحدث الإنذارات</h3>
+          <button type="button" class="panel-link-btn" (click)="goToWarningsList()">عرض الكل</button>
+        </div>
+
+        <div class="list-panel-body">
+          @for (w of summary()?.recentWarnings || []; track w.warningId; let idx = $index) {
+          <div class="person-item-row"
+            style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+            <div class="person-right" style="display:flex; align-items:center; gap:12px;">
+              <div class="warning-icon-box" [class.company-warn]="w.scope === 'Company'">
+                🔔
+              </div>
+              <div class="person-text" style="display:flex; flex-direction:column; gap:3px; text-align:right;">
+                <div class="person-name">{{ warningTypes.label(w.type) }}</div>
+                <div class="person-sub">{{ w.targetName }}</div>
+                <div class="warning-date-meta">{{ w.issuedDate | date:'yyyy-MM-dd' }} · #{{ w.warningId }}</div>
+              </div>
+            </div>
+
+            <div class="person-left-actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+              <button type="button" class="icon-action-btn eye-btn" (click)="onWarningItemPreview(w, idx)"
+                [title]="'معاينة تفاصيل الإنذار #' + w.warningId">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          } @empty {
+          <div class="empty-state">لا توجد إنذارات مسجلة</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- سجل الأنشطة الأخيرة -->
+    <div class="activity-card">
+      <div class="list-panel-header" style="margin-bottom: 14px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <h3 class="list-panel-title">🕒 سجل الأنشطة الأخيرة</h3>
+          <span class="tp-trainer-badge" style="font-size:11px; padding:3px 10px;">
+            {{ allActivity().length | number }} نشاط مسجل
+          </span>
+        </div>
+
+        @if (allActivity().length > 8) {
+        <button type="button" class="panel-link-btn" (click)="toggleShowAllActivity()">
+          {{ showAllActivity() ? 'عرض مختصر' : 'عرض الكل' }}
+        </button>
         }
       </div>
 
+      <div class="activity-list">
+        @for (item of recentActivity(); track item.logId ?? item.id ?? $index) {
+        <div class="activity-item">
+          <div class="activity-content">
+            <div class="activity-action-title">
+              <span class="status-dot" [ngClass]="getActivityClass(item.action, item.entityName)"></span>
+              <span>{{ item.action }}</span>
+            </div>
+            <div class="activity-meta">
+              <span>{{ item.userName }}</span>
+              <span>•</span>
+              <span class="activity-entity-pill">{{ item.entityName }}</span>
+            </div>
+          </div>
+
+          <div class="activity-time" dir="ltr">
+            {{ (item.timestamp || item.createdAt) | date:'MMM d, y · h:mm a' }}
+          </div>
+        </div>
+        } @empty {
+        <div class="empty-state">لا يوجد نشاط بعد</div>
+        }
+      </div>
+
+      @if (showAllActivity() && totalActivityPages() > 1) {
+      <div class="activity-pagination">
+        <div class="pagination-info">
+          الصفحة <strong>{{ activityPage() }}</strong> من <strong>{{ totalActivityPages() }}</strong>
+          <span style="color:#94a3b8; margin:0 6px;">|</span>
+          <span>عرض {{ ((activityPage() - 1) * activityPageSize) + 1 }} – {{ ((activityPage() - 1) *
+            activityPageSize) + recentActivity().length }} من أصل {{ allActivity().length }}</span>
+        </div>
+
+        <div class="pagination-controls">
+          <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === 1"
+            (click)="goToActivityPage(1)" title="الصفحة الأولى">
+            «
+          </button>
+          <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === 1"
+            (click)="goToActivityPage(activityPage() - 1)">
+            السابق
+          </button>
+
+          @for (p of visibleActivityPages(); track p) {
+          <button type="button" class="page-btn" [class.active]="p === activityPage()" (click)="goToActivityPage(p)">
+            {{ p }}
+          </button>
+          }
+
+          <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === totalActivityPages()"
+            (click)="goToActivityPage(activityPage() + 1)">
+            التالي
+          </button>
+          <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === totalActivityPages()"
+            (click)="goToActivityPage(totalActivityPages())" title="الصفحة الأخيرة">
+            »
+          </button>
+        </div>
+      </div>
+      }
     </div>
 
   </div>
+
+</div>
