@@ -19,6 +19,15 @@
       </button>
     </section>
 
+    <!-- 🟢 رسالة النجاح عند تسليم اختبار يحتاج تصحيح -->
+    @if (successMessage()) {
+      <div class="message success-message" role="alert">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>{{ successMessage() }}</span>
+        <button type="button" aria-label="إغلاق" (click)="successMessage.set('')">×</button>
+      </div>
+    }
+
     @if (errorMessage()) {
       <div class="message error-message" role="alert">
         <i class="fa-solid fa-circle-exclamation"></i>
@@ -92,39 +101,105 @@
               <div class="attempts-label"><i class="fa-solid fa-repeat"></i> المحاولات: {{ quiz.attemptsUsed }} / {{ quiz.maxAttempts }}</div>
               <div class="attempts-bar"><span [style.width.%]="getAttemptsProgressPercent(quiz)"></span></div>
             </div>
-            <div class="quiz-flags">
+                        <!-- 🟢 رسالة توضيحية إذا كانت الحالة بانتظار التصحيح -->
+            @if (quiz.state === 'PendingGrading') {
+              <div class="pending-grading-notice">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>النتيجة ستظهر بعد قيام المدرب بتصحيح الأسئلة المقالية أو الملفات المرفوعة.</span>
+              </div>
+            }
+                         <div class="quiz-flags">
               @if (quiz.cameraRequired) { <span class="enabled"><i class="fa-solid fa-video"></i> الكاميرا مطلوبة</span> }
-              @if (quiz.latestPercentage !== null && quiz.state === 'Completed') {
+              
+              <!-- 🟢 التعديل: عرض النسبة فقط إذا كانت متاحة (أي اكتمل التصحيح) -->
+              @if (quiz.latestPercentage !== null) {
                 <span class="enabled" [class.failed]="quiz.isPassed === false">
                   <i class="fa-solid" [ngClass]="quiz.isPassed ? 'fa-circle-check' : 'fa-circle-xmark'"></i> {{ quiz.latestPercentage }}%
                 </span>
               }
             </div>
-            <div class="quiz-actions">
               @switch (quiz.state) {
                 @case ('Available') {
-                  <button type="button" class="primary-btn full-width" (click)="onStartQuiz(quiz)"><i class="fa-solid fa-play"></i> ابدأ الاختبار</button>
-                }
-                @case ('InProgress') {
-                  <button type="button" class="primary-btn full-width" (click)="onResumeQuiz(quiz)"><i class="fa-solid fa-circle-play"></i> متابعة الاختبار</button>
-                }
-                @case ('PendingGrading') {
-                  <button type="button" class="secondary-btn full-width" disabled><i class="fa-solid fa-hourglass-half"></i> بانتظار التصحيح</button>
-                }
-                @case ('Completed') {
-                  <button type="button" class="primary-btn full-width" (click)="openAttemptsModal(quiz)"><i class="fa-solid fa-chart-column"></i> عرض النتائج</button>
-                  @if (quiz.attemptsRemaining > 0) {
-                    <button type="button" class="secondary-btn full-width" (click)="onRetryQuiz(quiz)"><i class="fa-solid fa-rotate-right"></i> إعادة المحاولة</button>
+                  <button type="button" class="primary-btn full-width" (click)="onStartQuiz(quiz)">
+                    <i class="fa-solid fa-play"></i> ابدأ الاختبار
+                  </button>
+
+                  @if (quiz.latestAttemptId) {
+                    <button type="button" class="secondary-btn full-width mt-2" (click)="openAttemptsModal(quiz)">
+                      <i class="fa-solid fa-chart-column"></i> عرض النتائج
+                    </button>
                   }
                 }
-                @case ('Upcoming') {
-                  <button type="button" class="secondary-btn full-width" disabled><i class="fa-solid fa-clock"></i> لم يبدأ بعد</button>
+
+                @case ('InProgress') {
+                  <button type="button" class="primary-btn full-width" (click)="onResumeQuiz(quiz)">
+                    <i class="fa-solid fa-circle-play"></i> متابعة الاختبار
+                  </button>
+
+                  @if (quiz.latestAttemptId) {
+                    <button type="button" class="secondary-btn full-width mt-2" (click)="openAttemptsModal(quiz)">
+                      <i class="fa-solid fa-chart-column"></i> عرض النتائج السابقة
+                    </button>
+                  }
                 }
+
+                <!-- 🟢 حالة بانتظار التصحيح -->
+                @case ('PendingGrading') {
+                  <button type="button" class="secondary-btn full-width" disabled>
+                    <i class="fa-solid fa-hourglass-half"></i> بانتظار التصحيح
+                  </button>
+
+                  @if (quiz.latestAttemptId) {
+                    <button type="button" class="primary-btn full-width mt-2"
+                            [disabled]="!quiz.isGradingCompleted"
+                            (click)="quiz.isGradingCompleted && openAttemptsModal(quiz)">
+                      <i class="fa-solid fa-chart-column"></i>
+                      {{ quiz.isGradingCompleted ? 'عرض النتائج' : 'النتيجة قيد التصحيح' }}
+                    </button>
+                  }
+
+                  @if (!isQuizExpired(quiz)) {
+                    <button type="button" class="secondary-btn full-width mt-2" (click)="onRetryQuiz(quiz)">
+                      <i class="fa-solid fa-rotate-right"></i> إعادة المحاولة
+                    </button>
+                  }
+                }
+
+                <!-- 🟢 حالة مكتمل -->
+                @case ('Completed') {
+                  <button type="button" class="primary-btn full-width" (click)="openAttemptsModal(quiz)">
+                    <i class="fa-solid fa-chart-column"></i> عرض النتائج
+                  </button>
+
+                  @if (!isQuizExpired(quiz)) {
+                    <button type="button" class="secondary-btn full-width mt-2" (click)="onRetryQuiz(quiz)">
+                      <i class="fa-solid fa-rotate-right"></i> إعادة المحاولة
+                    </button>
+                  }
+                }
+
+                @case ('Upcoming') {
+                  <button type="button" class="secondary-btn full-width" disabled>
+                    <i class="fa-solid fa-clock"></i> لم يبدأ بعد
+                  </button>
+                }
+
+                <!-- 🟢 حالة فائت -->
                 @case ('Missed') {
-                  <button type="button" class="secondary-btn full-width" disabled><i class="fa-solid fa-circle-xmark"></i> فاتك الاختبار</button>
+                  <button type="button" class="secondary-btn full-width" disabled>
+                    <i class="fa-solid fa-circle-xmark"></i> فاتك الاختبار
+                  </button>
+
+                  @if (quiz.attemptsUsed > 0 && quiz.latestAttemptId) {
+                    <button type="button" class="primary-btn full-width mt-2"
+                            [disabled]="!quiz.isGradingCompleted"
+                            (click)="quiz.isGradingCompleted && openAttemptsModal(quiz)">
+                      <i class="fa-solid fa-chart-column"></i>
+                      {{ quiz.isGradingCompleted ? 'عرض النتائج' : 'النتيجة قيد التصحيح' }}
+                    </button>
+                  }
                 }
               }
-            </div>
           </article>
         } @empty {
           <div class="empty-state">
@@ -346,12 +421,28 @@
   <!-- ========================================== -->
   @if (currentStep() === 4 && result()) {
     <section class="result-container">
-      <div class="result-hero" [class.passed]="result().isPassed" [class.failed]="result().isPassed === false">
+      <!-- 🟢 التعديل: التحقق من اكتمال التصحيح أولاً -->
+      <div class="result-hero" 
+           [class.passed]="result().isGradingCompleted && result().isPassed" 
+           [class.failed]="result().isGradingCompleted && result().isPassed === false"
+           [class.pending-result]="!result().isGradingCompleted">
+        
         <div class="result-icon">
-          <i class="fa-solid" [ngClass]="result().isPassed ? 'fa-award' : 'fa-circle-xmark'"></i>
+          @if (!result().isGradingCompleted) {
+            <i class="fa-solid fa-hourglass-half text-warning"></i>
+          } @else {
+            <i class="fa-solid" [ngClass]="result().isPassed ? 'fa-award' : 'fa-circle-xmark'"></i>
+          }
         </div>
-        <h1>{{ result().isPassed ? 'مبروك، لقد نجحت!' : 'للأسف، لم تنجح' }}</h1>
-        <p>لقد أكملت الاختبار: {{ result().quizTitle }}</p>
+
+        <!-- 🟢 التعديل: عرض النصوص بناءً على حالة التصحيح -->
+        @if (!result().isGradingCompleted) {
+          <h1>النتيجة قيد التصحيح</h1>
+          <p>لقد أكملت الاختبار: {{ result().quizTitle }}. ستظهر النتيجة النهائية بعد قيام المدرب بتصحيح الأسئلة المقالية أو الملفات المرفوعة.</p>
+        } @else {
+          <h1>{{ result().isPassed ? 'مبروك، لقد نجحت!' : 'للأسف، لم تنجح' }}</h1>
+          <p>لقد أكملت الاختبار: {{ result().quizTitle }}</p>
+        }
       </div>
 
       <div class="result-stats">
@@ -376,7 +467,6 @@
       </div>
     </section>
   }
-
   <!-- ========================================== -->
   <!-- SUBMIT CONFIRMATION MODAL -->
   <!-- ========================================== -->
@@ -471,6 +561,31 @@
               </div>
             }
           }
+        </div>
+      </div>
+    </div>
+  }
+
+    <!-- ========================================== -->
+  <!-- VALIDATION WARNING MODAL -->
+  <!-- ========================================== -->
+  @if (showValidationWarningModal()) {
+    <div class="modal-backdrop">
+      <div class="confirm-modal">
+        <div class="modal-icon warning">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3>تنبيه!</h3>
+        <p>
+          <strong>{{ errorMessage() }}</strong>
+        </p>
+        <p style="font-size: 13px; color: #64748b; margin-top: 8px;">
+          يرجى العودة للأسئلة والإجابة عليها جميعاً قبل تسليم الاختبار.
+        </p>
+        <div class="modal-actions center">
+          <button class="primary-btn" (click)="showValidationWarningModal.set(false)">
+            حسناً، فهمت
+          </button>
         </div>
       </div>
     </div>

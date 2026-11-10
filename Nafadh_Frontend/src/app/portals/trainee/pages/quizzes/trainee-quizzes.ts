@@ -52,6 +52,8 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
   currentStep = signal<Step>(1);
   loading = signal(false);
   errorMessage = signal('');
+  successMessage = signal(''); // 🟢 رسالة النجاح الجديدة
+  
   traineeId = signal<number | null>(null);
   overview = signal<TraineeQuizzesOverviewDto | null>(null);
   searchTerm = signal('');
@@ -78,6 +80,7 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
   showSubmitModal = signal(false);
   showAutoSubmitModal = signal(false);
   showViolationModal = signal(false);
+  showValidationWarningModal = signal(false);
 
   result = signal<any>(null);
 
@@ -93,7 +96,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
   draggingForQuestion: Record<number, boolean> = {};
   fileErrors: Record<number, string> = {};
 
-  // 🟢 Grace period: لمنع تسجيل المخالفات أثناء اختيار الملف
   private fileUploadGracePeriodTimeout: any = null;
   private isFileUploadGracePeriod = false;
 
@@ -216,7 +218,9 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
-  getStateClass(state: string): string { return state.toLowerCase(); }
+  getStateClass(state: string): string { 
+    return state.toLowerCase(); 
+  }
 
   getStateIcon(state: string): string {
     switch (state) {
@@ -566,7 +570,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     return null;
   }
 
-  // 🟢 دالة تفعيل فترة السماح عند الضغط على منطقة الرفع
   allowFileUploadGracePeriod(): void {
     this.isFileUploadGracePeriod = true;
 
@@ -574,14 +577,12 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
       clearTimeout(this.fileUploadGracePeriodTimeout);
     }
 
-    // إعادة تفعيل المراقبة بعد دقيقتين في حال لم يتم اختيار ملف
     this.fileUploadGracePeriodTimeout = setTimeout(() => {
       this.isFileUploadGracePeriod = false;
     }, 120000);
   }
 
   onFileSelected(event: Event, q: AttemptQuestionDto): void {
-    // 🟢 إيقاف فترة السماح فور اختيار الملف
     this.isFileUploadGracePeriod = false;
     if (this.fileUploadGracePeriodTimeout) {
       clearTimeout(this.fileUploadGracePeriodTimeout);
@@ -717,27 +718,58 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     return 'fa-file';
   }
 
-  private validateBeforeSubmit(): boolean {
-    const fileQuestions = this.questions().filter(q => this.isFileUploadQuestion(q));
+  // =========================================
+  // SUBMIT VALIDATION & SUBMIT
+  // =========================================
 
-    for (const q of fileQuestions) {
-      if (!this.answers[q.attemptQuestionId]?.uploadedFile) {
-        const idx = this.questions().indexOf(q) + 1;
-        this.errorMessage.set(
-          `السؤال رقم ${idx} يتطلب رفع ملف قبل التسليم.`
-        );
-        return false;
+  private validateBeforeSubmit(): boolean {
+    const allQuestions = this.questions();
+    
+    for (let i = 0; i < allQuestions.length; i++) {
+      const q = allQuestions[i];
+      const answer = this.answers[q.attemptQuestionId];
+      const questionType = String((q as any).questionType || '').toLowerCase();
+
+      const isChoiceQuestion = 
+        questionType === '0' || 
+        questionType === '1' || 
+        questionType === 'multiplechoice' || 
+        questionType === 'truefalse';
+
+      if (isChoiceQuestion) {
+        if (!answer || !answer.selectedOptionId) {
+          this.errorMessage.set(`السؤال رقم ${i + 1} لم يتم الإجابة عليه. يرجى الإجابة على جميع الأسئلة قبل التسليم.`);
+          return false;
+        }
+      }
+
+      const isEssayQuestion = 
+        questionType === '2' || 
+        questionType === 'essay';
+
+      if (isEssayQuestion) {
+        if (!answer || !answer.textAnswer || answer.textAnswer.trim() === '') {
+          this.errorMessage.set(`السؤال رقم ${i + 1} (مقالي) لم يتم الإجابة عليه. يرجى كتابة إجابتك قبل التسليم.`);
+          return false;
+        }
+      }
+
+      if (this.isFileUploadQuestion(q)) {
+        if (!answer || !answer.uploadedFile) {
+          this.errorMessage.set(`السؤال رقم ${i + 1} يتطلب رفع ملف قبل التسليم.`);
+          return false;
+        }
       }
     }
+
     return true;
   }
 
-  // =========================================
-  // SUBMIT
-  // =========================================
-
   submitQuiz() {
-    if (!this.validateBeforeSubmit()) return;
+    if (!this.validateBeforeSubmit()) {
+      this.showValidationWarningModal.set(true);
+      return;
+    }
     this.showSubmitModal.set(true);
   }
 
@@ -773,6 +805,17 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
+  isQuizExpired(quiz: TraineeQuizListItemDto): boolean {
+    if (!quiz.endDateTime) return false;
+    
+    const hasTz = /(?:Z|[+-]\d{2}:\d{2})$/i.test(quiz.endDateTime);
+    const dateValue = hasTz ? quiz.endDateTime : quiz.endDateTime + 'Z';
+    const endDate = new Date(dateValue);
+    
+    return new Date() > endDate;
+  }
+
+  // 🟢 التعديل: التحقق من الأسئلة المقالية قبل عرض شاشة النتيجة
   private loadResult() {
     const attemptId = this.attempt()?.attemptId;
     const tId = this.traineeId();
@@ -780,11 +823,40 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     this.loading.set(true);
 
     this.api.getAttemptDetails(attemptId).subscribe({
-      next: (details) => {
+      next: (details: any) => {
+        // فحص إذا كان يحتوي على أسئلة مقالية أو ملفات
+        const hasManualQuestions = details.answers?.some((ans: any) => {
+          const type = String(ans.questionType || '').toLowerCase();
+          return type === '2' || type === '3' || type === 'essay' || type === 'fileupload' || type === 'file';
+        });
+
+        // إذا كان هناك أسئلة تحتاج تصحيح بشري ولم يكتمل التصحيح
+        if (hasManualQuestions && !details.isGradingCompleted) {
+          this.loading.set(false);
+          this.stopCamera();
+          
+          // التوجيه لقائمة الاختبارات مباشرة
+          this.currentStep.set(1);
+          this.attempt.set(null);
+          this.refresh();
+
+          // إظهار رسالة النجاح
+          this.successMessage.set('تم تسليم الاختبار بنجاح. نظراً لاحتوائه على أسئلة مقالية أو ملفات مرفوعة، ستظهر النتيجة بعد قيام المدرب بالتصحيح.');
+          setTimeout(() => this.successMessage.set(''), 8000);
+          return;
+        }
+
+        // إذا كانت كل الأسئلة اختيار من متعدد، ننتقل لشاشة النتيجة العادية
         this.api.getMyResults(tId).subscribe({
           next: (results) => {
             const myResult = results.find(r => r.attemptId === attemptId);
-            this.result.set({ ...details, ...myResult });
+            const isGradingDone = details.isGradingCompleted ?? myResult?.isGradingCompleted ?? false;
+            
+            this.result.set({ 
+              ...details, 
+              ...myResult,
+              isGradingCompleted: isGradingDone
+            });
             this.loading.set(false);
             this.currentStep.set(4);
           },
@@ -802,20 +874,29 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
-  @HostListener('document:visibilitychange')
+   @HostListener('document:visibilitychange')
   onVisibilityChange() {
-    // 🟢 تجاهل المخالفة إذا كان المتدرب في فترة رفع الملف
     if (document.hidden && this.currentStep() === 3 && !this.isFileUploadGracePeriod) {
+      // 🟢 فحص إضافي: إذا كان الاختبار يحتوي على سؤال رفع ملف، لا تسجل مخالفة
+      if (this.hasFileUploadQuestion()) return;
+      
       this.handleViolation();
     }
   }
 
   @HostListener('window:blur')
   onWindowBlur() {
-    // 🟢 تجاهل المخالفة إذا كان المتدرب في فترة رفع الملف
     if (this.currentStep() === 3 && !this.isFileUploadGracePeriod) {
+      // 🟢 فحص إضافي: إذا كان الاختبار يحتوي على سؤال رفع ملف، لا تسجل مخالفة
+      if (this.hasFileUploadQuestion()) return;
+
       this.handleViolation();
     }
+  }
+
+  // 🟢 دالة مساعدة للتحقق من وجود سؤال رفع ملف
+  private hasFileUploadQuestion(): boolean {
+    return this.questions().some(q => this.isFileUploadQuestion(q));
   }
 
   private handleViolation() {
@@ -874,7 +955,13 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
         this.api.getMyResults(tId).subscribe({
           next: (results) => {
             const myResult = results.find(r => r.attemptId === attemptId);
-            this.result.set({ ...details, ...myResult });
+            const isGradingDone = details.isGradingCompleted ?? myResult?.isGradingCompleted ?? false;
+            
+            this.result.set({ 
+              ...details, 
+              ...myResult,
+              isGradingCompleted: isGradingDone
+            });
             this.loading.set(false);
             this.currentStep.set(4);
           },

@@ -1002,6 +1002,8 @@ export interface TraineeQuizListItemDto {
     | 'Completed'
     | 'Upcoming'
     | 'Missed';
+      isGradingCompleted: boolean;
+
 }
 
 export interface TraineeQuizzesOverviewDto {
