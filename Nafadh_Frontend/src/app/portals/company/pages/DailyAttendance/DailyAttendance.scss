@@ -670,6 +670,12 @@ tbody tr.saving {
   color: #dc2626;
 }
 
+/* Approved absence only: visually distinct from unexcused absence. */
+.badge-Excused {
+  background: #dcfce7;
+  color: #166534;
+}
+
 .badge-EarlyLeave {
   background: #ccfbf1;
   color: #0f766e;
