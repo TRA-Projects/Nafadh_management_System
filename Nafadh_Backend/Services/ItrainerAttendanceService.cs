@@ -1,11 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Services
 {
     public interface ITrainerAttendanceService
     {
-        Task<List<CompanyTrainerDto>> GetCompanyTrainersAsync(int companyId);
+        Task<List<CompanyTrainerDto>> GetCompanyTrainersAsync(int companyId, DateTime date);
 
         Task<List<TrainerAttendanceDto>> GetRangeAsync(int companyId, DateTime from, DateTime to, int? trainerId);
 
@@ -26,7 +26,7 @@ namespace Nafadh_Backend.Services
         Task<TrainerAttendanceDto?> SubmitExcuseAsync(int attendanceId, int trainerId, string? reason);
 
         // Supervisor-only: make a single decision on a submitted excuse.
-        Task<TrainerAttendanceDto?> ReviewExcuseAsync(int attendanceId, int companyId, string decision);
+        Task<TrainerAttendanceDto?> ReviewExcuseAsync(int attendanceId, int companyId, string decision, int reviewerUserId);
 
         // Confirms the whole day for the company. Returns how many records the day contains.
         Task<int> ConfirmDayAsync(TrainerAttendanceConfirmDto dto);
