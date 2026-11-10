@@ -773,17 +773,18 @@
                 </div>
 
                 @if (proofMode() === 'file') {
-                  <div
-                    class="proof-file-dropzone"
-                    (click)="certificateFileInput.click()"
-                  >
-                    <input
-                      #certificateFileInput
-                      type="file"
-                      accept="*/*"
-                      (change)="onCertificateFileSelected($event)"
-                      style="display: none;"
-                    />
+                 <div
+  class="proof-file-dropzone"
+  (click)="certificateFileInput.click()"
+>
+  <input
+    #certificateFileInput
+    type="file"
+    accept=".pdf,.jpg,.jpeg,.png"
+    (click)="$event.stopPropagation()"
+    (change)="onCertificateFileSelected($event)"
+    style="display: none;"
+  />
 
                     @if (certificateFileName()) {
                       <div class="proof-file-selected">
@@ -804,8 +805,7 @@
                         </svg>
                         <div>اضغط لرفع ملف الإثبات</div>
                         <div class="proof-file-empty-hint">
-                          جميع أنواع الملفات والصور مسموحة
-                        </div>
+الملفات المسموحة: PDF, JPG, JPEG, PNG                        </div>
                       </div>
                     }
                   </div>
