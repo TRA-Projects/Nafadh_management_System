@@ -28,15 +28,13 @@ namespace Nafadh_Backend.DTOs
     // ── Grade Submission DTO ─────────────────────────────────────────
     public class GradeSubmissionDto
     {
-
         [Required(ErrorMessage = "Grade is required.")]
-        [MaxLength(20)]
+        [RegularExpression(
+            @"^(100(\.0+)?|[0-9]{1,2}(\.[0-9]+)?)$",
+            ErrorMessage = "Grade must be a number between 0 and 100.")]
         public string Grade { get; set; } = string.Empty;
 
-
-
         public string? Feedback { get; set; }
-
     }
 
 
