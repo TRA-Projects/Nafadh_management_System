@@ -387,56 +387,111 @@
           </div>
 
 
-          <!-- الحساب البنكي -->
-          <div class="section-divider">
-            <span class="section-subtitle">الحساب البنكي</span>
+          
+<!-- الحساب البنكي -->
+<div class="section-divider">
+  <span class="section-subtitle">الحساب البنكي</span>
 
-            <!-- اسم البنك -->
-            <label class="field-label">اسم البنك</label>
-            @if (editing()) {
-              <input class="nfd-input field-input editable" [(ngModel)]="$any(t).bankName" type="text" />
-            } @else {
-              <input [value]="$any(t).bankName || ''" readonly class="field-input" />
-            }
+  <!-- اسم البنك -->
+  <label class="field-label">اسم البنك</label>
+  @if (editing()) {
+    <input
+      class="nfd-input field-input editable"
+      [(ngModel)]="$any(t).bankName"
+      (ngModelChange)="validateBankAccount()"
+      type="text"
+      [style.border-color]="bankErrors()['bankName'] ? '#ef4444' : null"
+    />
+    @if (bankErrors()['bankName']) {
+      <small style="color: #ef4444;">
+        {{ bankErrors()['bankName'] }}
+      </small>
+    }
+  } @else {
+    <input [value]="$any(t).bankName || ''" readonly class="field-input" />
+  }
 
-            <!-- اسم صاحب الحساب -->
-            <label class="field-label">اسم صاحب الحساب</label>
-            @if (editing()) {
-              <input class="nfd-input field-input editable" [(ngModel)]="$any(t).accountHolderName" type="text" />
-            } @else {
-              <input [value]="$any(t).accountHolderName || ''" readonly class="field-input" />
-            }
+  <!-- اسم صاحب الحساب -->
+  <label class="field-label">اسم صاحب الحساب</label>
+  @if (editing()) {
+    <input
+      class="nfd-input field-input editable"
+      [(ngModel)]="$any(t).accountHolderName"
+      (ngModelChange)="validateBankAccount()"
+      type="text"
+      [style.border-color]="bankErrors()['accountHolderName'] ? '#ef4444' : null"
+    />
+    @if (bankErrors()['accountHolderName']) {
+      <small style="color: #ef4444;">
+        {{ bankErrors()['accountHolderName'] }}
+      </small>
+    }
+  } @else {
+    <input [value]="$any(t).accountHolderName || ''" readonly class="field-input" />
+  }
 
-            <!-- رقم الحساب -->
-            <label class="field-label">رقم الحساب</label>
-            @if (editing()) {
-              <input class="nfd-input field-input editable" [(ngModel)]="$any(t).accountNumber" type="text" dir="ltr" />
-            } @else {
-              <input [value]="$any(t).accountNumber || ''" readonly dir="ltr" class="field-input" />
-            }
+  <!-- رقم الحساب -->
+  <label class="field-label">رقم الحساب</label>
+  @if (editing()) {
+    <input
+      class="nfd-input field-input editable"
+      [(ngModel)]="$any(t).accountNumber"
+      (ngModelChange)="validateBankAccount()"
+      type="text"
+      inputmode="numeric"
+      dir="ltr"
+      [style.border-color]="bankErrors()['accountNumber'] ? '#ef4444' : null"
+    />
+    @if (bankErrors()['accountNumber']) {
+      <small style="color: #ef4444;">
+        {{ bankErrors()['accountNumber'] }}
+      </small>
+    }
+  } @else {
+    <input [value]="$any(t).accountNumber || ''" readonly dir="ltr" class="field-input" />
+  }
 
-            <!-- IBAN -->
-            <label class="field-label">IBAN</label>
-            @if (editing()) {
-              <input
-                class="nfd-input field-input editable"
-                [(ngModel)]="$any(t).iban"
-                type="text"
-                dir="ltr"
-                placeholder="OMXXXXXXXXXXXXXXXXXXXXXXXX"
-              />
-            } @else {
-              <input [value]="$any(t).iban || ''" readonly dir="ltr" class="field-input" />
-            }
+  <!-- IBAN -->
+  <label class="field-label">IBAN</label>
+  @if (editing()) {
+    <input
+      class="nfd-input field-input editable"
+      [(ngModel)]="$any(t).iban"
+      (ngModelChange)="validateBankAccount()"
+      type="text"
+      dir="ltr"
+      maxlength="23"
+      placeholder="OM00XXXXXXXXXXXXXXXXXXX"
+      [style.border-color]="bankErrors()['iban'] ? '#ef4444' : null"
+    />
+    @if (bankErrors()['iban']) {
+      <small style="color: #ef4444;">
+        {{ bankErrors()['iban'] }}
+      </small>
+    }
+  } @else {
+    <input [value]="$any(t).iban || ''" readonly dir="ltr" class="field-input" />
+  }
 
-            <!-- الفرع -->
-            <label class="field-label">الفرع</label>
-            @if (editing()) {
-              <input class="nfd-input field-input editable" [(ngModel)]="$any(t).bankBranch" type="text" />
-            } @else {
-              <input [value]="$any(t).bankBranch || ''" readonly class="field-input" />
-            }
-          </div>
+  <!-- الفرع -->
+  <label class="field-label">الفرع</label>
+  @if (editing()) {
+    <input
+      class="nfd-input field-input editable"
+      [(ngModel)]="$any(t).bankBranch"
+      (ngModelChange)="validateBankAccount()"
+      type="text"
+      [style.border-color]="bankErrors()['bankBranch'] ? '#ef4444' : null"
+    />
+    @if (bankErrors()['bankBranch']) {
+      <small style="color: #ef4444;">
+        {{ bankErrors()['bankBranch'] }}
+      </small>
+    }
+  } @else {
+    <input [value]="$any(t).bankBranch || ''" readonly class="field-input" />
+  }
+</div>
 
         </div>
 
@@ -718,17 +773,18 @@
                 </div>
 
                 @if (proofMode() === 'file') {
-                  <div
-                    class="proof-file-dropzone"
-                    (click)="certificateFileInput.click()"
-                  >
-                    <input
-                      #certificateFileInput
-                      type="file"
-                      accept="*/*"
-                      (change)="onCertificateFileSelected($event)"
-                      style="display: none;"
-                    />
+                 <div
+  class="proof-file-dropzone"
+  (click)="certificateFileInput.click()"
+>
+  <input
+    #certificateFileInput
+    type="file"
+    accept=".pdf,.jpg,.jpeg,.png"
+    (click)="$event.stopPropagation()"
+    (change)="onCertificateFileSelected($event)"
+    style="display: none;"
+  />
 
                     @if (certificateFileName()) {
                       <div class="proof-file-selected">
@@ -749,8 +805,7 @@
                         </svg>
                         <div>اضغط لرفع ملف الإثبات</div>
                         <div class="proof-file-empty-hint">
-                          جميع أنواع الملفات والصور مسموحة
-                        </div>
+الملفات المسموحة: PDF, JPG, JPEG, PNG                        </div>
                       </div>
                     }
                   </div>

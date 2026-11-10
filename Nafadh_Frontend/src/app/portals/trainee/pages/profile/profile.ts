@@ -63,7 +63,94 @@ interface TraineeUpdateDto {
 
 
 export class TraineeProfile implements OnInit {
+validateBankAccount(): boolean {
+  const t = this.trainee();
 
+  if (!t) return false;
+
+  const fields = {
+    bankName: String(t.bankName ?? '').trim(),
+    accountHolderName: String(t.accountHolderName ?? '').trim(),
+    accountNumber: String(t.accountNumber ?? '').trim(),
+    iban: String(t.iban ?? '').replace(/\s/g, '').toUpperCase(),
+    bankBranch: String(t.bankBranch ?? '').trim()
+  };
+
+  const errors: Record<string, string> = {};
+
+  // All fields are optional when the entire section is empty.
+  const hasAnyValue = Object.values(fields).some(value => value !== '');
+
+  if (!hasAnyValue) {
+    this.bankErrors.set({});
+    return true;
+  }
+
+  const requiredFields: Record<string, string> = {
+    bankName: 'اسم البنك مطلوب.',
+    accountHolderName: 'اسم صاحب الحساب مطلوب.',
+    accountNumber: 'رقم الحساب مطلوب.',
+    iban: 'رقم IBAN مطلوب.',
+    bankBranch: 'اسم الفرع مطلوب.'
+  };
+
+  Object.entries(requiredFields).forEach(([key, message]) => {
+    if (!fields[key as keyof typeof fields]) {
+      errors[key] = message;
+    }
+  });
+
+  if (fields.bankName && !/^[\p{L}\s.'-]{2,100}$/u.test(fields.bankName)) {
+    errors['bankName'] = 'يرجى إدخال اسم بنك صحيح.';
+  }
+
+  if (
+    fields.accountHolderName &&
+    !/^[\p{L}\s.'-]{2,150}$/u.test(fields.accountHolderName)
+  ) {
+    errors['accountHolderName'] = 'يرجى إدخال اسم صاحب حساب صحيح.';
+  }
+
+  if (
+    fields.accountNumber &&
+    !/^[0-9]{5,30}$/.test(fields.accountNumber)
+  ) {
+    errors['accountNumber'] = 'رقم الحساب يجب أن يحتوي على 5 إلى 30 رقمًا.';
+  }
+
+  if (fields.iban) {
+    if (!/^OM\d{21}$/.test(fields.iban)) {
+      errors['iban'] = 'رقم IBAN العُماني يجب أن يبدأ بـ OM ويتكون من 23 خانة.';
+    } else {
+      // ISO 13616 MOD-97 check
+      const rearranged = fields.iban.slice(4) + fields.iban.slice(0, 4);
+      const numeric = rearranged.replace(/[A-Z]/g, char =>
+        String(char.charCodeAt(0) - 55)
+      );
+
+      let remainder = 0;
+
+      for (const digit of numeric) {
+        remainder = (remainder * 10 + Number(digit)) % 97;
+      }
+
+      if (remainder !== 1) {
+        errors['iban'] = 'رقم IBAN غير صحيح.';
+      }
+    }
+  }
+
+  if (
+    fields.bankBranch &&
+    !/^[\p{L}\p{N}\s.'-]{2,100}$/u.test(fields.bankBranch)
+  ) {
+    errors['bankBranch'] = 'يرجى إدخال اسم فرع صحيح.';
+  }
+
+  this.bankErrors.set(errors);
+
+  return Object.keys(errors).length === 0;
+}
 
   // =========================================================
   // USER / TRAINEE
@@ -188,62 +275,121 @@ constructor(
 
 }
 
-private async loadAttachmentSettings(): Promise<void> {
 
+private async loadAttachmentSettings(): Promise<void> {
   this.attachmentSettingsLoaded.set(false);
 
   try {
+    // Required attachment settings
+    const [extensions, maxSize] = await Promise.all([
+      firstValueFrom(
+        this.systemVariablesService.getAllowedExtensions()
+      ),
+      firstValueFrom(
+        this.systemVariablesService.getMaxAttachmentSizeMb()
+      )
+    ]);
 
-    const [
-  extensions,
-  maxSize,
-  sizeError,
-  typeError,
-  cvError,
-  certificateError
-] = await Promise.all([
-  firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
-  firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb()),
-  firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_SIZE_ERROR')),
-  firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_TYPE_ERROR')),
-  firstValueFrom(this.systemVariablesService.getErrorMessage('CV_TYPE_ERROR')),
-  firstValueFrom(this.systemVariablesService.getErrorMessage('CERTIFICATE_TYPE_ERROR'))
-]);
+    const normalizedExtensions = extensions
+      .map(ext =>
+        String(ext).trim().replace(/^\./, '').toLowerCase()
+      )
+      .filter(Boolean);
 
-this.attachmentSizeError.set(sizeError);
-this.attachmentTypeError.set(typeError);
-this.cvTypeError.set(cvError);
-this.certificateTypeError.set(certificateError);
-
-    if (extensions.length === 0) {
-      throw new Error('No allowed attachment extensions configured');
+    if (
+      normalizedExtensions.length === 0 ||
+      !Number.isFinite(maxSize) ||
+      maxSize <= 0
+    ) {
+      throw new Error('Invalid attachment settings');
     }
 
-    this.allowedExtensions.set(extensions);
-
+    this.allowedExtensions.set(normalizedExtensions);
     this.maxAttachmentSizeMb.set(maxSize);
-
     this.attachmentSettingsLoaded.set(true);
 
-  } catch (error) {
+    // Default messages
+    this.attachmentSizeError.set(
+      `حجم الملف يتجاوز الحد المسموح (${maxSize} MB)`
+    );
 
-    console.error('فشل تحميل إعدادات المرفقات:', error);
+    this.attachmentTypeError.set(
+      'نوع الملف غير مسموح'
+    );
+
+    this.cvTypeError.set(
+      'نوع ملف السيرة الذاتية غير مسموح'
+    );
+
+    this.certificateTypeError.set(
+      'نوع ملف الشهادة غير مسموح'
+    );
+
+    // Optional error messages should not block the page
+    const optionalMessages = await Promise.allSettled([
+      firstValueFrom(
+        this.systemVariablesService.getErrorMessage(
+          'ATTACHMENT_SIZE_ERROR'
+        )
+      ),
+      firstValueFrom(
+        this.systemVariablesService.getErrorMessage(
+          'ATTACHMENT_TYPE_ERROR'
+        )
+      ),
+      firstValueFrom(
+        this.systemVariablesService.getErrorMessage(
+          'CV_TYPE_ERROR'
+        )
+      ),
+      firstValueFrom(
+        this.systemVariablesService.getErrorMessage(
+          'CERTIFICATE_TYPE_ERROR'
+        )
+      )
+    ]);
+
+    const setters = [
+      (value: string) => this.attachmentSizeError.set(value),
+      (value: string) => this.attachmentTypeError.set(value),
+      (value: string) => this.cvTypeError.set(value),
+      (value: string) => this.certificateTypeError.set(value)
+    ];
+
+    optionalMessages.forEach((result, index) => {
+      if (
+        result.status === 'fulfilled' &&
+        typeof result.value === 'string' &&
+        result.value.trim()
+      ) {
+        setters[index](result.value);
+      } else if (result.status === 'rejected') {
+        console.warn(
+          '[Profile] Optional attachment message unavailable:',
+          index,
+          result.reason
+        );
+      }
+    });
+
+  } catch (error) {
+    console.error(
+      '[Profile] Required attachment settings failed:',
+      error
+    );
 
     this.allowedExtensions.set([]);
-
     this.maxAttachmentSizeMb.set(0);
-
     this.attachmentSettingsLoaded.set(false);
 
     this.openPopup(
-      'تعذر تحميل إعدادات المرفقات. يرجى تحديث الصفحة والمحاولة مجددًا.',
+      'تعذر تحميل إعدادات المرفقات الأساسية. يرجى المحاولة مجددًا.',
       'error',
       'خطأ في الإعدادات'
     );
-
   }
-
 }
+
 
 
   // =========================================================
@@ -908,7 +1054,16 @@ this.certificateTypeError.set(certificateError);
       return;
 
     }
+const bankValid = this.validateBankAccount();
 
+if (
+  this.phoneError() ||
+  this.gitHubError() ||
+  this.linkedInError() ||
+  !bankValid
+) {
+  return;
+}
 
     // -------------------------------------------------------
     // No changes
@@ -1365,6 +1520,13 @@ private validateAttachment(
 
   return true;
 }
+
+// =========================================================
+  // VALIDATION - Bank Account 
+  // =========================================================
+  bankErrors = signal<Record<string, string>>({});
+
+  
   // =========================================================
   // AVATAR UPLOAD
   // =========================================================
