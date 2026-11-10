@@ -2266,5 +2266,25 @@ namespace Nafadh_Backend.Services
         {
             return _repository.GetAdminCompaniesSummaryAsync();
         }
+
+        // ==========================================================
+        // Admin Reports - Master Trainees Transcript
+        // ==========================================================
+        public Task<AdminTraineesTranscriptDTO> GetAdminTraineesTranscriptAsync(
+            int pageNumber,
+            int pageSize,
+            int? companyId,
+            int? batchId,
+            int? traineeId
+        )
+        {
+            return _repository.GetAdminTraineesTranscriptAsync(
+                pageNumber,
+                pageSize,
+                companyId,
+                batchId,
+                traineeId
+            );
+        }
     }
 }
