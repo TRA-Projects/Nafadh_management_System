@@ -1299,11 +1299,77 @@ level: calculatedLevel,
   // =========================================================
   // دوال كشف الدرجات العام والفردي المعتمد
   // =========================================================
-  openTraineeTranscript(trainee: any) {
-    this.selectedTraineeForTranscript = trainee;
-    this.traineeSubView = 'single_transcript';
-    this.cdr.detectChanges();
+  openTraineeTranscript(trainee: any): void {
+  const traineeId = Number(trainee?.traineeId);
+
+  if (!Number.isInteger(traineeId) || traineeId <= 0) {
+    return;
   }
+
+  this.selectedTraineeForTranscript = null;
+  this.masterTranscriptError = '';
+  this.masterTranscriptLoading = true;
+
+  this.api.getAdminTraineesTranscript(
+    1,
+    1000,
+    undefined,
+    undefined,
+    traineeId
+  ).subscribe({
+    next: (response: any) => {
+      const rows = Array.isArray(response?.rows)
+        ? response.rows
+        : [];
+
+      const transcript = rows.find(
+        (item: any) =>
+          Number(item.traineeId) === traineeId &&
+          (
+            trainee.batchId == null ||
+            Number(item.batchId) === Number(trainee.batchId)
+          )
+      ) ?? rows.find(
+        (item: any) => Number(item.traineeId) === traineeId
+      );
+
+      this.selectedTraineeForTranscript = transcript
+        ? {
+            ...transcript,
+            projectScore: null,
+            assignedTrainer: null,
+            trainerNotes: null,
+            trainerRecommendation: null
+          }
+        : {
+            ...trainee,
+            attendanceRate: null,
+            technicalScore: null,
+            projectScore: null,
+            behavioralScore: null,
+            finalScore: null,
+            level: 'غير مكتمل',
+            trainerNotes: null,
+            trainerRecommendation: null
+          };
+
+      this.masterTranscriptLoading = false;
+      this.traineeSubView = 'single_transcript';
+      this.cdr.detectChanges();
+    },
+
+    error: (error: any) => {
+      console.error('Failed to load trainee transcript:', error);
+
+      this.masterTranscriptLoading = false;
+      this.masterTranscriptError =
+        'تعذر تحميل كشف درجات المتدرب. يرجى المحاولة مرة أخرى.';
+
+      this.selectedTraineeForTranscript = null;
+      this.cdr.detectChanges();
+    }
+  });
+}
 
   closeTraineeTranscript() {
     this.traineeSubView = 'roster';
