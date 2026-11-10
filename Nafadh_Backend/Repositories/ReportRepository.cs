@@ -854,7 +854,7 @@ namespace Nafadh_Backend.Repositories
                     AttendanceRate = Math.Round(s.Attendance, 1),
                     TechnicalScore = s.Technical,
                     BehavioralScore = s.Behavioral,
-                    FinalScore = s.Final,
+                    FinalScore = s.IsComplete ? s.Final : null,
                     Level = s.Level
                 }).ToList();
 
@@ -1410,6 +1410,150 @@ namespace Nafadh_Backend.Repositories
                 TotalCompanies = companies.Count,
                 TotalHostedTrainees = companies.Sum(c => c.TraineesCount),
                 Companies = companies
+            };
+        }
+
+        // ==========================================================
+        // Admin Reports - Master Trainees Transcript
+        // Uses existing batch weighted calculation
+        // ==========================================================
+        public async Task<AdminTraineesTranscriptDTO>
+            GetAdminTraineesTranscriptAsync(
+                int pageNumber,
+                int pageSize,
+                int? companyId,
+                int? batchId,
+                int? traineeId
+            )
+        {
+            pageNumber = Math.Max(1, pageNumber);
+            pageSize = Math.Clamp(pageSize, 1, 1000);
+
+            // Get only batches that have matching enrollments.
+            var enrollmentQuery = _context.NFD_Enrollments
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (companyId.HasValue)
+            {
+                enrollmentQuery = enrollmentQuery.Where(
+                    e => e.CompanyId == companyId.Value
+                );
+            }
+
+            if (batchId.HasValue)
+            {
+                enrollmentQuery = enrollmentQuery.Where(
+                    e => e.BatchId == batchId.Value
+                );
+            }
+
+            if (traineeId.HasValue)
+            {
+                enrollmentQuery = enrollmentQuery.Where(
+                    e => e.TraineeId == traineeId.Value
+                );
+            }
+
+            var matchingEnrollmentIds = await enrollmentQuery
+                .Select(e => e.EnrollmentId)
+                .ToListAsync();
+
+            var matchingBatchIds = await enrollmentQuery
+                .Select(e => e.BatchId)
+                .Distinct()
+                .ToListAsync();
+
+            var batches = await _context.NFD_Batches
+                .AsNoTracking()
+                .Include(b => b.Program)
+                .Where(b => matchingBatchIds.Contains(b.BatchId))
+                .OrderBy(b => b.BatchId)
+                .ToListAsync();
+
+            var matchingEnrollmentIdSet =
+                matchingEnrollmentIds.ToHashSet();
+
+            var rows = new List<AdminTraineeTranscriptRowDTO>();
+
+            foreach (var batch in batches)
+            {
+                var stats = await CalculateBatchWeightedStatsAsync(
+                    batch,
+                    companyId
+                );
+
+                foreach (var stat in stats)
+                {
+                    var enrollment = stat.Enrollment;
+
+                    if (!matchingEnrollmentIdSet.Contains(
+                        enrollment.EnrollmentId))
+                    {
+                        continue;
+                    }
+
+                    rows.Add(new AdminTraineeTranscriptRowDTO
+                    {
+                        EnrollmentId = enrollment.EnrollmentId,
+
+                        TraineeId = enrollment.TraineeId,
+
+                        TraineeName =
+                            enrollment.Trainee?.User?.FullName,
+
+                        Major = enrollment.Trainee?.Major,
+
+                        BatchId = batch.BatchId,
+                        BatchName = batch.BatchName,
+
+                        ProgramName = batch.Program?.Title,
+
+                        CompanyId = enrollment.CompanyId,
+
+                        CompanyName =
+                            enrollment.Company?.CompanyName,
+
+                        AttendanceRate =
+                            Math.Round(stat.Attendance, 1),
+
+                        TechnicalScore = stat.Technical,
+
+                        BehavioralScore = stat.Behavioral,
+
+                        FinalScore = stat.IsComplete
+                            ? stat.Final
+                            : null,
+
+                        Level = stat.Level,
+
+                        AttendanceWeight = batch.AttendanceWeight,
+                        TasksWeight = batch.TasksWeight,
+                        QuizzesWeight = batch.QuizzesWeight,
+                        ProjectsWeight = batch.ProjectsWeight
+                    });
+                }
+            }
+
+            var orderedRows = rows
+                .OrderBy(r => r.TraineeName)
+                .ThenBy(r => r.BatchId)
+                .ThenBy(r => r.EnrollmentId)
+                .ToList();
+
+            var totalCount = orderedRows.Count;
+
+            var pagedRows = orderedRows
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new AdminTraineesTranscriptDTO
+            {
+                Rows = pagedRows,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
             };
         }
     }
