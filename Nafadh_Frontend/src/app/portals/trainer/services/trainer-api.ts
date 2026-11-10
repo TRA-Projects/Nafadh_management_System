@@ -1910,5 +1910,32 @@ export class TrainerApi {
       `${this.base}/trainer/live-sessions/${sessionId}/survey/results`
     );
   }
-
+getMyTrainerAttendance(): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.base}/TrainerAttendance/my`
+  );
+}
+uploadTrainerAttendanceProof(
+  attendanceId: number,
+  formData: FormData
+): Observable<any> {
+  return this.http.post<any>(
+    `${this.base}/TrainerAttendance/${attendanceId}/proof`,
+    formData
+  );
+}
+isExcuseWindowOpen(attendanceId: number): Observable<{ isOpen: boolean }> {
+  return this.http.get<{ isOpen: boolean }>(
+    `${this.base}/TrainerAttendance/${attendanceId}/excuse-window`
+  );
+}
+submitTrainerAttendanceExcuse(
+  attendanceId: number,
+  reason: string
+): Observable<any> {
+  return this.http.put<any>(
+    `${this.base}/TrainerAttendance/${attendanceId}/excuse`,
+    { reason }
+  );
+}
 }

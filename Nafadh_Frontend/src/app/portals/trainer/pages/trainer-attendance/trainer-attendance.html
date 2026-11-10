@@ -1,0 +1,146 @@
+<div class="trainer-attendance-page" dir="rtl">
+
+    <div class="page-header attendance-page-header">
+    <div class="header-icon">
+        <i class="fa-solid fa-calendar-check"></i>
+    </div>
+
+    <div class="header-content">
+        <span class="header-section">سجل الحضور</span>
+        <h1>حضوري</h1>
+        <p>متابعة سجل حضورك وحالات الحضور والغياب</p>
+    </div>
+</div>
+
+    <div class="attendance-summary">
+
+        <div class="summary-card">
+            <span>إجمالي السجلات</span>
+            <strong>{{ attendance.length }}</strong>
+        </div>
+
+        <div class="summary-card present">
+            <span>حاضر</span>
+            <strong>{{ getStatusCount('Present') }}</strong>
+        </div>
+
+        <div class="summary-card late">
+            <span>متأخر</span>
+            <strong>{{ getStatusCount('Late') }}</strong>
+        </div>
+
+        <div class="summary-card absent">
+            <span>غائب</span>
+            <strong>{{ getStatusCount('Absent') }}</strong>
+        </div>
+
+    </div>
+
+    <div *ngIf="loading" class="state">
+        جاري تحميل سجل الحضور...
+    </div>
+
+    <div *ngIf="error && !loading" class="state error">
+        {{ error }}
+    </div>
+
+    <div *ngIf="!loading && !error" class="attendance-table">
+
+        <div *ngIf="attendance.length === 0" class="state">
+            لا توجد سجلات حضور.
+        </div>
+
+        <div *ngFor="let item of attendance" class="attendance-row">
+
+            <div>
+                <span>التاريخ</span>
+                <strong>{{ item.date | date:'dd/MM/yyyy' }}</strong>
+            </div>
+
+            <div>
+                <span>الحالة</span>
+
+                <strong class="status-badge" [class.present]="item.status === 'Present'"
+                    [class.late]="item.status === 'Late'" [class.absent]="item.status === 'Absent'"
+                    [class.excused]="item.status === 'Excused'">
+                    {{ getStatusLabel(item.status) }}
+                </strong>
+            </div>
+            <div>
+                <span>وقت الدخول</span>
+                <strong>{{ item.checkInTime || '—' }}</strong>
+            </div>
+
+            <div>
+                <span>وقت الخروج</span>
+                <strong>{{ item.checkOutTime || '—' }}</strong>
+            </div>
+
+            <div>
+                <span>الملاحظة</span>
+                <strong>{{ item.reason || '—' }}</strong>
+            </div>
+
+            <div *ngIf="item.status !== 'Present'" class="excuse-section">
+                <div class="excuse-status-row">
+                    <span>حالة العذر</span>
+
+                    <strong *ngIf="item.excuseReviewStatus" class="excuse-status"
+                        [class.pending]="item.excuseReviewStatus === 'Pending'"
+                        [class.approved]="item.excuseReviewStatus === 'Approved'"
+                        [class.rejected]="item.excuseReviewStatus === 'Rejected'">
+                        {{ getExcuseStatusLabel(item.excuseReviewStatus) }}
+                    </strong>
+
+                    <strong *ngIf="!item.excuseReviewStatus">
+                        غير مقدم
+                    </strong>
+                </div>
+
+                <div class="excuse-form">
+                    <div class="excuse-field">
+                        <label>ملاحظة العذر</label>
+
+                        <textarea class="excuse-input" [(ngModel)]="item._excuseDraft"
+                            [disabled]="excuseWindow[item.trainerAttendanceId] === false"
+                            placeholder="اكتب سبب العذر..." maxlength="500"></textarea>
+
+                        <button type="button" class="save-excuse-btn" [disabled]="
+                    excuseWindow[item.trainerAttendanceId] === false ||
+                    !item._excuseDraft?.trim()
+                " (click)="submitExcuse(item)">
+                            حفظ الملاحظة
+                        </button>
+
+                        <small *ngIf="excuseWindow[item.trainerAttendanceId] === false" class="excuse-closed">
+                            انتهت فترة تقديم العذر
+                        </small>
+                    </div>
+
+                    <div class="proof-field">
+                        <label>إثبات العذر</label>
+
+                        <label class="upload-proof-btn"
+                            [class.disabled]="excuseWindow[item.trainerAttendanceId] === false">
+                            <input type="file" accept="image/jpeg,image/png,application/pdf"
+                                (change)="uploadProof(item, $event)"
+                                [disabled]="excuseWindow[item.trainerAttendanceId] === false" hidden />
+
+                            {{
+                            excuseWindow[item.trainerAttendanceId] === false
+                            ? 'انتهت فترة العذر'
+                            : (item.excuseProofUrl ? 'تغيير الإثبات' : 'رفع الإثبات')
+                            }}
+                        </label>
+
+                        <a *ngIf="item.excuseProofUrl" [href]="item.excuseProofUrl" target="_blank" rel="noopener"
+                            class="proof-link">
+                            عرض الإثبات
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>

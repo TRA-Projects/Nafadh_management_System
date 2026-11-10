@@ -65,7 +65,22 @@ namespace Nafadh_Backend.Services
             _configuration = configuration;
             _context = context;
         }
+        public async Task<int?> GetTrainerIdByUserIdAsync(int userId)
+        {
+            return await _context.NFD_Trainers
+                .AsNoTracking()
+                .Where(t => t.UserId == userId)
+                .Select(t => (int?)t.TrainerId)
+                .FirstOrDefaultAsync();
+        }
+        public async Task<List<TrainerAttendanceDto>> GetMyAttendanceAsync(int trainerId)
+        {
+            var records = await _repository.GetByTrainerIdAsync(trainerId);
 
+            return records
+                .Select(ToDto)
+                .ToList();
+        }
         public async Task<List<CompanyTrainerDto>> GetCompanyTrainersAsync(int companyId)
         {
             var trainers = await _repository.GetCompanyTrainersAsync(companyId);
@@ -320,7 +335,23 @@ namespace Nafadh_Backend.Services
             var record = await _repository.GetByIdAsync(attendanceId);
             return record != null && record.TrainerId == trainerId;
         }
+        public async Task<bool> IsExcuseWindowOpenAsync(int attendanceId, int trainerId)
+        {
+            var record = await _repository.GetByIdAsync(attendanceId);
 
+            if (record == null || record.TrainerId != trainerId)
+                return false;
+
+            try
+            {
+                RequireExcuseWindow(record);
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        }
         public async Task<TrainerAttendanceDto?> SubmitExcuseAsync(int attendanceId, int trainerId, string? reason)
         {
             var record = await _repository.GetByIdAsync(attendanceId);
