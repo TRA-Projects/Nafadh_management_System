@@ -1092,7 +1092,7 @@ namespace Nafadh_Backend.Controllers
                     Message = message,
                     RelatedEntity = related,
                     IsRead = false,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 });
             }
         }

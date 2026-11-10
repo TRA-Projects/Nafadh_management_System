@@ -24,7 +24,7 @@ namespace Nafadh_Backend.Services
                 Message = n.Message,
                 RelatedEntity = n.RelatedEntity,
                 IsRead = n.IsRead,
-                CreatedAt = n.CreatedAt
+                CreatedAt = DateTime.SpecifyKind(n.CreatedAt, DateTimeKind.Utc)
             }).ToList();
         }
 
@@ -37,7 +37,7 @@ namespace Nafadh_Backend.Services
                 Message = dto.Message,
                 RelatedEntity = dto.RelatedEntity,
                 IsRead = false,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
 
             await _repository.AddAsync(notification);

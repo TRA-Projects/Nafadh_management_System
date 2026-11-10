@@ -226,7 +226,7 @@ namespace Nafadh_Backend.Controllers
                         : $"رفضت الهيئة خطة الكورس «{plan.Title}». راجعوا الملاحظات وعدّلوا الخطة ثم أعيدوا إرسالها.",
                     RelatedEntity = $"CoursePlan:{plan.PlanId}",
                     IsRead = false,
-                    CreatedAt = now
+                    CreatedAt = DateTime.UtcNow
                 });
             }
 

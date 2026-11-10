@@ -66,7 +66,7 @@ namespace Nafadh_Backend.Services
                     Message = $"بدأ المدرب تنفيذ خطة الكورس «{plan.Title}». تم تسجيل ملاحظة سبب الشروع ضمن سجل الخطة.",
                     RelatedEntity = $"CoursePlan:{plan.PlanId}",
                     IsRead = false,
-                    CreatedAt = now
+                    CreatedAt = DateTime.UtcNow
                 });
             }
 

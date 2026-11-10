@@ -192,7 +192,7 @@ namespace Nafadh_Backend.Services
                     Message = message,
                     RelatedEntity = cancelled ? $"BatchCancelled:{batch.BatchId}" : $"BatchAssignment:{batch.BatchId}",
                     IsRead = false,
-                    CreatedAt = now
+                    CreatedAt = DateTime.UtcNow
                 });
             await _context.SaveChangesAsync();
         }
