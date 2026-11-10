@@ -99,7 +99,17 @@ namespace Nafadh_Backend.Repositories
                 .Include(a => a.Trainer).ThenInclude(t => t.User)
                 .FirstOrDefaultAsync(a => a.TrainerAttendanceId == id);
         }
-
+        public async Task<List<NFD_TrainerAttendance>> GetByTrainerIdAsync(int trainerId)
+        {
+            return await _context.Set<NFD_TrainerAttendance>()
+                .AsNoTracking()
+                .Include(a => a.Trainer)
+                    .ThenInclude(t => t.User)
+                .Where(a => a.TrainerId == trainerId)
+                .OrderByDescending(a => a.Date)
+                .ThenByDescending(a => a.TrainerAttendanceId)
+                .ToListAsync();
+        }
         public async Task AddAsync(NFD_TrainerAttendance attendance)
         {
             await _context.Set<NFD_TrainerAttendance>().AddAsync(attendance);
