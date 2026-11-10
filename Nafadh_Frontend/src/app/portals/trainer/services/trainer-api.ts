@@ -1,4 +1,3 @@
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -77,6 +76,9 @@ export interface AttemptAnswerDetailsDto {
   questionText: string;
   questionType: string;
   points: number;
+  
+  fileUrl?: string;
+  originalFileName?: string;
 
   selectedOptionId?: number | null;
   selectedOptionText?: string | null;
@@ -157,6 +159,11 @@ export interface QuizAnswerDetailsDto {
   selectedOptionId: number | null;
   selectedOptionText: string | null;
   textAnswer: string | null;
+  
+  // 🟢 التعديل: إضافة الحقلين هنا
+  fileUrl?: string | null;
+  originalFileName?: string | null;
+
   maxPoints: number;
   awardedPoints: number;
   isCorrect: boolean | null;
@@ -1910,6 +1917,7 @@ export class TrainerApi {
       `${this.base}/trainer/live-sessions/${sessionId}/survey/results`
     );
   }
+
 getMyTrainerAttendance(): Observable<any[]> {
   return this.http.get<any[]>(
     `${this.base}/TrainerAttendance/my`

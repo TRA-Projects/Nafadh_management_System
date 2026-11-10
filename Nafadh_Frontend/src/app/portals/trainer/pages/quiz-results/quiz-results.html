@@ -701,27 +701,33 @@
           <!-- Trainee Answer -->
 
           <div class="answer-box">
+  <span class="answer-label">إجابة المتدرب</span>
 
-            <span class="answer-label">
-              إجابة المتدرب
-            </span>
+  <p *ngIf="answer.selectedOptionText">{{ answer.selectedOptionText }}</p>
 
-            <p *ngIf="answer.selectedOptionText">
-              {{ answer.selectedOptionText }}
-            </p>
+  <p *ngIf="answer.textAnswer">{{ answer.textAnswer }}</p>
 
-            <p *ngIf="answer.textAnswer">
-              {{ answer.textAnswer }}
-            </p>
+  <!-- 🟢 التعديل: إضافة عرض الملف هنا -->
+  <div *ngIf="answer.fileUrl" class="uploaded-answer-file">
+    <div class="file-header">
+      <i class="fa-solid fa-paperclip"></i>
+      <strong>ملف الإجابة المرفق:</strong>
+    </div>
+<a [href]="getFileUrl(answer.fileUrl)" target="_blank" download class="download-file-btn">
+  <i class="fa-solid fa-download"></i>
+  {{ answer.originalFileName || 'تحميل الملف' }}
+</a>
 
-            <p *ngIf="
-                !answer.selectedOptionText &&
-                !answer.textAnswer
-              " class="no-answer">
-              لم تتم الإجابة
-            </p>
+  </div>
 
-          </div>
+  <p *ngIf="
+      !answer.selectedOptionText &&
+      !answer.textAnswer &&
+      !answer.fileUrl
+    " class="no-answer">
+    لم تتم الإجابة
+  </p>
+</div>
 
 
 
@@ -1262,4 +1268,3 @@
   </div>
 
 </div>
- 

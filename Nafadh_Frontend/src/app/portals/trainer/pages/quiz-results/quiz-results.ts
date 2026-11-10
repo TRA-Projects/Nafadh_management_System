@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { inject, Component, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { environment } from '../../../../../environments/environment'; // 🟢 إضافة هذا السطر
 
 
 import {
@@ -922,6 +923,29 @@ closeSnapshot(): void {
 
   }
 
+  // =========================================
+  // 🟢 FILE URL HELPER (الدالة المضافة)
+  // =========================================
+  getFileUrl(fileUrl: string | null | undefined): string {
+    if (!fileUrl || !fileUrl.trim()) {
+      return '';
+    }
 
+    const url = fileUrl.trim();
+
+    if (/^https?:\/\//i.test(url)) {
+      return url;
+    }
+
+    const baseUrl = environment.apiBaseUrl
+      .replace(/\/api\/?$/i, '')
+      .replace(/\/$/, '');
+
+    const normalizedPath = url.startsWith('/')
+      ? url
+      : `/${url}`;
+
+    return `${baseUrl}${normalizedPath}`;
+  }
 
 }

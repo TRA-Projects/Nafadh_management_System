@@ -1,5 +1,4 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -22,11 +21,10 @@ namespace Nafadh_Backend.Repositories
         }
 
         // البحث عن سؤال مرتبط باختبار معين
-
         public async Task<NFD_QuizQuestion?>
-    GetQuizQuestionByIdAsync(
-        int quizId,
-        int quizQuestionId)
+            GetQuizQuestionByIdAsync(
+                int quizId,
+                int quizQuestionId)
         {
             return await _context.NFD_QuizQuestions
                 .FirstOrDefaultAsync(q =>
@@ -35,7 +33,6 @@ namespace Nafadh_Backend.Repositories
         }
 
         // التحقق من صلاحية جميع أسئلة الاختبار للنشر
-
         public async Task<bool> AreQuizQuestionsValidAsync(
             int quizId, int trainerId)
         {
@@ -82,7 +79,8 @@ namespace Nafadh_Backend.Repositories
                         break;
 
                     case Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay:
-                        // السؤال المقالي لا يحتاج خيارات
+                    case Nafadh_Backend.Enums.NFD_QuizQuestionType.FileUpload:
+                        // السؤال المقالي وسؤال رفع الملف لا يحتاجان خيارات
                         if (options.Count != 0)
                             return false;
                         break;
@@ -91,7 +89,7 @@ namespace Nafadh_Backend.Repositories
                         return false;
                 }
 
-                // التأكد من أن نصوص الخيارات غير فارغة
+                // التأكد من أن نصوص الخيارات غير فارغة (في حال وجود خيارات)
                 if (options.Any(o =>
                     string.IsNullOrWhiteSpace(o.OptionText) ||
                     string.IsNullOrWhiteSpace(o.OptionCode)))
@@ -116,11 +114,10 @@ namespace Nafadh_Backend.Repositories
         }
 
         // جلب الأسئلة المفعلة التابعة للمدرب
-
         public async Task<List<NFD_QuestionBank>>
-    GetQuestionsByIdsAsync(
-        List<int> questionIds,
-        int trainerId)
+            GetQuestionsByIdsAsync(
+                List<int> questionIds,
+                int trainerId)
         {
             return await _context.NFD_QuestionBanks
                 .Where(q =>
