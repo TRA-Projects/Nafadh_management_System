@@ -148,6 +148,131 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   readonly constants = inject(NafadhConstantsService);
   readonly warningTypes = inject(NafadhWarningTypesService);
   summary = signal<AdminDashboardSummary | null>(null);
+  // Admin Dashboard performance period filter
+performancePeriod = signal<'month' | 'year' | 'all' | 'custom'>('month');
+
+performanceStartDate = signal<string>('');
+performanceEndDate = signal<string>('');
+
+performancePeriodLoading = signal<boolean>(false);
+performancePeriodError = signal<string>('');
+
+private performanceRequestId = 0;
+
+private getPerformancePeriodDates(): {
+  startDate: string | null;
+  endDate: string | null;
+} {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+
+  switch (this.performancePeriod()) {
+    case 'month':
+      return {
+        startDate: `${year}-${month}-01`,
+        endDate: `${year}-${month}-${new Date(year, today.getMonth() + 1, 0).getDate()}`
+      };
+
+    case 'year':
+      return {
+        startDate: `${year}-01-01`,
+        endDate: `${year}-12-31`
+      };
+
+    case 'all':
+      return {
+        startDate: null,
+        endDate: null
+      };
+
+    case 'custom':
+      return {
+        startDate: this.performanceStartDate() || null,
+        endDate: this.performanceEndDate() || null
+      };
+  }
+}
+
+changePerformancePeriod(value: string): void {
+  if (
+    value !== 'month' &&
+    value !== 'year' &&
+    value !== 'all' &&
+    value !== 'custom'
+  ) {
+    return;
+  }
+
+  this.performancePeriod.set(value);
+
+  if (value !== 'custom') {
+    this.loadPerformancePeriod();
+  }
+}
+
+applyCustomPerformancePeriod(): void {
+  const start = this.performanceStartDate();
+  const end = this.performanceEndDate();
+
+  if (!start || !end) {
+    this.performancePeriodError.set('يرجى تحديد تاريخ البداية والنهاية.');
+    return;
+  }
+
+  if (start > end) {
+    this.performancePeriodError.set('تاريخ البداية يجب ألا يكون بعد تاريخ النهاية.');
+    return;
+  }
+
+  this.loadPerformancePeriod();
+}
+
+loadPerformancePeriod(): void {
+  const dates = this.getPerformancePeriodDates();
+
+  const requestId = ++this.performanceRequestId;
+
+  this.performancePeriodLoading.set(true);
+  this.performancePeriodError.set('');
+
+  this.api.getAdminDashboardSummaryByPeriod(
+    dates.startDate,
+    dates.endDate
+  ).subscribe({
+    next: (result: AdminDashboardSummary) => {
+      if (requestId !== this.performanceRequestId) return;
+
+      this.summary.update(current => {
+        if (!current) return current;
+
+        return {
+          ...current,
+          topPerformersCount: result.topPerformersCount,
+          topPerformersAvgScore: result.topPerformersAvgScore,
+          atRiskCount: result.atRiskCount,
+          topPerformers: result.topPerformers || [],
+          atRiskTrainees: result.atRiskTrainees || []
+        };
+      });
+
+      this.allTopPerformers.set(result.topPerformers || []);
+      this.allAtRiskTrainees.set(result.atRiskTrainees || []);
+
+      this.topPage.set(1);
+      this.riskPage.set(1);
+
+      this.performancePeriodLoading.set(false);
+    },
+    error: () => {
+      if (requestId !== this.performanceRequestId) return;
+
+      this.performancePeriodError.set('تعذر تحميل بيانات الفترة المحددة.');
+      this.performancePeriodLoading.set(false);
+    }
+  });
+}
+
   announcements = signal<any[]>([]);
   showAnnouncements = signal<boolean>(true);
   isLoading = signal<boolean>(false);
@@ -562,7 +687,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       }
 
       // مصدر أرقام ومؤشرات لوحة الإدارة هو ملخص Backend فقط؛ لا نستبدل القيم بحسابات محلية.
-      const summaryData = adminSummary as AdminDashboardSummary | null;
+            const summaryData = adminSummary as AdminDashboardSummary | null;
       if (summaryData) {
         this.summary.set(summaryData);
         this.allTopPerformers.set(summaryData.topPerformers || []);
@@ -572,6 +697,16 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         this.summary.set(null);
         this.allTopPerformers.set([]);
         this.allAtRiskTrainees.set([]);
+      }
+
+      // تحميل مؤشرات المتميزين والمتعثرين حسب الفترة المحددة فقط
+      if (summaryData) {
+        if (
+          this.performancePeriod() !== 'custom' ||
+          (this.performanceStartDate() && this.performanceEndDate())
+        ) {
+          this.loadPerformancePeriod();
+        }
       }
 
       this.finishLoading(isManualRefresh);
