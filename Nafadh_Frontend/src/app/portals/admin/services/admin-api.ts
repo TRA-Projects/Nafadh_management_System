@@ -71,6 +71,29 @@ getSystemVariables(): Observable<any[]> {
     return this.http.get<any>(`${this.base}/Report/dashboard-summary`);
   }
 
+  // Admin Dashboard - Date-filtered performance summary
+// This method is used only by the Admin Dashboard date filter.
+// The existing dashboard summary method remains unchanged.
+getAdminDashboardSummaryByPeriod(
+  startDate?: string | null,
+  endDate?: string | null
+): Observable<any> {
+  let params = new HttpParams();
+
+  if (startDate) {
+    params = params.set('startDate', startDate);
+  }
+
+  if (endDate) {
+    params = params.set('endDate', endDate);
+  }
+
+  return this.http.get<any>(
+    `${this.base}/Report/admin-dashboard-summary-by-period`,
+    { params }
+  );
+}
+
   getDashboardCharts(): Observable<DashboardChartsDto> {
     return this.http.get<DashboardChartsDto>(`${this.base}/Report/dashboard-charts`);
   }
