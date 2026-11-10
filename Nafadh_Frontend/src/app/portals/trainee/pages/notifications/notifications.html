@@ -1,14 +1,169 @@
+
+<style>
+  /* =========================================
+     Notification Accordion Layout
+     ========================================= */
+
+  .notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .notification-list .notification {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .notification-list .notification-main-row {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+
+  .notification-list .notification-main-row > .icon {
+    flex-shrink: 0;
+  }
+
+  .notification-list .notification-main-row > .body {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+    text-align: right;
+  }
+
+  .notification-list .notification-main-row .title-row {
+    min-width: 0;
+  }
+
+  .notification-list .notification-preview {
+    width: 100%;
+    max-width: 100%;
+    line-height: 1.8;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  .notification-expand-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  /* =========================================
+     Expanded Notification Details
+     ========================================= */
+
+  .notification-list .notification-expanded-details {
+    display: block;
+    flex: 0 0 auto;
+    align-self: stretch;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    clear: both;
+    margin: 16px 0 0;
+    padding: 18px 22px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    direction: rtl;
+    text-align: right;
+    animation: notificationExpand 0.2s ease-out;
+  }
+
+  .notification-expanded-label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #075bb5;
+  }
+
+  .notification-list .notification-expanded-message {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.9;
+    color: #334155;
+    direction: rtl;
+    text-align: right;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: normal;
+    overflow: visible;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+  }
+
+  .notification-main-row:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: -2px;
+    border-radius: 8px;
+  }
+
+  @keyframes notificationExpand {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .notification-list .notification-main-row {
+      gap: 10px;
+    }
+
+    .notification-list .notification-expanded-details {
+      padding: 14px;
+    }
+
+    .notification-list .notification-expanded-message {
+      font-size: 14px;
+    }
+  }
+</style>
+
 <section class="page" dir="rtl">
 
   <header class="page-header">
-
     <div>
       <h1>الإشعارات</h1>
       <p>مركز الإشعارات والتنبيهات الخاصة بحسابك.</p>
     </div>
-    
   </header>
-
 
   <!-- =========================================================
        Filters
@@ -16,13 +171,12 @@
 
   <div class="filters-row">
 
-    <!-- فلترة حسب النوع -->
+    <!-- Filter by notification type -->
     <div class="notification-type-filter">
 
       <span class="type-filter-title">
         تصفية حسب النوع:
       </span>
-
 
       <div class="type-filter-buttons">
 
@@ -31,67 +185,50 @@
           class="type-filter-button"
           [class.active]="activeTypeFilter() === 'all'"
           (click)="setTypeFilter('all')">
-
           الكل
-
         </button>
-
 
         <button
           type="button"
           class="type-filter-button"
           [class.active]="activeTypeFilter() === 'unknown'"
           (click)="setTypeFilter('unknown')">
-
           إشعار
-
         </button>
-
 
         <button
           type="button"
           class="type-filter-button"
           [class.active]="activeTypeFilter() === 'evaluation'"
           (click)="setTypeFilter('evaluation')">
-
           تقييم
-
         </button>
-
 
         <button
           type="button"
           class="type-filter-button"
           [class.active]="activeTypeFilter() === 'reminder'"
           (click)="setTypeFilter('reminder')">
-
           إنذار
-
         </button>
-
 
         <button
           type="button"
           class="type-filter-button"
           [class.active]="activeTypeFilter() === 'task'"
           (click)="setTypeFilter('task')">
-
           مهمة
-
         </button>
 
       </div>
-
     </div>
 
-
-    <!-- فلترة حسب حالة القراءة -->
+    <!-- Filter by read status -->
     <div class="read-filter">
 
       <span class="type-filter-title">
         حالة القراءة:
       </span>
-
 
       <div class="type-filter-buttons">
 
@@ -106,9 +243,7 @@
           <span>
             {{ notifications().length }}
           </span>
-
         </button>
-
 
         <button
           type="button"
@@ -121,9 +256,7 @@
           <span>
             {{ readCount() }}
           </span>
-
         </button>
-
 
         <button
           type="button"
@@ -136,15 +269,12 @@
           <span>
             {{ unreadCount() }}
           </span>
-
         </button>
 
       </div>
-
     </div>
 
   </div>
-
 
   <!-- =========================================================
        Loading
@@ -157,7 +287,6 @@
     </div>
 
   }
-
 
   <!-- =========================================================
        Error
@@ -172,15 +301,12 @@
       <button
         type="button"
         (click)="load()">
-
         إعادة المحاولة
-
       </button>
 
     </div>
 
   }
-
 
   <!-- =========================================================
        Empty
@@ -194,36 +320,26 @@
         ♧
       </span>
 
-
       <strong>
         لا توجد إشعارات
       </strong>
 
-
       <span>
 
         @if (activeFilter() === 'unread') {
-
           لا توجد إشعارات غير مقروءة.
-
         }
 
         @else if (activeFilter() === 'read') {
-
           لا توجد إشعارات مقروءة.
-
         }
 
         @else if (activeTypeFilter() !== 'all') {
-
           لا توجد إشعارات من النوع المحدد.
-
         }
 
         @else {
-
           ستظهر هنا الإشعارات الجديدة الخاصة بك.
-
         }
 
       </span>
@@ -231,7 +347,6 @@
     </div>
 
   }
-
 
   <!-- =========================================================
        Notifications List
@@ -250,190 +365,180 @@
           class="notification"
           [class.read]="item.isRead"
           [class.unread]="!item.isRead"
+          [class.expanded]="expandedNotificationId === item.notificationId"
           [ngClass]="'type-' + getNotificationType(item.relatedEntity)"
-          (click)="markRead(item)">
-
-
-          <!-- =================================================
-               Notification Icon
-               ================================================= -->
-
-          <div class="icon">
-
-            @switch (getNotificationType(item.relatedEntity)) {
-
-              @case ('task') {
-
-                📋
-
-              }
-
-
-              @case ('announcement') {
-
-                📢
-
-              }
-
-
-              @case ('reminder') {
-
-                ⏰
-
-              }
-
-
-              @case ('message') {
-
-                💬
-
-              }
-
-
-              @case ('system') {
-
-                ⚙️
-
-              }
-
-
-              @case ('training') {
-
-                🎓
-
-              }
-
-
-              @case ('lesson') {
-
-                📚
-
-              }
-
-
-              @case ('program') {
-
-                🗂️
-
-              }
-
-
-              @case ('assignment') {
-
-                📝
-
-              }
-
-
-              @case ('evaluation') {
-
-                ⭐
-
-              }
-
-
-              @case ('certificate') {
-
-                🏆
-
-              }
-
-
-              @case ('attendance') {
-
-                🕐
-
-              }
-
-
-              @case ('payment') {
-
-                💳
-
-              }
-
-
-              @case ('feedback') {
-
-                💭
-
-              }
-
-
-              @case ('achievement') {
-
-                🏅
-
-              }
-
-
-              @case ('report') {
-
-                📊
-
-              }
-
-
-              @default {
-
-                🔔
-
-              }
-
-            }
-
-          </div>
-
-
-          <!-- =================================================
-               Notification Body
-               ================================================= -->
-
-          <div class="body">
-
-            <div class="title-row">
-
-              <h2>
-                {{ item.title }}
-              </h2>
-
-
-              @if (!item.isRead) {
-
-                <span class="new">
-                  جديد
-                </span>
+        >
+
+          <!-- ===============================================
+               Clickable Notification Header
+               =============================================== -->
+
+          <div
+            class="notification-main-row"
+            role="button"
+            tabindex="0"
+            [attr.aria-expanded]="expandedNotificationId === item.notificationId"
+            (click)="toggleNotificationDetails(item)"
+            (keydown.enter)="toggleNotificationDetails(item)"
+            (keydown.space)="$event.preventDefault(); toggleNotificationDetails(item)"
+          >
+
+            <!-- Notification Icon -->
+            <div class="icon">
+
+              @switch (getNotificationType(item.relatedEntity)) {
+
+                @case ('task') {
+                  📋
+                }
+
+                @case ('announcement') {
+                  📢
+                }
+
+                @case ('reminder') {
+                  ⏰
+                }
+
+                @case ('message') {
+                  💬
+                }
+
+                @case ('system') {
+                  ⚙️
+                }
+
+                @case ('training') {
+                  🎓
+                }
+
+                @case ('lesson') {
+                  📚
+                }
+
+                @case ('program') {
+                  🗂️
+                }
+
+                @case ('assignment') {
+                  📝
+                }
+
+                @case ('evaluation') {
+                  ⭐
+                }
+
+                @case ('certificate') {
+                  🏆
+                }
+
+                @case ('attendance') {
+                  🕐
+                }
+
+                @case ('payment') {
+                  💳
+                }
+
+                @case ('feedback') {
+                  💭
+                }
+
+                @case ('achievement') {
+                  🏅
+                }
+
+                @case ('report') {
+                  📊
+                }
+
+                @default {
+                  🔔
+                }
 
               }
 
             </div>
 
+            <!-- Notification Body -->
+            <div class="body">
 
-            <p>
-              {{ item.message }}
-            </p>
+              <div class="title-row">
 
+                <h2>
+                  {{ item.title }}
+                </h2>
 
-            @if (item.relatedEntity) {
+                @if (!item.isRead) {
+                  <span class="new">
+                    جديد
+                  </span>
+                }
 
-              <small class="notification-type">
+              </div>
 
-                {{ getRelatedEntityLabel(item.relatedEntity) }}
+              <!-- Message preview when collapsed -->
+              @if (expandedNotificationId !== item.notificationId) {
 
-              </small>
+                <p class="notification-preview">
+                  {{ item.message }}
+                </p>
 
-            }
+              }
 
+              <!-- Notification type -->
+              @if (item.relatedEntity) {
 
-            <div class="notification-date">
+                <small class="notification-type">
+                  {{ getRelatedEntityLabel(item.relatedEntity) }}
+                </small>
 
-              <span class="date-dot"></span>
+              }
 
-              {{ timeAgo(item.createdAt) }}
+              <!-- Notification date -->
+              <div class="notification-date">
+
+                <span class="date-dot"></span>
+
+                {{ timeAgo(item.createdAt) }}
+
+              </div>
 
             </div>
 
+            <!-- Expand / Collapse Icon -->
+            <span
+              class="notification-expand-icon"
+              aria-hidden="true"
+            >
+              @if (expandedNotificationId === item.notificationId) {
+                ▲
+              } @else {
+                ▼
+              }
+            </span>
+
           </div>
+
+          <!-- ===============================================
+               Expanded Notification Details
+               =============================================== -->
+
+          @if (expandedNotificationId === item.notificationId) {
+
+            <div class="notification-expanded-details">
+
+              <div class="notification-expanded-label">
+              تفاصيل الأشعار:
+              </div>
+
+              <p class="notification-expanded-message">
+                {{ item.message?.trim() || 'لا توجد تفاصيل إضافية لهذا التنبيه.' }}
+              </p>
+
+            </div>
+
+          }
 
         </article>
 
