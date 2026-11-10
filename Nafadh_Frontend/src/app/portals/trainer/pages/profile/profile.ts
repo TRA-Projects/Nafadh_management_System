@@ -679,12 +679,24 @@ uploadCertificate(): void {
   });
 }
 
-deleteCertificate(certificate: TrainerCertificateDto): void {
-  const confirmed = window.confirm(
-    `هل تريدين حذف شهادة "${certificate.certificateName}"؟`
-  );
+certificateToDelete = signal<TrainerCertificateDto | null>(null);
+isDeletingCertificate = signal(false);
 
-  if (!confirmed) return;
+deleteCertificate(certificate: TrainerCertificateDto): void {
+  this.certificateToDelete.set(certificate);
+}
+
+cancelCertificateDelete(): void {
+  if (this.isDeletingCertificate()) return;
+  this.certificateToDelete.set(null);
+}
+
+confirmCertificateDelete(): void {
+  const certificate = this.certificateToDelete();
+
+  if (!certificate || this.isDeletingCertificate()) return;
+
+  this.isDeletingCertificate.set(true);
 
   this.api.deleteTrainerCertificate(
     certificate.trainerCertificateId
@@ -695,14 +707,19 @@ deleteCertificate(certificate: TrainerCertificateDto): void {
           x.trainerCertificateId !== certificate.trainerCertificateId
         )
       );
-      
+
+      this.isDeletingCertificate.set(false);
+      this.certificateToDelete.set(null);
+      this.showSuccess();
     },
     error: (error) => {
       console.error('تعذر حذف الشهادة:', error);
+      this.isDeletingCertificate.set(false);
       this.showError('تعذر حذف الشهادة.');
     }
   });
 }
+
 
 private resetCertificateForm(): void {
   this.certificateName = '';
