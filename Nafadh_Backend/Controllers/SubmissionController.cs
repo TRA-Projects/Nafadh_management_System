@@ -4,6 +4,7 @@ using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 using Nafadh_Backend.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -15,6 +16,7 @@ namespace Nafadh_Backend.Controllers
         private readonly ISubmissionService _service;
         private readonly IBadgeEvaluationService _badgeEvaluationService;
         private readonly IConfiguration _configuration;
+        private readonly Nafadhcontext _context;
 
         private readonly ITaskRepository _taskRepository;
         private readonly INotificationService _notificationService;
@@ -24,7 +26,8 @@ namespace Nafadh_Backend.Controllers
       IBadgeEvaluationService badgeEvaluationService,
       IConfiguration configuration,
             ITaskRepository taskRepository,
-    INotificationService notificationService
+   INotificationService notificationService,
+Nafadhcontext context
   )
         {
             _service = service;
@@ -32,6 +35,7 @@ namespace Nafadh_Backend.Controllers
             _configuration = configuration;
             _taskRepository = taskRepository;
             _notificationService = notificationService;
+            _context = context;
         }
 
 
@@ -141,6 +145,13 @@ namespace Nafadh_Backend.Controllers
         [HttpPost]
         public async Task<IActionResult> AddSubmission(AddSubmissionDto dto)
         {
+            var validationResult = await ValidateSubmissionAsync(
+    dto.TaskId,
+    dto.TraineeId
+);
+
+            if (validationResult != null)
+                return validationResult;
 
             var submission = new NFD_Submission
             {
@@ -208,7 +219,13 @@ namespace Nafadh_Backend.Controllers
                 );
             }
 
+            var validationResult = await ValidateSubmissionAsync(
+    taskId,
+    traineeId
+);
 
+            if (validationResult != null)
+                return validationResult;
             var submissionsFolder =
                 _configuration[
                     "Storage:SubmissionsPath"
@@ -615,7 +632,43 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(result);
         }
+        private async Task<IActionResult?> ValidateSubmissionAsync(
+    int taskId,
+    int traineeId)
+        {
+            var task = await _context.Set<NFD_Task>()
+                .AsNoTracking()
+                .Include(t => t.Batch)
+                .FirstOrDefaultAsync(t => t.TaskId == taskId);
 
+            if (task == null)
+                return NotFound("Task not found.");
+
+            if (task.Batch == null)
+                return BadRequest("Task has no associated batch.");
+
+            var today = DateTime.Today;
+
+            if (today < task.Batch.StartDate.Date)
+                return BadRequest(
+                    "Submission is not allowed before the batch starts.");
+
+            if (today > task.Batch.EndDate.Date)
+                return BadRequest(
+                    "Submission is not allowed after the batch ends.");
+
+            var isEnrolled = await _context.Set<NFD_Enrollment>()
+                .AsNoTracking()
+                .AnyAsync(e =>
+                    e.BatchId == task.BatchId &&
+                    e.TraineeId == traineeId);
+
+            if (!isEnrolled)
+                return BadRequest(
+                    "Trainee is not enrolled in this batch.");
+
+            return null;
+        }
         // ======================================================
         // NEW:
         // Notify trainer when a trainee submits a task
