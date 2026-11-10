@@ -563,10 +563,10 @@ saveSubmissionGrade(submission: SubmissionDto): void {
 
   this.savingGrade.set(true);
 
-  const payload = {
-    grade: this.gradeInput,
-    feedback: this.feedbackInput.trim()
-  };
+ const payload = {
+  grade: String(this.gradeInput),
+  feedback: this.feedbackInput.trim()
+};
 
   this.api.gradeSubmission(
     submission.submissionId,
@@ -635,45 +635,26 @@ saveSubmissionGrade(submission: SubmissionDto): void {
 openSubmissionFile(submission: SubmissionDto): void {
   this.submissionsModalError.set('');
 
-  const url = submission.fileUrl?.trim();
+  this.api.getSubmissionFile(submission.submissionId).subscribe({
+    next: (blob) => {
+      const fileUrl = URL.createObjectURL(blob);
 
-  if (!url) {
-    this.submissionsModalError.set('لا يوجد رابط لهذا التسليم.');
-    return;
-  }
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `submission-${submission.submissionId}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-  try {
-    const parsedUrl = new URL(url);
-    if (
-  parsedUrl.hostname === 'drive.nafadh.test' ||
-  parsedUrl.hostname.endsWith('.nafadh.test')
-) {
-  this.submissionsModalError.set(
-    'رابط التسليم تجريبي وغير متاح للعرض.'
-  );
-  return;
-}
-
-    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-      this.submissionsModalError.set('رابط التسليم غير صالح.');
-      return;
+      setTimeout(() => URL.revokeObjectURL(fileUrl), 60000);
+    },
+    error: (error) => {
+      console.error('Error downloading submission:', error);
+      this.submissionsModalError.set(
+        'تعذر تحميل ملف التسليم.'
+      );
     }
-
-    const previewWindow = window.open(
-      parsedUrl.href,
-      '_blank',
-      'noopener,noreferrer'
-    );
-
-    if (!previewWindow) {
-      // بعض المتصفحات ترجع null مع noopener رغم فتح التبويب.
-      // لذلك لا نعتبرها فشلًا مؤكدًا.
-      return;
-    }
-  } catch (error) {
-    console.error('Invalid submission URL:', error);
-    this.submissionsModalError.set('رابط التسليم غير صالح.');
-  }
+  });
 }
 
   // =====================================================
@@ -690,6 +671,12 @@ openSubmissionFile(submission: SubmissionDto): void {
   // =====================================================
 
   updateTaskStatus(task: TaskDto, newStatus: TaskStatus): void {
+      if (newStatus === 'Overdue') {
+    this.errorMessage.set(
+      'لا يمكن استخدام حالة متأخرة لاعتماد اكتمال التقييم.'
+    );
+    return;
+  }
     if (this.updatingTaskId() !== null || this.deletingTaskId() !== null) {
       return;
     }
