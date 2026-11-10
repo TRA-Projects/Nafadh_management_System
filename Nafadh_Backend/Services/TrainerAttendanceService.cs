@@ -77,6 +77,9 @@ namespace Nafadh_Backend.Services
         {
             var records = await _repository.GetByTrainerIdAsync(trainerId);
 
+            return records.Select(ToDto).ToList();
+        }
+
         public async Task<List<CompanyTrainerDto>> GetCompanyTrainersAsync(int companyId, DateTime date)
         {
             var trainers = await _repository.GetCompanyTrainersAsync(companyId, date);
