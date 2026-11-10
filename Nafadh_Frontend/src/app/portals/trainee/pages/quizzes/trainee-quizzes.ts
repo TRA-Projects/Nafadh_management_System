@@ -21,8 +21,22 @@ import {
 type Step = 1 | 2 | 3 | 4;
 type StateFilter = 'all' | 'Available' | 'InProgress' | 'PendingGrading' | 'Completed' | 'Upcoming' | 'Missed';
 
-const SNAPSHOT_INTERVAL_MS = 60_000;   // كل 60 ثانية
-const FIRST_SNAPSHOT_DELAY_MS = 3_000; // انتظار 3 ثواني لضمان ربط الفيديو
+const SNAPSHOT_INTERVAL_MS = 60_000;
+const FIRST_SNAPSHOT_DELAY_MS = 3_000;
+
+export interface UploadedFileInfo {
+  fileId: number;
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  uploadedAt?: string;
+}
+
+export interface AnswerState {
+  selectedOptionId: number | null;
+  textAnswer: string | null;
+  uploadedFile?: UploadedFileInfo | null;
+}
 
 @Component({
   selector: 'app-trainee-quizzes',
@@ -55,7 +69,9 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
 
   attempt = signal<QuizAttemptDto | null>(null);
   questions = signal<AttemptQuestionDto[]>([]);
-  answers: Record<number, { selectedOptionId: number | null, textAnswer: string | null }> = {};
+
+  answers: Record<number, AnswerState> = {};
+
   timeRemaining = signal<number>(0);
   private timerInterval: any;
 
@@ -68,6 +84,26 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
   showAttemptsModal = signal(false);
   quizAttempts = signal<any[]>([]);
   selectedQuizForAttempts = signal<TraineeQuizListItemDto | null>(null);
+
+  // =========================================
+  // FILE UPLOAD STATE
+  // =========================================
+  uploadingForQuestion: Record<number, boolean> = {};
+  uploadProgressForQuestion: Record<number, number> = {};
+  draggingForQuestion: Record<number, boolean> = {};
+  fileErrors: Record<number, string> = {};
+
+  // 🟢 Grace period: لمنع تسجيل المخالفات أثناء اختيار الملف
+  private fileUploadGracePeriodTimeout: any = null;
+  private isFileUploadGracePeriod = false;
+
+  private readonly MAX_FILE_SIZE = 10 * 1024 * 1024;
+  private readonly ALLOWED_EXTENSIONS = [
+    '.pdf', '.doc', '.docx', '.ppt', '.pptx',
+    '.xls', '.xlsx', '.txt', '.csv',
+    '.jpg', '.jpeg', '.png', '.gif', '.webp',
+    '.zip', '.rar'
+  ];
 
   quizzes = computed(() => this.overview()?.quizzes ?? []);
   availableCount = computed(() => this.overview()?.available ?? 0);
@@ -114,15 +150,12 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     const step = this.currentStep();
     if (this.lastBoundStep === step) return;
 
-    console.log(`[Camera] Attempting to bind camera at Step ${step}`);
     if (step === 2 && this.previewVideo?.nativeElement) {
       this.previewVideo.nativeElement.srcObject = this.mediaStream;
       this.lastBoundStep = 2;
-      console.log('[Camera] Bound to previewVideo');
     } else if (step === 3 && this.floatingVideo?.nativeElement) {
       this.floatingVideo.nativeElement.srcObject = this.mediaStream;
       this.lastBoundStep = 3;
-      console.log('[Camera] Bound to floatingVideo');
     }
   }
 
@@ -304,7 +337,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
       this.isCameraReady.set(true);
       this.cameraError.set('');
       this.lastBoundStep = 2;
-      console.log('[Camera] Camera turned on and bound to preview');
     } catch (err) {
       this.cameraError.set('تعذر الوصول إلى الكاميرا. يرجى التأكد من إعطاء الصلاحيات.');
       this.isCameraReady.set(false);
@@ -333,24 +365,13 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
 
   private takeSnapshot(eventType: string = 'Snapshot') {
     const attemptId = this.attempt()?.attemptId;
-    if (!attemptId || !this.isCameraReady()) {
-      console.warn(`[Snapshot] Skipped: attemptId=${attemptId}, isCameraReady=${this.isCameraReady()}`);
-      return;
-    }
+    if (!attemptId || !this.isCameraReady()) return;
 
     const video = this.currentStep() === 3
       ? this.floatingVideo?.nativeElement
       : this.previewVideo?.nativeElement;
 
-    if (!video) {
-      console.warn(`[Snapshot] Skipped: video element not found for step ${this.currentStep()}`);
-      return;
-    }
-
-    if (video.videoWidth === 0) {
-      console.warn(`[Snapshot] Skipped: videoWidth is 0 (video not ready)`);
-      return;
-    }
+    if (!video || video.videoWidth === 0) return;
 
     this.hiddenCanvas.width = video.videoWidth;
     this.hiddenCanvas.height = video.videoHeight;
@@ -360,18 +381,13 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     ctx.drawImage(video, 0, 0);
 
     this.hiddenCanvas.toBlob((blob) => {
-      if (!blob) {
-        console.error('[Snapshot] Failed to create blob');
-        return;
-      }
+      if (!blob) return;
       const formData = new FormData();
       formData.append('EventType', eventType);
       formData.append('Snapshot', blob, 'snapshot.jpg');
 
-      console.log(`[Snapshot] Sending ${eventType} (size: ${blob.size} bytes)`);
-
       this.api.sendProctoringEvent(attemptId, formData).subscribe({
-        next: () => console.log(`[Snapshot] ✅ ${eventType} saved successfully for attempt #${attemptId}`),
+        next: () => console.log(`[Snapshot] ✅ ${eventType} saved`),
         error: (err) => console.error(`[Snapshot] ❌ Failed to save ${eventType}:`, err)
       });
     }, 'image/jpeg', 0.8);
@@ -384,7 +400,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
         this.takeSnapshot('Snapshot');
       }
     }, SNAPSHOT_INTERVAL_MS);
-    console.log('[Snapshot] Loop started (every 60s)');
   }
 
   beginAttempt() {
@@ -430,7 +445,8 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     res.questions.forEach(q => {
       this.answers[q.attemptQuestionId] = {
         selectedOptionId: q.selectedOptionId || null,
-        textAnswer: q.textAnswer || null
+        textAnswer: q.textAnswer || null,
+        uploadedFile: (q as any).uploadedFile ?? null
       };
     });
 
@@ -439,14 +455,10 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
       : res.durationMinutes * 60;
     this.startTimer(seconds);
 
-    // الانتقال لخطوة 3
     this.currentStep.set(3);
 
-    // بعد الانتقال لخطوة 3، ننتظر 3 ثوانٍ لضمان ربط الفيديو العائم
     if (this.isCameraReady() && this.selectedQuiz()?.cameraRequired) {
-      console.log('[Setup] Waiting for floating video to bind...');
       setTimeout(() => {
-        console.log('[Setup] Taking first snapshot (IdentityVerified)');
         this.takeSnapshot('IdentityVerified');
         this.startSnapshotLoop();
       }, FIRST_SNAPSHOT_DELAY_MS);
@@ -511,7 +523,224 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
-  submitQuiz() { this.showSubmitModal.set(true); }
+  // =========================================
+  // FILE UPLOAD METHODS
+  // =========================================
+
+  isFileUploadQuestion(q: AttemptQuestionDto): boolean {
+    const type = (q as any).questionType;
+    return type === 3 || type === 'FileUpload' || type === 'File' || type === 'Fileupload';
+  }
+
+  getAcceptedFileTypes(q: AttemptQuestionDto): string {
+    const allowed = (q as any).allowedFileTypes;
+    if (allowed && Array.isArray(allowed) && allowed.length) {
+      return allowed.join(',');
+    }
+    return this.ALLOWED_EXTENSIONS.join(',');
+  }
+
+  getFileUploadHint(q: AttemptQuestionDto): string {
+    const maxMb = (q as any).maxFileSizeMB ?? 10;
+    return `الأنواع المسموحة: ${this.ALLOWED_EXTENSIONS.join(', ')} — الحجم الأقصى: ${maxMb} ميجابايت`;
+  }
+
+  private validateFile(file: File, q: AttemptQuestionDto): string | null {
+    const maxMb = (q as any).maxFileSizeMB ?? 10;
+    const maxBytes = maxMb * 1024 * 1024;
+
+    if (file.size > maxBytes) {
+      return `حجم الملف يجب ألا يتجاوز ${maxMb} ميجابايت (الحجم الحالي: ${(file.size / 1024 / 1024).toFixed(2)} ميجابايت).`;
+    }
+
+    if (file.size === 0) {
+      return 'الملف فارغ. يرجى اختيار ملف صالح.';
+    }
+
+    const name = file.name.toLowerCase();
+    const ext = name.substring(name.lastIndexOf('.'));
+    if (!this.ALLOWED_EXTENSIONS.includes(ext)) {
+      return `امتداد الملف (${ext}) غير مسموح. الأنواع المسموحة: ${this.ALLOWED_EXTENSIONS.join(', ')}`;
+    }
+
+    return null;
+  }
+
+  // 🟢 دالة تفعيل فترة السماح عند الضغط على منطقة الرفع
+  allowFileUploadGracePeriod(): void {
+    this.isFileUploadGracePeriod = true;
+
+    if (this.fileUploadGracePeriodTimeout) {
+      clearTimeout(this.fileUploadGracePeriodTimeout);
+    }
+
+    // إعادة تفعيل المراقبة بعد دقيقتين في حال لم يتم اختيار ملف
+    this.fileUploadGracePeriodTimeout = setTimeout(() => {
+      this.isFileUploadGracePeriod = false;
+    }, 120000);
+  }
+
+  onFileSelected(event: Event, q: AttemptQuestionDto): void {
+    // 🟢 إيقاف فترة السماح فور اختيار الملف
+    this.isFileUploadGracePeriod = false;
+    if (this.fileUploadGracePeriodTimeout) {
+      clearTimeout(this.fileUploadGracePeriodTimeout);
+    }
+
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.uploadFile(q, file);
+    input.value = '';
+  }
+
+  onFileDragOver(event: DragEvent, qId: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.draggingForQuestion[qId] = true;
+  }
+
+  onFileDragLeave(event: DragEvent, qId: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.draggingForQuestion[qId] = false;
+  }
+
+  onFileDrop(event: DragEvent, q: AttemptQuestionDto): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.draggingForQuestion[q.attemptQuestionId] = false;
+
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) return;
+    this.uploadFile(q, file);
+  }
+
+  private uploadFile(q: AttemptQuestionDto, file: File): void {
+    const attemptId = this.attempt()?.attemptId;
+    const qId = q.attemptQuestionId;
+
+    if (!attemptId) {
+      this.fileErrors[qId] = 'تعذر تحديد المحاولة.';
+      return;
+    }
+
+    const validationError = this.validateFile(file, q);
+    if (validationError) {
+      this.fileErrors[qId] = validationError;
+      return;
+    }
+
+    this.fileErrors[qId] = '';
+    this.uploadingForQuestion[qId] = true;
+    this.uploadProgressForQuestion[qId] = 0;
+
+    const formData = new FormData();
+    formData.append('AttemptQuestionId', qId.toString());
+    formData.append('File', file, file.name);
+
+    this.api.uploadAnswerFile(attemptId, formData).subscribe({
+      next: (response) => {
+        this.answers[qId] = {
+          ...this.answers[qId],
+          uploadedFile: {
+            fileId: response.fileId,
+            fileUrl: response.fileUrl,
+            fileName: response.fileName || file.name,
+            fileSize: response.fileSize || file.size,
+            uploadedAt: response.uploadedAt || new Date().toISOString()
+          }
+        };
+
+        this.saveAnswer(qId);
+
+        this.uploadingForQuestion[qId] = false;
+        this.uploadProgressForQuestion[qId] = 100;
+      },
+      error: (err) => {
+        this.uploadingForQuestion[qId] = false;
+        this.uploadProgressForQuestion[qId] = 0;
+        this.fileErrors[qId] =
+          err?.error?.message || 'تعذر رفع الملف. يرجى المحاولة مرة أخرى.';
+      }
+    });
+  }
+
+  removeUploadedFile(qId: number): void {
+    const attemptId = this.attempt()?.attemptId;
+    const fileId = this.answers[qId]?.uploadedFile?.fileId;
+
+    if (!attemptId || !fileId) return;
+    if (!confirm('هل أنت متأكد من إزالة الملف المرفوع؟')) return;
+
+    this.uploadingForQuestion[qId] = true;
+    this.fileErrors[qId] = '';
+
+    this.api.deleteAnswerFile(attemptId, qId, fileId).subscribe({
+      next: () => {
+        this.answers[qId] = {
+          ...this.answers[qId],
+          uploadedFile: null
+        };
+        this.saveAnswer(qId);
+        this.uploadingForQuestion[qId] = false;
+      },
+      error: (err) => {
+        this.uploadingForQuestion[qId] = false;
+        this.fileErrors[qId] = err?.error?.message || 'تعذر إزالة الملف.';
+      }
+    });
+  }
+
+  formatFileSize(bytes: number | null | undefined): string {
+    if (!bytes || bytes <= 0) return '';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+    return `${size.toFixed(2)} ${units[unitIndex]}`;
+  }
+
+  getFileIcon(fileName: string | null | undefined): string {
+    if (!fileName) return 'fa-file';
+    const ext = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+    if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) return 'fa-file-image';
+    if (['.pdf'].includes(ext)) return 'fa-file-pdf';
+    if (['.doc', '.docx'].includes(ext)) return 'fa-file-word';
+    if (['.xls', '.xlsx', '.csv'].includes(ext)) return 'fa-file-excel';
+    if (['.ppt', '.pptx'].includes(ext)) return 'fa-file-powerpoint';
+    if (['.zip', '.rar'].includes(ext)) return 'fa-file-zipper';
+    if (['.txt'].includes(ext)) return 'fa-file-lines';
+    return 'fa-file';
+  }
+
+  private validateBeforeSubmit(): boolean {
+    const fileQuestions = this.questions().filter(q => this.isFileUploadQuestion(q));
+
+    for (const q of fileQuestions) {
+      if (!this.answers[q.attemptQuestionId]?.uploadedFile) {
+        const idx = this.questions().indexOf(q) + 1;
+        this.errorMessage.set(
+          `السؤال رقم ${idx} يتطلب رفع ملف قبل التسليم.`
+        );
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // =========================================
+  // SUBMIT
+  // =========================================
+
+  submitQuiz() {
+    if (!this.validateBeforeSubmit()) return;
+    this.showSubmitModal.set(true);
+  }
+
   cancelSubmit() { this.showSubmitModal.set(false); }
 
   confirmSubmit() {
@@ -575,19 +804,23 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
 
   @HostListener('document:visibilitychange')
   onVisibilityChange() {
-    if (document.hidden && this.currentStep() === 3) {
+    // 🟢 تجاهل المخالفة إذا كان المتدرب في فترة رفع الملف
+    if (document.hidden && this.currentStep() === 3 && !this.isFileUploadGracePeriod) {
       this.handleViolation();
     }
   }
 
   @HostListener('window:blur')
   onWindowBlur() {
-    if (this.currentStep() === 3) {
+    // 🟢 تجاهل المخالفة إذا كان المتدرب في فترة رفع الملف
+    if (this.currentStep() === 3 && !this.isFileUploadGracePeriod) {
       this.handleViolation();
     }
   }
 
   private handleViolation() {
+    if (this.isFileUploadGracePeriod) return;
+
     const attemptId = this.attempt()?.attemptId;
     if (!attemptId) return;
 

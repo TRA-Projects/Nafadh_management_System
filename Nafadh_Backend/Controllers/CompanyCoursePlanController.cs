@@ -87,7 +87,7 @@ namespace Nafadh_Backend.Controllers
 
             var trainers = await _context.NFD_Trainers
                 .AsNoTracking()
-                .Where(t => t.Status == NFD_TrainerStatus.Active)
+                .Where(t => t.Status == NFD_TrainerStatus.Active && t.CompanyId == companyId)
                 .Select(t => new CoursePlanTrainerOptionDTO
                 {
                     TrainerId = t.TrainerId,
@@ -214,7 +214,7 @@ namespace Nafadh_Backend.Controllers
             if (batch.EndDate.Date < batch.StartDate.Date)
                 return BadRequest(new { message = "تواريخ الدفعة المسندة غير صالحة. تواصل مع الإدارة لتصحيحها." });
 
-            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds);
+            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds, companyId);
             if (trainerIds.Error is not null)
                 return BadRequest(new { message = trainerIds.Error });
 
@@ -310,7 +310,7 @@ namespace Nafadh_Backend.Controllers
 
             plan.Description = Clean(dto.Description);
 
-            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds);
+            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds, companyId);
             if (trainerIds.Error is not null)
                 return BadRequest(new { message = trainerIds.Error });
 
@@ -361,7 +361,7 @@ namespace Nafadh_Backend.Controllers
             if (plan is null)
                 return NotFound(new { message = "الخطة غير موجودة." });
 
-            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds);
+            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds, companyId);
             if (trainerIds.Error is not null)
                 return BadRequest(new { message = trainerIds.Error });
 
@@ -386,7 +386,7 @@ namespace Nafadh_Backend.Controllers
             if (plan is null || stage is null)
                 return NotFound(new { message = "المرحلة غير موجودة." });
 
-            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds);
+            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds, companyId);
             if (trainerIds.Error is not null)
                 return BadRequest(new { message = trainerIds.Error });
 
@@ -438,7 +438,7 @@ namespace Nafadh_Backend.Controllers
             var stageTrainerIds = await ValidateTrainerIdsAsync(
                 dto.TrainerIds.Count > 0
                     ? dto.TrainerIds
-                    : (dto.TrainerId.HasValue ? new List<int> { dto.TrainerId.Value } : new List<int>()));
+                    : (dto.TrainerId.HasValue ? new List<int> { dto.TrainerId.Value } : new List<int>()), companyId);
 
             if (stageTrainerIds.Error is not null)
                 return BadRequest(new { message = stageTrainerIds.Error });
@@ -485,7 +485,7 @@ namespace Nafadh_Backend.Controllers
             var stageTrainerIds = await ValidateTrainerIdsAsync(
                 dto.TrainerIds.Count > 0
                     ? dto.TrainerIds
-                    : (dto.TrainerId.HasValue ? new List<int> { dto.TrainerId.Value } : new List<int>()));
+                    : (dto.TrainerId.HasValue ? new List<int> { dto.TrainerId.Value } : new List<int>()), companyId);
 
             if (stageTrainerIds.Error is not null)
                 return BadRequest(new { message = stageTrainerIds.Error });
@@ -548,7 +548,7 @@ namespace Nafadh_Backend.Controllers
             if (!IsEditable(plan))
                 return Conflict(new { message = LockedMessage(plan) });
 
-            var error = ValidateItem(stage, dto) ?? await ValidateTrainerAsync(dto.TrainerId);
+            var error = ValidateItem(stage, dto) ?? await ValidateTrainerAsync(dto.TrainerId, companyId);
             if (error is not null)
                 return BadRequest(new { message = error });
 
@@ -592,7 +592,7 @@ namespace Nafadh_Backend.Controllers
             if (!IsEditable(plan))
                 return Conflict(new { message = LockedMessage(plan) });
 
-            var error = ValidateItem(stage, dto) ?? await ValidateTrainerAsync(dto.TrainerId);
+            var error = ValidateItem(stage, dto) ?? await ValidateTrainerAsync(dto.TrainerId, companyId);
             if (error is not null)
                 return BadRequest(new { message = error });
 
@@ -1029,7 +1029,7 @@ namespace Nafadh_Backend.Controllers
             return null;
         }
 
-        private async Task<(List<int> Ids, string? Error)> ValidateTrainerIdsAsync(IEnumerable<int>? trainerIds)
+        private async Task<(List<int> Ids, string? Error)> ValidateTrainerIdsAsync(IEnumerable<int>? trainerIds, int companyId)
         {
             var ids = (trainerIds ?? Enumerable.Empty<int>())
                 .Where(id => id > 0)
@@ -1041,7 +1041,7 @@ namespace Nafadh_Backend.Controllers
 
             var activeIds = await _context.NFD_Trainers
                 .AsNoTracking()
-                .Where(t => ids.Contains(t.TrainerId) && t.Status == NFD_TrainerStatus.Active)
+                .Where(t => ids.Contains(t.TrainerId) && t.Status == NFD_TrainerStatus.Active && t.CompanyId == companyId)
                 .Select(t => t.TrainerId)
                 .ToListAsync();
 
@@ -1050,14 +1050,14 @@ namespace Nafadh_Backend.Controllers
                 : (ids, "يوجد مدرب مختار غير موجود أو غير نشط.");
         }
 
-        private async Task<string?> ValidateTrainerAsync(int? trainerId)
+        private async Task<string?> ValidateTrainerAsync(int? trainerId, int companyId)
         {
             if (trainerId is null)
                 return null;
 
             var ok = await _context.NFD_Trainers
                 .AsNoTracking()
-                .AnyAsync(t => t.TrainerId == trainerId.Value && t.Status == NFD_TrainerStatus.Active);
+                .AnyAsync(t => t.TrainerId == trainerId.Value && t.Status == NFD_TrainerStatus.Active && t.CompanyId == companyId);
 
             return ok ? null : "المدرب المختار غير موجود أو غير نشط.";
         }
@@ -1092,7 +1092,7 @@ namespace Nafadh_Backend.Controllers
                     Message = message,
                     RelatedEntity = related,
                     IsRead = false,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 });
             }
         }

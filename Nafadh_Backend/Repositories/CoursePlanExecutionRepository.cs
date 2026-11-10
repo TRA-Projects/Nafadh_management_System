@@ -33,14 +33,16 @@ namespace Nafadh_Backend.Repositories
                 .Include(p => p.Notes)
                     .ThenInclude(n => n.User)
                 .AsSplitQuery()
-                .FirstOrDefaultAsync(p =>
-                    p.PlanId == planId &&
-                    p.ApprovalStatus == Enums.NFD_CoursePlanApprovalStatus.Approved &&
-                    p.Trainers.Any(pt => pt.Trainer.UserId == trainerUserId) ||
-                    p.Stages.Any(s =>
-                        (s.Trainer != null && s.Trainer.UserId == trainerUserId) ||
-                        s.Trainers.Any(st => st.Trainer.UserId == trainerUserId) ||
-                        s.Items.Any(i => i.Trainer != null && i.Trainer.UserId == trainerUserId)));
+               .FirstOrDefaultAsync(p =>
+    p.PlanId == planId &&
+    p.ApprovalStatus == Enums.NFD_CoursePlanApprovalStatus.Approved &&
+    (
+        p.Trainers.Any(pt => pt.Trainer.UserId == trainerUserId) ||
+        p.Stages.Any(s =>
+            (s.Trainer != null && s.Trainer.UserId == trainerUserId) ||
+            s.Trainers.Any(st => st.Trainer.UserId == trainerUserId) ||
+            s.Items.Any(i => i.Trainer != null && i.Trainer.UserId == trainerUserId))
+    ));
         }
 
         public Task<bool> IsActiveTrainerUserAsync(int userId)

@@ -1,4 +1,3 @@
-
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -51,7 +50,6 @@ import {
 export interface TrainerInBatchDto extends TrainerDto {
   trainerName: string;
 }
-
 
 @Injectable({
   providedIn: 'root'
@@ -1089,6 +1087,42 @@ downloadTraineeResume(resumeUrl: string): Observable<Blob> {
     return this.http.post<any>(
       `${this.base}/quiz-attempts/${attemptId}/proctoring`,
       data
+    );
+  }
+
+  // =========================================================
+  // Quiz File Upload (Added for File Upload Question Type)
+  // =========================================================
+
+    uploadAnswerFile(
+    attemptId: number,
+    formData: FormData
+  ): Observable<{
+    fileId: number;
+    fileUrl: string;
+    fileName: string;
+    fileSize: number;
+    uploadedAt?: string;
+  }> {
+    return this.http.post<{
+      fileId: number;
+      fileUrl: string;
+      fileName: string;
+      fileSize: number;
+      uploadedAt?: string;
+    }>(
+      `${this.base}/quiz-attempts/${attemptId}/answers/file`, // <--- المسار الصحيح
+      formData
+    );
+  }
+
+  deleteAnswerFile(
+    attemptId: number,
+    questionId: number,
+    fileId: number
+  ): Observable<any> {
+    return this.http.delete<any>(
+      `${this.base}/quiz-attempts/${attemptId}/questions/${questionId}/files/${fileId}`
     );
   }
 

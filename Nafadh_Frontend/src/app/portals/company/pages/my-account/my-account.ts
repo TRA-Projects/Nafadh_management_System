@@ -3,6 +3,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { finalize } from 'rxjs';
 
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -27,9 +28,11 @@ export class CompanyMyAccount implements OnInit {
   loading = signal(true);
   loadError = signal(false);
   exportingPdf = signal(false);
+  pdfExportError = signal<string | null>(null);
   activeTab = signal<AccountTab>('info');
   editingAccount = signal(false);
   savingAccount = signal(false);
+  accountSaveError = signal<string | null>(null);
 
   editPhone = signal('');
   
@@ -99,15 +102,26 @@ export class CompanyMyAccount implements OnInit {
       return;
     }
     this.editPhone.set(account.phone ?? '');
+    this.accountSaveError.set(null);
     this.editingAccount.set(true);
   }
 
   cancelEditAccount(): void {
     this.editingAccount.set(false);
+    this.accountSaveError.set(null);
   }
 
   saveAccount(): void {
-    const phone = this.editPhone().trim();
+    if (this.savingAccount()) return;
+    const phone = this.editPhone().trim().replace(/[٠-٩۰-۹]/g, digit => {
+      const code = digit.charCodeAt(0);
+      return String(code >= 0x06f0 ? code - 0x06f0 : code - 0x0660);
+    }).replace(/[\s()-]/g, '');
+    this.accountSaveError.set(null);
+    if (!/^\+?[0-9]{8,15}$/.test(phone)) {
+      this.accountSaveError.set('أدخل رقم هاتف صحيحًا من 8 إلى 15 رقمًا، دون حروف.');
+      return;
+    }
     this.savingAccount.set(true);
 
     this.api.updateMyAccount({ phone }).subscribe({
@@ -124,6 +138,7 @@ export class CompanyMyAccount implements OnInit {
       },
       error: (error: unknown) => {
         console.error('Failed to update phone:', error);
+        this.accountSaveError.set('تعذر حفظ رقم الهاتف. تحققي من صحة الرقم والصلاحيات ثم حاولي مجددًا.');
         this.savingAccount.set(false);
       }
     });
@@ -148,27 +163,35 @@ export class CompanyMyAccount implements OnInit {
   }
 
   exportToPdf(): void {
-    console.log('PDF BUTTON CLICKED');
+    if (this.exportingPdf()) return;
+    this.pdfExportError.set(null);
+    this.exportingPdf.set(true);
 
-    this.api.downloadMyAccountPdf().subscribe({
+    this.api.downloadMyAccountPdf().pipe(
+      finalize(() => this.exportingPdf.set(false))
+    ).subscribe({
       next: (blob: Blob) => {
-        console.log('PDF RECEIVED:', blob);
+        // A JSON error response or an empty document must not be downloaded as PDF.
+        if (!blob || blob.size === 0 || !blob.type.toLowerCase().includes('pdf')) {
+          this.pdfExportError.set('تعذر إنشاء ملف PDF. يرجى المحاولة مرة أخرى.');
+          return;
+        }
 
-        const url = window.URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-
         link.href = url;
         link.download = 'حسابي.pdf';
-
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
-
-        window.URL.revokeObjectURL(url);
+        link.remove();
+        // Give the browser time to consume the object URL before releasing it.
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
       },
-      error: (error) => {
-        console.error('PDF EXPORT ERROR:', error);
+      error: (error: unknown) => {
+        console.error('Company account PDF export failed:', error);
+        this.pdfExportError.set('فشل تنزيل ملف PDF. تأكدي من صلاحية الوصول وحاولي مجددًا.');
       },
     });
   }
+
 }

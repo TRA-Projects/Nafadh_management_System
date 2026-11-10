@@ -88,9 +88,11 @@ namespace Nafadh_Backend.Controllers
                 });
             }
 
-            user.Phone = string.IsNullOrWhiteSpace(dto.Phone)
-                ? null
-                : dto.Phone.Trim();
+            var phone = (dto.Phone ?? string.Empty).Trim();
+            if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^\+?[0-9]{8,15}$"))
+                return BadRequest(new { message = "أدخل رقم هاتف صحيحًا من 8 إلى 15 رقمًا." });
+
+            user.Phone = phone;
 
             await _context.SaveChangesAsync();
 
@@ -150,7 +152,7 @@ namespace Nafadh_Backend.Controllers
                     page.MarginHorizontal(35);
                     page.MarginVertical(30);
                     page.ContentFromRightToLeft();
-                    page.DefaultTextStyle(x => x.FontFamily("Lato").FontSize(10).FontColor("#1F2937"));
+                    page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(10).FontColor("#1F2937"));
 
                     page.Header().Column(header =>
                     {
@@ -162,7 +164,7 @@ namespace Nafadh_Backend.Controllers
                             {
                                 row.RelativeItem().Column(col =>
                                 {
-                                    col.Item().AlignRight().Text("NAFADH").FontFamily("Lato").FontSize(12).Bold().FontColor(Colors.White);
+                                    col.Item().AlignRight().Text("NAFADH").FontFamily("Arial").FontSize(12).Bold().FontColor(Colors.White);
                                     col.Item().PaddingTop(4).AlignRight().Text("الملف الشخصي للمستخدم").FontSize(21).Bold().FontColor(Colors.White);
                                     col.Item().PaddingTop(4).AlignRight().Text("بيانات الحساب والصلاحيات وسجل النشاطات").FontSize(9).FontColor("#E0E7FF");
                                 });

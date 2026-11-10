@@ -248,10 +248,18 @@ namespace Nafadh_Backend.Services
                 }
             }
 
+            // =============================================
+            // التعديل الجديد: 
+            // السماح لسؤال المقالي وسؤال رفع الملف بالعمل 
+            // دون الحاجة إلى خيارات (Options)
+            // =============================================
             if (question.QuestionType ==
-                NFD_QuizQuestionType.Essay)
+                NFD_QuizQuestionType.Essay ||
+                question.QuestionType ==
+                NFD_QuizQuestionType.FileUpload)
             {
                 question.Options.Clear();
+                return; // الخروج من الدالة لتجاهل التحقق من الخيارات
             }
 
             foreach (var option in options)
