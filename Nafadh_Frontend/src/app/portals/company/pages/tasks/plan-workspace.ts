@@ -3,7 +3,7 @@ import { NafadhConstantsService } from '../../../../core/services/nafadh-constan
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, finalize, timeout } from 'rxjs';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {
@@ -267,20 +267,26 @@ export class CompanyPlanWorkspace implements OnInit {
   // ============================================================
 
   private run(request$: Observable<CoursePlanDetailDto>, okText: string, after?: () => void): void {
+    if (this.busy()) return;
     this.busy.set(true);
-    request$.subscribe({
+    request$.pipe(
+      timeout(30000),
+      finalize(() => this.busy.set(false))
+    ).subscribe({
       next: (plan) => {
         this.plan.set(plan);
-        this.busy.set(false);
-        this.showToast(okText, 'ok');
         after?.();
+        this.showToast(okText, 'ok');
       },
       error: (err) => {
         console.error('Plan action failed:', err);
-        this.busy.set(false);
-        this.showToast(messageOf(err, 'تعذر تنفيذ الإجراء.'), 'err');
-        // The server is the source of truth: reload when the state changed under us.
-        if (err?.status === 409) this.load();
+        // Never strand the confirmation overlay after a failed or timed-out request.
+        this.confirm.set(null);
+        this.showToast(err?.name === 'TimeoutError'
+          ? 'انتهت مهلة انتظار الاستجابة. حدّثي الخطة للتأكد من حالة الاعتماد قبل إعادة المحاولة.'
+          : messageOf(err, 'تعذر تنفيذ الإجراء.'), 'err');
+        // The server might have saved the plan before the response was interrupted.
+        if (err?.status === 409 || err?.name === 'TimeoutError' || err?.status === 0) this.load();
       },
     });
   }

@@ -798,6 +798,10 @@
           </div>
         </div>
 
+        @if (!editingSupervisor) {
+          <p class="form-hint">سيتم إنشاء كلمة مرور مؤقتة آليًا وإرسالها إلى البريد الإلكتروني للمشرف.</p>
+        }
+
         @if (editingSupervisor) {
           <div class="status-select-box">
             <div>
@@ -817,8 +821,8 @@
 
         <div class="modal-actions">
           <button type="button" class="btn-cancel-modal" (click)="closeAddModal()">إلغاء</button>
-          <button type="submit" class="btn-save-modal" [disabled]="supervisorForm.invalid">
-            {{ editingSupervisor ? 'حفظ التعديلات' : 'إضافة المشرف' }}
+          <button type="submit" class="btn-save-modal" [disabled]="supervisorForm.invalid || savingSupervisor">
+            {{ savingSupervisor ? 'جارٍ الحفظ...' : (editingSupervisor ? 'حفظ التعديلات' : 'إضافة المشرف') }}
           </button>
         </div>
       </form>
@@ -835,7 +839,7 @@
         <div>
           <span class="modal-kicker">إدارة المدربين</span>
           <h2>إضافة ملف مدرب</h2>
-          <p class="modal-subtext">أدخلي بيانات ملف المدرب وربطيه بحساب مستخدم موجود.</p>
+          <p class="modal-subtext">أدخلي بيانات المدرب لإنشاء حساب وربطه بالشركة.</p>
         </div>
 
         <button
@@ -848,30 +852,28 @@
         </button>
       </div>
 
-      <div class="trainer-form-note">
-        استخدمي رقم حساب موجود في النظام لربط ملف المدرب به.
-      </div>
-
+      <div class="trainer-form-note">سيُنشأ حساب المدرب ويُربط تلقائيًا بشركتك.</div>
       <form (ngSubmit)="submitTrainer()" #trainerForm="ngForm">
-
         <div class="form-group">
-          <label for="trainerUserId">رقم حساب المستخدم <span>*</span></label>
-          <input
-            id="trainerUserId"
-            class="form-input"
-            type="number"
-            min="1"
-            placeholder="أدخلي رقم المستخدم User ID"
-            [(ngModel)]="newTrainer.userId"
-            name="userId"
-            required />
+          <label for="trainerName">اسم المدرب <span>*</span></label>
+          <input id="trainerName" class="form-input" type="text" maxlength="150" [(ngModel)]="newTrainer.fullName" name="fullName" required />
         </div>
+        <div class="form-group">
+          <label for="trainerEmail">البريد الإلكتروني <span>*</span></label>
+          <input id="trainerEmail" class="form-input" type="email" maxlength="150" [(ngModel)]="newTrainer.email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label for="trainerPhone">الهاتف</label>
+          <input id="trainerPhone" class="form-input" type="tel" maxlength="20" [(ngModel)]="newTrainer.phone" name="phone" />
+        </div>
+        <p class="form-hint">سيتم إنشاء كلمة مرور مؤقتة آليًا وإرسالها إلى البريد الإلكتروني للمدرب.</p>
 
         <div class="form-group">
           <label for="trainerSpecialty">التخصص <span>*</span></label>
           <input
             id="trainerSpecialty"
             class="form-input"
+            maxlength="150"
             type="text"
             placeholder="مثال: تقنية المعلومات"
             [(ngModel)]="newTrainer.specialty"
@@ -909,6 +911,7 @@
           <input
             id="trainerCvUrl"
             class="form-input"
+            maxlength="300"
             type="url"
             placeholder="https://example.com/cv.pdf"
             [(ngModel)]="newTrainer.cvUrl"

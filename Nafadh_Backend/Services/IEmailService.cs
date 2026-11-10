@@ -2,6 +2,9 @@ namespace Nafadh_Backend.Services
 {
     public interface IEmailService
     {
+        Task SendCompanyStaffWelcomeAsync(string email, string fullName, string companyName,
+            bool isTrainer, string temporaryPassword);
+
         Task SendFirstAbsenceWarningAsync(string email, string traineeName);
 
         Task SendSecondAbsenceWarningAsync(string email, string traineeName);

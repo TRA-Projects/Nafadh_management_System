@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
@@ -77,13 +77,9 @@ namespace Nafadh_Backend.Services
         {
             var records = await _repository.GetByTrainerIdAsync(trainerId);
 
-            return records
-                .Select(ToDto)
-                .ToList();
-        }
-        public async Task<List<CompanyTrainerDto>> GetCompanyTrainersAsync(int companyId)
+        public async Task<List<CompanyTrainerDto>> GetCompanyTrainersAsync(int companyId, DateTime date)
         {
-            var trainers = await _repository.GetCompanyTrainersAsync(companyId);
+            var trainers = await _repository.GetCompanyTrainersAsync(companyId, date);
 
             return trainers.Select(t => new CompanyTrainerDto
             {
@@ -152,7 +148,9 @@ namespace Nafadh_Backend.Services
                 Reason = a.Reason,
                 ExcuseProofUrl = a.ExcuseProofUrl,
                 IsConfirmed = a.IsConfirmed,
-                ExcuseReviewStatus = a.ExcuseReviewStatus
+                ExcuseReviewStatus = a.ExcuseReviewStatus,
+                ExcuseReviewedByUserId = a.ExcuseReviewedByUserId,
+                ExcuseReviewedAtUtc = a.ExcuseReviewedAtUtc
             }).ToList();
         }
 
@@ -167,7 +165,7 @@ namespace Nafadh_Backend.Services
             if (!Enum.IsDefined(typeof(NFD_TrainerAttendanceStatus), dto.Status))
                 throw new ArgumentException("Invalid attendance status.");
 
-            if (!await _repository.TrainerBelongsToCompanyAsync(dto.CompanyId, dto.TrainerId))
+            if (!await _repository.TrainerBelongsToCompanyAsync(dto.CompanyId, dto.TrainerId, date))
                 throw new ArgumentException("This trainer is not linked to the company.");
 
             var record = await _repository.GetAsync(dto.CompanyId, dto.TrainerId, date);
@@ -379,7 +377,7 @@ namespace Nafadh_Backend.Services
             return ToDto(record);
         }
 
-        public async Task<TrainerAttendanceDto?> ReviewExcuseAsync(int attendanceId, int companyId, string decision)
+        public async Task<TrainerAttendanceDto?> ReviewExcuseAsync(int attendanceId, int companyId, string decision, int reviewerUserId)
         {
             if (decision != "Approved" && decision != "Rejected")
                 throw new ArgumentException("Invalid review decision.");
@@ -390,7 +388,10 @@ namespace Nafadh_Backend.Services
                 throw new InvalidOperationException("No trainer excuse exists for review.");
             if (record.ExcuseReviewStatus == "Approved" || record.ExcuseReviewStatus == "Rejected")
                 throw new InvalidOperationException("This excuse has already been reviewed.");
+            if (reviewerUserId <= 0) throw new ArgumentException("Reviewer identity is required.");
             record.ExcuseReviewStatus = decision;
+            record.ExcuseReviewedByUserId = reviewerUserId;
+            record.ExcuseReviewedAtUtc = DateTime.UtcNow;
             record.UpdatedAt = DateTime.UtcNow;
             await _repository.SaveChangesAsync();
             return ToDto(record);
@@ -403,7 +404,7 @@ namespace Nafadh_Backend.Services
             if (date > OmanToday())
                 throw new ArgumentException("A future day cannot be confirmed.");
 
-            var trainers = await _repository.GetCompanyTrainersAsync(dto.CompanyId);
+            var trainers = await _repository.GetCompanyTrainersAsync(dto.CompanyId, date);
             if (trainers.Count == 0)
                 throw new ArgumentException("The company has no trainers to confirm.");
 
@@ -456,7 +457,9 @@ namespace Nafadh_Backend.Services
             Reason = a.Reason,
             ExcuseProofUrl = a.ExcuseProofUrl,
             IsConfirmed = a.IsConfirmed,
-            ExcuseReviewStatus = a.ExcuseReviewStatus
+            ExcuseReviewStatus = a.ExcuseReviewStatus,
+                ExcuseReviewedByUserId = a.ExcuseReviewedByUserId,
+                ExcuseReviewedAtUtc = a.ExcuseReviewedAtUtc
         };
     }
 }

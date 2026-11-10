@@ -1123,6 +1123,113 @@ namespace Nafadh_Backend.Repositories
             };
         }
 
+
+        public async Task<TrainerKpisDTO> GetTrainerReportKpisAsync(
+            int trainerId,
+            int? batchId,
+            int? traineeId)
+        {
+            // Only batches assigned to the current trainer.
+            var allowedBatchIds = _context.NFD_BatchTrainers
+                .AsNoTracking()
+                .Where(bt => bt.TrainerId == trainerId)
+                .Select(bt => bt.BatchId);
+
+            if (batchId.HasValue)
+            {
+                if (!await allowedBatchIds.ContainsAsync(batchId.Value))
+                {
+                    throw new ArgumentException(
+                        "The selected batch does not belong to this trainer.");
+                }
+            }
+
+            var enrollmentsQuery = _context.NFD_Enrollments
+                .AsNoTracking()
+                .Where(e => allowedBatchIds.Contains(e.BatchId));
+
+            if (batchId.HasValue)
+                enrollmentsQuery = enrollmentsQuery
+                    .Where(e => e.BatchId == batchId.Value);
+
+            if (traineeId.HasValue)
+                enrollmentsQuery = enrollmentsQuery
+                    .Where(e => e.TraineeId == traineeId.Value);
+
+            var enrollments = await enrollmentsQuery
+                .Include(e => e.DailyAttendances)
+                .Include(e => e.Evaluations)
+                    .ThenInclude(ev => ev.EvaluationTemplate)
+                .ToListAsync();
+
+            // Attendance rate for selected records.
+            var attendanceRecords = enrollments
+                .SelectMany(e => e.DailyAttendances)
+                .ToList();
+
+            var attendanceRate = attendanceRecords.Count > 0
+                ? Math.Round(
+                    attendanceRecords.Count(a =>
+                        a.Status == NFD_AttendanceStatus.Present)
+                    * 100.0 / attendanceRecords.Count, 1)
+                : 0.0;
+
+            // Average technical grade for selected records.
+            var technicalScores = enrollments
+                .SelectMany(e => e.Evaluations)
+                .Where(ev =>
+                    ev.EvaluationTemplate != null &&
+                    ev.EvaluationTemplate.Type == NFD_EvaluationType.Technical)
+                .Select(ev => ev.Score)
+                .ToList();
+
+            var avgTechnicalGrade = technicalScores.Count > 0
+                ? Math.Round((double)technicalScores.Average(), 1)
+                : 0.0;
+
+            // Tasks from selected batches.
+            var selectedBatchIds = batchId.HasValue
+                ? new List<int> { batchId.Value }
+                : await allowedBatchIds.ToListAsync();
+
+            var taskIds = await _context.NFD_Tasks
+                .AsNoTracking()
+                .Where(t => selectedBatchIds.Contains(t.BatchId))
+                .Select(t => t.TaskId)
+                .ToListAsync();
+
+            var submissionsQuery = _context.NFD_Submissions
+                .AsNoTracking()
+                .Where(s => taskIds.Contains(s.TaskId));
+
+            if (traineeId.HasValue)
+            {
+                // Only submissions belonging to this trainee's
+                // enrollments in the selected scope.
+
+                submissionsQuery = submissionsQuery
+                    .Where(s => s.TraineeId == traineeId.Value);
+
+            }
+
+            var submissions = await submissionsQuery.ToListAsync();
+
+            var taskCompletionRate = submissions.Count > 0
+                ? Math.Round(
+                    submissions.Count(s =>
+                        s.Status == NFD_SubmissionStatus.Graded)
+                    * 100.0 / submissions.Count, 1)
+                : 0.0;
+
+            return new TrainerKpisDTO
+            {
+                AttendanceRate = attendanceRate,
+                TaskCompletionRate = taskCompletionRate,
+                AvgTechnicalGrade = avgTechnicalGrade
+            };
+        }
+
+
         //==========================================================
         // Admin Reports: end-of-batch performance drill-down (paginated).
 

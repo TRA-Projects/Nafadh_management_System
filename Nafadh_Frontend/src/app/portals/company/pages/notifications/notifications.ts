@@ -83,10 +83,7 @@ export class CompanyNotifications implements OnInit {
     const selectedDay = this.selectedDate();
     return this.notifications().filter(n => {
       if (selectedDay) {
-        const date = new Date(n.createdAt);
-        if (Number.isNaN(date.getTime())) return false;
-        const localDay = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        if (localDay !== selectedDay) return false;
+        if (this.omanDay(n.createdAt) !== selectedDay) return false;
       }
       if (this.activeFilter() === 'unread' && n.isRead) return false;
       if (this.activeFilter() === 'read' && !n.isRead) return false;
@@ -310,12 +307,25 @@ export class CompanyNotifications implements OnInit {
       TEXT_RULES.find(rule => rule.pattern.test(text))?.key ?? 'system';
   }
   categoryLabel(key: Category): string { return CATEGORIES.find(c => c.key === key)?.label ?? 'عام'; }
+  /** Display dates consistently in Oman, independent of the viewer's device timezone. */
+  private readonly omanTimeZone = 'Asia/Muscat';
+  private notificationDate(value: string): Date {
+    // Modern API values contain an explicit UTC marker; legacy offset-less values
+    // were recorded as server-local time. Do not guess a historical offset here.
+    return new Date(value);
+  }
+  private omanDay(value: string): string {
+    const date = this.notificationDate(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: this.omanTimeZone, year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(date);
+  }
   private dayLabel(value: string): string {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'سابقًا';
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const day = new Date(date); day.setHours(0, 0, 0, 0);
-    const days = Math.round((today.getTime() - day.getTime()) / 86400000);
+    const key = this.omanDay(value);
+    if (!key) return 'سابقًا';
+    const today = this.omanDay(new Date().toISOString());
+    const days = Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${key}T00:00:00Z`)) / 86400000);
     if (days < 0) return 'قادمة';
     if (days === 0) return 'اليوم';
     if (days === 1) return 'أمس';
@@ -325,7 +335,7 @@ export class CompanyNotifications implements OnInit {
   timeAgo(value: string): string {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return 'تاريخ غير متوفر';
-    if (date.getTime() > Date.now()) return date.toLocaleString('ar-OM');
+    if (date.getTime() > Date.now()) return date.toLocaleString('ar-OM', { timeZone: this.omanTimeZone });
     const minutes = Math.floor((Date.now() - date.getTime()) / 60000);
     if (minutes < 1) return 'منذ لحظات';
     if (minutes < 60) return `منذ ${minutes} دقيقة`;
@@ -334,10 +344,10 @@ export class CompanyNotifications implements OnInit {
     const days = Math.floor(hours / 24);
     if (days === 1) return 'أمس';
     if (days < 30) return `منذ ${days} يوم`;
-    return date.toLocaleDateString('ar-OM');
+    return date.toLocaleDateString('ar-OM', { timeZone: this.omanTimeZone });
   }
   fullDate(value: string): string {
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? 'تاريخ غير متوفر' : date.toLocaleString('ar-OM');
+    return Number.isNaN(date.getTime()) ? 'تاريخ غير متوفر' : date.toLocaleString('ar-OM', { timeZone: this.omanTimeZone });
   }
 }

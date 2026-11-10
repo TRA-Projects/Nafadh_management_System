@@ -310,7 +310,14 @@ export class CompanyProfile implements OnInit {
           this.companyEditOpen.set(false);
           this.saveMessage.set('تم حفظ بيانات التواصل بنجاح.');
         },
-        error: () => this.saveError.set('تعذر حفظ بيانات التواصل. تحقق من الاتصال وصلاحية الحساب ثم حاول مجددًا.'),
+        error: (error: any) => {
+          const serverMessage = typeof error?.error?.message === 'string' ? error.error.message : '';
+          this.saveError.set(error?.status === 403
+            ? 'حسابك لا يملك صلاحية تعديل بيانات الشركة. راجع صلاحية تعديل الملف الشخصي.'
+            : error?.status === 400 && serverMessage
+              ? serverMessage
+              : 'تعذر حفظ بيانات التواصل. تحقق من الاتصال ثم حاول مجددًا.');
+        },
       });
   }
 
@@ -352,6 +359,14 @@ export class CompanyProfile implements OnInit {
       this.branchSaveError.set('أدخل رقم هاتف صحيحًا من 8 إلى 15 رقمًا.');
       return;
     }
+    const normalizeLocation = (value: string) => value.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+    const duplicate = this.branches().some(b =>
+      normalizeLocation(b.location || '') === normalizeLocation(location) &&
+      this.normalizePhone(b.contactPoint || '') === phone);
+    if (duplicate) {
+      this.branchSaveError.set('هذا الفرع مسجل مسبقًا بنفس الموقع ورقم الهاتف.');
+      return;
+    }
     this.savingBranch.set(true);
     this.api.addBranch({ companyId: this.companyId, location, contactPoint: phone })
       .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.savingBranch.set(false)))
@@ -369,7 +384,13 @@ export class CompanyProfile implements OnInit {
           this.branchDraft = { location: '', phone: '' };
           this.branchFormOpen.set(false);
         },
-        error: () => this.branchSaveError.set('تعذر حفظ الفرع. تحقق من الاتصال ثم حاول مجددًا.'),
+        error: (error: any) => {
+          this.branchSaveError.set(error?.status === 409
+            ? 'هذا الفرع مسجل مسبقًا بنفس الموقع ورقم الهاتف.'
+            : error?.status === 403
+              ? 'لا توجد صلاحية لإضافة فرع لهذه الشركة.'
+              : 'تعذر حفظ الفرع. تحقق من الاتصال ثم حاول مجددًا.');
+        },
       });
   }
 

@@ -2023,3 +2023,92 @@
     padding-right: 56px;
   }
 }
+
+/* Certificate Delete Confirmation Modal */
+
+.certificate-delete-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(10, 30, 55, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.certificate-delete-modal {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  box-sizing: border-box;
+  border: 1px solid #dce6ef;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 24px 65px rgba(10, 35, 70, 0.2);
+  text-align: center;
+  direction: rtl;
+}
+
+.certificate-delete-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: #fff0f0;
+  color: #c43a3a;
+  font-size: 24px;
+}
+
+.certificate-delete-modal h3 {
+  margin: 0 0 10px;
+  color: #123d70;
+  font-size: 19px;
+}
+
+.certificate-delete-modal p {
+  color: #718096;
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+.certificate-delete-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.certificate-delete-actions button {
+  flex: 1;
+  min-height: 43px;
+  border-radius: 11px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.certificate-delete-cancel {
+  border: 1px solid #dce6ef;
+  background: #f7f9fb;
+  color: #43566d;
+}
+
+.certificate-delete-confirm {
+  border: 1px solid #d94b4b;
+  background: #d94b4b;
+  color: #ffffff;
+}
+
+.certificate-delete-confirm:hover {
+  background: #bd3535;
+}
+
+@media (max-width: 480px) {
+  .certificate-delete-modal {
+    padding: 22px 18px;
+  }
+}

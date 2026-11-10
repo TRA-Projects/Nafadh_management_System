@@ -228,7 +228,7 @@ export interface TrainerDto {
   experienceYears: number;
   biography?: string;
   cvUrl?: string;
-  linkedinUrl?: string | null;
+  linkedInUrl?: string | null;
   // Public URL of the trainer profile image.
 profileImageUrl?: string | null;
   status: TrainerStatus;
@@ -769,6 +769,8 @@ export interface ConversationMessageDto {
   senderName?: string;
   receiverId?: number;
   ticketId?: number;
+  attachmentUrl?: string | null;
+attachmentFileName?: string | null;
 }
 
 export interface ConversationDetailDto extends ConversationListItemDto {

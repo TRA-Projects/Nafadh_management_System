@@ -554,7 +554,7 @@
     <input
       type="url"
       class="profile-input text-ltr"
-      [(ngModel)]="t.linkedinUrl"
+      [(ngModel)]="t.linkedInUrl"
       [readonly]="!isEditing()"
       (ngModelChange)="markProfileChanged()"
       maxlength="300"
@@ -629,31 +629,21 @@
 
 
 
-    <div class="skills-list">
+<div class="skills-list">
+  @for (skill of skills(); track skill.trainerSkillId) {
+    <span class="skill-tag">
+      {{ skill.skillName }}
 
-      @for (skill of skills(); track skill.trainerSkillId) {
+      <button
+        type="button"
+        (click)="removeSkill(skill.trainerSkillId)"
+        title="حذف المهارة">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </span>
+  }
+</div>
 
-      <span class="skill-tag">
-
-        {{ skill.skillName }}
-
-
-
-        @if (isEditing()) {
-
-        <button type="button" (click)="removeSkill(skill.trainerSkillId)" title="حذف المهارة">
-
-          <i class="fa-solid fa-xmark"></i>
-
-        </button>
-
-        }
-
-      </span>
-
-      }
-
-    </div>
 
   </section>
   <!-- =====================================================
@@ -1091,5 +1081,49 @@
   </div>
 
   }
+
+@if (certificateToDelete(); as certificate) {
+  <div class="certificate-delete-overlay">
+    <div
+      class="certificate-delete-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="certificate-delete-title">
+
+      <div class="certificate-delete-icon">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+
+      <h3 id="certificate-delete-title">
+        تأكيد حذف الشهادة
+      </h3>
+
+      <p>
+        هل أنت متأكد من حذف شهادة
+        <strong>{{ certificate.certificateName }}</strong>؟
+      </p>
+
+      <div class="certificate-delete-actions">
+        <button
+          type="button"
+          class="certificate-delete-cancel"
+          [disabled]="isDeletingCertificate()"
+          (click)="cancelCertificateDelete()">
+          إلغاء
+        </button>
+
+        <button
+          type="button"
+          class="certificate-delete-confirm"
+          [disabled]="isDeletingCertificate()"
+          (click)="confirmCertificateDelete()">
+          {{ isDeletingCertificate() ? 'جاري الحذف...' : 'نعم، حذف الشهادة' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
 
 </div>

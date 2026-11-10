@@ -346,6 +346,19 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
     return mode === 'week' ? [this.currentWeek()] : this.monthWeeks();
   }
 
+  /** Display-only effective status: an approved *absence* is "بعذر".
+   * Preserve the stored Absent status for audit, existing reports and attendance metrics.
+   * Late and EarlyLeave never become "بعذر".
+   */
+  isExcusedAbsence(record: TrainerAttendanceDto | null | undefined): boolean {
+    return record?.status === 'Absent' && record.excuseReviewStatus === 'Approved';
+  }
+
+  attendanceDisplayLabel(record: TrainerAttendanceDto | null | undefined): string {
+    if (this.isExcusedAbsence(record)) return 'بعذر';
+    return this.statusText(record?.status);
+  }
+
   private statusText(status?: TrainerAttendanceStatus): string {
     return status ? (STATES.find(s => s.key === status)?.label ?? status) : 'لم يسجل';
   }
@@ -370,7 +383,7 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
     const excuses = summaries.flatMap(w => w.rows.flatMap(r => r.days
       .filter(d => d.record && (d.record.status === 'Absent' || !!d.record.reason || !!d.record.excuseProofUrl))
       .map(d => ({ week: w.title, name: r.name, date: d.key,
-        status: this.statusText(d.record?.status), reason: d.record?.reason || 'لا يوجد سبب',
+        status: this.attendanceDisplayLabel(d.record), reason: d.record?.reason || 'لا يوجد سبب',
         proof: d.record?.excuseProofUrl ? this.fileUrl(d.record.excuseProofUrl) : '',
       }))));
     return { summaries, excuses };
@@ -385,7 +398,7 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
       const table: (string | number)[][] = [
         [week.title, week.label],
         ['المدرب', 'التخصص', ...week.days.map(d => `${d.label} ${d.key}`), 'نسبة الالتزام'],
-        ...week.rows.map(r => [r.name, r.specialty, ...r.days.map(d => this.statusText(d.record?.status)), r.rate === null ? '—' : `${r.rate}%`]),
+        ...week.rows.map(r => [r.name, r.specialty, ...r.days.map(d => this.attendanceDisplayLabel(d.record)), r.rate === null ? '—' : `${r.rate}%`]),
         [],
         ['حاضر', week.stats.Present, 'متأخر', week.stats.Late, 'غائب', week.stats.Absent, 'انصراف مبكر', week.stats.EarlyLeave],
         ['نسبة الالتزام', week.stats.rate === null ? '—' : `${week.stats.rate}%`],
@@ -422,7 +435,7 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
       <section class="week"><h2>${esc(week.title)} <small>${esc(week.label)}</small></h2>
       <div class="stats">حاضر: ${week.stats.Present} &nbsp; | &nbsp; متأخر: ${week.stats.Late} &nbsp; | &nbsp; غائب: ${week.stats.Absent} &nbsp; | &nbsp; انصراف مبكر: ${week.stats.EarlyLeave} &nbsp; | &nbsp; نسبة الالتزام: ${week.stats.rate === null ? '—' : week.stats.rate + '%'}</div>
       <table><thead><tr><th>المدرب</th><th>التخصص</th>${week.days.map(d => `<th>${esc(d.label)}<br><small>${esc(d.key)}</small></th>`).join('')}<th>الالتزام</th></tr></thead>
-      <tbody>${week.rows.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.specialty)}</td>${r.days.map(d => `<td class="${d.record?.status === 'Absent' ? 'absent' : ''}">${esc(this.statusText(d.record?.status))}</td>`).join('')}<td>${r.rate === null ? '—' : r.rate + '%'}</td></tr>`).join('')}</tbody></table></section>`).join('');
+      <tbody>${week.rows.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.specialty)}</td>${r.days.map(d => `<td class="${d.record?.status === 'Absent' ? 'absent' : ''}">${esc(this.attendanceDisplayLabel(d.record))}</td>`).join('')}<td>${r.rate === null ? '—' : r.rate + '%'}</td></tr>`).join('')}</tbody></table></section>`).join('');
     const excuseTable = `<section class="excuses"><h2>جدول الأعذار والملاحظات</h2>
       <table><thead><tr><th>الأسبوع</th><th>المدرب</th><th>التاريخ</th><th>الحالة</th><th>السبب / الملاحظة</th><th>إثبات العذر</th></tr></thead><tbody>
       ${excuses.length ? excuses.map(e => `<tr><td>${esc(e.week)}</td><td>${esc(e.name)}</td><td>${esc(e.date)}</td><td>${esc(e.status)}</td><td>${esc(e.reason)}</td><td>${e.proof ? `<a href="${esc(e.proof)}" target="_blank" rel="noopener">عرض الإثبات</a>` : 'غير مرفق'}</td></tr>`).join('') : '<tr><td colspan="6">لا توجد أعذار مسجلة</td></tr>'}
@@ -535,8 +548,8 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
     return status === 'Present' ? 100 : status === 'Absent' ? 0 : 75;
   }
 
-  weeklyStatusLabel(status: TrainerAttendanceStatus): string {
-    return this.statusText(status);
+  weeklyStatusLabel(record: TrainerAttendanceDto): string {
+    return this.attendanceDisplayLabel(record);
   }
 
   hasExcuse(record: TrainerAttendanceDto | null): boolean {
@@ -716,18 +729,16 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
 
 
 
-  statusSymbol(status?: TrainerAttendanceStatus): string {
-
-    return ({ Present: 'ح', Late: 'ت', Absent: 'غ', EarlyLeave: 'م' } as Record<TrainerAttendanceStatus, string>)[status!] ?? '—';
-
+  statusSymbol(record: TrainerAttendanceDto | null): string {
+    if (this.isExcusedAbsence(record)) return 'ع';
+    return ({ Present: 'ح', Late: 'ت', Absent: 'غ', EarlyLeave: 'م' } as Record<TrainerAttendanceStatus, string>)[record?.status!] ?? '—';
   }
 
 
 
-  statusClass(status?: TrainerAttendanceStatus): string {
-
-    return status ? `badge-${status}` : 'badge-empty';
-
+  statusClass(record: TrainerAttendanceDto | null): string {
+    if (this.isExcusedAbsence(record)) return 'badge-Excused';
+    return record?.status ? `badge-${record.status}` : 'badge-empty';
   }
 
 
@@ -789,7 +800,7 @@ ngOnInit(): void {
 
     forkJoin({
 
-      trainers: this.api.getCompanyTrainers(this.companyId),
+      trainers: this.api.getCompanyTrainers(this.companyId, this.todayKey),
 
       records: this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.loadToKey()),
 

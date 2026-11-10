@@ -116,6 +116,16 @@ closeMeetingDetails(): void {
   }
 }
 
+showChatOptions = false;
+
+toggleChatOptions(): void {
+  this.showChatOptions = !this.showChatOptions;
+}
+
+closeChatOptions(): void {
+  this.showChatOptions = false;
+}
+
 
   ngOnInit(): void {
     const userId = this.auth.userId;
@@ -134,9 +144,7 @@ closeMeetingDetails(): void {
   private loadTrainerTrainees(trainerId: number, userId: number): void {
     this.api.getMyBatches(trainerId).subscribe({
       next: (batches) => {
-        (batches ?? []).forEach(batch => {
-          this.createBatchGroup(batch.batchId, userId);
-        });
+      
 
         const requests = (batches ?? []).map(batch => this.api.getBatchTrainees(batch.batchId));
 
@@ -308,16 +316,7 @@ closeMeetingDetails(): void {
   batchGroups: any[] = [];
   isBatchGroupSelected = false;
 
- createBatchGroup(batchId: number, trainerUserId: number): void {
-  this.api.createBatchGroup({ batchId, trainerUserId }).subscribe({
-    next: () => {
-      this.loadTrainerConversations(trainerUserId);
-    },
-    error: (error) => {
-      console.error('فشل مزامنة مجموعة الدفعة:', error);
-    }
-  });
-}
+
 
   isNewMessage = false;
   selectedTraineeId = signal<number | null>(null);
@@ -332,6 +331,7 @@ closeMeetingDetails(): void {
 
   selectTrainee(traineeId: number): void {
     this.isBatchGroupSelected = false;
+    this.selectedBatchGroupId = null;
     this.selectedTraineeId.set(traineeId);
     this.isNewMessage = false;
 
@@ -366,6 +366,7 @@ this.cdr.markForCheck();
 
   this.api.getConversation(conversationId).subscribe({
     next: (conversation) => {
+      if (this.selectedBatchGroupId !== conversationId) return;
       const rawMessages = conversation?.messages ?? [];
 
       // الرسائل العادية في المجموعة
@@ -394,6 +395,7 @@ this.cdr.markForCheck();
       // جلب اجتماعات الدفعة
       this.api.getSessions(batchId).subscribe({
         next: (sessions: any[]) => {
+          if (this.selectedBatchGroupId !== conversationId) return;
           const batchSessions = (sessions ?? [])
             .filter(
               (session: any) =>
@@ -492,8 +494,10 @@ this.cdr.markForCheck();
           this.messages = loadedMessages;
           this.cdr.markForCheck();
         },
-        error: (error) => {
-          console.error('تعذر تحميل اجتماعات الدفعة:', error);
+       error: (error) => {
+  if (this.selectedBatchGroupId !== conversationId) return;
+
+  console.error('تعذر تحميل اجتماعات الدفعة:', error);
 
           // إذا فشل جلب الاجتماعات، لا نخفي الرسائل العادية
           this.messages = loadedMessages;
@@ -501,11 +505,13 @@ this.cdr.markForCheck();
         }
       });
     },
-    error: (error) => {
-      console.error('تعذر تحميل محادثة المجموعة:', error);
-      this.messages = [];
-      this.cdr.markForCheck();
-    }
+error: (error) => {
+  if (this.selectedBatchGroupId !== conversationId) return;
+
+  console.error('تعذر تحميل محادثة المجموعة:', error);
+  this.messages = [];
+  this.cdr.markForCheck();
+}
   });
 }
 
@@ -528,13 +534,16 @@ this.cdr.markForCheck();
       content: text
     }).subscribe({
       next: (savedMessage) => {
-        this.messages.push({
-          sender: 'trainer',
-          text: savedMessage?.content ?? text,
-          time:
-            this.formatMessageTime(savedMessage?.sentDate) ||
-            this.formatMessageTime(new Date())
-        });
+     this.messages = [
+  ...this.messages,
+  {
+    sender: 'trainer',
+    text: savedMessage?.content ?? text,
+    time: this.formatMessageTime(savedMessage?.sentDate) || this.formatMessageTime(new Date())
+  }
+];
+
+this.cdr.markForCheck();
         this.messageText = '';
       },
       error: (error) => {

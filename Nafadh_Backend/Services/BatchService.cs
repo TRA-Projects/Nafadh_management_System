@@ -155,6 +155,7 @@ namespace Nafadh_Backend.Services
         }
 
 
+
         public async Task<bool> UpdateAsync(int id, UpdateBatchDto dto)
         {
             var batch = await _repository.GetByIdAsync(id);
@@ -343,7 +344,7 @@ namespace Nafadh_Backend.Services
                     Message = message,
                     RelatedEntity = cancelled ? $"BatchCancelled:{batch.BatchId}" : $"BatchAssignment:{batch.BatchId}",
                     IsRead = false,
-                    CreatedAt = now
+                    CreatedAt = DateTime.UtcNow
                 });
             await _context.SaveChangesAsync();
         }
@@ -469,6 +470,7 @@ namespace Nafadh_Backend.Services
 
 
                 TotalTraineesCount = totalTrainees,
+                CompaniesCount = b.Enrollments?.Select(e => e.CompanyId).Distinct().Count() ?? 0,
                 IssuedCertificatesCount = completedCount,
                 Status = finalStatus,
                 Department = b.Program?.Category ?? "عام",

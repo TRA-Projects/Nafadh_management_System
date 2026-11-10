@@ -27,7 +27,12 @@ namespace Nafadh_Backend.Repositories
         Task<List<int>> GetCompanyTopPerformerTraineeIdsAsync(int companyId, int take);
         Task<List<int>> GetCompanyAtRiskTraineeIdsAsync(int companyId, int take);
         Task<TrainerKpisDTO> GetTrainerKpisAsync(
-    int trainerId);
+      int trainerId);
+
+        Task<TrainerKpisDTO> GetTrainerReportKpisAsync(
+            int trainerId,
+            int? batchId,
+            int? traineeId);
 
         Task<List<DTOs.TrainerTraineesReportRowDto>> GetTrainerTraineesReportRowsAsync(
     int trainerId, int? batchId, int? traineeId);

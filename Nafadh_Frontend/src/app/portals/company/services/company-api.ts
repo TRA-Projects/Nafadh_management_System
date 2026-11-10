@@ -197,7 +197,7 @@ export class CompanyApi {
   }
 
   addTrainer(dto: unknown): Observable<unknown> {
-    return this.http.post<unknown>(`${this.base}/Trainer`, dto);
+    return this.http.post<unknown>(`${this.base}/company-staff/trainers`, dto);
   }
   // ============================================================
   // Trainees
@@ -293,6 +293,10 @@ export class CompanyApi {
     return this.http.get<CompanySupervisorDto[]>(
       `${this.base}/CompanySupervisor/company/${companyId}`
     );
+  }
+
+  registerCompanySupervisor(dto: unknown): Observable<unknown> {
+    return this.http.post<unknown>(`${this.base}/company-staff/supervisors`, dto);
   }
 
   addSupervisor(dto: unknown): Observable<unknown> {
@@ -832,9 +836,10 @@ getAttachmentSettings(): Observable<{
     }))
   );
 }
-  getCompanyTrainers(companyId: number): Observable<CompanyTrainerDto[]> {
+  getCompanyTrainers(companyId: number, date?: string): Observable<CompanyTrainerDto[]> {
     return this.http.get<CompanyTrainerDto[]>(
-      `${this.base}/TrainerAttendance/company/${companyId}/trainers`
+      `${this.base}/TrainerAttendance/company/${companyId}/trainers`,
+      { params: date ? new HttpParams().set('date', date) : undefined }
     );
   }
 
@@ -936,7 +941,7 @@ getAttachmentSettings(): Observable<{
     return this.http.get<CompanyDto>(`${this.portalBase}/company/${id}`);
   }
   updatePortalCompanyContact(id: number, dto: { phone: string; email: string }): Observable<{ phone: string; email: string }> {
-    return this.http.patch<{ phone: string; email: string }>(`${this.portalBase}/company/${id}/contact`, { phone: dto.phone, email: dto.email });
+    return this.http.patch<{ phone: string; email: string }>(`${this.base}/Company/${id}/contact`, { phone: dto.phone, email: dto.email });
   }
   getPortalBranches(id: number): Observable<CompanyBranchDto[]> {
     return this.http.get<CompanyBranchDto[]>(`${this.portalBase}/company/${id}/branches`);

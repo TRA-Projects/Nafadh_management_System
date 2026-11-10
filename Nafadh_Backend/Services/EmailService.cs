@@ -23,6 +23,29 @@ namespace Nafadh_Backend.Services
             _templateService = templateService;
         }
 
+        // Initial credentials are generated server-side; do not include passwords in logs.
+        public async Task SendCompanyStaffWelcomeAsync(string email, string fullName, string companyName,
+            bool isTrainer, string temporaryPassword)
+        {
+            string safeName = WebUtility.HtmlEncode(fullName);
+            string safeCompany = WebUtility.HtmlEncode(companyName);
+            string safeEmail = WebUtility.HtmlEncode(email);
+            string safePassword = WebUtility.HtmlEncode(temporaryPassword);
+            string roleLabel = isTrainer ? "مدرب" : "مشرف";
+            string subject = $"تم تسجيلك {roleLabel} لدى {companyName} - منصة نفاذ";
+            string html = $@"<div dir='rtl' style='font-family:Arial,sans-serif;line-height:1.9;max-width:620px;margin:auto'>
+                <h2>مرحبًا بك في منصة نفاذ</h2>
+                <p>عزيزي/عزيزتي <strong>{safeName}</strong>،</p>
+                <p>تم إنشاء حسابك بصفة <strong>{roleLabel}</strong> تابع لشركة
+                   <strong>{safeCompany}</strong> في منصة نفاذ.</p>
+                <p>البريد المستخدم للدخول: <strong dir='ltr'>{safeEmail}</strong></p>
+                <p>كلمة المرور المؤقتة: <strong dir='ltr'>{safePassword}</strong></p>
+                <p><strong>يرجى تغيير كلمة المرور فور تسجيل الدخول، وعدم مشاركة هذه الرسالة.</strong></p>
+                <p>إذا لم تكن تتوقع إنشاء هذا الحساب، فتواصل مع مسؤول شركتك أو دعم نفاذ.</p>
+                <p>مع التحية،<br/>فريق منصة نفاذ</p></div>";
+            await SendAsync(email, subject, html);
+        }
+
         // ==========================================
         // First Absence Warning
         // ==========================================

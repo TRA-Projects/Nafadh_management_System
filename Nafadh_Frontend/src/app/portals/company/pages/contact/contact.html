@@ -50,7 +50,7 @@
           @for (c of filteredConversations(); track c.conversationId) {
             <button type="button" class="contact-thread" [class.active]="active()?.conversationId === c.conversationId" (click)="open(c.conversationId)" [disabled]="sending() || creating()" [attr.aria-current]="active()?.conversationId === c.conversationId ? 'true' : null">
               <span class="thread-avatar" aria-hidden="true">{{ (c.subject || 'م').charAt(0) }}</span>
-              <span class="thread-body"><span class="thread-title"><strong>{{ c.subject }}</strong>@if (c.unreadCount > 0) { <span class="unread-count">{{ c.unreadCount }}</span> }</span><span class="thread-category">{{ c.category || 'استفسار عام' }}</span><span class="thread-preview">{{ c.lastMessagePreview || 'لا توجد رسائل بعد' }}</span><span class="thread-date">{{ c.lastMessageDate | date:'dd/MM/yyyy • HH:mm' }}</span></span>
+              <span class="thread-body"><span class="thread-title"><strong>{{ c.subject }}</strong>@if (c.unreadCount > 0) { <span class="unread-count">{{ c.unreadCount }}</span> }</span><span class="thread-category">{{ c.category || 'استفسار عام' }}</span><span class="thread-preview">{{ c.lastMessagePreview || 'لا توجد رسائل بعد' }}</span><span class="thread-date">{{ utcTimestamp(c.lastMessageDate) | date:'dd/MM/yyyy • HH:mm':'+0400' }}</span></span>
             </button>
           } @empty {
             <div class="contact-placeholder">
@@ -99,7 +99,7 @@
         <div class="chat-messages" #messagesContainer tabindex="0" aria-label="سجل الرسائل">
           <div class="chat-date-divider"><span>سجل الرسائل</span></div>
           @for (m of conv.messages; track m.messageId) {
-            <div class="message-line" [class.mine]="m.senderId === (auth.userId ?? -1)"><div class="message-bubble"><strong>{{ m.senderName || (m.senderId === auth.userId ? 'أنت' : 'الهيئة') }}</strong><p dir="auto">{{ m.content }}</p><time>{{ m.sentDate | date:'dd/MM/yyyy • HH:mm' }}</time></div></div>
+            <div class="message-line" [class.mine]="m.senderId === (auth.userId ?? -1)"><div class="message-bubble"><strong>{{ m.senderName || (m.senderId === auth.userId ? 'أنت' : 'الهيئة') }}</strong><p dir="auto">{{ m.content }}</p><time>{{ utcTimestamp(m.sentDate) | date:'dd/MM/yyyy • HH:mm':'+0400' }}</time></div></div>
           } @empty { <div class="contact-placeholder"><span class="placeholder-icon">✉</span><h4>لا توجد رسائل بعد</h4><p>اكتب أول رسالة لبدء التواصل.</p></div> }
         </div>
         @if (isTrashed(conv.conversationId)) {
