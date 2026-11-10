@@ -386,7 +386,6 @@
   }
 
   <!-- 2. نافذة عرض وتحميل السيرة الذاتية -->
-  <!-- 2. نافذة عرض وتحميل السيرة الذاتية -->
   @if (showCvModal() && activeTrainee()) {
   <div class="modal-backdrop" (click)="closeCvModal()">
 
@@ -730,7 +729,7 @@
         </div>
       </div>
 
-      <!-- 🌟 زر الرجوع للصفحة السابقة في أعلى الهيدر -->
+      <!-- زر الرجوع للصفحة السابقة في أعلى الهيدر -->
       <button type="button" class="btn-fullscreen-close" (click)="closeBatchAttendanceModal()"
         title="الرجوع للصفحة السابقة">
         <i class="fa-solid fa-arrow-right"></i>
@@ -746,12 +745,10 @@
       <!-- ================================================================= -->
       @if (attendanceStep() === 1) {
 
-      <!-- 👈 شريط الفلاتر: يحتوي على قائمة الدفعات المنسدلة المطلوبة + البحث + التاريخ -->
       <div class="batch-controls-bar">
 
         <div class="batch-controls-right">
-
-          <!-- 👈 الزر والقائمة المنسدلة لاختيار الدفعة مباشرة بجانب البحث كما في صورتك -->
+          <!-- القائمة المنسدلة لاختيار الدفعة -->
           <div class="batch-dropdown-wrap">
             <select class="batch-select-dropdown" [ngModel]="attendanceBatchDropdownFilter()"
               (ngModelChange)="onBatchDropdownFilterChange($event)">
@@ -769,7 +766,6 @@
             <input type="text" class="batch-search-input" [ngModel]="attendanceBatchSearch()"
               (ngModelChange)="onBatchSearchChange($event)" placeholder="ابحث باسم الدفعة، المسار...">
           </div>
-
         </div>
 
         <!-- منتقي تاريخ الحضور -->
@@ -783,7 +779,7 @@
 
       </div>
 
-      <!-- 👈 شبكة بطاقات الدفعات التدريبية كاملة (تظهر جميع الدفعات المعتمدة) -->
+      <!-- شبكة بطاقات الدفعات التدريبية مع إحصائيات الأرقام الحقيقية -->
       <div class="portal-batch-grid">
         @for (batch of pagedAttendanceBatches(); track batch.name) {
         <div class="portal-batch-card">
@@ -798,22 +794,22 @@
             </div>
           </div>
 
-          <!-- شبكة الإحصائيات الأربعة المطابقة للتصميم الرسمي -->
+          <!-- شبكة الإحصائيات الأربعة بالأرقام الحقيقية -->
           <div class="portal-stats-grid">
             <div class="portal-stat-item">
-              <span class="stat-num">{{ batch.rating ?? '—' }}</span>
+              <span class="stat-num">{{ batch.rating }}</span>
               <span class="stat-lbl">التقييم</span>
             </div>
             <div class="portal-stat-item">
-              <span class="stat-num">{{ batch.count ?? '—' }}</span>
+              <span class="stat-num">{{ batch.count }}</span>
               <span class="stat-lbl">متدرب</span>
             </div>
             <div class="portal-stat-item">
-              <span class="stat-num">{{ batch.companies ?? '—' }}</span>
+              <span class="stat-num">{{ batch.companies }}</span>
               <span class="stat-lbl">الشركات</span>
             </div>
             <div class="portal-stat-item">
-              <span class="stat-num">{{ batch.programs ?? '—' }}</span>
+              <span class="stat-num">{{ batch.programs }}</span>
               <span class="stat-lbl">البرامج</span>
             </div>
           </div>
@@ -826,7 +822,7 @@
             </a>
           </div>
 
-          <!-- زر تسجيل حضور الدفعة والانتقال للصفحة التالية -->
+          <!-- زر تسجيل حضور الدفعة -->
           <button type="button" class="btn-portal-primary" (click)="selectBatchForAttendance(batch)">
             تسجيل حضور الدفعة <i class="fa-solid fa-arrow-left"></i>
           </button>
@@ -840,7 +836,7 @@
         }
       </div>
 
-      <!-- شريط التصفح والانتقال للصفحة التالية والسابقة للبطاقات -->
+      <!-- شريط التصفح -->
       <div class="nfd-pagination-bar">
         <div class="pagination-info">
           عرض الصفحة <strong>{{ batchCurrentPage() }}</strong> من <strong>{{ batchTotalPages() }}</strong>
@@ -870,11 +866,10 @@
       }
 
       <!-- ================================================================= -->
-      <!-- محتوى الخطوة 2: رصد حضور المتدربين + جدول التحضير (بدون منسدلة المسار)  -->
+      <!-- محتوى الخطوة 2: رصد حضور المتدربين بالألوان والحالات الفعلية        -->
       <!-- ================================================================= -->
       @if (attendanceStep() === 2) {
 
-      <!-- شريط التنقل العلوي ومعلومات الدفعة -->
       <div class="step2-top-bar">
         <button type="button" class="btn-back-link" (click)="backToBatchSelection()">
           <i class="fa-solid fa-arrow-right"></i> العودة لاختيار دفعة أخرى
@@ -887,7 +882,6 @@
         </div>
       </div>
 
-      <!-- شريط توجيهي إداري: يوضح أن التسجيل يتم عبر المدرب وأن الصفحة للاطلاع والمتابعة -->
       <div class="admin-notice-banner">
         <div class="notice-right">
           <div class="notice-icon"><i class="fa-solid fa-user-shield"></i></div>
@@ -896,7 +890,6 @@
           </div>
         </div>
 
-        <!-- 👈 المدرب الراصد: يظهر تلقائياً حسب الدفعة المحددة -->
         <div class="notice-left">
           <span class="trainer-tag">
             <i class="fa-solid fa-chalkboard-user"></i> المدرب الراصد:
@@ -905,10 +898,9 @@
         </div>
       </div>
 
-      <!-- شريط الفلاتر: البحث + تبويبات الحالة + زر تصدير سريع (بدون منسدلة المسارات) -->
+      <!-- شريط الفلاتر: البحث + تبويبات الحالة السريعة الملونة -->
       <div class="attendance-filter-row">
 
-        <!-- حقل البحث بالاسم أو الرقم المدني -->
         <div class="trainee-search-group">
           <label class="track-dropdown-label">بحث في المتدربين</label>
           <div class="trainee-search-box">
@@ -918,27 +910,37 @@
           </div>
         </div>
 
-        <!-- تبويبات الحالة السريعة -->
+        <!-- تبويبات الحالة مع أرقامها الحقيقية -->
         <div class="status-tabs-group">
           <label class="track-dropdown-label">تصفية بحالة الحضور</label>
           <div class="status-tabs-wrap">
-            <app-catalog-picker class="filter-select" caption="تصفية حضور المتدرب" [options]="attendancePickerChoices"
-              [value]="attendanceStatusFilter()" (valueChange)="onAttendanceStatusFilterChange($event)" />
-            @for (option of attendancePickerChoices; track option.value) {
-            <button type="button" class="status-tab" [class.present]="option.value === 'Present'"
-              [class.late]="option.value === 'Late'" [class.absent]="option.value === 'Absent'"
-              [class.excused]="option.value === 'Excused'" [class.active]="attendanceStatusFilter() === option.value"
-              (click)="onAttendanceStatusFilterChange(option.value)">
-              {{ option.label }} ({{ option.value === 'ALL' ? attendanceSummary().total : option.value === 'Present' ?
-              attendanceSummary().present : option.value === 'Late' ? attendanceSummary().late : option.value ===
-              'Absent' ? attendanceSummary().absent : option.value === 'Excused' ? attendanceSummary().excused :
-              attendanceSummary().notRecorded }})
+            <button type="button" class="status-tab" [class.active]="attendanceStatusFilter() === 'ALL'"
+              (click)="onAttendanceStatusFilterChange('ALL')">
+              الكل ({{ attendanceSummary().total }})
             </button>
-            }
+            <button type="button" class="status-tab present" [class.active]="attendanceStatusFilter() === 'Present'"
+              (click)="onAttendanceStatusFilterChange('Present')">
+              حاضر ({{ attendanceSummary().present }})
+            </button>
+            <button type="button" class="status-tab late" [class.active]="attendanceStatusFilter() === 'Late'"
+              (click)="onAttendanceStatusFilterChange('Late')">
+              متأخر ({{ attendanceSummary().late }})
+            </button>
+            <button type="button" class="status-tab absent" [class.active]="attendanceStatusFilter() === 'Absent'"
+              (click)="onAttendanceStatusFilterChange('Absent')">
+              غائب ({{ attendanceSummary().absent }})
+            </button>
+            <button type="button" class="status-tab excused" [class.active]="attendanceStatusFilter() === 'Excused'"
+              (click)="onAttendanceStatusFilterChange('Excused')">
+              معذور ({{ attendanceSummary().excused }})
+            </button>
+            <button type="button" class="status-tab" [class.active]="attendanceStatusFilter() === 'NotRecorded'"
+              (click)="onAttendanceStatusFilterChange('NotRecorded')">
+              قيد الرصد ({{ attendanceSummary().notRecorded }})
+            </button>
           </div>
         </div>
 
-        <!-- أزرار الإجراءات العلوية: تصدير الكشف + طباعة الكشف في نفس المسار بالأعلى -->
         <div class="top-actions-group">
           <button type="button" class="btn-export-quick" (click)="exportAttendanceToExcel()"
             title="تصدير بيانات الحضور الحالية إلى Excel">
@@ -953,7 +955,7 @@
 
       </div>
 
-      <!-- جدول استعراض معلومات المتدربين وسجل الحضور المرصود من المدرب -->
+      <!-- جدول المتدربين وحالة الحضور المعتمدة -->
       <div class="attendance-table-container">
         <table class="att-table">
           <thead>
@@ -971,7 +973,6 @@
             <tr>
               <td class="text-muted">{{ (attendanceCurrentPage() - 1) * attendancePageSize() + i + 1 }}</td>
 
-              <!-- معلومات المتدرب: الصورة والاسم والبريد -->
               <td>
                 <div class="att-trainee-cell">
                   <div class="att-avatar">
@@ -988,17 +989,15 @@
                 </div>
               </td>
 
-              <!-- المسار التدريبي -->
               <td>
                 <span class="att-track-badge">{{ record.track }}</span>
               </td>
 
-              <!-- الشركة المستضيفة -->
               <td>
                 <span class="att-company-badge">{{ record.companyName || 'مجموعة أفق التقنية' }}</span>
               </td>
 
-              <!-- حالة الحضور المسجلة من قِبل المدرب (عرض فقط على شكل بادج رسمي) -->
+              <!-- بادج حالة الحضور الملونة -->
               <td style="text-align: center;">
                 @switch (record.status) {
                 @case ('Present') {
@@ -1029,7 +1028,6 @@
                 }
               </td>
 
-              <!-- ملاحظات المدرب المسجلة كنص رسمي -->
               <td>
                 <span class="att-notes-display" [class.empty]="!record.notes">
                   {{ record.notes || 'لا توجد ملاحظات مسجلة' }}
@@ -1049,7 +1047,7 @@
         </table>
       </div>
 
-      <!-- شريط التصفح والانتقال للصفحة التالية والسابقة لسجل الحضور -->
+      <!-- شريط التصفح لسجل الحضور -->
       <div class="nfd-pagination-bar">
         <div class="pagination-info">
           عرض الصفحة <strong>{{ attendanceCurrentPage() }}</strong> من <strong>{{ attendanceTotalPages() }}</strong>
@@ -1092,11 +1090,10 @@
 
     </div>
 
-    <!-- فوتر الصفحة الكاملة: شريط ملخص إرشادي -->
+    <!-- فوتر الصفحة الكاملة -->
     <div class="fullscreen-attendance-footer">
       <div class="footer-actions">
         @if (attendanceStep() === 1) {
-
         }
       </div>
       <span class="footer-hint">

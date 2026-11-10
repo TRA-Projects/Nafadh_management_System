@@ -359,7 +359,66 @@ export class AdminTraineeProfile implements OnInit {
 
     this.generateAndDownloadHtmlCv(safeName);
   }
+openProfileCvInNewTab(): void {
+    const rawUrl = this.resumeUrl();
 
+    // 1. إذا كان رابطاً حقيقياً وليس تجريبياً (لا يحتوي على nafadh.test)
+    if (rawUrl && !rawUrl.includes('nafadh.test') && (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'))) {
+      window.open(rawUrl, '_blank');
+      return;
+    }
+
+    const t = (this as any).trainee ? (this as any).trainee() : null;
+    const name = (this as any).fullName ? (this as any).fullName() : (t?.fullName || 'متدرب');
+    const email = t?.email || '';
+    const phone = t?.phone || '—';
+    const nationalId = t?.nationalId || '—';
+    const university = t?.university || '—';
+    const major = t?.major || '—';
+    const company = t?.companyName || 'لم يوزّع بعد';
+    const batch = t?.batchName || '—';
+    const track = t?.trackName || '.NET Track';
+
+    const cvHtml = `
+      <!DOCTYPE html>
+      <html lang="ar" dir="rtl">
+      <head>
+        <meta charset="UTF-8">
+        <title>السيرة الذاتية - ${name}</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; padding: 40px; background: #f8fafc; color: #0f172a; line-height: 1.8; }
+          .card { max-width: 800px; margin: 0 auto; background: #fff; padding: 35px; border-radius: 16px; box-shadow: 0 4px 25px rgba(0,0,0,0.08); border-top: 6px solid #0a1172; }
+          h1 { color: #0a1172; margin-top: 0; font-size: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+          h2 { color: #1e293b; font-size: 20px; margin-top: 10px; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 25px; }
+          .item { background: #f1f5f9; padding: 14px 18px; border-radius: 10px; }
+          .label { font-size: 13px; color: #64748b; display: block; font-weight: 600; margin-bottom: 4px; }
+          .val { font-weight: bold; font-size: 15px; color: #0f172a; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>السيرة الذاتية والملف المهني للمتدرب</h1>
+          <h2>${name}</h2>
+          <div class="grid">
+            <div class="item"><span class="label">البريد الإلكتروني</span><span class="val">${email}</span></div>
+            <div class="item"><span class="label">رقم الهاتف</span><span class="val" dir="ltr">${phone}</span></div>
+            <div class="item"><span class="label">الرقم المدني</span><span class="val">${nationalId}</span></div>
+            <div class="item"><span class="label">الجامعة أو الكلية</span><span class="val">${university}</span></div>
+            <div class="item"><span class="label">التخصص الأكاديمي</span><span class="val">${major}</span></div>
+            <div class="item"><span class="label">الشركة المستضيفة</span><span class="val">${company}</span></div>
+            <div class="item"><span class="label">الدفعة التدريبية</span><span class="val">${batch}</span></div>
+            <div class="item"><span class="label">المسار التدريبي</span><span class="val">${track}</span></div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([cvHtml], { type: 'text/html;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(blob);
+    window.open(blobUrl, '_blank');
+  }
   private generateAndDownloadHtmlCv(safeName: string): void {
     const t = this.trainee() || {};
     const e = this.enrollment();
