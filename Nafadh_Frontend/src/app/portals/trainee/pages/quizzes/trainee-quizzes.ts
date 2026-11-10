@@ -78,6 +78,9 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
   showSubmitModal = signal(false);
   showAutoSubmitModal = signal(false);
   showViolationModal = signal(false);
+  
+  // 🟢 إضافة متغير للتحكم بنافذة التنبيه
+  showValidationWarningModal = signal(false);
 
   result = signal<any>(null);
 
@@ -204,6 +207,8 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     if (id) this.loadQuizzes(id);
   }
 
+  // داخل الكلاس
+
   getStateLabel(state: string): string {
     switch (state) {
       case 'Available': return 'متاح';
@@ -216,7 +221,9 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
-  getStateClass(state: string): string { return state.toLowerCase(); }
+  getStateClass(state: string): string { 
+    return state.toLowerCase(); 
+  }
 
   getStateIcon(state: string): string {
     switch (state) {
@@ -717,27 +724,62 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     return 'fa-file';
   }
 
-  private validateBeforeSubmit(): boolean {
-    const fileQuestions = this.questions().filter(q => this.isFileUploadQuestion(q));
+  // =========================================
+  // 🟢 SUBMIT VALIDATION & SUBMIT
+  // =========================================
 
-    for (const q of fileQuestions) {
-      if (!this.answers[q.attemptQuestionId]?.uploadedFile) {
-        const idx = this.questions().indexOf(q) + 1;
-        this.errorMessage.set(
-          `السؤال رقم ${idx} يتطلب رفع ملف قبل التسليم.`
-        );
-        return false;
+  private validateBeforeSubmit(): boolean {
+    const allQuestions = this.questions();
+    
+    for (let i = 0; i < allQuestions.length; i++) {
+      const q = allQuestions[i];
+      const answer = this.answers[q.attemptQuestionId];
+      const questionType = String((q as any).questionType || '').toLowerCase();
+
+      // 1. التحقق من أسئلة الاختيار من متعدد والصح والخطأ
+      const isChoiceQuestion = 
+        questionType === '0' || 
+        questionType === '1' || 
+        questionType === 'multiplechoice' || 
+        questionType === 'truefalse';
+
+      if (isChoiceQuestion) {
+        if (!answer || !answer.selectedOptionId) {
+          this.errorMessage.set(`السؤال رقم ${i + 1} لم يتم الإجابة عليه. يرجى الإجابة على جميع الأسئلة قبل التسليم.`);
+          return false;
+        }
+      }
+
+      // 2. التحقق من الأسئلة المقالية
+      const isEssayQuestion = 
+        questionType === '2' || 
+        questionType === 'essay';
+
+      if (isEssayQuestion) {
+        if (!answer || !answer.textAnswer || answer.textAnswer.trim() === '') {
+          this.errorMessage.set(`السؤال رقم ${i + 1} (مقالي) لم يتم الإجابة عليه. يرجى كتابة إجابتك قبل التسليم.`);
+          return false;
+        }
+      }
+
+      // 3. التحقق من أسئلة رفع الملفات
+      if (this.isFileUploadQuestion(q)) {
+        if (!answer || !answer.uploadedFile) {
+          this.errorMessage.set(`السؤال رقم ${i + 1} يتطلب رفع ملف قبل التسليم.`);
+          return false;
+        }
       }
     }
-    return true;
+
+    return true; // جميع الأسئلة تمت الإجابة عليها
   }
 
-  // =========================================
-  // SUBMIT
-  // =========================================
-
   submitQuiz() {
-    if (!this.validateBeforeSubmit()) return;
+    if (!this.validateBeforeSubmit()) {
+      // 🟢 إظهار نافذة التنبيه بدلاً من التمرير فقط
+      this.showValidationWarningModal.set(true);
+      return;
+    }
     this.showSubmitModal.set(true);
   }
 
@@ -772,7 +814,18 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
   }
-
+  // 🟢 دالة للتحقق مما إذا كان وقت الاختبار قد انتهى
+  isQuizExpired(quiz: TraineeQuizListItemDto): boolean {
+    if (!quiz.endDateTime) return false;
+    
+    // تحويل التاريخ القادم من الـ Backend إلى كائن Date
+    const hasTz = /(?:Z|[+-]\d{2}:\d{2})$/i.test(quiz.endDateTime);
+    const dateValue = hasTz ? quiz.endDateTime : quiz.endDateTime + 'Z';
+    const endDate = new Date(dateValue);
+    
+    // مقارنة الوقت الحالي بوقت النهاية
+    return new Date() > endDate;
+  }
   private loadResult() {
     const attemptId = this.attempt()?.attemptId;
     const tId = this.traineeId();
@@ -890,5 +943,8 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
         this.errorMessage.set('تعذر تحميل تفاصيل المحاولة');
       }
     });
+
+    
   }
+  
 }

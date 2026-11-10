@@ -151,6 +151,9 @@ namespace Nafadh_Backend.DTOs
         public decimal? LatestPercentage { get; set; }
         public bool? IsPassed { get; set; }
 
+        public bool IsGradingCompleted { get; set; }
+
+
         // Upcoming / Available / InProgress / PendingGrading / Completed / Missed
         public string State { get; set; } = string.Empty;
     }
