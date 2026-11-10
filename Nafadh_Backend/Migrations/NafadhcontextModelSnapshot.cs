@@ -3539,6 +3539,29 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_TrainerCertificates", (string)null);
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerSkill", b =>
+                {
+                    b.Property<int>("TrainerSkillId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TrainerSkillId"));
+
+                    b.Property<string>("SkillName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("TrainerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("TrainerSkillId");
+
+                    b.HasIndex("TrainerId");
+
+                    b.ToTable("NFD_TrainerSkills");
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainingMaterial", b =>
                 {
                     b.Property<int>("MaterialId")
@@ -5167,6 +5190,17 @@ namespace Nafadh_Backend.Migrations
                 {
                     b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
                         .WithMany("Certificates")
+                        .HasForeignKey("TrainerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Trainer");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerSkill", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
+                        .WithMany()
                         .HasForeignKey("TrainerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
