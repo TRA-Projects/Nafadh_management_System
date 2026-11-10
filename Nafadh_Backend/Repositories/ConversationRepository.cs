@@ -249,6 +249,18 @@ namespace Nafadh_Backend.Repositories
                     "Batch not found."
                 );
             }
+            // Get all trainers assigned to this batch
+            var trainerUserIds = await _context.NFD_BatchTrainers
+                .Where(bt => bt.BatchId == dto.BatchId)
+                .Select(bt => bt.Trainer.UserId)
+                .Distinct()
+                .ToListAsync();
+
+            if (!trainerUserIds.Contains(dto.TrainerUserId))
+            {
+                throw new ArgumentException(
+                    "The selected trainer is not assigned to this batch.");
+            }
 
             // check if batch group already exists
 
@@ -276,9 +288,9 @@ namespace Nafadh_Backend.Repositories
 
                 // إضافة المدرب إلى قائمة الأعضاء المطلوبين
                 var requiredUserIds = existingGroupTraineeUserIds
-                     .Append(dto.TrainerUserId)
-                    .Distinct()
-                    .ToList();
+     .Concat(trainerUserIds)
+     .Distinct()
+     .ToList();
 
                 // جلب الأعضاء الموجودين بالفعل في الجروب
                 var existingMemberIds = await _context.NFD_ConversationGroupMembers
@@ -376,10 +388,10 @@ namespace Nafadh_Backend.Repositories
                     .ToListAsync();
 
             var members =
-                traineeUserIds
-                    .Append(dto.TrainerUserId)
-                    .Distinct()
-                    .Select(
+      traineeUserIds
+          .Concat(trainerUserIds)
+          .Distinct()
+                      .Select(
                         userId =>
                             new NFD_ConversationGroupMember
                             {
