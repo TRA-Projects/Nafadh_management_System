@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -21,10 +21,12 @@ namespace Nafadh_Backend.Controllers
         // Get all trainers assigned to a company.
         [Authorize(Roles = "CompanySupervisor")]
         [HttpGet("company/{companyId:int}/trainers")]
-        public async Task<IActionResult> GetCompanyTrainers(int companyId)
+        public async Task<IActionResult> GetCompanyTrainers(int companyId, [FromQuery] DateTime? date)
         {
             if (!TryCompanyId(out var authorizedCompany) || authorizedCompany != companyId) return Forbid();
-            var items = await _service.GetCompanyTrainersAsync(companyId);
+            var attendanceDate = date?.Date ?? TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.UtcNow, GetOmanTimeZone()).Date;
+            var items = await _service.GetCompanyTrainersAsync(companyId, attendanceDate);
             return Ok(items);
         }
 
@@ -156,6 +158,12 @@ namespace Nafadh_Backend.Controllers
             }
         }
 
+        private static TimeZoneInfo GetOmanTimeZone()
+        {
+            try { return TimeZoneInfo.FindSystemTimeZoneById("Asia/Muscat"); }
+            catch (TimeZoneNotFoundException) { return TimeZoneInfo.FindSystemTimeZoneById("Arabian Standard Time"); }
+        }
+
         // Claim names must match authenticated JWT issuance. Missing claims always deny access.
         private bool TryTrainerId(out int id) => int.TryParse(
             User.FindFirst("trainerId")?.Value ?? User.FindFirst("TrainerId")?.Value, out id) && id > 0;
@@ -182,9 +190,11 @@ namespace Nafadh_Backend.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
             // Company identity comes from verified authentication, not a client-supplied companyId.
             if (!TryCompanyId(out var companyId)) return Forbid();
+            var reviewerClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (!int.TryParse(reviewerClaim, out var reviewerUserId) || reviewerUserId <= 0) return Forbid();
             try
             {
-                var result = await _service.ReviewExcuseAsync(id, companyId, dto.Decision);
+                var result = await _service.ReviewExcuseAsync(id, companyId, dto.Decision, reviewerUserId);
                 return result == null ? NotFound() : Ok(result);
             }
             catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
