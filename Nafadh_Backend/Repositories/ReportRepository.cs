@@ -328,11 +328,11 @@ namespace Nafadh_Backend.Repositories
 
                 // Do not classify incomplete evaluations
                 bool isComplete =
-                    (batch.AttendanceWeight <= 0 || attendanceComplete) &&
-                    (batch.TasksWeight <= 0 || tasks.Count == 0 || tasksComplete) &&
-                    (batch.QuizzesWeight <= 0 || quizzes.Count == 0 || quizzesComplete) &&
-                    (batch.ProjectsWeight <= 0 || projectsComplete) &&
-                    totalApplicableWeight > 0;
+    (batch.AttendanceWeight <= 0 || attendanceComplete) &&
+    (batch.TasksWeight <= 0 || (tasks.Count > 0 && tasksComplete)) &&
+    (batch.QuizzesWeight <= 0 || (quizzes.Count > 0 && quizzesComplete)) &&
+    (batch.ProjectsWeight <= 0 || (projectIds.Count > 0 && projectsComplete)) &&
+    totalApplicableWeight > 0;
 
                 double performance = isComplete
                     ? Math.Round(weightedScore / totalApplicableWeight, 2)
