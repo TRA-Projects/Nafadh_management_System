@@ -1384,3 +1384,38 @@ max-height: 600px;
     }
   }
 }
+
+.chat-header {
+  position: relative;
+}
+
+.chat-options-menu {
+  position: absolute;
+  top: 100%;
+  inset-inline-end: 12px;
+  min-width: 170px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+  z-index: 100;
+}
+
+.chat-options-menu button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  text-align: right;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+}
+

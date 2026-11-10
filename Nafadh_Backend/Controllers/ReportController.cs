@@ -132,6 +132,7 @@ namespace Nafadh_Backend.Controllers
         public async Task<IActionResult> GetTrainerPortalReportFile(
             int id
         )
+
         {
             var filePath =
                 await _service
@@ -163,6 +164,29 @@ namespace Nafadh_Backend.Controllers
                 "application/pdf"
             );
         }
+
+        [HttpGet("trainer-trainees/{id}/file")]
+        public async Task<IActionResult> GetTrainerTraineesReportFile(
+            int id
+        )
+        {
+            var filePath =
+                await _service.GetTrainerTraineesReportFilePathAsync(id);
+
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                return NotFound("Trainer trainees report file not found.");
+            }
+
+            var fileBytes =
+                await System.IO.File.ReadAllBytesAsync(filePath);
+
+            return File(
+                fileBytes,
+                "application/pdf"
+            );
+        }
+
         // ==========================================================
         // NEW analytics/aggregation endpoints (backend upgrade - Phase 2)
         // ==========================================================

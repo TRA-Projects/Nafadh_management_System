@@ -2,6 +2,7 @@
 #nullable enable
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -13,6 +14,8 @@ namespace Nafadh_Backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "CompanySupervisor,Admin,SuperAdmin")]
+    [TypeFilter(typeof(CompanySupervisorCompanyScopeFilter))]
     public class CompanySupervisorController : ControllerBase
     {
         private readonly ICompanySupervisorRepository _supervisorRepo;

@@ -58,5 +58,27 @@ namespace Nafadh_Backend.Repositories
             return await _context.NFD_Feedbacks
                 .AnyAsync(f => f.TraineeId == traineeId && f.ModuleId == moduleId && f.Type == type);
         }
+
+
+        public async Task<bool> HasSubmittedTrainerEvaluationAsync(
+            int traineeId,
+            int trainerId,
+            int moduleId,
+            string evaluationPeriod,
+            DateTime periodStartUtc,
+            DateTime periodEndUtc)
+        {
+            return await _context.NFD_Feedbacks
+                .AsNoTracking()
+                .AnyAsync(f =>
+                    f.Type == NFD_FeedbackType.TrainerRating &&
+                    f.TraineeId == traineeId &&
+                    f.TrainerId == trainerId &&
+                    f.ModuleId == moduleId &&
+                    f.EvaluationPeriod == evaluationPeriod &&
+                    f.SubmittedAt >= periodStartUtc &&
+                    f.SubmittedAt < periodEndUtc);
+        }
+
     }
 }

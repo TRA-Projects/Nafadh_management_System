@@ -41,6 +41,9 @@ namespace Nafadh_Backend.Models
         public NFD_TrainerStatus Status { get; set; }
      
 
+        // Private trainer owner. Null preserves existing unassigned/legacy trainers until reviewed.
+        public int? CompanyId { get; set; }
+
         public int UserId { get; set; }
         public NFD_User User { get; set; } = null!;
 

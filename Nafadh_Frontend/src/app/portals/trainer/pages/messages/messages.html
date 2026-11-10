@@ -308,9 +308,24 @@
         }
 
 
-        <button type="button" class="more-btn" title="المزيد">
-          ⋮
-        </button>
+     <button
+  type="button"
+  class="more-btn"
+  title="المزيد"
+  (click)="toggleChatOptions()"
+  [attr.aria-expanded]="showChatOptions">
+  ⋮
+</button>
+
+@if (showChatOptions) {
+  <div class="chat-options-menu">
+    <button
+      type="button"
+      (click)="closeChatOptions()">
+      إغلاق القائمة
+    </button>
+  </div>
+}
 
       </header>
 

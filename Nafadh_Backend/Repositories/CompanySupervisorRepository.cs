@@ -278,11 +278,12 @@ namespace Nafadh_Backend.Repositories
             int supervisorId,
             IReadOnlyCollection<int> trainerIds)
         {
-            var supervisorExists = await _context.NFD_CompanySupervisors
-                .AnyAsync(s => s.SupervisorId == supervisorId);
+            var companyId = await _context.NFD_CompanySupervisors
+                .Where(s => s.SupervisorId == supervisorId)
+                .Select(s => (int?)s.CompanyId)
+                .FirstOrDefaultAsync();
 
-            if (!supervisorExists)
-                return false;
+            if (!companyId.HasValue) return false;
 
             var selectedIds = trainerIds
                 .Where(id => id > 0)
@@ -296,8 +297,14 @@ namespace Nafadh_Backend.Repositories
                 return false;
             }
 
+            // Only private trainers of this company, or legacy unowned trainers who
+            // actually teach a batch with this company's enrollments, can be assigned.
+            var companyBatchIds = _context.NFD_Enrollments
+                .Where(e => e.CompanyId == companyId.Value).Select(e => e.BatchId);
             var existingTrainers = await _context.NFD_Trainers
-                .Where(t => selectedIds.Contains(t.TrainerId))
+                .Where(t => selectedIds.Contains(t.TrainerId) &&
+                    (t.CompanyId == companyId.Value ||
+                     (t.CompanyId == null && t.BatchTrainers.Any(bt => companyBatchIds.Contains(bt.BatchId)))))
                 .Select(t => t.TrainerId)
                 .ToListAsync();
 
@@ -370,8 +377,14 @@ namespace Nafadh_Backend.Repositories
                     x.SupervisorId == supervisorId &&
                     x.TrainerId == trainerId);
 
-            if (!assigned)
-                return false;
+            if (!assigned) return false;
+            var permitted = await _context.NFD_CompanySupervisors
+                .Where(s => s.SupervisorId == supervisorId)
+                .AnyAsync(s => _context.NFD_Trainers.Any(t => t.TrainerId == trainerId &&
+                    (t.CompanyId == s.CompanyId ||
+                    (t.CompanyId == null && t.BatchTrainers.Any(bt =>
+                        _context.NFD_Enrollments.Any(e => e.CompanyId == s.CompanyId && e.BatchId == bt.BatchId))))));
+            if (!permitted) return false;
 
             var now = DateTime.UtcNow;
 

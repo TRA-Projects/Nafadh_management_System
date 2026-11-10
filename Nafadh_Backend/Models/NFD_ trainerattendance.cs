@@ -37,6 +37,9 @@ namespace Nafadh_Backend.Models
         // Null = no excuse submitted; Pending/Approved/Rejected = review workflow.
         [MaxLength(16)]
         public string? ExcuseReviewStatus { get; set; }
+        // Audit details of the supervisor who decided the excuse.
+        public int? ExcuseReviewedByUserId { get; set; }
+        public DateTime? ExcuseReviewedAtUtc { get; set; }
 
         // Once the company confirms the day, the record becomes read-only.
         public bool IsConfirmed { get; set; }

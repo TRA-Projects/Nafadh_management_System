@@ -151,11 +151,8 @@ export class CompanySupervisors implements OnInit {
   private trainersRequestId = 0;
 
   newTrainer = {
-    userId: 0,
-    specialty: '',
-    experienceYears: 0,
-    biography: '',
-    cvUrl: ''
+    fullName: '', email: '', phone: '', password: '', confirmPassword: '',
+    specialty: '', experienceYears: 0, biography: '', cvUrl: ''
   };
 
   showProfileModal = false;
@@ -173,12 +170,16 @@ export class CompanySupervisors implements OnInit {
 
   distributionMap: Record<number, number[]> = {};
 
+  savingSupervisor = false;
+
   newSupervisor = {
     fullName: '',
     department: '',
     position: '',
     email: '',
     phone: '',
+    password: '',
+    confirmPassword: '',
     isInactive: false
   };
 
@@ -750,11 +751,8 @@ export class CompanySupervisors implements OnInit {
   // فتح نافذة إضافة مدرب
   openAddTrainerModal(): void {
     this.newTrainer = {
-      userId: 0,
-      specialty: '',
-      experienceYears: 0,
-      biography: '',
-      cvUrl: ''
+    fullName: '', email: '', phone: '', password: '', confirmPassword: '',
+      specialty: '', experienceYears: 0, biography: '', cvUrl: ''
     };
 
     this.showTrainerModal = true;
@@ -771,8 +769,8 @@ export class CompanySupervisors implements OnInit {
   submitTrainer(): void {
     if (this.savingTrainer) return;
 
-    if (!Number.isSafeInteger(this.newTrainer.userId) || this.newTrainer.userId <= 0) {
-      this.showToast('error', 'يرجى إدخال رقم حساب المستخدم الصحيح');
+    if (!this.newTrainer.fullName.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.newTrainer.email.trim())) {
+      this.showToast('error', 'يرجى إدخال اسم المدرب وبريد إلكتروني صحيح');
       return;
     }
 
@@ -783,14 +781,16 @@ export class CompanySupervisors implements OnInit {
 
     if (
       !Number.isFinite(Number(this.newTrainer.experienceYears)) ||
-      Number(this.newTrainer.experienceYears) < 0
+      (Number(this.newTrainer.experienceYears) < 0 || Number(this.newTrainer.experienceYears) > 100)
     ) {
       this.showToast('error', 'يرجى إدخال سنوات خبرة صحيحة');
       return;
     }
 
     const dto = {
-      userId: Number(this.newTrainer.userId),
+      fullName: this.newTrainer.fullName.trim(),
+      email: this.newTrainer.email.trim(),
+      phone: this.newTrainer.phone.trim(),
       specialty: this.newTrainer.specialty.trim(),
       experienceYears: Number(this.newTrainer.experienceYears),
       biography: this.newTrainer.biography.trim(),
@@ -800,13 +800,13 @@ export class CompanySupervisors implements OnInit {
     this.savingTrainer = true;
 
     this.companyApi.addTrainer(dto).subscribe({
-      next: () => {
+      next: (result: any) => {
         this.savingTrainer = false;
         this.closeTrainerModal();
 
         this.showToast(
           'success',
-          'تم إنشاء ملف المدرب بنجاح'
+          result?.emailSent ? 'تم إنشاء المدرب وإرسال بيانات الدخول إلى بريده' : 'تم إنشاء المدرب لكن تعذر إرسال البريد؛ يرجى التواصل مع الدعم'
         );
 
         this.loadCompanyTrainers();
@@ -1288,6 +1288,8 @@ export class CompanySupervisors implements OnInit {
       position: s.position,
       email: s.email,
       phone: s.phone,
+      password: '',
+    confirmPassword: '',
       isInactive: s.isInactive ?? false
     };
 
@@ -1306,7 +1308,9 @@ export class CompanySupervisors implements OnInit {
       position: 'مشرف تقنية المعلومات',
       email: '',
       phone: '',
-      isInactive: false
+      password: '',
+    confirmPassword: '',
+    isInactive: false
     };
   }
 
@@ -1318,6 +1322,7 @@ export class CompanySupervisors implements OnInit {
 
   // إضافة مشرف أو حفظ تعديلاته
   submitSupervisor(): void {
+    if (this.savingSupervisor) return;
     if (!this.newSupervisor.fullName.trim()) {
       this.showToast('error', 'يرجى إدخال اسم المشرف');
       return;
@@ -1333,6 +1338,11 @@ export class CompanySupervisors implements OnInit {
       status: this.newSupervisor.isInactive ? 'Inactive' : 'Active'
     };
 
+    if (!this.editingSupervisor && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.newSupervisor.email.trim())) {
+      this.showToast('error', 'يرجى إدخال بريد إلكتروني صحيح');
+      return;
+    }
+
     const editing =
       this.editingSupervisor && !!this.selectedSupervisor;
 
@@ -1341,15 +1351,17 @@ export class CompanySupervisors implements OnInit {
           this.selectedSupervisor!.supervisorId,
           dto
         )
-      : this.companyApi.addSupervisor(dto);
+      : this.companyApi.registerCompanySupervisor(dto);
 
+    this.savingSupervisor = true;
     request.subscribe({
-      next: () => {
+      next: (result: any) => {
+        this.savingSupervisor = false;
         this.showToast(
           'success',
           editing
             ? 'تم تحديث بيانات المشرف بنجاح'
-            : 'تمت إضافة المشرف بنجاح'
+            : (result?.emailSent ? 'تمت إضافة المشرف وإرسال بيانات الدخول إلى بريده' : 'تمت إضافة المشرف لكن تعذر إرسال البريد؛ يرجى التواصل مع الدعم')
         );
 
         this.closeAddModal();
@@ -1357,13 +1369,13 @@ export class CompanySupervisors implements OnInit {
       },
 
       error: (error: unknown) => {
-        console.error('Supervisor save error:', error);
+        this.savingSupervisor = false;
 
         this.showToast(
           'error',
           editing
             ? 'تعذر تحديث بيانات المشرف'
-            : 'تعذر إضافة المشرف'
+            : ((error as any)?.error?.message || 'تعذر إضافة المشرف')
         );
       }
     });

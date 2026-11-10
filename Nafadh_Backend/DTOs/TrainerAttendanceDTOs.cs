@@ -28,6 +28,8 @@ namespace Nafadh_Backend.DTOs
         public string? ExcuseProofUrl { get; set; }
         public bool IsConfirmed { get; set; }
         public string? ExcuseReviewStatus { get; set; }
+        public int? ExcuseReviewedByUserId { get; set; }
+        public DateTime? ExcuseReviewedAtUtc { get; set; }
     }
 
     // Creates the record for (company, trainer, date) or updates it if it already exists.

@@ -233,8 +233,15 @@ export class TraineeApi {
       `${this.base}/Trainee/${traineeId}/resume`,
       formData
     );
+    
   }
+downloadTraineeResume(resumeUrl: string): Observable<Blob> {
+  const url = this.getFileUrl(resumeUrl);
 
+  return this.http.get(url, {
+    responseType: 'blob'
+  });
+}
   // =========================================================
   // Enrollment
   // =========================================================

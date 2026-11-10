@@ -41,6 +41,7 @@ namespace Nafadh_Backend.DTOs
         public DateTime EndDate { get; set; }
         public decimal Capacity { get; set; }
         public int TotalTraineesCount { get; set; }
+        public int CompaniesCount { get; set; }
         public int IssuedCertificatesCount { get; set; }
         public NFD_BatchStatus Status { get; set; }
 

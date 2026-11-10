@@ -90,61 +90,42 @@ certificateFileInput: HTMLInputElement | null = null;
   saveCertificatesToStorage(list: any[]): void {
     localStorage.setItem('trainer_certificates', JSON.stringify(list));
   }
-  saveSkill(): void {
+saveSkill(): void {
+  const trainerId = this.trainer()?.trainerId;
+  const skillName = this.newSkillName.trim();
 
-    const skillName =
-      this.newSkillName.trim();
+  if (!this.isEditing() || !trainerId) return;
 
-    if (!skillName) {
-      this.showError(
-        'اكتب اسم المهارة أولًا.'
-      );
-
-      return;
-    }
-
-    const exists =
-      this.skills().some(
-        skill =>
-          skill.skillName?.trim().toLowerCase() ===
-          skillName.toLowerCase()
-      );
-
-    if (exists) {
-      this.showError(
-        'هذه المهارة مضافة مسبقًا.'
-      );
-
-      return;
-    }
-
-    this.skills.update(
-      currentSkills => [
-        ...currentSkills,
-        {
-          trainerSkillId: Date.now(),
-          skillName
-        }
-      ]
-    );
-
-    this.newSkillName = '';
-
-    this.showSkillInput.set(false);
-
-    this.markProfileChanged();
-
-  }
-  cancelSkill(): void {
-
-    this.newSkillName = '';
-
-    this.showSkillInput.set(false);
-
+  if (!skillName) {
+    this.showError('اكتبي اسم المهارة أولًا.');
+    return;
   }
 
+  if (this.skills().some(s =>
+    s.skillName?.trim().toLowerCase() === skillName.toLowerCase()
+  )) {
+    this.showError('هذه المهارة مضافة مسبقًا.');
+    return;
+  }
 
+  this.api.addTrainerSkill(trainerId, skillName).subscribe({
+    next: (skill) => {
+      this.skills.update(items => [...items, skill]);
+      this.newSkillName = '';
+      this.showSkillInput.set(false);
+      this.showSuccess();
+    },
+    error: (err) => {
+      console.error('تعذر إضافة المهارة:', err);
+      this.showError(err?.error?.message ?? 'تعذر حفظ المهارة.');
+    }
+  });
+}
 
+cancelSkill(): void {
+  this.newSkillName = '';
+  this.showSkillInput.set(false);
+}
 
 
   // =====================================================
@@ -495,7 +476,7 @@ private loadAttachmentSettings(): void {
             data.trainerId
           );
           this.loadTrainerCertificates(data.trainerId);
-
+          this.loadTrainerSkills(data.trainerId);
         },
 
 
@@ -540,6 +521,22 @@ private loadAttachmentSettings(): void {
       });
 
   }
+
+  //--------------
+  //loadTrainerSkills
+
+loadTrainerSkills(trainerId: number): void {
+  this.api.getTrainerSkills(trainerId).subscribe({
+    next: (items) => {
+      this.skills.set(items ?? []);
+    },
+    error: (err) => {
+      console.error('تعذر تحميل مهارات المدرب:', err);
+      this.skills.set([]);
+      this.showError('تعذر تحميل المهارات.');
+    }
+  });
+}
 
 
   // =====================================================
@@ -682,12 +679,24 @@ uploadCertificate(): void {
   });
 }
 
-deleteCertificate(certificate: TrainerCertificateDto): void {
-  const confirmed = window.confirm(
-    `هل تريدين حذف شهادة "${certificate.certificateName}"؟`
-  );
+certificateToDelete = signal<TrainerCertificateDto | null>(null);
+isDeletingCertificate = signal(false);
 
-  if (!confirmed) return;
+deleteCertificate(certificate: TrainerCertificateDto): void {
+  this.certificateToDelete.set(certificate);
+}
+
+cancelCertificateDelete(): void {
+  if (this.isDeletingCertificate()) return;
+  this.certificateToDelete.set(null);
+}
+
+confirmCertificateDelete(): void {
+  const certificate = this.certificateToDelete();
+
+  if (!certificate || this.isDeletingCertificate()) return;
+
+  this.isDeletingCertificate.set(true);
 
   this.api.deleteTrainerCertificate(
     certificate.trainerCertificateId
@@ -698,14 +707,19 @@ deleteCertificate(certificate: TrainerCertificateDto): void {
           x.trainerCertificateId !== certificate.trainerCertificateId
         )
       );
-      
+
+      this.isDeletingCertificate.set(false);
+      this.certificateToDelete.set(null);
+      this.showSuccess();
     },
     error: (error) => {
       console.error('تعذر حذف الشهادة:', error);
+      this.isDeletingCertificate.set(false);
       this.showError('تعذر حذف الشهادة.');
     }
   });
 }
+
 
 private resetCertificateForm(): void {
   this.certificateName = '';
@@ -784,26 +798,22 @@ getCertificateFileUrl(fileUrl: string): string {
   // REMOVE TRAINER SKILL
   // =====================================================
 
-  removeSkill(
-    skillId: number
-  ): void {
+removeSkill(skillId: number): void {
+  
 
-    if (!this.isEditing()) {
-      return;
+  this.api.deleteTrainerSkill(skillId).subscribe({
+    next: () => {
+      this.skills.update(items =>
+        items.filter(skill => skill.trainerSkillId !== skillId)
+      );
+      this.showSuccess();
+    },
+    error: (err) => {
+      console.error('تعذر حذف المهارة:', err);
+      this.showError('تعذر حذف المهارة.');
     }
-
-    this.skills.update(
-      currentSkills =>
-        currentSkills.filter(
-          skill =>
-            skill.trainerSkillId !== skillId
-        )
-    );
-
-    this.markProfileChanged();
-
-  }
-
+  });
+}
 
 
 
@@ -1102,8 +1112,8 @@ getCertificateFileUrl(fileUrl: string): string {
 cvUrl:
   trainer.cvUrl?.trim() ?? '',
 
-linkedinUrl:
-  trainer.linkedinUrl?.trim() || null
+linkedInUrl:
+  trainer.linkedInUrl?.trim() || null
 
     };
 

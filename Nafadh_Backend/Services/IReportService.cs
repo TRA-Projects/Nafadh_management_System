@@ -33,7 +33,10 @@ namespace Nafadh_Backend.Services
         Task<ReportOutputDTO> GenerateTrainerTraineesReportAsync(
             TrainerTraineesReportInputDto dto
         );
-
+        // Resolves the physical PDF path for Trainer Trainees reports.
+        Task<string?> GetTrainerTraineesReportFilePathAsync(
+            int reportId
+        );
         // NEW: analytics/aggregation endpoints — see DTOs/ReportAnalyticsDTOs.cs
         Task<DashboardChartsDTO> GetDashboardChartsAsync();
         Task<AdminDashboardSummaryDTO> GetAdminDashboardSummaryAsync();

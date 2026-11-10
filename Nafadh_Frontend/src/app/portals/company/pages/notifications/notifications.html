@@ -30,7 +30,7 @@
       <button type="button" class="reset-filters-btn" [disabled]="!hasFilters()" (click)="clearFilters()" aria-label="مسح جميع الفلاتر" title="مسح جميع الفلاتر"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg><span>مسح الفلاتر</span></button>
     </div>
     <div class="category-filter-row">
-      @if (categoryChips().length > 1) {
+      @if (categoryChips().length > 0) {
         <div class="chips" aria-label="تصفية حسب النوع" data-guide="company-notifications-categories">
           <button type="button" class="chip chip-all" [class.active]="activeCategory() === 'all'" [attr.aria-pressed]="activeCategory() === 'all'" (click)="setCategory('all')">الكل</button>
           @for (chip of categoryChips(); track chip.key) { <button type="button" class="chip cat-{{ chip.key }}" [class.active]="activeCategory() === chip.key" [attr.aria-pressed]="activeCategory() === chip.key" (click)="setCategory(chip.key)"><i class="dot" aria-hidden="true"></i>{{ chip.label }} <span>{{ chip.count }}</span></button> }
@@ -49,7 +49,14 @@
         <div class="group-label"><span>{{ group.label }}</span><i></i><small>{{ group.items.length }}</small></div>
         <div class="notification-list">
           @for (item of group.items; track item.notificationId) {
-            <article [attr.data-guide]="$first ? 'company-notifications-list' : null" class="notification cat-{{ categoryOf(item) }}" [class.unread]="!item.isRead">
+            <article [attr.data-guide]="$first ? 'company-notifications-list' : null" class="notification cat-{{ categoryOf(item) }}" [class.unread]="!item.isRead"
+              [class.excuse-clickable]="true"
+              role="button"
+              tabindex="0"
+              [attr.aria-label]="'فتح الإشعار: ' + item.title"
+              (click)="openNotification(item)"
+              (keydown.enter)="openNotification(item)"
+              (keydown.space)="$event.preventDefault(); openNotification(item)">
               <div class="icon" aria-hidden="true">
               @switch (categoryOf(item)) {
                 @case ('task') {
@@ -81,12 +88,33 @@
                 }
               }
               </div>
-              <div class="body"><div class="title-row"><h3>{{ item.title }}</h3>@if (!item.isRead) { <span class="new">جديد</span> }</div><p>{{ item.message }}</p><div class="meta"><span class="tag">{{ categoryLabel(categoryOf(item)) }}</span>@if (coursePlanLink(item); as planUrl) { <a [routerLink]="planUrl" [queryParams]="batchAssignmentId(item) ? { batchId: batchAssignmentId(item) } : null" class="tag" [attr.aria-label]="'عرض الخطة المرتبطة بإشعار ' + item.title">عرض الخطة</a> }</div></div>
-              <div class="side"><time [attr.datetime]="item.createdAt" [title]="fullDate(item.createdAt)">{{ timeAgo(item.createdAt) }}</time>@if (!item.isRead) { <button type="button" class="read-action" [disabled]="isPending(item.notificationId) || markingAll()" (click)="markRead(item)" [attr.aria-label]="'تعليم إشعار ' + item.title + ' كمقروء'">{{ isPending(item.notificationId) ? 'جارٍ التعليم...' : '✓ تعليم كمقروء' }}</button> } @else { <span class="read-status">✓ تمت القراءة</span> }</div>
+              <div class="body"><div class="title-row"><h3>{{ item.title }}</h3>@if (!item.isRead) { <span class="new">جديد</span> }</div><p>{{ item.message }}</p><div class="meta"><span class="tag">{{ categoryLabel(categoryOf(item)) }}</span>@if (coursePlanLink(item); as planUrl) { <a [routerLink]="planUrl" (click)="$event.stopPropagation()" [queryParams]="batchAssignmentId(item) ? { batchId: batchAssignmentId(item) } : null" class="tag" [attr.aria-label]="'عرض الخطة المرتبطة بإشعار ' + item.title">عرض الخطة</a> }</div></div>
+              <div class="side"><time [attr.datetime]="item.createdAt" [title]="fullDate(item.createdAt)">{{ timeAgo(item.createdAt) }}</time>@if (!item.isRead) { <button type="button" class="read-action" [disabled]="isPending(item.notificationId) || markingAll()" (click)="$event.stopPropagation(); markRead(item)" [attr.aria-label]="'تعليم إشعار ' + item.title + ' كمقروء'">{{ isPending(item.notificationId) ? 'جارٍ التعليم...' : '✓ تعليم كمقروء' }}</button> } @else { <span class="read-status">✓ تمت القراءة</span> }</div>
             </article>
           }
         </div>
       }
     }
   </div>
+
+  @if (selectedNotification(); as detail) {
+    <div class="notification-details-overlay" (click)="closeNotificationDetails()">
+      <section class="notification-details-dialog" role="dialog" aria-modal="true"
+        aria-labelledby="notification-details-title" (click)="$event.stopPropagation()">
+        <header class="notification-details-header">
+          <h2 id="notification-details-title">{{ detail.title }}</h2>
+          <button type="button" class="notification-details-close"
+            (click)="closeNotificationDetails()" aria-label="إغلاق التفاصيل">×</button>
+        </header>
+        <div class="notification-details-meta">
+          <span>{{ categoryLabel(categoryOf(detail)) }}</span>
+          <time [attr.datetime]="detail.createdAt">{{ fullDate(detail.createdAt) }}</time>
+        </div>
+        <p class="notification-details-message">{{ detail.message }}</p>
+        <div class="notification-details-actions">
+          <button type="button" class="btn btn-primary" (click)="closeNotificationDetails()">إغلاق</button>
+        </div>
+      </section>
+    </div>
+  }
 </section>
