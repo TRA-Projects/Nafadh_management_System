@@ -113,7 +113,7 @@
           <div class="company-card-header" (click)="selectCompany(company)">
             <div class="company-text">
               <h3 class="company-name">{{ company.name }}</h3>
-              <p class="company-field">{{ company.workField || 'تقنية المعلومات' }}</p>
+              <p class="company-field">{{ company.workField || 'غير متوفر' }}</p>
             </div>
 
             <div class="company-avatar-box">
@@ -223,8 +223,10 @@
 
       <div class="summary-metrics-grid">
         <div class="metric-card">
-          <span class="metric-value star" style="color: #f59e0b;">{{ selectedCompany?.ratingScore || '4.9' }} /
-            5.0</span>
+          <span class="metric-value star" style="color: #f59e0b;">
+            {{ selectedCompany?.ratingScore != null ? formatRating(selectedCompany.ratingScore) + ' / 5.0' : 'غير متوفر'
+            }}
+          </span>
           <span class="metric-label">تقييم المنشأة العام</span>
         </div>
         <div class="metric-card">
@@ -236,7 +238,7 @@
           <span class="metric-label">البرامج التدريبية المعتمدة</span>
         </div>
         <div class="metric-card">
-          <span class="metric-value">{{ selectedCompany?.capacity || 50 }}</span>
+          <span class="metric-value">{{ selectedCompany?.capacity ?? 'غير متوفر' }}</span>
           <span class="metric-label">الطاقة الاستيعابية القصوى</span>
         </div>
       </div>
@@ -246,7 +248,7 @@
         <div
           style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 12px;">
           <div><small style="color: #64748b;">مشرف التدريب المعتمد:</small>
-            <div style="font-weight: 700;">{{ selectedCompany?.supervisorName || 'أ. مشرف التدريب والتطوير' }}</div>
+            <div style="font-weight: 700;">{{ selectedCompany?.supervisorName || 'غير متوفر' }}</div>
           </div>
           <div><small style="color: #64748b;">رقم الهاتف:</small>
             <div style="font-weight: 700;">{{ selectedCompany?.phone || '—' }}</div>
@@ -358,7 +360,7 @@
         <div>
           <h2>تقرير نهاية الدفعة — الدفعة {{ selectedBatch?.id }}</h2>
           <p>{{ selectedBatch?.programName }} · {{ selectedCompany?.name }} · تاريخ الانتهاء: {{ selectedBatch?.endDate
-            || '2026-10-01' }}</p>
+            || 'غير متوفر' }}</p>
         </div>
         <div class="actions-left" style="display: flex; gap: 8px;">
           <button class="btn-excel" (click)="exportToExcel()">
@@ -983,7 +985,7 @@
         <div class="trainer-banner-info">
           <div class="banner-title-row">
             <h2>{{ selectedTrainer?.name }}</h2>
-            <span class="status-pill level-excellent">{{ selectedTrainer?.status || 'معتمد ونشط' }}</span>
+            <span class="status-pill level-excellent">{{ selectedTrainer?.status || 'غير محدد' }}</span>
           </div>
           <p class="trainer-track-sub">
             مسار التخصص: <strong>{{ selectedTrainer?.specialization }}</strong> · سنوات الخبرة: {{
@@ -1738,7 +1740,7 @@
             ← العودة إلى سجل المتدربين
           </button>
           <div style="display: flex; gap: 8px;">
-            <button class="btn-excel" (click)="exportTraineesToExcel()">تصدير Excel المعتمد</button>
+            <button class="btn-excel" (click)="exportTraineesToExcel()">تصدير Excel </button>
             <button class="btn-pdf" (click)="exportToPDF()">🖨️ طباعة الكشف العام A4</button>
           </div>
         </div>
@@ -1801,10 +1803,9 @@
             <div style="font-size: 11px; color: #64748b;">منظومة نفاذ الوطنية للتدريب المقرون بالتشغيل</div>
           </div>
           <div style="text-align: center;">
-            <div style="font-size: 20px; font-weight: 900; color: #0D1C8C;">كشف الدرجات والنتائج النهائية المعتمد</div>
+            <div style="font-size: 20px; font-weight: 900; color: #0D1C8C;">كشف الدرجات والنتائج التدريبية</div>
             <div style="font-size: 11px; font-weight: 700; color: #334155; margin-top: 4px;">
-              Master Official Transcript • العام التدريبي 2026م
-            </div>
+              Master Training Transcript • العام التدريبي 2026م </div>
           </div>
           <div style="text-align: left; font-size: 11px;">
             <div>رقم الاعتماد: <strong style="color: #0D1C8C;">-</strong></div>
@@ -1928,20 +1929,20 @@
           style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center; margin-top: 36px; padding-top: 20px; border-top: 1px dashed #94a3b8; font-size: 12px;">
           <div>
             <div style="font-weight: bold; color: #1e293b;">رئيس لجنة التدريب والتقييم</div>
-            <div style="margin: 18px 0; font-family: monospace; color: #475569;">اعتماد اللجنة الأكاديمية</div>
-            <div style="font-size: 10px; color: #94a3b8;">توقيع معتمد</div>
+            <div style="margin: 18px 0; font-family: monospace; color: #475569;"> لم يتم تسجيل اعتماد </div>
+            <div style="font-size: 10px; color: #94a3b8;"> لم يتم تسجيل توقيع</div>
           </div>
           <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
             <div
               style="width: 80px; height: 80px; border: 3px dashed #0D1C8C; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #0D1C8C; text-align: center; line-height: 1.2;">
-              ختم الاعتماد الرسمي<br>منظومة نفاذ
+              حالة الاعتماد <br>منظومة نفاذ
             </div>
-            <span style="font-size: 9px; color: #94a3b8; margin-top: 4px; font-family: monospace;">OFFICIAL SEAL</span>
+            <span style="font-size: 9px; color: #94a3b8; margin-top: 4px; font-family: monospace;"> NOT VERIFIED</span>
           </div>
           <div>
             <div style="font-weight: bold; color: #1e293b;">مدير عام منظومة نفاذ الوطنية</div>
-            <div style="margin: 18px 0; font-family: monospace; color: #475569;">التصديق والاعتماد النهائي</div>
-            <div style="font-size: 10px; color: #94a3b8;">الاعتماد الإداري</div>
+            <div style="margin: 18px 0; font-family: monospace; color: #475569;"> لم يتم تسجيل اعتماد نهائي</div>
+            <div style="font-size: 10px; color: #94a3b8;"> لم يتم تسجيل اعتماد إداري</div>
           </div>
         </div>
 
@@ -1967,10 +1968,9 @@
             <div style="font-size: 11px; color: #64748b;">برنامج التدريب المقرون بالتشغيل</div>
           </div>
           <div style="text-align: center;">
-            <div style="font-size: 22px; font-weight: 900; color: #0D1C8C;">كشف درجات وسجل تدريبي رسمي معتمد</div>
+            <div style="font-size: 22px; font-weight: 900; color: #0D1C8C;">كشف درجات وسجل تدريبي</div>
             <div style="font-size: 11px; font-weight: 700; color: #334155; margin-top: 4px;">
-              Official Individual Training & Academic Transcript
-            </div>
+              Individual Training Transcript </div>
           </div>
           <div style="text-align: left; font-size: 11px;">
             <div>رقم الوثيقة: <strong style="color: #0D1C8C; font-family: monospace;">NFD-TRN-{{
@@ -1999,8 +1999,8 @@
             <strong>{{ selectedTraineeForTranscript.major }}</strong>
           </div>
           <div>
-            <span style="color: #64748b; display: block; margin-bottom: 2px;">المدرب المشرف المعتمد:</span>
-            <strong>{{ selectedTraineeForTranscript.assignedTrainer }} 👨‍🏫</strong>
+            <span style="color: #64748b; display: block; margin-bottom: 2px;">المدرب المشرف:</span>
+            <strong>{{ selectedTraineeForTranscript.assignedTrainer || 'غير متوفر' }}</strong>
           </div>
           <div>
             <span style="color: #64748b; display: block; margin-bottom: 2px;">المعدل التراكمي العام (GPA):</span>
@@ -2014,7 +2014,7 @@
         </div>
 
         <h3 style="color: #0D1C8C; font-size: 14px; font-weight: 800; margin-bottom: 12px;">
-          سجل الدرجات ومؤشرات التحصيل المعتمدة:
+          سجل الدرجات ومؤشرات التحصيل :
         </h3>
         <table class="custom-table official-table" style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
 
@@ -2152,23 +2152,22 @@
         <div
           style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: center; border-top: 1px dashed #94a3b8; padding-top: 20px; font-size: 11px; align-items: center;">
           <div>
-            <div style="font-weight: bold; color: #1e293b;">المشرف الميداني المعتمد</div>
+            <div style="font-weight: bold; color: #1e293b;">المشرف الميداني </div>
             <div style="margin: 10px 0; font-weight: 700; color: #0D1C8C;">{{
-              selectedTraineeForTranscript.assignedTrainer }}</div>
-            <div style="font-size: 9px; color: #94a3b8;">توقيع معتمد</div>
+              selectedTraineeForTranscript.assignedTrainer || 'غير متوفر' }}</div>
+            <div style="font-size: 9px; color: #94a3b8;"> لم يتم تسجيل توقيع</div>
           </div>
           <div>
             <div style="font-weight: bold; color: #1e293b;">منسق البرامج الأكاديمية</div>
-            <div style="margin: 10px 0; font-weight: 700; color: #334155;">لجنة التقييم والاعتماد</div>
+            <div style="margin: 10px 0; font-weight: 700; color: #334155;"> حالة مراجعة التقييم غير محددة</div>
             <div style="font-size: 9px; color: #94a3b8;">تدقيق النتائج</div>
           </div>
           <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
             <div
               style="width: 72px; height: 72px; border: 3px dashed #0D1C8C; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 900; color: #0D1C8C; text-align: center; line-height: 1.2;">
-              ختم الاعتماد<br>منظومة نفاذ
+              حالة الاعتماد<br>منظومة نفاذ
             </div>
-            <span style="font-size: 8px; color: #94a3b8; margin-top: 3px; font-family: monospace;">OFFICIAL
-              SEAL</span>
+            <span style="font-size: 8px; color: #94a3b8; margin-top: 3px; font-family: monospace;">NOT VERIFIED</span>
           </div>
           <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px; background: #f8fafc;">
             <div style="font-weight: bold; font-size: 10px; color: #0f172a;">حالة التحقق الإلكتروني</div>
