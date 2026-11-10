@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 using System.Security.Claims;
@@ -47,7 +47,10 @@ namespace Nafadh_Backend.Controllers
         [HttpPatch("{companyId:int}/contact")]
         public async Task<IActionResult> UpdateContact(int companyId, [FromBody] CompanyContactUpdateDTO dto)
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) || userId <= 0)
+            var userClaim = User.FindFirstValue("userId")
+                ?? User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue("sub");
+            if (!int.TryParse(userClaim, out var userId) || userId <= 0)
                 return Unauthorized();
             if (!await CanEditContact(companyId, userId)) return Forbid();
             if (dto.ExtraFields?.Count > 0)

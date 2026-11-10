@@ -32,6 +32,7 @@ export class CompanyMyAccount implements OnInit {
   activeTab = signal<AccountTab>('info');
   editingAccount = signal(false);
   savingAccount = signal(false);
+  accountSaveError = signal<string | null>(null);
 
   editPhone = signal('');
   
@@ -101,15 +102,26 @@ export class CompanyMyAccount implements OnInit {
       return;
     }
     this.editPhone.set(account.phone ?? '');
+    this.accountSaveError.set(null);
     this.editingAccount.set(true);
   }
 
   cancelEditAccount(): void {
     this.editingAccount.set(false);
+    this.accountSaveError.set(null);
   }
 
   saveAccount(): void {
-    const phone = this.editPhone().trim();
+    if (this.savingAccount()) return;
+    const phone = this.editPhone().trim().replace(/[٠-٩۰-۹]/g, digit => {
+      const code = digit.charCodeAt(0);
+      return String(code >= 0x06f0 ? code - 0x06f0 : code - 0x0660);
+    }).replace(/[\s()-]/g, '');
+    this.accountSaveError.set(null);
+    if (!/^\+?[0-9]{8,15}$/.test(phone)) {
+      this.accountSaveError.set('أدخل رقم هاتف صحيحًا من 8 إلى 15 رقمًا، دون حروف.');
+      return;
+    }
     this.savingAccount.set(true);
 
     this.api.updateMyAccount({ phone }).subscribe({
@@ -126,6 +138,7 @@ export class CompanyMyAccount implements OnInit {
       },
       error: (error: unknown) => {
         console.error('Failed to update phone:', error);
+        this.accountSaveError.set('تعذر حفظ رقم الهاتف. تحققي من صحة الرقم والصلاحيات ثم حاولي مجددًا.');
         this.savingAccount.set(false);
       }
     });
