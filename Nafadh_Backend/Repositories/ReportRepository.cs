@@ -1100,9 +1100,17 @@ namespace Nafadh_Backend.Repositories
             var submissions = await _context.NFD_Submissions
                 .Where(s => tasksForBatches.Contains(s.TaskId))
                 .ToListAsync();
-            var taskCompletionRate = submissions.Count > 0
-                ? submissions.Count(s => s.Status == NFD_SubmissionStatus.Graded) * 100.0 / submissions.Count
-                : (double?)null;
+            var totalRequiredTasks = tasksForBatches.Count * enrollments.Count;
+
+            var completedTasks = submissions
+                .Where(s => s.Status == NFD_SubmissionStatus.Graded)
+                .Select(s => new { s.TaskId, s.TraineeId })
+                .Distinct()
+                .Count();
+
+            double? taskCompletionRate = totalRequiredTasks > 0
+                ? completedTasks * 100.0 / totalRequiredTasks
+                : null;
 
             var technicalScores = enrollments
                 .SelectMany(e => e.Evaluations)
@@ -1113,13 +1121,9 @@ namespace Nafadh_Backend.Repositories
 
             return new TrainerKpisDTO
             {
-                AttendanceRate = (double)(attendanceRate.HasValue
-    ? Math.Round(attendanceRate.Value, 1)
-    : (double?)null),
-                TaskCompletionRate = (double)(taskCompletionRate.HasValue
-    ? Math.Round(taskCompletionRate.Value, 1)
-    : (double?)null),
-                AvgTechnicalGrade = (double)(avgTechnicalGrade.HasValue ? Math.Round(avgTechnicalGrade.Value, 1) : (double?)null)
+                AttendanceRate = Math.Round(attendanceRate ?? 0.0, 1),
+                TaskCompletionRate = Math.Round(taskCompletionRate ?? 0.0, 1),
+                AvgTechnicalGrade = Math.Round(avgTechnicalGrade ?? 0.0, 1)
             };
         }
 
