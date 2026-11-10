@@ -63,7 +63,94 @@ interface TraineeUpdateDto {
 
 
 export class TraineeProfile implements OnInit {
+validateBankAccount(): boolean {
+  const t = this.trainee();
 
+  if (!t) return false;
+
+  const fields = {
+    bankName: String(t.bankName ?? '').trim(),
+    accountHolderName: String(t.accountHolderName ?? '').trim(),
+    accountNumber: String(t.accountNumber ?? '').trim(),
+    iban: String(t.iban ?? '').replace(/\s/g, '').toUpperCase(),
+    bankBranch: String(t.bankBranch ?? '').trim()
+  };
+
+  const errors: Record<string, string> = {};
+
+  // All fields are optional when the entire section is empty.
+  const hasAnyValue = Object.values(fields).some(value => value !== '');
+
+  if (!hasAnyValue) {
+    this.bankErrors.set({});
+    return true;
+  }
+
+  const requiredFields: Record<string, string> = {
+    bankName: 'اسم البنك مطلوب.',
+    accountHolderName: 'اسم صاحب الحساب مطلوب.',
+    accountNumber: 'رقم الحساب مطلوب.',
+    iban: 'رقم IBAN مطلوب.',
+    bankBranch: 'اسم الفرع مطلوب.'
+  };
+
+  Object.entries(requiredFields).forEach(([key, message]) => {
+    if (!fields[key as keyof typeof fields]) {
+      errors[key] = message;
+    }
+  });
+
+  if (fields.bankName && !/^[\p{L}\s.'-]{2,100}$/u.test(fields.bankName)) {
+    errors['bankName'] = 'يرجى إدخال اسم بنك صحيح.';
+  }
+
+  if (
+    fields.accountHolderName &&
+    !/^[\p{L}\s.'-]{2,150}$/u.test(fields.accountHolderName)
+  ) {
+    errors['accountHolderName'] = 'يرجى إدخال اسم صاحب حساب صحيح.';
+  }
+
+  if (
+    fields.accountNumber &&
+    !/^[0-9]{5,30}$/.test(fields.accountNumber)
+  ) {
+    errors['accountNumber'] = 'رقم الحساب يجب أن يحتوي على 5 إلى 30 رقمًا.';
+  }
+
+  if (fields.iban) {
+    if (!/^OM\d{21}$/.test(fields.iban)) {
+      errors['iban'] = 'رقم IBAN العُماني يجب أن يبدأ بـ OM ويتكون من 23 خانة.';
+    } else {
+      // ISO 13616 MOD-97 check
+      const rearranged = fields.iban.slice(4) + fields.iban.slice(0, 4);
+      const numeric = rearranged.replace(/[A-Z]/g, char =>
+        String(char.charCodeAt(0) - 55)
+      );
+
+      let remainder = 0;
+
+      for (const digit of numeric) {
+        remainder = (remainder * 10 + Number(digit)) % 97;
+      }
+
+      if (remainder !== 1) {
+        errors['iban'] = 'رقم IBAN غير صحيح.';
+      }
+    }
+  }
+
+  if (
+    fields.bankBranch &&
+    !/^[\p{L}\p{N}\s.'-]{2,100}$/u.test(fields.bankBranch)
+  ) {
+    errors['bankBranch'] = 'يرجى إدخال اسم فرع صحيح.';
+  }
+
+  this.bankErrors.set(errors);
+
+  return Object.keys(errors).length === 0;
+}
 
   // =========================================================
   // USER / TRAINEE
@@ -967,7 +1054,16 @@ private async loadAttachmentSettings(): Promise<void> {
       return;
 
     }
+const bankValid = this.validateBankAccount();
 
+if (
+  this.phoneError() ||
+  this.gitHubError() ||
+  this.linkedInError() ||
+  !bankValid
+) {
+  return;
+}
 
     // -------------------------------------------------------
     // No changes
@@ -1424,6 +1520,13 @@ private validateAttachment(
 
   return true;
 }
+
+// =========================================================
+  // VALIDATION - Bank Account 
+  // =========================================================
+  bankErrors = signal<Record<string, string>>({});
+
+  
   // =========================================================
   // AVATAR UPLOAD
   // =========================================================
