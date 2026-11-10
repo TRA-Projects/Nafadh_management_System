@@ -188,62 +188,121 @@ constructor(
 
 }
 
-private async loadAttachmentSettings(): Promise<void> {
 
+private async loadAttachmentSettings(): Promise<void> {
   this.attachmentSettingsLoaded.set(false);
 
   try {
+    // Required attachment settings
+    const [extensions, maxSize] = await Promise.all([
+      firstValueFrom(
+        this.systemVariablesService.getAllowedExtensions()
+      ),
+      firstValueFrom(
+        this.systemVariablesService.getMaxAttachmentSizeMb()
+      )
+    ]);
 
-    const [
-  extensions,
-  maxSize,
-  sizeError,
-  typeError,
-  cvError,
-  certificateError
-] = await Promise.all([
-  firstValueFrom(this.systemVariablesService.getAllowedExtensions()),
-  firstValueFrom(this.systemVariablesService.getMaxAttachmentSizeMb()),
-  firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_SIZE_ERROR')),
-  firstValueFrom(this.systemVariablesService.getErrorMessage('ATTACHMENT_TYPE_ERROR')),
-  firstValueFrom(this.systemVariablesService.getErrorMessage('CV_TYPE_ERROR')),
-  firstValueFrom(this.systemVariablesService.getErrorMessage('CERTIFICATE_TYPE_ERROR'))
-]);
+    const normalizedExtensions = extensions
+      .map(ext =>
+        String(ext).trim().replace(/^\./, '').toLowerCase()
+      )
+      .filter(Boolean);
 
-this.attachmentSizeError.set(sizeError);
-this.attachmentTypeError.set(typeError);
-this.cvTypeError.set(cvError);
-this.certificateTypeError.set(certificateError);
-
-    if (extensions.length === 0) {
-      throw new Error('No allowed attachment extensions configured');
+    if (
+      normalizedExtensions.length === 0 ||
+      !Number.isFinite(maxSize) ||
+      maxSize <= 0
+    ) {
+      throw new Error('Invalid attachment settings');
     }
 
-    this.allowedExtensions.set(extensions);
-
+    this.allowedExtensions.set(normalizedExtensions);
     this.maxAttachmentSizeMb.set(maxSize);
-
     this.attachmentSettingsLoaded.set(true);
 
-  } catch (error) {
+    // Default messages
+    this.attachmentSizeError.set(
+      `حجم الملف يتجاوز الحد المسموح (${maxSize} MB)`
+    );
 
-    console.error('فشل تحميل إعدادات المرفقات:', error);
+    this.attachmentTypeError.set(
+      'نوع الملف غير مسموح'
+    );
+
+    this.cvTypeError.set(
+      'نوع ملف السيرة الذاتية غير مسموح'
+    );
+
+    this.certificateTypeError.set(
+      'نوع ملف الشهادة غير مسموح'
+    );
+
+    // Optional error messages should not block the page
+    const optionalMessages = await Promise.allSettled([
+      firstValueFrom(
+        this.systemVariablesService.getErrorMessage(
+          'ATTACHMENT_SIZE_ERROR'
+        )
+      ),
+      firstValueFrom(
+        this.systemVariablesService.getErrorMessage(
+          'ATTACHMENT_TYPE_ERROR'
+        )
+      ),
+      firstValueFrom(
+        this.systemVariablesService.getErrorMessage(
+          'CV_TYPE_ERROR'
+        )
+      ),
+      firstValueFrom(
+        this.systemVariablesService.getErrorMessage(
+          'CERTIFICATE_TYPE_ERROR'
+        )
+      )
+    ]);
+
+    const setters = [
+      (value: string) => this.attachmentSizeError.set(value),
+      (value: string) => this.attachmentTypeError.set(value),
+      (value: string) => this.cvTypeError.set(value),
+      (value: string) => this.certificateTypeError.set(value)
+    ];
+
+    optionalMessages.forEach((result, index) => {
+      if (
+        result.status === 'fulfilled' &&
+        typeof result.value === 'string' &&
+        result.value.trim()
+      ) {
+        setters[index](result.value);
+      } else if (result.status === 'rejected') {
+        console.warn(
+          '[Profile] Optional attachment message unavailable:',
+          index,
+          result.reason
+        );
+      }
+    });
+
+  } catch (error) {
+    console.error(
+      '[Profile] Required attachment settings failed:',
+      error
+    );
 
     this.allowedExtensions.set([]);
-
     this.maxAttachmentSizeMb.set(0);
-
     this.attachmentSettingsLoaded.set(false);
 
     this.openPopup(
-      'تعذر تحميل إعدادات المرفقات. يرجى تحديث الصفحة والمحاولة مجددًا.',
+      'تعذر تحميل إعدادات المرفقات الأساسية. يرجى المحاولة مجددًا.',
       'error',
       'خطأ في الإعدادات'
     );
-
   }
-
 }
+
 
 
   // =========================================================
