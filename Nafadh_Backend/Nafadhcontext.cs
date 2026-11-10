@@ -253,6 +253,11 @@ namespace Nafadh_Backend
             {
                 entity.ToTable("NFD_Companies");
                 entity.HasIndex(e => e.UserId).IsUnique();
+                entity.HasIndex(e => e.CompanyId);
+                entity.HasOne<NFD_Company>()
+                    .WithMany()
+                    .HasForeignKey(e => e.CompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(e => e.User)
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
@@ -274,6 +279,11 @@ namespace Nafadh_Backend
             {
                 entity.ToTable("NFD_CompanySupervisors");
                 entity.HasIndex(e => e.UserId).IsUnique();
+                entity.HasIndex(e => e.CompanyId);
+                entity.HasOne<NFD_Company>()
+                    .WithMany()
+                    .HasForeignKey(e => e.CompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(e => e.User)
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
