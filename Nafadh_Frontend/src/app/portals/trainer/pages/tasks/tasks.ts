@@ -13,7 +13,9 @@ import {
   SubmissionDto,
   TaskDto,
   TrainerBatchDto,
-  TrainerDto
+  TrainerDto,
+  ProjectDto,
+  ProjectMemberDto
 } from '../../../../core/models/dtos';
 
 import { TaskPriority, TaskStatus } from '../../../../core/models/enums';
@@ -27,8 +29,241 @@ import { TaskPriority, TaskStatus } from '../../../../core/models/enums';
   styleUrl: './tasks.scss',
 })
 export class TrainerTasks implements OnInit {
+  activeTab = signal<'tasks' | 'projects'>('tasks');
+selectedProject = signal<ProjectDto | null>(null);
+showProjectMembersModal = signal(false);
+
+openProjectMembers(project: ProjectDto): void {
+  this.selectedProject.set(project);
+  this.projectMembers.set([]);
+  this.showProjectMembersModal.set(true);
+  this.loadProjectMembers(project.projectId);
+  this.loadBatchTraineesForProject();
+}
+projectMembers = signal<ProjectMemberDto[]>([]);
+batchTrainees = signal<{ traineeId: number; fullName: string }[]>([]);
+selectedProjectTraineeId = 0;
+selectedProjectMemberRole: 'Lead' | 'Contributor' = 'Contributor';
+addingProjectMember = signal(false);
+loadingProjectMembers = signal(false);
+projectMembersError = signal('');
+
+loadProjectMembers(projectId: number): void {
+  this.loadingProjectMembers.set(true);
+  this.projectMembersError.set('');
+
+  this.api.getProjectMembers(projectId).subscribe({
+    next: (data) => {
+      this.projectMembers.set(data ?? []);
+      this.loadingProjectMembers.set(false);
+    },
+    error: (error) => {
+      console.error('Error loading project members:', error);
+      this.projectMembersError.set('تعذر تحميل أعضاء الفريق');
+      this.loadingProjectMembers.set(false);
+    }
+  });
+}
+loadBatchTraineesForProject(): void {
+  if (!this.batchIdInput) {
+    this.batchTrainees.set([]);
+    return;
+  }
+
+  this.api.getBatchTrainees(this.batchIdInput).subscribe({
+    next: (data) => {
+      const trainees = (data ?? []) as {
+        traineeId: number;
+        fullName: string;
+      }[];
+
+  this.batchTrainees.set(trainees);
+    },
+    error: (error) => {
+      console.error('Error loading batch trainees:', error);
+      this.projectMembersError.set('تعذر تحميل متدربي الدفعة');
+    }
+  });
+}
+getProjectMemberName(traineeId: number): string {
+  const trainee = this.batchTrainees().find(
+    t => t.traineeId === traineeId
+  );
+
+  return trainee?.fullName ?? `متدرب رقم ${traineeId}`;
+}
+isProjectMember(traineeId: number): boolean {
+  return this.projectMembers().some(
+    member => member.traineeId === traineeId
+  );
+}
+addMemberToProject(): void {
+  const project = this.selectedProject();
+
+  if (!project || !this.selectedProjectTraineeId) {
+    this.projectMembersError.set('يرجى اختيار المتدرب أولاً');
+    return;
+  }
+
+  if (this.projectMembers().some(
+    m => m.traineeId === this.selectedProjectTraineeId
+  )) {
+    this.projectMembersError.set('المتدرب مضاف بالفعل إلى المشروع');
+    return;
+  }
+
+  this.addingProjectMember.set(true);
+  this.projectMembersError.set('');
+
+  this.api.addProjectMember({
+    projectId: project.projectId,
+    traineeId: this.selectedProjectTraineeId,
+    role: this.selectedProjectMemberRole
+  }).subscribe({
+    next: () => {
+      this.addingProjectMember.set(false);
+      this.selectedProjectTraineeId = 0;
+      this.loadProjectMembers(project.projectId);
+      this.loadBatchTraineesForProject();
+    },
+    error: (error) => {
+      console.error('Error adding project member:', error);
+      this.addingProjectMember.set(false);
+      this.projectMembersError.set('تعذر إضافة المتدرب للمشروع');
+    }
+  });
+}
+memberPendingDelete = signal<ProjectMemberDto | null>(null);
+showDeleteMemberModal = signal(false);
+
+removeProjectMember(member: ProjectMemberDto): void {
+  this.memberPendingDelete.set(member);
+  this.showDeleteMemberModal.set(true);
+}
+
+confirmRemoveProjectMember(): void {
+  const member = this.memberPendingDelete();
+  if (!member) return;
+
+  this.api.deleteProjectMember(member.id).subscribe({
+    next: () => {
+      this.showDeleteMemberModal.set(false);
+      this.memberPendingDelete.set(null);
+
+      const project = this.selectedProject();
+      if (project) {
+        this.loadProjectMembers(project.projectId);
+      }
+    },
+    error: (error) => {
+      console.error(error);
+      this.projectMembersError.set('تعذر حذف عضو الفريق');
+      this.showDeleteMemberModal.set(false);
+    }
+  });
+}
+setActiveTab(tab: 'tasks' | 'projects'): void {
+  this.activeTab.set(tab);
+
+  if (tab === 'projects') {
+    this.projects.set([]);
+    this.projectsError.set('');
+
+    if (!this.batchIdInput) {
+      this.projectsError.set('لا توجد دفعة محددة');
+      return;
+    }
+
+    this.loadingProjects.set(true);
+
+    this.api.getBatch(this.batchIdInput).subscribe({
+      next: (batch) => {
+        this.newProjectProgramId = batch.programId;
+        this.loadProjects();
+      },
+      error: (error) => {
+        console.error('Error loading batch:', error);
+        this.loadingProjects.set(false);
+        this.projectsError.set('تعذر تحميل بيانات الدفعة');
+      }
+    });
+  }
+}
   readonly constants = inject(NafadhConstantsService);
 
+  // =====================================================
+// PROJECTS
+// =====================================================
+
+showProjectCreateModal = signal(false);
+// PROJECTS LIST
+projects = signal<ProjectDto[]>([]);
+loadingProjects = signal(false);
+projectsError = signal('');
+
+// PROJECT CREATE FORM
+newProjectTitle = '';
+newProjectDescription = '';
+newProjectStartDate = '';
+newProjectEndDate = '';
+
+newProjectStatus:
+  'Planned' | 'InProgress' | 'Completed' | 'Cancelled' = 'Planned';
+
+newProjectProgramId = 0;
+projectSaving = signal(false);
+projectError = signal('');
+
+openProjectCreateModal(): void {
+  this.projectError.set('');
+
+  if (!this.batchIdInput) {
+    this.projectError.set('يرجى اختيار الدفعة أولاً');
+    this.showProjectCreateModal.set(true);
+    return;
+  }
+
+  this.newProjectProgramId = 0;
+
+  this.api.getBatch(this.batchIdInput).subscribe({
+    next: (batch) => {
+      this.newProjectProgramId = batch.programId;
+      this.showProjectCreateModal.set(true);
+    },
+    error: (error) => {
+      console.error('Error loading batch program:', error);
+      this.projectError.set('تعذر تحديد البرنامج المرتبط بالدفعة');
+      this.showProjectCreateModal.set(true);
+    }
+  });
+}
+
+closeProjectCreateModal(): void {
+  this.showProjectCreateModal.set(false);
+  
+}
+loadProjects(): void {
+  if (!this.newProjectProgramId) {
+    this.projects.set([]);
+    return;
+  }
+
+  this.loadingProjects.set(true);
+  this.projectsError.set('');
+
+  this.api.getProjectsByProgram(this.newProjectProgramId).subscribe({
+    next: (data) => {
+      this.projects.set(data ?? []);
+      this.loadingProjects.set(false);
+    },
+    error: (error) => {
+      console.error('Error loading projects:', error);
+      this.projects.set([]);
+      this.projectsError.set('تعذر تحميل المشاريع');
+      this.loadingProjects.set(false);
+    }
+  });
+}
   // =====================================================
   // TRAINER
   // =====================================================
@@ -885,5 +1120,58 @@ confirmDeleteTask(): void {
       }
     });
   }
+  saveProject(): void {
+  this.projectError.set('');
+
+  if (!this.newProjectTitle.trim()) {
+    this.projectError.set('يرجى إدخال عنوان المشروع');
+    return;
+  }
+
+  if (!this.newProjectStartDate || !this.newProjectEndDate) {
+    this.projectError.set('يرجى تحديد تاريخ البداية والنهاية');
+    return;
+  }
+
+  if (this.newProjectEndDate < this.newProjectStartDate) {
+    this.projectError.set('تاريخ النهاية يجب ألا يسبق تاريخ البداية');
+    return;
+  }
+
+  if (this.newProjectProgramId <= 0) {
+    this.projectError.set('تعذر تحديد برنامج المشروع');
+    return;
+  }
+
+  const payload = {
+    title: this.newProjectTitle.trim(),
+    description: this.newProjectDescription.trim(),
+    startDate: new Date(this.newProjectStartDate + 'T00:00:00').toISOString(),
+    endDate: new Date(this.newProjectEndDate + 'T00:00:00').toISOString(),
+    status: this.newProjectStatus,
+    programId: this.newProjectProgramId
+  };
+
+  this.projectSaving.set(true);
+
+  this.api.createProject(payload).subscribe({
+    next: () => {
+      this.projectSaving.set(false);
+      this.closeProjectCreateModal();
+       this.loadProjects();
+
+      this.newProjectTitle = '';
+      this.newProjectDescription = '';
+      this.newProjectStartDate = '';
+      this.newProjectEndDate = '';
+      this.newProjectStatus = 'Planned';
+    },
+    error: (error) => {
+      console.error('Error creating project:', error);
+      this.projectSaving.set(false);
+      this.projectError.set('تعذر إنشاء المشروع');
+    }
+  });
+}
 
 }

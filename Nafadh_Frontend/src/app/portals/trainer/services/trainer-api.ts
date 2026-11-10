@@ -924,6 +924,11 @@ deleteTrainerSkill(skillId: number): Observable<void> {
       dto
     );
   }
+  deleteProjectMember(memberId: number) {
+  return this.http.delete(
+    `${this.base}/ProjectMember/${memberId}`
+  );
+}
 
   getProjectGrades(
     batchId: number,

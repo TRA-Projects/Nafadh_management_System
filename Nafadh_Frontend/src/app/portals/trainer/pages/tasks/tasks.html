@@ -1,5 +1,30 @@
 <div class="tasks-page tasks-inline-001">
 
+  <!-- TASKS / PROJECTS TABS -->
+<div style="display:flex;justify-content:flex-start;gap:10px;margin-bottom:24px;direction:rtl;">
+
+  <button
+    type="button"
+    (click)="setActiveTab('tasks')"
+    [style.background]="activeTab() === 'tasks' ? '#10166f' : 'transparent'"
+    [style.color]="activeTab() === 'tasks' ? '#ffffff' : '#0056b8'"
+    style="padding:12px 28px;border:0;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;"
+  >
+    المهام
+  </button>
+
+  <button
+    type="button"
+    (click)="setActiveTab('projects')"
+    [style.background]="activeTab() === 'projects' ? '#10166f' : 'transparent'"
+    [style.color]="activeTab() === 'projects' ? '#ffffff' : '#0056b8'"
+    style="padding:12px 28px;border:0;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;"
+  >
+    المشاريع
+  </button>
+
+</div>
+@if (activeTab() === 'tasks') {
   <!-- ================= HEADER ================= -->
   <div class="tasks-header">
     <div class="tasks-header-copy">
@@ -980,6 +1005,322 @@
           }
         </button>
       </div>
+    </div>
+  </div>
+}}
+@if (activeTab() === 'projects') {
+  <div style="padding:24px 0;direction:rtl;">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;">
+      <div>
+        <h2 style="color:#10166f;margin:0 0 8px;">
+          المشاريع التدريبية
+        </h2>
+        <p style="color:#64748b;margin:0;">
+          إنشاء المشاريع ومتابعة أعضاء الفرق وتقييم المتدربين
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="nfd-btn primary"
+        (click)="openProjectCreateModal()"
+      >
+        + إنشاء مشروع
+      </button>
+    </div>
+<!-- PROJECTS LIST -->
+<div style="margin-top:24px;">
+
+  @if (loadingProjects()) {
+    <p style="color:#64748b;">جاري تحميل المشاريع...</p>
+
+  } @else if (projectsError()) {
+    <p style="color:#dc2626;">{{ projectsError() }}</p>
+
+  } @else if (projects().length === 0) {
+    <div style="padding:40px;text-align:center;background:#f8fafc;border-radius:14px;">
+      <h3 style="color:#334155;">لا توجد مشاريع</h3>
+      <p style="color:#64748b;">
+        لم يتم إنشاء مشاريع لهذا البرنامج حتى الآن
+      </p>
+    </div>
+
+  } @else {
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
+
+      @for (project of projects(); track project.projectId) {
+        <div style="padding:20px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;">
+
+          <h3 style="color:#10166f;margin:0 0 10px;">
+            {{ project.title }}
+          </h3>
+
+          <p style="color:#64748b;font-size:13px;">
+            {{ project.description || 'لا يوجد وصف للمشروع' }}
+          </p>
+
+          <p style="font-size:12px;">
+            <strong>البداية:</strong>
+            {{ project.startDate | date:'dd/MM/yyyy' }}
+          </p>
+
+          <p style="font-size:12px;">
+            <strong>النهاية:</strong>
+            {{ project.endDate | date:'dd/MM/yyyy' }}
+          </p>
+
+          <span style="font-size:12px;color:#0056b8;font-weight:700;">
+            @switch (project.status) {
+              @case ('Planned') { مخطط له }
+              @case ('InProgress') { قيد التنفيذ }
+              @case ('Completed') { مكتمل }
+              @case ('Cancelled') { ملغي }
+            }
+          </span>
+          <div style="margin-top:20px;padding-top:15px;border-top:1px solid #e2e8f0;">
+
+  <button
+    type="button"
+    class="nfd-btn primary"
+    (click)="openProjectMembers(project)"
+  >
+    إدارة أعضاء الفريق
+  </button>
+
+</div>
+
+        </div>
+      }
+
+    </div>
+  }
+
+</div>
+  </div>
+}
+@if (showProjectCreateModal()) {
+  <div
+    (click)="closeProjectCreateModal()"
+    style="position:fixed;inset:0;z-index:2000;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:20px;"
+  >
+    <div
+      (click)="$event.stopPropagation()"
+     style="background:white;border-radius:16px;padding:24px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;direction:rtl;box-sizing:border-box;"
+    >
+      <h3>إنشاء مشروع تدريبي</h3>
+
+     <form
+  (ngSubmit)="saveProject()"
+  style="display:flex;flex-direction:column;gap:14px;"
+>
+
+        <label>عنوان المشروع</label>
+        <input
+          type="text"
+          name="projectTitle"
+          [(ngModel)]="newProjectTitle"
+          maxlength="150"
+          required
+          style="display:block;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:14px;margin-top:6px;"
+        />
+
+        <label>وصف المشروع</label>
+        <textarea
+          name="projectDescription"
+          [(ngModel)]="newProjectDescription"
+         style="display:block;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:14px;margin-top:6px;"
+        ></textarea>
+
+        <label>تاريخ البداية</label>
+        <input
+          type="date"
+          name="projectStartDate"
+          [(ngModel)]="newProjectStartDate"
+          required
+         style="display:block;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:14px;margin-top:6px;"
+        />
+
+        <label>تاريخ النهاية</label>
+        <input
+          type="date"
+          name="projectEndDate"
+          [(ngModel)]="newProjectEndDate"
+          required
+        style="display:block;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:14px;margin-top:6px;"
+        />
+
+        <label>حالة المشروع</label>
+        <select
+          name="projectStatus"
+          [(ngModel)]="newProjectStatus"
+        style="display:block;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:14px;margin-top:6px;"
+        >
+          <option value="Planned">مخطط له</option>
+          <option value="InProgress">قيد التنفيذ</option>
+          <option value="Completed">مكتمل</option>
+          <option value="Cancelled">ملغي</option>
+        </select>
+
+        @if (projectError()) {
+          <p style="color:#dc2626;">{{ projectError() }}</p>
+        }
+
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button
+            type="submit"
+            class="nfd-btn primary"
+            [disabled]="projectSaving()"
+          >
+            {{ projectSaving() ? 'جاري الحفظ...' : 'حفظ المشروع' }}
+          </button>
+
+          <button
+            type="button"
+            class="nfd-btn"
+            (click)="closeProjectCreateModal()"
+            [disabled]="projectSaving()"
+          >
+            إلغاء
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+}
+<!-- PROJECT MEMBERS MODAL -->
+@if (showProjectMembersModal()) {
+  <div
+    style="position:fixed;inset:0;z-index:2100;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:20px;"
+  >
+    <div
+      style="background:white;border-radius:16px;padding:24px;width:100%;max-width:550px;max-height:85vh;overflow-y:auto;direction:rtl;box-sizing:border-box;"
+    >
+
+      <h3 style="color:#10166f;margin-top:0;">
+        إدارة أعضاء الفريق
+      </h3>
+
+      <p style="color:#64748b;">
+        {{ selectedProject()?.title }}
+      </p>
+
+      <!-- ADD PROJECT MEMBER -->
+<div style="padding:16px;background:#f8fafc;border-radius:12px;margin-bottom:20px;">
+
+  <h4 style="margin:0 0 12px;color:#10166f;">
+    إضافة عضو جديد
+  </h4>
+
+  <label style="display:block;margin-bottom:6px;">
+    اختر المتدرب
+  </label>
+
+  <select
+    [(ngModel)]="selectedProjectTraineeId"
+    style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;"
+  >
+    <option [ngValue]="0">اختر المتدرب</option>
+
+   @for (trainee of batchTrainees(); track trainee.traineeId) {
+  @if (!isProjectMember(trainee.traineeId)) {
+    <option [ngValue]="trainee.traineeId">
+      {{ trainee.fullName }}
+    </option>
+  }
+}
+  </select>
+
+  <label style="display:block;margin:12px 0 6px;">
+    دور المتدرب
+  </label>
+
+  <select
+    [(ngModel)]="selectedProjectMemberRole"
+    style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;"
+  >
+    <option value="Contributor">عضو الفريق</option>
+    <option value="Lead">قائد الفريق</option>
+  </select>
+
+  <button
+    type="button"
+    class="nfd-btn primary"
+    style="margin-top:14px;"
+    [disabled]="addingProjectMember() || !selectedProjectTraineeId"
+    (click)="addMemberToProject()"
+  >
+    {{ addingProjectMember() ? 'جاري الإضافة...' : 'إضافة عضو' }}
+  </button>
+
+</div>
+      @if (loadingProjectMembers()) {
+        <p>جاري تحميل أعضاء الفريق...</p>
+
+      } @else if (projectMembersError()) {
+        <p style="color:#dc2626;">
+          {{ projectMembersError() }}
+        </p>
+
+      } @else if (projectMembers().length === 0) {
+        <p style="color:#64748b;">
+          لا يوجد أعضاء في هذا المشروع حاليًا.
+        </p>
+
+      } @else {
+        @for (member of projectMembers(); track member.id) {
+          <div style="padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;">
+         <strong>{{ getProjectMemberName(member.traineeId) }}</strong>
+            <p style="margin:6px 0 0;color:#64748b;">
+              الدور: {{ member.role === 'Lead' ? 'قائد الفريق' : 'عضو الفريق' }}
+            </p>
+       <button
+  type="button"
+  (click)="memberPendingDelete.set(member); showDeleteMemberModal.set(true)"
+>
+  حذف العضو
+</button>
+          </div>
+        }
+      }
+
+      <button
+        type="button"
+        class="nfd-btn"
+        style="margin-top:20px;"
+        (click)="showProjectMembersModal.set(false)"
+      >
+        إغلاق
+      </button>
+
+    </div>
+  </div>
+}
+@if (showDeleteMemberModal()) {
+  <div class="delete-member-overlay">
+    <div class="delete-member-modal">
+
+      <h3>تأكيد حذف العضو</h3>
+
+      <p>هل أنت متأكد من حذف هذا المتدرب من الفريق؟</p>
+
+      <div class="delete-member-actions">
+        <button
+          type="button"
+          class="delete-confirm-btn"
+          (click)="confirmRemoveProjectMember()">
+          نعم، احذف
+        </button>
+
+        <button
+          type="button"
+          class="delete-cancel-btn"
+          (click)="showDeleteMemberModal.set(false); memberPendingDelete.set(null)">
+          إلغاء
+        </button>
+      </div>
+
     </div>
   </div>
 }
