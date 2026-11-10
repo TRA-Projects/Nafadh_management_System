@@ -281,6 +281,10 @@ namespace Nafadh_Backend.Services
 
             var fileName = $"attendance-{record.TrainerAttendanceId}-{Guid.NewGuid():N}{extension}";
             var fullPath = Path.Combine(storagePath, fileName);
+            // The notification is only for the FIRST non-empty excuse submission.
+            // Later edits / re-uploads must not create another notification.
+            var hadExcuseBeforeUpload = !string.IsNullOrWhiteSpace(record.Reason) ||
+                !string.IsNullOrWhiteSpace(record.ExcuseProofUrl);
             var oldUrl = record.ExcuseProofUrl;
 
             await using (var stream = new FileStream(fullPath, FileMode.CreateNew))
@@ -295,6 +299,9 @@ namespace Nafadh_Backend.Services
 
             try
             {
+                if (!hadExcuseBeforeUpload)
+                    await TrainerExcuseNotificationWriter.QueueFirstSubmissionAsync(_context, record);
+                // Persist proof and notification in the same DbContext save.
                 await _repository.SaveChangesAsync();
             }
             catch
@@ -359,10 +366,15 @@ namespace Nafadh_Backend.Services
             RequireExcuseWindow(record);
             if (reason?.Length > 500)
                 throw new ArgumentException("Reason cannot exceed 500 characters.");
+            var hadExcuseBeforeSubmission = !string.IsNullOrWhiteSpace(record.Reason) ||
+                !string.IsNullOrWhiteSpace(record.ExcuseProofUrl);
             record.Reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
             record.ExcuseReviewStatus = string.IsNullOrWhiteSpace(record.Reason) &&
                 string.IsNullOrWhiteSpace(record.ExcuseProofUrl) ? null : "Pending";
             record.UpdatedAt = DateTime.UtcNow;
+            if (!hadExcuseBeforeSubmission && !string.IsNullOrWhiteSpace(record.Reason))
+                await TrainerExcuseNotificationWriter.QueueFirstSubmissionAsync(_context, record);
+            // Persist reason and notification together.
             await _repository.SaveChangesAsync();
             return ToDto(record);
         }
