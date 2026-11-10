@@ -782,7 +782,7 @@ getCertificateFileUrl(fileUrl: string): string {
   // =====================================================
 
 removeSkill(skillId: number): void {
-  if (!this.isEditing()) return;
+  
 
   this.api.deleteTrainerSkill(skillId).subscribe({
     next: () => {

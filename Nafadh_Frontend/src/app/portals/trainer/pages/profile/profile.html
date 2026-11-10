@@ -629,31 +629,21 @@
 
 
 
-    <div class="skills-list">
+<div class="skills-list">
+  @for (skill of skills(); track skill.trainerSkillId) {
+    <span class="skill-tag">
+      {{ skill.skillName }}
 
-      @for (skill of skills(); track skill.trainerSkillId) {
+      <button
+        type="button"
+        (click)="removeSkill(skill.trainerSkillId)"
+        title="حذف المهارة">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </span>
+  }
+</div>
 
-      <span class="skill-tag">
-
-        {{ skill.skillName }}
-
-
-
-        @if (isEditing()) {
-
-        <button type="button" (click)="removeSkill(skill.trainerSkillId)" title="حذف المهارة">
-
-          <i class="fa-solid fa-xmark"></i>
-
-        </button>
-
-        }
-
-      </span>
-
-      }
-
-    </div>
 
   </section>
   <!-- =====================================================
