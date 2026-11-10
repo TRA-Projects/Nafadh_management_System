@@ -359,6 +359,28 @@ export class TrainerApi {
   }
 
 
+getTrainerSkills(trainerId: number): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.base}/TrainerSkill/trainer/${trainerId}`
+  );
+}
+
+addTrainerSkill(
+  trainerId: number,
+  skillName: string
+): Observable<any> {
+  return this.http.post<any>(
+    `${this.base}/TrainerSkill/trainer/${trainerId}`,
+    { skillName }
+  );
+}
+
+deleteTrainerSkill(skillId: number): Observable<void> {
+  return this.http.delete<void>(
+    `${this.base}/TrainerSkill/${skillId}`
+  );
+}
+
   // =====================================================
   // Dashboard / Batches
   // =====================================================

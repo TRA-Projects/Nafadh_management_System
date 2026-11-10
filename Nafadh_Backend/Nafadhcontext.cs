@@ -117,6 +117,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_CoursePlanStageTrainer> NFD_CoursePlanStageTrainers { get; set; }
         public DbSet<NFD_LessonFeedback> NFD_LessonFeedbacks { get; set; }
         public DbSet<NFD_TraineeSkill> NFD_TraineeSkills { get; set; }
+        public virtual DbSet<NFD_TrainerSkill> NFD_TrainerSkills { get; set; }
         public DbSet<NFD_WithdrawalRequest> NFD_WithdrawalRequests { get; set; }
         public DbSet<NFD_NotificationTemplate> NFD_NotificationTemplates
         { get; set; }

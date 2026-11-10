@@ -387,56 +387,111 @@
           </div>
 
 
-          <!-- الحساب البنكي -->
-          <div class="section-divider">
-            <span class="section-subtitle">الحساب البنكي</span>
+          
+<!-- الحساب البنكي -->
+<div class="section-divider">
+  <span class="section-subtitle">الحساب البنكي</span>
 
-            <!-- اسم البنك -->
-            <label class="field-label">اسم البنك</label>
-            @if (editing()) {
-              <input class="nfd-input field-input editable" [(ngModel)]="$any(t).bankName" type="text" />
-            } @else {
-              <input [value]="$any(t).bankName || ''" readonly class="field-input" />
-            }
+  <!-- اسم البنك -->
+  <label class="field-label">اسم البنك</label>
+  @if (editing()) {
+    <input
+      class="nfd-input field-input editable"
+      [(ngModel)]="$any(t).bankName"
+      (ngModelChange)="validateBankAccount()"
+      type="text"
+      [style.border-color]="bankErrors()['bankName'] ? '#ef4444' : null"
+    />
+    @if (bankErrors()['bankName']) {
+      <small style="color: #ef4444;">
+        {{ bankErrors()['bankName'] }}
+      </small>
+    }
+  } @else {
+    <input [value]="$any(t).bankName || ''" readonly class="field-input" />
+  }
 
-            <!-- اسم صاحب الحساب -->
-            <label class="field-label">اسم صاحب الحساب</label>
-            @if (editing()) {
-              <input class="nfd-input field-input editable" [(ngModel)]="$any(t).accountHolderName" type="text" />
-            } @else {
-              <input [value]="$any(t).accountHolderName || ''" readonly class="field-input" />
-            }
+  <!-- اسم صاحب الحساب -->
+  <label class="field-label">اسم صاحب الحساب</label>
+  @if (editing()) {
+    <input
+      class="nfd-input field-input editable"
+      [(ngModel)]="$any(t).accountHolderName"
+      (ngModelChange)="validateBankAccount()"
+      type="text"
+      [style.border-color]="bankErrors()['accountHolderName'] ? '#ef4444' : null"
+    />
+    @if (bankErrors()['accountHolderName']) {
+      <small style="color: #ef4444;">
+        {{ bankErrors()['accountHolderName'] }}
+      </small>
+    }
+  } @else {
+    <input [value]="$any(t).accountHolderName || ''" readonly class="field-input" />
+  }
 
-            <!-- رقم الحساب -->
-            <label class="field-label">رقم الحساب</label>
-            @if (editing()) {
-              <input class="nfd-input field-input editable" [(ngModel)]="$any(t).accountNumber" type="text" dir="ltr" />
-            } @else {
-              <input [value]="$any(t).accountNumber || ''" readonly dir="ltr" class="field-input" />
-            }
+  <!-- رقم الحساب -->
+  <label class="field-label">رقم الحساب</label>
+  @if (editing()) {
+    <input
+      class="nfd-input field-input editable"
+      [(ngModel)]="$any(t).accountNumber"
+      (ngModelChange)="validateBankAccount()"
+      type="text"
+      inputmode="numeric"
+      dir="ltr"
+      [style.border-color]="bankErrors()['accountNumber'] ? '#ef4444' : null"
+    />
+    @if (bankErrors()['accountNumber']) {
+      <small style="color: #ef4444;">
+        {{ bankErrors()['accountNumber'] }}
+      </small>
+    }
+  } @else {
+    <input [value]="$any(t).accountNumber || ''" readonly dir="ltr" class="field-input" />
+  }
 
-            <!-- IBAN -->
-            <label class="field-label">IBAN</label>
-            @if (editing()) {
-              <input
-                class="nfd-input field-input editable"
-                [(ngModel)]="$any(t).iban"
-                type="text"
-                dir="ltr"
-                placeholder="OMXXXXXXXXXXXXXXXXXXXXXXXX"
-              />
-            } @else {
-              <input [value]="$any(t).iban || ''" readonly dir="ltr" class="field-input" />
-            }
+  <!-- IBAN -->
+  <label class="field-label">IBAN</label>
+  @if (editing()) {
+    <input
+      class="nfd-input field-input editable"
+      [(ngModel)]="$any(t).iban"
+      (ngModelChange)="validateBankAccount()"
+      type="text"
+      dir="ltr"
+      maxlength="23"
+      placeholder="OM00XXXXXXXXXXXXXXXXXXX"
+      [style.border-color]="bankErrors()['iban'] ? '#ef4444' : null"
+    />
+    @if (bankErrors()['iban']) {
+      <small style="color: #ef4444;">
+        {{ bankErrors()['iban'] }}
+      </small>
+    }
+  } @else {
+    <input [value]="$any(t).iban || ''" readonly dir="ltr" class="field-input" />
+  }
 
-            <!-- الفرع -->
-            <label class="field-label">الفرع</label>
-            @if (editing()) {
-              <input class="nfd-input field-input editable" [(ngModel)]="$any(t).bankBranch" type="text" />
-            } @else {
-              <input [value]="$any(t).bankBranch || ''" readonly class="field-input" />
-            }
-          </div>
+  <!-- الفرع -->
+  <label class="field-label">الفرع</label>
+  @if (editing()) {
+    <input
+      class="nfd-input field-input editable"
+      [(ngModel)]="$any(t).bankBranch"
+      (ngModelChange)="validateBankAccount()"
+      type="text"
+      [style.border-color]="bankErrors()['bankBranch'] ? '#ef4444' : null"
+    />
+    @if (bankErrors()['bankBranch']) {
+      <small style="color: #ef4444;">
+        {{ bankErrors()['bankBranch'] }}
+      </small>
+    }
+  } @else {
+    <input [value]="$any(t).bankBranch || ''" readonly class="field-input" />
+  }
+</div>
 
         </div>
 
@@ -571,29 +626,34 @@
         </label>
       }
 
-      <div class="cv-file-row">
-        <span class="cv-file-name" dir="ltr">
-          📄
-          {{ $any(t).cvFileName || $any(t).resumeUrl || 'لا يوجد ملف مرفق' }}
-        </span>
+ <div class="cv-file-row">
+  <span class="cv-file-name">
+    📄 {{ $any(t).cvFileName || 'السيرة الذاتية' }}
+  </span>
 
-        @if ($any(t).resumeUrl) {
-          <a
-            [href]="getCvDownloadUrl($any(t).resumeUrl)"
-            target="_blank"
-            download
-            title="تحميل السيرة الذاتية"
-            class="cv-download-link"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-          </a>
-        }
-      </div>
+  <button
+    type="button"
+    class="cv-download-btn"
+    (click)="downloadCv($any(t).resumeUrl)"
+    title="تنزيل السيرة الذاتية"
+    aria-label="تنزيل السيرة الذاتية"
+  >
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <path d="m7 10 5 5 5-5"/>
+      <path d="M12 15V3"/>
+    </svg>
+  </button>
+</div>
 
     </div>
 
@@ -718,17 +778,18 @@
                 </div>
 
                 @if (proofMode() === 'file') {
-                  <div
-                    class="proof-file-dropzone"
-                    (click)="certificateFileInput.click()"
-                  >
-                    <input
-                      #certificateFileInput
-                      type="file"
-                      accept="*/*"
-                      (change)="onCertificateFileSelected($event)"
-                      style="display: none;"
-                    />
+                 <div
+  class="proof-file-dropzone"
+  (click)="certificateFileInput.click()"
+>
+  <input
+    #certificateFileInput
+    type="file"
+    accept=".pdf,.jpg,.jpeg,.png"
+    (click)="$event.stopPropagation()"
+    (change)="onCertificateFileSelected($event)"
+    style="display: none;"
+  />
 
                     @if (certificateFileName()) {
                       <div class="proof-file-selected">
@@ -749,8 +810,7 @@
                         </svg>
                         <div>اضغط لرفع ملف الإثبات</div>
                         <div class="proof-file-empty-hint">
-                          جميع أنواع الملفات والصور مسموحة
-                        </div>
+الملفات المسموحة: PDF, JPG, JPEG, PNG                        </div>
                       </div>
                     }
                   </div>
