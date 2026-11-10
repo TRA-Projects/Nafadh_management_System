@@ -18,6 +18,295 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
+
+        private sealed class BatchWeightedStat
+        {
+            public NFD_Enrollment Enrollment { get; set; } = null!;
+            public double Attendance { get; set; }
+            public decimal Technical { get; set; }
+            public decimal Behavioral { get; set; }
+            public decimal Final { get; set; }
+            public bool IsComplete { get; set; }
+            public string Level { get; set; } = "غير مكتمل";
+        }
+
+        private static decimal? ParseTaskGrade(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            value = value.Trim();
+
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+            var style = System.Globalization.NumberStyles.Number;
+
+            if (value.Contains('/'))
+            {
+                var parts = value.Split('/');
+
+                if (parts.Length != 2 ||
+                    !decimal.TryParse(parts[0].Trim(), style, culture, out var earned) ||
+                    !decimal.TryParse(parts[1].Trim(), style, culture, out var maximum) ||
+                    maximum <= 0 ||
+                    earned < 0 ||
+                    earned > maximum)
+                {
+                    return null;
+                }
+
+                return Math.Round(earned / maximum * 100m, 2);
+            }
+
+            if (!decimal.TryParse(value, style, culture, out var score))
+                return null;
+
+            return score >= 0m && score <= 100m
+                ? score
+                : null;
+        }
+
+        private async Task<List<BatchWeightedStat>> CalculateBatchWeightedStatsAsync(
+            NFD_Batch batch,
+            int? companyId = null)
+        {
+            var query = _context.NFD_Enrollments
+                .AsNoTracking()
+                .Where(e => e.BatchId == batch.BatchId);
+
+            if (companyId.HasValue)
+                query = query.Where(e => e.CompanyId == companyId.Value);
+
+            var enrollments = await query
+                .Include(e => e.Trainee).ThenInclude(t => t.User)
+                .Include(e => e.Company)
+                .Include(e => e.DailyAttendances).ThenInclude(a => a.Excuses)
+                .Include(e => e.Evaluations).ThenInclude(ev => ev.EvaluationTemplate)
+                .OrderBy(e => e.TraineeId)
+                .ToListAsync();
+
+            if (enrollments.Count == 0)
+                return new List<BatchWeightedStat>();
+
+            var traineeIds = enrollments.Select(e => e.TraineeId).Distinct().ToList();
+            var enrollmentIds = enrollments.Select(e => e.EnrollmentId).ToList();
+
+            var taskIds = await _context.NFD_Tasks
+                .AsNoTracking()
+                .Where(t => t.BatchId == batch.BatchId)
+                .Select(t => t.TaskId)
+                .ToListAsync();
+
+            var quizzes = await _context.NFD_Quizzes
+                .AsNoTracking()
+               .Where(q => q.BatchId == batch.BatchId &&
+            (q.Status == NFD_QuizStatus.Open ||
+             q.Status == NFD_QuizStatus.Closed ||
+             q.Status == NFD_QuizStatus.Archived))
+                .ToListAsync();
+
+            var submissions = await _context.NFD_Submissions
+                .AsNoTracking()
+                .Where(s => traineeIds.Contains(s.TraineeId) &&
+                            taskIds.Contains(s.TaskId) &&
+                            s.Status == NFD_SubmissionStatus.Graded)
+                .ToListAsync();
+
+            var attempts = await _context.NFD_QuizAttempts
+     .AsNoTracking()
+     .Where(a =>
+         traineeIds.Contains(a.TraineeId) &&
+         a.SubmittedAt != null &&
+         a.Quiz.BatchId == batch.BatchId &&
+         (a.Quiz.Status == NFD_QuizStatus.Open ||
+          a.Quiz.Status == NFD_QuizStatus.Closed ||
+          a.Quiz.Status == NFD_QuizStatus.Archived))
+     .ToListAsync();
+
+            var projectIds = await _context.NFD_ProjectBatches
+                .AsNoTracking()
+                .Where(p => p.BatchId == batch.BatchId)
+                .Select(p => p.ProjectId)
+                .Distinct()
+                .ToListAsync();
+
+            var projectGrades = await _context.NFD_TrainerProjectGrades
+                .AsNoTracking()
+                .Where(g => enrollmentIds.Contains(g.EnrollmentId) &&
+                            projectIds.Contains(g.ProjectId))
+                .ToListAsync();
+
+            var result = new List<BatchWeightedStat>();
+
+            foreach (var e in enrollments)
+            {
+                var attendanceRecords = e.DailyAttendances
+                    .Where(a => !a.Excuses.Any(x =>
+                        x.Status == NFD_ExcuseStatus.Approved))
+                    .ToList();
+
+                double attendance = attendanceRecords.Count > 0
+                    ? Math.Round(
+                        attendanceRecords.Count(a =>
+                            a.Status == NFD_AttendanceStatus.Present) *
+                        100.0 / attendanceRecords.Count, 2)
+                    : 0;
+
+                var traineeSubmissions = submissions
+                    .Where(s => s.TraineeId == e.TraineeId)
+                    .ToList();
+
+                var taskScores = new List<decimal>();
+
+                foreach (var taskId in taskIds)
+                {
+                    var submission = traineeSubmissions
+                        .Where(s => s.TaskId == taskId)
+                        .OrderByDescending(s => s.SubmittedAt)
+                        .FirstOrDefault();
+
+                    var grade = ParseTaskGrade(submission?.Grade);
+
+                    if (!grade.HasValue)
+                        continue;
+
+                    taskScores.Add(grade.Value);
+                }
+
+                bool tasksComplete = taskIds.Count > 0 &&
+                                     taskScores.Count == taskIds.Count;
+
+                decimal tasksScore = tasksComplete
+                    ? taskScores.Average()
+                    : 0;
+
+                var traineeAttempts = attempts
+                    .Where(a => a.TraineeId == e.TraineeId)
+                    .ToList();
+
+                var quizScores = new List<decimal>();
+
+                foreach (var quiz in quizzes)
+                {
+                    var bestAttempt = traineeAttempts
+     .Where(a => a.QuizId == quiz.QuizId)
+     .OrderByDescending(a => a.Percentage)
+     .FirstOrDefault();
+
+                    if (bestAttempt != null)
+                        quizScores.Add(bestAttempt.Percentage);
+                }
+
+                bool quizzesComplete = quizzes.Count > 0 &&
+                                       quizScores.Count == quizzes.Count;
+
+                decimal quizzesScore = quizzesComplete
+                    ? quizScores.Average()
+                    : 0;
+
+                var traineeProjectGrades = projectGrades
+                    .Where(g => g.EnrollmentId == e.EnrollmentId)
+                    .GroupBy(g => g.ProjectId)
+                    .Select(g => g.OrderByDescending(x => x.GradedAt)
+                                  .First().Score)
+                    .ToList();
+
+                bool projectsComplete = projectIds.Count > 0 &&
+                                        traineeProjectGrades.Count == projectIds.Count;
+
+                decimal projectsScore = projectsComplete
+                    ? traineeProjectGrades.Average()
+                    : 0;
+
+                bool attendanceComplete = attendanceRecords.Count > 0;
+
+                decimal technical = e.Evaluations
+                    .Where(x => x.EvaluationTemplate?.Type ==
+                                NFD_EvaluationType.Technical)
+                    .Select(x => x.Score)
+                    .DefaultIfEmpty(0)
+                    .Average();
+
+                decimal behavioral = e.Evaluations
+                    .Where(x => x.EvaluationTemplate?.Type ==
+                                NFD_EvaluationType.Behavioral)
+                    .Select(x => x.Score)
+                    .DefaultIfEmpty(0)
+                    .Average();
+
+                decimal totalWeight = 0;
+                decimal weightedScore = 0;
+
+                if (batch.AttendanceWeight > 0 && attendanceComplete)
+                {
+                    weightedScore += (decimal)attendance * batch.AttendanceWeight;
+                    totalWeight += batch.AttendanceWeight;
+                }
+
+                if (batch.TasksWeight > 0 && tasksComplete)
+                {
+                    weightedScore += tasksScore * batch.TasksWeight;
+                    totalWeight += batch.TasksWeight;
+                }
+
+                if (batch.QuizzesWeight > 0 && quizzesComplete)
+                {
+                    weightedScore += quizzesScore * batch.QuizzesWeight;
+                    totalWeight += batch.QuizzesWeight;
+                }
+
+                if (batch.ProjectsWeight > 0 && projectsComplete)
+                {
+                    weightedScore += projectsScore * batch.ProjectsWeight;
+                    totalWeight += batch.ProjectsWeight;
+                }
+
+                bool complete =
+                    totalWeight > 0 &&
+                    (batch.AttendanceWeight <= 0 || attendanceComplete) &&
+                    (batch.TasksWeight <= 0 || tasksComplete) &&
+                    (batch.QuizzesWeight <= 0 || quizzesComplete) &&
+                    (batch.ProjectsWeight <= 0 || projectsComplete);
+
+                decimal finalScore = complete
+                    ? Math.Round(weightedScore / totalWeight, 2)
+                    : 0;
+
+                string level = "غير مكتمل";
+
+                if (complete)
+                {
+                    if (finalScore >= batch.ExcellentMinScore &&
+                        (decimal)attendance >= batch.ExcellentMinAttendance)
+                        level = "ممتاز";
+                    else if (finalScore >= batch.VeryGoodMinScore &&
+                             (decimal)attendance >= batch.VeryGoodMinAttendance)
+                        level = "جيد جداً";
+                    else if (finalScore >= batch.GoodMinScore)
+                        level = "جيد";
+                    else
+                        level = "راسب";
+
+                    if ((decimal)attendance < batch.AtRiskMinAttendance &&
+                        level != "راسب")
+                        level = "متعثر";
+                }
+
+                result.Add(new BatchWeightedStat
+                {
+                    Enrollment = e,
+                    Attendance = attendance,
+                    Technical = Math.Round(technical, 1),
+                    Behavioral = Math.Round(behavioral, 1),
+                    Final = finalScore,
+                    IsComplete = complete,
+                    Level = level
+                });
+            }
+
+            return result;
+        }
+
+
         // TODO: implement data-access contract methods for this entity
 
         // GET Report by user or type
@@ -162,10 +451,14 @@ namespace Nafadh_Backend.Repositories
                 .Where(t => batchIds.Contains(t.BatchId))
                 .ToListAsync();
 
-            // 2. Load batch quizzes
+            // 2. Load valid batch quizzes only
             var batchQuizzes = await _context.NFD_Quizzes
                 .AsNoTracking()
-                .Where(q => batchIds.Contains(q.BatchId))
+                .Where(q =>
+                    batchIds.Contains(q.BatchId) &&
+                    (q.Status == NFD_QuizStatus.Open ||
+                     q.Status == NFD_QuizStatus.Closed ||
+                     q.Status == NFD_QuizStatus.Archived))
                 .ToListAsync();
 
             // 3. Load projects assigned to batches
@@ -232,13 +525,12 @@ namespace Nafadh_Backend.Repositories
                         .OrderByDescending(s => s.SubmittedAt)
                         .FirstOrDefault();
 
-                    if (submission == null ||
-                        !double.TryParse(submission.Grade, out double grade))
-                    {
-                        continue;
-                    }
+                    var grade = ParseTaskGrade(submission?.Grade);
 
-                    taskScores.Add(grade);
+                    if (!grade.HasValue)
+                        continue;
+
+                    taskScores.Add((double)grade.Value);
                 }
 
                 bool tasksComplete = tasks.Count == taskScores.Count;
@@ -328,11 +620,11 @@ namespace Nafadh_Backend.Repositories
 
                 // Do not classify incomplete evaluations
                 bool isComplete =
-                    (batch.AttendanceWeight <= 0 || attendanceComplete) &&
-                    (batch.TasksWeight <= 0 || tasks.Count == 0 || tasksComplete) &&
-                    (batch.QuizzesWeight <= 0 || quizzes.Count == 0 || quizzesComplete) &&
-                    (batch.ProjectsWeight <= 0 || projectsComplete) &&
-                    totalApplicableWeight > 0;
+    (batch.AttendanceWeight <= 0 || attendanceComplete) &&
+    (batch.TasksWeight <= 0 || (tasks.Count > 0 && tasksComplete)) &&
+    (batch.QuizzesWeight <= 0 || (quizzes.Count > 0 && quizzesComplete)) &&
+    (batch.ProjectsWeight <= 0 || (projectIds.Count > 0 && projectsComplete)) &&
+    totalApplicableWeight > 0;
 
                 double performance = isComplete
                     ? Math.Round(weightedScore / totalApplicableWeight, 2)
@@ -508,142 +800,62 @@ namespace Nafadh_Backend.Repositories
 
 
         // Admin Reports: end-of-batch performance drill-down.
+
+
         public async Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(
             int batchId, int pageNumber, int pageSize)
         {
-            if (pageNumber < 1) pageNumber = 1;
-            if (pageSize < 1) pageSize = 15;
+            pageNumber = Math.Max(1, pageNumber);
+            pageSize = Math.Max(1, pageSize);
 
             var batch = await _context.NFD_Batches
                 .Include(b => b.Program)
                 .FirstOrDefaultAsync(b => b.BatchId == batchId);
 
-            if (batch == null) return null;
+            if (batch == null)
+                return null;
 
-            var totalCount = await _context.NFD_Enrollments
-                .CountAsync(e => e.BatchId == batchId);
+            var stats = await CalculateBatchWeightedStatsAsync(batch);
 
-            if (totalCount == 0)
-            {
-                return new BatchPerformanceReportDTO
-                {
-                    BatchId = batch.BatchId,
-                    BatchName = batch.BatchName,
-                    ProgramName = batch.Program?.Title,
-                    CompanyName = null,
-                    AvgAttendance = 0,
-                    SuccessRate = 0,
-                    Rows = new List<BatchPerformanceRowDTO>(),
-                    TotalCount = 0,
-                    PageNumber = pageNumber,
-                    PageSize = pageSize
-                };
-            }
+            var totalCount = stats.Count;
 
-            // ==========================================================
-            // 1) إحصائيات الدفعة الكاملة (لازم تشمل كل المتدربين حتى تكون
-            //    متوسط الحضور ونسبة النجاح صحيحة) — بدون تحميل بيانات
-            //    User/Company الثقيلة، فقط الحضور والتقييمات.
-            // ==========================================================
-            var allEnrollmentsLean = await _context.NFD_Enrollments
-                .Where(e => e.BatchId == batchId)
-                .Include(e => e.DailyAttendances)
-                .Include(e => e.Evaluations).ThenInclude(ev => ev.EvaluationTemplate)
-                .OrderBy(e => e.TraineeId)
-                .ToListAsync();
+            var validAttendance = stats
+                .Select(s => s.Attendance)
+                .ToList();
 
-            static decimal AvgFor(NFD_Enrollment enrollment, NFD_EvaluationType type)
-            {
-                var scores = enrollment.Evaluations
-                    .Where(e => e.EvaluationTemplate != null && e.EvaluationTemplate.Type == type)
-                    .Select(e => e.Score)
-                    .ToList();
-                return scores.Count > 0 ? scores.Average() : 0m;
-            }
+            var avgAttendance = validAttendance.Count > 0
+                ? Math.Round(validAttendance.Average(), 1)
+                : 0;
 
-            static double AttendanceRateFor(NFD_Enrollment enrollment)
-            {
-                var total = enrollment.DailyAttendances.Count;
-                var present = enrollment.DailyAttendances.Count(a => a.Status == NFD_AttendanceStatus.Present);
-                return total > 0 ? (double)present / total * 100.0 : 0.0;
-            }
+            var assessed = stats.Where(s => s.IsComplete).ToList();
 
-            static string LevelFor(decimal overallAvg) => overallAvg switch
-            {
-                >= 90 => "ممتاز",
-                >= 80 => "جيد جداً",
-                >= 70 => "جيد",
-                >= 60 => "مقبول",
-                _ => "راسب"
-            };
+            var successRate = assessed.Count > 0
+                ? Math.Round(
+                    assessed.Count(s => s.Level != "راسب" &&
+                                        s.Level != "متعثر") *
+                    100.0 / assessed.Count, 1)
+                : 0;
 
-            var allStats = allEnrollmentsLean.Select(e =>
-            {
-                var technical = AvgFor(e, NFD_EvaluationType.Technical);
-                var behavioral = AvgFor(e, NFD_EvaluationType.Behavioral);
-                var final = AvgFor(e, NFD_EvaluationType.Final);
-                var overall = new[] { technical, behavioral, final }.Where(s => s > 0).ToList();
-                var overallAvg = overall.Count > 0 ? overall.Average() : 0m;
-
-                return new
-                {
-                    e.EnrollmentId,
-                    e.TraineeId,
-                    AttendanceRate = AttendanceRateFor(e),
-                    Technical = Math.Round(technical, 1),
-                    Behavioral = Math.Round(behavioral, 1),
-                    Final = Math.Round(final, 1),
-                    Level = LevelFor(overallAvg)
-                };
-            }).ToList();
-
-            var avgAttendance = Math.Round(allStats.Average(s => s.AttendanceRate), 1);
-            var successRate = Math.Round(allStats.Count(s => s.Level != "راسب") * 100.0 / allStats.Count, 1);
-
-            // ==========================================================
-            // 2) تحديد صفوف الصفحة الحالية فقط
-            // ==========================================================
-            var pageEnrollmentIds = allStats
-                .Select(s => s.EnrollmentId)
+            var pageStats = stats
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
-            // بيانات الاسم/التخصص/الشركة تُحمّل فقط لصفوف الصفحة الحالية
-            var pageEnrollments = await _context.NFD_Enrollments
-                .Where(e => pageEnrollmentIds.Contains(e.EnrollmentId))
-                .Include(e => e.Trainee).ThenInclude(t => t.User)
-                .Include(e => e.Company)
-                .ToDictionaryAsync(e => e.EnrollmentId);
+            var companyName = stats
+                .Select(s => s.Enrollment.Company?.CompanyName)
+                .FirstOrDefault(x => x != null);
 
-            var companyName = pageEnrollments.Values.Select(e => e.Company?.CompanyName).FirstOrDefault();
-            if (companyName == null)
-            {
-                // يحصل فقط إذا طُلبت صفحة تتجاوز عدد الصفحات المتاحة
-                var anyEnrollmentId = allStats.Select(s => s.EnrollmentId).FirstOrDefault();
-                companyName = await _context.NFD_Enrollments
-                    .Where(e => e.EnrollmentId == anyEnrollmentId)
-                    .Select(e => e.Company != null ? e.Company.CompanyName : null)
-                    .FirstOrDefaultAsync();
-            }
-
-            var rows = pageEnrollmentIds
-                .Select(id =>
+            var rows = pageStats.Select(s =>
+                new BatchPerformanceRowDTO
                 {
-                    var stat = allStats.First(s => s.EnrollmentId == id);
-                    var enrollment = pageEnrollments[id];
-
-                    return new BatchPerformanceRowDTO
-                    {
-                        TraineeId = stat.TraineeId,
-                        TraineeName = enrollment.Trainee?.User?.FullName,
-                        Major = enrollment.Trainee?.Major,
-                        AttendanceRate = Math.Round(stat.AttendanceRate, 1),
-                        TechnicalScore = stat.Technical,
-                        BehavioralScore = stat.Behavioral,
-                        FinalScore = stat.Final,
-                        Level = stat.Level
-                    };
+                    TraineeId = s.Enrollment.TraineeId,
+                    TraineeName = s.Enrollment.Trainee?.User?.FullName,
+                    Major = s.Enrollment.Trainee?.Major,
+                    AttendanceRate = Math.Round(s.Attendance, 1),
+                    TechnicalScore = s.Technical,
+                    BehavioralScore = s.Behavioral,
+                    FinalScore = s.IsComplete ? s.Final : null,
+                    Level = s.Level
                 }).ToList();
 
             return new BatchPerformanceReportDTO
@@ -662,6 +874,7 @@ namespace Nafadh_Backend.Repositories
         }
 
         // Admin Reports - Company-specific Batch Performance
+
         public async Task<AdminCompanyBatchPerformanceDTO?>
             GetAdminCompanyBatchPerformanceAsync(
                 int companyId,
@@ -669,144 +882,58 @@ namespace Nafadh_Backend.Repositories
                 int pageNumber,
                 int pageSize)
         {
-            if (pageNumber < 1) pageNumber = 1;
-            if (pageSize < 1) pageSize = 15;
+            pageNumber = Math.Max(1, pageNumber);
+            pageSize = Math.Max(1, pageSize);
 
             var batch = await _context.NFD_Batches
                 .AsNoTracking()
                 .Include(b => b.Program)
                 .FirstOrDefaultAsync(b => b.BatchId == batchId);
 
-            if (batch == null) return null;
+            if (batch == null)
+                return null;
 
             var companyName = await _context.NFD_Companies
                 .Where(c => c.CompanyId == companyId)
                 .Select(c => c.CompanyName)
                 .FirstOrDefaultAsync();
 
-            if (companyName == null) return null;
+            if (companyName == null)
+                return null;
 
-            // Only enrollments belonging to this company and batch
-            var enrollments = await _context.NFD_Enrollments
-                .AsNoTracking()
-                .Where(e =>
-                    e.CompanyId == companyId &&
-                    e.BatchId == batchId)
-                .Include(e => e.Trainee)
-                    .ThenInclude(t => t.User)
-                .Include(e => e.DailyAttendances)
-                .Include(e => e.Evaluations)
-                    .ThenInclude(ev => ev.EvaluationTemplate)
-                .OrderBy(e => e.TraineeId)
-                .ToListAsync();
+            var stats = await CalculateBatchWeightedStatsAsync(
+                batch, companyId);
 
-            static decimal? AverageScore(
-                NFD_Enrollment enrollment,
-                NFD_EvaluationType type)
-            {
-                var scores = enrollment.Evaluations
-                    .Where(ev =>
-                        ev.EvaluationTemplate != null &&
-                        ev.EvaluationTemplate.Type == type)
-                    .Select(ev => ev.Score)
-                    .ToList();
-
-                return scores.Count > 0 ? scores.Average() : null;
-            }
-
-            static double? AttendanceRate(NFD_Enrollment enrollment)
-            {
-                var total = enrollment.DailyAttendances.Count;
-
-                if (total == 0) return null;
-
-                var present = enrollment.DailyAttendances.Count(a =>
-                    a.Status == NFD_AttendanceStatus.Present);
-
-                return Math.Round((double)present / total * 100, 1);
-            }
-
-            static string GetLevel(decimal? score)
-            {
-                if (!score.HasValue) return "غير متوفر";
-
-                return score.Value switch
-                {
-                    >= 90 => "ممتاز",
-                    >= 80 => "جيد جداً",
-                    >= 70 => "جيد",
-                    >= 60 => "مقبول",
-                    _ => "راسب"
-                };
-            }
-
-            var stats = enrollments.Select(e =>
-            {
-                var technical = AverageScore(e, NFD_EvaluationType.Technical);
-                var behavioral = AverageScore(e, NFD_EvaluationType.Behavioral);
-                var final = AverageScore(e, NFD_EvaluationType.Final);
-
-                var availableScores = new[]
-                {
-            technical,
-            behavioral,
-            final
-        }
-                .Where(x => x.HasValue)
-                .Select(x => x!.Value)
-                .ToList();
-
-                decimal? overall = availableScores.Count > 0
-                    ? availableScores.Average()
-                    : null;
-
-                return new
-                {
-                    Enrollment = e,
-                    Attendance = AttendanceRate(e),
-                    Technical = technical,
-                    Behavioral = behavioral,
-                    Final = final,
-                    Level = GetLevel(overall)
-                };
-            }).ToList();
-
-            var validAttendance = stats
-                .Where(s => s.Attendance.HasValue)
-                .Select(s => s.Attendance!.Value)
-                .ToList();
-
-            double? avgAttendance = validAttendance.Count > 0
-    ? Math.Round(validAttendance.Average(), 1)
-    : null;
             var assessed = stats
-                .Where(s => s.Level != "غير متوفر")
+                .Where(s => s.IsComplete)
                 .ToList();
+
+            double? avgAttendance = stats.Count > 0
+                ? Math.Round(stats.Average(s => s.Attendance), 1)
+                : null;
 
             double? successRate = assessed.Count > 0
                 ? Math.Round(
-                    assessed.Count(s => s.Level != "راسب")
-                    * 100.0 / assessed.Count, 1)
+                    assessed.Count(s => s.Level != "راسب" &&
+                                        s.Level != "متعثر") *
+                    100.0 / assessed.Count, 1)
                 : null;
 
             var rows = stats
-    .Skip((pageNumber - 1) * pageSize)
-    .Take(pageSize)
-    .Select(s => new AdminCompanyBatchPerformanceRowDTO
-    {
-        TraineeId = s.Enrollment.TraineeId,
-        TraineeName = s.Enrollment.Trainee?.User?.FullName,
-        Major = s.Enrollment.Trainee?.Major,
-        AttendanceRate = s.Attendance,
-        TechnicalScore = s.Technical.HasValue
-            ? Math.Round(s.Technical.Value, 1) : null,
-        BehavioralScore = s.Behavioral.HasValue
-            ? Math.Round(s.Behavioral.Value, 1) : null,
-        FinalScore = s.Final.HasValue
-            ? Math.Round(s.Final.Value, 1) : null,
-        Level = s.Level
-    })
-    .ToList();
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(s => new AdminCompanyBatchPerformanceRowDTO
+                {
+                    TraineeId = s.Enrollment.TraineeId,
+                    TraineeName = s.Enrollment.Trainee?.User?.FullName,
+                    Major = s.Enrollment.Trainee?.Major,
+                    AttendanceRate = Math.Round(s.Attendance, 1),
+                    TechnicalScore = s.Technical,
+                    BehavioralScore = s.Behavioral,
+                    FinalScore = s.IsComplete ? s.Final : null,
+                    Level = s.Level
+                })
+                .ToList();
 
             return new AdminCompanyBatchPerformanceDTO
             {
@@ -822,6 +949,7 @@ namespace Nafadh_Backend.Repositories
                 PageSize = pageSize
             };
         }
+
 
         // Company portal Reports: company-wide attendance report (spans batches).
         public async Task<AttendanceReportDTO?> GetCompanyAttendanceReportAsync(int companyId)
@@ -1282,6 +1410,150 @@ namespace Nafadh_Backend.Repositories
                 TotalCompanies = companies.Count,
                 TotalHostedTrainees = companies.Sum(c => c.TraineesCount),
                 Companies = companies
+            };
+        }
+
+        // ==========================================================
+        // Admin Reports - Master Trainees Transcript
+        // Uses existing batch weighted calculation
+        // ==========================================================
+        public async Task<AdminTraineesTranscriptDTO>
+            GetAdminTraineesTranscriptAsync(
+                int pageNumber,
+                int pageSize,
+                int? companyId,
+                int? batchId,
+                int? traineeId
+            )
+        {
+            pageNumber = Math.Max(1, pageNumber);
+            pageSize = Math.Clamp(pageSize, 1, 1000);
+
+            // Get only batches that have matching enrollments.
+            var enrollmentQuery = _context.NFD_Enrollments
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (companyId.HasValue)
+            {
+                enrollmentQuery = enrollmentQuery.Where(
+                    e => e.CompanyId == companyId.Value
+                );
+            }
+
+            if (batchId.HasValue)
+            {
+                enrollmentQuery = enrollmentQuery.Where(
+                    e => e.BatchId == batchId.Value
+                );
+            }
+
+            if (traineeId.HasValue)
+            {
+                enrollmentQuery = enrollmentQuery.Where(
+                    e => e.TraineeId == traineeId.Value
+                );
+            }
+
+            var matchingEnrollmentIds = await enrollmentQuery
+                .Select(e => e.EnrollmentId)
+                .ToListAsync();
+
+            var matchingBatchIds = await enrollmentQuery
+                .Select(e => e.BatchId)
+                .Distinct()
+                .ToListAsync();
+
+            var batches = await _context.NFD_Batches
+                .AsNoTracking()
+                .Include(b => b.Program)
+                .Where(b => matchingBatchIds.Contains(b.BatchId))
+                .OrderBy(b => b.BatchId)
+                .ToListAsync();
+
+            var matchingEnrollmentIdSet =
+                matchingEnrollmentIds.ToHashSet();
+
+            var rows = new List<AdminTraineeTranscriptRowDTO>();
+
+            foreach (var batch in batches)
+            {
+                var stats = await CalculateBatchWeightedStatsAsync(
+                    batch,
+                    companyId
+                );
+
+                foreach (var stat in stats)
+                {
+                    var enrollment = stat.Enrollment;
+
+                    if (!matchingEnrollmentIdSet.Contains(
+                        enrollment.EnrollmentId))
+                    {
+                        continue;
+                    }
+
+                    rows.Add(new AdminTraineeTranscriptRowDTO
+                    {
+                        EnrollmentId = enrollment.EnrollmentId,
+
+                        TraineeId = enrollment.TraineeId,
+
+                        TraineeName =
+                            enrollment.Trainee?.User?.FullName,
+
+                        Major = enrollment.Trainee?.Major,
+
+                        BatchId = batch.BatchId,
+                        BatchName = batch.BatchName,
+
+                        ProgramName = batch.Program?.Title,
+
+                        CompanyId = enrollment.CompanyId,
+
+                        CompanyName =
+                            enrollment.Company?.CompanyName,
+
+                        AttendanceRate =
+                            Math.Round(stat.Attendance, 1),
+
+                        TechnicalScore = stat.Technical,
+
+                        BehavioralScore = stat.Behavioral,
+
+                        FinalScore = stat.IsComplete
+                            ? stat.Final
+                            : null,
+
+                        Level = stat.Level,
+
+                        AttendanceWeight = batch.AttendanceWeight,
+                        TasksWeight = batch.TasksWeight,
+                        QuizzesWeight = batch.QuizzesWeight,
+                        ProjectsWeight = batch.ProjectsWeight
+                    });
+                }
+            }
+
+            var orderedRows = rows
+                .OrderBy(r => r.TraineeName)
+                .ThenBy(r => r.BatchId)
+                .ThenBy(r => r.EnrollmentId)
+                .ToList();
+
+            var totalCount = orderedRows.Count;
+
+            var pagedRows = orderedRows
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new AdminTraineesTranscriptDTO
+            {
+                Rows = pagedRows,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
             };
         }
     }
