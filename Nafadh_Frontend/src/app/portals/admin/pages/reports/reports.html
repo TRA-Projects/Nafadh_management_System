@@ -434,66 +434,109 @@
         </div>
       </div>
 
-      <!-- 4. جدول نتائج المتدربين والتقييم النهائي -->
-      <div class="table-card">
-        <table class="custom-table" *ngIf="filteredBatchReportRows.length > 0">
-          <thead>
-            <tr>
-              <th>المتدرب</th>
-              <th>التخصص</th>
-              <th>نسبة الحضور</th>
-              <th>الدرجة التقنية</th>
-              <th>الدرجة السلوكية</th>
-              <th>المستوى العام</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let tr of filteredBatchReportRows">
-              <td class="bold text-navy-strong">{{ tr.traineeName }}</td>
-              <td>{{ tr.major }}</td>
-              <td>
-                <strong style="color: #059669;">
-                  {{ tr.attendanceRate != null ? tr.attendanceRate + '%' : 'غير متوفر' }}
-                </strong>
-              </td>
+  <!-- 4. جدول نتائج المتدربين والتقييم النهائي -->
+<div class="table-card">
+  <table class="custom-table" *ngIf="filteredBatchReportRows.length > 0">
+    <thead>
+      <tr>
+        <th>المتدرب</th>
+        <th>التخصص</th>
+        <th>نسبة الحضور</th>
+        <th>الدرجة التقنية</th>
+        <th>الدرجة السلوكية</th>
+        <th>الدرجة النهائية</th>
+        <th>المستوى العام</th>
+      </tr>
+    </thead>
 
-              <td>
-                <strong style="color: #0D1C8C;">
-                  {{ tr.technicalScore != null ? tr.technicalScore + '%' : 'غير متوفر' }}
-                </strong>
-              </td>
+    <tbody>
+      <tr *ngFor="let tr of filteredBatchReportRows">
+        <td class="bold text-navy-strong">
+          {{ tr.traineeName || 'غير متوفر' }}
+        </td>
 
-              <td>
-                <strong style="color: #2563eb;">
-                  {{ tr.behavioralScore != null ? tr.behavioralScore + '%' : 'غير متوفر' }}
-                </strong>
-              </td>
-              <td><span class="status-pill" [ngClass]="levelClass(tr.level)">{{ tr.level }}</span></td>
-            </tr>
-          </tbody>
-        </table>
+        <td>{{ tr.major || 'غير متوفر' }}</td>
 
-        <div class="no-results-box" *ngIf="filteredBatchReportRows.length === 0">
-          <h4>لا توجد نتائج مطابقة لبحثك في هذه الدفعة</h4>
-        </div>
+        <td>
+          <strong style="color: #059669;">
+            {{ tr.attendanceRate != null
+              ? (tr.attendanceRate | number:'1.0-1') + '%'
+              : 'غير متوفر' }}
+          </strong>
+        </td>
 
-        <!-- أزرار الترقيم Pagination -->
-        <div class="compact-pagination-wrapper no-print" *ngIf="filteredBatchReportRows.length > 0">
-          <div class="pagination-info">
-            عرض الصفحة <strong>{{ report()?.pageNumber || 1 }}</strong> من <strong>{{ report()?.totalPages || 1
-              }}</strong>
-          </div>
-          <div class="pagination-compact-controls">
-            <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) <= 1"
-              (click)="prevPage()">السابق</button>
-            <span class="page-indicator">{{ report()?.pageNumber || 1 }} / {{ report()?.totalPages || 1 }}</span>
-            <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) >= (report()?.totalPages ?? 1)"
-              (click)="nextPage()">التالي</button>
-          </div>
-        </div>
-      </div>
+        <td>
+          <strong style="color: #0D1C8C;">
+            {{ tr.technicalScore != null
+              ? (tr.technicalScore | number:'1.0-1') + '%'
+              : 'غير متوفر' }}
+          </strong>
+        </td>
 
+        <td>
+          <strong style="color: #2563eb;">
+            {{ tr.behavioralScore != null
+              ? (tr.behavioralScore | number:'1.0-1') + '%'
+              : 'غير متوفر' }}
+          </strong>
+        </td>
+
+        <td>
+          <strong style="color: #0D1C8C;">
+            {{ tr.level !== 'غير مكتمل' && tr.finalScore != null
+              ? (tr.finalScore | number:'1.0-2') + '%'
+              : 'غير مكتمل' }}
+          </strong>
+        </td>
+
+        <td>
+          <span class="status-pill" [ngClass]="levelClass(tr.level)">
+            {{ tr.level || 'غير مكتمل' }}
+          </span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="no-results-box" *ngIf="filteredBatchReportRows.length === 0">
+    <h4>لا توجد نتائج مطابقة لبحثك في هذه الدفعة</h4>
+  </div>
+
+  <div class="compact-pagination-wrapper no-print"
+       *ngIf="(report()?.totalCount ?? 0) > 0">
+
+    <div class="pagination-info">
+      عرض الصفحة
+      <strong>{{ report()?.pageNumber || 1 }}</strong>
+      من
+      <strong>{{ report()?.totalPages || 1 }}</strong>
     </div>
+
+    <div class="pagination-compact-controls">
+      <button
+        class="compact-nav-btn"
+        [disabled]="(report()?.pageNumber ?? 1) <= 1"
+        (click)="prevPage()">
+        السابق
+      </button>
+
+      <span class="page-indicator">
+        {{ report()?.pageNumber || 1 }}
+        /
+        {{ report()?.totalPages || 1 }}
+      </span>
+
+      <button
+        class="compact-nav-btn"
+        [disabled]="(report()?.pageNumber ?? 1) >= (report()?.totalPages ?? 1)"
+        (click)="nextPage()">
+        التالي
+      </button>
+    </div>
+  </div>
+</div>
+
+</div>
   </ng-container>
 
 
@@ -1684,8 +1727,15 @@
     </div>
 
     <!-- 3.2 كشف الدرجات العام المعتمد لكافة المتدربين مع آلية بحث شاملة -->
-    <div *ngIf="traineeSubView === 'master_transcript'">
+<div *ngIf="traineeSubView === 'master_transcript'">
 
+  <div *ngIf="masterTranscriptLoading" class="alert alert-info">
+    جارٍ تحميل كشف الدرجات من النظام...
+  </div>
+
+  <div *ngIf="masterTranscriptError" class="alert alert-danger">
+    {{ masterTranscriptError }}
+  </div>
       <!-- شريط الإجراءات والبحث (مخفي أثناء الطباعة no-print) -->
       <div class="no-print" style="margin-bottom: 16px;">
         <!-- الصف العلوي: أزرار العودة والتصدير والطباعة -->
@@ -1775,8 +1825,7 @@
           <div>إجمالي المتدربين المطابقين بالكشف: <strong style="color: #0D1C8C; font-size: 13px;">{{
               filteredMasterTranscriptList.length }} متدرباً</strong></div>
           <div>نسبة الاجتياز: <strong style="color: #15803d;">غير متوفر</strong></div>
-          <div>حالة الاعتماد الميداني: <strong style="color: #0D1C8C;">مؤهلون للتثبيت الوظيفي</strong></div>
-        </div>
+<div>حالة الاعتماد الميداني: <strong style="color: #0D1C8C;">غير محددة</strong></div>        </div>
 
         <!-- جدول الكشف العام مع Pagination عبر pagedMasterTranscriptList -->
         <table class="custom-table official-table" style="width: 100%; border-collapse: collapse;">
@@ -1787,10 +1836,12 @@
               <th style="padding: 10px; border: 1px solid #334155;">اسم المتدرب الثلاثي</th>
               <th style="padding: 10px; border: 1px solid #334155;">المنشأة المستضيفة</th>
               <th style="padding: 10px; border: 1px solid #334155;">المسار التدريبي</th>
-              <th style="padding: 10px; border: 1px solid #334155; text-align: center;">الحضور (15%)</th>
-              <th style="padding: 10px; border: 1px solid #334155; text-align: center;">التقني (35%)</th>
-              <th style="padding: 10px; border: 1px solid #334155; text-align: center;">المشروع (30%)</th>
-              <th style="padding: 10px; border: 1px solid #334155; text-align: center;">السلوكي (20%)</th>
+
+
+              <th style="padding: 10px; border: 1px solid #334155; text-align: center;">نسبة الحضور</th>
+<th style="padding: 10px; border: 1px solid #334155; text-align: center;">الدرجة التقنية</th>
+<th style="padding: 10px; border: 1px solid #334155; text-align: center;">درجة المشروع</th>
+<th style="padding: 10px; border: 1px solid #334155; text-align: center;">الدرجة السلوكية</th>
               <th
                 style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: center; background-color: #eff6ff !important; color: #0D1C8C !important; font-weight: 900;">
                 <div>المجموع النهائي</div>
@@ -1810,16 +1861,16 @@
               <td style="padding: 8px;">{{ t.companyName }}</td>
               <td style="padding: 8px; font-size: 11px;">{{ t.major }}</td>
               <td style="text-align: center; font-family: monospace; color: #15803d; font-weight: bold; padding: 8px;">
-                {{ t.attendanceRate }}%
+                {{ t.attendanceRate != null ? (t.attendanceRate | number:'1.0-1') + '%' : 'غير متوفر' }}
               </td>
-              <td style="text-align: center; font-family: monospace; color: #0D1C8C; font-weight: bold; padding: 8px;">
-                {{ t.technicalScore }}%
-              </td>
+             <td style="text-align: center; font-family: monospace; color: #0D1C8C; font-weight: bold; padding: 8px;">
+  {{ t.technicalScore != null ? (t.technicalScore | number:'1.0-1') + '%' : 'غير متوفر' }}
+</td>
               <td style="text-align: center; font-family: monospace; color: #2563eb; font-weight: bold; padding: 8px;">
-                {{ t.projectScore }}%
+                {{ t.projectScore != null ? (t.projectScore | number:'1.0-1') + '%' : 'غير متوفر' }}
               </td>
               <td style="text-align: center; font-family: monospace; color: #475569; font-weight: bold; padding: 8px;">
-                {{ t.behavioralScore }}%
+{{ t.behavioralScore != null ? (t.behavioralScore | number:'1.0-1') + '%' : 'غير متوفر' }}
               </td>
               <td
                 style="text-align: center; font-family: monospace; font-weight: 900; background-color: #eff6ff; color: #1e3a8a; padding: 8px; font-size: 13px;">
