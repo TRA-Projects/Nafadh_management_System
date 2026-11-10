@@ -874,9 +874,12 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
-  @HostListener('document:visibilitychange')
+   @HostListener('document:visibilitychange')
   onVisibilityChange() {
     if (document.hidden && this.currentStep() === 3 && !this.isFileUploadGracePeriod) {
+      // 🟢 فحص إضافي: إذا كان الاختبار يحتوي على سؤال رفع ملف، لا تسجل مخالفة
+      if (this.hasFileUploadQuestion()) return;
+      
       this.handleViolation();
     }
   }
@@ -884,8 +887,16 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
   @HostListener('window:blur')
   onWindowBlur() {
     if (this.currentStep() === 3 && !this.isFileUploadGracePeriod) {
+      // 🟢 فحص إضافي: إذا كان الاختبار يحتوي على سؤال رفع ملف، لا تسجل مخالفة
+      if (this.hasFileUploadQuestion()) return;
+
       this.handleViolation();
     }
+  }
+
+  // 🟢 دالة مساعدة للتحقق من وجود سؤال رفع ملف
+  private hasFileUploadQuestion(): boolean {
+    return this.questions().some(q => this.isFileUploadQuestion(q));
   }
 
   private handleViolation() {
