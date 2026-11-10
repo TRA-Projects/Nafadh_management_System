@@ -19,6 +19,15 @@
       </button>
     </section>
 
+    <!-- 🟢 رسالة النجاح عند تسليم اختبار يحتاج تصحيح -->
+    @if (successMessage()) {
+      <div class="message success-message" role="alert">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>{{ successMessage() }}</span>
+        <button type="button" aria-label="إغلاق" (click)="successMessage.set('')">×</button>
+      </div>
+    }
+
     @if (errorMessage()) {
       <div class="message error-message" role="alert">
         <i class="fa-solid fa-circle-exclamation"></i>
@@ -109,16 +118,14 @@
                 </span>
               }
             </div>
-                           @switch (quiz.state) {
-                                @case ('Available') {
+              @switch (quiz.state) {
+                @case ('Available') {
                   <button type="button" class="primary-btn full-width" (click)="onStartQuiz(quiz)">
                     <i class="fa-solid fa-play"></i> ابدأ الاختبار
                   </button>
 
-                  <!-- 🟢 إضافة زر عرض النتائج إذا كان لديه محاولات سابقة -->
                   @if (quiz.latestAttemptId) {
-                    <button type="button" class="secondary-btn full-width mt-2" 
-                            (click)="openAttemptsModal(quiz)">
+                    <button type="button" class="secondary-btn full-width mt-2" (click)="openAttemptsModal(quiz)">
                       <i class="fa-solid fa-chart-column"></i> عرض النتائج
                     </button>
                   }
@@ -129,10 +136,8 @@
                     <i class="fa-solid fa-circle-play"></i> متابعة الاختبار
                   </button>
 
-                  <!-- 🟢 إضافة زر عرض النتائج إذا كان لديه محاولات سابقة -->
                   @if (quiz.latestAttemptId) {
-                    <button type="button" class="secondary-btn full-width mt-2" 
-                            (click)="openAttemptsModal(quiz)">
+                    <button type="button" class="secondary-btn full-width mt-2" (click)="openAttemptsModal(quiz)">
                       <i class="fa-solid fa-chart-column"></i> عرض النتائج السابقة
                     </button>
                   }
@@ -144,7 +149,6 @@
                     <i class="fa-solid fa-hourglass-half"></i> بانتظار التصحيح
                   </button>
 
-                  <!-- 🟢 زر عرض النتائج: يظهر بمجرد وجود محاولة، لكنه معطل حتى يكتمل التصحيح -->
                   @if (quiz.latestAttemptId) {
                     <button type="button" class="primary-btn full-width mt-2"
                             [disabled]="!quiz.isGradingCompleted"
@@ -154,7 +158,6 @@
                     </button>
                   }
 
-                  <!-- السماح بإعادة المحاولة إذا لم ينته الوقت -->
                   @if (!isQuizExpired(quiz)) {
                     <button type="button" class="secondary-btn full-width mt-2" (click)="onRetryQuiz(quiz)">
                       <i class="fa-solid fa-rotate-right"></i> إعادة المحاولة
@@ -187,7 +190,6 @@
                     <i class="fa-solid fa-circle-xmark"></i> فاتك الاختبار
                   </button>
 
-                  <!-- عرض النتائج إذا كان قد حاول سابقاً، مع تعطيله أثناء التصحيح -->
                   @if (quiz.attemptsUsed > 0 && quiz.latestAttemptId) {
                     <button type="button" class="primary-btn full-width mt-2"
                             [disabled]="!quiz.isGradingCompleted"

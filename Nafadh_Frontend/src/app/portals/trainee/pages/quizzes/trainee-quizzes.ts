@@ -52,6 +52,8 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
   currentStep = signal<Step>(1);
   loading = signal(false);
   errorMessage = signal('');
+  successMessage = signal(''); // 🟢 رسالة النجاح الجديدة
+  
   traineeId = signal<number | null>(null);
   overview = signal<TraineeQuizzesOverviewDto | null>(null);
   searchTerm = signal('');
@@ -78,8 +80,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
   showSubmitModal = signal(false);
   showAutoSubmitModal = signal(false);
   showViolationModal = signal(false);
-  
-  // 🟢 إضافة متغير للتحكم بنافذة التنبيه
   showValidationWarningModal = signal(false);
 
   result = signal<any>(null);
@@ -96,7 +96,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
   draggingForQuestion: Record<number, boolean> = {};
   fileErrors: Record<number, string> = {};
 
-  // 🟢 Grace period: لمنع تسجيل المخالفات أثناء اختيار الملف
   private fileUploadGracePeriodTimeout: any = null;
   private isFileUploadGracePeriod = false;
 
@@ -206,8 +205,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     const id = this.traineeId();
     if (id) this.loadQuizzes(id);
   }
-
-  // داخل الكلاس
 
   getStateLabel(state: string): string {
     switch (state) {
@@ -573,7 +570,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     return null;
   }
 
-  // 🟢 دالة تفعيل فترة السماح عند الضغط على منطقة الرفع
   allowFileUploadGracePeriod(): void {
     this.isFileUploadGracePeriod = true;
 
@@ -581,14 +577,12 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
       clearTimeout(this.fileUploadGracePeriodTimeout);
     }
 
-    // إعادة تفعيل المراقبة بعد دقيقتين في حال لم يتم اختيار ملف
     this.fileUploadGracePeriodTimeout = setTimeout(() => {
       this.isFileUploadGracePeriod = false;
     }, 120000);
   }
 
   onFileSelected(event: Event, q: AttemptQuestionDto): void {
-    // 🟢 إيقاف فترة السماح فور اختيار الملف
     this.isFileUploadGracePeriod = false;
     if (this.fileUploadGracePeriodTimeout) {
       clearTimeout(this.fileUploadGracePeriodTimeout);
@@ -725,7 +719,7 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   // =========================================
-  // 🟢 SUBMIT VALIDATION & SUBMIT
+  // SUBMIT VALIDATION & SUBMIT
   // =========================================
 
   private validateBeforeSubmit(): boolean {
@@ -736,7 +730,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
       const answer = this.answers[q.attemptQuestionId];
       const questionType = String((q as any).questionType || '').toLowerCase();
 
-      // 1. التحقق من أسئلة الاختيار من متعدد والصح والخطأ
       const isChoiceQuestion = 
         questionType === '0' || 
         questionType === '1' || 
@@ -750,7 +743,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
         }
       }
 
-      // 2. التحقق من الأسئلة المقالية
       const isEssayQuestion = 
         questionType === '2' || 
         questionType === 'essay';
@@ -762,7 +754,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
         }
       }
 
-      // 3. التحقق من أسئلة رفع الملفات
       if (this.isFileUploadQuestion(q)) {
         if (!answer || !answer.uploadedFile) {
           this.errorMessage.set(`السؤال رقم ${i + 1} يتطلب رفع ملف قبل التسليم.`);
@@ -771,12 +762,11 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
       }
     }
 
-    return true; // جميع الأسئلة تمت الإجابة عليها
+    return true;
   }
 
   submitQuiz() {
     if (!this.validateBeforeSubmit()) {
-      // 🟢 إظهار نافذة التنبيه بدلاً من التمرير فقط
       this.showValidationWarningModal.set(true);
       return;
     }
@@ -814,18 +804,18 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
   }
-  // 🟢 دالة للتحقق مما إذا كان وقت الاختبار قد انتهى
+
   isQuizExpired(quiz: TraineeQuizListItemDto): boolean {
     if (!quiz.endDateTime) return false;
     
-    // تحويل التاريخ القادم من الـ Backend إلى كائن Date
     const hasTz = /(?:Z|[+-]\d{2}:\d{2})$/i.test(quiz.endDateTime);
     const dateValue = hasTz ? quiz.endDateTime : quiz.endDateTime + 'Z';
     const endDate = new Date(dateValue);
     
-    // مقارنة الوقت الحالي بوقت النهاية
     return new Date() > endDate;
   }
+
+  // 🟢 التعديل: التحقق من الأسئلة المقالية قبل عرض شاشة النتيجة
   private loadResult() {
     const attemptId = this.attempt()?.attemptId;
     const tId = this.traineeId();
@@ -833,11 +823,40 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
     this.loading.set(true);
 
     this.api.getAttemptDetails(attemptId).subscribe({
-      next: (details) => {
+      next: (details: any) => {
+        // فحص إذا كان يحتوي على أسئلة مقالية أو ملفات
+        const hasManualQuestions = details.answers?.some((ans: any) => {
+          const type = String(ans.questionType || '').toLowerCase();
+          return type === '2' || type === '3' || type === 'essay' || type === 'fileupload' || type === 'file';
+        });
+
+        // إذا كان هناك أسئلة تحتاج تصحيح بشري ولم يكتمل التصحيح
+        if (hasManualQuestions && !details.isGradingCompleted) {
+          this.loading.set(false);
+          this.stopCamera();
+          
+          // التوجيه لقائمة الاختبارات مباشرة
+          this.currentStep.set(1);
+          this.attempt.set(null);
+          this.refresh();
+
+          // إظهار رسالة النجاح
+          this.successMessage.set('تم تسليم الاختبار بنجاح. نظراً لاحتوائه على أسئلة مقالية أو ملفات مرفوعة، ستظهر النتيجة بعد قيام المدرب بالتصحيح.');
+          setTimeout(() => this.successMessage.set(''), 8000);
+          return;
+        }
+
+        // إذا كانت كل الأسئلة اختيار من متعدد، ننتقل لشاشة النتيجة العادية
         this.api.getMyResults(tId).subscribe({
           next: (results) => {
             const myResult = results.find(r => r.attemptId === attemptId);
-            this.result.set({ ...details, ...myResult });
+            const isGradingDone = details.isGradingCompleted ?? myResult?.isGradingCompleted ?? false;
+            
+            this.result.set({ 
+              ...details, 
+              ...myResult,
+              isGradingCompleted: isGradingDone
+            });
             this.loading.set(false);
             this.currentStep.set(4);
           },
@@ -857,7 +876,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
 
   @HostListener('document:visibilitychange')
   onVisibilityChange() {
-    // 🟢 تجاهل المخالفة إذا كان المتدرب في فترة رفع الملف
     if (document.hidden && this.currentStep() === 3 && !this.isFileUploadGracePeriod) {
       this.handleViolation();
     }
@@ -865,7 +883,6 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
 
   @HostListener('window:blur')
   onWindowBlur() {
-    // 🟢 تجاهل المخالفة إذا كان المتدرب في فترة رفع الملف
     if (this.currentStep() === 3 && !this.isFileUploadGracePeriod) {
       this.handleViolation();
     }
@@ -927,7 +944,13 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
         this.api.getMyResults(tId).subscribe({
           next: (results) => {
             const myResult = results.find(r => r.attemptId === attemptId);
-            this.result.set({ ...details, ...myResult });
+            const isGradingDone = details.isGradingCompleted ?? myResult?.isGradingCompleted ?? false;
+            
+            this.result.set({ 
+              ...details, 
+              ...myResult,
+              isGradingCompleted: isGradingDone
+            });
             this.loading.set(false);
             this.currentStep.set(4);
           },
@@ -943,8 +966,5 @@ export class TraineeQuizzes implements OnInit, OnDestroy, AfterViewChecked {
         this.errorMessage.set('تعذر تحميل تفاصيل المحاولة');
       }
     });
-
-    
   }
-  
 }
