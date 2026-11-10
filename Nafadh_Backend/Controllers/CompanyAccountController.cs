@@ -88,9 +88,11 @@ namespace Nafadh_Backend.Controllers
                 });
             }
 
-            user.Phone = string.IsNullOrWhiteSpace(dto.Phone)
-                ? null
-                : dto.Phone.Trim();
+            var phone = (dto.Phone ?? string.Empty).Trim();
+            if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^\+?[0-9]{8,15}$"))
+                return BadRequest(new { message = "أدخل رقم هاتف صحيحًا من 8 إلى 15 رقمًا." });
+
+            user.Phone = phone;
 
             await _context.SaveChangesAsync();
 

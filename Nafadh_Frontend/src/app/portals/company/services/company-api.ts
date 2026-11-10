@@ -941,7 +941,7 @@ getAttachmentSettings(): Observable<{
     return this.http.get<CompanyDto>(`${this.portalBase}/company/${id}`);
   }
   updatePortalCompanyContact(id: number, dto: { phone: string; email: string }): Observable<{ phone: string; email: string }> {
-    return this.http.patch<{ phone: string; email: string }>(`${this.portalBase}/company/${id}/contact`, { phone: dto.phone, email: dto.email });
+    return this.http.patch<{ phone: string; email: string }>(`${this.base}/Company/${id}/contact`, { phone: dto.phone, email: dto.email });
   }
   getPortalBranches(id: number): Observable<CompanyBranchDto[]> {
     return this.http.get<CompanyBranchDto[]>(`${this.portalBase}/company/${id}/branches`);

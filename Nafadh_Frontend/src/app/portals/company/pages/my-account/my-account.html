@@ -303,7 +303,13 @@
                         class="form-control account-edit-input ltr"
                         [(ngModel)]="editPhone"
                         placeholder="أدخل رقم الجوال"
+                        maxlength="20"
+                        inputmode="tel"
                       >
+
+                      @if (accountSaveError()) {
+                        <span role="alert" style="color:#b91c1c;font-size:12px;">{{ accountSaveError() }}</span>
+                      }
 
                       <!-- زر حفظ -->
                       <button
