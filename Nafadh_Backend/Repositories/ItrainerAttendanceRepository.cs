@@ -24,6 +24,8 @@ namespace Nafadh_Backend.Repositories
 
         Task<NFD_TrainerAttendance?> GetByIdAsync(int id);
 
+        Task<List<NFD_TrainerAttendance>> GetByTrainerIdAsync(int trainerId);
+
         Task AddAsync(NFD_TrainerAttendance attendance);
 
         Task<bool> SaveChangesAsync();

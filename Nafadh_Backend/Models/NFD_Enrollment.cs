@@ -31,6 +31,7 @@ namespace Nafadh_Backend.Models
 
         public int? DepartmentId { get; set; }
         public NFD_Department? Department { get; set; }
+        public NFD_AdminProjectScore? AdminProjectScore { get; set; }
 
         public int? SupervisorId { get; set; }
         public NFD_CompanySupervisor? CompanySupervisor { get; set; }

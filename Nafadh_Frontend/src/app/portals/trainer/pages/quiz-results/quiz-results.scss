@@ -2602,3 +2602,46 @@ tbody tr:hover {
     height: 210px;
   }
 }
+/* =========================================================
+   UPLOADED ANSWER FILE
+========================================================= */
+.uploaded-answer-file {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.file-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.file-header i {
+  color: #64748b;
+}
+
+.download-file-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.2s;
+}
+
+.download-file-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}

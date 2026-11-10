@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, computed, inject, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 import { forkJoin } from 'rxjs';
 import * as XLSX from 'xlsx';
@@ -148,6 +149,11 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
   private readonly api = inject(CompanyApi);
 
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+
+  // Optional deep link from a stored trainer-excuse notification.
+  private linkedAttendanceId: number | null = null;
+  private linkedAttendanceDate: string | null = null;
 
 
 
@@ -761,13 +767,25 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
 
 ngOnInit(): void {
   this.companyId = this.auth.companyId ?? 0;
+
+  // A notification provides the attendance record ID and its calendar date.
+  // Keep the existing attendance page/UI, changing only the initial selection.
+  const params = this.route.snapshot.queryParamMap;
+  const idParam = params.get('attendanceId');
+  const attendanceId = idParam && /^[1-9]\d*$/.test(idParam) ? Number(idParam) : null;
+  const dateParam = params.get('date');
+  const validDate = dateParam && /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(dateParam)
+    && this.dayKey(new Date(`${dateParam}T12:00:00`)) === dateParam && dateParam <= this.todayKey;
+
+  if (attendanceId && Number.isSafeInteger(attendanceId) && validDate) {
+    this.linkedAttendanceId = attendanceId;
+    this.linkedAttendanceDate = dateParam;
+    this.selectedAttendanceMonth.set(dateParam.slice(0, 7));
+    this.view.set('week');
+  }
+
   this.selectedExportWeek.set(this.initialWeekIndex());
-
-  console.log('Company ID:', this.companyId);
-
   this.load();
-
-
 }
 
 
@@ -799,6 +817,9 @@ ngOnInit(): void {
 
         this.records.set(records ?? []);
 
+        // Open the specific trainer excuse only after the correct date range
+        // has been fetched from the server. Never alter the saved attendance.
+        this.openLinkedExcuseIfAvailable(records ?? []);
         this.loading.set(false);
 
       },
@@ -818,6 +839,37 @@ ngOnInit(): void {
   }
 
 
+
+  private openLinkedExcuseIfAvailable(records: TrainerAttendanceDto[]): void {
+    const id = this.linkedAttendanceId;
+    const date = this.linkedAttendanceDate;
+    if (id === null || date === null) return;
+
+    const record = records.find(item =>
+      item.trainerAttendanceId === id && this.dateOf(item.date) === date);
+    if (!record) {
+      this.showNotice('error', 'تعذر العثور على سجل العذر المرتبط بهذا الإشعار.');
+      return;
+    }
+
+    const weekIndex = this.monthWeeks().findIndex(week =>
+      this.dayKey(week.start) <= date && date <= this.dayKey(week.end));
+    if (weekIndex >= 0) {
+      this.selectedExportWeek.set(weekIndex);
+      this.selectedWeek.set(weekIndex);
+    }
+    this.selectedTrainerId.set(record.trainerId);
+    this.view.set('week');
+    if (this.hasExcuse(record)) {
+      this.openWeeklyExcuse(record);
+    } else {
+      this.showNotice('error', 'سجل الحضور موجود، لكن لا يحتوي على عذر مرفق.');
+    }
+    // Opening the deep link is a one-time navigation action, not a new
+    // review/approval. Subsequent refreshes must not re-open the dialog.
+    this.linkedAttendanceId = null;
+    this.linkedAttendanceDate = null;
+  }
 
   setView(mode: ViewMode): void {
 

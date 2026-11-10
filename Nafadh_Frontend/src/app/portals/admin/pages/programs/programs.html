@@ -2046,6 +2046,100 @@
       </div>
     </section>
 
+    <!-- إعدادات التقييم الخاصة بالدفعة -->
+<section class="create-batch-section evaluation-settings-section">
+
+  <div class="create-batch-section-heading">
+    <span class="create-batch-section-number">02</span>
+    <div>
+      <h3>أوزان ومعايير التقييم</h3>
+      <p>حددي نسبة مساهمة كل عنصر ومعايير تصنيف المتدربين في هذه الدفعة.</p>
+    </div>
+  </div>
+
+  <h4>أولاً: أوزان التقييم</h4>
+
+  <div class="create-batch-fields">
+
+    <div class="create-batch-field">
+      <label>وزن الحضور (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="attendanceWeight">
+    </div>
+
+    <div class="create-batch-field">
+      <label>وزن الاختبارات (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="quizzesWeight">
+    </div>
+
+    <div class="create-batch-field">
+      <label>وزن المهام (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="tasksWeight">
+    </div>
+
+    <div class="create-batch-field">
+      <label>وزن المشاريع (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="projectsWeight">
+    </div>
+
+  </div>
+
+  <div class="batch-form-error"
+    *ngIf="batchForm.hasError('evaluationWeightsTotalInvalid')">
+    مجموع أوزان التقييم يجب أن يساوي 100%.
+  </div>
+
+  <h4>ثانياً: معايير تصنيف المتدربين</h4>
+
+  <div class="create-batch-fields">
+
+    <div class="create-batch-field">
+      <label>الحد الأدنى للممتاز (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="excellentMinScore">
+    </div>
+
+    <div class="create-batch-field">
+      <label>نسبة الحضور المطلوبة للممتاز (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="excellentMinAttendance">
+    </div>
+
+    <div class="create-batch-field">
+      <label>الحد الأدنى لجيد جداً (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="veryGoodMinScore">
+    </div>
+
+    <div class="create-batch-field">
+      <label>نسبة الحضور المطلوبة لجيد جداً (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="veryGoodMinAttendance">
+    </div>
+
+    <div class="create-batch-field">
+      <label>الحد الأدنى لجيد (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="goodMinScore">
+    </div>
+
+    <div class="create-batch-field">
+      <label>حد الحضور للمعرضين للخطر (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="atRiskMinAttendance">
+    </div>
+
+  </div>
+
+  <small>
+    يمكنك تعديل هذه القيم حسب سياسة التقييم الخاصة بالدفعة.
+  </small>
+
+</section>
+
     <!-- قسم المتدربين سيُضاف في الخطوة التالية -->
 
     
@@ -2399,7 +2493,99 @@
         <app-catalog-picker class="form-select text-right" caption="حالة الدفعة" [options]="batchStatusChoices" [value]="batchStatusKeys[editBatchForm.controls['status'].value]" [fallbackLabel]="batchStatusFallback[batchStatusKeys[editBatchForm.controls['status'].value]] || ''" (valueChange)="editBatchForm.controls['status'].setValue(batchStatusKeys.indexOf($event))" />
       </div>
 
-      
+      <!-- إعدادات التقييم الخاصة بالدفعة -->
+<section class="create-batch-section evaluation-settings-section">
+
+  <div class="create-batch-section-heading">
+    <span class="create-batch-section-number">02</span>
+    <div>
+      <h3>أوزان ومعايير التقييم</h3>
+      <p>يمكنك تعديل إعدادات التقييم لهذه الدفعة بشكل مستقل.</p>
+    </div>
+  </div>
+
+  <h4>أولاً: أوزان التقييم</h4>
+
+  <div class="create-batch-fields">
+
+    <div class="create-batch-field">
+      <label>وزن الحضور (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="attendanceWeight">
+    </div>
+
+    <div class="create-batch-field">
+      <label>وزن الاختبارات (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="quizzesWeight">
+    </div>
+
+    <div class="create-batch-field">
+      <label>وزن المهام (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="tasksWeight">
+    </div>
+
+    <div class="create-batch-field">
+      <label>وزن المشاريع (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="projectsWeight">
+    </div>
+
+  </div>
+
+  <div class="batch-form-error"
+    *ngIf="editBatchForm.hasError('evaluationWeightsTotalInvalid')">
+    مجموع أوزان التقييم يجب أن يساوي 100%.
+  </div>
+
+  <h4>ثانياً: معايير تصنيف المتدربين</h4>
+
+  <div class="create-batch-fields">
+
+    <div class="create-batch-field">
+      <label>الحد الأدنى للممتاز (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="excellentMinScore">
+    </div>
+
+    <div class="create-batch-field">
+      <label>نسبة الحضور المطلوبة للممتاز (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="excellentMinAttendance">
+    </div>
+
+    <div class="create-batch-field">
+      <label>الحد الأدنى لجيد جداً (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="veryGoodMinScore">
+    </div>
+
+    <div class="create-batch-field">
+      <label>نسبة الحضور المطلوبة لجيد جداً (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="veryGoodMinAttendance">
+    </div>
+
+    <div class="create-batch-field">
+      <label>الحد الأدنى لجيد (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="goodMinScore">
+    </div>
+
+    <div class="create-batch-field">
+      <label>حد الحضور للمعرضين للخطر (%)</label>
+      <input type="number" min="0" max="100" step="0.01"
+        formControlName="atRiskMinAttendance">
+    </div>
+
+  </div>
+
+  <small>
+    تعديل هذه القيم يؤثر على إعدادات هذه الدفعة فقط.
+  </small>
+
+</section>
 
 <section class="batch-trainee-picker edit-batch-trainees">
   <h3>إضافة متدربين إلى الدفعة</h3>

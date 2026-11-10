@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -302,6 +301,10 @@ namespace Nafadh_Backend.Services
                                 answer?.SelectedOption?.OptionText,
 
                             TextAnswer = answer?.TextAnswer,
+
+                            // 🟢 إضافة حقول الملفات هنا
+                            FileUrl = answer?.FileUrl,
+                            OriginalFileName = answer?.OriginalFileName,
 
                             MaxPoints = aq.Points,
 

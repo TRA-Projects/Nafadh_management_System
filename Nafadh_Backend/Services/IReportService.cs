@@ -55,7 +55,16 @@ namespace Nafadh_Backend.Services
         Task<List<int>> GetCompanyAtRiskTraineeIdsAsync(int companyId, int take);
         Task<TrainerKpisDTO> GetTrainerKpisAsync(int trainerId);
         // Admin Reports - Companies Summary
+        // Admin Reports - Companies Summary
         Task<AdminCompaniesSummaryDTO> GetAdminCompaniesSummaryAsync();
 
+        // Admin Reports - Master Trainees Transcript
+        Task<AdminTraineesTranscriptDTO> GetAdminTraineesTranscriptAsync(
+            int pageNumber,
+            int pageSize,
+            int? companyId,
+            int? batchId,
+            int? traineeId
+        );
     }
 }

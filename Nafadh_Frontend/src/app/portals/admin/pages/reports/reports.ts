@@ -255,8 +255,10 @@ navigateTrainerAttendance(direction: -1 | 1): void {
   masterCompanyFilter = 'ALL';
   masterLevelFilter = 'ALL';
   masterScoreRangeFilter = 'ALL';
-  filteredMasterTranscriptList: any[] = [];
-
+filteredMasterTranscriptList: any[] = [];
+masterTranscriptData: any[] = [];
+masterTranscriptLoading = false;
+masterTranscriptError = '';
 
   // =========================================================
   // Supervisor Reports - تقارير المشرفين
@@ -1185,15 +1187,7 @@ getTrainerAttendanceMonthWeeks(): {
          const projScore = t.projectScore ?? t.ProjectScore ?? null;
          const behavScore = t.behavioralScore ?? t.BehavioralScore ?? null;
 
-          const calculatedLevel = techScore == null
-  ? 'غير متوفر'
-  : techScore >= 90
-    ? 'ممتاز'
-    : techScore >= 80
-      ? 'جيد جداً'
-      : techScore >= 70
-        ? 'جيد'
-        : 'غير مجتاز';
+          const calculatedLevel = t.level ?? t.Level ?? 'غير مكتمل';
 
           return {
             traineeId: t.traineeId || t.TraineeId || t.id,
@@ -1205,7 +1199,8 @@ getTrainerAttendanceMonthWeeks(): {
             technicalScore: techScore,
             projectScore: projScore,
             behavioralScore: behavScore,
-            level: t.level || calculatedLevel,
+            finalScore: t.finalScore ?? t.FinalScore ?? null,
+level: calculatedLevel,
 
             assignedTrainer: t.trainerName || t.assignedTrainer || 'غير محدد',
 
@@ -1304,11 +1299,77 @@ getTrainerAttendanceMonthWeeks(): {
   // =========================================================
   // دوال كشف الدرجات العام والفردي المعتمد
   // =========================================================
-  openTraineeTranscript(trainee: any) {
-    this.selectedTraineeForTranscript = trainee;
-    this.traineeSubView = 'single_transcript';
-    this.cdr.detectChanges();
+  openTraineeTranscript(trainee: any): void {
+  const traineeId = Number(trainee?.traineeId);
+
+  if (!Number.isInteger(traineeId) || traineeId <= 0) {
+    return;
   }
+
+  this.selectedTraineeForTranscript = null;
+  this.masterTranscriptError = '';
+  this.masterTranscriptLoading = true;
+
+  this.api.getAdminTraineesTranscript(
+    1,
+    1000,
+    undefined,
+    undefined,
+    traineeId
+  ).subscribe({
+    next: (response: any) => {
+      const rows = Array.isArray(response?.rows)
+        ? response.rows
+        : [];
+
+      const transcript = rows.find(
+        (item: any) =>
+          Number(item.traineeId) === traineeId &&
+          (
+            trainee.batchId == null ||
+            Number(item.batchId) === Number(trainee.batchId)
+          )
+      ) ?? rows.find(
+        (item: any) => Number(item.traineeId) === traineeId
+      );
+
+      this.selectedTraineeForTranscript = transcript
+        ? {
+            ...transcript,
+            projectScore: null,
+            assignedTrainer: null,
+            trainerNotes: null,
+            trainerRecommendation: null
+          }
+        : {
+            ...trainee,
+            attendanceRate: null,
+            technicalScore: null,
+            projectScore: null,
+            behavioralScore: null,
+            finalScore: null,
+            level: 'غير مكتمل',
+            trainerNotes: null,
+            trainerRecommendation: null
+          };
+
+      this.masterTranscriptLoading = false;
+      this.traineeSubView = 'single_transcript';
+      this.cdr.detectChanges();
+    },
+
+    error: (error: any) => {
+      console.error('Failed to load trainee transcript:', error);
+
+      this.masterTranscriptLoading = false;
+      this.masterTranscriptError =
+        'تعذر تحميل كشف درجات المتدرب. يرجى المحاولة مرة أخرى.';
+
+      this.selectedTraineeForTranscript = null;
+      this.cdr.detectChanges();
+    }
+  });
+}
 
   closeTraineeTranscript() {
     this.traineeSubView = 'roster';
@@ -1316,19 +1377,92 @@ getTrainerAttendanceMonthWeeks(): {
     this.cdr.detectChanges();
   }
 
-  openMasterTranscript() {
-    this.traineeSubView = 'master_transcript';
-    this.masterSearchTerm = '';
-    this.masterCompanyFilter = 'ALL';
-    this.masterLevelFilter = 'ALL';
-    this.masterScoreRangeFilter = 'ALL';
-    this.applyMasterTranscriptFilters();
+  openMasterTranscript(): void {
+  this.traineeSubView = 'master_transcript';
+
+  this.masterSearchTerm = '';
+  this.masterCompanyFilter = 'ALL';
+  this.masterLevelFilter = 'ALL';
+  this.masterScoreRangeFilter = 'ALL';
+
+  this.masterTranscriptData = [];
+  this.filteredMasterTranscriptList = [];
+  this.pagedMasterTranscriptList = [];
+  this.masterTranscriptError = '';
+  this.masterTranscriptLoading = true;
+
+  const api = this.api as any;
+
+  if (!api.getAdminTraineesTranscript) {
+    this.masterTranscriptLoading = false;
+    this.masterTranscriptError = 'خدمة كشف الدرجات غير متوفرة.';
     this.cdr.detectChanges();
+    return;
   }
+
+  // Fetch all pages to preserve existing frontend filters and export.
+  const allRows: any[] = [];
+
+  const loadPage = (pageNumber: number): void => {
+    api.getAdminTraineesTranscript(pageNumber, 1000).subscribe({
+      next: (response: any) => {
+        const rows = Array.isArray(response?.rows)
+          ? response.rows
+          : [];
+
+        allRows.push(...rows);
+
+        const totalPages = Math.max(
+          1,
+          Number(response?.totalPages) || 1
+        );
+
+        if (pageNumber < totalPages) {
+          loadPage(pageNumber + 1);
+          return;
+        }
+
+        this.masterTranscriptData = allRows.map((row: any) => ({
+          ...row,
+          traineeName: row.traineeName ?? 'غير متوفر',
+          companyName: row.companyName ?? 'غير متوفر',
+          major: row.major ?? 'غير متوفر',
+          level: row.level ?? 'غير مكتمل',
+          finalScore: row.finalScore ?? null,
+
+          // The backend currently does not return an
+          // individual project score or trainer information.
+          projectScore: null,
+          assignedTrainer: null
+        }));
+
+        this.masterTranscriptLoading = false;
+        this.applyMasterTranscriptFilters();
+        this.cdr.detectChanges();
+      },
+
+      error: (error: any) => {
+        console.error('Failed to load master transcript', error);
+
+        this.masterTranscriptLoading = false;
+        this.masterTranscriptData = [];
+        this.filteredMasterTranscriptList = [];
+        this.pagedMasterTranscriptList = [];
+
+        this.masterTranscriptError =
+          'تعذر تحميل كشف الدرجات. يرجى المحاولة مرة أخرى.';
+
+        this.cdr.detectChanges();
+      }
+    });
+  };
+
+  loadPage(1);
+  this.cdr.detectChanges();
+}
   // دالة البحث الشامل في كل حقول كشف الدرجات
   applyMasterTranscriptFilters() {
-    let list = [...this.allTraineesData];
-
+let list = [...this.masterTranscriptData];
     // 1. البحث الشامل بالاسم، الرقم الأكاديمي، الشركة، التخصص، أو المدرب
     if (this.masterSearchTerm.trim()) {
       const q = this.masterSearchTerm.toLowerCase().trim();
@@ -1363,14 +1497,23 @@ getTrainerAttendanceMonthWeeks(): {
       list = list.filter(t => t.level && t.level.includes(this.masterLevelFilter));
     }
 
-    // 4. فلتر نطاق المجموع النهائي
-    if (this.masterScoreRangeFilter === '90_PLUS') {
-      list = list.filter(t => this.getTraineeFinalScore(t) >= 90);
-    } else if (this.masterScoreRangeFilter === '80_PLUS') {
-      list = list.filter(t => this.getTraineeFinalScore(t) >= 80);
-    } else if (this.masterScoreRangeFilter === '70_PLUS') {
-      list = list.filter(t => this.getTraineeFinalScore(t) >= 70);
-    }
+  // 4. فلتر نطاق المجموع النهائي
+if (this.masterScoreRangeFilter === '90_PLUS') {
+  list = list.filter(t => {
+    const score = this.getTraineeFinalScore(t);
+    return score !== null && score >= 90;
+  });
+} else if (this.masterScoreRangeFilter === '80_PLUS') {
+  list = list.filter(t => {
+    const score = this.getTraineeFinalScore(t);
+    return score !== null && score >= 80;
+  });
+} else if (this.masterScoreRangeFilter === '70_PLUS') {
+  list = list.filter(t => {
+    const score = this.getTraineeFinalScore(t);
+    return score !== null && score >= 70;
+  });
+}
 
     this.filteredMasterTranscriptList = list;
     this.masterTranscriptCurrentPage = 1;
@@ -1445,23 +1588,41 @@ getTrainerAttendanceMonthWeeks(): {
     return pages;
   }
 
-  getTraineeFinalScore(tr: any): number {
-    if (!tr) return null as any;
-    if ([tr.attendanceRate, tr.technicalScore, tr.projectScore, tr.behavioralScore].some(v => v == null)) return null as any;
-    const att = Number(tr.attendanceRate || 0) * 0.15;
-    const tech = Number(tr.technicalScore || 0) * 0.35;
-    const proj = Number(tr.projectScore) * 0.30;
-    const beh = Number(tr.behavioralScore || 0) * 0.20;
-    return Math.round(att + tech + proj + beh);
+getTraineeFinalScore(tr: any): number | null {
+  if (!tr || tr.level === 'غير مكتمل') {
+    return null;
   }
 
-  getTraineeGpa(tr: any): string {
-    const finalScore = this.getTraineeFinalScore(tr);
-    if (finalScore == null) {
+  const score = tr.finalScore;
+
+  if (score === null || score === undefined || score === '') {
+    return null;
+  }
+
+  const numericScore = Number(score);
+
+  return Number.isFinite(numericScore) &&
+    numericScore >= 0 &&
+    numericScore <= 100
+    ? numericScore
+    : null;
+}
+
+ getTraineeGpa(tr: any): string {
+  const gpa = tr?.gpa ?? tr?.Gpa;
+
+  if (gpa === null || gpa === undefined || gpa === '') {
     return 'غير متوفر';
   }
-    return ((finalScore / 100) * 4).toFixed(2);
-  }
+
+  const numericGpa = Number(gpa);
+
+  return Number.isFinite(numericGpa) &&
+    numericGpa >= 0 &&
+    numericGpa <= 4
+    ? numericGpa.toFixed(2)
+    : 'غير متوفر';
+}
 
 
   setSubSection(sub: 'company' | 'trainer' | 'trainee' | 'supervisor') {
@@ -1743,34 +1904,91 @@ getTrainerAttendanceMonthWeeks(): {
     document.body.removeChild(link);
   }
 
-  exportTraineesToExcel() {
-    const list = this.filteredTraineesList;
-    if (!list || list.length === 0) {
-      alert('لا توجد بيانات متدربين لتصديرها');
-      return;
-    }
-    const headers = ['الرقم الأكاديمي', 'اسم المتدرب', 'الشركة الراعية', 'التخصص', 'المدرب المشرف', 'الحضور (15%)', 'التقني (35%)', 'المشروع (30%)', 'السلوكي (20%)', 'المجموع الكلي (100%)', 'المستوى'];
-    const dataRows = list.map(t => [
-      `"NFD-${t.traineeId || ''}"`,
-      `"${t.traineeName || ''}"`,
-      `"${t.companyName || ''}"`,
-      `"${t.major || ''}"`,
-      `"${t.assignedTrainer || ''}"`,
-      (t.attendanceRate || 0) + '%',
-      (t.technicalScore || 0) + '%',
-      (t.projectScore || t.technicalScore || 0) + '%',
-      (t.behavioralScore || 0) + '%',
-      this.getTraineeFinalScore(t) + '%',
-      `"${t.level || ''}"`
-    ]);
-    const csvContent = '\uFEFF' + [headers.join(','), ...dataRows.map(e => e.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `كشف_درجات_المتدربين_المعتمد_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  
+exportTraineesToExcel(): void {
+const list = this.traineeSubView === 'master_transcript'
+  ? this.filteredMasterTranscriptList
+  : this.filteredTraineesList;
+  if (!list || list.length === 0) {
+    alert('لا توجد بيانات متدربين لتصديرها');
+    return;
   }
+
+  const formatPercent = (value: any): string => {
+    if (value === null || value === undefined || value === '') {
+      return 'غير متوفر';
+    }
+
+    const numeric = Number(value);
+
+    return Number.isFinite(numeric) &&
+      numeric >= 0 &&
+      numeric <= 100
+      ? `${numeric}%`
+      : 'غير متوفر';
+  };
+
+  const escapeCsv = (value: any): string => {
+    const text = String(value ?? '');
+    return `"${text.replace(/"/g, '""')}"`;
+  };
+
+  const headers = [
+    'الرقم الأكاديمي',
+    'اسم المتدرب',
+    'الشركة الراعية',
+    'التخصص',
+    'المدرب المشرف',
+    'الحضور',
+    'التقني',
+    'المشروع',
+    'السلوكي',
+    'المجموع النهائي',
+    'المستوى'
+  ];
+
+  const dataRows = list.map((t: any) => {
+    const finalScore = this.getTraineeFinalScore(t);
+
+    return [
+      `NFD-${t.traineeId ?? ''}`,
+      t.traineeName ?? 'غير متوفر',
+      t.companyName ?? 'غير متوفر',
+      t.major ?? 'غير متوفر',
+      t.assignedTrainer ?? 'غير متوفر',
+      formatPercent(t.attendanceRate),
+      formatPercent(t.technicalScore),
+      formatPercent(t.projectScore),
+      formatPercent(t.behavioralScore),
+      finalScore === null
+        ? 'غير مكتمل'
+        : `${finalScore}%`,
+      t.level ?? 'غير مكتمل'
+    ];
+  });
+
+  const csvContent = '\uFEFF' +
+    [headers, ...dataRows]
+      .map(row => row.map(escapeCsv).join(','))
+      .join('\r\n');
+
+  const blob = new Blob(
+    [csvContent],
+    { type: 'text/csv;charset=utf-8;' }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download =
+    `كشف_درجات_المتدربين_${new Date().toISOString().slice(0, 10)}.csv`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
+
 }

@@ -42,10 +42,19 @@ namespace Nafadh_Backend.Repositories
 
         // Admin Reports - Company-specific Batch Performance
         Task<AdminCompanyBatchPerformanceDTO?> GetAdminCompanyBatchPerformanceAsync(
-            int companyId,
-            int batchId,
+     int companyId,
+     int batchId,
+     int pageNumber,
+     int pageSize
+ );
+
+        // Admin Reports - Master Trainees Transcript
+        Task<AdminTraineesTranscriptDTO> GetAdminTraineesTranscriptAsync(
             int pageNumber,
-            int pageSize
+            int pageSize,
+            int? companyId,
+            int? batchId,
+            int? traineeId
         );
 
     }

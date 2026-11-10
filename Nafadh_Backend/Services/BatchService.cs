@@ -58,11 +58,59 @@ namespace Nafadh_Backend.Services
             return result;
         }
 
+        private static void ValidateClassificationSettings(
+    decimal excellentScore,
+    decimal excellentAttendance,
+    decimal veryGoodScore,
+    decimal veryGoodAttendance,
+    decimal goodScore,
+    decimal atRiskAttendance)
+        {
+            var values = new[]
+            {
+        excellentScore,
+        excellentAttendance,
+        veryGoodScore,
+        veryGoodAttendance,
+        goodScore,
+        atRiskAttendance
+    };
+
+            if (values.Any(v => v < 0 || v > 100))
+                throw new InvalidOperationException(
+                    "يجب أن تكون جميع حدود التصنيف بين 0 و100.");
+
+            if (excellentScore < veryGoodScore ||
+                veryGoodScore < goodScore)
+                throw new InvalidOperationException(
+                    "يجب أن تكون حدود الدرجات مرتبة من متميز إلى جيد.");
+
+            if (excellentAttendance < veryGoodAttendance)
+                throw new InvalidOperationException(
+                    "نسبة حضور المتميز يجب ألا تقل عن نسبة حضور جيد جداً.");
+        }
+
         public async Task<BatchDto> CreateAsync(CreateBatchDto dto)
         {
-
             if (dto.ProgramId <= 0 || dto.EndDate.Date < dto.StartDate.Date)
                 throw new InvalidOperationException("يجب تحديد برنامج صحيح ومدة تدريب صالحة.");
+
+            // Validate that the four evaluation weights form a valid 100% distribution.
+            ValidateEvaluationWeights(
+                dto.AttendanceWeight,
+                dto.QuizzesWeight,
+                dto.TasksWeight,
+                dto.ProjectsWeight);
+
+            // Validate the classification thresholds.
+            ValidateClassificationSettings(
+                dto.ExcellentMinScore,
+                dto.ExcellentMinAttendance,
+                dto.VeryGoodMinScore,
+                dto.VeryGoodMinAttendance,
+                dto.GoodMinScore,
+                dto.AtRiskMinAttendance);
+
 
             var entity = new NFD_Batch
             {
@@ -72,15 +120,35 @@ namespace Nafadh_Backend.Services
                 StartDate = dto.StartDate,
                 EndDate = dto.EndDate,
                 Capacity = dto.Capacity,
-                Status = NFD_BatchStatus.Upcoming
+                Status = NFD_BatchStatus.Upcoming,
+
+                // Save the evaluation weights separately for each batch.
+                AttendanceWeight = dto.AttendanceWeight,
+                QuizzesWeight = dto.QuizzesWeight,
+                TasksWeight = dto.TasksWeight,
+                ProjectsWeight = dto.ProjectsWeight,
+
+                // Save the classification thresholds separately for each batch.
+
+                ExcellentMinScore = dto.ExcellentMinScore,
+                ExcellentMinAttendance = dto.ExcellentMinAttendance,
+
+                VeryGoodMinScore = dto.VeryGoodMinScore,
+                VeryGoodMinAttendance = dto.VeryGoodMinAttendance,
+
+                GoodMinScore = dto.GoodMinScore,
+                AtRiskMinAttendance = dto.AtRiskMinAttendance
             };
 
             // Persist the assignment and its in-app notifications in one transaction.
             await using var transaction = await _context.Database.BeginTransactionAsync();
             var created = await _repository.AddAsync(entity);
+
             if (created.CompanyId.HasValue)
                 await NotifyCompanyAssignmentAsync(created, created.CompanyId.Value, cancelled: false);
+
             await transaction.CommitAsync();
+
             var savedBatch = await _repository.GetByIdAsync(created.BatchId);
 
             return MapToDto(savedBatch ?? created, 0);
@@ -96,8 +164,83 @@ namespace Nafadh_Backend.Services
             if (dto.EndDate.Date < dto.StartDate.Date)
                 throw new InvalidOperationException("مدة الدفعة غير صالحة.");
 
+            // Update evaluation weights only when the request includes weight settings.
+            bool hasAnyEvaluationWeight =
+                dto.AttendanceWeight.HasValue ||
+                dto.QuizzesWeight.HasValue ||
+                dto.TasksWeight.HasValue ||
+                dto.ProjectsWeight.HasValue;
+
+            if (hasAnyEvaluationWeight)
+            {
+                // All four weights must be supplied together to avoid partial configurations.
+                if (!dto.AttendanceWeight.HasValue ||
+                    !dto.QuizzesWeight.HasValue ||
+                    !dto.TasksWeight.HasValue ||
+                    !dto.ProjectsWeight.HasValue)
+                {
+                    throw new InvalidOperationException(
+                        "يجب إرسال أوزان التقييم الأربعة معاً.");
+                }
+
+                // Validate that the total evaluation weight equals 100%.
+                ValidateEvaluationWeights(
+                    dto.AttendanceWeight.Value,
+                    dto.QuizzesWeight.Value,
+                    dto.TasksWeight.Value,
+                    dto.ProjectsWeight.Value);
+
+                // Apply the new evaluation weights to this batch only.
+                batch.AttendanceWeight = dto.AttendanceWeight.Value;
+                batch.QuizzesWeight = dto.QuizzesWeight.Value;
+                batch.TasksWeight = dto.TasksWeight.Value;
+                batch.ProjectsWeight = dto.ProjectsWeight.Value;
+            }
+
+            // Update classification settings independently of evaluation weights.
+            bool hasClassificationSettings =
+                dto.ExcellentMinScore.HasValue ||
+                dto.ExcellentMinAttendance.HasValue ||
+                dto.VeryGoodMinScore.HasValue ||
+                dto.VeryGoodMinAttendance.HasValue ||
+                dto.GoodMinScore.HasValue ||
+                dto.AtRiskMinAttendance.HasValue;
+
+            if (hasClassificationSettings)
+            {
+                // All six classification thresholds must be supplied together.
+                if (!dto.ExcellentMinScore.HasValue ||
+                    !dto.ExcellentMinAttendance.HasValue ||
+                    !dto.VeryGoodMinScore.HasValue ||
+                    !dto.VeryGoodMinAttendance.HasValue ||
+                    !dto.GoodMinScore.HasValue ||
+                    !dto.AtRiskMinAttendance.HasValue)
+                {
+                    throw new InvalidOperationException(
+                        "يجب إرسال معايير التصنيف الستة معاً.");
+                }
+
+                ValidateClassificationSettings(
+                    dto.ExcellentMinScore.Value,
+                    dto.ExcellentMinAttendance.Value,
+                    dto.VeryGoodMinScore.Value,
+                    dto.VeryGoodMinAttendance.Value,
+                    dto.GoodMinScore.Value,
+                    dto.AtRiskMinAttendance.Value);
+
+                batch.ExcellentMinScore = dto.ExcellentMinScore.Value;
+                batch.ExcellentMinAttendance = dto.ExcellentMinAttendance.Value;
+
+                batch.VeryGoodMinScore = dto.VeryGoodMinScore.Value;
+                batch.VeryGoodMinAttendance = dto.VeryGoodMinAttendance.Value;
+
+                batch.GoodMinScore = dto.GoodMinScore.Value;
+                batch.AtRiskMinAttendance = dto.AtRiskMinAttendance.Value;
+            }
+
             if (batch.Status != dto.Status)
                 await CatalogSelectionPolicy.RequireActiveAsync(_constants, dto.Status);
+
             var previousCompanyId = batch.CompanyId;
             var previousProgramId = batch.ProgramId;
             var assignmentChanged = previousCompanyId != dto.CompanyId ||
@@ -111,16 +254,19 @@ namespace Nafadh_Backend.Services
             var batchPlan = await _context.NFD_CoursePlans
                 .Include(p => p.Stages)
                 .SingleOrDefaultAsync(p => p.BatchId == id);
+
             if (scheduleChanged && batchPlan is not null)
             {
                 if (batchPlan.ApprovalStatus != NFD_CoursePlanApprovalStatus.Draft &&
                     batchPlan.ApprovalStatus != NFD_CoursePlanApprovalStatus.Rejected)
                     throw new InvalidOperationException(
                         "لا يمكن تغيير مدة دفعة لها خطة مقدمة أو معتمدة. أعد الخطة للمراجعة أولاً.");
+
                 if (batchPlan.Stages.Any(s => s.StartDate.Date < dto.StartDate.Date ||
                                              s.EndDate.Date > dto.EndDate.Date))
                     throw new InvalidOperationException(
                         "مدة الدفعة الجديدة لا تشمل مراحل الخطة الحالية. صحح المراحل قبل تغيير المدة.");
+
                 batchPlan.StartDate = dto.StartDate.Date;
                 batchPlan.EndDate = dto.EndDate.Date;
                 batchPlan.UpdatedAt = DateTime.Now;
@@ -147,15 +293,21 @@ namespace Nafadh_Backend.Services
             batch.Status = dto.Status;
 
             await using var transaction = await _context.Database.BeginTransactionAsync();
+
             await _repository.UpdateAsync(batch);
+
             if (previousCompanyId.HasValue && previousCompanyId != batch.CompanyId)
                 await NotifyCompanyAssignmentAsync(batch, previousCompanyId.Value, cancelled: true);
+
             if (batch.CompanyId.HasValue && (assignmentChanged || scheduleChanged))
                 await NotifyCompanyAssignmentAsync(batch, batch.CompanyId.Value, cancelled: false,
                     updated: !assignmentChanged);
+
             await transaction.CommitAsync();
+
             return true;
         }
+
 
         // RelatedEntity = BatchAssignment:{batchId} allows Company to open the
         // specific Admin assignment directly from its own notifications.
@@ -300,6 +452,23 @@ namespace Nafadh_Backend.Services
                 StartDate = b.StartDate,
                 EndDate = b.EndDate,
                 Capacity = b.Capacity,
+
+                // Return the evaluation weights saved for this specific batch.
+                AttendanceWeight = b.AttendanceWeight,
+                QuizzesWeight = b.QuizzesWeight,
+                TasksWeight = b.TasksWeight,
+                ProjectsWeight = b.ProjectsWeight,
+
+                ExcellentMinScore = b.ExcellentMinScore,
+                ExcellentMinAttendance = b.ExcellentMinAttendance,
+
+                VeryGoodMinScore = b.VeryGoodMinScore,
+                VeryGoodMinAttendance = b.VeryGoodMinAttendance,
+
+                GoodMinScore = b.GoodMinScore,
+                AtRiskMinAttendance = b.AtRiskMinAttendance,
+
+
                 TotalTraineesCount = totalTrainees,
                 CompaniesCount = b.Enrollments?.Select(e => e.CompanyId).Distinct().Count() ?? 0,
                 IssuedCertificatesCount = completedCount,
@@ -312,6 +481,8 @@ namespace Nafadh_Backend.Services
                 CoursePlanStatus = "لم تُرفع بعد",
                 HasCoursePlan = false
             };
+
+
         }
 
         private async Task PopulatePlanStatusesAsync(List<BatchDto> batches)
@@ -350,5 +521,29 @@ namespace Nafadh_Backend.Services
         {
             return await _repository.GetProgressAsync(batchId);
         }
+
+        // Validates that all evaluation weights are within the allowed range
+        // and their total equals 100%.
+        private static void ValidateEvaluationWeights(
+            decimal attendance,
+            decimal quizzes,
+            decimal tasks,
+            decimal projects)
+        {
+            var weights = new[] { attendance, quizzes, tasks, projects };
+
+            if (weights.Any(weight => weight < 0 || weight > 100))
+            {
+                throw new InvalidOperationException(
+                    "يجب أن تكون نسبة كل عنصر بين 0 و100.");
+            }
+
+            if (weights.Sum() != 100m)
+            {
+                throw new InvalidOperationException(
+                    "مجموع أوزان التقييم يجب أن يساوي 100%.");
+            }
+        }
     }
 }
+    

@@ -673,6 +673,35 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("UserTypes");
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_AdminProjectScore", b =>
+                {
+                    b.Property<int>("AdminProjectScoreId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AdminProjectScoreId"));
+
+                    b.Property<int>("EnrollmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal>("Score")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("AdminProjectScoreId");
+
+                    b.HasIndex("EnrollmentId")
+                        .IsUnique();
+
+                    b.ToTable("NFD_AdminProjectScores", (string)null);
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Announcement", b =>
                 {
                     b.Property<int>("AnnouncementId")
@@ -811,6 +840,12 @@ namespace Nafadh_Backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BatchId"));
 
+                    b.Property<decimal>("AtRiskMinAttendance")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("AttendanceWeight")
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<string>("BatchName")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -825,14 +860,38 @@ namespace Nafadh_Backend.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("ExcellentMinAttendance")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("ExcellentMinScore")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("GoodMinScore")
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<int>("ProgramId")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("ProjectsWeight")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("QuizzesWeight")
+                        .HasColumnType("decimal(5,2)");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("TasksWeight")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("VeryGoodMinAttendance")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("VeryGoodMinScore")
+                        .HasColumnType("decimal(5,2)");
 
                     b.HasKey("BatchId");
 
@@ -2218,6 +2277,30 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_Projects", (string)null);
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_ProjectBatch", b =>
+                {
+                    b.Property<int>("ProjectBatchId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProjectBatchId"));
+
+                    b.Property<int>("BatchId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProjectBatchId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("ProjectId", "BatchId")
+                        .IsUnique();
+
+                    b.ToTable("NFD_ProjectBatches", (string)null);
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_ProjectMember", b =>
                 {
                     b.Property<int>("MemberId")
@@ -3550,6 +3633,48 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_TrainerCertificates", (string)null);
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerProjectGrade", b =>
+                {
+                    b.Property<int>("TrainerProjectGradeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TrainerProjectGradeId"));
+
+                    b.Property<int>("EnrollmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Feedback")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("GradedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Score")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int>("TrainerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("TrainerProjectGradeId");
+
+                    b.HasIndex("EnrollmentId");
+
+                    b.HasIndex("TrainerId");
+
+                    b.HasIndex("ProjectId", "EnrollmentId")
+                        .IsUnique();
+
+                    b.ToTable("NFD_TrainerProjectGrades", (string)null);
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerSkill", b =>
                 {
                     b.Property<int>("TrainerSkillId")
@@ -4011,6 +4136,17 @@ namespace Nafadh_Backend.Migrations
                         .IsRequired();
 
                     b.Navigation("UserType");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_AdminProjectScore", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Enrollment", "Enrollment")
+                        .WithOne("AdminProjectScore")
+                        .HasForeignKey("Nafadh_Backend.Models.NFD_AdminProjectScore", "EnrollmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Enrollment");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Announcement", b =>
@@ -4745,6 +4881,25 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Program");
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_ProjectBatch", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Batch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_ProjectMember", b =>
                 {
                     b.HasOne("Nafadh_Backend.Models.NFD_Project", "Project")
@@ -5213,6 +5368,33 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Trainer");
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerProjectGrade", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Enrollment", "Enrollment")
+                        .WithMany()
+                        .HasForeignKey("EnrollmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
+                        .WithMany()
+                        .HasForeignKey("TrainerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Enrollment");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Trainer");
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerSkill", b =>
                 {
                     b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
@@ -5412,6 +5594,8 @@ namespace Nafadh_Backend.Migrations
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Enrollment", b =>
                 {
+                    b.Navigation("AdminProjectScore");
+
                     b.Navigation("Certificates");
 
                     b.Navigation("DailyAttendances");

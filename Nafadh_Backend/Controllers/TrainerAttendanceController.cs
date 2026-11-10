@@ -94,8 +94,24 @@ namespace Nafadh_Backend.Controllers
         {
             try
             {
-                if (!TryTrainerId(out var trainerId)) return Forbid();
-                if (!await _service.TrainerOwnsAttendanceAsync(id, trainerId)) return NotFound();
+                if (!int.TryParse(
+                        User.FindFirstValue(ClaimTypes.NameIdentifier),
+                        out var userId) || userId <= 0)
+                {
+                    return Forbid();
+                }
+
+                var trainerId = await _service.GetTrainerIdByUserIdAsync(userId);
+
+                if (!trainerId.HasValue)
+                {
+                    return Forbid();
+                }
+
+                if (!await _service.TrainerOwnsAttendanceAsync(id, trainerId.Value))
+                {
+                    return NotFound();
+                }
                 var url = await _service.UploadProofAsync(
                     id,
                     dto.File
@@ -169,18 +185,42 @@ namespace Nafadh_Backend.Controllers
             User.FindFirst("trainerId")?.Value ?? User.FindFirst("TrainerId")?.Value, out id) && id > 0;
         private bool TryCompanyId(out int id) => int.TryParse(
             User.FindFirst("companyId")?.Value ?? User.FindFirst("CompanyId")?.Value, out id) && id > 0;
-
         [Authorize(Roles = "Trainer")]
         [HttpPut("{id:int}/excuse")]
-        public async Task<IActionResult> SubmitExcuse(int id, [FromBody] TrainerAttendanceExcuseSubmissionDto dto)
+        public async Task<IActionResult> SubmitExcuse(
+            int id,
+            [FromBody] TrainerAttendanceExcuseSubmissionDto dto)
         {
-            if (!TryTrainerId(out var trainerId)) return Forbid();
+            if (!int.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var userId))
+            {
+                return Forbid();
+            }
+
+            var trainerId = await _service.GetTrainerIdByUserIdAsync(userId);
+
+            if (!trainerId.HasValue)
+                return Forbid();
+
             try
             {
-                var result = await _service.SubmitExcuseAsync(id, trainerId, dto.Reason);
+                var result = await _service.SubmitExcuseAsync(
+                    id,
+                    trainerId.Value,
+                    dto.Reason
+                );
+
                 return result == null ? NotFound() : Ok(result);
             }
-            catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         [Authorize(Roles = "CompanySupervisor")]
@@ -223,6 +263,52 @@ namespace Nafadh_Backend.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+        }
+        [Authorize(Roles = "Trainer")]
+        [HttpGet("{id:int}/excuse-window")]
+        public async Task<IActionResult> IsExcuseWindowOpen(int id)
+        {
+            if (!int.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var userId))
+            {
+                return Forbid();
+            }
+
+            var trainerId = await _service.GetTrainerIdByUserIdAsync(userId);
+
+            if (!trainerId.HasValue)
+                return Forbid();
+
+            var isOpen = await _service.IsExcuseWindowOpenAsync(
+                id,
+                trainerId.Value
+            );
+
+            return Ok(new
+            {
+                isOpen
+            });
+        }
+        [Authorize(Roles = "Trainer")]
+        [HttpGet("my")]
+        public async Task<IActionResult> GetMyAttendance()
+        {
+            if (!int.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out var userId))
+            {
+                return Forbid();
+            }
+
+            var trainerId = await _service.GetTrainerIdByUserIdAsync(userId);
+
+            if (!trainerId.HasValue)
+                return Forbid();
+
+            var items = await _service.GetMyAttendanceAsync(trainerId.Value);
+
+            return Ok(items);
         }
     }
 }

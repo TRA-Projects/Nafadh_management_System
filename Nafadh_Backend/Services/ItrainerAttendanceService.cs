@@ -30,5 +30,8 @@ namespace Nafadh_Backend.Services
 
         // Confirms the whole day for the company. Returns how many records the day contains.
         Task<int> ConfirmDayAsync(TrainerAttendanceConfirmDto dto);
+        Task<List<TrainerAttendanceDto>> GetMyAttendanceAsync(int trainerId);
+        Task<int?> GetTrainerIdByUserIdAsync(int userId);
+        Task<bool> IsExcuseWindowOpenAsync(int attendanceId, int trainerId);
     }
 }

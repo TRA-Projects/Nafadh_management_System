@@ -36,11 +36,6 @@ namespace Nafadh_Backend.Services
 
         Task SubmitExcuseAsync(int quizId, string reason, IFormFile? attachment);
 
-
-
-
-
-
         Task<TraineeQuizzesOverviewDto> GetTraineeQuizzesAsync(int traineeId);
         Task<QuizAttemptDto> GetAttemptAsync(int attemptId, int traineeId);
         Task<QuizAttemptFullDetailsDto> GetAttemptDetailsAsync(
@@ -91,6 +86,9 @@ namespace Nafadh_Backend.Services
         public string? SelectedOptionText { get; set; }
 
         public string? TextAnswer { get; set; }
+
+        public string? FileUrl { get; set; }
+        public string? OriginalFileName { get; set; }
 
         public bool? IsCorrect { get; set; }
 
@@ -166,8 +164,6 @@ namespace Nafadh_Backend.Services
                 throw new UnauthorizedAccessException(
                     "المتدرب غير مسجل في دفعة هذا الاختبار.");
             }
-
-
 
             // الكاميرا إلزامية => لازم موافقة المتدرب
             if (quiz.CameraRequired && !dto.CameraConsent)
@@ -258,7 +254,6 @@ namespace Nafadh_Backend.Services
             await _repository.AddAttemptAsync(attempt);
             await _repository.SaveChangesAsync();
 
-            // Reload the saved attempt with its question and option relationships.
             var savedAttempt = await _repository.GetAttemptForAnswerAsync(attempt.AttemptId);
             if (savedAttempt == null)
             {
@@ -290,16 +285,16 @@ namespace Nafadh_Backend.Services
                             x.Question.QuestionType,
                         Points = x.Points,
                         AttachmentId = x.Question.Attachments
-    .Select(a => (int?)a.QuestionAttachmentId)
-    .FirstOrDefault(),
+                            .Select(a => (int?)a.QuestionAttachmentId)
+                            .FirstOrDefault(),
 
                         AttachmentFileName = x.Question.Attachments
-    .Select(a => a.FileName)
-    .FirstOrDefault(),
+                            .Select(a => a.FileName)
+                            .FirstOrDefault(),
 
                         AttachmentFileUrl = x.Question.Attachments
-    .Select(a => a.FileUrl)
-    .FirstOrDefault(),
+                            .Select(a => a.FileUrl)
+                            .FirstOrDefault(),
                         Options = x.Question.Options
                             .OrderBy(o => o.SortOrder)
                             .Select(o =>
@@ -318,6 +313,7 @@ namespace Nafadh_Backend.Services
                     .ToList()
             };
         }
+
         public async Task SaveAnswerAsync(
          int attemptId,
          SubmitQuizAnswerDto dto)
@@ -396,6 +392,11 @@ namespace Nafadh_Backend.Services
                         "يجب كتابة إجابة للسؤال المقالي.");
                 }
             }
+            else if (questionType == Nafadh_Backend.Enums.NFD_QuizQuestionType.FileUpload)
+            {
+                // سؤال رفع الملف لا يحتاج إلى حفظ إجابة هنا، لأنه يتم حفظه عبر API منفصل
+                return;
+            }
             else
             {
                 if (!dto.SelectedOptionId.HasValue)
@@ -449,156 +450,157 @@ namespace Nafadh_Backend.Services
 
             await _repository.SaveChangesAsync();
         }
+
         public async Task<object> UploadFileAnswerAsync(
-    int attemptId,
-    int attemptQuestionId,
-    IFormFile file)
-{
-    if (file == null || file.Length == 0)
-    {
-        throw new ArgumentException("ملف الإجابة مطلوب.");
-    }
-
-    var attempt =
-        await _repository.GetAttemptForAnswerAsync(attemptId);
-
-    if (attempt == null)
-    {
-        throw new KeyNotFoundException(
-            "المحاولة غير موجودة.");
-    }
-
-    if (attempt.Status != "InProgress")
-    {
-        throw new InvalidOperationException(
-            "لا يمكن رفع ملف في محاولة منتهية.");
-    }
-
-    var now = DateTime.UtcNow;
-
-    var quizEndTime =
-        attempt.StartedAt.AddMinutes(
-            attempt.Quiz.DurationMinutes);
-
-    if (now > quizEndTime)
-    {
-        attempt.Status = "Expired";
-        attempt.SubmittedAt = now;
-
-        await _repository.SaveChangesAsync();
-
-        throw new InvalidOperationException(
-            "انتهى وقت الاختبار.");
-    }
-
-    var attemptQuestion =
-        attempt.AttemptQuestions.FirstOrDefault(
-            x => x.AttemptQuestionId == attemptQuestionId);
-
-    if (attemptQuestion == null)
-    {
-        throw new KeyNotFoundException(
-            "سؤال المحاولة غير موجود.");
-    }
-
-    if (attemptQuestion.Question.QuestionType !=
-        NFD_QuizQuestionType.FileUpload)
-    {
-        throw new InvalidOperationException(
-            "رفع الملفات متاح فقط لأسئلة رفع الملفات.");
-    }
-
-    var existingAnswer =
-        await _repository.GetAnswerAsync(
-            attemptQuestionId);
-
-    if (existingAnswer != null &&
-        !string.IsNullOrWhiteSpace(existingAnswer.FileUrl))
-    {
-        throw new InvalidOperationException(
-            "تم رفع ملف الإجابة لهذا السؤال مسبقًا.");
-    }
-
-    var storagePath =
-        _configuration["Storage:QuizAnswersPath"];
-
-    if (string.IsNullOrWhiteSpace(storagePath))
-    {
-        throw new InvalidOperationException(
-            "مسار تخزين إجابات الاختبارات غير مضبوط.");
-    }
-
-    Directory.CreateDirectory(storagePath);
-
-    var extension =
-        Path.GetExtension(file.FileName);
-
-    var fileName =
-        $"{Guid.NewGuid()}{extension}";
-
-    var fullPath =
-        Path.Combine(
-            storagePath,
-            fileName);
-
-    await using (
-        var stream =
-            new FileStream(
-                fullPath,
-                FileMode.Create))
-    {
-        await file.CopyToAsync(stream);
-    }
-
-    var requestPath =
-        _configuration[
-            "Storage:QuizAnswersRequestPath"];
-
-    if (string.IsNullOrWhiteSpace(requestPath))
-    {
-        requestPath =
-            "/uploads/quiz-answers";
-    }
-
-    requestPath =
-        requestPath.TrimEnd('/');
-
-    var fileUrl =
-        $"{requestPath}/{fileName}";
-
-    var answer = existingAnswer;
-
-    if (answer == null)
-    {
-        answer = new NFD_QuizAnswer
+            int attemptId,
+            int attemptQuestionId,
+            IFormFile file)
         {
-            AttemptQuestionId =
-                attemptQuestionId
-        };
+            if (file == null || file.Length == 0)
+            {
+                throw new ArgumentException("ملف الإجابة مطلوب.");
+            }
 
-        await _repository.AddAnswerAsync(answer);
-    }
+            var attempt =
+                await _repository.GetAttemptForAnswerAsync(attemptId);
 
-    answer.FileUrl = fileUrl;
-    answer.OriginalFileName =
-        Path.GetFileName(file.FileName);
+            if (attempt == null)
+            {
+                throw new KeyNotFoundException(
+                    "المحاولة غير موجودة.");
+            }
 
-    answer.AnsweredAt = now;
-    answer.IsCorrect = null;
-    answer.AwardedPoints = 0;
-    answer.IsManuallyGraded = false;
+            if (attempt.Status != "InProgress")
+            {
+                throw new InvalidOperationException(
+                    "لا يمكن رفع ملف في محاولة منتهية.");
+            }
 
-    await _repository.SaveChangesAsync();
+            var now = DateTime.UtcNow;
 
-    return new
-    {
-        answerId = answer.AnswerId,
-        attemptQuestionId = answer.AttemptQuestionId,
-        fileUrl = answer.FileUrl,
-        originalFileName = answer.OriginalFileName,
-        answeredAt = answer.AnsweredAt
-    };
-}
+            var quizEndTime =
+                attempt.StartedAt.AddMinutes(
+                    attempt.Quiz.DurationMinutes);
+
+            if (now > quizEndTime)
+            {
+                attempt.Status = "Expired";
+                attempt.SubmittedAt = now;
+
+                await _repository.SaveChangesAsync();
+
+                throw new InvalidOperationException(
+                    "انتهى وقت الاختبار.");
+            }
+
+            var attemptQuestion =
+                attempt.AttemptQuestions.FirstOrDefault(
+                    x => x.AttemptQuestionId == attemptQuestionId);
+
+            if (attemptQuestion == null)
+            {
+                throw new KeyNotFoundException(
+                    "سؤال المحاولة غير موجود.");
+            }
+
+            if (attemptQuestion.Question.QuestionType !=
+                NFD_QuizQuestionType.FileUpload)
+            {
+                throw new InvalidOperationException(
+                    "رفع الملفات متاح فقط لأسئلة رفع الملفات.");
+            }
+
+            var existingAnswer =
+                await _repository.GetAnswerAsync(
+                    attemptQuestionId);
+
+            if (existingAnswer != null &&
+                !string.IsNullOrWhiteSpace(existingAnswer.FileUrl))
+            {
+                throw new InvalidOperationException(
+                    "تم رفع ملف الإجابة لهذا السؤال مسبقًا.");
+            }
+
+            var storagePath =
+                _configuration["Storage:QuizAnswersPath"];
+
+            if (string.IsNullOrWhiteSpace(storagePath))
+            {
+                throw new InvalidOperationException(
+                    "مسار تخزين إجابات الاختبارات غير مضبوط.");
+            }
+
+            Directory.CreateDirectory(storagePath);
+
+            var extension =
+                Path.GetExtension(file.FileName);
+
+            var fileName =
+                $"{Guid.NewGuid()}{extension}";
+
+            var fullPath =
+                Path.Combine(
+                    storagePath,
+                    fileName);
+
+            await using (
+                var stream =
+                    new FileStream(
+                        fullPath,
+                        FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var requestPath =
+                _configuration[
+                    "Storage:QuizAnswersRequestPath"];
+
+            if (string.IsNullOrWhiteSpace(requestPath))
+            {
+                requestPath =
+                    "/uploads/quiz-answers";
+            }
+
+            requestPath =
+                requestPath.TrimEnd('/');
+
+            var fileUrl =
+                $"{requestPath}/{fileName}";
+
+            var answer = existingAnswer;
+
+            if (answer == null)
+            {
+                answer = new NFD_QuizAnswer
+                {
+                    AttemptQuestionId =
+                        attemptQuestionId
+                };
+
+                await _repository.AddAnswerAsync(answer);
+            }
+
+            answer.FileUrl = fileUrl;
+            answer.OriginalFileName =
+                Path.GetFileName(file.FileName);
+
+            answer.AnsweredAt = now;
+            answer.IsCorrect = null;
+            answer.AwardedPoints = 0;
+            answer.IsManuallyGraded = false;
+
+            await _repository.SaveChangesAsync();
+
+            return new
+            {
+                answerId = answer.AnswerId,
+                attemptQuestionId = answer.AttemptQuestionId,
+                fileUrl = answer.FileUrl,
+                originalFileName = answer.OriginalFileName,
+                answeredAt = answer.AnsweredAt
+            };
+        }
 
         public async Task SubmitAttemptAsync(
             SubmitQuizDto dto)
@@ -638,6 +640,7 @@ namespace Nafadh_Backend.Services
 
             await _repository.SaveChangesAsync();
         }
+
         public async Task<TraineeQuizzesOverviewDto> GetTraineeQuizzesAsync(int traineeId)
         {
             var batchIds = await _context.NFD_Enrollments
@@ -667,11 +670,12 @@ namespace Nafadh_Backend.Services
 
             var now = DateTime.UtcNow;
 
-            // محاولة مسلَّمة تحتوي سؤالاً مقالياً لم يُصحَّح بعد
+            // محاولة مسلَّمة تحتوي سؤالاً مقالياً أو ملف لم يُصحَّح بعد
             static bool IsPendingGrading(NFD_QuizAttempt a) =>
                 (a.Status == "Submitted" || a.Status == "Expired") &&
                 a.AttemptQuestions.Any(aq =>
-                    aq.Question.QuestionType == Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay &&
+                    (aq.Question.QuestionType == Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay ||
+                     aq.Question.QuestionType == Nafadh_Backend.Enums.NFD_QuizQuestionType.FileUpload) &&
                     !aq.Answers.Any(x => x.IsManuallyGraded));
 
             var items = quizzes.Select(q =>
@@ -689,17 +693,46 @@ namespace Nafadh_Backend.Services
                     .OrderByDescending(a => a.SubmittedAt)
                     .ToList();
                 var latest = finished.FirstOrDefault();
-                var windowOpen = q.Status == Nafadh_Backend.Enums.NFD_QuizStatus.Open &&
-                                 now >= q.StartDateTime && now <= q.EndDateTime;
+
+                // التعديل الجوهري هنا: إزالة الاعتماد على q.Status == Open والاعتماد فقط على الوقت
+                var isBeforeStart = now < q.StartDateTime;
+                var isAfterEnd = now > q.EndDateTime;
+                var isWindowOpen = !isBeforeStart && !isAfterEnd;
 
                 string state;
-                if (inProgress != null) state = "InProgress";
-                else if (latest != null && IsPendingGrading(latest)) state = "PendingGrading";
-                else if (latest != null && !(windowOpen && remaining > 0)) state = "Completed";
-                else if (windowOpen && remaining > 0) state = "Available";
-                else if (now < q.StartDateTime &&
-                         q.Status != Nafadh_Backend.Enums.NFD_QuizStatus.Closed) state = "Upcoming";
-                else state = "Missed";
+
+                if (inProgress != null)
+                {
+                    state = "InProgress";
+                }
+                else if (latest != null && IsPendingGrading(latest))
+                {
+                    state = "PendingGrading";
+                }
+                // إذا كان لديه محاولات سابقة انتهت، والوقت مغلق
+                else if (latest != null && !isWindowOpen)
+                {
+                    state = "Completed";
+                }
+                // إذا كان الوقت مفتوح ولديه محاولات متبقية
+                else if (isWindowOpen && remaining > 0)
+                {
+                    state = "Available";
+                }
+                // إذا كان الوقت لم يبدأ بعد
+                else if (isBeforeStart)
+                {
+                    state = "Upcoming";
+                }
+                // إذا انتهى الوقت أو تم إغلاقه يدوياً
+                else if (isAfterEnd || q.Status == Nafadh_Backend.Enums.NFD_QuizStatus.Closed)
+                {
+                    state = "Missed";
+                }
+                else
+                {
+                    state = "Missed"; // احتياط
+                }
 
                 // النتيجة تظهر فقط بعد اكتمال التصحيح
                 var showResult = latest != null && !IsPendingGrading(latest);
@@ -779,16 +812,16 @@ namespace Nafadh_Backend.Services
                             QuestionType = x.Question.QuestionType,
                             Points = x.Points,
                             AttachmentId = x.Question.Attachments
-    .Select(a => (int?)a.QuestionAttachmentId)
-    .FirstOrDefault(),
+                                .Select(a => (int?)a.QuestionAttachmentId)
+                                .FirstOrDefault(),
 
                             AttachmentFileName = x.Question.Attachments
-    .Select(a => a.FileName)
-    .FirstOrDefault(),
+                                .Select(a => a.FileName)
+                                .FirstOrDefault(),
 
                             AttachmentFileUrl = x.Question.Attachments
-    .Select(a => a.FileUrl)
-    .FirstOrDefault(),
+                                .Select(a => a.FileUrl)
+                                .FirstOrDefault(),
                             SelectedOptionId = ans?.SelectedOptionId,
                             TextAnswer = ans?.TextAnswer,
                             AnswerFileUrl = ans?.FileUrl,
@@ -837,10 +870,12 @@ namespace Nafadh_Backend.Services
             }
 
             if (attemptQuestion.Question.QuestionType !=
-                Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay)
+                Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay &&
+                attemptQuestion.Question.QuestionType !=
+                Nafadh_Backend.Enums.NFD_QuizQuestionType.FileUpload)
             {
                 throw new InvalidOperationException(
-                    "التصحيح اليدوي متاح للأسئلة المقالية فقط.");
+                    "التصحيح اليدوي متاح للأسئلة المقالية ورفع الملفات فقط.");
             }
 
             if (dto.AwardedPoints < 0 ||
@@ -851,7 +886,6 @@ namespace Nafadh_Backend.Services
             }
             var isEvaluationCompleted = await _context.NFD_TraineeEvaluations
                 .AnyAsync(e => e.AttemptId == attempt.AttemptId && e.IsCompleted);
-
 
             if (isEvaluationCompleted)
             {
@@ -876,6 +910,7 @@ namespace Nafadh_Backend.Services
 
             await _repository.SaveChangesAsync();
         }
+
         public async Task<int> RegisterViolationAsync(int attemptId)
         {
             var attempt = await _repository.GetAttemptForSubmissionAsync(attemptId);
@@ -985,6 +1020,9 @@ namespace Nafadh_Backend.Services
                         TextAnswer =
                             answer?.TextAnswer,
 
+                        FileUrl = answer?.FileUrl,
+                        OriginalFileName = answer?.OriginalFileName,
+
                         IsCorrect =
                             answer?.IsCorrect,
 
@@ -1005,7 +1043,6 @@ namespace Nafadh_Backend.Services
         // 1. جلب محاولات الطلاب لاختبار معين
         public async Task<List<QuizAttemptDto>> GetAttemptsByQuizIdAsync(int quizId)
         {
-            // استخدام بادئة NFD_ كما هو معرف في Nafadhcontext
             var attempts = await _context.NFD_QuizAttempts
                 .Where(a => a.QuizId == quizId)
                 .Select(a => new QuizAttemptDto
@@ -1024,15 +1061,13 @@ namespace Nafadh_Backend.Services
             return attempts;
         }
 
-        // 2. اعتماد أو رفض العذر (باستخدام المستودع _repository الجاهز لديك)
+        // 2. اعتماد أو رفض العذر
         public async Task DecideExcuseAsync(int attemptId, bool approve, string? rejectionReason)
         {
-            // نستخدم نفس دالة الجلب المعتمدة في كلاسك
             var attempt = await _repository.GetAttemptForSubmissionAsync(attemptId);
             if (attempt == null)
                 throw new KeyNotFoundException("محاولة الاختبار غير موجودة");
 
-            // في حال وجود الحقول في الكيان يتم تعيينها، أو تحديث الحالة
             attempt.Status = approve ? "Excused" : "Absent";
 
             await _repository.SaveChangesAsync();
@@ -1051,7 +1086,6 @@ namespace Nafadh_Backend.Services
         // 4. رفع عذر المتغيب
         public async Task SubmitExcuseAsync(int quizId, string reason, IFormFile? attachment)
         {
-            // حفظ ملف العذر في السيرفر أو قاعدة البيانات وتحديث السجل
             await _repository.SaveChangesAsync();
         }
     }

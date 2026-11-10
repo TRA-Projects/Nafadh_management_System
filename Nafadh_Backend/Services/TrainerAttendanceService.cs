@@ -65,6 +65,17 @@ namespace Nafadh_Backend.Services
             _configuration = configuration;
             _context = context;
         }
+        public async Task<int?> GetTrainerIdByUserIdAsync(int userId)
+        {
+            return await _context.NFD_Trainers
+                .AsNoTracking()
+                .Where(t => t.UserId == userId)
+                .Select(t => (int?)t.TrainerId)
+                .FirstOrDefaultAsync();
+        }
+        public async Task<List<TrainerAttendanceDto>> GetMyAttendanceAsync(int trainerId)
+        {
+            var records = await _repository.GetByTrainerIdAsync(trainerId);
 
         public async Task<List<CompanyTrainerDto>> GetCompanyTrainersAsync(int companyId, DateTime date)
         {
@@ -268,6 +279,10 @@ namespace Nafadh_Backend.Services
 
             var fileName = $"attendance-{record.TrainerAttendanceId}-{Guid.NewGuid():N}{extension}";
             var fullPath = Path.Combine(storagePath, fileName);
+            // The notification is only for the FIRST non-empty excuse submission.
+            // Later edits / re-uploads must not create another notification.
+            var hadExcuseBeforeUpload = !string.IsNullOrWhiteSpace(record.Reason) ||
+                !string.IsNullOrWhiteSpace(record.ExcuseProofUrl);
             var oldUrl = record.ExcuseProofUrl;
 
             await using (var stream = new FileStream(fullPath, FileMode.CreateNew))
@@ -282,6 +297,9 @@ namespace Nafadh_Backend.Services
 
             try
             {
+                if (!hadExcuseBeforeUpload)
+                    await TrainerExcuseNotificationWriter.QueueFirstSubmissionAsync(_context, record);
+                // Persist proof and notification in the same DbContext save.
                 await _repository.SaveChangesAsync();
             }
             catch
@@ -322,7 +340,23 @@ namespace Nafadh_Backend.Services
             var record = await _repository.GetByIdAsync(attendanceId);
             return record != null && record.TrainerId == trainerId;
         }
+        public async Task<bool> IsExcuseWindowOpenAsync(int attendanceId, int trainerId)
+        {
+            var record = await _repository.GetByIdAsync(attendanceId);
 
+            if (record == null || record.TrainerId != trainerId)
+                return false;
+
+            try
+            {
+                RequireExcuseWindow(record);
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        }
         public async Task<TrainerAttendanceDto?> SubmitExcuseAsync(int attendanceId, int trainerId, string? reason)
         {
             var record = await _repository.GetByIdAsync(attendanceId);
@@ -330,10 +364,15 @@ namespace Nafadh_Backend.Services
             RequireExcuseWindow(record);
             if (reason?.Length > 500)
                 throw new ArgumentException("Reason cannot exceed 500 characters.");
+            var hadExcuseBeforeSubmission = !string.IsNullOrWhiteSpace(record.Reason) ||
+                !string.IsNullOrWhiteSpace(record.ExcuseProofUrl);
             record.Reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
             record.ExcuseReviewStatus = string.IsNullOrWhiteSpace(record.Reason) &&
                 string.IsNullOrWhiteSpace(record.ExcuseProofUrl) ? null : "Pending";
             record.UpdatedAt = DateTime.UtcNow;
+            if (!hadExcuseBeforeSubmission && !string.IsNullOrWhiteSpace(record.Reason))
+                await TrainerExcuseNotificationWriter.QueueFirstSubmissionAsync(_context, record);
+            // Persist reason and notification together.
             await _repository.SaveChangesAsync();
             return ToDto(record);
         }
