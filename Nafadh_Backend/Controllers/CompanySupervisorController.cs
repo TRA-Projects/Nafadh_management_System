@@ -3,6 +3,8 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Enums;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -19,11 +21,14 @@ namespace Nafadh_Backend.Controllers
     public class CompanySupervisorController : ControllerBase
     {
         private readonly ICompanySupervisorRepository _supervisorRepo;
+        private readonly Nafadhcontext _db;
 
         public CompanySupervisorController(
-            ICompanySupervisorRepository supervisorRepo)
+            ICompanySupervisorRepository supervisorRepo,
+            Nafadhcontext db)
         {
             _supervisorRepo = supervisorRepo;
+            _db = db;
         }
 
         // ============================================================
@@ -152,24 +157,113 @@ namespace Nafadh_Backend.Controllers
 
         // ============================================================
         // PUT: api/CompanySupervisor/{id}
-        // Update supervisor department / position
+        // Update supervisor profile and membership state together with the linked user.
+        // The existing company scope filter checks ownership of the supervisor ID.
         // ============================================================
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateSupervisor(
             int id,
             [FromBody] UpdateCompanySupervisorDto updateDto)
         {
-            var supervisor =
-                await _supervisorRepo.GetByIdAsync(id);
+            if (updateDto == null)
+                return BadRequest(new { message = "بيانات المشرف مطلوبة." });
 
+            var supervisor = await _supervisorRepo.GetByIdAsync(id);
             if (supervisor == null)
                 return NotFound();
+            if (supervisor.User == null)
+                return Conflict(new { message = "حساب المستخدم المرتبط بالمشرف غير موجود." });
 
-            supervisor.Department = updateDto.Department;
-            supervisor.Position = updateDto.Position;
+            var user = supervisor.User;
+            if (updateDto.FullName != null)
+            {
+                var name = updateDto.FullName.Trim();
+                if (name.Length < 2 || name.Length > 150)
+                    return BadRequest(new { message = "اسم المشرف يجب أن يكون بين 2 و150 حرفًا." });
+                user.FullName = name;
+            }
 
-            await _supervisorRepo.UpdateAsync(supervisor);
+            if (updateDto.Email != null)
+            {
+                var email = updateDto.Email.Trim().ToLowerInvariant();
+                if (string.IsNullOrWhiteSpace(email) || email.Length > 150 ||
+                    !new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(email))
+                    return BadRequest(new { message = "البريد الإلكتروني غير صحيح." });
+                if (await _db.NFD_Users.AsNoTracking().AnyAsync(u =>
+                    u.UserId != user.UserId && u.Email.ToLower() == email))
+                    return Conflict(new { message = "البريد الإلكتروني مرتبط بحساب آخر." });
+                user.Email = email;
+            }
 
+            if (updateDto.Phone != null)
+            {
+                var phone = updateDto.Phone.Trim();
+                if (phone.Length > 0 &&
+                    !System.Text.RegularExpressions.Regex.IsMatch(phone, @"^\+?[0-9]{8,15}$"))
+                    return BadRequest(new { message = "رقم الهاتف يجب أن يتكون من 8 إلى 15 رقمًا." });
+                user.Phone = phone.Length == 0 ? null : phone;
+            }
+
+            if (updateDto.Department != null)
+            {
+                var department = updateDto.Department.Trim();
+                if (department.Length > 100)
+                    return BadRequest(new { message = "اسم القسم يتجاوز الحد المسموح." });
+                supervisor.Department = department.Length == 0 ? null : department;
+            }
+            if (updateDto.Position != null)
+            {
+                var position = updateDto.Position.Trim();
+                if (position.Length > 100)
+                    return BadRequest(new { message = "المسمى الوظيفي يتجاوز الحد المسموح." });
+                supervisor.Position = position.Length == 0 ? null : position;
+            }
+
+            if (updateDto.Status != null)
+            {
+                if (!System.Enum.TryParse<NFD_SupervisorStatus>(updateDto.Status.Trim(), true, out var status) ||
+                    !System.Enum.IsDefined(status))
+                    return BadRequest(new { message = "حالة المشرف غير صحيحة." });
+
+                if (!User.IsInRole("Admin") && !User.IsInRole("SuperAdmin") &&
+                    status == NFD_SupervisorStatus.Suspended)
+                    return Forbid();
+
+                // Company supervisors cannot override a globally suspended user account.
+                var isAdministrator = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+                if (user.Status == NFD_UserStatus.Suspended && !isAdministrator)
+                    return Conflict(new { message = "لا يمكن تغيير حالة حساب أوقفته الإدارة." });
+
+                // Never lock a company out by deactivating its last active supervisor.
+                if (status != NFD_SupervisorStatus.Active &&
+                    supervisor.Status == NFD_SupervisorStatus.Active && !isAdministrator)
+                {
+                    var anotherActiveSupervisor = await _db.NFD_CompanySupervisors.AsNoTracking()
+                        .AnyAsync(s => s.CompanyId == supervisor.CompanyId &&
+                                       s.SupervisorId != id &&
+                                       s.Status == NFD_SupervisorStatus.Active &&
+                                       s.User.Status == NFD_UserStatus.Active);
+                    if (!anotherActiveSupervisor)
+                        return Conflict(new { message = "لا يمكن تعطيل آخر مشرف نشط في الشركة." });
+                }
+
+                supervisor.Status = status;
+                if (status == NFD_SupervisorStatus.Active)
+                    user.Status = NFD_UserStatus.Active;
+                else
+                {
+                    // The user account can belong to another active company membership.
+                    var hasOtherActiveMembership = await _db.NFD_CompanySupervisors.AsNoTracking()
+                        .AnyAsync(s => s.UserId == user.UserId && s.SupervisorId != id &&
+                                       s.Status == NFD_SupervisorStatus.Active);
+                    if (!hasOtherActiveMembership)
+                        user.Status = status == NFD_SupervisorStatus.Suspended
+                            ? NFD_UserStatus.Suspended : NFD_UserStatus.Inactive;
+                }
+            }
+
+            // Both entities are tracked by GetByIdAsync; one SaveChanges is atomic.
+            await _db.SaveChangesAsync();
             return NoContent();
         }
 

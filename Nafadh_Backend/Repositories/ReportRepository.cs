@@ -956,6 +956,7 @@ namespace Nafadh_Backend.Repositories
         {
             var enrollments = await _context.NFD_Enrollments
                 .Include(e => e.Trainee).ThenInclude(t => t.User)
+                .Include(e => e.Department)
                 .Include(e => e.DailyAttendances)
                 .Where(e => e.CompanyId == companyId)
                 .ToListAsync();
@@ -972,6 +973,10 @@ namespace Nafadh_Backend.Repositories
 
                 return new AttendanceReportRowDTO
                 {
+                    EnrollmentId = e.EnrollmentId,
+                    BatchId = e.BatchId,
+                    DepartmentId = e.DepartmentId,
+                    DepartmentName = e.Department?.Name,
                     TraineeId = e.TraineeId,
                     TraineeName = e.Trainee?.User?.FullName,
                     PresentDays = present,
@@ -1001,13 +1006,17 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
 
             var byWeek = records
-                .GroupBy(a => System.Globalization.ISOWeek.GetWeekOfYear(a.Date))
-                .OrderByDescending(g => g.Key)
+                .GroupBy(a => new
+                {
+                    Year = System.Globalization.ISOWeek.GetYear(a.Date),
+                    Week = System.Globalization.ISOWeek.GetWeekOfYear(a.Date)
+                })
+                .OrderByDescending(g => g.Key.Year).ThenByDescending(g => g.Key.Week)
                 .Take(6)
-                .OrderBy(g => g.Key)
+                .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Week)
                 .Select(g => new ChartPointDTO
                 {
-                    Label = $"أسبوع {g.Key}",
+                    Label = $"أسبوع {g.Key.Week} / {g.Key.Year}",
                     Value = Math.Round(g.Count(a => a.Status == NFD_AttendanceStatus.Present) * 100.0 / g.Count(), 1)
                 })
                 .ToList();

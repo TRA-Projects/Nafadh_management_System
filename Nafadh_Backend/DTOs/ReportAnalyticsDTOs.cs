@@ -48,6 +48,11 @@ namespace Nafadh_Backend.DTOs
 
     public class AttendanceReportRowDTO
     {
+        // Attendance belongs to the enrollment, not to the trainee across all batches.
+        public int EnrollmentId { get; set; }
+        public int BatchId { get; set; }
+        public int? DepartmentId { get; set; }
+        public string? DepartmentName { get; set; }
         public int TraineeId { get; set; }
         public string? TraineeName { get; set; }
         public int PresentDays { get; set; }
