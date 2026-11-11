@@ -401,7 +401,7 @@ export class CompanyPlanWorkspace implements OnInit {
       durationHours: p.durationHours,
       startDate: toInputDate(p.startDate),
       endDate: toInputDate(p.endDate),
-      trainerIds: p.trainers.map(t => t.trainerId),
+      trainerIds: (p.directPlanTrainers ?? []).map(t => t.trainerId),
     };
     this.formError.set('');
     this.planFormOpen.set(true);
@@ -415,7 +415,7 @@ export class CompanyPlanWorkspace implements OnInit {
     this.formError.set('');
     this.planForm = {
       ...this.planForm,
-      trainerIds: p.trainers.map(t => t.trainerId),
+      trainerIds: (p.directPlanTrainers ?? []).map(t => t.trainerId),
     };
     this.trainerFormOpen.set(true);
   }
