@@ -99,6 +99,30 @@ namespace Nafadh_Backend.Services
             var session = await _repository.GetByIdAsync(id);
             if (session == null) return false;
 
+            if (dto.Status == NFD_SessionStatus.Completed)
+            {
+                if (string.IsNullOrWhiteSpace(session.EndTime) ||
+                    !TimeSpan.TryParse(session.EndTime, out var endTime))
+                {
+                    throw new InvalidOperationException(
+                        "لا يمكن إكمال الجلسة بدون تحديد وقت نهاية صحيح.");
+                }
+
+                var omanTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+                    "Asia/Muscat");
+
+                var nowInOman = TimeZoneInfo.ConvertTimeFromUtc(
+                    DateTime.UtcNow, omanTimeZone);
+
+                var sessionEnd = session.SessionDate.Date.Add(endTime);
+
+                if (nowInOman < sessionEnd)
+                {
+                    throw new InvalidOperationException(
+                        "لا يمكن إكمال الجلسة قبل انتهاء موعدها.");
+                }
+            }
+
             session.Status = dto.Status;
             await _repository.UpdateAsync(session);
             return true;

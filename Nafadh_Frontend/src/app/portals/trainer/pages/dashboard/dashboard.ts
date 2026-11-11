@@ -263,17 +263,35 @@ sessionForm = {
 
   });
 
-  toggleSessionCompletion(session: SessionDto): void {
-    const isCompleted = session.status === 'Completed';
+ toggleSessionCompletion(session: SessionDto): void {
+  const isCompleted = session.status === 'Completed';
 
-    if (isCompleted) {
-      this.sessionToReset.set(session);
-      this.showConfirmModal.set(true);
-      return;
-    }
-
-    this.updateSessionStatus(session, 1);
+  if (isCompleted) {
+    this.sessionToReset.set(session);
+    this.showConfirmModal.set(true);
+    return;
   }
+
+  if (!session.endTime) {
+    alert('لا يمكن إكمال الجلسة بدون تحديد وقت النهاية.');
+    return;
+  }
+
+  const datePart = session.sessionDate.split('T')[0];
+  const endDateTime = new Date(`${datePart}T${session.endTime}`);
+
+  if (Number.isNaN(endDateTime.getTime())) {
+    alert('وقت نهاية الجلسة غير صحيح.');
+    return;
+  }
+
+  if (Date.now() < endDateTime.getTime()) {
+    alert('لا يمكن إكمال الجلسة قبل انتهاء موعدها.');
+    return;
+  }
+
+  this.updateSessionStatus(session, 1);
+}
 
   confirmResetSession(): void {
     const session = this.sessionToReset();
@@ -517,27 +535,25 @@ sessionForm = {
           this.getSessionDateTime(b)
       );
   });
-    sessionsStartingSoon = computed(() => {
-    const now = this.currentTime();
-    const tenMinutesInMilliseconds = 10 * 60 * 1000;
+  sessionsStartingSoon = computed(() => {
+  const now = this.currentTime();
+  const tenMinutes = 10 * 60 * 1000;
 
-    return this.sessions()
-      .filter((session) => {
-        const status = String(session.status).toLowerCase();
-        const sessionStartTime = this.getSessionDateTime(session);
+  return this.sessions()
+    .filter(session => {
+      const status = String(session.status).toLowerCase();
+      const start = this.getSessionDateTime(session);
 
-        return (
-          (status === 'scheduled' || status === 'postponed') &&
-          sessionStartTime > now &&
-          sessionStartTime <= now + tenMinutesInMilliseconds
-        );
-      })
-      .sort(
-        (a, b) =>
-          this.getSessionDateTime(a) -
-          this.getSessionDateTime(b)
+      return (
+        (status === 'scheduled' || status === 'postponed') &&
+        start > now &&
+        start <= now + tenMinutes
       );
-  });
+    })
+    .sort((a, b) =>
+      this.getSessionDateTime(a) - this.getSessionDateTime(b)
+    );
+});
 
 
 
