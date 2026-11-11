@@ -1994,436 +1994,55 @@
 }
 
 
-/* ==========================================================
-   ADMIN TRAINEES - FULL PAGE RESPONSIVE
-   ========================================================== */
-
+/* Trainees table: readable content and horizontal scrolling */
 .trainees-container,
-.trainees-container *,
-.trainees-container *::before,
-.trainees-container *::after,
-.fullscreen-attendance-overlay,
-.fullscreen-attendance-overlay * {
-  box-sizing: border-box;
-}
-
-.trainees-container,
-.fullscreen-attendance-body {
+.trainees-container .table-card {
   min-width: 0;
   max-width: 100%;
 }
 
-.trainees-container :is(
-  .kpi-card, .filter-card, .table-card,
-  .portal-batch-card, .modal-card, .form-group
-) {
-  min-width: 0;
-}
-
-.trainees-container :is(
-  .page-title, .trainee-name-wrap, .kpi-info,
-  .banner-right, .portal-batch-title
-) {
-  overflow-wrap: anywhere;
-}
-
-.table-responsive,
-.attendance-table-container {
+.trainees-container .table-responsive {
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-.trainees-table,
-.att-table {
-  min-width: 780px;
+.trainees-table {
+  min-width: 1150px;
+  table-layout: auto;
 }
 
-.modal-body,
-.cv-modal .cv-modal-body {
-  overflow-y: auto;
-  min-height: 0;
+.trainees-table .trainee-meta-cell {
+  min-width: 240px;
 }
 
-.fullscreen-attendance-overlay {
-  height: 100dvh;
+.trainees-table .trainee-name-wrap {
+  min-width: 160px;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
-.fullscreen-attendance-body {
-  min-height: 0;
+.trainees-table .trainee-name-wrap strong {
+  white-space: nowrap;
 }
 
-.fullscreen-attendance-overlay :is(
-  .batch-controls-right, .batch-search-wrap,
-  .trainee-search-group, .trainee-search-box,
-  .notice-right, .step2-batch-info-tag
-) {
-  min-width: 0;
-  max-width: 100%;
+.trainees-table .trainee-name-wrap span {
+  display: block;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: ltr;
+  text-align: right;
 }
 
-.fullscreen-attendance-overlay :is(
-  .fullscreen-title, .portal-batch-title,
-  .att-name, .tag-value, .att-notes-display
-) {
-  overflow-wrap: anywhere;
-}
-
-.status-tabs-wrap {
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.nfd-toast {
-  max-width: calc(100vw - 24px);
-}
-
-/* Small laptops */
-@media (max-width: 1200px) {
-  .trainees-container {
-    padding: 24px;
-  }
-
-  .kpi-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .filter-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .portal-stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* Tablets */
-@media (max-width: 900px) {
-  .trainees-container {
-    padding: 18px;
-  }
-
-  .kpi-grid,
-  .filter-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .page-header,
-  .fullscreen-attendance-header,
-  .fullscreen-attendance-footer,
-  .step2-top-bar {
-    flex-wrap: wrap;
-    gap: 14px;
-  }
-
-  .header-actions {
-    width: 100%;
-  }
-
-  .fullscreen-attendance-header {
-    padding: 16px 20px;
-  }
-
-  .fullscreen-attendance-body {
-    padding: 18px 20px;
-  }
-
-  .batch-controls-bar,
-  .attendance-filter-row {
-    align-items: stretch;
-  }
-
-  .batch-controls-right,
-  .batch-controls-bar,
-  .attendance-filter-row {
-    flex-wrap: wrap;
-  }
-
-  .track-dropdown-group,
-  .trainee-search-group {
-    flex: 1 1 220px;
-    min-width: 0;
-  }
-
-  .modal-card {
-    max-width: calc(100vw - 32px);
-  }
-
-  .form-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* Mobile */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .trainees-container {
     padding: 12px;
   }
 
-  .page-header {
-    align-items: stretch;
-  }
-
-  .page-title {
-    font-size: 1.3rem;
-    flex-wrap: wrap;
-  }
-
-  .header-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .header-actions > * {
-    min-width: 0;
-    width: 100%;
-    white-space: normal;
-  }
-
-  .kpi-grid,
-  .filter-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .kpi-card {
-    padding: 12px;
-    flex-wrap: wrap;
-  }
-
-  .kpi-value {
-    overflow-wrap: anywhere;
-  }
-
-  .filter-card {
-    padding: 14px;
-  }
-
-  .filter-grid .search-box {
-    grid-column: 1 / -1;
-  }
-
-  .search-input,
-  .filter-select,
-  .form-control {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .withdrawal-alert-banner,
-  .admin-notice-banner {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .pagination-container,
-  .nfd-pagination-bar {
-    justify-content: center;
-    gap: 10px;
-  }
-
-  .pagination-controls,
-  .pagination-actions {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .modal-backdrop {
-    padding: 8px;
-  }
-
-  .modal-card,
-  .modal-card.modal-lg {
-    width: 100%;
-    max-width: 100%;
-    max-height: calc(100dvh - 16px);
-  }
-
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: 12px;
-  }
-
-  .modal-footer {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .modal-footer .btn {
-    flex: 1 1 120px;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .fullscreen-attendance-header {
-    padding: 12px;
-    align-items: flex-start;
-  }
-
-  .fullscreen-header-info {
-    min-width: 0;
-    flex: 1 1 100%;
-    gap: 10px;
-  }
-
-  .fullscreen-title {
-    font-size: 1.15rem;
-  }
-
-  .fullscreen-subtitle {
-    font-size: 0.78rem;
-  }
-
-  .fullscreen-icon-badge {
-    width: 38px;
-    height: 38px;
-    flex-shrink: 0;
-  }
-
-  .btn-fullscreen-close {
-    padding: 8px 12px;
-  }
-
-  .fullscreen-attendance-body {
-    padding: 12px;
-  }
-
-  .batch-controls-bar,
-  .attendance-filter-row {
-    padding: 12px;
-    gap: 12px;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .batch-controls-right,
-  .batch-dropdown-wrap,
-  .batch-search-wrap,
-  .batch-date-wrap,
-  .track-dropdown-group,
-  .trainee-search-group,
-  .status-tabs-group,
-  .top-actions-group {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .batch-select-dropdown,
-  .batch-search-input,
-  .batch-date-input,
-  .track-select-control,
-  .trainee-search-box input {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-  }
-
-  .portal-batch-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .portal-batch-card {
-    padding: 14px;
-  }
-
-  .portal-stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .step2-top-bar {
-    align-items: stretch;
-  }
-
-  .status-tabs-wrap {
-    width: 100%;
-  }
-
-  .status-tab {
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
-
-  .top-actions-group,
-  .footer-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .top-actions-group > *,
-  .footer-actions > * {
-    flex: 1 1 130px;
-    min-width: 0;
-  }
-
-  .att-summary-strip {
-    gap: 8px;
-  }
-
-  .summary-pill {
-    padding: 8px 10px;
-    font-size: 0.78rem;
-  }
-
-  .fullscreen-attendance-footer {
-    padding: 10px 12px;
-    gap: 10px;
-  }
-
-  .footer-hint {
-    flex: 1 1 100%;
-    overflow-wrap: anywhere;
-  }
-
-  .nfd-toast {
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    min-width: 0;
-    width: auto;
-  }
-
-  .cv-modal .cv-viewer-wrapper {
-    min-height: 0;
-    height: 55dvh;
-  }
-}
-
-/* Very small phones */
-@media (max-width: 380px) {
-  .trainees-container {
-    padding: 8px;
-  }
-
-  .kpi-grid,
-  .filter-grid,
-  .header-actions,
-  .portal-stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .filter-card,
-  .portal-batch-card {
-    padding: 12px;
-  }
-}
-
-/* Short landscape screens */
-@media (max-height: 550px) {
-  .modal-backdrop {
-    align-items: flex-start;
-    overflow-y: auto;
-  }
-
-  .modal-card {
-    max-height: calc(100dvh - 16px);
+  .trainees-container .table-card {
+    overflow: hidden;
   }
 }
