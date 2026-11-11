@@ -836,6 +836,14 @@ getAttachmentSettings(): Observable<{
     }))
   );
 }
+  // Staff listing includes trainers before and after an active training period.
+  // DailyAttendance continues using getCompanyTrainers(), which is date-restricted.
+  getCompanyTrainerDirectory(companyId: number): Observable<CompanyTrainerDto[]> {
+    return this.http.get<CompanyTrainerDto[]>(
+      `${this.base}/CompanyCoursePlan/company/${companyId}/trainers/directory`
+    );
+  }
+
   getCompanyTrainers(companyId: number, date?: string): Observable<CompanyTrainerDto[]> {
     return this.http.get<CompanyTrainerDto[]>(
       `${this.base}/TrainerAttendance/company/${companyId}/trainers`,
