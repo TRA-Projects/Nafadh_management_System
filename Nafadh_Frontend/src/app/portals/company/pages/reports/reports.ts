@@ -18,6 +18,7 @@ import html2pdf from 'html2pdf.js';
 
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { CompanyWeightedEvaluationDto } from '../../../../core/models/dtos';
 
 type ReportTab =
   | 'att'
@@ -120,6 +121,12 @@ export class ReportsComponent implements OnInit {
   topPerformers: any[] = [];
   atRiskTrainees: any[] = [];
   programDistribution: any[] = [];
+  weightedEvaluations: CompanyWeightedEvaluationDto[] = [];
+  averageWeightedScore: number | null = null;
+  completedEvaluationsCount = 0;
+  averageAttendanceRate: number | null = null;
+  totalAbsentDays = 0;
+  totalLateDays = 0;
 
   // =====================================================
   // 1. الحضور
@@ -315,20 +322,13 @@ export class ReportsComponent implements OnInit {
           })
         ),
 
-      topPerformers: this.companyApi
-        .getTopPerformers(this.companyId)
+      // Single source for all final Company classifications: the Admin evaluator.
+      weightedResults: this.companyApi
+        .getCompanyWeightedEvaluations(this.companyId)
         .pipe(
           catchError(error => {
-            console.error('Top performers API:', error);
-            return of(null);
-          })
-        ),
-
-      atRisk: this.companyApi
-        .getAtRiskTrainees(this.companyId)
-        .pipe(
-          catchError(error => {
-            console.error('At risk API:', error);
+            console.error('Weighted evaluations API:', error);
+            this.errorMessage = 'تعذر تحميل نتائج التقييم الموزونة من الخادم.';
             return of(null);
           })
         )
@@ -356,11 +356,17 @@ export class ReportsComponent implements OnInit {
         this.programDistribution =
           this.extractList(result.distribution);
 
-        this.topPerformers =
-          this.extractList(result.topPerformers);
-
-        this.atRiskTrainees =
-          this.extractList(result.atRisk);
+        this.weightedEvaluations = result.weightedResults ?? [];
+        const completed = this.weightedEvaluations.filter(item =>
+          item.isComplete && item.finalScore !== null);
+        this.completedEvaluationsCount = completed.length;
+        this.averageWeightedScore = completed.length
+          ? Math.round(completed.reduce((sum, item) => sum + Number(item.finalScore), 0)
+            / completed.length * 10) / 10
+          : null;
+        this.topPerformers = completed.filter(item => item.level === 'ممتاز');
+        this.atRiskTrainees = completed.filter(item =>
+          item.level === 'متعثر' || item.level === 'راسب');
 
         this.loadAchievement(enrollments);
 
@@ -473,6 +479,14 @@ export class ReportsComponent implements OnInit {
       report
     );
 
+    this.averageAttendanceRate = report
+      ? this.toNumber(report?.overallAttendanceRate ?? report?.OverallAttendanceRate)
+      : null;
+    this.totalAbsentDays = rows.reduce((sum, item) => sum + this.toNumber(
+      item.absentDays ?? item.AbsentDays), 0);
+    this.totalLateDays = rows.reduce((sum, item) => sum + this.toNumber(
+      item.lateDays ?? item.LateDays), 0);
+
     if (!rows.length) {
       this.attendanceDepartments = [];
       this.attendanceProgramsCards = [];
@@ -569,17 +583,9 @@ export class ReportsComponent implements OnInit {
             absence,
             late,
 
-            evaluation: attendance >= 95
-              ? 'ممتاز'
-              : attendance >= 85
-                ? 'جيد'
-                : 'يحتاج متابعة',
-
-            status: attendance >= 95
-              ? 'ok'
-              : attendance >= 85
-                ? 'warn'
-                : 'bad'
+            // Attendance-only label, not the Admin academic grade.
+            evaluation: 'معدل حضور',
+            status: 'muted'
           };
         }
       );
@@ -1219,9 +1225,16 @@ export class ReportsComponent implements OnInit {
 
       case 'achieve':
 
-        data = this.achievementPrograms.map(item => ({
-          'البرنامج': item.name,
-          'نسبة الإنجاز': `${item.value}%`
+        // Export the same batch-level final assessment shown in the report.
+        // Progress summaries are a separate indicator, not a weighted grade.
+        data = this.weightedEvaluations.map(item => ({
+          'رقم التسجيل': item.enrollmentId,
+          'المتدرب': item.fullName ?? 'غير محدد',
+          'البرنامج': item.programName ?? 'غير محدد',
+          'الدفعة': item.batchName ?? String(item.batchId),
+          'الحضور': `${item.attendancePercent}%`,
+          'الدرجة النهائية': item.finalScore === null ? 'غير مكتمل' : `${item.finalScore}%`,
+          'التصنيف': item.level
         }));
 
         fileName = 'Nafadh_Achievement_Report';

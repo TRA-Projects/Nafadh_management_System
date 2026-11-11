@@ -494,6 +494,23 @@ export interface CompanyDashboardChartPointDto {
   value: number;
 }
 
+/** Fix 12: a final weighted batch result, never an unweighted score. */
+export interface CompanyWeightedEvaluationDto {
+  enrollmentId: number;
+  traineeId: number;
+  batchId: number;
+  batchName?: string | null;
+  programName?: string | null;
+  fullName?: string | null;
+  major?: string | null;
+  gitHubUrl?: string | null;
+  linkedInUrl?: string | null;
+  attendancePercent: number;
+  finalScore: number | null;
+  isComplete: boolean;
+  level: string;
+}
+
 export interface CompanyDashboardTraineeDto {
   traineeId: number;
   enrollmentId: number;

@@ -12,6 +12,7 @@ import {
   CompanyDto,
   CompanySupervisorDto,
   CompanyDashboardDto,
+  CompanyWeightedEvaluationDto,
   ConversationDetailDto,
   ConversationListItemDto,
   ConversationMessageDto,
@@ -93,6 +94,13 @@ export class CompanyApi {
   getDashboard(companyId: number): Observable<CompanyDashboardDto> {
     return this.http.get<CompanyDashboardDto>(
       `${this.base}/CompanyDashboard/${companyId}`
+    );
+  }
+
+  /** Final weighted classifications from the same calculator as Admin reports. */
+  getCompanyWeightedEvaluations(companyId: number): Observable<CompanyWeightedEvaluationDto[]> {
+    return this.http.get<CompanyWeightedEvaluationDto[]>(
+      `${this.base}/CompanyDashboard/${companyId}/weighted-results`
     );
   }
 
