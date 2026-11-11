@@ -72,27 +72,27 @@ export class AdminApi {
   }
 
   // Admin Dashboard - Date-filtered performance summary
-// This method is used only by the Admin Dashboard date filter.
-// The existing dashboard summary method remains unchanged.
-getAdminDashboardSummaryByPeriod(
-  startDate?: string | null,
-  endDate?: string | null
-): Observable<any> {
-  let params = new HttpParams();
+  // This method is used only by the Admin Dashboard date filter.
+  // The existing dashboard summary method remains unchanged.
+  getAdminDashboardSummaryByPeriod(
+    startDate?: string | null,
+    endDate?: string | null
+  ): Observable<any> {
+    let params = new HttpParams();
 
-  if (startDate) {
-    params = params.set('startDate', startDate);
+    if (startDate) {
+      params = params.set('startDate', startDate);
+    }
+
+    if (endDate) {
+      params = params.set('endDate', endDate);
+    }
+
+    return this.http.get<any>(
+      `${this.base}/Report/admin-dashboard-summary-by-period`,
+      { params }
+    );
   }
-
-  if (endDate) {
-    params = params.set('endDate', endDate);
-  }
-
-  return this.http.get<any>(
-    `${this.base}/Report/admin-dashboard-summary-by-period`,
-    { params }
-  );
-}
 
   getDashboardCharts(): Observable<DashboardChartsDto> {
     return this.http.get<DashboardChartsDto>(`${this.base}/Report/dashboard-charts`);
@@ -217,35 +217,35 @@ getAdminDashboardSummaryByPeriod(
     );
   }
 
-// Admin Reports - Master Trainees Transcript
-getAdminTraineesTranscript(
-  pageNumber: number = 1,
-  pageSize: number = 1000,
-  companyId?: number,
-  batchId?: number,
-  traineeId?: number
-): Observable<any> {
-  let params = new HttpParams()
-    .set('pageNumber', String(pageNumber))
-    .set('pageSize', String(pageSize));
+  // Admin Reports - Master Trainees Transcript
+  getAdminTraineesTranscript(
+    pageNumber: number = 1,
+    pageSize: number = 1000,
+    companyId?: number,
+    batchId?: number,
+    traineeId?: number
+  ): Observable<any> {
+    let params = new HttpParams()
+      .set('pageNumber', String(pageNumber))
+      .set('pageSize', String(pageSize));
 
-  if (companyId != null) {
-    params = params.set('companyId', String(companyId));
+    if (companyId != null) {
+      params = params.set('companyId', String(companyId));
+    }
+
+    if (batchId != null) {
+      params = params.set('batchId', String(batchId));
+    }
+
+    if (traineeId != null) {
+      params = params.set('traineeId', String(traineeId));
+    }
+
+    return this.http.get<any>(
+      `${this.base}/Report/admin-trainees-transcript`,
+      { params }
+    );
   }
-
-  if (batchId != null) {
-    params = params.set('batchId', String(batchId));
-  }
-
-  if (traineeId != null) {
-    params = params.set('traineeId', String(traineeId));
-  }
-
-  return this.http.get<any>(
-    `${this.base}/Report/admin-trainees-transcript`,
-    { params }
-  );
-}
 
 
   getCompany(id: number): Observable<CompanyDto> { return this.http.get<CompanyDto>(`${this.base}/Company/${this.sanitizeId(id)}`); }
@@ -254,12 +254,41 @@ getAdminTraineesTranscript(
   approveCompany(id: number) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}/approve`, {}); }
   suspendCompany(id: number) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}/suspend`, {}); }
 
-  // ==========================================================
-  // 6. Programs & Batches
-  // ==========================================================
-  getBatches(): Observable<BatchDto[]> {
-    return this.http.get<BatchDto[]>(`${this.base}/Batch`);
-  }
+// ==========================================================
+// 6. Programs & Batches
+// ==========================================================
+
+getBatches(): Observable<BatchDto[]> {
+  return this.http.get<BatchDto[]>(`${this.base}/Batch`);
+}
+
+// Admin Certificates - Get companies and tracks linked to batches
+getAdminCertificateFilterOptions(): Observable<{
+  companies: {
+    companyId: number;
+    companyName: string;
+    batchIds: number[];
+  }[];
+  tracks: {
+    trackId: number;
+    trackName: string;
+  }[];
+}> {
+  return this.http.get<{
+    companies: {
+      companyId: number;
+      companyName: string;
+      batchIds: number[];
+    }[];
+    tracks: {
+      trackId: number;
+      trackName: string;
+    }[];
+  }>(`${this.base}/admin/certificates/filter-options`);
+}
+ 
+
+  
 
   createBatch(dto: unknown) { return this.http.post(`${this.base}/Batch`, dto); }
   updateBatch(id: number, dto: unknown) { return this.http.put(`${this.base}/Batch/${this.sanitizeId(id)}`, dto); }
