@@ -1030,3 +1030,242 @@
     font-size: 12px;
   }
 }
+
+/* =========================================================
+   TRAINEE PROJECTS — TRAINER STYLE / READ ONLY
+========================================================= */
+
+.trainee-projects-section,
+.trainee-project-details {
+  padding: 24px 0;
+  direction: rtl;
+}
+
+.trainee-projects-heading {
+  margin-bottom: 24px;
+
+  h2 {
+    margin: 0 0 8px;
+    color: #10166f;
+    font-size: 23px;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+  }
+}
+
+.trainee-projects-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, 280px), 1fr)
+  );
+  gap: 16px;
+}
+
+.trainee-project-item {
+  padding: 22px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+
+  h3 {
+    margin: 0 0 12px;
+    color: #10166f;
+    font-size: 18px;
+  }
+}
+
+.trainee-project-description {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.8;
+  min-height: 48px;
+}
+
+.trainee-project-info {
+  margin-top: 16px;
+
+  p {
+    font-size: 13px;
+    color: #334155;
+  }
+}
+
+.trainee-project-status {
+  color: #0056b8;
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 14px;
+}
+
+.trainee-project-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.trainee-project-empty {
+  text-align: center;
+  padding: 40px;
+  border-radius: 14px;
+
+  h3 {
+    color: #334155;
+  }
+
+  p {
+    color: #64748b;
+  }
+}
+
+.trainee-project-details-card {
+  margin-top: 20px;
+  padding: 28px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+
+.trainee-project-details-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+
+  h2 {
+    color: #10166f;
+    margin: 0 0 12px;
+  }
+
+  p {
+    color: #64748b;
+    line-height: 1.8;
+  }
+}
+
+.trainee-project-details-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+
+  > div {
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 13px;
+  }
+
+  strong {
+    color: #10166f;
+  }
+}
+
+.trainee-project-team {
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.trainee-project-team-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  h3 {
+    color: #10166f;
+    margin: 0;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 13px;
+  }
+}
+
+.trainee-project-members-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, 240px), 1fr)
+  );
+  gap: 14px;
+}
+
+.trainee-project-member-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.trainee-project-member-avatar {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8edff;
+  color: #10166f;
+  border-radius: 50%;
+}
+
+.trainee-project-member-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  strong {
+    color: #10166f;
+    font-size: 14px;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  small {
+    color: #059669;
+    font-weight: 700;
+  }
+}
+
+.trainee-project-member-notice {
+  padding: 12px 16px;
+  background: #ecfdf5;
+  color: #047857;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.trainee-project-error {
+  color: #dc2626;
+}
+
+@media (max-width: 640px) {
+  .trainee-project-details-header {
+    flex-direction: column;
+  }
+
+  .trainee-project-details-dates {
+    grid-template-columns: 1fr;
+  }
+}

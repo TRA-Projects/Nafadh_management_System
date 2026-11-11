@@ -11,7 +11,8 @@ import {
   TaskDto,
   TraineeProfileDto,
   EnrollmentDto,
-  BatchDto
+  BatchDto,
+  ProjectMemberDto
 } from '../../../../core/models/dtos';
 
 @Component({
@@ -43,6 +44,117 @@ export class TraineeTasks implements OnInit {
 
   selected = signal<TaskDto | null>(null);
   selectedProject = signal<ProjectDto | null>(null);
+
+
+
+  // =========================================================
+  // PROJECT TEAM — READ ONLY
+  // =========================================================
+
+  projectMembers = signal<ProjectMemberDto[]>([]);
+
+  batchTrainees = signal<
+    { traineeId: number; fullName: string }[]
+  >([]);
+
+  loadingProjectMembers = signal(false);
+  projectMembersError = signal('');
+
+  getProjectMemberName(traineeId: number): string {
+    const trainee = this.batchTrainees().find(
+      item => Number(item.traineeId) === Number(traineeId)
+    );
+
+    return trainee?.fullName || `متدرب رقم ${traineeId}`;
+  }
+
+  getProjectMemberRole(role: string): string {
+    switch (role?.toLowerCase()) {
+      case 'lead':
+        return 'قائد الفريق';
+
+      case 'contributor':
+        return 'عضو الفريق';
+
+      default:
+        return role || 'عضو الفريق';
+    }
+  }
+
+  isCurrentTraineeMember(): boolean {
+    const traineeId = this.traineeId();
+
+    if (!traineeId) {
+      return false;
+    }
+
+    return this.projectMembers().some(
+      member => Number(member.traineeId) === Number(traineeId)
+    );
+  }
+
+  loadBatchTraineesForProjects(): void {
+    const batchId = this.batchId();
+
+    if (!batchId) {
+      this.batchTrainees.set([]);
+      return;
+    }
+
+    this.api.getBatchTrainees(batchId).subscribe({
+      next: trainees => {
+        this.batchTrainees.set(
+          (trainees ?? []).map(trainee => ({
+            traineeId: trainee.traineeId,
+            fullName: trainee.fullName || `متدرب رقم ${trainee.traineeId}`
+          }))
+        );
+      },
+
+      error: error => {
+        console.error(
+          'Error loading project trainee names:',
+          error
+        );
+
+        this.batchTrainees.set([]);
+      }
+    });
+  }
+
+  loadProjectMembers(projectId: number): void {
+    this.loadingProjectMembers.set(true);
+    this.projectMembersError.set('');
+    this.projectMembers.set([]);
+
+    this.api.getProjectMembers(projectId).subscribe({
+      next: members => {
+        if (this.selectedProject()?.projectId !== projectId) {
+          return;
+        }
+
+        this.projectMembers.set(members ?? []);
+        this.loadingProjectMembers.set(false);
+      },
+
+      error: error => {
+        if (this.selectedProject()?.projectId !== projectId) {
+          return;
+        }
+
+        console.error(
+          'Error loading project members:',
+          error
+        );
+
+        this.projectMembers.set([]);
+        this.projectMembersError.set(
+          'تعذر تحميل أعضاء فريق المشروع.'
+        );
+        this.loadingProjectMembers.set(false);
+      }
+    });
+  }
 
   submissionLink = '';
 
@@ -171,6 +283,7 @@ export class TraineeTasks implements OnInit {
 
         this.batchData.set(batch);
         this.programId.set(batch.programId);
+this.loadBatchTraineesForProjects();
 
         this.loadTasks(batchId);
 
@@ -710,18 +823,30 @@ if (!this.isValidSubmissionUrl(link)) {
   // Select Project
   // =========================================================
 
+
   selectProject(project: ProjectDto): void {
     this.selectedProject.set(project);
     this.selected.set(null);
+
     this.errorMessage.set('');
     this.successMessage.set('');
+
+    this.projectMembers.set([]);
+    this.projectMembersError.set('');
+
+    this.loadProjectMembers(project.projectId);
   }
 
   backToProjects(): void {
     this.selectedProject.set(null);
+    this.projectMembers.set([]);
+    this.projectMembersError.set('');
+    this.loadingProjectMembers.set(false);
+
     this.errorMessage.set('');
     this.successMessage.set('');
   }
+
 
   // =========================================================
   // Project Dates

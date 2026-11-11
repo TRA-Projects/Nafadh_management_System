@@ -30,6 +30,7 @@ import {
   TrainingMaterialDto,
   SessionDto,
   ProgramDto,
+  ProjectMemberDto,
   TrainerDto,
   CompanySupervisorDto,
   ProgressSummaryDto,
@@ -581,6 +582,14 @@ downloadTraineeResume(resumeUrl: string): Observable<Blob> {
       `${this.base}/Project/program/${programId}`
     );
   }
+  // Get project team members (read-only)
+getProjectMembers(
+  projectId: number
+): Observable<ProjectMemberDto[]> {
+  return this.http.get<ProjectMemberDto[]>(
+    `${this.base}/ProjectMember/project/${projectId}`
+  );
+}
 
   // =========================================================
   // Attendance
