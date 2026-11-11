@@ -938,6 +938,10 @@ export interface BatchPerformanceReportDto {
 }
  
 export interface AttendanceReportRowDto {
+  enrollmentId: number;
+  batchId: number;
+  departmentId?: number | null;
+  departmentName?: string | null;
   traineeId: number;
   traineeName?: string;
   presentDays: number;

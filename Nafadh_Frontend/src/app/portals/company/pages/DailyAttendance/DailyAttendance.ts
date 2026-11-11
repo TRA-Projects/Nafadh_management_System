@@ -5,7 +5,7 @@ import { Component, ElementRef, HostListener, OnDestroy, OnInit, QueryList, View
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
-import { forkJoin } from 'rxjs';
+import { forkJoin, of, catchError } from 'rxjs';
 import * as XLSX from 'xlsx';
 
 import { CompanyApi } from '../../services/company-api';
@@ -35,6 +35,8 @@ interface TrainerAttendanceDto {
   trainerAttendanceId: number;
 
   trainerId: number;
+
+  trainerName?: string | null;
 
   date: string;
 
@@ -213,7 +215,8 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
   trainerSearch = signal('');
   filteredTrainerOptions = computed(() => {
     const query = this.trainerSearch().trim().toLocaleLowerCase();
-    return this.trainers().filter(trainer =>
+    const roster = this.view() === 'day' ? this.trainers() : this.historicalTrainers();
+    return roster.filter(trainer =>
       !query || (trainer.fullName ?? '').toLocaleLowerCase().includes(query)
     );
   });
@@ -229,6 +232,29 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
   });
 
   trainers = signal<CompanyTrainerDto[]>([]);
+  // Staff directory supplies optional metadata; the period attendance records define history.
+  private directoryTrainers = signal<CompanyTrainerDto[]>([]);
+  historicalTrainers = computed<CompanyTrainerDto[]>(() => {
+    const month = `${this.selectedAttendanceMonth()}-`;
+    const lookup = new Map<number, CompanyTrainerDto>();
+    for (const trainer of [...this.directoryTrainers(), ...this.trainers()]) {
+      lookup.set(trainer.trainerId, trainer);
+    }
+    const historic = new Map<number, CompanyTrainerDto>();
+    for (const record of this.records()) {
+      const date = this.dateOf(record.date);
+      if (!date.startsWith(month) || date > this.todayKey) continue;
+      const metadata = lookup.get(record.trainerId);
+      historic.set(record.trainerId, {
+        trainerId: record.trainerId,
+        fullName: record.trainerName || metadata?.fullName || `مدرب #${record.trainerId}`,
+        specialty: metadata?.specialty || '—',
+        profileImageUrl: metadata?.profileImageUrl ?? null,
+        status: metadata?.status || 'Inactive',
+      });
+    }
+    return [...historic.values()].sort((a, b) => (a.fullName ?? '').localeCompare(b.fullName ?? '', 'ar'));
+  });
 
   failedTrainerImages = signal<number[]>([]);
 
@@ -313,6 +339,7 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
     }
     if (value === this.selectedAttendanceMonth()) return;
     this.selectedAttendanceMonth.set(value);
+    this.selectedTrainerId.set(null); // A trainer selected in another month may have no records here.
     this.selectedWeek.set(null);
     this.selectedExportWeek.set(this.initialWeekIndex());
     this.load();
@@ -477,10 +504,9 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
   /** Company attendance rate for recorded entries in the selected month. */
   monthlyAttendanceRate = computed<number | null>(() => {
     const monthPrefix = `${this.selectedAttendanceMonth()}-`;
-    const trainerIds = new Set(this.trainers().map(t => t.trainerId));
     const monthRecords = this.records().filter(record => {
       const date = this.dateOf(record.date);
-      return date.startsWith(monthPrefix) && date <= this.todayKey && trainerIds.has(record.trainerId);
+      return date.startsWith(monthPrefix) && date <= this.todayKey;
     });
     if (!monthRecords.length) return null;
     return Math.round(monthRecords.reduce((sum, record) => sum + this.commitmentPoints(record.status), 0) / monthRecords.length);
@@ -707,8 +733,13 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
 
     const map = this.recordMap();
 
-    return this.trainers().filter(trainer =>
-      !applyTrainerFilter || this.selectedTrainerId() === null || trainer.trainerId === this.selectedTrainerId()
+    const periodKeys = new Set(week.days.map(day => day.key));
+    const periodTrainerIds = new Set(this.records()
+      .filter(record => periodKeys.has(this.dateOf(record.date)))
+      .map(record => record.trainerId));
+    return this.historicalTrainers().filter(trainer =>
+      periodTrainerIds.has(trainer.trainerId) &&
+      (!applyTrainerFilter || this.selectedTrainerId() === null || trainer.trainerId === this.selectedTrainerId())
     ).map((trainer, index) => {
 
       const days = week.days.map(day => ({
@@ -747,13 +778,11 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
 
     const keys = new Set(week.days.map(d => d.key));
 
-    const trainerIds = new Set(this.trainers().map(t => t.trainerId));
-
     const counts = { Present: 0, Late: 0, Absent: 0, EarlyLeave: 0 };
 
     for (const record of this.records()) {
 
-      if (keys.has(this.dateOf(record.date)) && trainerIds.has(record.trainerId)) counts[record.status]++;
+      if (keys.has(this.dateOf(record.date))) counts[record.status]++;
 
     }
 
@@ -801,12 +830,12 @@ ngOnInit(): void {
     forkJoin({
 
       trainers: this.api.getCompanyTrainers(this.companyId, this.todayKey),
-
+      directory: this.api.getCompanyTrainerDirectory(this.companyId).pipe(catchError(() => of([]))),
       records: this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.loadToKey()),
 
     }).subscribe({
 
-      next: ({ trainers, records }) => {
+      next: ({ trainers, directory, records }) => {
 
         this.failedTrainerImages.set([]);
         this.trainers.set((trainers ?? []).map(trainer => ({
@@ -815,6 +844,7 @@ ngOnInit(): void {
             (trainer as CompanyTrainerDto & { ProfileImageUrl?: string | null }).ProfileImageUrl ?? null,
         })));
 
+        this.directoryTrainers.set(directory ?? []);
         this.records.set(records ?? []);
 
         // Open the specific trainer excuse only after the correct date range

@@ -479,13 +479,13 @@ export class ReportsComponent implements OnInit {
       return;
     }
 
-    const departmentByTrainee = new Map<number, string>();
+    const departmentByEnrollment = new Map<number, string>();
 
     enrollments.forEach(enrollment => {
 
-      const traineeId = this.toNumber(
-        enrollment.traineeId ??
-        enrollment.TraineeId
+      const enrollmentId = this.toNumber(
+        enrollment.enrollmentId ??
+        enrollment.EnrollmentId
       );
 
       const department = String(
@@ -496,8 +496,8 @@ export class ReportsComponent implements OnInit {
         'غير محدد'
       );
 
-      if (traineeId > 0) {
-        departmentByTrainee.set(traineeId, department);
+      if (enrollmentId > 0) {
+        departmentByEnrollment.set(enrollmentId, department);
       }
     });
 
@@ -505,13 +505,13 @@ export class ReportsComponent implements OnInit {
 
     rows.forEach(row => {
 
-      const traineeId = this.toNumber(
-        row.traineeId ??
-        row.TraineeId
+      const enrollmentId = this.toNumber(
+        row.enrollmentId ??
+        row.EnrollmentId
       );
 
       const department =
-        departmentByTrainee.get(traineeId) ??
+        departmentByEnrollment.get(enrollmentId) ??
         String(
           row.departmentName ??
           row.DepartmentName ??
