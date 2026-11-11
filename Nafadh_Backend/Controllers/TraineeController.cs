@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Nafadh_Backend.Services;
 using Nafadh_Backend.DTOs;
-using Nafadh_Backend.Models;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Filters;
+using Nafadh_Backend.Models;
+using Nafadh_Backend.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -119,6 +120,7 @@ namespace Nafadh_Backend.Controllers
                 FullName = t.User?.FullName,
                 Email = t.User?.Email,
                 NationalId = t.NationalId,
+                DateOfBirth = t.DateOfBirth,
                 University = t.University,
                 Major = t.Major,
                 AcademicLevel = t.AcademicLevel,
@@ -700,6 +702,7 @@ namespace Nafadh_Backend.Controllers
                 Email = t.User?.Email,
                 Phone = t.User?.Phone,
                 NationalId = t.NationalId,
+                DateOfBirth = t.DateOfBirth,
                 University = t.University,
                 Major = t.Major,
                 AcademicLevel = t.AcademicLevel,
@@ -829,6 +832,7 @@ namespace Nafadh_Backend.Controllers
                     Email = trainee.User.Email,
                     Phone = trainee.User.Phone,
                     NationalId = trainee.NationalId,
+                    DateOfBirth = trainee.DateOfBirth,
                     University = trainee.University,
                     Major = trainee.Major,
                     AcademicLevel = trainee.AcademicLevel,

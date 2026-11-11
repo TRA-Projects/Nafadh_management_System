@@ -50,7 +50,7 @@
               <span>·</span>
               <span>تخصص: <strong>{{ tp.major }}</strong></span>
               <span>·</span>
-              <span>العمر: <strong>{{ tp.age }} سنة</strong></span>
+              <span>العمر: <strong>{{ tp.age != null && tp.age > 0 ? tp.age + ' سنة' : '—' }}</strong></span>
               <span>·</span>
               <span>الرقم المدني: {{ tp.nationalId }}</span>
             </div>

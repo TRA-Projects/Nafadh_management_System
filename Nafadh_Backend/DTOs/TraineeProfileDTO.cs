@@ -31,6 +31,7 @@ namespace Nafadh_Backend.DTOs
         public string? University { get; set; }
         public string? Major { get; set; }
         public string? AcademicLevel { get; set; }
+        public DateTime? DateOfBirth { get; set; }
         //public string? Skills { get; set; }
         public string? ResumeUrl { get; set; }
         public string? GitHubUrl { get; set; }

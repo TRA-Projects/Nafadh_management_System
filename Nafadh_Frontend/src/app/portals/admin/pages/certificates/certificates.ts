@@ -74,22 +74,22 @@ export class AdminCertificates implements OnInit {
   private static cachedTraineesByBatch = new Map<number, TraineeDto[]>();
 
   readonly batches = signal<BatchCertificateCardDto[]>([]);
- readonly weeklyTrainingHours = signal<number | null>(null);
+  readonly weeklyTrainingHours = signal<number | null>(null);
   readonly certificateMinGrade = signal<number | null>(null);
   readonly certificateTexts = signal<Record<string, string>>({});
 
-getCertificateText(
-  key: string,
-  params: Record<string, string | number> = {}
-): string {
-  let message = this.certificateTexts()[key] ?? '';
+  getCertificateText(
+    key: string,
+    params: Record<string, string | number> = {}
+  ): string {
+    let message = this.certificateTexts()[key] ?? '';
 
-  for (const [name, value] of Object.entries(params)) {
-    message = message.replaceAll(`{${name}}`, String(value));
+    for (const [name, value] of Object.entries(params)) {
+      message = message.replaceAll(`{${name}}`, String(value));
+    }
+
+    return message;
   }
-
-  return message;
-}
   readonly selectedBatch = signal<BatchCertificateCardDto | null>(null);
   readonly selectedBatchTrainees = signal<TraineeDto[]>([]);
 
@@ -150,53 +150,64 @@ getCertificateText(
 
   private allBatches: BatchCertificateCardDto[] = [];
 
-  constructor(private readonly api: AdminApi) {}
+  private certificateCompanies: {
+    companyId: number;
+    companyName: string;
+    batchIds: number[];
+  }[] = [];
 
- ngOnInit(): void {
-  this.loadCertificateSettings();
-  this.fetchBatches();
-}
-private loadCertificateSettings(): void {
-  this.api.getSystemVariables().subscribe({
-    next: (rows: any[]) => {
+  private certificateTracks: {
+    trackId: number;
+    trackName: string;
+  }[] = [];
 
-      // تحميل جميع النصوص والإعدادات من قاعدة البيانات
-      const settings: Record<string, string> = {};
+  constructor(private readonly api: AdminApi) { }
 
-      for (const row of rows) {
-        const key = row.variableKey ?? row.VariableKey;
-        const value = row.value ?? row.Value;
+  ngOnInit(): void {
+    this.loadCertificateSettings();
+    this.fetchBatches();
+  }
+  private loadCertificateSettings(): void {
+    this.api.getSystemVariables().subscribe({
+      next: (rows: any[]) => {
 
-        if (key && value != null) {
-          settings[String(key)] = String(value);
+        // تحميل جميع النصوص والإعدادات من قاعدة البيانات
+        const settings: Record<string, string> = {};
+
+        for (const row of rows) {
+          const key = row.variableKey ?? row.VariableKey;
+          const value = row.value ?? row.Value;
+
+          if (key && value != null) {
+            settings[String(key)] = String(value);
+          }
         }
+
+        // تخزين النصوص لاستخدامها في صفحة الشهادات
+        this.certificateTexts.set(settings);
+
+        // ساعات التدريب الأسبوعية من قاعدة البيانات
+        const hours = Number(settings['PROGRAM_WEEKLY_HOURS']);
+        const minGrade = Number(settings['CERT_MIN_GRADE']);
+
+        if (settings['CERT_MIN_GRADE'] !== undefined &&
+          Number.isFinite(minGrade) &&
+          minGrade >= 0 &&
+          minGrade <= 100) {
+          this.certificateMinGrade.set(minGrade);
+        }
+
+        if (Number.isFinite(hours) && hours > 0) {
+          this.weeklyTrainingHours.set(hours);
+        }
+
+      },
+
+      error: (err) => {
+        console.error('Failed to load certificate settings:', err);
       }
-
-      // تخزين النصوص لاستخدامها في صفحة الشهادات
-      this.certificateTexts.set(settings);
-
-      // ساعات التدريب الأسبوعية من قاعدة البيانات
-      const hours = Number(settings['PROGRAM_WEEKLY_HOURS']);
-      const minGrade = Number(settings['CERT_MIN_GRADE']);
-
-if (settings['CERT_MIN_GRADE'] !== undefined &&
-    Number.isFinite(minGrade) &&
-    minGrade >= 0 &&
-    minGrade <= 100) {
-  this.certificateMinGrade.set(minGrade);
-}
-
-      if (Number.isFinite(hours) && hours > 0) {
-        this.weeklyTrainingHours.set(hours);
-      }
-  
-    },
-
-    error: (err) => {
-      console.error('Failed to load certificate settings:', err);
-    }
-  });
-}
+    });
+  }
 
   private showCertificateMessage(
     type: 'error' | 'warning' | 'success',
@@ -247,52 +258,52 @@ if (settings['CERT_MIN_GRADE'] !== undefined &&
 
   // حساب عدد الساعات تلقائياً من تاريخ بداية ونهاية الدفعة (بمعدل 7 ساعات يومياً / 5 أيام في الأسبوع)
   calculateTrainingHours(
-  startDate?: string | Date,
-  endDate?: string | Date
-): {
-  totalHours: number;
-  techHours: number;
-  practicalHours: number;
-} {
-  const weeklyHours = this.weeklyTrainingHours();
-  if (weeklyHours === null) {
-  throw new Error('PROGRAM_WEEKLY_HOURS is not loaded');
-}
+    startDate?: string | Date,
+    endDate?: string | Date
+  ): {
+    totalHours: number;
+    techHours: number;
+    practicalHours: number;
+  } {
+    const weeklyHours = this.weeklyTrainingHours();
+    if (weeklyHours === null) {
+      throw new Error('PROGRAM_WEEKLY_HOURS is not loaded');
+    }
 
-  if (!startDate || !endDate) {
+    if (!startDate || !endDate) {
+      return {
+        totalHours: 0,
+        techHours: 0,
+        practicalHours: 0
+      };
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    const diffDays =
+      (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+
+    if (!Number.isFinite(diffDays) || diffDays < 0) {
+      return {
+        totalHours: 0,
+        techHours: 0,
+        practicalHours: 0
+      };
+    }
+
+    const weeks = diffDays / 7;
+    const totalHours = Math.round(weeks * weeklyHours);
+
+    const techHours = Math.round((totalHours * 2) / 3);
+    const practicalHours = totalHours - techHours;
+
     return {
-      totalHours: 0,
-      techHours: 0,
-      practicalHours: 0
+      totalHours,
+      techHours,
+      practicalHours
     };
   }
-
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-
-  const diffDays =
-    (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-
-  if (!Number.isFinite(diffDays) || diffDays < 0) {
-    return {
-      totalHours: 0,
-      techHours: 0,
-      practicalHours: 0
-    };
-  }
-
-  const weeks = diffDays / 7;
-  const totalHours = Math.round(weeks * weeklyHours);
-
-  const techHours = Math.round((totalHours * 2) / 3);
-  const practicalHours = totalHours - techHours;
-
-  return {
-    totalHours,
-    techHours,
-    practicalHours
-  };
-}
 
   getGradeLabel(gradeStr?: string): string {
     if (!gradeStr) return 'اجتياز بنجاح';
@@ -361,7 +372,14 @@ if (settings['CERT_MIN_GRADE'] !== undefined &&
   }
 
   fetchBatches(): void {
-    if (AdminCertificates.cachedBatches && AdminCertificates.cachedBatches.length > 0) {
+    // Load company and track filter options from Backend
+    this.fetchCertificateFilterOptions();
+
+    // Load cached batches first, if available
+    if (
+      AdminCertificates.cachedBatches &&
+      AdminCertificates.cachedBatches.length > 0
+    ) {
       this.allBatches = AdminCertificates.cachedBatches;
       this.populateFilterOptions(this.allBatches);
       this.applyFilters();
@@ -370,65 +388,119 @@ if (settings['CERT_MIN_GRADE'] !== undefined &&
       this.loading.set(true);
     }
 
+    // Fetch all batches from Backend
     this.api.getBatches().subscribe({
       next: (response: any[]) => {
         const rawBatches = response || [];
 
         if (rawBatches.length === 0) {
           this.allBatches = [];
-          this.batches.set([]);
-          this.totalBatchesCount.set(0);
+          AdminCertificates.cachedBatches = [];
+          this.populateFilterOptions([]);
+          this.applyFilters();
           this.loading.set(false);
           return;
         }
 
-        const normalizedBatches = rawBatches.map((b: any) => this.normalizeBatch(b));
+        const normalizedBatches: BatchCertificateCardDto[] =
+          rawBatches.map((b: any) => this.normalizeBatch(b));
 
         this.allBatches = normalizedBatches;
         AdminCertificates.cachedBatches = normalizedBatches;
+
         this.populateFilterOptions(normalizedBatches);
         this.applyFilters();
         this.loading.set(false);
 
-        const batchRequests$ = normalizedBatches.map((normalized: BatchCertificateCardDto) => {
-          const bId = this.cleanId(normalized.batchId ?? normalized.id);
+        // Fetch certificate statuses for each batch
+        const batchRequests$ = normalizedBatches.map(
+          (normalized: BatchCertificateCardDto) => {
+            const bId = this.cleanId(
+              normalized.batchId ?? normalized.id
+            );
 
-          return this.api.getBatchCertificatesStatus(bId).pipe(
-            map((res: any) => {
-              const rawList = Array.isArray(res) ? res : (res?.items || []);
-              const mappedTrainees = this.mapTraineesList(rawList, bId);
-              AdminCertificates.cachedTraineesByBatch.set(bId, mappedTrainees);
+            return this.api.getBatchCertificatesStatus(bId).pipe(
+              map((res: any): BatchCertificateCardDto => {
+                const rawList = Array.isArray(res)
+                  ? res
+                  : (res?.items || []);
 
-              const issuedCount = mappedTrainees.filter(t => t.isIssued).length;
+                const mappedTrainees = this.mapTraineesList(
+                  rawList,
+                  bId
+                );
 
-              return {
-                ...normalized,
-                totalTraineesCount: mappedTrainees.length,
-                issuedCertificatesCount: issuedCount
-              };
-            }),
-            catchError(() =>
-              of({
-                ...normalized,
-                totalTraineesCount: normalized.totalTraineesCount || 0,
-                issuedCertificatesCount: normalized.issuedCertificatesCount || 0
-              })
-            )
-          );
-        });
+                AdminCertificates.cachedTraineesByBatch.set(
+                  bId,
+                  mappedTrainees
+                );
 
-        forkJoin<BatchCertificateCardDto[]>(batchRequests$).subscribe({
-          next: (finalBatches) => {
+                const issuedCount = mappedTrainees.filter(
+                  t => t.isIssued
+                ).length;
+
+                return {
+                  ...normalized,
+                  totalTraineesCount: mappedTrainees.length,
+                  issuedCertificatesCount: issuedCount
+                };
+              }),
+              catchError(() =>
+                of({
+                  ...normalized,
+                  totalTraineesCount:
+                    normalized.totalTraineesCount || 0,
+                  issuedCertificatesCount:
+                    normalized.issuedCertificatesCount || 0
+                } as BatchCertificateCardDto)
+              )
+            );
+          }
+        );
+
+        forkJoin(batchRequests$).subscribe({
+          next: (finalBatches: BatchCertificateCardDto[]) => {
             this.allBatches = finalBatches;
             AdminCertificates.cachedBatches = finalBatches;
+
             this.populateFilterOptions(finalBatches);
             this.applyFilters();
+          },
+          error: (err) => {
+            console.error(
+              'Error fetching certificate statuses:',
+              err
+            );
           }
         });
       },
       error: (err) => {
         console.error('Error fetching batches:', err);
         this.loading.set(false);
+      }
+    });
+  }
+  private fetchCertificateFilterOptions(): void {
+    this.api.getAdminCertificateFilterOptions().subscribe({
+      next: (response) => {
+        this.certificateCompanies = response.companies || [];
+        this.certificateTracks = response.tracks || [];
+
+        this.companiesList.set(
+          this.certificateCompanies.map(c => c.companyName)
+        );
+
+        this.tracksList.set(
+          this.certificateTracks.map(t => t.trackName)
+        );
+
+        this.applyFilters();
+      },
+      error: (err) => {
+        console.error(
+          'Error fetching certificate filter options:',
+          err
+        );
       }
     });
   }
@@ -459,15 +531,6 @@ if (settings['CERT_MIN_GRADE'] !== undefined &&
   }
 
   private populateFilterOptions(batches: BatchCertificateCardDto[]): void {
-    const companies = Array.from(
-      new Set(batches.map(b => b.companyName).filter(Boolean))
-    ).sort();
-    const tracks = Array.from(
-      new Set(batches.map(b => b.trackName).filter(Boolean))
-    ).sort();
-
-    this.companiesList.set(companies);
-    this.tracksList.set(tracks);
     this.allBatchesList.set(batches);
 
     let completed = 0;
@@ -502,7 +565,21 @@ if (settings['CERT_MIN_GRADE'] !== undefined &&
     let filteredBatches = [...this.allBatches];
 
     if (selectedCompany !== 'all') {
-      filteredBatches = filteredBatches.filter(b => b.companyName === selectedCompany);
+      const selectedCompanyData = this.certificateCompanies.find(
+        company => company.companyName === selectedCompany
+      );
+
+      if (selectedCompanyData) {
+        const allowedBatchIds = new Set(
+          selectedCompanyData.batchIds.map(id => Number(id))
+        );
+
+        filteredBatches = filteredBatches.filter(batch =>
+          allowedBatchIds.has(this.cleanId(batch.batchId ?? batch.id))
+        );
+      } else {
+        filteredBatches = [];
+      }
     }
 
     if (selectedTrack !== 'all') {
@@ -661,20 +738,20 @@ if (settings['CERT_MIN_GRADE'] !== undefined &&
 
   onViewTrainees(batch: BatchCertificateCardDto): void {
     if (!this.isBatchCompleted(batch)) {
-  const messageKey = this.isBatchOngoing(batch)
-    ? 'CERT_BATCH_ONGOING_MESSAGE'
-    : 'CERT_BATCH_NOT_STARTED_MESSAGE';
+      const messageKey = this.isBatchOngoing(batch)
+        ? 'CERT_BATCH_ONGOING_MESSAGE'
+        : 'CERT_BATCH_NOT_STARTED_MESSAGE';
 
-  this.showCertificateMessage(
-    'warning',
-    this.getCertificateText('CERT_BATCH_NOT_COMPLETED_TITLE'),
-    this.getCertificateText(messageKey, {
-      batchName: batch.batchName
-    })
-  );
+      this.showCertificateMessage(
+        'warning',
+        this.getCertificateText('CERT_BATCH_NOT_COMPLETED_TITLE'),
+        this.getCertificateText(messageKey, {
+          batchName: batch.batchName
+        })
+      );
 
-  return;
-}
+      return;
+    }
 
     this.selectedBatch.set(batch);
     this.traineeSearchTerm.set('');
@@ -738,9 +815,9 @@ if (settings['CERT_MIN_GRADE'] !== undefined &&
       trackName: batch?.trackName || 'البرنامج التدريبي المعتمد',
       companyName: batch?.companyName || 'الشركة المدربة المعتمدة',
       batchName: batch?.batchName || '',
-     startDate: batch?.startDate,
-endDate: batch?.endDate,
-grade: trainee.grade,
+      startDate: batch?.startDate,
+      endDate: batch?.endDate,
+      grade: trainee.grade,
       gradeLabel: trainee.gradeLabel || this.getGradeLabel(trainee.grade),
       serialNumber:
         trainee.serialNumber ||
@@ -876,66 +953,66 @@ grade: trainee.grade,
   issueSingleCertificate(trainee: TraineeDto, autoOpenModal: boolean = true): void {
     const batch = this.selectedBatch();
 
-  if (!this.isBatchCompleted(batch)) {
-  this.showCertificateMessage(
-    'error',
-    this.getCertificateText('CERT_BATCH_REQUIRED_TITLE'),
-    this.getCertificateText('CERT_BATCH_REQUIRED_MESSAGE')
-  );
-  return;
-}
+    if (!this.isBatchCompleted(batch)) {
+      this.showCertificateMessage(
+        'error',
+        this.getCertificateText('CERT_BATCH_REQUIRED_TITLE'),
+        this.getCertificateText('CERT_BATCH_REQUIRED_MESSAGE')
+      );
+      return;
+    }
 
     const eId = this.cleanId(trainee.enrollmentId);
- if (!eId) {
-  this.showCertificateMessage(
-    'error',
-    this.getCertificateText('CERT_ENROLLMENT_MISSING_TITLE'),
-    this.getCertificateText('CERT_ENROLLMENT_MISSING_MESSAGE')
-  );
-  return;
-}
+    if (!eId) {
+      this.showCertificateMessage(
+        'error',
+        this.getCertificateText('CERT_ENROLLMENT_MISSING_TITLE'),
+        this.getCertificateText('CERT_ENROLLMENT_MISSING_MESSAGE')
+      );
+      return;
+    }
 
     const grade =
       trainee.grade != null
         ? Number(String(trainee.grade).replace('%', '').trim())
         : NaN;
 
-   if (isNaN(grade)) {
-  this.showCertificateMessage(
-    'warning',
-    this.getCertificateText('CERT_GRADE_MISSING_TITLE'),
-    this.getCertificateText('CERT_GRADE_MISSING_MESSAGE', {
-      traineeName: trainee.fullName
-    })
-  );
-  return;
-}
-   const minGrade = this.certificateMinGrade();
+    if (isNaN(grade)) {
+      this.showCertificateMessage(
+        'warning',
+        this.getCertificateText('CERT_GRADE_MISSING_TITLE'),
+        this.getCertificateText('CERT_GRADE_MISSING_MESSAGE', {
+          traineeName: trainee.fullName
+        })
+      );
+      return;
+    }
+    const minGrade = this.certificateMinGrade();
 
-if (minGrade === null) {
-  this.showCertificateMessage(
-    'error',
-    this.getCertificateText('CERT_ISSUE_FAILED_TITLE'),
-    this.getCertificateText('CERT_ISSUE_FAILED_MESSAGE', {
-      traineeName: trainee.fullName,
-      error: 'CERT_MIN_GRADE is not loaded'
-    })
-  );
-  return;
-}
+    if (minGrade === null) {
+      this.showCertificateMessage(
+        'error',
+        this.getCertificateText('CERT_ISSUE_FAILED_TITLE'),
+        this.getCertificateText('CERT_ISSUE_FAILED_MESSAGE', {
+          traineeName: trainee.fullName,
+          error: 'CERT_MIN_GRADE is not loaded'
+        })
+      );
+      return;
+    }
 
-if (grade < minGrade) {
-  this.showCertificateMessage(
-    'error',
-    this.getCertificateText('CERT_GRADE_MISSING_TITLE'),
-    this.getCertificateText('CERT_GRADE_BELOW_MIN_MESSAGE', {
-      traineeName: trainee.fullName,
-      grade: grade.toFixed(2),
-    minGrade: minGrade
-    })
-  );
-  return;
-}
+    if (grade < minGrade) {
+      this.showCertificateMessage(
+        'error',
+        this.getCertificateText('CERT_GRADE_MISSING_TITLE'),
+        this.getCertificateText('CERT_GRADE_BELOW_MIN_MESSAGE', {
+          traineeName: trainee.fullName,
+          grade: grade.toFixed(2),
+          minGrade: minGrade
+        })
+      );
+      return;
+    }
 
     const payload = {
       enrollmentId: eId,
@@ -953,14 +1030,14 @@ if (grade < minGrade) {
           this.refreshBatchStatus(batch.batchId || batch.id);
         }
 
-    this.showCertificateMessage(
-  'success',
-  this.getCertificateText('CERT_ISSUE_SUCCESS_TITLE'),
-  this.getCertificateText('CERT_ISSUE_SUCCESS_MESSAGE', {
-    traineeName: trainee.fullName,
-    serialNumber: certObj?.serialNumber ?? trainee.serialNumber
-  })
-);
+        this.showCertificateMessage(
+          'success',
+          this.getCertificateText('CERT_ISSUE_SUCCESS_TITLE'),
+          this.getCertificateText('CERT_ISSUE_SUCCESS_MESSAGE', {
+            traineeName: trainee.fullName,
+            serialNumber: certObj?.serialNumber ?? trainee.serialNumber
+          })
+        );
         if (autoOpenModal) {
           this.viewSingleCertificate({
             ...trainee,
@@ -970,107 +1047,107 @@ if (grade < minGrade) {
           });
         }
       },
-   error: (err) => {
-  const backendMessage = err?.error?.message ?? '';
+      error: (err) => {
+        const backendMessage = err?.error?.message ?? '';
 
-  this.showCertificateMessage(
-    'error',
-    this.getCertificateText('CERT_ISSUE_FAILED_TITLE'),
-    this.getCertificateText('CERT_ISSUE_FAILED_MESSAGE', {
-      traineeName: trainee.fullName,
-      error: backendMessage
-    })
-  );
-}
+        this.showCertificateMessage(
+          'error',
+          this.getCertificateText('CERT_ISSUE_FAILED_TITLE'),
+          this.getCertificateText('CERT_ISSUE_FAILED_MESSAGE', {
+            traineeName: trainee.fullName,
+            error: backendMessage
+          })
+        );
+      }
     });
   }
 
- 
-issueAllCertificates(): void {
-  const batch = this.selectedBatch();
 
-  if (!this.isBatchCompleted(batch)) {
-    this.showCertificateMessage(
-      'error',
-      this.getCertificateText('CERT_ALL_BATCH_REQUIRED_TITLE'),
-      this.getCertificateText('CERT_ALL_BATCH_REQUIRED_MESSAGE')
-    );
-    return;
-  }
+  issueAllCertificates(): void {
+    const batch = this.selectedBatch();
 
-  const minGrade = this.certificateMinGrade();
+    if (!this.isBatchCompleted(batch)) {
+      this.showCertificateMessage(
+        'error',
+        this.getCertificateText('CERT_ALL_BATCH_REQUIRED_TITLE'),
+        this.getCertificateText('CERT_ALL_BATCH_REQUIRED_MESSAGE')
+      );
+      return;
+    }
 
-  if (minGrade === null) {
-    console.error('CERT_MIN_GRADE is not loaded');
-    return;
-  }
+    const minGrade = this.certificateMinGrade();
 
-  const unissued = this.selectedBatchTrainees()
-    .filter(t => !this.isCertificateIssued(t));
+    if (minGrade === null) {
+      console.error('CERT_MIN_GRADE is not loaded');
+      return;
+    }
 
-  if (unissued.length === 0) {
-    this.showCertificateMessage(
-      'warning',
-      this.getCertificateText('CERT_ALL_ALREADY_ISSUED_TITLE'),
-      this.getCertificateText('CERT_ALL_ALREADY_ISSUED_MESSAGE')
-    );
-    return;
-  }
+    const unissued = this.selectedBatchTrainees()
+      .filter(t => !this.isCertificateIssued(t));
 
-  const requests$ = unissued.map(trainee => {
-    const payload = {
-      enrollmentId: trainee.enrollmentId,
-      type: 0
-    };
+    if (unissued.length === 0) {
+      this.showCertificateMessage(
+        'warning',
+        this.getCertificateText('CERT_ALL_ALREADY_ISSUED_TITLE'),
+        this.getCertificateText('CERT_ALL_ALREADY_ISSUED_MESSAGE')
+      );
+      return;
+    }
 
-    return this.api.issueCertificate(payload).pipe(
-      map(() => true),
-      catchError(err => {
-        console.error(
-          `Failed to issue certificate for ${trainee.fullName}`,
-          err
+    const requests$ = unissued.map(trainee => {
+      const payload = {
+        enrollmentId: trainee.enrollmentId,
+        type: 0
+      };
+
+      return this.api.issueCertificate(payload).pipe(
+        map(() => true),
+        catchError(err => {
+          console.error(
+            `Failed to issue certificate for ${trainee.fullName}`,
+            err
+          );
+          return of(false);
+        })
+      );
+    });
+
+    forkJoin(requests$).subscribe({
+      next: results => {
+        const successCount = results.filter(Boolean).length;
+        const failedCount = results.length - successCount;
+
+        if (batch) {
+          this.reloadTraineesAndBatchStatus(batch.batchId || batch.id);
+        }
+
+        if (failedCount > 0) {
+          this.showCertificateMessage(
+            'error',
+            this.getCertificateText('CERT_ALL_ERROR_TITLE'),
+            this.getCertificateText('CERT_ALL_ERROR_MESSAGE')
+          );
+          return;
+        }
+
+        this.showCertificateMessage(
+          'success',
+          this.getCertificateText('CERT_ALL_SUCCESS_TITLE'),
+          this.getCertificateText('CERT_ALL_SUCCESS_MESSAGE', {
+            count: successCount
+          })
         );
-        return of(false);
-      })
-    );
-  });
+      },
 
-  forkJoin(requests$).subscribe({
-    next: results => {
-      const successCount = results.filter(Boolean).length;
-      const failedCount = results.length - successCount;
-
-      if (batch) {
-        this.reloadTraineesAndBatchStatus(batch.batchId || batch.id);
-      }
-
-      if (failedCount > 0) {
+      error: () => {
         this.showCertificateMessage(
           'error',
           this.getCertificateText('CERT_ALL_ERROR_TITLE'),
           this.getCertificateText('CERT_ALL_ERROR_MESSAGE')
         );
-        return;
       }
-
-      this.showCertificateMessage(
-        'success',
-        this.getCertificateText('CERT_ALL_SUCCESS_TITLE'),
-        this.getCertificateText('CERT_ALL_SUCCESS_MESSAGE', {
-          count: successCount
-        })
-      );
-    },
-
-    error: () => {
-      this.showCertificateMessage(
-        'error',
-        this.getCertificateText('CERT_ALL_ERROR_TITLE'),
-        this.getCertificateText('CERT_ALL_ERROR_MESSAGE')
-      );
-    }
-  });
-}
+    });
+  }
   private reloadTraineesAndBatchStatus(batchId: number): void {
     const bId = this.cleanId(batchId);
     this.loadingTrainees.set(true);
@@ -1089,20 +1166,20 @@ issueAllCertificates(): void {
         this.selectedBatch.update(batch =>
           batch
             ? {
-                ...batch,
-                totalTraineesCount: totalTrainees,
-                issuedCertificatesCount: issuedCertificates
-              }
+              ...batch,
+              totalTraineesCount: totalTrainees,
+              issuedCertificatesCount: issuedCertificates
+            }
             : null
         );
 
         this.allBatches = this.allBatches.map(batch =>
           (batch.batchId === bId || batch.id === bId)
             ? {
-                ...batch,
-                totalTraineesCount: totalTrainees,
-                issuedCertificatesCount: issuedCertificates
-              }
+              ...batch,
+              totalTraineesCount: totalTrainees,
+              issuedCertificatesCount: issuedCertificates
+            }
             : batch
         );
         AdminCertificates.cachedBatches = this.allBatches;
@@ -1131,20 +1208,20 @@ issueAllCertificates(): void {
         this.selectedBatch.update(batch =>
           batch
             ? {
-                ...batch,
-                totalTraineesCount: totalTrainees,
-                issuedCertificatesCount: issuedCertificates
-              }
+              ...batch,
+              totalTraineesCount: totalTrainees,
+              issuedCertificatesCount: issuedCertificates
+            }
             : null
         );
 
         this.allBatches = this.allBatches.map(batch =>
           (batch.batchId === bId || batch.id === bId)
             ? {
-                ...batch,
-                totalTraineesCount: totalTrainees,
-                issuedCertificatesCount: issuedCertificates
-              }
+              ...batch,
+              totalTraineesCount: totalTrainees,
+              issuedCertificatesCount: issuedCertificates
+            }
             : batch
         );
         AdminCertificates.cachedBatches = this.allBatches;
@@ -1209,12 +1286,12 @@ issueAllCertificates(): void {
       list.map(t =>
         t.enrollmentId === enrollmentId
           ? {
-              ...t,
-              isIssued,
-              type: type ?? t.type,
-              issueDate: today,
-              fileUrl: fileUrl || t.fileUrl
-            }
+            ...t,
+            isIssued,
+            type: type ?? t.type,
+            issueDate: today,
+            fileUrl: fileUrl || t.fileUrl
+          }
           : t
       )
     );
