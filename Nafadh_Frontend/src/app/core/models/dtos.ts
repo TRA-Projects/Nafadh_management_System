@@ -656,7 +656,7 @@ export interface ProjectDto {
 }
 
 export interface ProjectMemberDto {
-  id: number;
+ memberId: number;
   role: string;
   projectId: number;
   traineeId: number;
@@ -1002,6 +1002,8 @@ export interface TraineeQuizListItemDto {
     | 'Completed'
     | 'Upcoming'
     | 'Missed';
+      isGradingCompleted: boolean;
+
 }
 
 export interface TraineeQuizzesOverviewDto {

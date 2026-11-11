@@ -207,6 +207,33 @@ namespace Nafadh_Backend.Controllers
             return Ok(summary);
         }
 
+        // ==========================================================
+        // Admin Portal ONLY - Dashboard Summary by Period
+        // GET: api/Report/admin-dashboard-summary-by-period
+        // ==========================================================
+        [HttpGet("admin-dashboard-summary-by-period")]
+        public async Task<IActionResult> GetAdminDashboardSummaryByPeriod(
+            [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null
+        )
+        {
+            if (startDate.HasValue &&
+                endDate.HasValue &&
+                startDate.Value.Date > endDate.Value.Date)
+            {
+                return BadRequest(
+                    "startDate cannot be later than endDate."
+                );
+            }
+
+            var summary = await _service.GetAdminDashboardSummaryByPeriodAsync(
+                startDate?.Date,
+                endDate?.Date
+            );
+
+            return Ok(summary);
+        }
+
         // GET: api/Report/batch-performance/{batchId}?pageNumber=1&pageSize=15 (Admin Reports drill-down)
         [HttpGet("batch-performance/{batchId}")]
         public async Task<IActionResult> GetBatchPerformance(

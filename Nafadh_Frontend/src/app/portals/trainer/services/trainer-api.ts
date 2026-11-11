@@ -891,6 +891,54 @@ deleteTrainerSkill(skillId: number): Observable<void> {
     );
 
   }
+    // =====================================================
+  // TRAINER PROJECTS
+  // =====================================================
+
+  getProjectsByProgram(programId: number): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.base}/Project/program/${programId}`
+    );
+  }
+
+  createProject(dto: unknown): Observable<any> {
+    return this.http.post<any>(
+      `${this.base}/Project`,
+      dto
+    );
+  }
+
+  getProjectMembers(projectId: number): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.base}/ProjectMember/project/${projectId}`
+    );
+  }
+
+  addProjectMember(dto: {
+    projectId: number;
+    traineeId: number;
+    role: string;
+  }): Observable<any> {
+    return this.http.post<any>(
+      `${this.base}/ProjectMember`,
+      dto
+    );
+  }
+ deleteProjectMember(memberId: number): Observable<string> {
+  return this.http.delete(
+    `${this.base}/ProjectMember/${memberId}`,
+    { responseType: 'text' }
+  );
+}
+
+  getProjectGrades(
+    batchId: number,
+    projectId: number
+  ): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.base}/trainer/project-grades/batch/${batchId}/project/${projectId}`
+    );
+  }
 
   // =====================================================
   // Trainee Evaluation
