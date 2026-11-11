@@ -31,7 +31,17 @@
             <div><small>الساعات المعتمدة</small><strong>{{ p.durationHours }}</strong></div>
             <div><small>رقم الدفعة</small><strong>{{ p.batchId }}</strong></div>
           </div>
-          <p class="hint">هذه البيانات يحددها Admin ولا يمكن تغييرها من بوابة الشركة.</p>
+          <div class="info-grid" aria-label="أوزان ومعايير تقييم الدفعة المعتمدة">
+            <div><small>وزن الحضور</small><strong>{{ p.attendanceWeight }}%</strong></div>
+            <div><small>وزن الاختبارات</small><strong>{{ p.quizzesWeight }}%</strong></div>
+            <div><small>وزن المهام</small><strong>{{ p.tasksWeight }}%</strong></div>
+            <div><small>وزن المشاريع</small><strong>{{ p.projectsWeight }}%</strong></div>
+            <div><small>المتميز (درجة/حضور)</small><strong>{{ p.excellentMinScore }}% / {{ p.excellentMinAttendance }}%</strong></div>
+            <div><small>جيد جدًا (درجة/حضور)</small><strong>{{ p.veryGoodMinScore }}% / {{ p.veryGoodMinAttendance }}%</strong></div>
+            <div><small>جيد (درجة)</small><strong>{{ p.goodMinScore }}%</strong></div>
+            <div><small>حد حضور التعثر</small><strong>{{ p.atRiskMinAttendance }}%</strong></div>
+          </div>
+          <p class="hint">هذه بيانات الدفعة المعتمدة من Admin، للعرض فقط؛ ولا تحسب بوابة الشركة تصنيفًا مستقلًا.</p>
         } @else if (!programs().length) {
           <p class="hint">لا توجد دفعات مسندة لهذه الشركة حاليًا. يتم الإسناد من Admin Portal.</p>
         }
