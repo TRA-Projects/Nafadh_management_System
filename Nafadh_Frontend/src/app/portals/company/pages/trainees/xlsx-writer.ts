@@ -218,3 +218,101 @@ export function downloadBlob(blob: Blob, fileName: string): void {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/**
+ * Multi-sheet, formatted Excel report for Company Portal. The existing single-sheet
+ * trainee export above is intentionally left unchanged.
+ */
+export interface CompanyWorkbookSheet {
+  name: string;
+  headers: string[];
+  rows: XlsxCell[][];
+  /** Optional report-specific note displayed under the title. */
+  note?: string;
+}
+
+const REPORT_STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<fonts count="4">
+<font><sz val="11"/><name val="Calibri"/></font>
+<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
+<font><b/><sz val="16"/><color rgb="FF00338D"/><name val="Calibri"/></font>
+<font><sz val="10"/><color rgb="FF64748B"/><name val="Calibri"/></font>
+</fonts>
+<fills count="4"><fill><patternFill patternType="none"/></fill>
+<fill><patternFill patternType="gray125"/></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FF00338D"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFF1F5FB"/><bgColor indexed="64"/></patternFill></fill></fills>
+<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="5">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
+<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="right" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
+<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
+<xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1" applyAlignment="1"><alignment horizontal="right" vertical="center" wrapText="1"/></xf>
+</cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+
+export function buildCompanyWorkbook(
+  title: string,
+  sheets: CompanyWorkbookSheet[],
+  generatedAt = new Date()
+): Blob {
+  if (!sheets.length) throw new Error('No sheets to export');
+  const stamp = generatedAt.toLocaleString('ar-OM');
+  const usedNames = new Set<string>();
+  const data: { name: string; data: Uint8Array }[] = [];
+  const sheetFiles: string[] = [];
+  const declarations: string[] = [];
+  const relationships: string[] = [];
+  const overrides: string[] = [];
+
+  for (const [index, sheet] of sheets.entries()) {
+    if (!sheet.headers.length) throw new Error('Sheet has no headers');
+    const base = safeSheetName(sheet.name);
+    let name = base;
+    for (let n = 2; usedNames.has(name.toLowerCase()); n++) {
+      name = `${base.slice(0, 27)} ${n}`.slice(0, 31);
+    }
+    usedNames.add(name.toLowerCase());
+    const lastCol = columnName(sheet.headers.length - 1);
+    const lastRow = sheet.rows.length + 5;
+    const widths = columnWidths(sheet.headers, sheet.rows).map(w => Math.min(46, w));
+    const row = (number: number, values: XlsxCell[], style: number, height?: number): string =>
+      `<row r="${number}"${height ? ` ht="${height}" customHeight="1"` : ''}>` +
+      sheet.headers.map((_, col) => cell(`${columnName(col)}${number}`, values[col] ?? '', style)).join('') +
+      `</row>`;
+    const body = sheet.rows.map((values, j) =>
+      row(j + 6, values, j % 2 === 1 ? 4 : 0, 24)).join('');
+    const xmlSheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+      `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
+      `<sheetViews><sheetView workbookViewId="0" rightToLeft="1">` +
+      `<pane ySplit="5" topLeftCell="A6" activePane="bottomLeft" state="frozen"/>` +
+      `</sheetView></sheetViews>` +
+      `<cols>${widths.map((w, i) => `<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')}</cols>` +
+      `<sheetData>${row(1, [title], 2, 30)}${row(2, ['نظام نفاذ | بوابة الشركة'], 3, 20)}` +
+      `${row(3, [`تاريخ التصدير: ${stamp}`], 3, 20)}${row(4, [sheet.note || ''], 3, 20)}` +
+      `${row(5, sheet.headers, 1, 28)}${body}</sheetData>` +
+      `<mergeCells count="4"><mergeCell ref="A1:${lastCol}1"/><mergeCell ref="A2:${lastCol}2"/>` +
+      `<mergeCell ref="A3:${lastCol}3"/><mergeCell ref="A4:${lastCol}4"/></mergeCells>` +
+      `<autoFilter ref="A5:${lastCol}${Math.max(5, lastRow)}"/>` +
+      `<pageSetup orientation="landscape" paperSize="9"/></worksheet>`;
+    const path = `xl/worksheets/sheet${index + 1}.xml`;
+    sheetFiles.push(path);
+    data.push({ name: path, data: encoder.encode(xmlSheet) });
+    declarations.push(`<sheet name="${xml(name)}" sheetId="${index + 1}" r:id="rId${index + 1}"/>`);
+    relationships.push(`<Relationship Id="rId${index + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${index + 1}.xml"/>`);
+    overrides.push(`<Override PartName="/${path}" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`);
+  }
+
+  const common = [
+    { name: '[Content_Types].xml', data: `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${overrides.join('')}</Types>` },
+    { name: '_rels/.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+    { name: 'xl/workbook.xml', data: `<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${declarations.join('')}</sheets></workbook>` },
+    { name: 'xl/_rels/workbook.xml.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${relationships.join('')}<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>` },
+    { name: 'xl/styles.xml', data: REPORT_STYLES },
+  ].map(file => ({ name: file.name, data: encoder.encode(file.data) }));
+  return new Blob([zip([...common, ...data]) as unknown as BlobPart], { type: MIME });
+}
