@@ -639,6 +639,31 @@ deleteTrainerSkill(skillId: number): Observable<void> {
     );
   }
 
+  // =====================================================
+  // UPDATE LESSON
+  // =====================================================
+
+  updateLesson(
+    lessonId: number,
+    dto: {
+      title: string;
+      contentBody?: string | null;
+      orderIndex: number;
+    }
+  ): Observable<void> {
+    return this.http.put<void>(
+      `${this.base}/Lesson/${lessonId}`,
+      dto
+    );
+  }
+
+
+deleteLesson(lessonId: number): Observable<void> {
+  return this.http.delete<void>(
+    `${this.base}/Lesson/${lessonId}`
+  );
+}
+
   createMaterial(
     dto: {
       fileUrl: string;

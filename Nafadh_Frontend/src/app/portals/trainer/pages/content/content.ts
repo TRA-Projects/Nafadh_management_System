@@ -184,6 +184,25 @@ showDeleteMaterialModal =
 
   showArchiveModal =
     signal(false);
+    // Edit module
+showEditModuleModal = signal(false);
+
+moduleToEdit = signal<ModuleDto | null>(null);
+
+editModuleTitle = '';
+
+// Edit Lesson
+showEditLessonModal = signal(false);
+
+lessonToEdit = signal<LessonDto | null>(null);
+
+editLessonTitle = '';
+
+editLessonContentBody = '';
+
+// Delete Lesson
+showDeleteLessonModal = signal(false);
+lessonToDelete = signal<LessonDto | null>(null);
 
 
   // =====================================================
@@ -1419,6 +1438,172 @@ private loadAttachmentSettings(): void {
     );
 
   }
+  // OPEN EDIT MODULE MODAL
+openEditModuleModal(module: ModuleDto): void {
+  this.moduleToEdit.set(module);
+  this.editModuleTitle = module.title;
+  this.showEditModuleModal.set(true);
+
+  this.errorMessage.set('');
+  this.successMessage.set('');
+}
+
+// OPEN EDIT LESSON MODAL
+openEditLessonModal(lesson: LessonDto): void {
+  this.lessonToEdit.set(lesson);
+
+ this.editLessonTitle = lesson.title ?? '';
+  this.editLessonContentBody = lesson.contentBody ?? '';
+
+  this.showEditLessonModal.set(true);
+
+  this.errorMessage.set('');
+  this.successMessage.set('');
+}
+
+ // Open Delete Lesson Modal
+openDeleteLessonModal(lesson: LessonDto): void {
+  this.lessonToDelete.set(lesson);
+  this.showDeleteLessonModal.set(true);
+  this.errorMessage.set('');
+  this.successMessage.set('');
+}
+
+// Close Delete Lesson Modal
+closeDeleteLessonModal(): void {
+  this.showDeleteLessonModal.set(false);
+  this.lessonToDelete.set(null);
+}
+
+confirmDeleteLesson(): void {
+  const lesson = this.lessonToDelete();
+
+  if (!lesson || this.saving()) return;
+
+  this.saving.set(true);
+  this.errorMessage.set('');
+
+  this.api.deleteLesson(lesson.lessonId).subscribe({
+    next: () => {
+      this.lessons.update(currentLessons =>
+        currentLessons.filter(
+          item => item.lessonId !== lesson.lessonId
+        )
+      );
+
+      this.closeDeleteLessonModal();
+      this.saving.set(false);
+      this.successMessage.set('تم حذف الدرس بنجاح.');
+    },
+    error: (error) => {
+      console.error('Error deleting lesson:', error);
+      this.saving.set(false);
+
+      this.errorMessage.set(
+        'تعذر حذف الدرس. تأكدي من عدم وجود مواد تعليمية أو تقييمات مرتبطة به.'
+      );
+    }
+  });
+}
+
+
+saveEditModule(): void {
+  const module = this.moduleToEdit();
+  const newTitle = this.editModuleTitle.trim();
+
+  if (!module || this.saving()) return;
+
+  if (!newTitle) {
+    this.errorMessage.set('يرجى إدخال اسم الوحدة.');
+    return;
+  }
+
+  this.saving.set(true);
+  this.errorMessage.set('');
+
+  this.api.updateModule(module.moduleId, {
+    title: newTitle,
+    orderIndex: module.orderIndex,
+    availableFrom: module.availableFrom ?? null,
+    availableTo: module.availableTo ?? null,
+    isArchived: module.isArchived,
+    prerequisiteModuleId: module.prerequisiteModuleId ?? null
+  }).subscribe({
+    next: () => {
+      this.modules.update(modules =>
+        modules.map(item =>
+          item.moduleId === module.moduleId
+            ? { ...item, title: newTitle }
+            : item
+        )
+      );
+
+      this.showEditModuleModal.set(false);
+      this.moduleToEdit.set(null);
+      this.saving.set(false);
+      this.successMessage.set('تم تعديل اسم الوحدة بنجاح.');
+    },
+    error: (error) => {
+      console.error('Error updating module:', error);
+      this.saving.set(false);
+      this.errorMessage.set('تعذر تعديل اسم الوحدة.');
+    }
+  });
+}
+
+ // SAVE EDIT LESSON
+saveEditLesson(): void {
+  const lesson = this.lessonToEdit();
+  const newTitle = this.editLessonTitle.trim();
+
+  if (!lesson || this.saving()) return;
+
+  if (!newTitle) {
+    this.errorMessage.set('يرجى إدخال اسم الدرس.');
+    return;
+  }
+
+  this.saving.set(true);
+  this.errorMessage.set('');
+
+  const newContentBody =
+    this.editLessonContentBody.trim() || null;
+
+  this.api.updateLesson(lesson.lessonId, {
+    title: newTitle,
+    contentBody: newContentBody,
+   orderIndex: lesson.orderIndex ?? 0
+  }).subscribe({
+    next: () => {
+    
+this.lessons.update(currentLessons =>
+  currentLessons.map(item => {
+    if (item.lessonId === lesson.lessonId) {
+      return {
+        ...item,
+        title: newTitle,
+       contentBody: newContentBody ?? undefined
+      };
+    }
+
+    return item;
+  })
+);
+
+
+      this.showEditLessonModal.set(false);
+      this.lessonToEdit.set(null);
+      this.saving.set(false);
+      this.successMessage.set('تم تعديل الدرس بنجاح.');
+    },
+    error: (error) => {
+      console.error('Error updating lesson:', error);
+      this.saving.set(false);
+      this.errorMessage.set('تعذر تعديل الدرس.');
+    }
+  });
+}
+
 // =====================================================
 // ARCHIVE MODULE
 // =====================================================

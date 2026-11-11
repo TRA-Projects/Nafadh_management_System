@@ -1742,3 +1742,118 @@ button:disabled {
     flex-wrap: wrap;
   }
 }
+.module-incomplete-badge {
+  background-color: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+/* Edit Module Button */
+.module-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 10px 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+
+  background-color: #eff6ff;
+  color: #1d4ed8;
+
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  i {
+    font-size: 14px;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: #dbeafe;
+    border-color: #93c5fd;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* Edit Lesson Button */
+.lesson-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 8px 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+
+  background-color: #eff6ff;
+  color: #1d4ed8;
+
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  i {
+    font-size: 13px;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: #dbeafe;
+    border-color: #93c5fd;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.lesson-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background-color: #fef2f2;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  i {
+    font-size: 13px;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.lesson-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}

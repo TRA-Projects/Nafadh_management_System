@@ -81,8 +81,14 @@ namespace Nafadh_Backend.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return NotFound(new { message = ex.Message });
+                if (ex.Message == "الدرس المطلوب غير موجود.")
+                {
+                    return NotFound(new { message = ex.Message });
+                }
+
+                return Conflict(new { message = ex.Message });
             }
         }
+
     }
 }
