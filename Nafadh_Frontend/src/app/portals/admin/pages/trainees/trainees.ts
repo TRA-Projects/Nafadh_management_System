@@ -2,7 +2,7 @@ import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { inject, Component, OnInit, signal, computed, ViewEncapsulation } from '@angular/core';
 import { CommonModule, NgClass, NgStyle } from '@angular/common';
-import { Router } from '@angular/router'; // 👈 تم استيراد الراوتر للتنقل للبروفايل
+import { Router } from '@angular/router'; 
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { forkJoin, of } from 'rxjs';
@@ -310,15 +310,7 @@ export class AdminTrainees implements OnInit {
           });
         });
 
-        // 👈 إذا كان تاريخ اليوم لا يحتوي على رصد مسجل بعد، نظهر إحصائية الحضور الفعلية
-        if (summary.total === 0) {
-          const totalTrainees = this.allDbTrainees().length || this.trainees().length || 45;
-          summary.total = totalTrainees;
-          summary.present = Math.round(totalTrainees * 0.75);
-          summary.late = Math.round(totalTrainees * 0.1);
-          summary.absent = Math.round(totalTrainees * 0.08);
-          summary.excused = Math.round(totalTrainees * 0.07);
-        }
+
 
         summary.rate = summary.total > 0
           ? Math.round(
@@ -424,17 +416,20 @@ export class AdminTrainees implements OnInit {
           b.companiesCount ?? b.CompaniesCount ?? 0
         );
 
-        // حساب تقييم وعدد برامج واقعي حتى لو لم يرجعها الباك إند
-        const calcRating = b.rating ?? b.Rating ?? (4.6 + (((batchId * 7) % 4) / 10)).toFixed(1);
-        const calcPrograms = Number(b.programsCount ?? b.ProgramsCount ?? b.programs ?? (1 + (batchId % 2)));
-        const calcCompanies = companiesVal > 0 ? companiesVal : (4 + (batchId % 3));
-        const calcCount = countVal > 0 ? countVal : (7 + (batchId * 2) % 6);
+        const calcRating = b.rating ?? b.Rating ?? null;
+
+        const calcPrograms = Number(
+          b.programsCount ?? b.ProgramsCount ?? b.programs ?? 0
+        );
+
+        const calcCompanies = companiesVal;
+        const calcCount = countVal;
 
         return {
           ...b,
           batchId,
           name,
-          track: b.trackName ?? b.TrackName ?? b.track ?? '.NET Track',
+          track: b.trackName ?? b.TrackName ?? b.track ?? 'غير محدد',
           count: calcCount,
           companies: calcCompanies,
           rating: calcRating,
@@ -731,32 +726,7 @@ export class AdminTrainees implements OnInit {
                 ? response.data.items
                 : [];
 
-        // قائمة متدربي الدفعة
-        const allTrainees = this.allDbTrainees().length > 0 ? this.allDbTrainees() : this.trainees();
-        const batchTrainees = allTrainees.filter(t => 
-          !t.batchName || t.batchName === batch.name || t.batchName.includes(batch.name)
-        );
-        const listToUse = batchTrainees.length > 0 ? batchTrainees : allTrainees.slice(0, 11);
 
-        // إذا كان السيرفر لم يسجل حضوراً لهذا اليوم بعد، نأخذ المتدربين ونعرض رصدهم المعتمد
-        if (rows.length === 0) {
-          const sampleStatuses: TraineeAttendanceRecord['status'][] = [
-            'Present', 'Present', 'Present', 'Late', 'Present', 'Absent', 'Present', 'Excused', 'Present', 'Present', 'Late'
-          ];
-          rows = listToUse.map((t, idx) => {
-            const assigned = sampleStatuses[idx % sampleStatuses.length];
-            return {
-              traineeId: t.traineeId,
-              traineeName: t.fullName,
-              status: assigned,
-              companyName: t.companyName || 'مجموعة أفق التقنية',
-              trackName: t.trackName || batch.track || '.NET Track',
-              checkInTime: assigned === 'Present' ? '08:00 ص' : assigned === 'Late' ? '08:35 ص' : null,
-              note: assigned === 'Excused' ? 'عذر طبي معتمد' : assigned === 'Late' ? 'تأخر بسبب الازدحام' : '',
-              hasAttendanceRecord: true
-            };
-          });
-        }
 
         const records: TraineeAttendanceRecord[] =
           rows.map((item: any) => {
@@ -766,21 +736,30 @@ export class AdminTrainees implements OnInit {
 
             const trainee = this.getTraineeById(traineeId);
 
-            let rawStatus = String(item.status ?? item.Status ?? 'Present');
-            const validStatuses = ['Present', 'Late', 'Absent', 'Excused'];
+            const rawStatus = String(
+              item.status ?? item.Status ?? 'NotRecorded'
+            ).trim().toLowerCase();
 
-            let status: TraineeAttendanceRecord['status'] =
-              validStatuses.includes(rawStatus)
-                ? rawStatus as TraineeAttendanceRecord['status']
-                : 'Present';
+            const statusMap: Record<string, TraineeAttendanceRecord['status']> = {
+              present: 'Present',
+              late: 'Late',
+              absent: 'Absent',
+              excused: 'Excused',
+              notrecorded: 'NotRecorded'
+            };
 
-            if (item.hasAttendanceRecord === false || item.HasAttendanceRecord === false) {
-              const defaultStatuses: TraineeAttendanceRecord['status'][] = ['Present', 'Late', 'Present', 'Absent', 'Excused'];
-              status = defaultStatuses[(traineeId || 1) % defaultStatuses.length];
-            }
+            const hasAttendanceRecord =
+              item.hasAttendanceRecord ?? item.HasAttendanceRecord;
+
+            const status: TraineeAttendanceRecord['status'] =
+              hasAttendanceRecord === false
+                ? 'NotRecorded'
+                : (statusMap[rawStatus] ?? 'NotRecorded');
 
             const checkIn =
-              item.checkInTime ?? item.CheckInTime ?? (status === 'Present' ? '08:00 ص' : status === 'Late' ? '08:35 ص' : null);
+              status === 'NotRecorded'
+                ? null
+                : (item.checkInTime ?? item.CheckInTime ?? null);
 
             return {
               traineeId,
@@ -804,7 +783,7 @@ export class AdminTrainees implements OnInit {
                 item.companyName ??
                 item.CompanyName ??
                 trainee?.companyName ??
-                'مجموعة أفق التقنية',
+                'غير محدد',
               batchName:
                 item.batchName ??
                 item.BatchName ??
@@ -814,7 +793,7 @@ export class AdminTrainees implements OnInit {
                 item.TrackName ??
                 trainee?.trackName ??
                 batch.track ??
-                '.NET Track',
+                'غير محدد',
               profileImageUrl:
                 trainee?.profileImageUrl ?? null,
               status,
@@ -882,7 +861,7 @@ export class AdminTrainees implements OnInit {
           }
         }
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -1451,38 +1430,38 @@ export class AdminTrainees implements OnInit {
     const statusParam = (statusVal === '0' || statusVal === '1' || statusVal === '2') ? Number(statusVal) : null;
 
     const queryParams: Record<string, unknown> = {
-  pageNumber: this.currentPage(),
-  pageSize: this.pageSize()
-};
+      pageNumber: this.currentPage(),
+      pageSize: this.pageSize()
+    };
 
-const searchTerm = this.searchQuery().trim();
+    const searchTerm = this.searchQuery().trim();
 
-if (searchTerm) {
-  queryParams['searchTerm'] = searchTerm;
-}
+    if (searchTerm) {
+      queryParams['searchTerm'] = searchTerm;
+    }
 
-const university = this.universityFilter();
+    const university = this.universityFilter();
 
-if (university !== 'ALL') {
-  queryParams['university'] = university;
-}
+    if (university !== 'ALL') {
+      queryParams['university'] = university;
+    }
 
-const company = this.companyFilter();
+    const company = this.companyFilter();
 
-if (company !== 'ALL' && company !== 'UNASSIGNED') {
-  const selectedCompany = this.companies().find(
-    (c: any) =>
-      (c.companyName ?? c.name ?? c.CompanyName) === company
-  );
+    if (company !== 'ALL' && company !== 'UNASSIGNED') {
+      const selectedCompany = this.companies().find(
+        (c: any) =>
+          (c.companyName ?? c.name ?? c.CompanyName) === company
+      );
 
-  const companyId = Number(
-    selectedCompany?.companyId ?? selectedCompany?.CompanyId
-  );
+      const companyId = Number(
+        selectedCompany?.companyId ?? selectedCompany?.CompanyId
+      );
 
-  if (Number.isInteger(companyId) && companyId > 0) {
-    queryParams['companyId'] = companyId;
-  }
-}
+      if (Number.isInteger(companyId) && companyId > 0) {
+        queryParams['companyId'] = companyId;
+      }
+    }
 
     if (statusParam !== null && !isNaN(statusParam)) {
       queryParams['status'] = statusParam;
@@ -1936,10 +1915,10 @@ if (company !== 'ALL' && company !== 'UNASSIGNED') {
   }
 
   onTraineeSearchChange(value: string): void {
-  this.searchQuery.set(value);
-  this.currentPage.set(1);
-  this.loadTrainees();
-}
+    this.searchQuery.set(value);
+    this.currentPage.set(1);
+    this.loadTrainees();
+  }
 
 
   onStatusFilterChange(newStatus: string) {
