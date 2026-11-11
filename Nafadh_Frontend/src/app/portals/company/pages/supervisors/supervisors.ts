@@ -651,7 +651,7 @@ export class CompanySupervisors implements OnInit {
       }
     });
 
-    this.companyApi.getCompanyTrainers(this.companyId).subscribe({
+    this.companyApi.getCompanyTrainerDirectory(this.companyId).subscribe({
       next: (response: unknown) => {
         if (requestId !== this.trainersRequestId) return;
 
@@ -1463,7 +1463,7 @@ export class CompanySupervisors implements OnInit {
 
     forkJoin({
       assigned: this.companyApi.getSupervisorTrainers(s.supervisorId),
-      trainers: this.companyApi.getCompanyTrainers(this.companyId)
+      trainers: this.companyApi.getCompanyTrainerDirectory(this.companyId)
     }).subscribe({
       next: ({ assigned, trainers }) => {
         if (!this.isDistributeModalOpen || this.selectedSupervisor !== s) return;
