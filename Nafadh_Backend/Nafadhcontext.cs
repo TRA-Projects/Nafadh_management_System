@@ -276,10 +276,6 @@ namespace Nafadh_Backend
                 entity.ToTable("NFD_Companies");
                 entity.HasIndex(e => e.UserId).IsUnique();
                 entity.HasIndex(e => e.CompanyId);
-                entity.HasOne<NFD_Company>()
-                    .WithMany()
-                    .HasForeignKey(e => e.CompanyId)
-                    .OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(e => e.User)
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
@@ -346,6 +342,12 @@ namespace Nafadh_Backend
             {
                 entity.ToTable("NFD_Trainers");
                 entity.HasIndex(e => e.UserId).IsUnique();
+                // Matches the existing AddCompanyTrainerOwnership migration and ModelSnapshot.
+                entity.HasIndex(e => e.CompanyId);
+                entity.HasOne<NFD_Company>()
+                    .WithMany()
+                    .HasForeignKey(e => e.CompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(e => e.User)
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
