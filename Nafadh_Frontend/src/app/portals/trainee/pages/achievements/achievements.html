@@ -1,100 +1,111 @@
-
 <div class="achievements-page" dir="rtl">
 
   @if (showSuccessToast()) {
-    <div class="toast-success">
+    <div class="toast-success" role="status">
       {{ successMessage() }}
     </div>
   }
 
-  <div class="page-header">
-    <div>
-      <h2 class="nfd-page-title">
-        الإنجازات والشهادات
-      </h2>
-
-      <p class="nfd-page-sub">
-        تابع تقدمك، إنجازاتك وشهاداتك التدريبية
-      </p>
+  <!-- =========================================================
+       HEADER
+  ========================================================== -->
+  <header class="page-header">
+    <div class="page-header-text">
+      <h2 class="nfd-page-title">الإنجازات والشهادات</h2>
+      <p class="nfd-page-sub">تابع تقدمك، إنجازاتك وشهاداتك التدريبية</p>
     </div>
-
-    <div class="achievement-summary">
-      <!-- إكمال البرنامج -->
-      <div class="summary-item">
-        <div class="summary-icon progress-icon">
-          <i class="fas fa-percent"></i>
-        </div>
-
-        <div>
-          <span>إكمال البرنامج</span>
-          <strong>{{ progressPercentage() }}%</strong>
-        </div>
-      </div>
-<!-- التقييم الكلي - النسبة المعتمدة -->
-<div class="summary-item">
-
-  <div
-    class="summary-icon"
-    style="background:#ecfdf5;color:#047857">
-    <i class="fas fa-star"></i>
-  </div>
-
-  <div>
-    <span>التقييم الكلي</span>
-
-    <strong>
-      {{ certificateFinalScore() }}
-    </strong>
-  </div>
-
-</div>
+  </header>
 
   <!-- =========================================================
-       FEEDBACK STRIP
+       SUMMARY  (3 بطاقات + شاركنا تجربتك في صف واحد)
   ========================================================== -->
+  <section class="achievement-summary">
 
-  <div class="feedback-strip">
-    <div class="feedback-info">
-      <span class="feedback-icon">
-        <i class="fas fa-comment-dots"></i>
-      </span>
-
+    <div class="summary-item">
+      <div class="summary-icon progress-icon">
+        <i class="fas fa-percent"></i>
+      </div>
       <div>
-        <strong>شاركنا تجربتك</strong>
-        <small>أكملت وحدة مؤخراً؟ نود معرفة رأيك</small>
+        <span>إكمال البرنامج</span>
+        <strong>{{ progressPercentage() }}%</strong>
       </div>
     </div>
 
-    <div class="feedback-buttons">
-      <button
-        type="button"
-        class="feedback-btn"
-        (click)="openFeedback('TrainerRating')">
+    <div class="summary-item">
+      <div class="summary-icon score-icon">
         <i class="fas fa-star"></i>
-        {{ constants.administrativeLabel('NFD_FBK_TYPE', 'TrainerRating') }}
-      </button>
-
-      <button
-        type="button"
-        class="feedback-btn"
-        (click)="openFeedback('BatchExperienceRating')">
-        <i class="fas fa-chart-bar"></i>
-        {{ constants.administrativeLabel('NFD_FBK_TYPE', 'BatchExperienceRating') }}
-      </button>
+      </div>
+      <div>
+        <span>التقييم الكلي</span>
+        <strong>{{ certificateFinalScore() }}</strong>
+      </div>
     </div>
-  </div>
+
+    <div class="summary-item">
+      <div class="summary-icon certificate-icon">
+        <i class="fas fa-certificate"></i>
+      </div>
+      <div>
+        <span>الشهادة</span>
+        <strong class="summary-status"
+                [class.ok]="canDownloadCertificate()">
+          {{ canDownloadCertificate() ? 'متاحة' : 'بانتظار الإصدار' }}
+        </strong>
+      </div>
+    </div>
+
+    <!-- شاركنا تجربتك: بجانب البطاقات الصغيرة -->
+    <div class="feedback-strip">
+      <div class="feedback-info">
+        <span class="feedback-icon"><i class="fas fa-comment-dots"></i></span>
+        <strong>شاركنا تجربتك في البرنامج التدريبي</strong>
+      </div>
+
+      <div class="feedback-buttons">
+        <button
+          type="button"
+          class="feedback-btn"
+          (click)="openFeedback('TrainerRating')">
+          <i class="fas fa-star"></i>
+          {{ constants.administrativeLabel('NFD_FBK_TYPE', 'TrainerRating') }}
+        </button>
+
+        <button
+          type="button"
+          class="feedback-btn"
+          (click)="openFeedback('BatchExperienceRating')">
+          <i class="fas fa-chart-bar"></i>
+          {{ constants.administrativeLabel('NFD_FBK_TYPE', 'BatchExperienceRating') }}
+        </button>
+      </div>
+    </div>
+
+  </section>
 
   <!-- =========================================================
-       MAIN GRID
+       MAIN GRID  (التقدم ثم الشهادة تحته)
   ========================================================== -->
+ <div
+  class="main-grid"
+  style="
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    max-width: none !important;
+    gap: 20px !important;
+  ">
 
-  <div class="main-grid" style="grid-template-columns: minmax(0, 1fr); width: 100%;">
-
-    <!-- =======================================================
-         PROGRESS
-    ======================================================== -->
-
-    <div class="nfd-card progress-card" style="grid-column: 1 / -1; width: 100%; min-width: 0; box-sizing: border-box;">
+    <!-- ===================== PROGRESS ===================== -->
+    <section
+  class="nfd-card progress-card"
+  style="
+    display: block;
+    width: 100% !important;
+    max-width: none !important;
+    flex: 0 0 100% !important;
+    box-sizing: border-box;
+  ">
 
       <div class="card-header">
         <div>
@@ -102,19 +113,13 @@
             <i class="fas fa-book-open"></i>
             تقدم البرنامج
           </h3>
-
-          <span>
-            متابعة تقدمك في الوحدات التدريبية
-          </span>
+          <span>متابعة تقدمك في الوحدات التدريبية</span>
         </div>
       </div>
 
       <div class="modules-list">
 
-        @for (
-          module of displayModules();
-          track module.moduleId
-        ) {
+        @for (module of displayModules(); track module.moduleId) {
 
           @let progress = module.progress;
           @let status = module.status;
@@ -134,12 +139,9 @@
                 } @else {
                   <i class="far fa-circle"></i>
                 }
-
               </div>
 
-              <span>
-                {{ title }}
-              </span>
+              <span [title]="title">{{ title }}</span>
             </div>
 
             <div class="module-progress">
@@ -151,108 +153,112 @@
                 </div>
               </div>
 
-              <strong>
-                {{ progress }}%
-              </strong>
+              <strong>{{ progress }}%</strong>
             </div>
           </div>
 
-        }
-
-        @empty {
+        } @empty {
           <div class="empty-state">
-            <span>
-              <i class="fas fa-inbox"></i>
-            </span>
-            <p>
-              لا توجد وحدات مسجلة بعد
-            </p>
+            <span><i class="fas fa-inbox"></i></span>
+            <p>لا توجد وحدات مسجلة بعد</p>
           </div>
         }
 
       </div>
+    </section>
+
+    <!-- ===================== CERTIFICATE ===================== -->
+   <!-- ===================== CERTIFICATE ===================== -->
+<section class="certificate-card nfd-card">
+
+  <!-- 1. Certificate title -->
+  <div class="certificate-info">
+
+    <div class="certificate-title">
+      <div class="certificate-icon">
+        <i class="fas fa-certificate"></i>
+      </div>
+
+      <div>
+        <h3>
+          {{ certificateDocument(issuedCertificate()?.type).ar }}
+        </h3>
+
+        <p>
+          @if (!issuedCertificate()) {
+            <i class="fas fa-clock"></i>
+            الشهادة بانتظار إصدارها من الإدارة.
+          } @else {
+            <i class="fas fa-check-circle"></i>
+            تم إصدار الشهادة، ويمكنك مشاهدتها وتحميلها.
+          }
+        </p>
+      </div>
     </div>
+
+    <div class="certificate-status">
+      @if (canDownloadCertificate()) {
+        <span class="available">
+          <i class="fas fa-check-circle"></i>
+          متاحة
+        </span>
+      } @else {
+        <span class="pending">
+          <i class="fas fa-clock"></i>
+          قيد الإصدار
+        </span>
+      }
+    </div>
+
   </div>
 
-  <!-- =========================================================
-       CERTIFICATE
-  ========================================================== -->
+  <!-- 2. NAFADH certificate preview -->
+  <div class="certificate-preview">
 
-  <div class="certificate-card nfd-card">
-    <div class="certificate-info">
-      <div class="certificate-title">
-        <div class="certificate-icon">
-          <i class="fas fa-certificate"></i>
-        </div>
-
-        <div>
-          <h3>
-            {{ certificateDocument(issuedCertificate()?.type).ar }}
-          </h3>
-
-          <p>
-            @if (!issuedCertificate()) {
-              <i class="fas fa-clock"></i>
-              الشهادة بانتظار إصدارها من الإدارة.
-            } @else {
-              <i class="fas fa-check-circle"></i>
-              تم إصدار الشهادة من الإدارة، ويمكنك مشاهدتها وتحميلها.
-            }
-          </p>
-        </div>
-      </div>
-
-      <div class="certificate-status">
-        @if (canDownloadCertificate()) {
-          <span class="available">
-            <i class="fas fa-check-circle"></i>
-            الشهادة متاحة
-          </span>
-        } @else {
-          <span class="pending">
-            <i class="fas fa-clock"></i>
-            بانتظار إصدار الإدارة
-          </span>
-        }
-      </div>
+    <div class="certificate-brand">
+      NAFADH
     </div>
 
-    <div class="certificate-preview">
-      <div class="certificate-brand">NAFADH</div>
+    <div class="certificate-text">
+      <span>
+        {{ certificateDocument(issuedCertificate()?.type).ar }}
+      </span>
 
-      <div class="certificate-text">
-        <span>
-          {{ certificateDocument(issuedCertificate()?.type).ar }}
-        </span>
+      <strong>{{ traineeName() }}</strong>
 
-        <strong>{{ traineeName() }}</strong>
-        <small>{{ programTitle() }}</small>
-      </div>
+      <small>{{ programTitle() }}</small>
     </div>
 
-    @if (canDownloadCertificate()) {
-      <div class="certificate-actions">
-        <button
-          type="button"
-          class="download-btn enabled"
-          [disabled]="loading()"
-          (click)="viewCertificate()">
-          <i class="fas fa-eye"></i>
-          مشاهدة الشهادة
-        </button>
+  </div>
 
-        
-<button
-  type="button"
-  class="download-btn enabled"
-  [disabled]="!canDownloadCertificate()"
-  (click)="downloadCertificate()">
-  <i class="fas fa-download"></i>
-  تحميل الشهادة
-</button>
+  <!-- 3. Action buttons -->
+  @if (canDownloadCertificate()) {
 
-      </div>
-    } @else {
+    <div class="certificate-actions">
+
+      <button
+        type="button"
+        class="download-btn enabled"
+        [disabled]="loading()"
+        (click)="viewCertificate()">
+        <i class="fas fa-eye"></i>
+        مشاهدة
+      </button>
+
+      <button
+        type="button"
+        class="download-btn enabled"
+        [disabled]="loading()"
+        (click)="downloadCertificate()">
+        <i class="fas fa-download"></i>
+        تحميل
+      </button>
+
+    </div>
+
+  } @else {
+
+    <div class="certificate-actions">
       <button
         type="button"
         class="download-btn"
@@ -260,330 +266,300 @@
         <i class="fas fa-lock"></i>
         بانتظار إصدار الشهادة
       </button>
-    }
-  </div>
+    </div>
 
+  }
 
- 
-<!-- =========================================================
-     OFFICIAL CERTIFICATE PREVIEW - ADMIN DESIGN
-========================================================== -->
+</section>
 
-@if (certificatePreviewOpen()) {
-  @if (issuedCertificate(); as cert) {
+  <!-- =========================================================
+       OFFICIAL CERTIFICATE PREVIEW (النافذة المنبثقة)
+  ========================================================== -->
+  @if (certificatePreviewOpen()) {
+    @if (issuedCertificate(); as cert) {
 
-    <div class="trainee-cert-backdrop"
-         (click)="closeCertificatePreview()">
+      <div class="trainee-cert-backdrop"
+           (click)="closeCertificatePreview()">
 
-      <div class="trainee-cert-dialog"
-           (click)="$event.stopPropagation()">
+        <div class="trainee-cert-dialog"
+             (click)="$event.stopPropagation()">
 
-        <div class="trainee-cert-dialog-header">
-          <h3>معاينة الشهادة الرسمية المعتمدة</h3>
+          <div class="trainee-cert-dialog-header">
+            <h3>معاينة الشهادة الرسمية المعتمدة</h3>
 
-          <button type="button"
-                  (click)="closeCertificatePreview()"
-                  aria-label="إغلاق">
-            ✕
-          </button>
-        </div>
+            <button type="button"
+                    (click)="closeCertificatePreview()"
+                    aria-label="إغلاق">
+              ✕
+            </button>
+          </div>
 
-        <div class="trainee-cert-dialog-body">
+          <div class="trainee-cert-dialog-body">
 
-          <div class="official-certificate-paper"
-               id="trainee-printable-certificate">
+            <div class="official-certificate-paper"
+                 id="trainee-printable-certificate">
 
-            <div class="cert-outer-border">
-              <div class="cert-inner-gold-border">
+              <div class="cert-outer-border">
+                <div class="cert-inner-gold-border">
 
-                <div class="corner-ornament top-right"></div>
-                <div class="corner-ornament top-left"></div>
-                <div class="corner-ornament bottom-right"></div>
-                <div class="corner-ornament bottom-left"></div>
+                  <div class="corner-ornament top-right"></div>
+                  <div class="corner-ornament top-left"></div>
+                  <div class="corner-ornament bottom-right"></div>
+                  <div class="corner-ornament bottom-left"></div>
 
-                <!-- HEADER -->
-                <div class="official-cert-header">
+                  <!-- HEADER -->
+                  <div class="official-cert-header">
 
-                  <div class="cert-brand-side">
-                    <img
-                      src="https://nafadh.om/app-assets/AccountLayoutStyle/img/logo.png"
-                      alt="شعار برنامج نفاذ"
-                      style="height:52px;width:auto;object-fit:contain">
-                  </div>
-
-                  <div class="cert-crest-center">
-                    <span class="cert-title-banner">
-                     شهادة إتمام تدريب
-                    </span>
-                  </div>
-
-                  <div class="cert-brand-side">
-                    <img
-                      src="https://nafadh.om/app-assets/AccountLayoutStyle/img/TRA-Logo.png"
-                      alt="شعار هيئة تنظيم الاتصالات"
-                      style="height:56px;width:auto;object-fit:contain">
-                  </div>
-
-                </div>
-
-                <!-- BODY -->
-                <div class="official-cert-body">
-
-                  <p class="cert-witness-line">
-                    تشهد
-                    <strong>هيئة تنظيم الاتصالات</strong>
-                    و<strong>البرنامج الوطني «نفاذ»</strong>
-
-                   @if (officialCertificateDetails()?.companyName) {
-  بالشراكة مع
-  <strong class="text-teal">
-    {{ officialCertificateDetails()?.companyName }}
-  </strong>
-}
-
-                    بأن المتدرب / المتدربة:
-                  </p>
-
-                  <h1 class="cert-trainee-full-name">
-                    {{ traineeName() }}
-                  </h1>
-
-                  <p class="cert-completion-paragraph">
-
-                    {{
-                      certificateDocument(cert.type).completion
-                        ? 'قد أتمّ بنجاح متطلبات البرنامج التدريبي التخصصي في مسار'
-                        : 'تُمنح له هذه الشهادة في مسار'
-                    }}
-
-                    <strong class="text-navy">
-                      «{{ programTitle() }}»
-                    </strong>
-
-                    ضمن
-                    <strong>
-                      ({{ certificateBatch()?.batchName
-                          || enrollment()?.batchName
-                          || 'غير متاح' }})
-                    </strong>،
-
-                    والمنعقد خلال الفترة من
-
-                    <strong>
-                      {{
-                        officialCertificateDetails()?.startDate
-                          ? (officialCertificateDetails()?.startDate
-                              | date:'dd/MM/yyyy')
-                          : 'غير متاح'
-                      }}
-                    </strong>
-
-                    إلى
-
-                    <strong>
-                      {{
-                        officialCertificateDetails()?.endDate
-                          ? (officialCertificateDetails()?.endDate
-                              | date:'dd/MM/yyyy')
-                          : 'غير متاح'
-                      }}
-                    </strong>،
-
-                    بإجمالي
-
-                    <strong>
-                      ({{ certificateTrainingHours() ?? 'غير متاح' }}
-                      ساعة تدريبية)
-                    </strong>
-
-                    شملت المهارات التقنية التخصصية
-                    ({{ certificateTechHours() ?? 'غير متاح' }} ساعة)،
-
-                    والمشاريع العملية الميدانية ومهارات العمل الحر
-                    ({{ certificatePracticalHours() ?? 'غير متاح' }}
-                    ساعة).
-
-                  </p>
-
-                  <!-- SCORES -->
-                  <div class="cert-scores-strip">
-
-                    <div class="score-box">
-                      <span class="sc-label">
-                        الدرجة النهائية المكتسبة
-                      </span>
-
-                      <strong class="sc-value text-navy">
-                        {{ certificateFinalScore() }}
-                      </strong>
+                    <div class="cert-brand-side">
+                      <img
+                        src="https://nafadh.om/app-assets/AccountLayoutStyle/img/logo.png"
+                        alt="شعار برنامج نفاذ"
+                        style="height:52px;width:auto;object-fit:contain">
                     </div>
 
-                    <div class="score-box highlight-grade">
-                      <span class="sc-label">
-                        التقدير العام
+                    <div class="cert-crest-center">
+                      <span class="cert-title-banner">
+                        شهادة إتمام تدريب
                       </span>
-
-                      <strong class="sc-value text-emerald">
-                        {{ certificateFinalGrade() }}
-                      </strong>
                     </div>
 
-                    <div class="score-box">
-                      <span class="sc-label">
-                        إجمالي ساعات التدريب
+                    <div class="cert-brand-side">
+                      <img
+                        src="https://nafadh.om/app-assets/AccountLayoutStyle/img/TRA-Logo.png"
+                        alt="شعار هيئة تنظيم الاتصالات"
+                        style="height:56px;width:auto;object-fit:contain">
+                    </div>
+
+                  </div>
+
+                  <!-- BODY -->
+                  <div class="official-cert-body">
+
+                    <p class="cert-witness-line">
+                      تشهد
+                      <strong>هيئة تنظيم الاتصالات</strong>
+                      و<strong>البرنامج الوطني «نفاذ»</strong>
+
+                      @if (officialCertificateDetails()?.companyName) {
+                        بالشراكة مع
+                        <strong class="text-teal">
+                          {{ officialCertificateDetails()?.companyName }}
+                        </strong>
+                      }
+
+                      بأن المتدرب / المتدربة:
+                    </p>
+
+                    <h1 class="cert-trainee-full-name">
+                      {{ traineeName() }}
+                    </h1>
+
+                    <p class="cert-completion-paragraph">
+
+                      {{
+                        certificateDocument(cert.type).completion
+                          ? 'قد أتمّ بنجاح متطلبات البرنامج التدريبي التخصصي في مسار'
+                          : 'تُمنح له هذه الشهادة في مسار'
+                      }}
+
+                      <strong class="text-navy">
+                        «{{ programTitle() }}»
+                      </strong>
+
+                      ضمن
+                      <strong>
+                        ({{ certificateBatch()?.batchName
+                            || enrollment()?.batchName
+                            || 'غير متاح' }})
+                      </strong>،
+
+                      والمنعقد خلال الفترة من
+
+                      <strong>
+                        {{
+                          officialCertificateDetails()?.startDate
+                            ? (officialCertificateDetails()?.startDate
+                                | date:'dd/MM/yyyy')
+                            : 'غير متاح'
+                        }}
+                      </strong>
+
+                      إلى
+
+                      <strong>
+                        {{
+                          officialCertificateDetails()?.endDate
+                            ? (officialCertificateDetails()?.endDate
+                                | date:'dd/MM/yyyy')
+                            : 'غير متاح'
+                        }}
+                      </strong>،
+
+                      بإجمالي
+
+                      <strong>
+                        ({{ certificateTrainingHours() ?? 'غير متاح' }}
+                        ساعة تدريبية)
+                      </strong>
+
+                      شملت المهارات التقنية التخصصية
+                      ({{ certificateTechHours() ?? 'غير متاح' }} ساعة)،
+
+                      والمشاريع العملية الميدانية ومهارات العمل الحر
+                      ({{ certificatePracticalHours() ?? 'غير متاح' }}
+                      ساعة).
+
+                    </p>
+
+                    <!-- SCORES -->
+                    <div class="cert-scores-strip">
+
+                      <div class="score-box">
+                        <span class="sc-label">الدرجة النهائية المكتسبة</span>
+                        <strong class="sc-value text-navy">
+                          {{ certificateFinalScore() }}
+                        </strong>
+                      </div>
+
+                      <div class="score-box highlight-grade">
+                        <span class="sc-label">التقدير العام</span>
+                        <strong class="sc-value text-emerald">
+                          {{ certificateFinalGrade() }}
+                        </strong>
+                      </div>
+
+                      <div class="score-box">
+                        <span class="sc-label">إجمالي ساعات التدريب</span>
+                        <strong class="sc-value text-teal">
+                          @if (certificateTrainingHours() !== null) {
+                            {{ certificateTrainingHours() }}
+                            ساعة تدريبية
+                          } @else {
+                            غير متاح
+                          }
+                        </strong>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  <!-- FOOTER -->
+                  <div class="official-cert-footer">
+
+                    <div class="cert-signature-block">
+                      <span class="sig-label">
+                        اعتماد الجهة المدربة المستضيفة
                       </span>
 
-                      <strong class="sc-value text-teal">
-                        @if (certificateTrainingHours() !== null) {
-                          {{ certificateTrainingHours() }}
-                          ساعة تدريبية
-                        } @else {
-                          غير متاح
+                      <strong class="sig-company">
+                        {{ officialCertificateDetails()?.companyName || 'غير متاح' }}
+                      </strong>
+
+                      <svg
+                        viewBox="0 0 140 32"
+                        width="115"
+                        height="24"
+                        class="sig-handwriting"
+                        aria-label="رسم توقيع زخرفي">
+                        <path
+                          d="M15 22 Q 40 6, 62 18 T 115 10 M 35 25 L 95 16"
+                          stroke="#0A1172"
+                          stroke-width="2"
+                          fill="none"
+                          stroke-linecap="round" />
+                      </svg>
+
+                      <div class="sig-approved">
+                        <i class="fas fa-check-circle"></i>
+                        <span>تم الاعتماد والتوقيع الإلكتروني</span>
+                      </div>
+                    </div>
+
+                    <div class="cert-qr-verification-block">
+
+                      <div class="qr-meta-text">
+
+                        <div class="qr-badge-title">
+                          <i class="fa-solid fa-shield-halved"></i>
+                          بيانات الشهادة
+                        </div>
+
+                        <div class="qr-code-line">
+                          SN:
+                          <strong>{{ certificateSerialNumber() }}</strong>
+                        </div>
+
+                        <div class="qr-code-line">
+                          Code:
+                          <strong>{{ certificateVerificationCode() }}</strong>
+                        </div>
+
+                        <div class="qr-date-line">
+                          تاريخ الإصدار:
+                          {{
+                            officialCertificateDetails()?.issueDate
+                              ? (officialCertificateDetails()?.issueDate | date:'dd/MM/yyyy')
+                              : 'غير متاح'
+                          }}
+                        </div>
+
+                      </div>
+
+                      <div class="qr-svg-box" title="رمز QR للشهادة">
+                        @if (certificateQrUrl()) {
+                          <img [src]="certificateQrUrl()" alt="QR Code" />
                         }
-                      </strong>
+                      </div>
+
                     </div>
 
                   </div>
-                </div>
-
-                <!-- FOOTER -->
-                <div class="official-cert-footer">
-
-                  <div class="cert-signature-block">
-                    <span class="sig-label">
-                      اعتماد الجهة المدربة المستضيفة
-                    </span>
-
-                    <strong class="sig-company">
-                     {{ officialCertificateDetails()?.companyName || 'غير متاح' }}
-                    </strong>
-
-                    <!-- Decorative signature matching Admin Portal -->
-<svg
-  viewBox="0 0 140 32"
-  width="115"
-  height="24"
-  class="sig-handwriting"
-  aria-label="رسم توقيع زخرفي"
->
-  <path
-    d="M15 22 Q 40 6, 62 18 T 115 10 M 35 25 L 95 16"
-    stroke="#0A1172"
-    stroke-width="2"
-    fill="none"
-    stroke-linecap="round"
-  />
-</svg>
-
-<div class="sig-approved">
-  <i class="fas fa-check-circle"></i>
-  <span>تم الاعتماد والتوقيع الإلكتروني</span>
-</div>
-                  </div>
-
-    
-<div class="cert-qr-verification-block">
-
-  <div class="qr-meta-text">
-
-    <div class="qr-badge-title">
-      <i class="fa-solid fa-shield-halved"></i>
-      بيانات الشهادة
-    </div>
-
-    <div class="qr-code-line">
-      SN:
-      <strong>{{ certificateSerialNumber() }}</strong>
-    </div>
-
-    <div class="qr-code-line">
-      Code:
-      <strong>{{ certificateVerificationCode() }}</strong>
-    </div>
-
-    <div class="qr-date-line">
-      تاريخ الإصدار:
-      {{
-        officialCertificateDetails()?.issueDate
-          ? (officialCertificateDetails()?.issueDate | date:'dd/MM/yyyy')
-          : 'غير متاح'
-      }}
-    </div>
-
-  </div>
-
-  <div class="qr-svg-box"
-       style="width: 68px; height: 68px;"
-       title="رمز QR للشهادة">
-
-    @if (certificateQrUrl()) {
-      <img
-        [src]="certificateQrUrl()"
-        alt="QR Code"
-        style="width: 100%; height: 100%; object-fit: contain; display: block;"
-      />
-    }
-
-  </div>
-
-</div>
-
-
- 
 
                 </div>
-
               </div>
             </div>
+
+            <!-- ACTIONS -->
+            <div class="cert-actions-row">
+
+              <button type="button"
+                      class="btn-download-pdf"
+                      (click)="downloadCertificate()">
+                <i class="fas fa-file-pdf"></i>
+                تنزيل الشهادة المعتمدة (PDF)
+              </button>
+
+              <button type="button"
+                      class="btn-download-pdf"
+                      (click)="printIssuedCertificate()">
+                <i class="fas fa-print"></i>
+                طباعة / حفظ PDF
+              </button>
+
+              <button type="button"
+                      class="btn-close-modal"
+                      (click)="closeCertificatePreview()">
+                إغلاق المعاينة
+              </button>
+
+            </div>
+
           </div>
-
-          <!-- ACTIONS -->
-          <div class="cert-actions-row">
-
-            <button type="button"
-                    class="btn-download-pdf"
-                    (click)="downloadCertificate()">
-              <i class="fas fa-file-pdf"></i>
-              تنزيل الشهادة المعتمدة (PDF)
-            </button>
-
-            <button type="button"
-                    class="btn-download-pdf"
-                    (click)="printIssuedCertificate()">
-              <i class="fas fa-print"></i>
-              طباعة / حفظ PDF
-            </button>
-
-            <button type="button"
-                    class="btn-close-modal"
-                    (click)="closeCertificatePreview()">
-              إغلاق المعاينة
-            </button>
-
-          </div>
-
         </div>
       </div>
-    </div>
+    }
   }
-}
 
   <!-- =========================================================
        FEEDBACK MODAL
   ========================================================== -->
-
   @if (showFeedback()) {
 
-    <div
-      class="nfd-modal-bg"
-      (click)="showFeedback.set(false)">
+    <div class="nfd-modal-bg" (click)="showFeedback.set(false)">
 
-      <div
-        class="nfd-modal"
-        (click)="$event.stopPropagation()">
+      <div class="nfd-modal" (click)="$event.stopPropagation()">
 
-        <!-- HEADER -->
-
+        <!-- HEADER (ثابت) -->
         <div class="modal-header">
           <div>
             <h3>
@@ -602,210 +578,109 @@
           <button
             type="button"
             class="modal-close"
+            aria-label="إغلاق"
             (click)="showFeedback.set(false)">
             <i class="fas fa-times"></i>
           </button>
         </div>
 
-        <!-- TRAINER EVALUATION -->
+        <!-- BODY (يتمرر داخلياً) -->
+        <div class="modal-body">
 
-        @if (feedbackType() === 'TrainerRating') {
+          @if (feedbackType() === 'TrainerRating') {
 
-          <div
-            style="
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 8px;
-              margin-bottom: 15px;
-            ">
+            <div class="seg-group">
+              <button
+                type="button"
+                class="seg-btn"
+                [class.active]="evaluationPeriod() === 'Weekly'"
+                (click)="onEvaluationPeriodChange('Weekly')">
+                <i class="fas fa-calendar-week"></i>
+                تقييم أسبوعي
+              </button>
 
-            <button
-              type="button"
-              (click)="onEvaluationPeriodChange('Weekly')"
-              [style.background]="evaluationPeriod() === 'Weekly' ? '#0d9488' : '#f8fafc'"
-              [style.color]="evaluationPeriod() === 'Weekly' ? '#fff' : '#334155'"
-              style="
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                padding: 9px;
-                cursor: pointer;
-                font-family: inherit;
-                font-size: 11px;
-                font-weight: 700;
-              ">
-              <i class="fas fa-calendar-week"></i>
-              تقييم أسبوعي
-            </button>
+              <button
+                type="button"
+                class="seg-btn"
+                [class.active]="evaluationPeriod() === 'Monthly'"
+                (click)="onEvaluationPeriodChange('Monthly')">
+                <i class="fas fa-calendar-alt"></i>
+                تقييم شهري
+              </button>
+            </div>
 
-            <button
-              type="button"
-              (click)="onEvaluationPeriodChange('Monthly')"
-              [style.background]="evaluationPeriod() === 'Monthly' ? '#0d9488' : '#f8fafc'"
-              [style.color]="evaluationPeriod() === 'Monthly' ? '#fff' : '#334155'"
-              style="
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                padding: 9px;
-                cursor: pointer;
-                font-family: inherit;
-                font-size: 11px;
-                font-weight: 700;
-              ">
-              <i class="fas fa-calendar-alt"></i>
-              تقييم شهري
-            </button>
-          </div>
+            <div class="field-row">
+              <div class="field">
+                <label class="comment-label">
+                  <i class="fas fa-book"></i>
+                  اختيار الكورس
+                </label>
 
-          <label class="comment-label">
-            <i class="fas fa-book"></i>
-            اختيار الكورس
-          </label>
+                <select
+                  class="field-select"
+                  [ngModel]="selectedModuleId()"
+                  (ngModelChange)="onModuleSelected($event ? +$event : null)">
+                  <option [ngValue]="null">اختر الكورس</option>
+                  @for (module of modules(); track module.moduleId) {
+                    <option [ngValue]="module.moduleId">{{ module.title }}</option>
+                  }
+                </select>
+              </div>
 
-          <select
-            [ngModel]="selectedModuleId()"
-            (ngModelChange)="onModuleSelected($event ? +$event : null)"
-            style="
-              width: 100%;
-              box-sizing: border-box;
-              border: 1px solid #e2e8f0;
-              border-radius: 7px;
-              padding: 9px;
-              font-family: inherit;
-              font-size: 11px;
-              outline: none;
-              background: #fff;
-              margin-bottom: 12px;
-            ">
+              <div class="field">
+                <label class="comment-label">
+                  <i class="fas fa-user-tie"></i>
+                  اختيار المدرب
+                </label>
 
-            <option [ngValue]="null">اختر الكورس</option>
+                <select
+                  class="field-select"
+                  [ngModel]="selectedTrainerId()"
+                  (ngModelChange)="onTrainerSelected($event ? +$event : null)">
+                  <option [ngValue]="null">اختر المدرب</option>
+                  @for (trainer of trainers(); track getTrainerId(trainer)) {
+                    <option [ngValue]="getTrainerId(trainer)">
+                      {{ getTrainerName(trainer) }}
+                    </option>
+                  }
+                </select>
+              </div>
+            </div>
 
-            @for (module of modules(); track module.moduleId) {
-              <option [ngValue]="module.moduleId">
-                {{ module.title }}
-              </option>
-            }
-          </select>
+            <div class="hint-box">
+              <i class="fas fa-info-circle"></i>
+              @if (evaluationPeriod() === 'Weekly') {
+                التقييم الأسبوعي متاح للإرسال مرة واحدة أسبوعيًا.
+              } @else {
+                التقييم الشهري متاح للإرسال مرة واحدة شهريًا.
+              }
+            </div>
 
-          <label class="comment-label">
-            <i class="fas fa-user-tie"></i>
-            اختيار المدرب
-          </label>
+          } @else {
 
-          <select
-            [ngModel]="selectedTrainerId()"
-            (ngModelChange)="onTrainerSelected($event ? +$event : null)"
-            style="
-              width: 100%;
-              box-sizing: border-box;
-              border: 1px solid #e2e8f0;
-              border-radius: 7px;
-              padding: 9px;
-              font-family: inherit;
-              font-size: 11px;
-              outline: none;
-              background: #fff;
-              margin-bottom: 15px;
-              color: #64748b;
-            ">
+            <div class="hint-box">
+              <i class="fas fa-info-circle"></i>
+              {{ constants.administrativeLabel('NFD_FBK_TYPE', 'BatchExperienceRating') }}
+              متاح للإرسال عند اكتمال البرنامج 100%.
+            </div>
 
-            <option [ngValue]="null">اختر المدرب</option>
+          }
 
-            @for (trainer of trainers(); track getTrainerId(trainer)) {
-              <option [ngValue]="getTrainerId(trainer)">
-                {{ getTrainerName(trainer) }}
-              </option>
-            }
-          </select>
-
-          <div
-            style="
-              background: #f0fdfa;
-              border: 1px solid #ccfbf1;
-              border-radius: 8px;
-              padding: 9px 10px;
-              margin-bottom: 14px;
-              font-size: 10px;
-              color: #0f766e;
-            ">
-
-            <i class="fas fa-info-circle"></i>
-
-            @if (evaluationPeriod() === 'Weekly') {
-              التقييم الأسبوعي متاح للإرسال مرة واحدة أسبوعيًا.
-            } @else {
-              التقييم الشهري متاح للإرسال مرة واحدة شهريًا.
-            }
-          </div>
-
-
-          <!-- =================================================
-               CRITERIA + RATING CIRCLES
-          ================================================== -->
-
+          <!-- CRITERIA (مشتركة بين النوعين) -->
           @for (c of criteria(); track c.criterionId) {
 
-            <div
-              class="criterion-row"
-              style="margin-bottom: 16px;">
+            <div class="criterion-row">
 
-              <label
-                style="
-                  display: block;
-                  margin-bottom: 8px;
-                  font-weight: 700;
-                  font-size: 12px;
-                  color: #334155;
-                ">
-                {{ c.name }}
-              </label>
+              <label class="criterion-label">{{ c.name }}</label>
 
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 9px;
-                  direction: rtl;
-                  margin-bottom: 9px;
-                ">
-
+              <div class="score-circles">
                 @for (score of [1, 2, 3, 4, 5]; track score) {
-
                   <button
                     type="button"
+                    class="score-btn"
                     [class.selected]="scores[c.criterionId] === score"
-                    (click)="scores[c.criterionId] = score"
-                    style="
-                      width: 36px;
-                      height: 36px;
-                      min-width: 36px;
-                      padding: 0;
-                      border-radius: 50%;
-                      border: 1px solid #dbe2e8;
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      font-family: inherit;
-                      font-size: 14px;
-                      font-weight: 700;
-                      cursor: pointer;
-                      transition: 0.2s;
-                    "
-                    [style.background]="scores[c.criterionId] === score ? '#0d9488' : '#ffffff'"
-                    [style.border-color]="scores[c.criterionId] === score ? '#0d9488' : '#dbe2e8'"
-                    [style.color]="scores[c.criterionId] === score ? '#ffffff' : '#475569'">
-
-                    @if (score === 1) {
-                      ١
-                    } @else if (score === 2) {
-                      ٢
-                    } @else if (score === 3) {
-                      ٣
-                    } @else if (score === 4) {
-                      ٤
-                    } @else {
-                      ٥
-                    }
-
+                    (click)="scores[c.criterionId] = score">
+                    {{ ['١', '٢', '٣', '٤', '٥'][score - 1] }}
                   </button>
                 }
               </div>
@@ -814,141 +689,17 @@
                 [ngModel]="criterionComments[c.criterionId] || ''"
                 (ngModelChange)="criterionComments[c.criterionId] = $event"
                 rows="2"
-                placeholder="اكتب ملاحظتك هنا..."
-                style="
-                  width: 100%;
-                  box-sizing: border-box;
-                  border: 1px solid #e2e8f0;
-                  border-radius: 7px;
-                  padding: 9px;
-                  font-family: inherit;
-                  font-size: 11px;
-                  outline: none;
-                  resize: vertical;
-                ">
+                [placeholder]="feedbackType() === 'TrainerRating'
+                  ? 'اكتب ملاحظتك هنا...'
+                  : 'اكتب ملاحظتك للبرنامج التدريبي هنا...'">
               </textarea>
 
             </div>
           }
 
-        } @else {
+        </div>
 
-          <!-- =================================================
-               PROGRAM EVALUATION
-          ================================================== -->
-
-          <div
-            style="
-              background: #f0fdfa;
-              border: 1px solid #ccfbf1;
-              border-radius: 8px;
-              padding: 9px 10px;
-              margin-bottom: 14px;
-              font-size: 10px;
-              color: #0f766e;
-            ">
-
-            <i class="fas fa-info-circle"></i>
-
-            {{ constants.administrativeLabel('NFD_FBK_TYPE', 'BatchExperienceRating') }}
-            متاح للإرسال عند اكتمال البرنامج 100%.
-          </div>
-
-          @for (c of criteria(); track c.criterionId) {
-
-            <div
-              class="criterion-row"
-              style="margin-bottom: 16px;">
-
-              <label
-                style="
-                  display: block;
-                  margin-bottom: 8px;
-                  font-weight: 700;
-                  font-size: 12px;
-                  color: #334155;
-                ">
-                {{ c.name }}
-              </label>
-
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 9px;
-                  direction: rtl;
-                  margin-bottom: 9px;
-                ">
-
-                @for (score of [1, 2, 3, 4, 5]; track score) {
-
-                  <button
-                    type="button"
-                    [class.selected]="scores[c.criterionId] === score"
-                    (click)="scores[c.criterionId] = score"
-                    style="
-                      width: 36px;
-                      height: 36px;
-                      min-width: 36px;
-                      padding: 0;
-                      border-radius: 50%;
-                      border: 1px solid #dbe2e8;
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      font-family: inherit;
-                      font-size: 14px;
-                      font-weight: 700;
-                      cursor: pointer;
-                      transition: 0.2s;
-                    "
-                    [style.background]="scores[c.criterionId] === score ? '#0d9488' : '#ffffff'"
-                    [style.border-color]="scores[c.criterionId] === score ? '#0d9488' : '#dbe2e8'"
-                    [style.color]="scores[c.criterionId] === score ? '#ffffff' : '#475569'">
-
-                    @if (score === 1) {
-                      ١
-                    } @else if (score === 2) {
-                      ٢
-                    } @else if (score === 3) {
-                      ٣
-                    } @else if (score === 4) {
-                      ٤
-                    } @else {
-                      ٥
-                    }
-
-                  </button>
-                }
-              </div>
-
-              <textarea
-                [ngModel]="criterionComments[c.criterionId] || ''"
-                (ngModelChange)="criterionComments[c.criterionId] = $event"
-                rows="2"
-                placeholder="اكتب ملاحظتك للبرنامج التدريبي هنا..."
-                style="
-                  width: 100%;
-                  box-sizing: border-box;
-                  border: 1px solid #e2e8f0;
-                  border-radius: 7px;
-                  padding: 9px;
-                  font-family: inherit;
-                  font-size: 11px;
-                  outline: none;
-                  resize: vertical;
-                ">
-              </textarea>
-
-            </div>
-          }
-
-        }
-
-        <!-- =================================================
-             FEEDBACK ACTIONS
-        ================================================== -->
-
+        <!-- ACTIONS (ثابتة أسفل النافذة) -->
         <div class="modal-actions">
 
           <button
@@ -956,7 +707,6 @@
             class="cancel-btn"
             (click)="showFeedback.set(false)"
             [disabled]="isSubmitting()">
-
             <i class="fas fa-times"></i>
             إلغاء
           </button>
