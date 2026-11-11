@@ -79,44 +79,20 @@
   <!-- The former per-program SVG contained illustrative values; the live weekly
        attendance and department comparisons are displayed below instead. -->
 
-  <div class="reports-grid-split">
+  <!-- Full-width company weekly attendance: removed the unused comparison card. -->
+  <div class="reports-grid-full">
     <div class="card card-pad">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 3v18h18" />
-          <path d="m19 9-5 5-4-4-3 3" />
-        </svg>
-        تقرير حضور المتدربين للشركة    
-      </div>
+      <div class="card-title">تقرير حضور المتدربين للشركة — آخر ستة أسابيع مسجلة</div>
+      <p class="report-hint">المخطط يعرض حضور التسجيلات النشطة، مع استبعاد الأعذار المعتمدة.</p>
       <div class="hbars">
         @for (week of attendanceWeeks; track week.label) {
-        <div class="hbar">
-          <div class="h-lbl">{{ week.label }}</div>
-          <div class="h-trk">
-            <div class="h-fill" [style.width.%]="week.value"></div>
+          <div class="hbar">
+            <div class="h-lbl">{{ week.label }}</div>
+            <div class="h-trk"><div class="h-fill" [style.width.%]="week.value"></div></div>
+            <div class="h-val">{{ week.value }}%</div>
           </div>
-          <div class="h-val">{{ week.value }}%</div>
-        </div>
-        }
-      </div>
-    </div>
-
-    <div class="card card-pad">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 20v-6M6 20V10M18 20V4" />
-        </svg>
-        مقارنة الحضور حسب القسم
-      </div>
-      <div class="hbars">
-        @for (department of comparisonDepartments; track department.name) {
-        <div class="hbar">
-          <div class="h-lbl">{{ department.name }}</div>
-          <div class="h-trk">
-            <div class="h-fill" [style.width.%]="department.value"></div>
-          </div>
-          <div class="h-val">{{ department.value }}%</div>
-        </div>
+        } @empty {
+          <p class="report-hint">لا توجد سجلات حضور متاحة للأسابيع الأخيرة.</p>
         }
       </div>
     </div>
@@ -166,10 +142,10 @@
   @if (activeTab === 'achieve') {
   <div class="achievement-stats-grid">
     <div class="achievement-card-mini">
-      <span class="label">متوسط الإنجاز العام</span>
+      <span class="label">متوسط التقييم النهائي الموزون</span>
       <div class="value-row">
         <b style="color: #00338d;">{{ averageWeightedScore === null ? '—' : (averageWeightedScore + '%') }}</b>
-        <small>للنتائج المكتملة فقط</small>
+        <small>للنتائج المكتملة وفق أوزان Admin لكل دفعة</small>
       </div>
     </div>
 
@@ -182,7 +158,7 @@
     </div>
 
     <div class="achievement-card-mini">
-      <span class="label">متدربون متميزون</span>
+      <span class="label">تسجيلات بتصنيف ممتاز</span>
       <div class="value-row">
         <b style="color: #10b981;">{{ topPerformers.length }}</b>
         <small>وفق حد ممتاز المعتمد لكل دفعة</small>
@@ -190,10 +166,10 @@
     </div>
 
     <div class="achievement-card-mini">
-      <span class="label">متعثرون</span>
+      <span class="label">تسجيلات متعثرة/راسبة</span>
       <div class="value-row">
         <b style="color: #ef4444;">{{ atRiskTrainees.length }}</b>
-        <small>متعثرون أو راسبون حسب معيار الدفعة</small>
+        <small>من النتائج المكتملة، حسب معايير كل دفعة</small>
       </div>
     </div>
   </div>
@@ -277,14 +253,14 @@
 
   <div class="card card-pad">
     <div class="card-title">
-      الطاقة حسب البرنامج
+      ملخص الطاقة على مستوى الشركة (وليس توزيعًا حسب البرنامج)
     </div>
     <div class="tbl-wrap">
       <table class="tbl">
         <thead>
           <tr>
-            <th>البرنامج</th>
-            <th>الحصة المخصصة</th>
+            <th>النطاق</th>
+            <th>السعة الإجمالية</th>
             <th>المستخدم</th>
             <th>المتبقي</th>
             <th>الاستغلال</th>
@@ -321,95 +297,120 @@
 
 @if (activeTab === 'tasks') {
   <section class="tasks-dashboard" dir="rtl">
-
     <div class="tasks-heading">
       <div>
-        <h3>تقرير المهام التدريبية</h3>
-        <p>متابعة إنجاز المهام وحالة العمل لدى المتدربين</p>
+        <h3>تقرير الخطط والمهام التشغيلية للشركة</h3>
+        <p>خطط الشركة ومراحلها وبنود التنفيذ وإسنادات المدربين؛ لا يشمل واجبات المتدربين أو تسليماتهم.</p>
       </div>
       <div class="tasks-heading-icon">☷</div>
     </div>
 
-    <div class="tasks-summary">
-      <div class="task-stat task-stat-total">
-        <span class="task-stat-icon">▤</span>
-        <span class="task-stat-label">إجمالي المهام</span>
-        <strong>{{ tasks.length }}</strong>
-        <small>جميع المهام المسجلة</small>
+    @if (tasksLoading) {
+      <p class="report-hint" role="status">جاري تحميل خطط الشركة وبنودها...</p>
+    }
+    @if (tasksError) {
+      <div class="report-error" role="alert">{{ tasksError }}
+        <button class="btn btn-outline btn-sm" type="button" (click)="loadTasksReport()">إعادة المحاولة</button>
       </div>
-
-      <div class="task-stat task-stat-pending">
-        <span class="task-stat-icon">◷</span>
-        <span class="task-stat-label">قيد التنفيذ</span>
-        <strong>{{ taskPendingCount }}</strong>
-        <small>مهام بانتظار الإنجاز</small>
-      </div>
-
-      <div class="task-stat task-stat-review">
-        <span class="task-stat-icon">✓</span>
-        <span class="task-stat-label">بانتظار المراجعة</span>
-        <strong>{{ taskReviewCount }}</strong>
-        <small>تحتاج إلى مراجعة</small>
-      </div>
-
-      <div class="task-stat task-stat-late">
-        <span class="task-stat-icon">!</span>
-        <span class="task-stat-label">مهام متأخرة</span>
-        <strong>{{ taskLateCount }}</strong>
-        <small>تجاوزت موعد التسليم</small>
-      </div>
-    </div>
-
-    <div class="tasks-table-card">
-      <div class="tasks-table-heading">
-        <div>
-          <h4>أحدث المهام والمشروعات</h4>
-          <p>تفاصيل المهام وحالة التسليم</p>
+    }
+    @if (!tasksError && tasksLoaded) {
+      <div class="tasks-summary">
+        <div class="task-stat task-stat-total">
+          <span class="task-stat-icon">▤</span>
+          <span class="task-stat-label">إجمالي الخطط</span>
+          <strong>{{ taskStats.total }}</strong>
+          <small>خطط الشركة التدريبية</small>
         </div>
-        <span class="tasks-count">{{ tasks.length }} مهمة</span>
+        <div class="task-stat task-stat-pending">
+          <span class="task-stat-icon">◷</span>
+          <span class="task-stat-label">بانتظار الاعتماد</span>
+          <strong>{{ taskStats.pendingApproval }}</strong>
+          <small>في انتظار اعتماد الإدارة</small>
+        </div>
+        <div class="task-stat task-stat-review">
+          <span class="task-stat-icon">✓</span>
+          <span class="task-stat-label">قيد التنفيذ</span>
+          <strong>{{ taskStats.inProgress }}</strong>
+          <small>خطط بدأ تنفيذها</small>
+        </div>
+        <div class="task-stat task-stat-late">
+          <span class="task-stat-icon">!</span>
+          <span class="task-stat-label">خطط متأخرة</span>
+          <strong>{{ taskStats.delayedPlans }}</strong>
+          <small>وفق المراحل والمواعيد المسجلة</small>
+        </div>
       </div>
 
-      <div class="tasks-table-scroll">
-        <table class="tasks-table">
-          <thead>
-            <tr>
-              <th>المهمة</th>
-              <th>البرنامج</th>
-              <th>موعد التسليم</th>
-              <th>الأولوية</th>
-              <th>الحالة</th>
-              <th>عدد التسليمات</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            @for (item of tasks; track item.id) {
-              <tr>
-                <td>{{ item.task }}</td>
-                <td>{{ item.program }}</td>
-                <td>
-                  {{ item.due !== 'غير محدد' ? (item.due | date:'yyyy/MM/dd') : 'غير محدد' }}
-                </td>
-                <td>{{ constants.administrativeLabel('NFD_TSK_PRI', item.priority) }}</td>
-                <td>
-                  <span [ngClass]="getTaskStatusClass(item.status)">
-                    {{ getTaskStatusText(item.status) }}
-                  </span>
-                </td>
-                <td>{{ item.submissionsCount }}</td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6" class="tasks-empty">
-                  لا توجد مهام لعرضها حاليًا
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+      <div class="tasks-table-card">
+        <div class="tasks-table-heading">
+          <div>
+            <h4>الخطط المعتمدة على بيانات الشركة</h4>
+            <p>منشئ الخطة يمثل صاحب الإنشاء، وليس تكليفًا فرديًا مستقلًا للمشرف.</p>
+          </div>
+          <span class="tasks-count">{{ planRows.length }} خطة</span>
+        </div>
+        <div class="tasks-table-scroll">
+          <table class="tasks-table">
+            <thead><tr>
+              <th>الخطة / البرنامج</th><th>الدفعة</th><th>منشئ الخطة</th>
+              <th>المدربون المسندون</th><th>الاعتماد</th><th>التنفيذ</th>
+              <th>تقدم البنود</th><th>التأخير</th>
+            </tr></thead>
+            <tbody>
+              @for (plan of planRows; track plan.planId) {
+                <tr>
+                  <td>{{ plan.title }}</td>
+                  <td>{{ plan.batchId ?? '—' }}</td>
+                  <td>{{ plan.createdByName || 'غير محدد' }}</td>
+                  <td>{{ planTrainerNames(plan) }}</td>
+                  <td>{{ approvalLabel(plan.approvalStatus) }}</td>
+                  <td>{{ executionLabel(plan.executionStatus) }}</td>
+                  <td>{{ plan.progressPercentage }}%</td>
+                  <td>{{ plan.isDelayed ? ('متأخرة (' + plan.delayedStages + ' مراحل)') : 'لا' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="8" class="tasks-empty">لا توجد خطط تشغيلية مسجلة لهذه الشركة.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
+      <div class="tasks-table-card" style="margin-top:18px">
+        <div class="tasks-table-heading">
+          <div>
+            <h4>المهام والمشروعات داخل الخطط</h4>
+            <p>بنود تنفيذية على مستوى المرحلة والمدرب، وليست واجبات المتدربين.</p>
+          </div>
+          <span class="tasks-count">{{ operationalItems.length }} بند</span>
+        </div>
+        @if (taskDetailsIncomplete) {
+          <p class="report-hint" role="alert">تعذر تحميل تفاصيل بعض الخطط؛ قد تكون قائمة البنود غير مكتملة.</p>
+        }
+        <div class="tasks-table-scroll">
+          <table class="tasks-table">
+            <thead><tr>
+              <th>الخطة</th><th>المرحلة</th><th>نوع البند</th><th>البند</th>
+              <th>المدرب المسند</th><th>موعد التنفيذ</th><th>الأولوية</th><th>الحالة</th>
+            </tr></thead>
+            <tbody>
+              @for (item of operationalItems; track item.id) {
+                <tr>
+                  <td>{{ item.planTitle }}</td><td>{{ item.stageTitle }}</td>
+                  <td>{{ itemTypeLabel(item.type) }}</td><td>{{ item.title }}</td>
+                  <td>{{ item.trainerNames }}</td>
+                  <td>{{ item.dueDate | date:'yyyy/MM/dd' }}</td>
+                  <td>{{ itemPriorityLabel(item.priority) }}</td>
+                  <td>{{ progressLabel(item.status) }}{{ item.isOverdue ? ' — متأخر' : '' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="8" class="tasks-empty">لا توجد بنود تنفيذية في الخطط المتاحة.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
   </section>
 }
 
