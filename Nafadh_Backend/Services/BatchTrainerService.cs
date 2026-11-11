@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 using Nafadh_Backend.DTOs;
@@ -179,12 +180,23 @@ namespace Nafadh_Backend.Services
         {
             var trainer = await _trainerRepository.GetByIdAsync(dto.TrainerId);
 
-            var batchExists =
-                await _batchRepository.GetByIdAsync(dto.BatchId) != null;
+            var batch = await _batchRepository.GetByIdAsync(dto.BatchId);
 
-            if (trainer?.User == null || !batchExists)
+            if (trainer?.User == null || batch == null)
             {
                 return false;
+            }
+
+            // A batch may legitimately have no company. But a company-owned trainer
+            // must not be assigned to another company's batch (including shared
+            // batches that already contain enrollments from a different company).
+            if (trainer.CompanyId.HasValue)
+            {
+                if (batch.CompanyId.HasValue && batch.CompanyId != trainer.CompanyId)
+                    return false;
+                if (!batch.CompanyId.HasValue && await _context.NFD_Enrollments
+                    .AnyAsync(e => e.BatchId == batch.BatchId && e.CompanyId != trainer.CompanyId.Value))
+                    return false;
             }
 
             // If trainer is already assigned, ensure group membership.
@@ -246,13 +258,37 @@ namespace Nafadh_Backend.Services
         // Unassign trainer from batch
         // =========================================================
 
-        public async Task<bool> UnassignAsync(
-            UnassignTrainerDto dto)
+        public async Task<bool> UnassignAsync(UnassignTrainerDto dto)
         {
-            return await _repository.DeleteAsync(
-                dto.BatchId,
-                dto.TrainerId
-            );
+            var trainerUserId = await _context.NFD_Trainers
+                .Where(t => t.TrainerId == dto.TrainerId)
+                .Select(t => (int?)t.UserId)
+                .FirstOrDefaultAsync();
+            if (!trainerUserId.HasValue)
+                return false;
+
+            // Keep batch-trainer assignment and batch-group membership consistent.
+            // A removed trainer must not retain access to private batch conversations.
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var removed = await _repository.DeleteAsync(dto.BatchId, dto.TrainerId);
+            if (!removed)
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+
+            var groupMemberships = await _context.NFD_ConversationGroupMembers
+                .Where(m => m.BatchId == dto.BatchId && m.UserId == trainerUserId.Value &&
+                    _context.NFD_SupportTickets.Any(t =>
+                        t.TicketId == m.ConversationId && t.Category == "BatchGroup"))
+                .ToListAsync();
+            if (groupMemberships.Count > 0)
+            {
+                _context.NFD_ConversationGroupMembers.RemoveRange(groupMemberships);
+                await _context.SaveChangesAsync();
+            }
+            await transaction.CommitAsync();
+            return true;
         }
     }
 }
