@@ -139,7 +139,7 @@
         <div class="kpi-info">
           <span class="kpi-label">المتدربون المتميزون</span>
           <strong class="kpi-value">{{ kpiTopPerformersCount() }}</strong>
-          <small>النشطون بأداء 80% فأعلى</small>
+          <small>النشطون المصنفون ممتازين وفق معايير كل دفعة</small>
         </div>
       </article>
 
@@ -154,7 +154,7 @@
           <strong class="kpi-value">
             {{ topPerformersAverage() | number:'1.0-0' }}%
           </strong>
-          <small>متوسط أداء النشطين بأداء 80% فأعلى</small>
+          <small>متوسط التقييم النهائي الموزون للمتدربين المتميزين</small>
         </div>
       </article>
 
@@ -167,9 +167,9 @@
           </svg>
         </div>
         <div class="kpi-info">
-          <span class="kpi-label">متعثرون بحاجة لمتابعة</span>
+          <span class="kpi-label">المتدربون المتعثرون</span>
           <strong class="kpi-value">{{ kpiAtRisk().length }}</strong>
-          <small>من المتدربين النشطين</small>
+          <small>بحسب تصنيف الدفعات المعتمد من الإدارة</small>
         </div>
       </article>
     </div>
@@ -504,7 +504,7 @@
         <div class="card-title">
           <span>
             <span class="icon-bell">🔔</span>
-            أحدث الإنذارات
+            أحدث إنذارات المتدربين
           </span>
           <label class="limit-picker">
             <span>عدد المعروض</span>
@@ -568,7 +568,7 @@
               </div>
             </div>
           } @empty {
-            <div class="empty">لا توجد إنذارات حديثة.</div>
+            <div class="empty">لا توجد إنذارات حديثة للمتدربين.</div>
           }
         </div>
       </div>
