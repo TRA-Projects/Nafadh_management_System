@@ -77,6 +77,25 @@ namespace Nafadh_Backend.Services
         {
             var records = await _repository.GetByTrainerIdAsync(trainerId);
 
+            return records.Select(record => new TrainerAttendanceDto
+            {
+                TrainerAttendanceId = record.TrainerAttendanceId,
+                CompanyId = record.CompanyId,
+                TrainerId = record.TrainerId,
+                TrainerName = null,
+                Date = record.Date,
+                Status = record.Status,
+                CheckInTime = record.CheckInTime,
+                CheckOutTime = record.CheckOutTime,
+                Reason = record.Reason,
+                ExcuseProofUrl = record.ExcuseProofUrl,
+                IsConfirmed = record.IsConfirmed,
+                ExcuseReviewStatus = record.ExcuseReviewStatus,
+                ExcuseReviewedByUserId = record.ExcuseReviewedByUserId,
+                ExcuseReviewedAtUtc = record.ExcuseReviewedAtUtc
+            }).ToList();
+        }
+
         public async Task<List<CompanyTrainerDto>> GetCompanyTrainersAsync(int companyId, DateTime date)
         {
             var trainers = await _repository.GetCompanyTrainersAsync(companyId, date);
