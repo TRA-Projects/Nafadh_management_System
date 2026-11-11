@@ -1,4 +1,3 @@
-
 @if (visible) {
   <div class="meeting-toast" role="alert">
     <div class="toast-header">
@@ -18,12 +17,13 @@
       <h3>{{ title }}</h3>
       <p>{{ message }}</p>
 
-      @if (meetingLink) {
+      @if (sessionId) {
         <button
           type="button"
           class="join-btn"
           (click)="joinMeeting()">
-          الانضمام للحصة
+          <i class="fa-solid fa-video" style="margin-left: 6px;"></i>
+          الانضمام للحصة الآن
         </button>
       }
     </div>
