@@ -376,7 +376,7 @@ openProfileCvInNewTab(): void {
     const major = t?.major || '—';
     const company = t?.companyName || 'لم يوزّع بعد';
     const batch = t?.batchName || '—';
-    const track = t?.trackName || '.NET Track';
+    const track = t?.trackName || 'غير محدد';
 
     const cvHtml = `
       <!DOCTYPE html>
@@ -460,9 +460,9 @@ openProfileCvInNewTab(): void {
     <div class="section">
       <div class="section-title">المؤهل الأكاديمي وجهة التدريب</div>
       <div class="grid">
-        <div class="item"><span class="label">الجامعة / الكلية</span><span class="val">${t.university || 'جامعة السلطان قابوس'}</span></div>
-        <div class="item"><span class="label">التخصص الأكاديمي</span><span class="val">${t.major || 'علوم الحاسوب'}</span></div>
-        <div class="item"><span class="label">الشركة المستضيفة</span><span class="val">${e?.companyName || t.companyName || '—'}</span></div>
+        <div class="item"><span class="label">الجامعة / الكلية</span><span class="val">${t.university || 'غير محدد'}</span></div>
+        <div class="item"><span class="label">التخصص الأكاديمي</span><span class="val">${t.major || 'غير محدد'}</span></div>
+        <div class="item"><span class="label">الشركة المستضيفة</span><span class="val">${e?.companyName || t.companyName || 'غير محدد'}</span></div>
         <div class="item"><span class="label">نسبة الإنجاز ومتوسط التقييم</span><span class="val">الإنجاز: ${this.completionPercentage()}% | التقييم: ${this.overallAverageScore() ?? '—'}%</span></div>
       </div>
     </div>
