@@ -80,6 +80,36 @@
     }
   </section>
 
+  <!-- 🌟 قسم مخصص لطلبات معالجة الإنذارات الواردة من الشركات 🌟 -->
+  <section class="toolbar-card" aria-label="طلبات معالجة الإنذارات" style="margin-bottom: 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <h2 style="font-size:1.1rem;margin:0;">⚠️ طلبات معالجة الإنذارات (الواردة من الشركات)</h2>
+      <button class="btn btn-secondary" type="button" (click)="loadPlanRequests()"
+        [disabled]="planRequestsLoading()">تحديث الطلبات</button>
+    </div>
+    @if (planRequestsLoading()) { <p>جارٍ تحميل طلبات المعالجة...</p> }
+    @else if (planRequestsError()) { <p role="alert">{{ planRequestsError() }}</p> }
+    @else if (!remediationNotifications().length) { 
+      <p style="color:#64748b;margin-top:8px;">لا توجد طلبات معالجة إنذارات جديدة حالياً.</p> 
+    }
+    @else {
+    <div style="display:grid;gap:10px;margin-top:12px;">
+      @for (request of remediationNotifications(); track request.notificationId) {
+      <div
+        style="border:1px solid #e2e8f0;padding:12px;border-radius:9px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#f8fafc;">
+        <div>
+          <strong style="color:#0f172a;">{{ request.title }}</strong>
+          @if (!request.isRead) { <span style="background:#ef4444;color:#fff;padding:2px 6px;border-radius:4px;font-size:0.75rem;margin-inline:8px;">جديد</span> }
+          <div style="color:#334155;margin:4px 0;">{{ request.message }}</div>
+          <small style="color:#64748b;">{{ request.createdAt | date:'yyyy/MM/dd HH:mm' }}</small>
+        </div>
+        <button type="button" class="btn btn-primary" (click)="openRemediationRequest(request)">مراجعة طلب المعالجة</button>
+      </div>
+      }
+    </div>
+    }
+  </section>
+
   <!-- 2. كروت المؤشرات والإحصائيات التراكمية (KPIs) -->
   <div class="metrics-grid">
     <div class="metric-card">
@@ -130,7 +160,7 @@
       <button type="button" class="tab-btn" [class.active]="activeFilter() === 'company'"
         (click)="setFilter('company')">شؤون الشركات</button>
       
-      <!-- 👈 إضافة تبويب المسودات المحفوظة -->
+      <!-- إضافة تبويب المسودات المحفوظة -->
       <button type="button" class="tab-btn" [class.active]="activeFilter() === 'drafts'"
         (click)="setFilter('drafts')">
         📝 المسودات المحفوظة <span class="tab-badge" style="background:#f59e0b;color:#fff;">{{ drafts().length }}</span>
@@ -254,7 +284,7 @@
   </div>
   }
 
-  <!-- 🌟 5. النافذة المنبثقة الجديدة (إعلان جديد) 🌟 -->
+  <!-- 🌟 5. النافذة المنبثقة (إعلان جديد) 🌟 -->
   @if (showAnnounce()) {
   <div class="modal-backdrop" (click)="closeAnnounceModal()">
     <div class="announcement-modal" (click)="$event.stopPropagation()">
@@ -320,7 +350,7 @@
           <app-catalog-picker class="custom-select" caption="الفئة المستهدفة الرئيسية" [options]="audienceChoices"
             [value]="scopeByAudience[newAnnounceData.mainAudience]" (valueChange)="chooseAudience($event)" />
 
-          <!-- إعدادات التخصيص للشركات (التصميم الجديد) -->
+          <!-- إعدادات التخصيص للشركات -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'companies'">
             <div class="radio-group" style="margin-bottom: 16px;">
               <label><input type="radio" [(ngModel)]="newAnnounceData.companyScope" value="all_companies"> كافة
@@ -578,7 +608,7 @@
             </div>
           </div>
 
-          <!-- إعدادات التخصيص للمدربين (التصميم الجديد) -->
+          <!-- إعدادات التخصيص للمدربين -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'trainers'">
             <div class="radio-group" style="margin-bottom: 16px;">
               <label><input type="radio" [(ngModel)]="newAnnounceData.trainerScope" value="all_trainers"> كافة
@@ -778,7 +808,6 @@
         </div>
         <div class="footer-actions">
           <button class="nfd-btn secondary-btn" (click)="closeAnnounceModal()">إلغاء</button>
-          <!-- 👈 تم ربط زر حفظ كمسودة بدالته الصحيحة -->
           <button class="nfd-btn secondary-btn" type="button" (click)="saveAsDraft()">حفظ كمسودة</button>
           <button class="nfd-btn primary-btn publish-btn" (click)="postAnnouncement()" [disabled]="posting()">
             <svg *ngIf="!posting()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
