@@ -79,10 +79,10 @@ export class WarningsComponent implements OnInit {
 
         this.companyApi.getCompanyWarnings(this.companyId).subscribe({
           next: (data) => {
-            this.warnings = data ?? [];
-
-            console.log('Company warnings:', this.warnings);
-            console.log('Warnings count:', this.warnings.length);
+            // Defensive presentation guard; the server is the source of truth.
+            this.warnings = (data ?? []).filter(warning =>
+              warning.scope === 'Company' && warning.companyId === this.companyId
+            );
 
             this.loading = false;
 
