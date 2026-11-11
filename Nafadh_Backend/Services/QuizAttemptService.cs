@@ -694,7 +694,6 @@ namespace Nafadh_Backend.Services
                     .ToList();
                 var latest = finished.FirstOrDefault();
 
-                // التعديل الجوهري هنا: إزالة الاعتماد على q.Status == Open والاعتماد فقط على الوقت
                 var isBeforeStart = now < q.StartDateTime;
                 var isAfterEnd = now > q.EndDateTime;
                 var isWindowOpen = !isBeforeStart && !isAfterEnd;
@@ -724,14 +723,19 @@ namespace Nafadh_Backend.Services
                 {
                     state = "Upcoming";
                 }
-                // إذا انتهى الوقت أو تم إغلاقه يدوياً
+                // 🟢 التعديل: إذا كان لديه محاولة سابقة (used > 0) وانتهى الوقت، يعتبر "مكتمل" وليس "فائت"
+                else if ((isAfterEnd || q.Status == Nafadh_Backend.Enums.NFD_QuizStatus.Closed) && used > 0)
+                {
+                    state = "Completed";
+                }
+                // إذا انتهى الوقت ولم يحاول أبداً
                 else if (isAfterEnd || q.Status == Nafadh_Backend.Enums.NFD_QuizStatus.Closed)
                 {
                     state = "Missed";
                 }
                 else
                 {
-                    state = "Missed"; // احتياط
+                    state = "Missed";
                 }
 
                 // النتيجة تظهر فقط بعد اكتمال التصحيح

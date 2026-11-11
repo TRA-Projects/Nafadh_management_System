@@ -66,11 +66,11 @@ namespace Nafadh_Backend.Services
             }
 
             return attempt.AttemptQuestions.All(aq =>
-                aq.Question.QuestionType !=
-                    NFD_QuizQuestionType.Essay ||
-
+                (aq.Question.QuestionType !=
+                    NFD_QuizQuestionType.Essay &&
+                 aq.Question.QuestionType !=
+                    NFD_QuizQuestionType.FileUpload) ||
                 !aq.Answers.Any() ||
-
                 aq.Answers.All(answer =>
                     answer.IsManuallyGraded));
         }
@@ -276,6 +276,10 @@ namespace Nafadh_Backend.Services
                             aq.Question.QuestionType ==
                             NFD_QuizQuestionType.Essay;
 
+                        var isFileUpload =
+                            aq.Question.QuestionType ==
+                            NFD_QuizQuestionType.FileUpload;
+
                         return new QuizAnswerDetailsDto
                         {
                             AnswerId =
@@ -320,7 +324,7 @@ namespace Nafadh_Backend.Services
                                 answer?.IsMarkedForReview ?? false,
 
                             RequiresManualGrading =
-                                isEssay &&
+                                (isEssay || isFileUpload) &&
                                 answer != null &&
                                 !answer.IsManuallyGraded
                         };

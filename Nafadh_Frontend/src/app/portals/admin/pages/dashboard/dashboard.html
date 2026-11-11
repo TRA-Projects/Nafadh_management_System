@@ -917,6 +917,63 @@
         </button>
       </div>
     </div>
+    <!-- Admin Dashboard Performance Period Filter -->
+    <div style="
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    margin: 16px 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+  ">
+      <label for="performancePeriod" style="font-weight: 700; color: #334155;">
+        فترة تقييم المتميزين والمتعثرين:
+      </label>
+
+      <select id="performancePeriod" [value]="performancePeriod()"
+        (change)="changePerformancePeriod($any($event.target).value)" style="
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: white;
+    ">
+        <option value="month">هذا الشهر</option>
+        <option value="year">هذه السنة</option>
+        <option value="all">جميع الفترات</option>
+        <option value="custom">فترة مخصصة</option>
+      </select>
+
+      @if (performancePeriod() === 'custom') {
+      <label for="performanceStartDate">من</label>
+
+      <input id="performanceStartDate" type="date" [value]="performanceStartDate()"
+        (change)="performanceStartDate.set($any($event.target).value)" />
+
+      <label for="performanceEndDate">إلى</label>
+
+      <input id="performanceEndDate" type="date" [value]="performanceEndDate()"
+        (change)="performanceEndDate.set($any($event.target).value)" />
+
+      <button type="button" (click)="applyCustomPerformancePeriod()" [disabled]="performancePeriodLoading()">
+        تطبيق
+      </button>
+      }
+
+      @if (performancePeriodLoading()) {
+      <span style="color: #64748b;">
+        جاري تحميل النتائج...
+      </span>
+      }
+
+      @if (performancePeriodError()) {
+      <span style="color: #dc2626;" role="alert">
+        {{ performancePeriodError() }}
+      </span>
+      }
+    </div>
 
     <!-- إعلانات المنصة -->
     @if (announcements().length > 0) {

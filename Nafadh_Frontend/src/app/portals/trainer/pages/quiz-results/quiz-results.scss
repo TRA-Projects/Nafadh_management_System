@@ -2645,3 +2645,39 @@ tbody tr:hover {
   background: #dbeafe;
   border-color: #93c5fd;
 }
+
+
+/* أضف هذا في نهاية ملف الـ SCSS أو بجانب تنسيقات result-hero */
+
+.result-hero.pending-result { 
+  border-color: #fde68a; 
+  background: #fffbeb; 
+}
+
+.result-hero.pending-result .result-icon { 
+  background: #fef3c7; 
+  color: #d97706; 
+}
+
+.result-hero.pending-result h1 {
+  color: #b45309;
+}
+
+.text-warning {
+  color: #d97706 !important;
+}
+
+/* =========================================================
+   DISABLED PRIMARY BUTTON (أثناء التصحيح)
+========================================================= */
+.primary-btn:disabled {
+  background: #94a3b8;
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.primary-btn:disabled:hover {
+  background: #94a3b8;
+  transform: none;
+}

@@ -2242,6 +2242,20 @@ namespace Nafadh_Backend.Services
             return _repository.GetAdminDashboardSummaryAsync();
         }
 
+        // ==========================================================
+        // Admin Portal ONLY - Dashboard Performance Period Filtering
+        // ==========================================================
+        public Task<AdminDashboardSummaryDTO> GetAdminDashboardSummaryByPeriodAsync(
+            DateTime? startDate,
+            DateTime? endDate
+        )
+        {
+            return _repository.GetAdminDashboardSummaryByPeriodAsync(
+                startDate,
+                endDate
+            );
+        }
+
         public Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(
            int batchId, int pageNumber, int pageSize)
           => _repository.GetBatchPerformanceAsync(batchId, pageNumber, pageSize);
