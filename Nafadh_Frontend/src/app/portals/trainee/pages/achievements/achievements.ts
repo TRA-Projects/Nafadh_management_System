@@ -988,9 +988,17 @@ export class TraineeAchievements implements OnInit {
   overallEvaluation = signal<any | null>(null);
 readonly overallEvaluationDetailsOpen = signal(false);
 
+
 openOverallEvaluationDetails(): void {
   this.overallEvaluationDetailsOpen.set(true);
+
+  const enrollmentId = Number(this.enrollmentId() ?? 0);
+
+  if (enrollmentId > 0 && !this.overallEvaluation()) {
+    this.loadOverallEvaluation(enrollmentId);
+  }
 }
+
 
 closeOverallEvaluationDetails(): void {
   this.overallEvaluationDetailsOpen.set(false);
@@ -2264,40 +2272,43 @@ private loadOfficialCertificateDetails(
   // OVERALL EVALUATION
   // ============================================================
 
-  private loadOverallEvaluation(
-    enrollmentId: number
-  ): void {
+  
+private loadOverallEvaluation(enrollmentId: number): void {
+  this.overallEvaluation.set(null);
 
-    this.api
-      .getOverallEvaluation(
-        enrollmentId
-      )
-      .subscribe({
+  if (!enrollmentId || enrollmentId <= 0) {
+    console.warn('Invalid enrollment ID for overall evaluation');
+    return;
+  }
 
-        next: (data) => {
+  this.api.getOverallEvaluation(enrollmentId).subscribe({
+    next: (data: any) => {
+      // Ignore responses from a previous enrollment.
+      if (Number(this.enrollmentId()) !== Number(enrollmentId)) {
+        return;
+      }
 
-          this.overallEvaluation.set(
-            data
-          );
+      console.log('Overall Evaluation API Response:', data);
 
-        },
+      this.overallEvaluation.set(data ?? null);
+    },
 
-        error: (err) => {
+    error: (err: any) => {
+      if (Number(this.enrollmentId()) !== Number(enrollmentId)) {
+        return;
+      }
 
-          console.warn(
-            '⚠️ لم يتم العثور على التقييم الكلي أو حدث خطأ:',
-            err
-          );
-
-          this.overallEvaluation.set(
-            null
-          );
-
-        },
-
+      console.error('Overall Evaluation API Error:', {
+        enrollmentId,
+        status: err?.status,
+        response: err?.error
       });
 
-  }
+      this.overallEvaluation.set(null);
+    }
+  });
+}
+
 
 
   // ============================================================

@@ -30,13 +30,8 @@
           <strong>{{ progressPercentage() }}%</strong>
         </div>
       </div>
-
-      <!-- التقييم الكلي الجديد -->
-     <!-- التقييم الكلي المعتمد -->
-<button
-  type="button"
-  class="summary-item overall-evaluation-button"
-  (click)="openOverallEvaluationDetails()">
+<!-- التقييم الكلي - النسبة المعتمدة -->
+<div class="summary-item">
 
   <div
     class="summary-icon"
@@ -45,16 +40,14 @@
   </div>
 
   <div>
-  <span>التقييم الكلي</span>
+    <span>التقييم الكلي</span>
 
-<strong>
-  {{ overallEvaluation()?.finalGrade || 'غير متاح' }}
-</strong>
-
-    <small>عرض تفاصيل التقييم</small>
+    <strong>
+      {{ certificateFinalScore() }}
+    </strong>
   </div>
 
-</button>
+</div>
 
   <!-- =========================================================
        FEEDBACK STRIP
@@ -988,96 +981,5 @@
       </div>
     </div>
   }
-@if (overallEvaluationDetailsOpen()) {
 
-  <div
-    class="trainee-cert-backdrop"
-    (click)="closeOverallEvaluationDetails()">
-
-    <div
-      class="trainee-cert-dialog"
-      (click)="$event.stopPropagation()">
-
-      <div class="trainee-cert-dialog-header">
-        <h3>تفاصيل التقييم الكلي</h3>
-
-        <button
-          type="button"
-          (click)="closeOverallEvaluationDetails()">
-          ✕
-        </button>
-      </div>
-
-      <div class="overall-evaluation-details">
-
-        @if (overallEvaluation(); as evaluation) {
-
-          <h3>نتيجة التقييم المعتمدة</h3>
-
-          <div class="overall-evaluation-row">
-            <span>الحضور</span>
-            <strong>
-              {{ evaluation.attendancePercentage ?? 'غير متاح' }}
-            </strong>
-          </div>
-
-          <div class="overall-evaluation-row">
-            <span>المهام</span>
-            <strong>
-              {{ evaluation.tasksPercentage ?? 'غير متاح' }}
-            </strong>
-          </div>
-
-          <div class="overall-evaluation-row">
-            <span>الاختبارات</span>
-            <strong>
-              {{ evaluation.quizzesPercentage ?? 'غير متاح' }}
-            </strong>
-          </div>
-
-          <div class="overall-evaluation-row">
-            <span>المشاريع</span>
-            <strong>
-              {{ evaluation.projectsPercentage ?? 'غير متاح' }}
-            </strong>
-          </div>
-
-       <div class="overall-evaluation-row">
-  <span>الدرجة النهائية</span>
-  <strong>
-    {{
-      evaluation.finalScore !== null &&
-      evaluation.finalScore !== undefined
-        ? (evaluation.finalScore | number:'1.2-2') + '%'
-        : 'غير متاح'
-    }}
-  </strong>
-</div>
-
-<div class="overall-evaluation-row">
-  <span>التقدير النهائي</span>
-  <strong>
-    {{ evaluation.finalGrade || 'غير متاح' }}
-  </strong>
-</div>
-
-          <p class="overall-evaluation-note">
-            يتم احتساب التقييم النهائي باستخدام نتائج الحضور
-            والمهام والاختبارات والمشاريع، وفق الأوزان
-            ومعايير التصنيف المعتمدة في النظام.
-          </p>
-
-        } @else {
-
-          <p>
-            لم يتم توفير التقييم الكلي لهذا التسجيل بعد.
-          </p>
-
-        }
-
-      </div>
-    </div>
-  </div>
-
-}
 </div>
