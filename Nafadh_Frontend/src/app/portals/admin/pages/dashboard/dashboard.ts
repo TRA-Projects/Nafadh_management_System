@@ -599,11 +599,34 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     return Math.min(100, Math.round((cap.used / cap.total) * 100));
   });
 
-  maxDistributionValue = computed(() => {
+    maxDistributionValue = computed(() => {
     const list = this.summary()?.programDistribution || [];
     if (!list.length) return 1;
     return Math.max(...list.map(x => x.value), 1);
   });
+
+  // Program distribution: show only the top 5 on the dashboard.
+  showAllProgramsModal = signal<boolean>(false);
+
+  topFivePrograms = computed(() => {
+    const programs = this.summary()?.programDistribution || [];
+
+    return [...programs]
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  });
+
+  totalProgramsCount = computed(() => {
+    return this.summary()?.programDistribution?.length ?? 0;
+  });
+
+  openAllProgramsModal(): void {
+    this.showAllProgramsModal.set(true);
+  }
+
+  closeAllProgramsModal(): void {
+    this.showAllProgramsModal.set(false);
+  }
 
   private barChartInstance: Chart | null = null;
   private donutChartInstance: Chart | null = null;
