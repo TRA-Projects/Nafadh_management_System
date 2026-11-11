@@ -924,9 +924,10 @@ deleteTrainerSkill(skillId: number): Observable<void> {
       dto
     );
   }
-  deleteProjectMember(memberId: number) {
+ deleteProjectMember(memberId: number): Observable<string> {
   return this.http.delete(
-    `${this.base}/ProjectMember/${memberId}`
+    `${this.base}/ProjectMember/${memberId}`,
+    { responseType: 'text' }
   );
 }
 

@@ -1269,7 +1269,7 @@
         </p>
 
       } @else {
-        @for (member of projectMembers(); track member.id) {
+        @for (member of projectMembers(); track member.memberId) {
           <div style="padding:12px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;">
          <strong>{{ getProjectMemberName(member.traineeId) }}</strong>
             <p style="margin:6px 0 0;color:#64748b;">

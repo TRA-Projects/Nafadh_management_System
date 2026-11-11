@@ -656,7 +656,7 @@ export interface ProjectDto {
 }
 
 export interface ProjectMemberDto {
-  id: number;
+ memberId: number;
   role: string;
   projectId: number;
   traineeId: number;

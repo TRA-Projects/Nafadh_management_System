@@ -54,6 +54,7 @@ loadProjectMembers(projectId: number): void {
 
   this.api.getProjectMembers(projectId).subscribe({
     next: (data) => {
+      console.log('Project members API response:', data);
       this.projectMembers.set(data ?? []);
       this.loadingProjectMembers.set(false);
     },
@@ -145,7 +146,7 @@ confirmRemoveProjectMember(): void {
   const member = this.memberPendingDelete();
   if (!member) return;
 
-  this.api.deleteProjectMember(member.id).subscribe({
+  this.api.deleteProjectMember(member.memberId).subscribe({
     next: () => {
       this.showDeleteMemberModal.set(false);
       this.memberPendingDelete.set(null);
