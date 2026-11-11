@@ -56,16 +56,42 @@ namespace Nafadh_Backend.Repositories
             await _context.SaveChangesAsync();
         }
 
-        //Remove a lesson
+
+        // Remove a lesson
         public async Task DeleteLessonAsync(int lessonId)
         {
             var lesson = await _context.NFD_Lessons.FindAsync(lessonId);
+
             if (lesson == null)
             {
-                throw new InvalidOperationException("The specified lesson does not exist.");
+                throw new InvalidOperationException(
+                    "The specified lesson does not exist.");
             }
+
+            // Check if the lesson has training materials
+            var hasMaterials = await _context.NFD_TrainingMaterials
+                .AnyAsync(m => m.LessonId == lessonId);
+
+            if (hasMaterials)
+            {
+                throw new InvalidOperationException(
+                    "لا يمكن حذف الدرس لأنه يحتوي على مواد تعليمية مرتبطة به.");
+            }
+
+            var hasFeedback = await _context.NFD_LessonFeedbacks
+                .AnyAsync(f => f.LessonId == lessonId);
+
+            if (hasFeedback)
+            {
+                throw new InvalidOperationException(
+                    "لا يمكن حذف الدرس لأنه يحتوي على تقييمات مرتبطة به."
+                );
+            }
+
+
             _context.NFD_Lessons.Remove(lesson);
             await _context.SaveChangesAsync();
         }
+
     }
 }
