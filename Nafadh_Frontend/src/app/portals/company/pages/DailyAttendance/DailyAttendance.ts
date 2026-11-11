@@ -6,7 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
 import { forkJoin, of, catchError } from 'rxjs';
-import * as XLSX from 'xlsx';
+import { buildCompanyWorkbook, downloadBlob, CompanyWorkbookSheet } from '../trainees/xlsx-writer';
+import { openCompanyPrintReport } from '../../utils/print-report';
 
 import { CompanyApi } from '../../services/company-api';
 
@@ -420,31 +421,30 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
     this.exportMenu.set(null);
     if (this.loading() || this.loadError()) return;
     const { summaries, excuses } = this.exportData(mode);
-    const book = XLSX.utils.book_new();
-    for (const [i, week] of summaries.entries()) {
-      const table: (string | number)[][] = [
-        [week.title, week.label],
-        ['المدرب', 'التخصص', ...week.days.map(d => `${d.label} ${d.key}`), 'نسبة الالتزام'],
-        ...week.rows.map(r => [r.name, r.specialty, ...r.days.map(d => this.attendanceDisplayLabel(d.record)), r.rate === null ? '—' : `${r.rate}%`]),
-        [],
-        ['حاضر', week.stats.Present, 'متأخر', week.stats.Late, 'غائب', week.stats.Absent, 'انصراف مبكر', week.stats.EarlyLeave],
-        ['نسبة الالتزام', week.stats.rate === null ? '—' : `${week.stats.rate}%`],
-      ];
-      const sheet = XLSX.utils.aoa_to_sheet(table);
-      sheet['!cols'] = [{ wch: 30 }, { wch: 26 }, ...week.days.map(() => ({ wch: 23 })), { wch: 18 }];
-      sheet['!views'] = [{ rightToLeft: true }];
-      XLSX.utils.book_append_sheet(book, sheet, `الأسبوع ${i + 1}`);
+    const sheets: CompanyWorkbookSheet[] = summaries.map((week, i) => ({
+      name: `الأسبوع ${i + 1}`,
+      headers: ['المدرب', 'التخصص', ...week.days.map(d => `${d.label} ${d.key}`), 'الالتزام (%)'],
+      rows: week.rows.map(r => [
+        r.name, r.specialty, ...r.days.map(d => this.attendanceDisplayLabel(d.record)),
+        r.rate === null ? 'غير متاح' : r.rate
+      ]),
+      note: `${week.title} - ${week.label} | حاضر: ${week.stats.Present}، متأخر: ${week.stats.Late}، غائب: ${week.stats.Absent}، انصراف مبكر: ${week.stats.EarlyLeave}، نسبة الالتزام: ${week.stats.rate === null ? 'غير متاحة' : week.stats.rate + '%'}`
+    }));
+    sheets.push({
+      name: 'الأعذار',
+      headers: ['الأسبوع', 'المدرب', 'التاريخ', 'الحالة', 'سبب / ملاحظة', 'رابط إثبات العذر'],
+      rows: excuses.map(e => [e.week, e.name, e.date, e.status, e.reason, e.proof || 'غير مرفق']),
+      note: 'تظل حالة الحضور الأصلية محفوظة، وقرار العذر يعرض بشكل مستقل.'
+    });
+    try {
+      downloadBlob(
+        buildCompanyWorkbook(mode === 'week' ? 'تقرير حضور المدربين الأسبوعي' : 'تقرير حضور المدربين الشهري', sheets),
+        `TrainerAttendance_${mode}_${this.selectedAttendanceMonth()}${mode === 'week' ? `_week_${this.selectedExportWeek() + 1}` : ''}.xlsx`
+      );
+    } catch (error) {
+      console.error('Trainer attendance Excel export:', error);
+      this.showNotice('error', 'تعذر إنشاء ملف Excel.');
     }
-    const excuseRows = [
-      ['الأسبوع', 'المدرب', 'التاريخ', 'الحالة', 'سبب / ملاحظة', 'رابط إثبات العذر'],
-      ...excuses.map(e => [e.week, e.name, e.date, e.status, e.reason, e.proof || 'غير مرفق']),
-    ];
-    if (!excuses.length) excuseRows.push(['لا توجد أعذار مسجلة']);
-    const excuseSheet = XLSX.utils.aoa_to_sheet(excuseRows);
-    excuseSheet['!cols'] = [{ wch: 18 }, { wch: 30 }, { wch: 16 }, { wch: 20 }, { wch: 55 }, { wch: 65 }];
-    excuseSheet['!views'] = [{ rightToLeft: true }];
-    XLSX.utils.book_append_sheet(book, excuseSheet, 'الأعذار');
-    XLSX.writeFile(book, `TrainerAttendance_${mode}_${this.selectedAttendanceMonth()}${mode === 'week' ? `_week_${this.selectedExportWeek() + 1}` : ''}.xlsx`);
   }
 
   private escapeReport(value: unknown): string {
@@ -457,46 +457,22 @@ export class CompanyDailyAttendance implements OnInit, OnDestroy {
     if (this.loading() || this.loadError()) return;
     const { summaries, excuses } = this.exportData(mode);
     const esc = (v: unknown) => this.escapeReport(v);
-    const title = mode === 'week' ? 'تقرير الحضور الأسبوعي' : 'تقرير الحضور الشهري';
+    const title = mode === 'week' ? 'تقرير حضور المدربين الأسبوعي' : 'تقرير حضور المدربين الشهري';
     const sections = summaries.map(week => `
-      <section class="week"><h2>${esc(week.title)} <small>${esc(week.label)}</small></h2>
-      <div class="stats">حاضر: ${week.stats.Present} &nbsp; | &nbsp; متأخر: ${week.stats.Late} &nbsp; | &nbsp; غائب: ${week.stats.Absent} &nbsp; | &nbsp; انصراف مبكر: ${week.stats.EarlyLeave} &nbsp; | &nbsp; نسبة الالتزام: ${week.stats.rate === null ? '—' : week.stats.rate + '%'}</div>
-      <table><thead><tr><th>المدرب</th><th>التخصص</th>${week.days.map(d => `<th>${esc(d.label)}<br><small>${esc(d.key)}</small></th>`).join('')}<th>الالتزام</th></tr></thead>
-      <tbody>${week.rows.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.specialty)}</td>${r.days.map(d => `<td class="${d.record?.status === 'Absent' ? 'absent' : ''}">${esc(this.attendanceDisplayLabel(d.record))}</td>`).join('')}<td>${r.rate === null ? '—' : r.rate + '%'}</td></tr>`).join('')}</tbody></table></section>`).join('');
-    const excuseTable = `<section class="excuses"><h2>جدول الأعذار والملاحظات</h2>
-      <table><thead><tr><th>الأسبوع</th><th>المدرب</th><th>التاريخ</th><th>الحالة</th><th>السبب / الملاحظة</th><th>إثبات العذر</th></tr></thead><tbody>
-      ${excuses.length ? excuses.map(e => `<tr><td>${esc(e.week)}</td><td>${esc(e.name)}</td><td>${esc(e.date)}</td><td>${esc(e.status)}</td><td>${esc(e.reason)}</td><td>${e.proof ? `<a href="${esc(e.proof)}" target="_blank" rel="noopener">عرض الإثبات</a>` : 'غير مرفق'}</td></tr>`).join('') : '<tr><td colspan="6">لا توجد أعذار مسجلة</td></tr>'}
+      <section class="section"><h2>${esc(week.title)} <small>${esc(week.label)}</small></h2>
+      <p class="note">حاضر: ${week.stats.Present} | متأخر: ${week.stats.Late} | غائب: ${week.stats.Absent} | انصراف مبكر: ${week.stats.EarlyLeave} | نسبة الالتزام: ${week.stats.rate === null ? 'غير متاحة' : week.stats.rate + '%'}</p>
+      <table><thead><tr><th>المدرب</th><th>التخصص</th>${week.days.map(d => `<th>${esc(d.label)} ${esc(d.key)}</th>`).join('')}<th>الالتزام (%)</th></tr></thead>
+      <tbody>${week.rows.length ? week.rows.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.specialty)}</td>${r.days.map(d => `<td>${esc(this.attendanceDisplayLabel(d.record))}</td>`).join('')}<td>${r.rate === null ? '—' : esc(r.rate) + '%'}</td></tr>`).join('') : `<tr><td colspan="${week.days.length + 3}">لا توجد سجلات.</td></tr>`}</tbody></table></section>`).join('');
+    const excuseTable = `<section class="section"><h2>جدول الأعذار والملاحظات</h2>
+      <table><thead><tr><th>الأسبوع</th><th>المدرب</th><th>التاريخ</th><th>الحالة</th><th>السبب / الملاحظة</th><th>رابط إثبات العذر</th></tr></thead><tbody>
+      ${excuses.length ? excuses.map(e => `<tr><td>${esc(e.week)}</td><td>${esc(e.name)}</td><td>${esc(e.date)}</td><td>${esc(e.status)}</td><td>${esc(e.reason)}</td><td>${esc(e.proof || 'غير مرفق')}</td></tr>`).join('') : '<tr><td colspan="6">لا توجد أعذار مسجلة</td></tr>'}
       </tbody></table></section>`;
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) { this.showNotice('error', 'المتصفح منع فتح نافذة التقرير. اسمحي بالنوافذ المنبثقة ثم أعيدي المحاولة.'); return; }
-    printWindow.document.open();
-    printWindow.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${title}</title><style>
-      @page { size: A4 landscape; margin: 12mm; }
-      *{box-sizing:border-box}body{font-family:Tahoma,Arial,sans-serif;color:#14213d;margin:0;direction:rtl;font-size:11px}
-      header{border-bottom:3px solid #172b85;padding-bottom:12px;margin-bottom:18px}h1{margin:0 0 8px;font-size:21px;color:#101d78}h2{font-size:15px;color:#101d78;margin:18px 0 10px}small{font-size:10px;color:#64748b;font-weight:normal}
-      .stats{background:#eef3ff;padding:10px;border-radius:6px;margin-bottom:10px;font-weight:bold}table{width:100%;border-collapse:collapse;table-layout:auto;direction:rtl}th,td{border:1px solid #d7e0ef;padding:7px 6px;text-align:right;vertical-align:top;overflow-wrap:anywhere}th{background:#edf2fb;color:#12277b}tbody tr:nth-child(even){background:#f8faff}.absent{color:#c62828;font-weight:bold}a{color:#1453c8}.week{break-inside:avoid-page;margin-bottom:20px}.excuses{break-before:page}thead{display:table-header-group}tr{break-inside:avoid}footer{margin-top:20px;color:#64748b;font-size:10px}
-      @media screen{body{max-width:1200px;margin:75px auto 24px;padding:20px}.report-actions{position:fixed;left:20px;top:15px;display:flex;gap:9px;z-index:10}.report-actions button{color:white;border:0;border-radius:7px;padding:10px 16px;cursor:pointer;font-family:inherit;font-weight:bold}.print-btn{background:#172b85}.save-btn{background:#087c63}}
-      @media print{.report-actions{display:none!important}}
-      #attendance-report{background:#fff;padding:10px} .report-actions button:disabled{opacity:.55;cursor:wait}
-      </style></head><body><div class="report-actions"><button class="print-btn" onclick="window.print()">🖨 طباعة</button><button class="save-btn" onclick="saveAsPdf()">↓ حفظ PDF</button></div><main id="attendance-report"><header><h1>${title}</h1><div>تاريخ إعداد التقرير: ${esc(this.todayKey)} | ${esc(this.exportPeriodLabel(mode))}</div></header>${sections}${excuseTable}<footer>البيانات من سجلات حضور المدربين المحملة في النظام. روابط الإثبات تتطلب صلاحية الوصول للملفات.</footer></main><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script><script>
-      async function saveAsPdf(){
-        const button=document.querySelector(".save-btn");
-        if(!window.html2pdf){alert("تعذر تحميل أداة حفظ PDF. تأكدي من الاتصال بالإنترنت ثم أعيدي فتح التقرير.");return;}
-        button.disabled=true;button.textContent="جاري تجهيز PDF...";
-        try{
-          await window.html2pdf().set({
-            margin:8, filename:"TrainerAttendance_${mode}_${this.selectedAttendanceMonth()}${mode === 'week' ? `_week_${this.selectedExportWeek() + 1}` : ''}.pdf",
-            image:{type:"jpeg",quality:0.98},
-            html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",scrollY:0},
-            jsPDF:{unit:"mm",format:"a4",orientation:"landscape"},
-            pagebreak:{mode:["css","legacy"],avoid:["tr"]}
-          }).from(document.getElementById("attendance-report")).save();
-        }catch(error){console.error(error);alert("تعذر حفظ التقرير. حاولي مرة أخرى.");}
-        finally{button.disabled=false;button.textContent="↓ حفظ PDF";}
-      }
-      </script></body></html>`);
-    printWindow.document.close();
-    printWindow.focus();
+    const opened = openCompanyPrintReport(
+      title,
+      `${sections}${excuseTable}<footer>البيانات من سجلات حضور المدربين. روابط الإثبات ظاهرة كنص ولا تتجاوز صلاحيات الوصول.</footer>`,
+      { landscape: true, subtitle: this.exportPeriodLabel(mode) }
+    );
+    if (!opened) this.showNotice('error', 'المتصفح منع فتح نافذة التقرير. اسمح بالنوافذ المنبثقة ثم أعد المحاولة.');
   }
 
   selectedWeek = signal<number | null>(null);
