@@ -144,12 +144,12 @@ export class CompanyApi {
     );
   }
 
+  // Dedicated company endpoint: authenticated supervisor, company-scoped
+  // administrative warnings only. Trainee warnings stay in Dashboard.
   getCompanyWarnings(companyId: number): Observable<WarningDto[]> {
-    const params = new HttpParams()
-      .set('scope', 'Company')
-      .set('companyId', companyId);
-
-    return this.http.get<WarningDto[]>(`${this.base}/Warning`, { params });
+    return this.http.get<WarningDto[]>(
+      `${this.base}/CompanyAdministrativeWarnings/${companyId}`
+    );
   }
 
   getPlatformAnnouncements(): Observable<AnnouncementDto[]> {
@@ -582,7 +582,7 @@ export class CompanyApi {
     reply: string
   ): Observable<unknown> {
     return this.http.put(
-      `${this.base}/Warning/${warningId}/reply?companyId=${companyId}`,
+      `${this.base}/CompanyAdministrativeWarnings/${companyId}/${warningId}/reply`,
       { reply }
     );
   }
