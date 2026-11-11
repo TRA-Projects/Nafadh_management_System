@@ -65,6 +65,14 @@ export class CompanyProgramDetails implements OnInit {
   readonly loading = signal(true);
   readonly error = signal('');
 
+  // Single expanded batch; null keeps the list compact by default.
+  readonly expandedBatchId = signal<number | null>(null);
+
+  toggleBatchDetails(batchId: number): void {
+    this.expandedBatchId.update(current => current === batchId ? null : batchId);
+  }
+
+
 
 
   // بيانات البرنامج والمتدربين
