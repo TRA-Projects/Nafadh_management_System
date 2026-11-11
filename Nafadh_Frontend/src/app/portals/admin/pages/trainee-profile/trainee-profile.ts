@@ -39,7 +39,6 @@ interface StageCard {
   module: ModuleDto;
   orderIndex: number;
   statusRaw: string;
-  progressPercent: number;
   evaluations: EvaluationDto[];
   averageScore: number | null;
 }
@@ -900,17 +899,14 @@ openProfileCvInNewTab(): void {
           ) / 10
           : null;
 
-      const progressPercent =
-        statusRaw === 'Completed' ? 100 : statusRaw === 'InProgress' ? 50 : 0;
-
-      return {
-        module: m,
-        orderIndex: m.orderIndex,
-        statusRaw,
-        progressPercent,
-        evaluations: moduleEvals,
-        averageScore: avg,
-      };
+return {
+  module: m,
+  orderIndex: m.orderIndex,
+  statusRaw,
+  evaluations: moduleEvals,
+  averageScore: avg,
+};
+      
     });
 
     this.stages.set(cards);
