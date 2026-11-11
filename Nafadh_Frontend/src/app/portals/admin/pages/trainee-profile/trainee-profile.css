@@ -794,3 +794,16 @@
 @media(max-width:1050px) { .exam-stats-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .exam-list-heading { align-items:flex-start; } }
 @media(max-width:650px) { .exam-record-card { padding:15px; }.exam-stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.exam-filter-bar { width:100%; }.filter-tabs { width:100%;overflow-x:auto; }.exam-search-input { width:100%; }.exam-top-actions { width:100%;flex-wrap:wrap; } }
 @media print { .exam-top-actions,.exam-filter-bar,.exam-details-btn { display:none!important; }.exam-table-scroll { overflow:visible; }.exam-main-table { min-width:0; } }
+/* Trainee module status without estimated progress */
+.stage-status-info {
+  margin: 10px 0 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #f1f5f9;
+}
+
+.stage-status-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
