@@ -5,7 +5,10 @@ import { moduleProgressKey } from '../../../../core/models/administrative-consta
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TraineeApi } from '../../services/trainee-api';
+import {
+  TraineeApi,
+  OfficialCertificateDetailsDto
+} from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 
 import html2pdf from 'html2pdf.js';
@@ -993,32 +996,50 @@ closeOverallEvaluationDetails(): void {
   this.overallEvaluationDetailsOpen.set(false);
 }
 
+// ============================================================
+// OFFICIAL CERTIFICATE - ADMIN GRADE SOURCE
+// ============================================================
+
+readonly officialCertificateDetails =
+  signal<OfficialCertificateDetailsDto | null>(null);
+
 readonly certificateFinalScore = computed<string>(() => {
-  const evaluation = this.overallEvaluation();
+  const details = this.officialCertificateDetails();
+  const certificate = this.issuedCertificate();
 
-  if (!evaluation || evaluation.isComplete === false) {
-    return 'بانتظار اعتماد التقييم';
-  }
-
-  const score = Number(evaluation.finalScore);
-
-  if (!Number.isFinite(score) ||
-      evaluation.finalScore === null ||
-      evaluation.finalScore === undefined) {
+  if (
+    !details ||
+    !certificate ||
+    Number(details.certificateId) !==
+      Number(certificate.certificateId) ||
+    !details.hasGrade ||
+    details.grade === null ||
+    details.grade === undefined
+  ) {
     return 'غير متاح';
   }
 
-  return `${score.toFixed(2)}%`;
+  const grade = Number(details.grade);
+
+  return Number.isFinite(grade)
+    ? `${grade.toFixed(2)}%`
+    : 'غير متاح';
 });
 
 readonly certificateFinalGrade = computed<string>(() => {
-  const evaluation = this.overallEvaluation();
+  const details = this.officialCertificateDetails();
+  const certificate = this.issuedCertificate();
 
-  if (!evaluation || evaluation.isComplete === false) {
-    return 'بانتظار اعتماد التقييم';
+  if (
+    !details ||
+    !certificate ||
+    Number(details.certificateId) !==
+      Number(certificate.certificateId)
+  ) {
+    return 'غير متاح';
   }
 
-  return evaluation.finalGrade || 'غير متاح';
+  return details.gradeLabel || 'غير متاح';
 });
 
 readonly certificateTrainingHours = computed(() => {
@@ -1561,18 +1582,23 @@ this.certificatePreviewOpen.set(false);
             activeEnrollment
           );
 
-          this.enrollmentId.set(
-            activeEnrollment.enrollmentId
-          );
+    this.enrollmentId.set(
+  activeEnrollment.enrollmentId
+);
 
-          this.batchId.set(
-            activeEnrollment.batchId
-          );
+this.batchId.set(
+  activeEnrollment.batchId
+);
 
-          // Load overall evaluation.
-          this.loadOverallEvaluation(
-            activeEnrollment.enrollmentId
-          );
+// Official certificate details.
+this.loadOfficialCertificateDetails(
+  activeEnrollment.enrollmentId
+);
+
+// Overall evaluation remains separate.
+this.loadOverallEvaluation(
+  activeEnrollment.enrollmentId
+);
 
           // Load batch and training program.
           this.loadBatchAndProgram(
@@ -2110,7 +2136,53 @@ next: (batch: BatchDto) => {
 
   }
 
+// ============================================================
+// LOAD OFFICIAL CERTIFICATE DETAILS
+// ============================================================
 
+private loadOfficialCertificateDetails(
+  enrollmentId: number
+): void {
+  this.officialCertificateDetails.set(null);
+
+  if (!enrollmentId) {
+    return;
+  }
+
+  this.api
+    .getOfficialCertificateDetails(enrollmentId)
+    .subscribe({
+      next: (details) => {
+        // Ignore stale responses if enrollment changes.
+        if (
+          Number(this.enrollmentId()) !==
+          Number(details.enrollmentId)
+        ) {
+          return;
+        }
+
+        this.officialCertificateDetails.set(details);
+
+        console.log(
+          'Official Certificate Details:',
+          details
+        );
+      },
+
+      error: (err) => {
+        if (Number(this.enrollmentId()) !== enrollmentId) {
+          return;
+        }
+
+        console.warn(
+          'Failed to load official certificate details:',
+          err
+        );
+
+        this.officialCertificateDetails.set(null);
+      }
+    });
+}
   // ============================================================
   // OVERALL EVALUATION
   // ============================================================

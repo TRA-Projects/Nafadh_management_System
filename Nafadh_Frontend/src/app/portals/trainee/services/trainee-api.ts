@@ -52,6 +52,24 @@ export interface TrainerInBatchDto extends TrainerDto {
   trainerName: string;
 }
 
+export interface OfficialCertificateDetailsDto {
+  enrollmentId: number;
+  traineeId: number;
+  batchId: number;
+  batchName: string;
+  traineeName: string;
+  startDate: string;
+  endDate: string;
+  certificateId: number;
+  issueDate: string;
+  grade: number | null;
+  gradeLabel: string | null;
+  hasGrade: boolean;
+  isIssued: boolean;
+}
+
+
+
 @Injectable({
   providedIn: 'root'
 })
@@ -808,13 +826,25 @@ getProjectMembers(
     );
   }
 
-  getCertificates(
-    traineeId: number
-  ): Observable<CertificateDto[]> {
-    return this.http.get<CertificateDto[]>(
-      `${this.base}/Certificate/trainee/${traineeId}`
-    );
-  }
+ getCertificates(
+  traineeId: number
+): Observable<CertificateDto[]> {
+  return this.http.get<CertificateDto[]>(
+    `${this.base}/Certificate/trainee/${traineeId}`
+  );
+}
+
+// =========================================================
+// Official Certificate Details - Trainee Portal
+// =========================================================
+
+getOfficialCertificateDetails(
+  enrollmentId: number
+): Observable<OfficialCertificateDetailsDto> {
+  return this.http.get<OfficialCertificateDetailsDto>(
+    `${this.base}/Certificate/enrollment/${enrollmentId}/official-details`
+  );
+}
 
   downloadCertificate(
     certificateId: number

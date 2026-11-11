@@ -45,11 +45,11 @@
   </div>
 
   <div>
-    <span>التقييم الكلي</span>
+  <span>التقييم الكلي</span>
 
-    <strong>
-      {{ certificateFinalGrade() }}
-    </strong>
+<strong>
+  {{ overallEvaluation()?.finalGrade || 'غير متاح' }}
+</strong>
 
     <small>عرض تفاصيل التقييم</small>
   </div>
@@ -909,15 +909,24 @@
             </strong>
           </div>
 
-          <div class="overall-evaluation-row">
-            <span>الدرجة النهائية</span>
-            <strong>{{ certificateFinalScore() }}</strong>
-          </div>
+       <div class="overall-evaluation-row">
+  <span>الدرجة النهائية</span>
+  <strong>
+    {{
+      evaluation.finalScore !== null &&
+      evaluation.finalScore !== undefined
+        ? (evaluation.finalScore | number:'1.2-2') + '%'
+        : 'غير متاح'
+    }}
+  </strong>
+</div>
 
-          <div class="overall-evaluation-row">
-            <span>التقدير النهائي</span>
-            <strong>{{ certificateFinalGrade() }}</strong>
-          </div>
+<div class="overall-evaluation-row">
+  <span>التقدير النهائي</span>
+  <strong>
+    {{ evaluation.finalGrade || 'غير متاح' }}
+  </strong>
+</div>
 
           <p class="overall-evaluation-note">
             يتم احتساب التقييم النهائي باستخدام نتائج الحضور
