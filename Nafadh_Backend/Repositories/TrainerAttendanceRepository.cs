@@ -53,6 +53,17 @@ namespace Nafadh_Backend.Repositories
                              ongoingPlans.Any(p => p.PlanId == st.PlanId))
                 .Select(st => st.TrainerId!.Value);
 
+            // An item-only trainer is eligible only while that assigned item is active
+            // within an in-progress stage/plan, and never gains whole-plan assignment.
+            var assignedToOngoingItem = _context.NFD_CoursePlanItems
+                .Where(i => i.TrainerId.HasValue &&
+                            i.Status == NFD_CoursePlanProgressStatus.InProgress &&
+                            i.Stage.Status == NFD_CoursePlanProgressStatus.InProgress &&
+                            i.Stage.StartDate < nextDay && i.Stage.EndDate >= day &&
+                            i.DueDate >= day &&
+                            ongoingPlans.Any(p => p.PlanId == i.Stage.PlanId))
+                .Select(i => i.TrainerId!.Value);
+
             // Require an actual assignment, not mere company membership.
             return _context.NFD_Trainers.Where(t =>
                 t.Status == NFD_TrainerStatus.Active &&
@@ -60,7 +71,8 @@ namespace Nafadh_Backend.Repositories
                 (t.BatchTrainers.Any(bt => ongoingBatchIds.Contains(bt.BatchId)) ||
                  assignedToOngoingPlan.Contains(t.TrainerId) ||
                  assignedToOngoingStage.Contains(t.TrainerId) ||
-                 assignedLegacyStage.Contains(t.TrainerId)));
+                 assignedLegacyStage.Contains(t.TrainerId) ||
+                 assignedToOngoingItem.Contains(t.TrainerId)));
         }
 
         public async Task<List<NFD_Trainer>> GetCompanyTrainersAsync(int companyId, DateTime date)

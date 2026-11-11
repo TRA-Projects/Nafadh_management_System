@@ -154,15 +154,15 @@ export class CompanyTrainees implements OnInit {
         const risk = new Set(
           (dashboard?.atRiskTrainees ?? []).map(x => x.enrollmentId)
         );
-        const attendanceByTrainee = new Map(
-          (attendance?.rows ?? []).map(x => [x.traineeId, x.attendanceRate])
+        const attendanceByEnrollment = new Map(
+          (attendance?.rows ?? []).map(x => [x.enrollmentId, x.attendanceRate])
         );
 
         applyExtras = rows => rows.map(t => {
           const performance = performers.get(t.enrollmentId);
           return {
             ...t,
-            att: attendanceByTrainee.get(t.id)
+            att: attendanceByEnrollment.get(t.enrollmentId)
               ?? performance?.attendancePercent ?? null,
             perf: performance?.performancePercent ?? null,
             status: risk.has(t.enrollmentId) && t.status === 'InProgress'

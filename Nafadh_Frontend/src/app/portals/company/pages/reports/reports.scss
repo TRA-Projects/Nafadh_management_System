@@ -349,6 +349,34 @@
 
   /* الرسوم والأشرطة */
 
+
+  /* Full-width weekly attendance after removal of unused comparison card. */
+  .reports-grid-full {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .report-hint {
+    color: var(--report-muted);
+    font-size: 13px;
+    line-height: 1.8;
+    margin: 0 0 15px;
+  }
+
+  .report-error {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding: 14px;
+    color: var(--report-danger);
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    background: #fef2f2;
+  }
   .reports-grid-split {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

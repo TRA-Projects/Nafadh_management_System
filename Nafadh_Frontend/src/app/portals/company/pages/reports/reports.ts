@@ -1,5 +1,3 @@
-import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
-
 import { CommonModule } from '@angular/common';
 
 import {
@@ -13,11 +11,26 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 
-import * as XLSX from 'xlsx';
-import html2pdf from 'html2pdf.js';
+import { buildCompanyWorkbook, downloadBlob, CompanyWorkbookSheet } from '../trainees/xlsx-writer';
+import { openCompanyPrintReport, reportTablesHtml } from '../../utils/print-report';
 
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { CompanyWeightedEvaluationDto } from '../../../../core/models/dtos';
+import {
+  APPROVAL_LABELS,
+  EXECUTION_LABELS,
+  ITEM_TYPE_LABELS,
+  PRIORITY_LABELS,
+  PROGRESS_LABELS,
+  CoursePlanDetailDto,
+  CoursePlanSummaryDto,
+  PlanApprovalStatus,
+  PlanExecutionStatus,
+  PlanItemType,
+  PlanPriority,
+  PlanProgressStatus,
+} from '../../models/company-tasks.models';
 
 type ReportTab =
   | 'att'
@@ -66,14 +79,20 @@ interface EvaluationReport {
   statusClass: string;
 }
 
-interface TaskReport {
+/** Course-plan execution items, never trainee assignments or submissions. */
+interface OperationalItemReport {
   id: number;
-  task: string;
-  program: string;
-  due: string;
-  priority: string;
-  status: string;
-  submissionsCount: number;
+  planId: number;
+  planTitle: string;
+  batchId: number | null;
+  stageTitle: string;
+  type: PlanItemType;
+  title: string;
+  dueDate: string;
+  priority: PlanPriority;
+  status: PlanProgressStatus;
+  trainerNames: string;
+  isOverdue: boolean;
 }
 
 interface SupervisorReport {
@@ -88,11 +107,6 @@ interface SupervisorReport {
   statusClass: string;
 }
 
-interface ComparisonDepartment {
-  name: string;
-  value: number;
-}
-
 @Component({
   selector: 'app-reports',
   standalone: true,
@@ -101,8 +115,6 @@ interface ComparisonDepartment {
   styleUrls: ['./reports.scss']
 })
 export class ReportsComponent implements OnInit {
-  readonly constants = inject(NafadhConstantsService);
-
   private readonly companyApi = inject(CompanyApi);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
@@ -120,6 +132,12 @@ export class ReportsComponent implements OnInit {
   topPerformers: any[] = [];
   atRiskTrainees: any[] = [];
   programDistribution: any[] = [];
+  weightedEvaluations: CompanyWeightedEvaluationDto[] = [];
+  averageWeightedScore: number | null = null;
+  completedEvaluationsCount = 0;
+  averageAttendanceRate: number | null = null;
+  totalAbsentDays = 0;
+  totalLateDays = 0;
 
   // =====================================================
   // 1. الحضور
@@ -182,39 +200,22 @@ export class ReportsComponent implements OnInit {
   evaluations: EvaluationReport[] = [];
 
   // =====================================================
-  // 5. المهام - بيانات فعلية من API
+  // 5. Operational company plans and assigned trainer items only.
+  // Read from authorized CompanyCoursePlan endpoints (NOT Task/Submissions).
   // =====================================================
 
-  tasks: TaskReport[] = [];
+  planRows: CoursePlanSummaryDto[] = [];
+  operationalItems: OperationalItemReport[] = [];
+  tasksLoaded = false;
+  tasksError = '';
+  taskDetailsIncomplete = false;
 
   taskStats = {
     total: 0,
-    completed: 0,
-    pending: 0,
-    review: 0,
-    late: 0,
-    completionRate: 0
+    pendingApproval: 0,
+    inProgress: 0,
+    delayedPlans: 0
   };
-
-  get taskTotalCount(): number {
-    return this.taskStats.total;
-  }
-
-  get taskPendingCount(): number {
-    return this.taskStats.pending;
-  }
-
-  get taskReviewCount(): number {
-    return this.taskStats.review;
-  }
-
-  get taskLateCount(): number {
-    return this.taskStats.late;
-  }
-
-  get taskCompletedCount(): number {
-    return this.taskStats.completed;
-  }
 
   // =====================================================
   // 6. مقارنة المشرفين
@@ -222,15 +223,11 @@ export class ReportsComponent implements OnInit {
 
   supervisors: SupervisorReport[] = [];
 
-  comparisonDepartments: ComparisonDepartment[] = [];
-
   // =====================================================
   // 7. بدء التشغيل
   // =====================================================
 
   ngOnInit(): void {
-    this.constants.ensure('NFD_TSK_PRI');
-
     const id = this.auth.companyId;
 
     if (id === null || id === undefined || id <= 0) {
@@ -255,9 +252,6 @@ export class ReportsComponent implements OnInit {
 
     this.loading = true;
     this.errorMessage = '';
-
-    // تحميل المهام بشكل مستقل
-    this.loadTasksReport();
 
     forkJoin({
 
@@ -315,20 +309,13 @@ export class ReportsComponent implements OnInit {
           })
         ),
 
-      topPerformers: this.companyApi
-        .getTopPerformers(this.companyId)
+      // Single source for all final Company classifications: the Admin evaluator.
+      weightedResults: this.companyApi
+        .getCompanyWeightedEvaluations(this.companyId)
         .pipe(
           catchError(error => {
-            console.error('Top performers API:', error);
-            return of(null);
-          })
-        ),
-
-      atRisk: this.companyApi
-        .getAtRiskTrainees(this.companyId)
-        .pipe(
-          catchError(error => {
-            console.error('At risk API:', error);
+            console.error('Weighted evaluations API:', error);
+            this.errorMessage = 'تعذر تحميل نتائج التقييم الموزونة من الخادم.';
             return of(null);
           })
         )
@@ -356,11 +343,17 @@ export class ReportsComponent implements OnInit {
         this.programDistribution =
           this.extractList(result.distribution);
 
-        this.topPerformers =
-          this.extractList(result.topPerformers);
-
-        this.atRiskTrainees =
-          this.extractList(result.atRisk);
+        this.weightedEvaluations = result.weightedResults ?? [];
+        const completed = this.weightedEvaluations.filter(item =>
+          item.isComplete && item.finalScore !== null);
+        this.completedEvaluationsCount = completed.length;
+        this.averageWeightedScore = completed.length
+          ? Math.round(completed.reduce((sum, item) => sum + Number(item.finalScore), 0)
+            / completed.length * 10) / 10
+          : null;
+        this.topPerformers = completed.filter(item => item.level === 'ممتاز');
+        this.atRiskTrainees = completed.filter(item =>
+          item.level === 'متعثر' || item.level === 'راسب');
 
         this.loadAchievement(enrollments);
 
@@ -473,19 +466,27 @@ export class ReportsComponent implements OnInit {
       report
     );
 
+    this.averageAttendanceRate = report
+      ? this.toNumber(report?.overallAttendanceRate ?? report?.OverallAttendanceRate)
+      : null;
+    this.totalAbsentDays = rows.reduce((sum, item) => sum + this.toNumber(
+      item.absentDays ?? item.AbsentDays), 0);
+    this.totalLateDays = rows.reduce((sum, item) => sum + this.toNumber(
+      item.lateDays ?? item.LateDays), 0);
+
     if (!rows.length) {
       this.attendanceDepartments = [];
       this.attendanceProgramsCards = [];
       return;
     }
 
-    const departmentByTrainee = new Map<number, string>();
+    const departmentByEnrollment = new Map<number, string>();
 
     enrollments.forEach(enrollment => {
 
-      const traineeId = this.toNumber(
-        enrollment.traineeId ??
-        enrollment.TraineeId
+      const enrollmentId = this.toNumber(
+        enrollment.enrollmentId ??
+        enrollment.EnrollmentId
       );
 
       const department = String(
@@ -496,8 +497,8 @@ export class ReportsComponent implements OnInit {
         'غير محدد'
       );
 
-      if (traineeId > 0) {
-        departmentByTrainee.set(traineeId, department);
+      if (enrollmentId > 0) {
+        departmentByEnrollment.set(enrollmentId, department);
       }
     });
 
@@ -505,13 +506,13 @@ export class ReportsComponent implements OnInit {
 
     rows.forEach(row => {
 
-      const traineeId = this.toNumber(
-        row.traineeId ??
-        row.TraineeId
+      const enrollmentId = this.toNumber(
+        row.enrollmentId ??
+        row.EnrollmentId
       );
 
       const department =
-        departmentByTrainee.get(traineeId) ??
+        departmentByEnrollment.get(enrollmentId) ??
         String(
           row.departmentName ??
           row.DepartmentName ??
@@ -569,17 +570,9 @@ export class ReportsComponent implements OnInit {
             absence,
             late,
 
-            evaluation: attendance >= 95
-              ? 'ممتاز'
-              : attendance >= 85
-                ? 'جيد'
-                : 'يحتاج متابعة',
-
-            status: attendance >= 95
-              ? 'ok'
-              : attendance >= 85
-                ? 'warn'
-                : 'bad'
+            // Attendance-only label, not the Admin academic grade.
+            evaluation: 'معدل حضور',
+            status: 'muted'
           };
         }
       );
@@ -769,290 +762,91 @@ export class ReportsComponent implements OnInit {
       }
     );
 
-    this.comparisonDepartments = [];
     this.evaluations = [];
   }
 
   // =====================================================
-  // 14. تحميل المهام وتسليماتها
+  // 14. Operational plans and their trainer-assigned execution items.
+  // NO student NFD_Task or NFD_Submission API calls are made.
   // =====================================================
 
-  private loadTasksReport(): void {
-
+  loadTasksReport(): void {
+    if (!this.companyId || this.tasksLoading) return;
     this.tasksLoading = true;
-
-    this.companyApi
-      .getTasksByCompany(this.companyId)
-      .pipe(
-        catchError(error => {
-          console.error('Tasks API Error:', error);
-          return of([]);
-        })
-      )
-      .subscribe({
-
-        next: response => {
-
-          const taskList = this.extractList(response);
-
-          if (!taskList.length) {
-
-            this.tasks = [];
-            this.calculateTaskStats();
-
-            this.tasksLoading = false;
-            this.cdr.detectChanges();
-
-            return;
-          }
-
-          // طلب تسليمات كل مهمة
-          const requests = taskList.map((task: any) => {
-
-            const taskId = this.toNumber(
-              task.taskId ??
-              task.TaskId ??
-              task.id ??
-              task.Id
-            );
-
-            if (taskId <= 0) {
-              return of([]);
-            }
-
-            return this.companyApi
-              .getSubmissionsByTask(taskId)
-              .pipe(
-                catchError(error => {
-
-                  console.error(
-                    `Submissions API Error for task ${taskId}:`,
-                    error
-                  );
-
-                  return of([]);
-                })
-              );
-          });
-
-          forkJoin(requests).subscribe({
-
-            next: allSubmissions => {
-
-              this.tasks = taskList.map(
-                (task: any, index: number): TaskReport => {
-
-                  const taskId = this.toNumber(
-                    task.taskId ??
-                    task.TaskId ??
-                    task.id ??
-                    task.Id
-                  );
-
-                  const submissions = this.extractList(
-                    allSubmissions[index]
-                  );
-
-                  const dueDate =
-                    task.dueDate ??
-                    task.DueDate ??
-                    null;
-
-                  const originalStatus = String(
-                    task.status ??
-                    task.Status ??
-                    ''
-                  ).trim().toLowerCase();
-
-                  const status = this.resolveTaskStatus(
-                    originalStatus,
-                    dueDate
-                  );
-
-                  return {
-
-                    id: taskId,
-
-                    task: String(
-                      task.title ??
-                      task.Title ??
-                      'بدون عنوان'
-                    ),
-
-                    program: String(
-                      task.programName ??
-                      task.ProgramName ??
-                      task.batchName ??
-                      task.BatchName ??
-                      'غير محدد'
-                    ),
-
-                    due: dueDate
-                      ? String(dueDate)
-                      : 'غير محدد',
-
-                    priority: String(
-                      task.priority ??
-                      task.Priority ??
-                      'غير محدد'
-                    ),
-
-                    status,
-
-                    submissionsCount: submissions.length
-                  };
-                }
-              );
-
-              this.calculateTaskStats();
-
-              this.tasksLoading = false;
-              this.cdr.detectChanges();
-            },
-
-            error: error => {
-
-              console.error(
-                'Task submissions loading error:',
-                error
-              );
-
-              this.tasksLoading = false;
-              this.cdr.detectChanges();
-            }
-
-          });
-        },
-
-        error: error => {
-
-          console.error('Tasks loading error:', error);
-
-          this.tasks = [];
-          this.calculateTaskStats();
-
+    this.tasksError = '';
+    this.taskDetailsIncomplete = false;
+    this.planRows = [];
+    this.operationalItems = [];
+    this.companyApi.getCoursePlans(this.companyId).subscribe({
+      next: overview => {
+        this.planRows = overview.plans ?? [];
+        const counts = overview.counts;
+        this.taskStats = {
+          total: this.planRows.length,
+          pendingApproval: counts?.pendingApproval ?? 0,
+          inProgress: counts?.inProgress ?? 0,
+          delayedPlans: counts?.delayedPlans ?? 0
+        };
+        this.tasksLoaded = true;
+        if (!this.planRows.length) {
           this.tasksLoading = false;
           this.cdr.detectChanges();
+          return;
         }
 
-      });
-  }
-
-  // =====================================================
-  // 15. تحديد حالة المهمة
-  // =====================================================
-
-  private resolveTaskStatus(
-    originalStatus: string,
-    dueDate: any
-  ): string {
-
-    // الحالات المكتملة
-    const completedStatuses = [
-      'completed',
-      'complete',
-      'done',
-      'مكتمل',
-      'مكتملة'
-    ];
-
-    if (
-      completedStatuses.some(status =>
-        originalStatus.includes(status)
-      )
-    ) {
-      return 'completed';
-    }
-
-    // حالات المراجعة
-    const reviewStatuses = [
-      'review',
-      'under review',
-      'مراجعة',
-      'قيد المراجعة'
-    ];
-
-    if (
-      reviewStatuses.some(status =>
-        originalStatus.includes(status)
-      )
-    ) {
-      return 'review';
-    }
-
-    // حالات التأخير
-    const lateStatuses = [
-      'late',
-      'overdue',
-      'متأخر',
-      'متأخرة'
-    ];
-
-    if (
-      lateStatuses.some(status =>
-        originalStatus.includes(status)
-      )
-    ) {
-      return 'late';
-    }
-
-    // فحص تاريخ التسليم
-    if (dueDate) {
-
-      const due = new Date(dueDate);
-
-      if (!isNaN(due.getTime())) {
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        due.setHours(0, 0, 0, 0);
-
-        if (due.getTime() < today.getTime()) {
-          return 'late';
-        }
+        // A detail request is scoped by the same authenticated CompanyId.
+        // Keep overview results even if a single plan detail cannot load.
+        const requests = this.planRows.map(plan =>
+          this.companyApi.getCoursePlan(this.companyId, plan.planId).pipe(
+            catchError(error => {
+              console.error('Course plan details API:', plan.planId, error);
+              this.taskDetailsIncomplete = true;
+              return of(null);
+            })
+          )
+        );
+        forkJoin(requests).subscribe({
+          next: details => {
+            this.operationalItems = details
+              .filter((detail): detail is CoursePlanDetailDto => detail !== null)
+              .flatMap(detail => detail.stages.flatMap(stage =>
+                stage.items.map(item => ({
+                  id: item.itemId,
+                  planId: detail.planId,
+                  planTitle: detail.title,
+                  batchId: detail.batchId ?? null,
+                  stageTitle: stage.title,
+                  type: item.itemType,
+                  title: item.title,
+                  dueDate: item.dueDate,
+                  priority: item.priority,
+                  status: item.status,
+                  trainerNames: item.trainerName || stage.trainerName ||
+                    (stage.trainers ?? []).map(trainer => trainer.fullName).join('، ') ||
+                    'لم يُسند مدرب',
+                  isOverdue: item.isOverdue
+                }))
+              ))
+              .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+            this.tasksLoading = false;
+            this.cdr.detectChanges();
+          },
+          error: error => {
+            console.error('Operational items loading error:', error);
+            this.taskDetailsIncomplete = true;
+            this.tasksLoading = false;
+            this.cdr.detectChanges();
+          }
+        });
+      },
+      error: error => {
+        console.error('Company course plans API:', error);
+        this.tasksError = 'تعذر تحميل الخطط التشغيلية للشركة. حاول إعادة التحميل.';
+        this.tasksLoading = false;
+        this.tasksLoaded = false;
+        this.cdr.detectChanges();
       }
-    }
-
-    return 'pending';
-  }
-
-  // =====================================================
-  // 16. حساب إحصائيات المهام
-  // =====================================================
-
-  private calculateTaskStats(): void {
-
-    const total = this.tasks.length;
-
-    const completed = this.tasks.filter(
-      task => task.status === 'completed'
-    ).length;
-
-    const pending = this.tasks.filter(
-      task => task.status === 'pending'
-    ).length;
-
-    const review = this.tasks.filter(
-      task => task.status === 'review'
-    ).length;
-
-    const late = this.tasks.filter(
-      task => task.status === 'late'
-    ).length;
-
-    this.taskStats = {
-
-      total,
-      completed,
-      pending,
-      review,
-      late,
-
-      completionRate: total > 0
-        ? Math.round((completed / total) * 100)
-        : 0
-    };
+    });
   }
 
   // =====================================================
@@ -1117,52 +911,37 @@ export class ReportsComponent implements OnInit {
 
   selectTab(tab: ReportTab): void {
     this.activeTab = tab;
-  }
-
-  // =====================================================
-  // 19. حالات المهام
-  // =====================================================
-
-  getTaskStatusClass(status: string): string {
-
-    switch (status) {
-
-      case 'review':
-        return 'info';
-
-      case 'pending':
-        return 'warn';
-
-      case 'late':
-        return 'bad';
-
-      case 'completed':
-        return 'ok';
-
-      default:
-        return 'muted';
+    if (tab === 'tasks' && !this.tasksLoaded && !this.tasksLoading) {
+      this.loadTasksReport();
     }
   }
 
-  getTaskStatusText(status: string): string {
+  // =====================================================
+  // 19. Server-aligned operational status labels.
+  // =====================================================
 
-    switch (status) {
+  approvalLabel(value: PlanApprovalStatus): string {
+    return APPROVAL_LABELS[value] ?? value;
+  }
 
-      case 'review':
-        return 'قيد المراجعة';
+  executionLabel(value: PlanExecutionStatus): string {
+    return EXECUTION_LABELS[value] ?? value;
+  }
 
-      case 'pending':
-        return 'قيد التنفيذ';
+  progressLabel(value: PlanProgressStatus): string {
+    return PROGRESS_LABELS[value] ?? value;
+  }
 
-      case 'late':
-        return 'متأخرة';
+  itemTypeLabel(value: PlanItemType): string {
+    return ITEM_TYPE_LABELS[value] ?? value;
+  }
 
-      case 'completed':
-        return 'مكتملة';
+  itemPriorityLabel(value: PlanPriority): string {
+    return PRIORITY_LABELS[value] ?? value;
+  }
 
-      default:
-        return 'غير محددة';
-    }
+  planTrainerNames(plan: CoursePlanSummaryDto): string {
+    return (plan.trainers ?? []).map(t => t.fullName).join('، ') || 'لم يُسند مدرب';
   }
 
   // =====================================================
@@ -1193,298 +972,152 @@ export class ReportsComponent implements OnInit {
   }
 
   // =====================================================
-  // 21. تصدير Excel
+  // 21. Exports: use the SAME actual company API data in PDF and Excel.
+  // PDF is browser-printed vector text, never a screenshot.
   // =====================================================
 
-  exportExcel(): void {
+  private readonly exportTitles: Record<ReportTab, string> = {
+    att: 'تقرير حضور المتدربين للشركة',
+    achieve: 'تقرير إنجاز المتدربين للشركة',
+    cap: 'تقرير الطاقة الاستيعابية للشركة',
+    tasks: 'تقرير الخطط والمهام التشغيلية للشركة',
+    eval: 'تقرير التقييمات',
+    compare: 'تقرير مقارنة المشرفين'
+  };
 
-    let data: Record<string, string | number>[] = [];
-    let fileName = 'Nafadh_Report';
-
+  private exportSheets(): CompanyWorkbookSheet[] {
     switch (this.activeTab) {
-
       case 'att':
-
-        data = this.attendanceDepartments.map(item => ({
-          'القسم': item.department,
-          'عدد المتدربين': item.trainees,
-          'معدل الحضور': `${item.attendance}%`,
-          'الغياب': item.absence,
-          'التأخر': item.late,
-          'التقييم': item.evaluation
-        }));
-
-        fileName = 'Nafadh_Attendance_Report';
-        break;
-
+        return [
+          {
+            name: 'حضور حسب القسم',
+            headers: ['القسم', 'عدد التسجيلات', 'الحضور (%)', 'الغياب', 'التأخر', 'التقييم'],
+            rows: this.attendanceDepartments.map(item => [
+              item.department, item.trainees, item.attendance,
+              item.absence, item.late, item.evaluation
+            ]),
+            note: 'النسب مأخوذة من تقرير الحضور الفعلي للشركة؛ قد تتضمن تسجيلات مكتملة.'
+          },
+          {
+            name: 'الحضور الأسبوعي',
+            headers: ['الأسبوع', 'الحضور (%)'],
+            rows: this.attendanceWeeks.map(week => [week.label, week.value]),
+            note: 'الأسابيع المتاحة من سجلات الحضور الفعلية.'
+          }
+        ];
       case 'achieve':
-
-        data = this.achievementPrograms.map(item => ({
-          'البرنامج': item.name,
-          'نسبة الإنجاز': `${item.value}%`
-        }));
-
-        fileName = 'Nafadh_Achievement_Report';
-        break;
-
+        return [
+          {
+            name: 'التقييم الموزون',
+            headers: ['رقم التسجيل', 'المتدرب', 'البرنامج', 'الدفعة', 'الحضور (%)', 'الدرجة النهائية (%)', 'التصنيف'],
+            rows: this.weightedEvaluations.map(item => [
+              item.enrollmentId, item.fullName ?? 'غير محدد',
+              item.programName ?? 'غير محدد', item.batchName ?? String(item.batchId),
+              item.attendancePercent,
+              item.finalScore === null ? 'غير مكتمل' : item.finalScore,
+              item.level
+            ]),
+            note: 'الدرجة النهائية والتصنيف وفق الأوزان والمعايير المعتمدة للدفعة في Admin. غير المكتمل لا يساوي صفرًا.'
+          },
+          {
+            name: 'تقدم الأنشطة',
+            headers: ['البرنامج', 'متوسط تقدم الأنشطة (%)'],
+            rows: this.achievementPrograms.map(item => [item.name, item.value]),
+            note: 'تقدم الأنشطة مختلف عن نتيجة التقييم النهائي الموزون.'
+          }
+        ];
       case 'cap':
-
-        data = this.capacityPrograms.map(item => ({
-          'البرنامج': item.name,
-          'الحصة المخصصة': item.capacity,
-          'المستخدم': item.used,
-          'المتبقي': item.remaining,
-          'الاستغلال': `${item.percentage}%`
-        }));
-
-        fileName = 'Nafadh_Capacity_Report';
-        break;
-
-      case 'eval':
-
-        data = this.evaluations.map(item => ({
-          'المشرف': item.supervisor,
-          'القسم': item.department,
-          'مطلوب': item.required,
-          'متأخر': item.late,
-          'آخر تقييم': item.lastEvaluation,
-          'الحالة': item.status
-        }));
-
-        fileName = 'Nafadh_Evaluations_Report';
-        break;
-
+        return [{
+          name: 'الطاقة الاستيعابية',
+          headers: ['النطاق', 'السعة الإجمالية', 'المستخدم', 'المتبقي', 'الاستغلال (%)'],
+          rows: this.capacityPrograms.map(item => [
+            item.name, item.capacity, item.used, item.remaining, item.percentage
+          ]),
+          note: 'تعبّر البيانات عن الطاقة الاستيعابية للشركة، وليست توزيعًا تقديريًا حسب البرامج.'
+        }];
       case 'tasks':
-
-        data = this.tasks.map(item => ({
-          'اسم المهمة': item.task,
-          'البرنامج أو الدفعة': item.program,
-          'تاريخ التسليم': item.due,
-          'الأولوية': this.constants.administrativeLabel('NFD_TSK_PRI', item.priority),
-          'الحالة': this.getTaskStatusText(item.status),
-          'عدد التسليمات': item.submissionsCount
-        }));
-
-        fileName = 'Nafadh_Tasks_Report';
-        break;
-
+        return [
+          {
+            name: 'الخطط التشغيلية',
+            headers: ['رقم الخطة', 'الخطة/البرنامج', 'الدفعة', 'منشئ الخطة', 'المدربون المسندون', 'الاعتماد', 'التنفيذ', 'إنجاز البنود (%)', 'المراحل المتأخرة'],
+            rows: this.planRows.map(plan => [
+              plan.planId, plan.title, plan.batchId ?? '—',
+              plan.createdByName || 'غير محدد', this.planTrainerNames(plan),
+              this.approvalLabel(plan.approvalStatus), this.executionLabel(plan.executionStatus),
+              plan.progressPercentage, plan.delayedStages
+            ]),
+            note: 'خطط الشركة التشغيلية؛ لا يشمل التقرير واجبات المتدربين أو التسليمات.'
+          },
+          {
+            name: 'بنود التنفيذ',
+            headers: ['الخطة', 'الدفعة', 'المرحلة', 'نوع البند', 'البند', 'المدرب المسؤول', 'الموعد', 'الأولوية', 'الحالة', 'متأخر'],
+            rows: this.operationalItems.map(item => [
+              item.planTitle, item.batchId ?? '—', item.stageTitle,
+              this.itemTypeLabel(item.type), item.title, item.trainerNames,
+              item.dueDate ? new Date(item.dueDate).toLocaleDateString('ar-OM') : '—',
+              this.itemPriorityLabel(item.priority), this.progressLabel(item.status),
+              item.isOverdue ? 'نعم' : 'لا'
+            ]),
+            note: this.taskDetailsIncomplete
+              ? 'تنبيه: بعض تفاصيل الخطط لم تُحمّل؛ قائمة البنود قد تكون غير مكتملة.'
+              : 'البنود التنفيذية على مستوى الخطة والمرحلة والمدرب فقط.'
+          }
+        ];
+      case 'eval':
+        return [{
+          name: 'التقييمات',
+          headers: ['المشرف', 'القسم', 'مطلوب', 'متأخر', 'آخر تقييم', 'الحالة'],
+          rows: this.evaluations.map(item => [item.supervisor, item.department, item.required, item.late, item.lastEvaluation, item.status])
+        }];
       case 'compare':
-
-        data = this.supervisors.map(item => ({
-          'المشرف': item.name,
-          'القسم': item.department,
-          'المتدربون': item.trainees,
-
-          'معدل الحضور': item.attendance === null
-            ? 'غير متاح'
-            : `${item.attendance}%`,
-
-          'متوسط الأداء': item.performance === null
-            ? 'غير متاح'
-            : `${item.performance}%`,
-
-          'تقييمات معلقة':
-            item.pendingEvaluations ?? 'غير متاح',
-
-          'الأداء العام': item.overall
-        }));
-
-        fileName = 'Nafadh_Supervisors_Comparison_Report';
-        break;
+        return [{
+          name: 'المشرفون',
+          headers: ['المشرف', 'القسم', 'المتدربون', 'الحضور (%)', 'الأداء (%)', 'تقييمات معلقة', 'الأداء العام'],
+          rows: this.supervisors.map(item => [
+            item.name, item.department, item.trainees,
+            item.attendance ?? 'غير متاح', item.performance ?? 'غير متاح',
+            item.pendingEvaluations ?? 'غير متاح', item.overall
+          ])
+        }];
     }
+  }
 
-    if (!data.length) {
+  private canExport(sheets: CompanyWorkbookSheet[]): boolean {
+    if (this.loading || (this.activeTab === 'tasks' && (this.tasksLoading || !this.tasksLoaded || !!this.tasksError))) {
+      alert('لم يكتمل تحميل بيانات التقرير. يرجى المحاولة بعد انتهاء التحميل.');
+      return false;
+    }
+    if (!sheets.some(sheet => sheet.rows.length)) {
       alert('لا توجد بيانات فعلية متاحة لتصديرها في هذا التقرير.');
-      return;
+      return false;
     }
+    return true;
+  }
 
+  exportExcel(): void {
+    const sheets = this.exportSheets();
+    if (!this.canExport(sheets)) return;
     try {
-
-      const worksheet = XLSX.utils.json_to_sheet(data);
-
-      worksheet['!cols'] = Object.keys(data[0]).map(key => {
-
-        const lengths = data.map(row =>
-          String(row[key] ?? '').length
-        );
-
-        return {
-          wch: Math.min(
-            Math.max(key.length, ...lengths) + 3,
-            35
-          )
-        };
-      });
-
-      worksheet['!views'] = [
-        { rightToLeft: true }
-      ];
-
-      const workbook = XLSX.utils.book_new();
-
-      XLSX.utils.book_append_sheet(
-        workbook,
-        worksheet,
-        'التقرير'
-      );
-
-      XLSX.writeFile(
-        workbook,
-        `${fileName}.xlsx`
-      );
-
+      const file = buildCompanyWorkbook(this.exportTitles[this.activeTab], sheets);
+      downloadBlob(file, `Nafadh_Company_${this.activeTab}_${new Date().toISOString().slice(0, 10)}.xlsx`);
     } catch (error) {
-
       console.error('Excel export error:', error);
       alert('حدث خطأ أثناء إنشاء ملف Excel.');
     }
   }
 
-  // =====================================================
-  // 22. تصدير PDF
-  // =====================================================
-
   exportPdf(): void {
-
-    const source = document.querySelector(
-      '.reports-page'
-    ) as HTMLElement | null;
-
-    if (!source) {
-      alert('تعذر العثور على محتوى التقرير.');
-      return;
+    const sheets = this.exportSheets();
+    if (!this.canExport(sheets)) return;
+    const success = openCompanyPrintReport(
+      this.exportTitles[this.activeTab],
+      reportTablesHtml(sheets.map(sheet => ({
+        title: sheet.name, headers: sheet.headers, rows: sheet.rows, note: sheet.note
+      }))),
+      { landscape: sheets.some(sheet => sheet.headers.length > 6) }
+    );
+    if (!success) {
+      alert('المتصفح منع فتح نافذة التقرير. اسمح بالنوافذ المنبثقة ثم أعد المحاولة.');
     }
-
-    const clone = source.cloneNode(true) as HTMLElement;
-
-    clone.querySelector('.page-head')?.remove();
-    clone.querySelector('.tabs')?.remove();
-
-    clone.querySelectorAll('button').forEach(button => {
-      button.remove();
-    });
-
-    clone.setAttribute('dir', 'rtl');
-    clone.style.direction = 'rtl';
-    clone.style.textAlign = 'right';
-    clone.style.background = '#ffffff';
-    clone.style.color = '#111827';
-    clone.style.width = '1120px';
-    clone.style.padding = '20px';
-    clone.style.boxSizing = 'border-box';
-
-    const reportNames: Record<ReportTab, string> = {
-
-      att: 'تقرير حضور المتدربين للبرامج',
-      achieve: 'تقرير إنجاز المتدربين',
-      cap: 'تقرير الطاقة الاستيعابية',
-      eval: 'تقرير التقييمات',
-      tasks: 'تقرير المهام',
-      compare: 'تقرير مقارنة الأقسام والمشرفين'
-
-    };
-
-    const reportName = reportNames[this.activeTab];
-
-    const title = document.createElement('div');
-
-    title.style.direction = 'rtl';
-    title.style.textAlign = 'center';
-    title.style.marginBottom = '25px';
-    title.style.paddingBottom = '15px';
-    title.style.borderBottom = '2px solid #00338d';
-
-    const heading = document.createElement('h1');
-
-    heading.textContent = reportName;
-    heading.style.margin = '0 0 8px';
-    heading.style.fontSize = '24px';
-    heading.style.color = '#00338d';
-
-    const systemName = document.createElement('div');
-
-    systemName.textContent = 'نظام نفاذ لإدارة التدريب';
-    systemName.style.fontSize = '13px';
-    systemName.style.color = '#64748b';
-
-    const reportDate = document.createElement('div');
-
-    reportDate.textContent =
-      `تاريخ التقرير: ${new Date().toLocaleDateString('ar-OM')}`;
-
-    reportDate.style.marginTop = '5px';
-    reportDate.style.fontSize = '12px';
-    reportDate.style.color = '#64748b';
-
-    title.append(heading, systemName, reportDate);
-
-    clone.insertBefore(title, clone.firstChild);
-
-    clone.querySelectorAll('table').forEach(table => {
-
-      table.style.direction = 'rtl';
-      table.style.width = '100%';
-      table.style.borderCollapse = 'collapse';
-
-    });
-
-    const wrapper = document.createElement('div');
-
-    wrapper.style.position = 'fixed';
-    wrapper.style.left = '-15000px';
-    wrapper.style.top = '0';
-    wrapper.style.width = '1160px';
-    wrapper.style.background = '#ffffff';
-    wrapper.style.padding = '20px';
-    wrapper.style.boxSizing = 'border-box';
-
-    wrapper.appendChild(clone);
-    document.body.appendChild(wrapper);
-
-    const options = {
-
-      margin: 10,
-
-      filename: `${reportName}.pdf`,
-
-      image: {
-        type: 'jpeg' as const,
-        quality: 0.98
-      },
-
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false
-      },
-
-      jsPDF: {
-        unit: 'mm' as const,
-        format: 'a4' as const,
-        orientation: 'landscape' as const
-      },
-
-      pagebreak: {
-        mode: ['css', 'legacy'] as const
-      }
-
-    };
-
-    html2pdf()
-      .set(options)
-      .from(clone)
-      .save()
-      .then(() => {
-        wrapper.remove();
-      })
-      .catch(error => {
-
-        console.error('PDF export error:', error);
-
-        wrapper.remove();
-
-        alert('حدث خطأ أثناء إنشاء ملف PDF.');
-      });
   }
 }

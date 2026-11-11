@@ -651,7 +651,7 @@ export class CompanySupervisors implements OnInit {
       }
     });
 
-    this.companyApi.getCompanyTrainers(this.companyId).subscribe({
+    this.companyApi.getCompanyTrainerDirectory(this.companyId).subscribe({
       next: (response: unknown) => {
         if (requestId !== this.trainersRequestId) return;
 
@@ -1338,8 +1338,14 @@ export class CompanySupervisors implements OnInit {
       status: this.newSupervisor.isInactive ? 'Inactive' : 'Active'
     };
 
-    if (!this.editingSupervisor && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.newSupervisor.email.trim())) {
+    // The same validation applies to creating and editing an account.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.newSupervisor.email.trim())) {
       this.showToast('error', 'يرجى إدخال بريد إلكتروني صحيح');
+      return;
+    }
+    if (this.newSupervisor.phone.trim() &&
+        !/^\+?[0-9]{8,15}$/.test(this.newSupervisor.phone.trim())) {
+      this.showToast('error', 'رقم الهاتف يجب أن يتكون من 8 إلى 15 رقمًا');
       return;
     }
 
@@ -1373,9 +1379,9 @@ export class CompanySupervisors implements OnInit {
 
         this.showToast(
           'error',
-          editing
+          (error as any)?.error?.message || (editing
             ? 'تعذر تحديث بيانات المشرف'
-            : ((error as any)?.error?.message || 'تعذر إضافة المشرف')
+            : 'تعذر إضافة المشرف')
         );
       }
     });
@@ -1411,7 +1417,7 @@ export class CompanySupervisors implements OnInit {
 
       error: (error: unknown) => {
         console.error('Toggle status error:', error);
-        this.showToast('error', 'تعذر تغيير حالة الحساب');
+        this.showToast('error', (error as any)?.error?.message || 'تعذر تغيير حالة الحساب');
       }
     });
 
@@ -1463,7 +1469,7 @@ export class CompanySupervisors implements OnInit {
 
     forkJoin({
       assigned: this.companyApi.getSupervisorTrainers(s.supervisorId),
-      trainers: this.companyApi.getCompanyTrainers(this.companyId)
+      trainers: this.companyApi.getCompanyTrainerDirectory(this.companyId)
     }).subscribe({
       next: ({ assigned, trainers }) => {
         if (!this.isDistributeModalOpen || this.selectedSupervisor !== s) return;

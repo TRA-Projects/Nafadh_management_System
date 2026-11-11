@@ -951,12 +951,55 @@ namespace Nafadh_Backend.Repositories
         }
 
 
+        // Fix 12: single source of final weighted assessment for the Company portal.
+        // Reuses the SAME CalculateBatchWeightedStatsAsync invoked by Admin's
+        // batch-performance reports. Each enrollment remains distinct (Fix 11).
+        // Never return trainees belonging to another company in shared batches.
+        public async Task<List<CompanyWeightedEvaluationDTO>> GetCompanyWeightedEvaluationsAsync(int companyId)
+        {
+            var batches = await _context.NFD_Batches
+                .AsNoTracking()
+                .Include(b => b.Program)
+                .Where(b => b.Enrollments.Any(e =>
+                    e.CompanyId == companyId &&
+                    e.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress))
+                .OrderBy(b => b.BatchId)
+                .ToListAsync();
+
+            var result = new List<CompanyWeightedEvaluationDTO>();
+            foreach (var batch in batches)
+            {
+                var stats = await CalculateBatchWeightedStatsAsync(batch, companyId);
+                result.AddRange(stats
+                    .Where(s => s.Enrollment.CompletionStatus ==
+                                NFD_EnrollmentCompletionStatus.InProgress)
+                    .Select(s => new CompanyWeightedEvaluationDTO
+                    {
+                        EnrollmentId = s.Enrollment.EnrollmentId,
+                        TraineeId = s.Enrollment.TraineeId,
+                        BatchId = batch.BatchId,
+                        BatchName = batch.BatchName,
+                        ProgramName = batch.Program?.Title,
+                        FullName = s.Enrollment.Trainee?.User?.FullName,
+                        Major = s.Enrollment.Trainee?.Major,
+                        GitHubUrl = s.Enrollment.Trainee?.GitHubUrl,
+                        LinkedInUrl = s.Enrollment.Trainee?.LinkedInUrl,
+                        AttendancePercent = Math.Round(s.Attendance, 1),
+                        FinalScore = s.IsComplete ? s.Final : null,
+                        IsComplete = s.IsComplete,
+                        Level = s.Level
+                    }));
+            }
+            return result;
+        }
+
         // Company portal Reports: company-wide attendance report (spans batches).
         public async Task<AttendanceReportDTO?> GetCompanyAttendanceReportAsync(int companyId)
         {
             var enrollments = await _context.NFD_Enrollments
                 .Include(e => e.Trainee).ThenInclude(t => t.User)
-                .Include(e => e.DailyAttendances)
+                .Include(e => e.Department)
+                .Include(e => e.DailyAttendances).ThenInclude(a => a.Excuses)
                 .Where(e => e.CompanyId == companyId)
                 .ToListAsync();
 
@@ -964,23 +1007,40 @@ namespace Nafadh_Backend.Repositories
 
             var rows = enrollments.Select(e =>
             {
-                var present = e.DailyAttendances.Count(a => a.Status == NFD_AttendanceStatus.Present);
-                var late = e.DailyAttendances.Count(a => a.Status == NFD_AttendanceStatus.Late);
-                var absent = e.DailyAttendances.Count(a => a.Status == NFD_AttendanceStatus.Absent);
-                var excused = e.DailyAttendances.Count(a => a.Status == NFD_AttendanceStatus.Excused);
-                var total = e.DailyAttendances.Count;
+                var eligible = e.DailyAttendances
+                    .Where(a => !a.Excuses.Any(x => x.Status == NFD_ExcuseStatus.Approved))
+                    .ToList();
+                var present = eligible.Count(a => a.Status == NFD_AttendanceStatus.Present);
+                var late = eligible.Count(a => a.Status == NFD_AttendanceStatus.Late);
+                var absent = eligible.Count(a => a.Status == NFD_AttendanceStatus.Absent);
+                var excused = e.DailyAttendances.Count(a =>
+                    a.Excuses.Any(x => x.Status == NFD_ExcuseStatus.Approved) ||
+                    a.Status == NFD_AttendanceStatus.Excused);
 
                 return new AttendanceReportRowDTO
                 {
+                    EnrollmentId = e.EnrollmentId,
+                    BatchId = e.BatchId,
+                    DepartmentId = e.DepartmentId,
+                    DepartmentName = e.Department?.Name,
                     TraineeId = e.TraineeId,
                     TraineeName = e.Trainee?.User?.FullName,
                     PresentDays = present,
                     LateDays = late,
                     AbsentDays = absent,
                     ExcusedDays = excused,
-                    AttendanceRate = total > 0 ? Math.Round((double)present / total * 100.0, 1) : 0
+                    AttendanceRate = eligible.Count > 0
+                        ? Math.Round((double)present / eligible.Count * 100.0, 1) : 0
                 };
             }).ToList();
+
+            // The summary KPI uses active attendance records, like the
+            // Company Dashboard. Historical rows remain visible in the report.
+            var activeAttendance = enrollments
+                .Where(e => e.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress)
+                .SelectMany(e => e.DailyAttendances)
+                .Where(a => !a.Excuses.Any(x => x.Status == NFD_ExcuseStatus.Approved))
+                .ToList();
 
             return new AttendanceReportDTO
             {
@@ -988,7 +1048,9 @@ namespace Nafadh_Backend.Repositories
                 BatchName = null,
                 PeriodStart = enrollments.SelectMany(e => e.DailyAttendances).Select(a => (DateTime?)a.Date).Min(),
                 PeriodEnd = enrollments.SelectMany(e => e.DailyAttendances).Select(a => (DateTime?)a.Date).Max(),
-                OverallAttendanceRate = rows.Count > 0 ? Math.Round(rows.Average(r => r.AttendanceRate), 1) : 0,
+                OverallAttendanceRate = activeAttendance.Count > 0
+                    ? Math.Round(activeAttendance.Count(a => a.Status == NFD_AttendanceStatus.Present)
+                        * 100.0 / activeAttendance.Count, 1) : 0,
                 Rows = rows
             };
         }
@@ -997,17 +1059,24 @@ namespace Nafadh_Backend.Repositories
         public async Task<List<ChartPointDTO>> GetCompanyAttendanceChartAsync(int companyId)
         {
             var records = await _context.NFD_DailyAttendances
-                .Where(a => a.Enrollment.CompanyId == companyId)
+                .Include(a => a.Excuses)
+                .Where(a => a.Enrollment.CompanyId == companyId &&
+                            a.Enrollment.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress)
                 .ToListAsync();
 
             var byWeek = records
-                .GroupBy(a => System.Globalization.ISOWeek.GetWeekOfYear(a.Date))
-                .OrderByDescending(g => g.Key)
+                .Where(a => !a.Excuses.Any(x => x.Status == NFD_ExcuseStatus.Approved))
+                .GroupBy(a => new
+                {
+                    Year = System.Globalization.ISOWeek.GetYear(a.Date),
+                    Week = System.Globalization.ISOWeek.GetWeekOfYear(a.Date)
+                })
+                .OrderByDescending(g => g.Key.Year).ThenByDescending(g => g.Key.Week)
                 .Take(6)
-                .OrderBy(g => g.Key)
+                .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Week)
                 .Select(g => new ChartPointDTO
                 {
-                    Label = $"أسبوع {g.Key}",
+                    Label = $"أسبوع {g.Key.Week} / {g.Key.Year}",
                     Value = Math.Round(g.Count(a => a.Status == NFD_AttendanceStatus.Present) * 100.0 / g.Count(), 1)
                 })
                 .ToList();
@@ -1026,52 +1095,29 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
         }
 
-        // Company portal Dashboard: top performers, ranked by average evaluation score.
+        // Legacy Company report lists now use the same weighted classification.
         public async Task<List<int>> GetCompanyTopPerformerTraineeIdsAsync(int companyId, int take)
         {
-            var ranked = await _context.NFD_Enrollments
-                .Where(e => e.CompanyId == companyId)
-                .Select(e => new
-                {
-                    e.TraineeId,
-                    AvgScore = e.Evaluations.Count() > 0 ? e.Evaluations.Average(ev => ev.Score) : 0
-                })
-                .OrderByDescending(x => x.AvgScore)
-                .Take(take)
-                .ToListAsync();
-
-            return ranked.Select(x => x.TraineeId).ToList();
+            var rows = await GetCompanyWeightedEvaluationsAsync(companyId);
+            return rows.Where(x => x.Level == "ممتاز")
+                .OrderByDescending(x => x.FinalScore)
+                .ThenByDescending(x => x.AttendancePercent)
+                .Select(x => x.TraineeId)
+                .Distinct()
+                .Take(Math.Clamp(take, 1, 100))
+                .ToList();
         }
 
-        // Company portal Dashboard: at-risk trainees (low attendance or low scores).
         public async Task<List<int>> GetCompanyAtRiskTraineeIdsAsync(int companyId, int take)
         {
-            const double attendanceThreshold = 80.0;
-            const decimal scoreThreshold = 60m;
-
-            var enrollments = await _context.NFD_Enrollments
-                .Include(e => e.DailyAttendances)
-                .Include(e => e.Evaluations)
-                .Where(e => e.CompanyId == companyId)
-                .ToListAsync();
-
-            var atRisk = enrollments
-                .Select(e =>
-                {
-                    var total = e.DailyAttendances.Count;
-                    var present = e.DailyAttendances.Count(a => a.Status == NFD_AttendanceStatus.Present);
-                    var attendanceRate = total > 0 ? (double)present / total * 100.0 : 100.0;
-                    var avgScore = e.Evaluations.Count > 0 ? e.Evaluations.Average(ev => ev.Score) : 100m;
-
-                    return new { e.TraineeId, attendanceRate, avgScore };
-                })
-                .Where(x => x.attendanceRate < attendanceThreshold || x.avgScore < scoreThreshold)
-                .OrderBy(x => x.attendanceRate)
-                .Take(take)
+            var rows = await GetCompanyWeightedEvaluationsAsync(companyId);
+            return rows.Where(x => x.Level == "متعثر" || x.Level == "راسب")
+                .OrderBy(x => x.AttendancePercent)
+                .ThenBy(x => x.FinalScore)
                 .Select(x => x.TraineeId)
+                .Distinct()
+                .Take(Math.Clamp(take, 1, 100))
                 .ToList();
-
-            return atRisk;
         }
 
         // Trainer Reports: attendance rate / task completion rate / avg technical

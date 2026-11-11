@@ -157,7 +157,7 @@
         </div>
         <div class="stat-value-row">
           <strong class="ok">{{ formatPercent(p.percent) }}%</strong>
-          <span>من الطاقة الاستيعابية</span>
+          <span>من مقاعد الدفعات المرتبطة بالشركة (مشتركة)</span>
         </div>
       </div>
 
@@ -264,7 +264,7 @@
       <div class="card card-pad">
         <div class="card-title">
           <span class="title-main">نسبة استخدام البرنامج</span>
-          <span>نظرة عامة</span>
+          <span>الدفعات المرتبطة بشركتكم</span>
         </div>
 
         <div class="distribution-chart-container">
@@ -366,7 +366,7 @@
               <div class="batch-capacity">
                 <i class="fa-solid fa-users"></i>
                 <span>
-                  {{ batch.companyEnrollmentCount }} من شركتكم · {{ batch.capacity }} مقعد
+                  {{ batch.companyEnrollmentCount }} تسجيل لشركتكم · {{ batch.capacity }} مقعد إجمالي مشترك
                 </span>
               </div>
 
@@ -378,6 +378,33 @@
               >
                 {{ batchStatusLabel(batch.status) }}
               </span>
+              <div class="company-batch-metadata">
+                <strong>أوزان التقييم المعتمدة من الإدارة</strong>
+                <span>الحضور {{ batch.attendanceWeight }}% · الاختبارات {{ batch.quizzesWeight }}% · المهام {{ batch.tasksWeight }}% · المشاريع {{ batch.projectsWeight }}%</span>
+                <strong>معايير التصنيف للدفعة</strong>
+                <span>متميز: درجة {{ batch.excellentMinScore }}% وحضور {{ batch.excellentMinAttendance }}% فأعلى</span>
+                <span>جيد جدًا: درجة {{ batch.veryGoodMinScore }}% وحضور {{ batch.veryGoodMinAttendance }}% فأعلى</span>
+                <span>جيد: درجة {{ batch.goodMinScore }}% فأعلى · حد حضور التعثر {{ batch.atRiskMinAttendance }}%</span>
+                @for (assignment of batch.trainers; track assignment.scope + '-' + assignment.trainerId + '-' + (assignment.stageId ?? 0) + '-' + (assignment.itemId ?? 0)) {
+                  <span class="trainer-assignment">
+                    {{ assignment.trainerName }} —
+                    {{ assignment.scope === 'Batch' ? 'مدرب الدفعة' : assignment.scope === 'Plan' ? 'مدرب الخطة' : assignment.scope === 'Stage' ? 'مدرب مرحلة: ' + assignment.stageTitle : 'مدرب بند: ' + assignment.itemTitle }}
+                  </span>
+                }
+                @if (!batch.trainers.length) {
+                  <span>لم يُسند مدرب بعد، ويمكن تحديده لاحقًا قبل التنفيذ.</span>
+                }
+                @for (plan of batch.plans; track plan.planId) {
+                  <div class="company-plan-metadata">
+                    <strong>الخطة: {{ plan.title }}</strong>
+                    <span>الساعات المعتمدة {{ plan.durationHours }} · الحالة {{ plan.approvalStatus }} / {{ plan.executionStatus }}</span>
+                    <span>المدة: {{ formatDate(plan.startDate) }} – {{ formatDate(plan.endDate) }}</span>
+                    @for (stage of plan.stages; track stage.stageId) {
+                      <span>المرحلة: {{ stage.title }} · {{ formatDate(stage.startDate) }} – {{ formatDate(stage.endDate) }} · {{ stage.status }} (ساعات المرحلة غير محددة في بيانات Admin)</span>
+                    }
+                  </div>
+                }
+              </div>
             </div>
           }
         </div>

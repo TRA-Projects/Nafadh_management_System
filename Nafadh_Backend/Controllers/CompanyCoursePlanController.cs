@@ -125,7 +125,17 @@ namespace Nafadh_Backend.Controllers
                     DurationHours = b.Program.DurationHours,
                     Price = b.Program.Price,
                     TrackId = b.Program.TrackId,
-                    Status = b.Program.Status.ToString()
+                    Status = b.Program.Status.ToString(),
+                    AttendanceWeight = b.AttendanceWeight,
+                    QuizzesWeight = b.QuizzesWeight,
+                    TasksWeight = b.TasksWeight,
+                    ProjectsWeight = b.ProjectsWeight,
+                    ExcellentMinScore = b.ExcellentMinScore,
+                    ExcellentMinAttendance = b.ExcellentMinAttendance,
+                    VeryGoodMinScore = b.VeryGoodMinScore,
+                    VeryGoodMinAttendance = b.VeryGoodMinAttendance,
+                    GoodMinScore = b.GoodMinScore,
+                    AtRiskMinAttendance = b.AtRiskMinAttendance
                 })
                 .ToListAsync();
 
@@ -158,6 +168,39 @@ namespace Nafadh_Backend.Controllers
                     .OrderBy(c => c)
                     .ToList()
             });
+        }
+
+        // Company staff directory is NOT the daily-attendance eligibility list.
+        // Include inactive/new company employees and only historically verified legacy trainers.
+        [HttpGet("company/{companyId:int}/trainers/directory")]
+        public async Task<ActionResult<List<CompanyTrainerDirectoryDTO>>> GetTrainerDirectory(int companyId)
+        {
+            if (!await OwnsCompanyAsync(companyId))
+                return Forbid();
+
+            var trainers = await _context.NFD_Trainers.AsNoTracking()
+                .Where(t => t.CompanyId == companyId ||
+                    (t.CompanyId == null &&
+                     (t.BatchTrainers.Any(bt => bt.Batch.CompanyId == companyId ||
+                         (bt.Batch.CompanyId == null &&
+                          bt.Batch.Enrollments.Any(e => e.CompanyId == companyId) &&
+                          !bt.Batch.Enrollments.Any(e => e.CompanyId != companyId))) ||
+                      _context.NFD_CoursePlanTrainers.Any(pt => pt.TrainerId == t.TrainerId && pt.Plan.CompanyId == companyId) ||
+                      _context.NFD_CoursePlanStageTrainers.Any(st => st.TrainerId == t.TrainerId && st.Stage.Plan.CompanyId == companyId) ||
+                      _context.NFD_CoursePlanStages.Any(st => st.TrainerId == t.TrainerId && st.Plan.CompanyId == companyId) ||
+                      _context.NFD_TrainerAttendances.Any(a => a.TrainerId == t.TrainerId && a.CompanyId == companyId))))
+                .OrderBy(t => t.User.FullName)
+                .Select(t => new CompanyTrainerDirectoryDTO
+                {
+                    TrainerId = t.TrainerId,
+                    FullName = t.User.FullName,
+                    Email = t.User.Email,
+                    Phone = t.User.Phone,
+                    Specialty = t.Specialty,
+                    Status = t.Status.ToString()
+                })
+                .ToListAsync();
+            return Ok(trainers);
         }
 
         // GET: api/CompanyCoursePlan/company/{companyId}/plans/{planId}

@@ -1,17 +1,29 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { throwError, timer } from 'rxjs';
+import { forkJoin, throwError, timer } from 'rxjs';
 import { retry } from 'rxjs/operators';
-
+import { TrainerApi } from '../../services/trainer-api';
+import { AuthService } from '../../../../core/auth/auth.service';
 import {
   NotificationDto,
-  NotificationService
+  NotificationService,
+  SendBatchNotificationDto
 } from '../../../../shared/services/notification.service';
 
 import { NotificationSummaryService } from '../../../../shared/services/notification-summary.service';
 
-type NotificationFilter = 'all' | 'unread';
+type NotificationFilter = 'all' | 'unread' | 'read';
+type NotificationType =
+  | 'all'
+  | 'announcement'
+  | 'task'
+  | 'evaluation'
+  | 'attendance'
+  | 'conversation'
+  | 'warning'
+  | 'session'
+  | 'tasksubmission';
 type DeleteMode = 'one' | 'selected';
 
 @Component({
@@ -25,9 +37,25 @@ export class TrainerNotifications implements OnInit {
   private readonly notificationService = inject(NotificationService);
   private readonly summaryService = inject(NotificationSummaryService);
   private readonly router = inject(Router);
+  private readonly trainerApi = inject(TrainerApi);
+private readonly auth = inject(AuthService);
+
+trainerBatches = signal<Array<{
+  batchId: number;
+  batchName?: string | null;
+}>>([]);
+
+batchTrainees = signal<Array<{
+  traineeId: number;
+  fullName: string;
+}>>([]);
+
+loadingBatches = signal(false);
+loadingTrainees = signal(false);
 
   notifications = signal<NotificationDto[]>([]);
   activeFilter = signal<NotificationFilter>('all');
+  activeType = signal<NotificationType>('all');
   loading = signal(true);
   error = signal<string | null>(null);
   markingAll = signal(false);
@@ -35,25 +63,54 @@ export class TrainerNotifications implements OnInit {
   deleteModalOpen = signal(false);
   deleteMode = signal<DeleteMode>('selected');
   notificationToDelete = signal<NotificationDto | null>(null);
+  deleting = signal(false);
+  deleteError = signal<string | null>(null);
+
+  sendModalOpen = signal(false);
+  sending = signal(false);
+  sendError = signal<string | null>(null);
+  sendSuccess = signal<string | null>(null);
+  sendBatchId = signal<number | null>(null);
+  sendTraineeId = signal<number | null>(null);
+  sendTitle = signal('');
+  sendMessage = signal('');
 
   // متغيرات نافذة تفاصيل الإشعار المنبثقة
   notificationDetailsModalOpen = signal(false);
   selectedNotificationForDetails = signal<NotificationDto | null>(null);
 
-  filteredNotifications = computed(() => {
-    const list = this.notifications();
-    if (this.activeFilter() === 'unread') {
-      return list.filter(notification => !notification.isRead);
-    }
-    return list;
-  });
+filteredNotifications = computed(() => {
+  let list = this.notifications();
+
+  if (this.activeFilter() === 'unread') {
+    list = list.filter(n => !n.isRead);
+  } else if (this.activeFilter() === 'read') {
+    list = list.filter(n => n.isRead);
+  }
+
+  if (this.activeType() !== 'all') {
+    list = list.filter(n => {
+      const entity = this.getNotificationType(n.relatedEntity);
+
+      if (this.activeType() === 'session') {
+        return entity.startsWith('session:') || entity === 'session';
+      }
+
+      return entity === this.activeType();
+    });
+  }
+
+  return list;
+});
 
   totalCount = computed(() => this.notifications().length);
 
   unreadCount = computed(() =>
     this.notifications().filter(notification => !notification.isRead).length
   );
-
+readCount = computed(() =>
+  this.notifications().filter(notification => notification.isRead).length
+);
   selectedCount = computed(() => this.selectedIds().size);
 
   allSelected = computed(() => {
@@ -103,6 +160,10 @@ export class TrainerNotifications implements OnInit {
     this.activeFilter.set(filter);
     this.clearSelection();
   }
+  setType(type: NotificationType): void {
+  this.activeType.set(type);
+  this.clearSelection();
+}
 
   toggleSelection(notificationId: number): void {
     this.selectedIds.update(current => {
@@ -238,6 +299,7 @@ export class TrainerNotifications implements OnInit {
   askDeleteOne(notification: NotificationDto): void {
     this.notificationToDelete.set(notification);
     this.deleteMode.set('one');
+    this.deleteError.set(null);
     this.deleteModalOpen.set(true);
   }
 
@@ -245,6 +307,7 @@ export class TrainerNotifications implements OnInit {
     if (!this.selectedCount()) return;
     this.notificationToDelete.set(null);
     this.deleteMode.set('selected');
+    this.deleteError.set(null);
     this.deleteModalOpen.set(true);
   }
 
@@ -254,22 +317,168 @@ export class TrainerNotifications implements OnInit {
   }
 
   confirmDelete(): void {
-    if (this.deleteMode() === 'one') {
-      const notification = this.notificationToDelete();
-      if (!notification) return;
-      this.notifications.update(list =>
-        list.map(item => item).filter(item => item.notificationId !== notification.notificationId)
-      );
-    } else {
-      const ids = Array.from(this.selectedIds());
-      this.notifications.update(list =>
-        list.map(item => item).filter(item => !ids.includes(item.notificationId))
-      );
-      this.clearSelection();
+    if (this.deleting()) return;
+    const ids = this.deleteMode() === 'one'
+      ? [this.notificationToDelete()?.notificationId].filter((id): id is number => id != null)
+      : Array.from(this.selectedIds());
+    if (!ids.length) return;
+
+    this.deleting.set(true);
+    this.deleteError.set(null);
+    forkJoin(ids.map(id => this.notificationService.deleteNotification(id))).subscribe({
+      next: () => {
+        const removed = new Set(ids);
+        this.notifications.update(list => list.filter(item => !removed.has(item.notificationId)));
+        this.clearSelection();
+        this.deleteModalOpen.set(false);
+        this.notificationToDelete.set(null);
+        this.deleting.set(false);
+        this.summaryService.refresh();
+      },
+      error: err => {
+        console.error('Failed to delete notifications.', err);
+        this.deleteError.set('تعذر حذف بعض الإشعارات. أعيدي تحميل الصفحة للتحقق.');
+        this.deleting.set(false);
+      }
+    });
+  }
+
+openSendModal(): void {
+  this.sendError.set(null);
+  this.sendSuccess.set(null);
+  this.sendBatchId.set(null);
+  this.sendTraineeId.set(null);
+  this.batchTrainees.set([]);
+  this.trainerBatches.set([]);
+  this.sendModalOpen.set(true);
+
+  const userId = this.auth.session()?.userId;
+
+  if (!userId) {
+    this.sendError.set('تعذر تحديد المستخدم الحالي.');
+    return;
+  }
+
+  this.loadingBatches.set(true);
+
+  this.trainerApi.getTrainerByUserId(userId).subscribe({
+    next: trainer => {
+      this.trainerApi.getMyBatches(trainer.trainerId).subscribe({
+        next: batches => {
+          this.trainerBatches.set(batches ?? []);
+          this.loadingBatches.set(false);
+        },
+        error: err => {
+          console.error('Failed to load trainer batches.', err);
+          this.sendError.set('تعذر تحميل دفعات المدرب.');
+          this.loadingBatches.set(false);
+        }
+      });
+    },
+    error: err => {
+      console.error('Failed to load trainer.', err);
+      this.sendError.set('تعذر تحميل بيانات المدرب.');
+      this.loadingBatches.set(false);
     }
-    this.deleteModalOpen.set(false);
-    this.notificationToDelete.set(null);
-    this.summaryService.refresh();
+  });
+}
+
+  closeSendModal(): void {
+    if (!this.sending()) this.sendModalOpen.set(false);
+  }
+
+ updateSendBatchId(value: string): void {
+  const id = Number(value);
+
+  this.sendBatchId.set(
+    value && Number.isInteger(id) && id > 0 ? id : null
+  );
+
+  this.sendTraineeId.set(null);
+  this.batchTrainees.set([]);
+  this.sendError.set(null);
+
+  const batchId = this.sendBatchId();
+
+  if (!batchId) return;
+
+  if (!this.trainerBatches().some(b => b.batchId === batchId)) {
+    this.sendBatchId.set(null);
+    this.sendError.set('الدفعة غير متاحة لهذا المدرب.');
+    return;
+  }
+
+  this.loadingTrainees.set(true);
+
+  this.trainerApi.getBatchTrainees(batchId).subscribe({
+    next: trainees => {
+      this.batchTrainees.set(
+        (trainees as Array<{ traineeId: number; fullName: string }>) ?? []
+      );
+      this.loadingTrainees.set(false);
+    },
+    error: err => {
+      console.error('Failed to load trainees.', err);
+      this.sendError.set('تعذر تحميل متدربي الدفعة.');
+      this.loadingTrainees.set(false);
+    }
+  });
+}
+
+  updateSendTraineeId(value: string): void {
+    const id = Number(value);
+    this.sendTraineeId.set(value.trim() && Number.isInteger(id) && id > 0 ? id : null);
+  }
+
+  sendNotification(): void {
+    if (this.sending()) return;
+    const batchId = this.sendBatchId();
+    const title = this.sendTitle().trim();
+    const message = this.sendMessage().trim();
+    if (!batchId || !title || !message) {
+      this.sendError.set('رقم الدفعة وعنوان الإشعار ومحتواه مطلوبة.');
+      return;
+    }
+    if (
+  !this.trainerBatches().some(batch => batch.batchId === batchId)
+) {
+  this.sendError.set('الدفعة المحددة غير متاحة.');
+  return;
+}
+
+if (this.loadingTrainees()) {
+  this.sendError.set('انتظري حتى يكتمل تحميل المتدربين.');
+  return;
+}
+
+const traineeId = this.sendTraineeId();
+
+if (
+  traineeId !== null &&
+  !this.batchTrainees().some(trainee => trainee.traineeId === traineeId)
+) {
+  this.sendError.set('المتدرب غير موجود في الدفعة المحددة.');
+  return;
+}
+    const dto: SendBatchNotificationDto = {
+      batchId, traineeId: this.sendTraineeId(), title, message
+    };
+    this.sending.set(true);
+    this.sendError.set(null);
+    this.sendSuccess.set(null);
+    this.notificationService.sendToBatch(dto).subscribe({
+      next: result => {
+        this.sending.set(false);
+        this.sendSuccess.set(`تم إرسال الإشعار إلى ${result.sentCount} مستلم.`);
+        this.sendTitle.set('');
+        this.sendMessage.set('');
+      },
+      error: err => {
+        console.error('Failed to send notification.', err);
+        this.sendError.set(err?.error?.message ?? 'تعذر إرسال الإشعار.');
+        this.sending.set(false);
+      }
+    });
   }
 
     deleteTitle(): string {
@@ -281,7 +490,36 @@ export class TrainerNotifications implements OnInit {
       ? 'هل أنت متأكد من حذف هذا الإشعار؟'
       : `هل أنت متأكد من حذف ${this.selectedCount()} إشعارات محددة؟`;
   }
+getNotificationType(relatedEntity?: string | null): string {
+  const entity = (relatedEntity ?? '').trim().toLowerCase();
 
+  if (entity.startsWith('session:')) return 'session';
+  if (entity.startsWith('trainerannouncement:')) return 'announcement';
+
+  const types = [
+    'announcement', 'warning', 'attendance',
+    'evaluation', 'task', 'tasksubmission',
+    'conversation', 'session'
+  ];
+
+  return types.includes(entity) ? entity : 'other';
+}
+
+getNotificationIcon(relatedEntity?: string | null): string {
+  const icons: Record<string, string> = {
+    announcement: 'fa-bullhorn',
+    warning: 'fa-triangle-exclamation',
+    attendance: 'fa-calendar-check',
+    evaluation: 'fa-star',
+    task: 'fa-list-check',
+    tasksubmission: 'fa-file-arrow-up',
+    conversation: 'fa-comments',
+    session: 'fa-chalkboard-user',
+    other: 'fa-bell'
+  };
+
+  return icons[this.getNotificationType(relatedEntity)];
+}
   trackById(_: number, item: NotificationDto): number {
     return item.notificationId;
   }

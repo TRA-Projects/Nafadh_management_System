@@ -1,3 +1,5 @@
+import { buildCompanyWorkbook, downloadBlob } from '../trainees/xlsx-writer';
+import { openCompanyPrintReport } from '../../utils/print-report';
 
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -267,135 +269,62 @@ openQuizResults(): void {
 
   async exportExcel(): Promise<void> {
     const m = this.exportModel();
-
-    if (!m || this.exporting()) {
-      return;
-    }
-
+    if (!m || this.exporting()) return;
     this.exporting.set('excel');
-
     try {
-      const XLSX = await import('xlsx');
       const { p } = m;
-
-      const summary: (string | number | Date)[][] = [
-        ['تقرير تفاصيل البرنامج التدريبي', ''],
-        ['تاريخ التصدير', m.exportedAt],
-        [],
-        ['البيان', 'القيمة'],
+      const safeDate = (value: Date) => Number.isFinite(value.getTime())
+        ? this.formatDate(value.toISOString())
+        : 'غير محدد';
+      const info: (string | number)[][] = [
         ['اسم البرنامج', p.title],
         ['الوصف', p.description],
         ['التصنيف', p.category],
         ['الأقسام', p.department],
         ['حالة البرنامج', this.programStatusLabel(p.status)],
-        [
-          'الاعتماد للشركة',
-          p.approved ? 'معتمد للشركة' : 'غير معتمد',
-        ],
-        ['عدد الساعات التدريبية', p.durationHours],
+        ['الاعتماد للشركة', p.approved ? 'معتمد للشركة' : 'غير معتمد'],
+        ['الساعات التدريبية', p.durationHours],
         ['عدد المراحل', m.modules.length],
         ['عدد الدفعات', p.batchCount],
         ['إجمالي التسجيلات', p.enrollmentCount],
         ['المتدربون الحاليون', p.currentTraineeCount],
         ['عدد المشرفين', m.supervisors],
-        ['متوسط الإنجاز (%)', m.averageProgress],
+        ['متوسط تقدم الأنشطة (%)', m.averageProgress],
         ['إجمالي المقاعد', p.capacity],
         ['المقاعد المشغولة', p.occupied],
         ['المقاعد المتاحة', p.available],
         ['نسبة الإشغال (%)', Math.round(p.percent * 10) / 10],
       ];
-
-      const modulesSheet: (string | number)[][] = [
-        ['الترتيب', 'المرحلة', 'تعتمد على'],
-        ...m.modules.map((x) => [
-          x.order,
-          x.title,
-          x.prerequisite,
-        ]),
-      ];
-
-      const batchesSheet: (string | number | Date)[][] = [
+      const workbook = buildCompanyWorkbook(
+        `تفاصيل البرنامج - ${p.title}`,
         [
-          'الدفعة',
-          'تاريخ البدء',
-          'تاريخ الانتهاء',
-          'الحالة',
-          'السعة (مقعد)',
-          'متدربو شركتكم',
-        ],
-        ...m.batches.map((x) => [
-          x.name,
-          x.start,
-          x.end,
-          x.status,
-          x.capacity,
-          x.companyCount,
-        ]),
-      ];
-
-      const traineesSheet: (string | number)[][] = [
-        [
-          '#',
-          'المتدرب',
-          'القسم',
-          'الدفعة',
-          'المشرف',
-          'نسبة الإنجاز (%)',
-          'الحالة',
-          'GitHub',
-          'LinkedIn',
-        ],
-        ...m.trainees.map((t, i) => [
-          i + 1,
-          t.name,
-          t.department,
-          t.cohort,
-          t.supervisor,
-          t.progress,
-          t.status,
-          t.gitHubUrl ?? '',
-          t.linkedInUrl ?? '',
-        ]),
-      ];
-
-      const book = XLSX.utils.book_new();
-
-      const add = (
-        name: string,
-        rows: unknown[][],
-        widths: number[]
-      ) => {
-        const sheet = XLSX.utils.aoa_to_sheet(
-          rows as never[][],
-          { cellDates: true }
-        );
-
-        sheet['!cols'] = widths.map((wch) => ({ wch }));
-
-        for (const address of Object.keys(sheet)) {
-          if (
-            address[0] !== '!' &&
-            sheet[address].t === 'd'
-          ) {
-            sheet[address].z = 'dd/mm/yyyy';
+          { name: 'ملخص البرنامج', headers: ['البيان', 'القيمة'], rows: info },
+          {
+            name: 'المراحل',
+            headers: ['الترتيب', 'المرحلة', 'تعتمد على'],
+            rows: m.modules.map(x => [x.order, x.title, x.prerequisite])
+          },
+          {
+            name: 'الدفعات',
+            headers: ['الدفعة', 'تاريخ البدء', 'تاريخ الانتهاء', 'الحالة', 'السعة (مقعد)', 'متدربو شركتكم'],
+            rows: m.batches.map(x => [
+              x.name, safeDate(x.start),
+              safeDate(x.end), x.status, x.capacity, x.companyCount
+            ])
+          },
+          {
+            name: 'المتدربون',
+            headers: ['رقم التسجيل', 'المتدرب', 'القسم', 'الدفعة', 'المشرف', 'تقدم الأنشطة (%)', 'الحالة', 'GitHub', 'LinkedIn'],
+            rows: m.trainees.map(t => [
+              t.enrollmentId, t.name, t.department, t.cohort, t.supervisor,
+              t.progress, t.status, t.gitHubUrl ?? '', t.linkedInUrl ?? ''
+            ]),
+            note: 'التقدم في الأنشطة لا يمثل الدرجة الأكاديمية الموزونة.'
           }
-        }
-
-        XLSX.utils.book_append_sheet(book, sheet, name);
-      };
-
-      add('ملخص البرنامج', summary, [26, 70]);
-      add('المراحل', modulesSheet, [10, 44, 36]);
-      add('الدفعات', batchesSheet, [22, 16, 16, 14, 14, 16]);
-      add('المتدربون', traineesSheet, [
-        6, 28, 22, 22, 26, 16, 14, 34, 34,
-      ]);
-
-      XLSX.writeFile(
-        book,
-        this.exportFileName(p.id, 'xlsx'),
-        { cellDates: true }
+        ],
+        m.exportedAt
       );
+      downloadBlob(workbook, this.exportFileName(p.id, 'xlsx'));
     } catch (error) {
       console.error('Excel export failed:', error);
       alert('تعذر إنشاء ملف Excel.');
@@ -404,73 +333,15 @@ openQuizResults(): void {
     }
   }
 
-  async exportPdf(): Promise<void> {
+  exportPdf(): void {
     const m = this.exportModel();
-
-    if (!m || this.exporting()) {
-      return;
-    }
-
-    this.exporting.set('pdf');
-
-    const host = document.createElement('div');
-
-    host.style.cssText =
-      'position:fixed;left:-10000px;top:0;width:794px;' +
-      'background:#fff;z-index:-1;';
-
-    host.innerHTML = this.buildReportHtml(m);
-    document.body.appendChild(host);
-
-    try {
-      await (
-        document as Document & {
-          fonts?: { ready: Promise<unknown> };
-        }
-      ).fonts?.ready;
-
-      const html2pdf = (await import('html2pdf.js')).default;
-
-      const options = {
-        margin: [10, 8, 12, 8] as [
-          number,
-          number,
-          number,
-          number
-        ],
-        filename: this.exportFileName(m.p.id, 'pdf'),
-        image: {
-          type: 'jpeg' as const,
-          quality: 0.98,
-        },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-        },
-        jsPDF: {
-          unit: 'mm' as const,
-          format: 'a4' as const,
-          orientation: 'portrait' as const,
-        },
-        pagebreak: {
-          mode: ['css', 'legacy'],
-          avoid: ['tr', '.pdf-title', '.pdf-kpis'],
-        },
-      };
-
-      await html2pdf()
-        .set(options)
-        .from(host.firstElementChild as HTMLElement)
-        .save();
-    } catch (error) {
-      console.error('PDF export failed:', error);
-      alert('تعذر إنشاء ملف PDF.');
-    } finally {
-      host.remove();
-      this.exporting.set('');
-    }
+    if (!m || this.exporting()) return;
+    const opened = openCompanyPrintReport(
+      `تفاصيل البرنامج التدريبي - ${m.p.title}`,
+      this.buildReportHtml(m),
+      { landscape: true, subtitle: 'البيانات مستمدة من تفاصيل برنامج الشركة والدفعات المرتبطة بها.' }
+    );
+    if (!opened) alert('المتصفح منع فتح نافذة التقرير؛ اسمح بالنوافذ المنبثقة ثم حاول مجددًا.');
   }
 
   private esc(value: unknown): string {
@@ -487,8 +358,8 @@ openQuizResults(): void {
     const e = (v: unknown) => this.esc(v);
     const { p } = m;
 
-    const date = (d: Date) =>
-      this.formatDate(d.toISOString());
+    const date = (d: Date) => Number.isFinite(d.getTime())
+      ? this.formatDate(d.toISOString()) : 'غير محدد';
 
     const kpi = (
       label: string,
@@ -531,7 +402,7 @@ openQuizResults(): void {
     ];
 
     return `
-<div dir="rtl" style="font-family:'Cairo','Segoe UI',Tahoma,sans-serif;color:#10254a;width:778px;padding:6px 4px;font-size:12px;line-height:1.7;">
+<div dir="rtl" style="font-family:'Cairo','Segoe UI',Tahoma,sans-serif;color:#10254a;width:100%;padding:6px 4px;font-size:12px;line-height:1.7;">
   <style>
     .pdf-head{background:#00338d;color:#fff;border-radius:10px;padding:14px 18px;margin-bottom:12px}
     .pdf-head small{opacity:.8;font-size:11px}

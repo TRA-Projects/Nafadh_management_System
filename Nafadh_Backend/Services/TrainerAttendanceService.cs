@@ -76,13 +76,10 @@ namespace Nafadh_Backend.Services
         public async Task<List<TrainerAttendanceDto>> GetMyAttendanceAsync(int trainerId)
         {
             var records = await _repository.GetByTrainerIdAsync(trainerId);
-
             return records.Select(ToDto).ToList();
         }
 
-        public async Task<List<CompanyTrainerDto>> GetCompanyTrainersAsync(
-            int companyId,
-            DateTime date)
+        public async Task<List<CompanyTrainerDto>> GetCompanyTrainersAsync(int companyId, DateTime date)
         {
             var trainers = await _repository.GetCompanyTrainersAsync(companyId, date);
 
@@ -95,7 +92,7 @@ namespace Nafadh_Backend.Services
                 Status = t.Status
             }).ToList();
         }
- 
+
         public async Task<List<TrainerAttendanceDto>> GetRangeAsync(int companyId, DateTime from, DateTime to, int? trainerId)
         {
             from = from.Date;

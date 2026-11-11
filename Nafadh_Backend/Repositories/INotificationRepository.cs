@@ -26,6 +26,7 @@ namespace Nafadh_Backend.Repositories
 
 
         Task MarkAllAsReadAsync(int userId);
+        Task<bool> DeleteAsync(int id, int userId);
 
     }
 }

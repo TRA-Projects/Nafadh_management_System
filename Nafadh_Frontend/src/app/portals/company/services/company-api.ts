@@ -12,6 +12,7 @@ import {
   CompanyDto,
   CompanySupervisorDto,
   CompanyDashboardDto,
+  CompanyWeightedEvaluationDto,
   ConversationDetailDto,
   ConversationListItemDto,
   ConversationMessageDto,
@@ -96,6 +97,13 @@ export class CompanyApi {
     );
   }
 
+  /** Final weighted classifications from the same calculator as Admin reports. */
+  getCompanyWeightedEvaluations(companyId: number): Observable<CompanyWeightedEvaluationDto[]> {
+    return this.http.get<CompanyWeightedEvaluationDto[]>(
+      `${this.base}/CompanyDashboard/${companyId}/weighted-results`
+    );
+  }
+
   getCapacity(companyId: number): Observable<CompanyCapacityDto> {
     return this.http.get<CompanyCapacityDto>(
       `${this.base}/Company/${companyId}/capacity`
@@ -136,12 +144,12 @@ export class CompanyApi {
     );
   }
 
+  // Dedicated company endpoint: authenticated supervisor, company-scoped
+  // administrative warnings only. Trainee warnings stay in Dashboard.
   getCompanyWarnings(companyId: number): Observable<WarningDto[]> {
-    const params = new HttpParams()
-      .set('scope', 'Company')
-      .set('companyId', companyId);
-
-    return this.http.get<WarningDto[]>(`${this.base}/Warning`, { params });
+    return this.http.get<WarningDto[]>(
+      `${this.base}/CompanyAdministrativeWarnings/${companyId}`
+    );
   }
 
   getPlatformAnnouncements(): Observable<AnnouncementDto[]> {
@@ -574,7 +582,7 @@ export class CompanyApi {
     reply: string
   ): Observable<unknown> {
     return this.http.put(
-      `${this.base}/Warning/${warningId}/reply?companyId=${companyId}`,
+      `${this.base}/CompanyAdministrativeWarnings/${companyId}/${warningId}/reply`,
       { reply }
     );
   }
@@ -836,6 +844,14 @@ getAttachmentSettings(): Observable<{
     }))
   );
 }
+  // Staff listing includes trainers before and after an active training period.
+  // DailyAttendance continues using getCompanyTrainers(), which is date-restricted.
+  getCompanyTrainerDirectory(companyId: number): Observable<CompanyTrainerDto[]> {
+    return this.http.get<CompanyTrainerDto[]>(
+      `${this.base}/CompanyCoursePlan/company/${companyId}/trainers/directory`
+    );
+  }
+
   getCompanyTrainers(companyId: number, date?: string): Observable<CompanyTrainerDto[]> {
     return this.http.get<CompanyTrainerDto[]>(
       `${this.base}/TrainerAttendance/company/${companyId}/trainers`,
