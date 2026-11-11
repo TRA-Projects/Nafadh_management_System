@@ -271,176 +271,309 @@
   </div>
 
 
-  <!-- =========================================================
-       OFFICIAL CERTIFICATE PREVIEW
-  ========================================================== -->
+ 
+<!-- =========================================================
+     OFFICIAL CERTIFICATE PREVIEW - ADMIN DESIGN
+========================================================== -->
 
-  @if (certificatePreviewOpen()) {
-    @if (issuedCertificate(); as cert) {
-      <div
-        class="trainee-cert-backdrop"
-        (click)="closeCertificatePreview()">
+@if (certificatePreviewOpen()) {
+  @if (issuedCertificate(); as cert) {
 
-        <div
-          class="trainee-cert-dialog"
-          (click)="$event.stopPropagation()">
+    <div class="trainee-cert-backdrop"
+         (click)="closeCertificatePreview()">
 
-          <div class="trainee-cert-dialog-header">
-            <h3>معاينة الشهادة الرسمية المعتمدة</h3>
-            <button
-              type="button"
-              (click)="closeCertificatePreview()"
-              aria-label="إغلاق">
-              ✕
-            </button>
-          </div>
+      <div class="trainee-cert-dialog"
+           (click)="$event.stopPropagation()">
 
-          <div class="trainee-cert-dialog-body">
-            <div
-              class="official-certificate-paper"
-              id="trainee-printable-certificate">
+        <div class="trainee-cert-dialog-header">
+          <h3>معاينة الشهادة الرسمية المعتمدة</h3>
 
-              <div class="cert-outer-border">
-                <div class="cert-inner-gold-border">
+          <button type="button"
+                  (click)="closeCertificatePreview()"
+                  aria-label="إغلاق">
+            ✕
+          </button>
+        </div>
 
-                  <div class="corner-ornament top-right"></div>
-                  <div class="corner-ornament top-left"></div>
-                  <div class="corner-ornament bottom-right"></div>
-                  <div class="corner-ornament bottom-left"></div>
+        <div class="trainee-cert-dialog-body">
 
-                  <div class="official-cert-header">
-                    <div class="cert-brand-side">
-                      <img
-                        src="https://nafadh.om/app-assets/AccountLayoutStyle/img/logo.png"
-                        alt="نفاذ"
-                        style="height:52px;width:auto;object-fit:contain">
-                    </div>
+          <div class="official-certificate-paper"
+               id="trainee-printable-certificate">
 
-                    <div class="cert-crest-center">
-                      <span class="cert-title-banner">
-                        {{ certificateDocument(cert.type).ar }}
-                      </span>
-                    </div>
+            <div class="cert-outer-border">
+              <div class="cert-inner-gold-border">
 
-                    <div class="cert-brand-side">
-                      <img
-                        src="https://nafadh.om/app-assets/AccountLayoutStyle/img/TRA-Logo.png"
-                        alt="هيئة تنظيم الاتصالات"
-                        style="height:56px;width:auto;object-fit:contain">
-                    </div>
+                <div class="corner-ornament top-right"></div>
+                <div class="corner-ornament top-left"></div>
+                <div class="corner-ornament bottom-right"></div>
+                <div class="corner-ornament bottom-left"></div>
+
+                <!-- HEADER -->
+                <div class="official-cert-header">
+
+                  <div class="cert-brand-side">
+                    <img
+                      src="https://nafadh.om/app-assets/AccountLayoutStyle/img/logo.png"
+                      alt="شعار برنامج نفاذ"
+                      style="height:52px;width:auto;object-fit:contain">
                   </div>
 
-                  <div class="official-cert-body">
-                    <p class="cert-witness-line">
-                      تشهد
-                      <strong>هيئة تنظيم الاتصالات</strong>
-                      و<strong>البرنامج الوطني «نفاذ»</strong>
+                  <div class="cert-crest-center">
+                    <span class="cert-title-banner">
+                     شهادة إتمام تدريب
+                    </span>
+                  </div>
 
-                      @if (certificateBatch()?.companyName) {
-                        بالشراكة مع
-                        <strong class="text-teal">
-                          {{ certificateBatch()?.companyName }}
-                        </strong>
-                      }
-
-                      بأن المتدرب / المتدربة:
-                    </p>
-
-                    <h1 class="cert-trainee-full-name">
-                      {{ traineeName() }}
-                    </h1>
-
-                    <p class="cert-completion-paragraph">
-                      {{
-                        certificateDocument(cert.type).completion
-                          ? 'قد أتمّ بنجاح متطلبات البرنامج التدريبي التخصصي في مسار'
-                          : 'تُمنح له هذه الشهادة في مسار'
-                      }}
-
-                      <strong class="text-navy">
-                        «{{ programTitle() }}»
-                      </strong>
-
-                      ضمن
-                      <strong>
-                        ({{ certificateBatch()?.batchName || enrollment()?.batchName || '' }})
-                      </strong>.
-
-                      @if (certificateBatch()?.startDate && certificateBatch()?.endDate) {
-                        والمنعقد خلال الفترة من
-                        <strong>
-                          {{ certificateBatch()?.startDate | date:'dd/MM/yyyy' }}
-                        </strong>
-                        إلى
-                        <strong>
-                          {{ certificateBatch()?.endDate | date:'dd/MM/yyyy' }}
-                        </strong>.
-                      }
-                    </p>
-
-                   <div class="cert-scores-strip">
-
-  <div class="score-box">
-    <span class="sc-label">
-      الدرجة النهائية المكتسبة
-    </span>
-
-    <strong class="sc-value text-navy">
-      {{ certificateFinalScore() }}
-    </strong>
-  </div>
-
-  <div class="score-box highlight-grade">
-    <span class="sc-label">
-      التقدير العام
-    </span>
-
-    <strong class="sc-value text-emerald">
-      {{ certificateFinalGrade() }}
-    </strong>
-  </div>
-
-  <div class="score-box">
-    <span class="sc-label">
-      إجمالي ساعات التدريب
-    </span>
-
-    <strong class="sc-value text-teal">
-      @if (certificateTrainingHours(); as hours) {
-        {{ hours }} ساعة تدريبية
-      } @else {
-        غير متاح
-      }
-    </strong>
-  </div>
-
-</div>
+                  <div class="cert-brand-side">
+                    <img
+                      src="https://nafadh.om/app-assets/AccountLayoutStyle/img/TRA-Logo.png"
+                      alt="شعار هيئة تنظيم الاتصالات"
+                      style="height:56px;width:auto;object-fit:contain">
                   </div>
 
                 </div>
+
+                <!-- BODY -->
+                <div class="official-cert-body">
+
+                  <p class="cert-witness-line">
+                    تشهد
+                    <strong>هيئة تنظيم الاتصالات</strong>
+                    و<strong>البرنامج الوطني «نفاذ»</strong>
+
+                   @if (officialCertificateDetails()?.companyName) {
+  بالشراكة مع
+  <strong class="text-teal">
+    {{ officialCertificateDetails()?.companyName }}
+  </strong>
+}
+
+                    بأن المتدرب / المتدربة:
+                  </p>
+
+                  <h1 class="cert-trainee-full-name">
+                    {{ traineeName() }}
+                  </h1>
+
+                  <p class="cert-completion-paragraph">
+
+                    {{
+                      certificateDocument(cert.type).completion
+                        ? 'قد أتمّ بنجاح متطلبات البرنامج التدريبي التخصصي في مسار'
+                        : 'تُمنح له هذه الشهادة في مسار'
+                    }}
+
+                    <strong class="text-navy">
+                      «{{ programTitle() }}»
+                    </strong>
+
+                    ضمن
+                    <strong>
+                      ({{ certificateBatch()?.batchName
+                          || enrollment()?.batchName
+                          || 'غير متاح' }})
+                    </strong>،
+
+                    والمنعقد خلال الفترة من
+
+                    <strong>
+                      {{
+                        officialCertificateDetails()?.startDate
+                          ? (officialCertificateDetails()?.startDate
+                              | date:'dd/MM/yyyy')
+                          : 'غير متاح'
+                      }}
+                    </strong>
+
+                    إلى
+
+                    <strong>
+                      {{
+                        officialCertificateDetails()?.endDate
+                          ? (officialCertificateDetails()?.endDate
+                              | date:'dd/MM/yyyy')
+                          : 'غير متاح'
+                      }}
+                    </strong>،
+
+                    بإجمالي
+
+                    <strong>
+                      ({{ certificateTrainingHours() ?? 'غير متاح' }}
+                      ساعة تدريبية)
+                    </strong>
+
+                    شملت المهارات التقنية التخصصية
+                    ({{ certificateTechHours() ?? 'غير متاح' }} ساعة)،
+
+                    والمشاريع العملية الميدانية ومهارات العمل الحر
+                    ({{ certificatePracticalHours() ?? 'غير متاح' }}
+                    ساعة).
+
+                  </p>
+
+                  <!-- SCORES -->
+                  <div class="cert-scores-strip">
+
+                    <div class="score-box">
+                      <span class="sc-label">
+                        الدرجة النهائية المكتسبة
+                      </span>
+
+                      <strong class="sc-value text-navy">
+                        {{ certificateFinalScore() }}
+                      </strong>
+                    </div>
+
+                    <div class="score-box highlight-grade">
+                      <span class="sc-label">
+                        التقدير العام
+                      </span>
+
+                      <strong class="sc-value text-emerald">
+                        {{ certificateFinalGrade() }}
+                      </strong>
+                    </div>
+
+                    <div class="score-box">
+                      <span class="sc-label">
+                        إجمالي ساعات التدريب
+                      </span>
+
+                      <strong class="sc-value text-teal">
+                        @if (certificateTrainingHours() !== null) {
+                          {{ certificateTrainingHours() }}
+                          ساعة تدريبية
+                        } @else {
+                          غير متاح
+                        }
+                      </strong>
+                    </div>
+
+                  </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="official-cert-footer">
+
+                  <div class="cert-signature-block">
+                    <span class="sig-label">
+                      اعتماد الجهة المدربة المستضيفة
+                    </span>
+
+                    <strong class="sig-company">
+                     {{ officialCertificateDetails()?.companyName || 'غير متاح' }}
+                    </strong>
+
+                    <!-- Decorative signature matching Admin Portal -->
+<svg
+  viewBox="0 0 140 32"
+  width="115"
+  height="24"
+  class="sig-handwriting"
+  aria-label="رسم توقيع زخرفي"
+>
+  <path
+    d="M15 22 Q 40 6, 62 18 T 115 10 M 35 25 L 95 16"
+    stroke="#0A1172"
+    stroke-width="2"
+    fill="none"
+    stroke-linecap="round"
+  />
+</svg>
+
+<div class="sig-approved">
+  <i class="fas fa-check-circle"></i>
+  <span>تم الاعتماد والتوقيع الإلكتروني</span>
+</div>
+                  </div>
+
+    
+<div class="cert-qr-verification-block">
+
+  <div class="qr-meta-text">
+
+    <div class="qr-badge-title">
+      <i class="fa-solid fa-shield-halved"></i>
+      بيانات الشهادة
+    </div>
+
+    <div class="qr-code-line">
+      SN:
+      <strong>{{ certificateSerialNumber() }}</strong>
+    </div>
+
+    <div class="qr-code-line">
+      Code:
+      <strong>{{ certificateVerificationCode() }}</strong>
+    </div>
+
+    <div class="qr-date-line">
+      تاريخ الإصدار:
+      {{
+        officialCertificateDetails()?.issueDate
+          ? (officialCertificateDetails()?.issueDate | date:'dd/MM/yyyy')
+          : 'غير متاح'
+      }}
+    </div>
+
+  </div>
+
+  <div class="qr-svg-box"
+       style="width: 68px; height: 68px;"
+       title="رمز QR للشهادة">
+
+    @if (certificateQrUrl()) {
+      <img
+        [src]="certificateQrUrl()"
+        alt="QR Code"
+        style="width: 100%; height: 100%; object-fit: contain; display: block;"
+      />
+    }
+
+  </div>
+
+</div>
+
+
+ 
+
+                </div>
+
               </div>
             </div>
-
-            <div class="cert-actions-row">
-              <button
-                type="button"
-                class="btn-download-pdf"
-                (click)="printIssuedCertificate()">
-                طباعة / حفظ PDF
-              </button>
-
-              <button
-                type="button"
-                class="btn-close-modal"
-                (click)="closeCertificatePreview()">
-                إغلاق المعاينة
-              </button>
-            </div>
           </div>
+
+          <!-- ACTIONS -->
+          <div class="cert-actions-row">
+
+            <button type="button"
+                    class="btn-download-pdf"
+                    (click)="downloadCertificate()">
+              <i class="fas fa-file-pdf"></i>
+              تنزيل الشهادة المعتمدة (PDF)
+            </button>
+
+            <button type="button"
+                    class="btn-download-pdf"
+                    (click)="printIssuedCertificate()">
+              <i class="fas fa-print"></i>
+              طباعة / حفظ PDF
+            </button>
+
+            <button type="button"
+                    class="btn-close-modal"
+                    (click)="closeCertificatePreview()">
+              إغلاق المعاينة
+            </button>
+
+          </div>
+
         </div>
       </div>
-    }
+    </div>
   }
+}
 
   <!-- =========================================================
        FEEDBACK MODAL

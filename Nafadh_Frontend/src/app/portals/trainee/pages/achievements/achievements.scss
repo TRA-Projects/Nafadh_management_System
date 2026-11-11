@@ -1582,4 +1582,610 @@
   font-size: 13px;
   line-height: 1.8;
 }
+
+/* =========================================================
+   OFFICIAL CERTIFICATE - ADMIN PORTAL DESIGN
+========================================================= */
+
+.trainee-cert-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.trainee-cert-dialog {
+  width: min(960px, 98vw);
+  max-height: 95vh;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.3);
+}
+
+.trainee-cert-dialog-header {
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0a1172;
+  color: #fff;
+}
+
+.trainee-cert-dialog-header h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.trainee-cert-dialog-header button {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+}
+
+.trainee-cert-dialog-body {
+  padding: 16px;
+  overflow-y: auto;
+  background: #f1f5f9;
+}
+
+.official-certificate-paper {
+  background: #fff;
+  padding: 8px;
+  border-radius: 14px;
+  direction: rtl;
+  color: #1e293b;
+}
+
+.cert-outer-border {
+  border: 6px double #0a1172;
+  border-radius: 12px;
+  padding: 14px;
+  background: linear-gradient(135deg, #fff, #f8faff);
+}
+
+.cert-inner-gold-border {
+  border: 1.5px solid #c59b27;
+  border-radius: 8px;
+  padding: 22px 28px;
+  position: relative;
+}
+
+.corner-ornament {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: #c59b27;
+  border-style: solid;
+}
+
+.corner-ornament.top-right {
+  top: 10px;
+  right: 10px;
+  border-width: 3px 3px 0 0;
+}
+
+.corner-ornament.top-left {
+  top: 10px;
+  left: 10px;
+  border-width: 3px 0 0 3px;
+}
+
+.corner-ornament.bottom-right {
+  bottom: 10px;
+  right: 10px;
+  border-width: 0 3px 3px 0;
+}
+
+.corner-ornament.bottom-left {
+  bottom: 10px;
+  left: 10px;
+  border-width: 0 0 3px 3px;
+}
+
+.official-cert-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.cert-brand-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.cert-crest-center {
+  flex: 1;
+  text-align: center;
+}
+
+.cert-title-banner {
+  display: inline-block;
+  background: rgba(10,17,114,.06);
+  border: 1px solid rgba(10,17,114,.18);
+  color: #0a1172;
+  padding: 4px 18px;
+  border-radius: 30px;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.official-cert-body {
+  text-align: center;
+  padding: 14px 10px;
+}
+
+.cert-witness-line {
+  font-size: 14px;
+  color: #475569;
+  margin: 0 0 6px;
+}
+
+.cert-trainee-full-name {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 4px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #c59b27;
+  display: inline-block;
+  min-width: 48%;
+}
+
+.cert-completion-paragraph {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: #334155;
+  max-width: 720px;
+  margin: 0 auto 12px;
+}
+
+.cert-scores-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.score-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 9px;
+  text-align: center;
+}
+
+.score-box.highlight-grade {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.sc-label {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 3px;
+}
+
+.sc-value {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.text-navy { color: #0a1172; }
+.text-teal { color: #0d9488; }
+.text-emerald { color: #059669; }
+
+.official-cert-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.cert-signature-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: right;
+}
+
+.sig-label {
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.sig-company {
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.sig-approved {
+  font-size: 11.5px;
+  color: #0a1172;
+  font-weight: 700;
+}
+
+.cert-qr-verification-block {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+
+.qr-meta-text {
+  text-align: right;
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.qr-badge-title {
+  font-weight: 800;
+  color: #059669;
+  margin-bottom: 2px;
+}
+
+.qr-code-line {
+  font-family: monospace;
+  color: #1e293b;
+}
+
+.qr-date-line {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.qr-svg-box {
+  width: 68px;
+  height: 68px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.qr-unavailable {
+  font-size: 9px;
+  text-align: center;
+  color: #64748b;
+}
+
+.cert-actions-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.btn-download-pdf {
+  flex: 2;
+  background: #0a1172;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-download-pdf:hover {
+  background: #1e3a8a;
+}
+
+.btn-close-modal {
+  flex: 1;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  border-radius: 10px;
+  padding: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 650px) {
+  .trainee-cert-backdrop { padding: 6px; }
+  .trainee-cert-dialog-body { padding: 8px; }
+  .cert-inner-gold-border { padding: 14px; }
+  .cert-brand-side { min-width: 60px; }
+  .cert-brand-side img { max-width: 65px; }
+  .cert-scores-strip { gap: 5px; }
+  .score-box { padding: 6px 3px; }
+  .sc-value { font-size: 11px; }
+  .official-cert-footer { gap: 8px; }
+  .cert-actions-row { flex-wrap: wrap; }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 6mm;
+  }
+
+  .official-certificate-paper {
+    width: 100%;
+    box-shadow: none;
+    break-inside: avoid;
+  }
+}
+.sig-handwriting {
+  display: block;
+  margin: 7px 0;
+}
+
+.qr-svg-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+}
+.cert-qr-verification-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.qr-meta-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
+
+.qr-code-line {
+  font-size: 11px;
+  direction: ltr;
+  text-align: right;
+}
+
+.qr-svg-box {
+  flex-shrink: 0;
+}
+
+.qr-svg-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ==========================================================
+   OFFICIAL CERTIFICATE - ADMIN VISUAL ALIGNMENT
+========================================================== */
+
+.official-certificate-paper {
+  direction: rtl;
+  background: #ffffff;
+}
+
+.cert-inner-gold-border {
+  padding: 22px 28px 18px;
+}
+
+.official-cert-body {
+  padding: 14px 10px 18px;
+}
+
+.cert-trainee-full-name {
+  color: #111827;
+  font-size: 30px;
+  margin: 6px 0 12px;
+  min-width: 54%;
+}
+
+.cert-completion-paragraph {
+  max-width: 820px;
+  line-height: 1.85;
+  font-size: 13.5px;
+  margin-bottom: 14px;
+}
+
+/* Scores */
+
+.cert-scores-strip {
+  max-width: 750px;
+  gap: 12px;
+}
+
+.score-box {
+  background: #f8fafc;
+  border: 1px solid #dce4ee;
+  border-radius: 11px;
+  padding: 12px 10px;
+}
+
+.score-box.highlight-grade {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.sc-label {
+  font-size: 11.5px;
+  color: #8492a6;
+}
+
+.sc-value {
+  font-size: 15px;
+}
+
+/* Footer */
+
+.official-cert-footer {
+  direction: rtl;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  border-top: 1px solid #dce4ee;
+  padding-top: 15px;
+  margin-top: 8px;
+  min-height: 110px;
+}
+
+.cert-signature-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: right;
+  gap: 5px;
+  flex: 0 0 38%;
+}
+
+.sig-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.sig-company {
+  color: #111827;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.sig-handwriting {
+  width: 115px;
+  height: 25px;
+  margin: 3px 0 0;
+}
+
+.sig-approved {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #0a1172;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.sig-approved i {
+  color: #0a1172;
+  font-size: 15px;
+}
+
+/* QR and verification details */
+
+.cert-qr-verification-block {
+  direction: ltr;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #dce4ee;
+  border-radius: 12px;
+  padding: 10px 12px;
+  max-width: 350px;
+  box-sizing: border-box;
+}
+
+.qr-svg-box {
+  order: -1;
+  flex: 0 0 78px;
+  width: 78px !important;
+  height: 78px !important;
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
+  padding: 4px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.qr-svg-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.qr-meta-text {
+  direction: rtl;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.qr-badge-title {
+  color: #059669;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.qr-code-line {
+  direction: ltr;
+  text-align: right;
+  font-size: 10px;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.qr-date-line {
+  font-size: 10px;
+  color: #8492a6;
+  white-space: nowrap;
+}
+
+@media (max-width: 650px) {
+  .cert-inner-gold-border {
+    padding: 14px 12px;
+  }
+
+  .official-cert-footer {
+    gap: 10px;
+  }
+
+  .cert-signature-block {
+    flex-basis: 45%;
+  }
+
+  .sig-approved {
+    white-space: normal;
+    font-size: 10px;
+  }
+
+  .cert-qr-verification-block {
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .qr-svg-box {
+    flex-basis: 55px;
+    width: 55px !important;
+    height: 55px !important;
+  }
+
+  .qr-code-line {
+    font-size: 8px;
+  }
 }

@@ -66,6 +66,12 @@ export interface OfficialCertificateDetailsDto {
   gradeLabel: string | null;
   hasGrade: boolean;
   isIssued: boolean;
+  totalHours: number | null;
+techHours: number | null;
+practicalHours: number | null;
+companyId?: number | null;
+companyName?: string | null;
+verificationUrl?: string | null;
 }
 
 
@@ -545,7 +551,11 @@ downloadTraineeResume(resumeUrl: string): Observable<Blob> {
       `${this.base}/TraineeModuleProgress/trainee/${traineeId}`
     );
   }
-
+getSystemVariables(): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.base}/system-variables`
+  );
+}
   getModuleProgressPercentage(
     traineeId: number
   ): Observable<number> {

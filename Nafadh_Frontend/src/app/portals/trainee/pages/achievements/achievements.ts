@@ -996,6 +996,78 @@ closeOverallEvaluationDetails(): void {
   this.overallEvaluationDetailsOpen.set(false);
 }
 
+generateSerialNumber(
+  batchId: number,
+  enrollmentId: number,
+  traineeId: number
+): string {
+  const year = new Date().getFullYear();
+  const bPart = String(batchId || 1).padStart(3, '0');
+  const ePart = String(enrollmentId || traineeId || 1).padStart(4, '0');
+
+  return `SN-${year}-${bPart}-${ePart}`;
+}
+
+generateVerificationCode(
+  batchId: number,
+  enrollmentId: number,
+  traineeId: number
+): string {
+  const seed =
+    ((batchId + 7) * 313 +
+      (enrollmentId + 11) * 97 +
+      (traineeId + 3) * 53) % 9000 + 1000;
+
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const c1 = chars[(batchId + enrollmentId) % chars.length];
+  const c2 = chars[(traineeId + enrollmentId * 3) % chars.length];
+
+  const ePart = String(enrollmentId || traineeId || 1)
+    .padStart(3, '0');
+
+  return `VR-NAF-${seed}${c1}${c2}-${ePart}`;
+}
+
+readonly certificateSerialNumber = computed(() => {
+  const details = this.officialCertificateDetails();
+
+  if (!details?.certificateId) return '';
+
+  return this.generateSerialNumber(
+    Number(details.batchId),
+    Number(details.enrollmentId),
+    Number(details.traineeId)
+  );
+});
+
+readonly certificateVerificationCode = computed(() => {
+  const details = this.officialCertificateDetails();
+
+  if (!details?.certificateId) return '';
+
+  return this.generateVerificationCode(
+    Number(details.batchId),
+    Number(details.enrollmentId),
+    Number(details.traineeId)
+  );
+});
+
+readonly certificateQrUrl = computed(() => {
+  const serial = this.certificateSerialNumber();
+  const code = this.certificateVerificationCode();
+
+  if (!serial || !code) return '';
+
+  const verificationData =
+    `https://nafadh.om/?sn=${serial}-${code}`;
+
+  return (
+    'https://api.qrserver.com/v1/create-qr-code/' +
+    '?size=200x200&margin=4&data=' +
+    encodeURIComponent(verificationData)
+  );
+});
+
 // ============================================================
 // OFFICIAL CERTIFICATE - ADMIN GRADE SOURCE
 // ============================================================
@@ -1042,16 +1114,49 @@ readonly certificateFinalGrade = computed<string>(() => {
   return details.gradeLabel || 'غير متاح';
 });
 
-readonly certificateTrainingHours = computed(() => {
-  const batch = this.certificateBatch();
+readonly certificateTrainingHours = computed<number | null>(() => {
+  const details = this.officialCertificateDetails();
+  const certificate = this.issuedCertificate();
 
-  if (!batch?.startDate || !batch?.endDate) {
+  if (
+    !details ||
+    !certificate ||
+    Number(details.certificateId) !== Number(certificate.certificateId)
+  ) {
     return null;
   }
 
-  // لا نفترض عدد ساعات أسبوعية ثابتًا.
-  // ستُربط ساعات الشهادة بإعدادات التدريب المعتمدة.
-  return null;
+  return details.totalHours ?? null;
+});
+
+readonly certificateTechHours = computed<number | null>(() => {
+  const details = this.officialCertificateDetails();
+  const certificate = this.issuedCertificate();
+
+  if (
+    !details ||
+    !certificate ||
+    Number(details.certificateId) !== Number(certificate.certificateId)
+  ) {
+    return null;
+  }
+
+  return details.techHours ?? null;
+});
+
+readonly certificatePracticalHours = computed<number | null>(() => {
+  const details = this.officialCertificateDetails();
+  const certificate = this.issuedCertificate();
+
+  if (
+    !details ||
+    !certificate ||
+    Number(details.certificateId) !== Number(certificate.certificateId)
+  ) {
+    return null;
+  }
+
+  return details.practicalHours ?? null;
 });
   // ============================================================
   // BADGES
@@ -1314,8 +1419,8 @@ readonly certificateTrainingHours = computed(() => {
   // COMPONENT INITIALIZATION
   // ============================================================
 
-  ngOnInit(): void {
-    this.constants.ensure('NFD_FBK_TYPE');
+ngOnInit(): void {
+  this.constants.ensure('NFD_FBK_TYPE');
 
     const session = this.auth.session?.();
 
@@ -1392,6 +1497,7 @@ readonly certificateTrainingHours = computed(() => {
   // ============================================================
   // LOAD ALL TRAINEE DATA
   // ============================================================
+
 
   loadAllData(): void {
     const userId = this.userId();
@@ -1621,80 +1727,51 @@ this.loadOverallEvaluation(
       });
   }
 
-  private loadBatchAndProgram(
-    batchId: number
-  ): void {
+private loadBatchAndProgram(batchId: number): void {
 
-    if (
-      !batchId ||
-      Number.isNaN(batchId)
-    ) {
+  if (!batchId || Number.isNaN(Number(batchId))) {
+    this.errorMessage.set('لم يتم العثور على الدفعة.');
+    this.loading.set(false);
+    return;
+  }
 
-      this.errorMessage.set(
-        'لم يتم العثور على الدفعة.'
-      );
+  this.api.getBatch(batchId).subscribe({
 
-      this.loading.set(false);
+    next: (batch: BatchDto) => {
 
-      return;
-    }
+      // Save batch data for the certificate.
+      this.certificateBatch.set(batch);
 
-    this.api
-      .getBatch(batchId)
-      .subscribe({
-
-        
-next: (batch: BatchDto) => {
-
-  // Store the batch information for the official certificate.
-  this.certificateBatch.set(batch);
-
-  const programId = Number(batch.programId);
-
-          if (
-            !programId ||
-            Number.isNaN(programId)
-          ) {
-
-            this.errorMessage.set(
-              'لم يتم العثور على البرنامج المرتبط بالدفعة.'
-            );
-
-            this.loading.set(false);
-
-            return;
-          }
-
-          this.programId.set(
-            programId
-          );
-
-          this.loadProgram(
-            programId
-          );
-
-        },
-
-        error: (
-          err: any
-        ) => {
-
-          console.error(
-            '❌ فشل جلب الدفعة:',
-            err
-          );
-
-          this.errorMessage.set(
-            'تعذر تحميل بيانات الدفعة.'
-          );
-
-          this.loading.set(false);
-
-        },
-
+      // Check whether the backend returns company information.
+      console.log('Certificate Batch Details:', {
+        batchId: batch.batchId,
+        companyId: (batch as any).companyId,
+        companyName: (batch as any).companyName,
+        batch
       });
 
-  }
+      const programId = Number(batch.programId);
+
+      if (!programId || Number.isNaN(programId)) {
+        this.errorMessage.set(
+          'لم يتم العثور على البرنامج المرتبط بالدفعة.'
+        );
+        this.loading.set(false);
+        return;
+      }
+
+      this.programId.set(programId);
+      this.loadProgram(programId);
+    },
+
+    error: (err: any) => {
+      console.error('فشل جلب الدفعة:', err);
+      this.errorMessage.set('تعذر تحميل بيانات الدفعة.');
+      this.loading.set(false);
+    }
+
+  });
+}
 
 
   private loadProgram(
