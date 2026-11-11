@@ -1451,9 +1451,38 @@ export class AdminTrainees implements OnInit {
     const statusParam = (statusVal === '0' || statusVal === '1' || statusVal === '2') ? Number(statusVal) : null;
 
     const queryParams: Record<string, unknown> = {
-      pageNumber: this.currentPage(),
-      pageSize: this.pageSize()
-    };
+  pageNumber: this.currentPage(),
+  pageSize: this.pageSize()
+};
+
+const searchTerm = this.searchQuery().trim();
+
+if (searchTerm) {
+  queryParams['searchTerm'] = searchTerm;
+}
+
+const university = this.universityFilter();
+
+if (university !== 'ALL') {
+  queryParams['university'] = university;
+}
+
+const company = this.companyFilter();
+
+if (company !== 'ALL' && company !== 'UNASSIGNED') {
+  const selectedCompany = this.companies().find(
+    (c: any) =>
+      (c.companyName ?? c.name ?? c.CompanyName) === company
+  );
+
+  const companyId = Number(
+    selectedCompany?.companyId ?? selectedCompany?.CompanyId
+  );
+
+  if (Number.isInteger(companyId) && companyId > 0) {
+    queryParams['companyId'] = companyId;
+  }
+}
 
     if (statusParam !== null && !isNaN(statusParam)) {
       queryParams['status'] = statusParam;
@@ -1905,6 +1934,13 @@ export class AdminTrainees implements OnInit {
     fields.forEach(f => this.validateSingleField(f));
     return Object.keys(this.formErrors()).length === 0;
   }
+
+  onTraineeSearchChange(value: string): void {
+  this.searchQuery.set(value);
+  this.currentPage.set(1);
+  this.loadTrainees();
+}
+
 
   onStatusFilterChange(newStatus: string) {
     this.statusFilter.set(newStatus);
