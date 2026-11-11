@@ -133,6 +133,19 @@ namespace Nafadh_Backend.Services
             dto.CompanyName = plan.Company?.CompanyName ?? string.Empty;
             dto.ProgramId = plan.ProgramId;
             dto.BatchId = plan.BatchId;
+            dto.DirectPlanTrainers = plan.Trainers
+                .Select(pt => pt.Trainer)
+                .GroupBy(t => t.TrainerId)
+                .Select(g => g.First())
+                .OrderBy(t => t.User.FullName)
+                .Select(t => new CoursePlanTrainerOptionDTO
+                {
+                    TrainerId = t.TrainerId,
+                    FullName = t.User.FullName,
+                    Specialty = t.Specialty
+                })
+                .ToList();
+            // A display-only union: stage-only / item-only trainers keep their narrower assignment.
             dto.Trainers = plan.Trainers
                 .Select(pt => pt.Trainer)
                 .Concat(plan.Stages.SelectMany(st => st.Trainers.Select(x => x.Trainer)))
