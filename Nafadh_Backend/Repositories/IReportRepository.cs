@@ -27,6 +27,7 @@ namespace Nafadh_Backend.Repositories
             DateTime? endDate
         );
         Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(int batchId, int pageNumber, int pageSize);
+        Task<List<CompanyWeightedEvaluationDTO>> GetCompanyWeightedEvaluationsAsync(int companyId);
         Task<DTOs.AttendanceReportDTO?> GetCompanyAttendanceReportAsync(int companyId);
         Task<List<DTOs.ChartPointDTO>> GetCompanyAttendanceChartAsync(int companyId);
         Task<List<DTOs.ChartPointDTO>> GetCompanyProgramDistributionAsync(int companyId);

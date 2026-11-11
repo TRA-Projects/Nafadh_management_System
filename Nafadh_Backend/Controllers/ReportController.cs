@@ -4,6 +4,9 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
 using Nafadh_Backend.DTOs;
@@ -18,11 +21,22 @@ namespace Nafadh_Backend.Controllers
         // NEW: used to resolve trainee IDs into full list-item DTOs for the
         // top-performers/at-risk endpoints below.
         private readonly ITraineeService _traineeService;
+        private readonly Nafadhcontext _context;
 
-        public ReportController(IReportService service, ITraineeService traineeService)
+        public ReportController(IReportService service, ITraineeService traineeService, Nafadhcontext context)
         {
             _service = service;
             _traineeService = traineeService;
+            _context = context;
+        }
+
+        private async Task<bool> OwnsCompanyAsync(int companyId)
+        {
+            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue("sub");
+            return int.TryParse(claim, out var userId) &&
+                   await _context.NFD_CompanySupervisors.AsNoTracking()
+                       .AnyAsync(s => s.UserId == userId && s.CompanyId == companyId);
         }
 
         // TODO: implement endpoints for this entity
@@ -235,6 +249,8 @@ namespace Nafadh_Backend.Controllers
         }
 
         // GET: api/Report/batch-performance/{batchId}?pageNumber=1&pageSize=15 (Admin Reports drill-down)
+        // Fix 12: batch assessment data must not be publicly accessible.
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpGet("batch-performance/{batchId}")]
         public async Task<IActionResult> GetBatchPerformance(
             int batchId,
@@ -250,6 +266,8 @@ namespace Nafadh_Backend.Controllers
         // Admin Reports - Company Batch Performance
         // GET: api/Report/admin-company-batch-performance/{companyId}/{batchId}
         // ==========================================================
+        // Fix 12: batch assessment data must not be publicly accessible.
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpGet("admin-company-batch-performance/{companyId:int}/{batchId:int}")]
         public async Task<IActionResult> GetAdminCompanyBatchPerformance(
             int companyId,
@@ -271,42 +289,52 @@ namespace Nafadh_Backend.Controllers
         }
 
         // GET: api/Report/company-attendance/{companyId} (Company Reports tab)
+        [Authorize(Roles = "CompanySupervisor")]
         [HttpGet("company-attendance/{companyId}")]
         public async Task<IActionResult> GetCompanyAttendanceReport(int companyId)
         {
+            if (!await OwnsCompanyAsync(companyId)) return Forbid();
             var report = await _service.GetCompanyAttendanceReportAsync(companyId);
             if (report == null) return NotFound();
             return Ok(report);
         }
 
         // GET: api/Report/company-attendance-chart/{companyId} (Company Dashboard)
+        [Authorize(Roles = "CompanySupervisor")]
         [HttpGet("company-attendance-chart/{companyId}")]
         public async Task<IActionResult> GetCompanyAttendanceChart(int companyId)
         {
+            if (!await OwnsCompanyAsync(companyId)) return Forbid();
             var weeks = await _service.GetCompanyAttendanceChartAsync(companyId);
             return Ok(new { weeks });
         }
 
         // GET: api/Report/company-program-distribution/{companyId} (Company Dashboard)
+        [Authorize(Roles = "CompanySupervisor")]
         [HttpGet("company-program-distribution/{companyId}")]
         public async Task<IActionResult> GetCompanyProgramDistribution(int companyId)
         {
+            if (!await OwnsCompanyAsync(companyId)) return Forbid();
             return Ok(await _service.GetCompanyProgramDistributionAsync(companyId));
         }
 
         // GET: api/Report/company-top-performers/{companyId} (Company Dashboard)
+        [Authorize(Roles = "CompanySupervisor")]
         [HttpGet("company-top-performers/{companyId}")]
         public async Task<IActionResult> GetCompanyTopPerformers(int companyId, [FromQuery] int take = 5)
         {
+            if (!await OwnsCompanyAsync(companyId)) return Forbid();
             var ids = await _service.GetCompanyTopPerformerTraineeIdsAsync(companyId, take);
             var trainees = await ResolveTraineesAsync(ids);
             return Ok(trainees);
         }
 
         // GET: api/Report/company-at-risk-trainees/{companyId} (Company Dashboard)
+        [Authorize(Roles = "CompanySupervisor")]
         [HttpGet("company-at-risk-trainees/{companyId}")]
         public async Task<IActionResult> GetCompanyAtRiskTrainees(int companyId, [FromQuery] int take = 5)
         {
+            if (!await OwnsCompanyAsync(companyId)) return Forbid();
             var ids = await _service.GetCompanyAtRiskTraineeIdsAsync(companyId, take);
             var trainees = await ResolveTraineesAsync(ids);
             return Ok(trainees);
