@@ -51,11 +51,23 @@ namespace Nafadh_Backend.Controllers
         }
 
         [HttpPut("{id}/status")]
-        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateSessionStatusDto dto)
+        public async Task<IActionResult> UpdateStatus(
+        int id,
+        [FromBody] UpdateSessionStatusDto dto)
         {
-            var success = await _service.UpdateStatusAsync(id, dto);
-            if (!success) return NotFound();
-            return NoContent();
+            try
+            {
+                var success = await _service.UpdateStatusAsync(id, dto);
+
+                if (!success)
+                    return NotFound();
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
