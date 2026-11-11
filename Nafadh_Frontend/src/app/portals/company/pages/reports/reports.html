@@ -84,21 +84,46 @@
     <div class="card card-pad">
       <div class="card-title">تقرير حضور المتدربين للشركة — آخر ستة أسابيع مسجلة</div>
       <p class="report-hint">المخطط يعرض حضور التسجيلات النشطة، مع استبعاد الأعذار المعتمدة.</p>
-      <div class="hbars">
-        @for (week of attendanceWeeks; track week.label) {
-          <div class="hbar">
-            <div class="h-lbl">{{ week.label }}</div>
-            <div class="h-trk"><div class="h-fill" [style.width.%]="week.value"></div></div>
-            <div class="h-val">{{ week.value }}%</div>
+      @if (attendanceChartError) {
+        <div class="report-error" role="alert">{{ attendanceChartError }}
+          <button class="btn btn-outline btn-sm" type="button" (click)="loadAllReportsData()" [disabled]="loading">إعادة المحاولة</button>
+        </div>
+      } @else if (attendanceWeeks.length) {
+        <div class="attendance-columns-chart" role="img" aria-label="تقرير حضور المتدربين للشركة — آخر ستة أسابيع مسجلة">
+          <div class="attendance-columns-plot">
+            <div class="attendance-columns-grid" aria-hidden="true">
+              <span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span>
+            </div>
+            <div class="attendance-columns-bars" [style.--columns-count]="attendanceWeeks.length">
+              @for (week of attendanceWeeks; track $index) {
+                <div class="attendance-columns-item"
+                     [attr.aria-label]="week.label + ': ' + week.value + '%'">
+                  <div class="attendance-columns-height">
+                    <div class="attendance-columns-bar"
+                         [style.--bar-percent]="week.value + '%'"
+                         [style.--bar-delay]="$index * 85 + 'ms'"
+                         [title]="week.label + ': ' + week.value + '%'">
+                    </div>
+                  </div>
+                  <strong class="attendance-columns-value">{{ week.value }}%</strong>
+                  <span class="attendance-columns-week">{{ week.label }}</span>
+                </div>
+              }
+            </div>
           </div>
-        } @empty {
-          <p class="report-hint">لا توجد سجلات حضور متاحة للأسابيع الأخيرة.</p>
-        }
-      </div>
+        </div>
+      } @else {
+        <p class="report-hint">لا توجد سجلات حضور متاحة للأسابيع الأخيرة.</p>
+      }
     </div>
   </div>
 
   <div class="card card-pad">
+    @if (attendanceReportError) {
+      <div class="report-error" role="alert">{{ attendanceReportError }}
+        <button class="btn btn-outline btn-sm" type="button" (click)="loadAllReportsData()" [disabled]="loading">إعادة المحاولة</button>
+      </div>
+    }
     <div class="card-title">
       تفاصيل الحضور والغياب حسب القسم
     </div>
@@ -140,6 +165,11 @@
   <!-- 2. إنجاز المتدربين (محدث مع الحدث ومانع الانتشار) -->
   <!-- ================================================= -->
   @if (activeTab === 'achieve') {
+    @if (weightedResultsError) {
+      <div class="report-error" role="alert">{{ weightedResultsError }}
+        <button class="btn btn-outline btn-sm" type="button" (click)="loadAllReportsData()" [disabled]="loading">إعادة المحاولة</button>
+      </div>
+    }
   <div class="achievement-stats-grid">
     <div class="achievement-card-mini">
       <span class="label">متوسط التقييم النهائي الموزون</span>
@@ -211,24 +241,29 @@
             style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
             <span>{{ program.name }}</span>
             <!-- تم وضع حدث النقر (click) مباشرة على زر العين لضمان الاستجابة الفورية -->
-            <span (click)="viewProgramOrTraineeDetails(program, $event)"
+            <button type="button" (click)="viewProgramOrTraineeDetails(program, $event)" aria-label="عرض تفاصيل المتدربين"
               style="background: #f8faff; border: 1px solid #cbd5e1; color: #002b66; width: 34px; height: 34px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"
               title="عرض تفاصيل المتدربين">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                 <circle cx="12" cy="12" r="3"></circle>
               </svg>
-            </span>
+            </button>
           </h4>
         </div>
 
-        <div class="program-progress-section" style="margin-top: 12px;">
+        <div class="program-progress-section">
           <div class="prog-info-row">
             <span>مستوى الإنجاز الحالي</span>
             <b>{{ program.value }} من 100%</b>
           </div>
-          <div class="prog-bar-bg">
-            <div class="prog-bar-fill" [style.width.%]="program.value"></div>
+          <div class="program-linear-chart" role="progressbar"
+               [attr.aria-label]="program.name"
+               aria-valuemin="0" aria-valuemax="100"
+               [attr.aria-valuenow]="program.value">
+            <div class="program-linear-track">
+              <div class="program-linear-fill" [style.width.%]="program.value"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -241,55 +276,52 @@
   <!-- 3. الطاقة الاستيعابية -->
   <!-- ================================================= -->
   @if (activeTab === 'cap') {
-  <div class="card card-pad capacity-card">
-    <div class="card-title">الطاقة الاستيعابية الفعلية للشركة</div>
-    <div class="capacity-row">
-      <p>الإجمالي: <b>{{ totalCapacity }}</b> مقعدًا</p>
-      <p>المستخدم: <b>{{ usedCapacity }}</b> مقعدًا</p>
-      <p>المتبقي: <b>{{ remainingCapacity }}</b> مقعدًا</p>
-      <p>نسبة الاستغلال: <b>{{ capacityPercentage }}%</b></p>
+    @if (capacityError) {
+      <div class="report-error" role="alert">{{ capacityError }}
+        <button class="btn btn-outline btn-sm" type="button" (click)="loadAllReportsData()" [disabled]="loading">إعادة المحاولة</button>
+      </div>
+    }
+    <div class="card card-pad capacity-card capacity-chart-card">
+      <div class="card-title">الطاقة الاستيعابية الفعلية للشركة</div>
+      <div class="capacity-chart-layout">
+        <div class="capacity-donut" [style.background]="capacityRingBackground"
+             role="img" [attr.aria-label]="'نسبة الاستغلال: ' + capacityPercentage + '%'">
+          <div class="capacity-donut-center">
+            <span>نسبة الاستغلال</span>
+            <strong>{{ capacityPercentage }}%</strong>
+          </div>
+        </div>
+        <div class="capacity-metrics">
+          <div class="capacity-metric"><span>الإجمالي</span><b>{{ totalCapacity }}</b><small>مقعدًا</small></div>
+          <div class="capacity-metric occupied"><span>المستخدم</span><b>{{ usedCapacity }}</b><small>مقعدًا</small></div>
+          <div class="capacity-metric remaining"><span>المتبقي</span><b>{{ remainingCapacity }}</b><small>مقعدًا</small></div>
+          <div class="capacity-metric"><span>نسبة الاستغلال</span><b>{{ capacityPercentage }}%</b></div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="card card-pad">
-    <div class="card-title">
-      ملخص الطاقة على مستوى الشركة (وليس توزيعًا حسب البرنامج)
+    <div class="card card-pad">
+      <div class="card-title">ملخص الطاقة على مستوى الشركة (وليس توزيعًا حسب البرنامج)</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>النطاق</th><th>السعة الإجمالية</th><th>المستخدم</th><th>المتبقي</th><th>الاستغلال</th></tr></thead>
+          <tbody>
+            @for (program of capacityPrograms; track program.name) {
+              <tr>
+                <td><b>{{ program.name }}</b></td>
+                <td>{{ program.capacity }}</td><td>{{ program.used }}</td><td>{{ program.remaining }}</td>
+                <td><div class="capacity-progress">
+                  <div class="bar"><i [style.width.%]="program.percentage"></i></div>
+                  <b>{{ program.percentage }}%</b>
+                </div></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="tbl-wrap">
-      <table class="tbl">
-        <thead>
-          <tr>
-            <th>النطاق</th>
-            <th>السعة الإجمالية</th>
-            <th>المستخدم</th>
-            <th>المتبقي</th>
-            <th>الاستغلال</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (program of capacityPrograms; track program.name) {
-          <tr>
-            <td><b>{{ program.name }}</b></td>
-            <td>{{ program.capacity }}</td>
-            <td>{{ program.used }}</td>
-            <td>{{ program.remaining }}</td>
-            <td>
-              <div class="capacity-progress">
-                <div class="bar">
-                  <i [class.amber]="program.percentage < 70" [style.width.%]="program.percentage"></i>
-                </div>
-                <b>{{ program.percentage }}%</b>
-              </div>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
   }
 
-  
   <!-- ================================================= -->
   <!-- 5. المهام -->
   <!-- ================================================= -->
@@ -365,7 +397,7 @@
                   <td>{{ planTrainerNames(plan) }}</td>
                   <td>{{ approvalLabel(plan.approvalStatus) }}</td>
                   <td>{{ executionLabel(plan.executionStatus) }}</td>
-                  <td>{{ plan.progressPercentage }}%</td>
+                  <td><div class="table-progress-cell"><div class="table-progress-track"><i [style.width.%]="plan.progressPercentage"></i></div><strong>{{ plan.progressPercentage }}%</strong></div></td>
                   <td>{{ plan.isDelayed ? ('متأخرة (' + plan.delayedStages + ' مراحل)') : 'لا' }}</td>
                 </tr>
               } @empty {

@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 
@@ -122,6 +123,10 @@ export class ReportsComponent implements OnInit {
 
   companyId = 0;
   errorMessage = '';
+  weightedResultsError = '';
+  attendanceChartError = '';
+  attendanceReportError = '';
+  capacityError = '';
   activeTab: ReportTab = 'att';
 
   loading = false;
@@ -193,6 +198,31 @@ export class ReportsComponent implements OnInit {
       : 0;
   }
 
+  get capacityRingBackground(): string {
+    if (this.totalCapacity <= 0) return 'conic-gradient(#e5edf7 0% 100%)';
+    const used = Math.max(0, Math.min(100, (this.usedCapacity / this.totalCapacity) * 100));
+    return `conic-gradient(#08368e 0% ${used}%, #19b9c5 ${used}% 100%)`;
+  }
+
+  get attendanceChartPoints(): { x: number; y: number }[] {
+    const weeks = this.attendanceWeeks;
+    const count = weeks.length;
+    return weeks.map((week, index) => ({
+      x: count <= 1 ? 360 : 720 - ((index + 0.5) * 720 / count),
+      y: 205 - (Math.max(0, Math.min(100, week.value)) * 1.8)
+    }));
+  }
+
+  get attendanceLinePoints(): string {
+    return this.attendanceChartPoints.map(point => `${point.x},${point.y}`).join(' ');
+  }
+
+  get attendanceAreaPoints(): string {
+    const points = this.attendanceChartPoints;
+    if (!points.length) return '';
+    return `${points[0].x},205 ${this.attendanceLinePoints} ${points[points.length - 1].x},205`;
+  }
+
   // =====================================================
   // 4. التقييمات
   // =====================================================
@@ -250,8 +280,13 @@ export class ReportsComponent implements OnInit {
       return;
     }
 
+    if (this.loading) return;
     this.loading = true;
     this.errorMessage = '';
+    this.weightedResultsError = '';
+    this.attendanceChartError = '';
+    this.attendanceReportError = '';
+    this.capacityError = '';
 
     forkJoin({
 
@@ -260,6 +295,7 @@ export class ReportsComponent implements OnInit {
         .pipe(
           catchError(error => {
             console.error('Capacity API:', error);
+            this.capacityError = this.apiErrorDetails(error, 'الطاقة الاستيعابية');
             return of(null);
           })
         ),
@@ -269,6 +305,7 @@ export class ReportsComponent implements OnInit {
         .pipe(
           catchError(error => {
             console.error('Attendance chart API:', error);
+            this.attendanceChartError = this.apiErrorDetails(error, 'رسم الحضور');
             return of(null);
           })
         ),
@@ -278,6 +315,7 @@ export class ReportsComponent implements OnInit {
         .pipe(
           catchError(error => {
             console.error('Attendance report API:', error);
+            this.attendanceReportError = this.apiErrorDetails(error, 'تقرير الحضور');
             return of(null);
           })
         ),
@@ -315,7 +353,7 @@ export class ReportsComponent implements OnInit {
         .pipe(
           catchError(error => {
             console.error('Weighted evaluations API:', error);
-            this.errorMessage = 'تعذر تحميل نتائج التقييم الموزونة من الخادم.';
+            this.weightedResultsError = this.apiErrorDetails(error, 'نتائج التقييم الموزونة');
             return of(null);
           })
         )
@@ -343,7 +381,10 @@ export class ReportsComponent implements OnInit {
         this.programDistribution =
           this.extractList(result.distribution);
 
-        this.weightedEvaluations = result.weightedResults ?? [];
+        if (result.weightedResults !== null && !Array.isArray(result.weightedResults)) {
+          this.weightedResultsError = 'استجابة نتائج التقييم الموزونة لا تطابق قائمة النتائج المتوقعة من الخادم.';
+        }
+        this.weightedEvaluations = Array.isArray(result.weightedResults) ? result.weightedResults : [];
         const completed = this.weightedEvaluations.filter(item =>
           item.isComplete && item.finalScore !== null);
         this.completedEvaluationsCount = completed.length;
@@ -371,6 +412,21 @@ export class ReportsComponent implements OnInit {
       }
 
     });
+  }
+
+  /** Preserve the HTTP failure for diagnostics; never turn a failed request into 0%. */
+  private apiErrorDetails(error: unknown, report: string): string {
+    if (!(error instanceof HttpErrorResponse)) {
+      return `تعذر تحميل ${report}. يرجى إعادة المحاولة.`;
+    }
+    const code = error.status;
+    const reason = code === 0 ? 'تعذر الاتصال بالخادم أو حظر الاتصال' :
+      code === 401 ? 'انتهت جلسة الدخول أو لم يتم إرسال بيانات المصادقة' :
+      code === 403 ? 'لا توجد صلاحية للوصول إلى التقرير' :
+      code === 404 ? 'مسار التقرير غير موجود في الخادم' :
+      code >= 500 ? 'خطأ داخل الخادم' :
+      `تعذر تنفيذ الطلب (${code})`;
+    return `تعذر تحميل ${report}: ${reason}${code ? ` (HTTP ${code})` : ''}.`;
   }
 
   // =====================================================
@@ -414,37 +470,36 @@ export class ReportsComponent implements OnInit {
   // =====================================================
 
   private buildAttendanceChart(response: any): void {
-
-    const weeks = Array.isArray(response)
+    const weeks: any[] = Array.isArray(response)
       ? response
-      : this.extractList(
-          response?.weeks ??
-          response?.Weeks
-        );
+      : this.extractList(response?.weeks ?? response?.Weeks ?? response);
 
-    this.attendanceWeeks = weeks.map(
-      (week: any, index: number): AttendanceWeek => ({
+    const parsed = weeks.flatMap((week: any) => {
+      const rawLabel = week?.label ?? week?.Label ?? week?.week ?? week?.Week;
+      const rawValue = week?.value ?? week?.Value ?? week?.attendance ??
+        week?.Attendance ?? week?.attendanceRate ?? week?.AttendanceRate;
+      // A missing value is not a real 0% attendance rate.
+      if (rawLabel === null || rawLabel === undefined || String(rawLabel).trim() === '' ||
+          rawValue === null || rawValue === undefined || rawValue === '') return [];
+      const value = Number(rawValue);
+      if (!Number.isFinite(value) || value < 0 || value > 100) return [];
+      return [{ label: String(rawLabel).trim(), value }];
+    });
 
-        label: String(
-          week?.label ??
-          week?.Label ??
-          week?.week ??
-          week?.Week ??
-          `الأسبوع ${index + 1}`
-        ),
-
-        value: this.clampPercentage(
-          week?.value ??
-          week?.Value ??
-          week?.attendance ??
-          week?.Attendance ??
-          week?.attendanceRate ??
-          week?.AttendanceRate ??
-          0
-        )
-
-      })
-    );
+    // Some backend responses arrive newest-first. Sort only when all labels
+    // expose an unambiguous year + ISO week, otherwise keep server ordering.
+    const weekKey = (label: string): number | null => {
+      const yearFirst = /\b(20\d{2})\s*[/\-]\s*(?:الأسبوع\s*)?(\d{1,2})\b/.exec(label);
+      const weekFirst = /(?:الأسبوع\s*)?(\d{1,2})\s*[/\-]\s*(20\d{2})\b/.exec(label);
+      const year = Number(yearFirst?.[1] ?? weekFirst?.[2]);
+      const week = Number(yearFirst?.[2] ?? weekFirst?.[1]);
+      return year >= 2000 && week >= 1 && week <= 53 ? year * 100 + week : null;
+    };
+    const sortable = parsed.map(row => ({ ...row, key: weekKey(row.label) }));
+    if (sortable.every(row => row.key !== null)) {
+      sortable.sort((a, b) => (a.key ?? 0) - (b.key ?? 0));
+    }
+    this.attendanceWeeks = sortable.slice(-6).map(({ label, value }) => ({ label, value }));
   }
 
   // =====================================================
@@ -1083,6 +1138,12 @@ export class ReportsComponent implements OnInit {
   }
 
   private canExport(sheets: CompanyWorkbookSheet[]): boolean {
+    if ((this.activeTab === 'achieve' && this.weightedResultsError) ||
+        (this.activeTab === 'att' && (this.attendanceChartError || this.attendanceReportError)) ||
+        (this.activeTab === 'cap' && this.capacityError)) {
+      alert('تعذر تصدير التقرير لأن بعض بياناته لم تُحمّل من الخادم. يرجى إعادة المحاولة.');
+      return false;
+    }
     if (this.loading || (this.activeTab === 'tasks' && (this.tasksLoading || !this.tasksLoaded || !!this.tasksError))) {
       alert('لم يكتمل تحميل بيانات التقرير. يرجى المحاولة بعد انتهاء التحميل.');
       return false;
