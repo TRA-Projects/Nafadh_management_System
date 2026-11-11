@@ -565,22 +565,22 @@ export class AdminCertificates implements OnInit {
     let filteredBatches = [...this.allBatches];
 
     if (selectedCompany !== 'all') {
-  const selectedCompanyData = this.certificateCompanies.find(
-    company => company.companyName === selectedCompany
-  );
+      const selectedCompanyData = this.certificateCompanies.find(
+        company => company.companyName === selectedCompany
+      );
 
-  if (selectedCompanyData) {
-    const allowedBatchIds = new Set(
-      selectedCompanyData.batchIds.map(id => Number(id))
-    );
+      if (selectedCompanyData) {
+        const allowedBatchIds = new Set(
+          selectedCompanyData.batchIds.map(id => Number(id))
+        );
 
-    filteredBatches = filteredBatches.filter(batch =>
-      allowedBatchIds.has(this.cleanId(batch.batchId ?? batch.id))
-    );
-  } else {
-    filteredBatches = [];
-  }
-}
+        filteredBatches = filteredBatches.filter(batch =>
+          allowedBatchIds.has(this.cleanId(batch.batchId ?? batch.id))
+        );
+      } else {
+        filteredBatches = [];
+      }
+    }
 
     if (selectedTrack !== 'all') {
       filteredBatches = filteredBatches.filter(b => b.trackName === selectedTrack);

@@ -374,20 +374,14 @@ getAdminCertificateFilterOptions(): Observable<{
     );
   }
 
-  // يبحث في قائمة الخطط المتاحة عن خطة الدفعة؛ لا يفترض أن batchId هو planId.
-  getBatchCoursePlan(batchId: number): Observable<any> {
-    const cleanId = this.sanitizeId(batchId);
-    return this.getPendingCoursePlans().pipe(
-      map((response: any) => {
-        const plans: any[] = Array.isArray(response)
-          ? response
-          : (response?.items ?? response?.data ?? response?.results ?? []);
-        return plans.find((plan: any) =>
-          Number(plan?.batchId ?? plan?.batch?.batchId) === cleanId
-        ) ?? null;
-      })
-    );
-  }
+  // Get the full course plan details by Batch ID
+getBatchCoursePlan(batchId: number): Observable<any> {
+  const cleanId = this.sanitizeId(batchId);
+
+  return this.http.get<any>(
+    `${this.base}/CoursePlanApproval/batch/${cleanId}/plan`
+  );
+}
 
   // قرار الاعتماد يتم حسب planId وليس batchId.
   reviewBatchCoursePlan(batchId: number, planId: number, payload: any): Observable<any> {
