@@ -321,6 +321,49 @@ export interface CompanyProgramBatchDto {
   capacity: number;
   companyEnrollmentCount: number;
   status: string;
+  attendanceWeight: number;
+  quizzesWeight: number;
+  tasksWeight: number;
+  projectsWeight: number;
+  excellentMinScore: number;
+  excellentMinAttendance: number;
+  veryGoodMinScore: number;
+  veryGoodMinAttendance: number;
+  goodMinScore: number;
+  atRiskMinAttendance: number;
+  trainers: CompanyProgramTrainerAssignmentDto[];
+  plans: CompanyProgramPlanDto[];
+}
+
+export interface CompanyProgramTrainerAssignmentDto {
+  trainerId: number;
+  trainerName: string;
+  scope: 'Batch' | 'Plan' | 'Stage' | 'Item';
+  planId?: number | null;
+  stageId?: number | null;
+  itemId?: number | null;
+  stageTitle?: string | null;
+  itemTitle?: string | null;
+}
+
+export interface CompanyProgramPlanDto {
+  planId: number;
+  title: string;
+  durationHours: number;
+  startDate: string;
+  endDate: string;
+  approvalStatus: string;
+  executionStatus: string;
+  stages: CompanyProgramStageDto[];
+}
+
+export interface CompanyProgramStageDto {
+  stageId: number;
+  title: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  trainers: CompanyProgramTrainerAssignmentDto[];
 }
 
 export interface CompanyProgramEnrollmentDto {
