@@ -72,6 +72,10 @@ export class AdminNotifications implements OnInit {
   private readonly notificationsApi = inject(NotificationService);
   private readonly router = inject(Router);
   readonly planRequestNotifications = signal<UserNotification[]>([]);
+  
+  // 👈 إضافة إشارات طلبات معالجة الإنذارات
+  readonly remediationNotifications = signal<UserNotification[]>([]);
+
   readonly pendingCoursePlans = signal<any[]>([]);
   readonly pendingPlansError = signal<string | null>(null);
   readonly planRequestsLoading = signal(false);
@@ -219,9 +223,20 @@ export class AdminNotifications implements OnInit {
     this.planRequestsError.set(null);
     this.notificationsApi.getMine().subscribe({
       next: rows => {
-        this.planRequestNotifications.set((rows ?? []).filter(n =>
+        const all = rows ?? [];
+        
+        // إشعارات الخطط التدريبية
+        this.planRequestNotifications.set(all.filter(n =>
           /^CoursePlan:[1-9]\d*$/.test((n.relatedEntity ?? '').trim())
         ).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)));
+
+        // 🌟 استخراج إشعارات طلبات معالجة الإنذارات
+        this.remediationNotifications.set(all.filter(n =>
+          (n.relatedEntity ?? '').toLowerCase().includes('remediation') ||
+          (n.title ?? '').includes('معالجة') ||
+          (n.message ?? '').includes('معالجة')
+        ).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)));
+
         this.planRequestsLoading.set(false);
       },
       error: () => {
@@ -249,7 +264,18 @@ export class AdminNotifications implements OnInit {
     this.openPlanById(Number(match[1]));
   }
 
-  // 👈 ترتيب الإعلانات بحيث تظهر المثبتة (isPinned) في القمة أولاً
+  // 🌟 دالة فتح ومراجعة طلب المعالجة
+  openRemediationRequest(item: UserNotification): void {
+    if (!item.isRead) {
+      this.notificationsApi.markAsRead(item.notificationId).subscribe({
+        next: () => this.remediationNotifications.update(list =>
+          list.map(n => n.notificationId === item.notificationId ? { ...n, isRead: true } : n)),
+        error: () => { }
+      });
+    }
+    this.router.navigate(['/admin/remediation']);
+  }
+
   load(): void {
     this.loadPlanRequests();
     this.loading.set(true);
@@ -559,9 +585,6 @@ export class AdminNotifications implements OnInit {
     if (editor) this.newAnnounceData.content = editor.innerHTML;
   }
 
-  // =========================================================================
-  // دالة نشر الإعلان (مع دعم الأولوية والإيميل والتثبيت)
-  // =========================================================================
   postAnnouncement(): void {
     if (!this.constants.isSelectable('NFD_ANN_SCOPE', this.scopeByAudience[this.newAnnounceData.mainAudience])) {
       alert('اختر نطاق إعلان مفعّلاً.');
@@ -597,14 +620,12 @@ export class AdminNotifications implements OnInit {
       fd.mainAudience === 'trainers'  ? 4 :
       fd.mainAudience === 'admins'    ? 5 : 0;
 
-    // تحويل الأولوية إلى رقم C# Enum (2: عاجل، 1: هام، 0: عادي)
     const rawPrio = String(fd.priority || '').toLowerCase();
     const priorityVal =
       rawPrio === 'urgent' || rawPrio === 'عاجل' || rawPrio === '2' ? 2 :
       rawPrio === 'important' || rawPrio === 'هام' || rawPrio === '1' ? 1 : 0;
     const priorityName = priorityVal === 2 ? 'Urgent' : priorityVal === 1 ? 'Important' : 'Normal';
 
-    // فحص خيار البريد والتثبيت
     const isEmailEnabled = Boolean(fd.channels?.email);
     const isPinnedVal = Boolean(fd.isPinned);
 
@@ -620,14 +641,12 @@ export class AdminNotifications implements OnInit {
       priorityLevel: priorityName,
       createdAt: new Date().toISOString(),
 
-      // قنوات النشر والبريد
       channels: isEmailEnabled ? ['Email', 'Platform'] : ['Platform'],
       sendEmail: isEmailEnabled,
       SendEmail: isEmailEnabled,
       isEmail: isEmailEnabled,
       IsEmail: isEmailEnabled,
 
-      // تثبيت الإعلان في الصدارة
       isPinned: isPinnedVal,
       IsPinned: isPinnedVal,
       pinned: isPinnedVal,
@@ -670,9 +689,6 @@ export class AdminNotifications implements OnInit {
     });
   }
 
-  // ==========================================
-  // دوال إدارة المسودات (Save as Draft)
-  // ==========================================
   saveAsDraft(): void {
     const fd = this.newAnnounceData;
     if (!fd.title.trim() && !fd.content.trim()) {
