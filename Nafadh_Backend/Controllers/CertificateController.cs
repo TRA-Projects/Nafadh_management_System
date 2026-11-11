@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -154,6 +155,168 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(result);
         }
+
+
+
+        // ============================================================
+        // TRAINEE PORTAL - OFFICIAL CERTIFICATE DETAILS
+        // Uses the same grade source and classification as Admin Portal.
+        // ============================================================
+
+        [HttpGet("enrollment/{enrollmentId:int}/official-details")]
+        [RequirePagePermission(
+            "nf.trainee.evaluations-badges", "View")]
+        public async Task<IActionResult> GetOfficialCertificateDetails(
+            int enrollmentId)
+        {
+            var userIdText =
+                User.FindFirst("userId")?.Value ??
+                User.FindFirst("UserId")?.Value ??
+                User.FindFirst("sub")?.Value ??
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdText, out var userId))
+            {
+                return Unauthorized(new
+                {
+                    message = "تعذر تحديد حساب المستخدم."
+                });
+            }
+
+            var enrollment = await _context.NFD_Enrollments
+                .AsNoTracking()
+                .Where(e =>
+                    e.EnrollmentId == enrollmentId &&
+                    e.Trainee.UserId == userId)
+                .Select(e => new
+                {
+                    e.EnrollmentId,
+                    e.TraineeId,
+                    e.BatchId,
+                    e.Batch.BatchName,
+                    e.Batch.StartDate,
+                    e.Batch.EndDate,
+                    TraineeName = e.Trainee.User.FullName
+                })
+                .FirstOrDefaultAsync();
+
+            if (enrollment == null)
+            {
+                return NotFound(new
+                {
+                    message = "التسجيل غير موجود أو لا يخص هذا المتدرب."
+                });
+            }
+
+            var certificate = await _context.NFD_Certificates
+                .AsNoTracking()
+                .Where(c => c.EnrollmentId == enrollmentId)
+                .OrderBy(c => c.CertificateId)
+                .Select(c => new
+                {
+                    c.CertificateId,
+                    c.IssueDate,
+                    c.FileUrl
+                })
+                .FirstOrDefaultAsync();
+
+            if (certificate == null)
+            {
+                return NotFound(new
+                {
+                    message = "لم يتم إصدار شهادة لهذا التسجيل."
+                });
+            }
+
+            // Same grade calculation used by Admin certificate status.
+            decimal? grade = await _context.NFD_Evaluations
+                .AsNoTracking()
+                .Where(ev => ev.EnrollmentId == enrollmentId)
+                .Select(ev => (decimal?)ev.Score)
+                .AverageAsync();
+
+            string? gradeLabel = null;
+
+            if (grade.HasValue)
+            {
+                var score = grade.Value;
+
+                gradeLabel =
+                    score >= 95m ? "امتياز مع مرتبة الشرف" :
+                    score >= 90m ? "امتياز" :
+                    score >= 80m ? "جيد جداً" :
+                    score >= 70m ? "جيد" :
+                    score >= 50m ? "مقبول" :
+                                   "غير مجتاز";
+            }
+
+            return Ok(new
+            {
+                enrollment.EnrollmentId,
+                enrollment.TraineeId,
+                enrollment.BatchId,
+                enrollment.BatchName,
+                enrollment.TraineeName,
+                enrollment.StartDate,
+                enrollment.EndDate,
+
+                certificate.CertificateId,
+                certificate.IssueDate,
+
+                Grade = grade,
+                GradeLabel = gradeLabel,
+
+                HasGrade = grade.HasValue,
+                IsIssued = true
+            });
+        }
+
+#if DEBUG
+        [HttpGet("debug/enrollment/{enrollmentId:int}/grade")]
+        [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+        public async Task<IActionResult> TestCertificateGrade(int enrollmentId)
+        {
+            var remoteIp = HttpContext.Connection.RemoteIpAddress;
+
+            if (remoteIp == null ||
+                !System.Net.IPAddress.IsLoopback(remoteIp))
+            {
+                return NotFound();
+            }
+
+            var grade = await _context.NFD_Evaluations
+                .AsNoTracking()
+                .Where(e => e.EnrollmentId == enrollmentId)
+                .Select(e => (decimal?)e.Score)
+                .AverageAsync();
+
+            if (!grade.HasValue)
+            {
+                return Ok(new
+                {
+                    EnrollmentId = enrollmentId,
+                    Message = "لا توجد درجات لهذا التسجيل."
+                });
+            }
+
+            var score = grade.Value;
+
+            var gradeLabel =
+                score >= 95m ? "امتياز مع مرتبة الشرف" :
+                score >= 90m ? "امتياز" :
+                score >= 80m ? "جيد جداً" :
+                score >= 70m ? "جيد" :
+                score >= 50m ? "مقبول" :
+                               "غير مجتاز";
+
+            return Ok(new
+            {
+                EnrollmentId = enrollmentId,
+                Grade = Math.Round(score, 2),
+                GradeLabel = gradeLabel
+            });
+        }
+#endif
 
         //=================-- Admin portal =================--
 

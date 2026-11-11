@@ -8,7 +8,7 @@ namespace Nafadh_Backend.Controllers
 {
     [ApiController]
     [Route("api/admin/certificates")]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class AdminCertificateFiltersController : ControllerBase
     {
         private readonly Nafadhcontext _context;

@@ -32,17 +32,29 @@
       </div>
 
       <!-- التقييم الكلي الجديد -->
-      <div class="summary-item">
-        <div class="summary-icon" style="background: #ecfdf5; color: #047857;">
-          <i class="fas fa-star"></i>
-        </div>
-        <div>
-          <span>التقييم الكلي</span>
-          <strong>{{ overallEvaluation()?.finalGrade || 'غير متاح' }}</strong>
-        </div>
-      </div>
-    </div>
+     <!-- التقييم الكلي المعتمد -->
+<button
+  type="button"
+  class="summary-item overall-evaluation-button"
+  (click)="openOverallEvaluationDetails()">
+
+  <div
+    class="summary-icon"
+    style="background:#ecfdf5;color:#047857">
+    <i class="fas fa-star"></i>
   </div>
+
+  <div>
+    <span>التقييم الكلي</span>
+
+    <strong>
+      {{ certificateFinalGrade() }}
+    </strong>
+
+    <small>عرض تفاصيل التقييم</small>
+  </div>
+
+</button>
 
   <!-- =========================================================
        FEEDBACK STRIP
@@ -366,59 +378,43 @@
                       }
                     </p>
 
-                    <div class="cert-scores-strip">
-                      <div class="score-box">
-                        <span class="sc-label">حالة الشهادة</span>
-                        <strong class="sc-value text-emerald">
-                          معتمدة وصادرة
-                        </strong>
-                      </div>
+                   <div class="cert-scores-strip">
 
-                      <div class="score-box">
-                        <span class="sc-label">تاريخ الإصدار</span>
-                        <strong class="sc-value text-navy">
-                          {{ cert.issueDate | date:'dd/MM/yyyy' }}
-                        </strong>
-                      </div>
+  <div class="score-box">
+    <span class="sc-label">
+      الدرجة النهائية المكتسبة
+    </span>
 
-                      <div class="score-box">
-                        <span class="sc-label">مرجع الشهادة</span>
-                        <strong class="sc-value text-teal">
-                          {{ cert.certificateId }}
-                        </strong>
-                      </div>
-                    </div>
-                  </div>
+    <strong class="sc-value text-navy">
+      {{ certificateFinalScore() }}
+    </strong>
+  </div>
 
-                  <div class="official-cert-footer">
-                    <div class="cert-signature-block">
-                      <span class="sig-label">
-                        الجهة المدربة المستضيفة
-                      </span>
+  <div class="score-box highlight-grade">
+    <span class="sc-label">
+      التقدير العام
+    </span>
 
-                      <strong class="sig-company">
-                        {{ certificateBatch()?.companyName || '—' }}
-                      </strong>
-                    </div>
+    <strong class="sc-value text-emerald">
+      {{ certificateFinalGrade() }}
+    </strong>
+  </div>
 
-                    <div class="cert-qr-verification-block">
-                      <div class="qr-meta-text">
-                        <div class="qr-badge-title">
-                          <i class="fa-solid fa-circle-check"></i>
-                          شهادة صادرة من النظام
-                        </div>
+  <div class="score-box">
+    <span class="sc-label">
+      إجمالي ساعات التدريب
+    </span>
 
-                        <div class="qr-date-line">
-                          تاريخ الإصدار:
-                          {{ cert.issueDate | date:'dd/MM/yyyy' }}
-                        </div>
+    <strong class="sc-value text-teal">
+      @if (certificateTrainingHours(); as hours) {
+        {{ hours }} ساعة تدريبية
+      } @else {
+        غير متاح
+      }
+    </strong>
+  </div>
 
-                        <div class="qr-code-line">
-                          رقم سجل الشهادة:
-                          {{ cert.certificateId }}
-                        </div>
-                      </div>
-                    </div>
+</div>
                   </div>
 
                 </div>
@@ -859,5 +855,87 @@
       </div>
     </div>
   }
+@if (overallEvaluationDetailsOpen()) {
 
+  <div
+    class="trainee-cert-backdrop"
+    (click)="closeOverallEvaluationDetails()">
+
+    <div
+      class="trainee-cert-dialog"
+      (click)="$event.stopPropagation()">
+
+      <div class="trainee-cert-dialog-header">
+        <h3>تفاصيل التقييم الكلي</h3>
+
+        <button
+          type="button"
+          (click)="closeOverallEvaluationDetails()">
+          ✕
+        </button>
+      </div>
+
+      <div class="overall-evaluation-details">
+
+        @if (overallEvaluation(); as evaluation) {
+
+          <h3>نتيجة التقييم المعتمدة</h3>
+
+          <div class="overall-evaluation-row">
+            <span>الحضور</span>
+            <strong>
+              {{ evaluation.attendancePercentage ?? 'غير متاح' }}
+            </strong>
+          </div>
+
+          <div class="overall-evaluation-row">
+            <span>المهام</span>
+            <strong>
+              {{ evaluation.tasksPercentage ?? 'غير متاح' }}
+            </strong>
+          </div>
+
+          <div class="overall-evaluation-row">
+            <span>الاختبارات</span>
+            <strong>
+              {{ evaluation.quizzesPercentage ?? 'غير متاح' }}
+            </strong>
+          </div>
+
+          <div class="overall-evaluation-row">
+            <span>المشاريع</span>
+            <strong>
+              {{ evaluation.projectsPercentage ?? 'غير متاح' }}
+            </strong>
+          </div>
+
+          <div class="overall-evaluation-row">
+            <span>الدرجة النهائية</span>
+            <strong>{{ certificateFinalScore() }}</strong>
+          </div>
+
+          <div class="overall-evaluation-row">
+            <span>التقدير النهائي</span>
+            <strong>{{ certificateFinalGrade() }}</strong>
+          </div>
+
+          <p class="overall-evaluation-note">
+            يتم احتساب التقييم النهائي باستخدام نتائج الحضور
+            والمهام والاختبارات والمشاريع، وفق الأوزان
+            ومعايير التصنيف المعتمدة في النظام.
+          </p>
+
+        } @else {
+
+          <p>
+            لم يتم توفير التقييم الكلي لهذا التسجيل بعد.
+          </p>
+
+        }
+
+      </div>
+    </div>
+  </div>
+
+}
 </div>

@@ -983,7 +983,55 @@ export class TraineeAchievements implements OnInit {
   moduleProgress = signal<TraineeModuleProgressDto[]>([]);
 
   overallEvaluation = signal<any | null>(null);
+readonly overallEvaluationDetailsOpen = signal(false);
 
+openOverallEvaluationDetails(): void {
+  this.overallEvaluationDetailsOpen.set(true);
+}
+
+closeOverallEvaluationDetails(): void {
+  this.overallEvaluationDetailsOpen.set(false);
+}
+
+readonly certificateFinalScore = computed<string>(() => {
+  const evaluation = this.overallEvaluation();
+
+  if (!evaluation || evaluation.isComplete === false) {
+    return 'بانتظار اعتماد التقييم';
+  }
+
+  const score = Number(evaluation.finalScore);
+
+  if (!Number.isFinite(score) ||
+      evaluation.finalScore === null ||
+      evaluation.finalScore === undefined) {
+    return 'غير متاح';
+  }
+
+  return `${score.toFixed(2)}%`;
+});
+
+readonly certificateFinalGrade = computed<string>(() => {
+  const evaluation = this.overallEvaluation();
+
+  if (!evaluation || evaluation.isComplete === false) {
+    return 'بانتظار اعتماد التقييم';
+  }
+
+  return evaluation.finalGrade || 'غير متاح';
+});
+
+readonly certificateTrainingHours = computed(() => {
+  const batch = this.certificateBatch();
+
+  if (!batch?.startDate || !batch?.endDate) {
+    return null;
+  }
+
+  // لا نفترض عدد ساعات أسبوعية ثابتًا.
+  // ستُربط ساعات الشهادة بإعدادات التدريب المعتمدة.
+  return null;
+});
   // ============================================================
   // BADGES
   // ============================================================
@@ -2842,18 +2890,18 @@ next: (batch: BatchDto) => {
     }, 4000);
   }
 
-  viewCertificate(): void {
-    const certificate = this.issuedCertificate();
+viewCertificate(): void {
+  const certificate = this.issuedCertificate();
 
-    if (!certificate) {
-      this.showCertificateMessage(
-        'الشهادة بانتظار إصدار الإدارة.'
-      );
-      return;
-    }
-
-    this.certificatePreviewOpen.set(true);
+  if (!certificate) {
+    this.showCertificateMessage(
+      'الشهادة بانتظار إصدار الإدارة.'
+    );
+    return;
   }
+
+  this.certificatePreviewOpen.set(true);
+}
 
   closeCertificatePreview(): void {
     this.certificatePreviewOpen.set(false);
@@ -2876,86 +2924,49 @@ async downloadCertificate(): Promise<void> {
     return;
   }
 
-  // Display the certificate template if it is not open.
   this.certificatePreviewOpen.set(true);
 
-  try {
-    const certificateElement =
-      await this.waitForCertificateElement();
+  const element = await this.waitForCertificateElement();
 
-    if (!certificateElement) {
-      this.showCertificateMessage(
-        'تعذر تجهيز الشهادة للتنزيل.'
-      );
-      return;
+  if (!element) {
+    this.showCertificateMessage(
+      'تعذر العثور على قالب الشهادة.'
+    );
+    return;
+  }
+
+  const options = {
+    margin: 0,
+    filename: `Nafadh-Certificate-${certificate.certificateId}.pdf`,
+    image: {
+      type: 'jpeg' as const,
+      quality: 0.98
+    },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    },
+    jsPDF: {
+      unit: 'mm' as const,
+      format: 'a4' as const,
+      orientation: 'landscape' as const
     }
+  };
 
-    // Wait for fonts to load.
-    await document.fonts.ready;
-
-    // Wait for certificate images to load.
-    const images = Array.from(
-      certificateElement.querySelectorAll('img')
-    );
-
-    await Promise.all(
-      images.map(image => {
-        if (image.complete) {
-          return Promise.resolve();
-        }
-
-        return new Promise<void>(resolve => {
-          image.addEventListener('load', () => resolve(), {
-            once: true
-          });
-
-          image.addEventListener('error', () => resolve(), {
-            once: true
-          });
-        });
-      })
-    );
-
-    const fileName =
-      `Nafadh-Certificate-${certificate.certificateId}.pdf`;
-
-    const options = {
-      margin: 0,
-      filename: fileName,
-      image: {
-        type: 'jpeg' as const,
-        quality: 0.98
-      },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        scrollX: 0,
-        scrollY: 0
-      },
-      jsPDF: {
-        unit: 'mm' as const,
-        format: 'a4',
-        orientation: 'landscape' as const
-      },
-      pagebreak: {
-        mode: ['avoid-all', 'css', 'legacy']
-      }
-    };
-
+  try {
     await html2pdf()
       .set(options)
-      .from(certificateElement)
+      .from(element)
       .save();
-
   } catch (error) {
     console.error(
-      'Certificate PDF download failed:',
+      'Certificate PDF generation failed:',
       error
     );
 
     this.showCertificateMessage(
-      'حدث خطأ أثناء تنزيل الشهادة.'
+      'تعذر إنشاء ملف PDF للشهادة.'
     );
   }
 }

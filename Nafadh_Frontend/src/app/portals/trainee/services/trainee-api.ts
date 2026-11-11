@@ -842,7 +842,14 @@ getProjectMembers(
       `${this.base}/Enrollment/${enrollmentId}`
     );
   }
-
+downloadIssuedCertificate(
+  certificateId: number
+): Observable<Blob> {
+  return this.http.get(
+    `${this.base}/Certificate/${certificateId}/download`,
+    { responseType: 'blob' }
+  );
+}
   // =========================================================
   // Feedback at Module Completion
   // =========================================================
