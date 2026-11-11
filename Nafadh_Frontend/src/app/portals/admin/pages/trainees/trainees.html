@@ -119,7 +119,7 @@
     <div class="filter-grid">
       <div class="search-box">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input type="text" class="search-input" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+        <input type="text" class="search-input" [ngModel]="searchQuery()" (ngModelChange)="onTraineeSearchChange($event)"
           placeholder="ابحث بالاسم، الرقم المدني، البريد، أو التخصص..." />
       </div>
 
@@ -1108,4 +1108,3 @@
   </div>
   }
 
-</div>
