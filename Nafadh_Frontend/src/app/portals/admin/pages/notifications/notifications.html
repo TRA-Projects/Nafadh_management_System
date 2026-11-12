@@ -89,8 +89,8 @@
     </div>
     @if (planRequestsLoading()) { <p>جارٍ تحميل طلبات المعالجة...</p> }
     @else if (planRequestsError()) { <p role="alert">{{ planRequestsError() }}</p> }
-    @else if (!remediationNotifications().length) { 
-      <p style="color:#64748b;margin-top:8px;">لا توجد طلبات معالجة إنذارات جديدة حالياً.</p> 
+    @else if (!remediationNotifications().length) {
+    <p style="color:#64748b;margin-top:8px;">لا توجد طلبات معالجة إنذارات جديدة حالياً.</p>
     }
     @else {
     <div style="display:grid;gap:10px;margin-top:12px;">
@@ -99,11 +99,14 @@
         style="border:1px solid #e2e8f0;padding:12px;border-radius:9px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#f8fafc;">
         <div>
           <strong style="color:#0f172a;">{{ request.title }}</strong>
-          @if (!request.isRead) { <span style="background:#ef4444;color:#fff;padding:2px 6px;border-radius:4px;font-size:0.75rem;margin-inline:8px;">جديد</span> }
+          @if (!request.isRead) { <span
+            style="background:#ef4444;color:#fff;padding:2px 6px;border-radius:4px;font-size:0.75rem;margin-inline:8px;">جديد</span>
+          }
           <div style="color:#334155;margin:4px 0;">{{ request.message }}</div>
           <small style="color:#64748b;">{{ request.createdAt | date:'yyyy/MM/dd HH:mm' }}</small>
         </div>
-        <button type="button" class="btn btn-primary" (click)="openRemediationRequest(request)">مراجعة طلب المعالجة</button>
+        <button type="button" class="btn btn-primary" (click)="openRemediationRequest(request)">مراجعة طلب
+          المعالجة</button>
       </div>
       }
     </div>
@@ -159,10 +162,9 @@
         (click)="setFilter('alert')">تنبيهات وإنذارات</button>
       <button type="button" class="tab-btn" [class.active]="activeFilter() === 'company'"
         (click)="setFilter('company')">شؤون الشركات</button>
-      
+
       <!-- إضافة تبويب المسودات المحفوظة -->
-      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'drafts'"
-        (click)="setFilter('drafts')">
+      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'drafts'" (click)="setFilter('drafts')">
         📝 المسودات المحفوظة <span class="tab-badge" style="background:#f59e0b;color:#fff;">{{ drafts().length }}</span>
       </button>
     </div>
@@ -188,42 +190,50 @@
   @if (activeFilter() === 'drafts') {
   <div class="notifications-list drafts-list">
     @if (!drafts().length) {
-      <div class="state-card empty">
-        <div class="empty-icon-circle">📝</div>
-        <h3>لا توجد مسودات محفوظة حالياً</h3>
-        <p>يمكنك كتابة أي إعلان واختيار "حفظ كمسودة" للرجوع إليه وتعديله أو نشره لاحقاً.</p>
-      </div>
+    <div class="state-card empty">
+      <div class="empty-icon-circle">📝</div>
+      <h3>لا توجد مسودات محفوظة حالياً</h3>
+      <p>يمكنك كتابة أي إعلان واختيار "حفظ كمسودة" للرجوع إليه وتعديله أو نشره لاحقاً.</p>
+    </div>
     } @else {
-      @for (draft of drafts(); track draft.id) {
-      <article class="notification-card" style="border-right: 4px solid #f59e0b; background: #fffbeb;">
-        <div class="card-icon-wrap" style="background: #fef3c7; color: #b45309;">
-          <span>📝</span>
+    @for (draft of drafts(); track draft.id) {
+    <article class="notification-card" style="border-right: 4px solid #f59e0b; background: #fffbeb;">
+      <div class="card-icon-wrap" style="background: #fef3c7; color: #b45309;">
+        <span>📝</span>
+      </div>
+      <div class="card-content">
+        <div class="title-row">
+          <h2 class="notification-title">{{ draft.title }}</h2>
+          <span class="badge-category" style="background:#fef3c7; color:#b45309; font-weight:700;">مسودة محفوظة</span>
+          @if (draft.priority === 'urgent') { <span class="badge-priority urgent">🔴 عاجل</span> }
+          @else if (draft.priority === 'important' || draft.priority === 'high') { <span class="badge-priority high">🟡
+            هام</span> }
         </div>
-        <div class="card-content">
-          <div class="title-row">
-            <h2 class="notification-title">{{ draft.title }}</h2>
-            <span class="badge-category" style="background:#fef3c7; color:#b45309; font-weight:700;">مسودة محفوظة</span>
-            @if (draft.priority === 'urgent') { <span class="badge-priority urgent">🔴 عاجل</span> }
-            @else if (draft.priority === 'important' || draft.priority === 'high') { <span class="badge-priority high">🟡 هام</span> }
-          </div>
-          <p class="notification-message">{{ draft.content }}</p>
-          <div class="notification-meta">
-            <span class="meta-item"><span class="meta-icon">⏱</span> تاريخ الحفظ: {{ draft.updatedAt | date:'yyyy/MM/dd HH:mm' }}</span>
-          </div>
+        <p class="notification-message">{{ draft.content }}</p>
+        <div class="notification-meta">
+          <span class="meta-item"><span class="meta-icon">⏱</span> تاريخ الحفظ: {{ draft.updatedAt | date:'yyyy/MM/dd
+            HH:mm' }}</span>
         </div>
-        <div class="card-actions" style="display:flex; gap: 8px; align-items:center;">
-          <button type="button" class="btn btn-sm" style="background:#10b981; color:#fff; border:none; border-radius:6px; padding:6px 14px; font-weight:700; cursor:pointer;" (click)="publishDraft(draft)">
-            🚀 نشر الآن
-          </button>
-          <button type="button" class="btn btn-sm" style="background:#0284c7; color:#fff; border:none; border-radius:6px; padding:6px 12px; cursor:pointer;" (click)="editDraft(draft)">
-            ✏️ تعديل
-          </button>
-          <button type="button" class="btn btn-sm" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;" (click)="deleteDraft(draft.id)">
-            🗑️
-          </button>
-        </div>
-      </article>
-      }
+      </div>
+      <div class="card-actions" style="display:flex; gap: 8px; align-items:center;">
+        <button type="button" class="btn btn-sm"
+          style="background:#10b981; color:#fff; border:none; border-radius:6px; padding:6px 14px; font-weight:700; cursor:pointer;"
+          (click)="publishDraft(draft)">
+          🚀 نشر الآن
+        </button>
+        <button type="button" class="btn btn-sm"
+          style="background:#0284c7; color:#fff; border:none; border-radius:6px; padding:6px 12px; cursor:pointer;"
+          (click)="editDraft(draft)">
+          ✏️ تعديل
+        </button>
+        <button type="button" class="btn btn-sm"
+          style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;"
+          (click)="deleteDraft(draft.id)">
+          🗑️
+        </button>
+      </div>
+    </article>
+    }
     }
   </div>
   } @else if (loading()) {
@@ -260,12 +270,13 @@
         <div class="title-row">
           <h2 class="notification-title">{{ item.title }}</h2>
           @if (!item.isRead) { <span class="badge-new">جديد</span> }
-          @if (item.isPinned) { <span class="badge-priority" style="background:#fef3c7;color:#b45309;font-weight:700;">📌 مثبت</span> }
+          @if (item.isPinned) { <span class="badge-priority"
+            style="background:#fef3c7;color:#b45309;font-weight:700;">📌 مثبت</span> }
           <span class="badge-category" [ngClass]="item.category">{{ getCategoryLabel(item.category) }}</span>
           @if (item.priority === 'urgent') { <span class="badge-priority urgent">🔴 عاجل</span> }
           @else if (item.priority === 'high') { <span class="badge-priority high">🟡 هام</span> }
         </div>
-        <p class="notification-message">{{ item.message }}</p>
+        <p class="notification-message" dir="rtl">{{ item.message }}</p>
         <div class="notification-meta">
           <span class="meta-item"><span class="meta-icon">⏱</span> {{ item.dateLabel }}</span>
           <span class="meta-dot">•</span>
@@ -758,10 +769,10 @@
               1. List
             </button>
           </div>
-          <div #announcementEditor class="announcement-rich-editor" contenteditable="true" dir="auto"
-            [innerHTML]="newAnnounceData.content" (input)="onAnnouncementEditorInput($event)"
-            data-placeholder="اكتب تفاصيل الإعلان هنا...">
-          </div>
+          <div #announcementEditor class="announcement-rich-editor" contenteditable="true" dir="rtl"
+  (input)="onAnnouncementEditorInput($event)"
+  data-placeholder="اكتب تفاصيل الإعلان هنا...">
+</div>
 
           <!-- قسم خيارات النشر والقنوات المتزامنة -->
           <div class="publishing-options-section">

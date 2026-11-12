@@ -829,8 +829,7 @@
 .profile-container :is(
   .nfd-card, .identity-card, .identity-text,
   .section-card, .summary-card, .stage-block,
-  .eval-box, .exam-record-card, .warning-item,
-  .prof-modal-card
+  .eval-box, .exam-record-card, .warning-item
 ) {
   min-width: 0;
   max-width: 100%;
@@ -883,15 +882,17 @@
   overflow-y: auto;
 }
 
-.prof-modal-card,
-.prof-modal-card.lg {
-  width: 100%;
-  max-width: min(100%, 800px);
+/* Profile modals — controlled sizes */
+.profile-container .prof-modal-backdrop > .prof-modal-card {
+  width: min(100%, 520px);
+  max-width: 520px;
   max-height: calc(100dvh - 32px);
+  margin-inline: auto;
 }
 
-.prof-modal-card:not(.lg) {
-  max-width: min(100%, 520px);
+.profile-container .prof-modal-backdrop > .prof-modal-card.lg {
+  width: min(100%, 800px);
+  max-width: 800px;
 }
 
 .prof-modal-body {

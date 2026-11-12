@@ -72,7 +72,7 @@ export class AdminNotifications implements OnInit {
   private readonly notificationsApi = inject(NotificationService);
   private readonly router = inject(Router);
   readonly planRequestNotifications = signal<UserNotification[]>([]);
-  
+
   // 👈 إضافة إشارات طلبات معالجة الإنذارات
   readonly remediationNotifications = signal<UserNotification[]>([]);
 
@@ -224,7 +224,7 @@ export class AdminNotifications implements OnInit {
     this.notificationsApi.getMine().subscribe({
       next: rows => {
         const all = rows ?? [];
-        
+
         // إشعارات الخطط التدريبية
         this.planRequestNotifications.set(all.filter(n =>
           /^CoursePlan:[1-9]\d*$/.test((n.relatedEntity ?? '').trim())
@@ -616,14 +616,14 @@ export class AdminNotifications implements OnInit {
 
     const scopeVal =
       fd.mainAudience === 'companies' ? 1 :
-      fd.mainAudience === 'trainees'  ? 3 :
-      fd.mainAudience === 'trainers'  ? 4 :
-      fd.mainAudience === 'admins'    ? 5 : 0;
+        fd.mainAudience === 'trainees' ? 3 :
+          fd.mainAudience === 'trainers' ? 4 :
+            fd.mainAudience === 'admins' ? 5 : 0;
 
     const rawPrio = String(fd.priority || '').toLowerCase();
     const priorityVal =
       rawPrio === 'urgent' || rawPrio === 'عاجل' || rawPrio === '2' ? 2 :
-      rawPrio === 'important' || rawPrio === 'هام' || rawPrio === '1' ? 1 : 0;
+        rawPrio === 'important' || rawPrio === 'هام' || rawPrio === '1' ? 1 : 0;
     const priorityName = priorityVal === 2 ? 'Urgent' : priorityVal === 1 ? 'Important' : 'Normal';
 
     const isEmailEnabled = Boolean(fd.channels?.email);
@@ -633,15 +633,23 @@ export class AdminNotifications implements OnInit {
       title: fd.title.trim(),
       message: fd.content.trim(),
       description: fd.content.trim(),
+
       scopeType: scopeVal,
       targetScope: fd.mainAudience,
       createdByUserId: uid,
-      priority: priorityVal,
-      Priority: priorityVal,
+
+      // Backend expects string, not number
+      priority: String(priorityName),
+
       priorityLevel: priorityName,
       createdAt: new Date().toISOString(),
 
-      channels: isEmailEnabled ? ['Email', 'Platform'] : ['Platform'],
+      // Backend expects Channels as an object
+      channels: {
+        inApp: true,
+        email: isEmailEnabled
+      },
+
       sendEmail: isEmailEnabled,
       SendEmail: isEmailEnabled,
       isEmail: isEmailEnabled,
@@ -651,17 +659,24 @@ export class AdminNotifications implements OnInit {
       IsPinned: isPinnedVal,
       pinned: isPinnedVal,
 
-      companyIds: fd.mainAudience === 'companies' && fd.companyScope === 'specific_companies'
-        ? fd.selectedCompanyIds.map(id => Number(id))
-        : [],
-      traineeIds: fd.mainAudience === 'trainees' && fd.traineeScope === 'specific_trainees'
-        ? fd.selectedTraineeIds.map(id => Number(id))
-        : [],
-      trainerIds: fd.mainAudience === 'trainers' && fd.trainerScope === 'specific_trainers'
-        ? fd.selectedTrainerIds.map(id => Number(id))
-        : []
-    };
+      companyIds:
+        fd.mainAudience === 'companies' &&
+          fd.companyScope === 'specific_companies'
+          ? fd.selectedCompanyIds.map(id => Number(id))
+          : [],
 
+      traineeIds:
+        fd.mainAudience === 'trainees' &&
+          fd.traineeScope === 'specific_trainees'
+          ? fd.selectedTraineeIds.map(id => Number(id))
+          : [],
+
+      trainerIds:
+        fd.mainAudience === 'trainers' &&
+          fd.trainerScope === 'specific_trainers'
+          ? fd.selectedTrainerIds.map(id => Number(id))
+          : []
+    };
     this.api.createAnnouncement(payload as any).subscribe({
       next: (res: any) => {
         this.posting.set(false);
