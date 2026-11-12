@@ -1296,3 +1296,100 @@ tbody tr:last-child td {
 .company-batch-metadata > strong, .company-plan-metadata > strong { font-weight: 700; }
 .company-plan-metadata { display: flex; flex-direction: column; padding: 0.5rem; border-inline-start: 2px solid #b4c4e7; gap: 0.25rem; }
 .trainer-assignment { display: block; }
+
+
+/* Compact expandable batches: name, dates, enrollment and status are always visible. */
+.batch-accordion {
+  border: 1px solid #dfe7f3;
+  border-radius: 12px;
+  background: #f8fafc;
+  overflow: hidden;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.batch-accordion:hover,
+.batch-accordion.is-open {
+  border-color: #b9cbea;
+}
+.batch-accordion.is-open { box-shadow: 0 3px 12px rgba(0, 51, 141, .05); }
+.batch-accordion-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 54px;
+  padding: 9px 15px;
+}
+.batch-accordion-name { color: #10254a; font-size: 14px; font-weight: 800; }
+.batch-details-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 59px;
+  height: 36px;
+  border: 1px solid #d5e1f3;
+  border-radius: 9px;
+  background: white;
+  color: #00338d;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .2s, border-color .2s;
+}
+.batch-details-toggle:hover { background: #edf4ff; border-color: #9eb8e2; }
+.batch-details-toggle:focus-visible { outline: 3px solid #60a5fa; outline-offset: 2px; }
+.batch-details-toggle svg { width: 18px; height: 18px; }
+.batch-details-toggle .batch-chevron { width: 14px; height: 14px; transition: transform .2s ease; }
+.batch-accordion.is-open .batch-chevron { transform: rotate(180deg); }
+.batch-details-panel {
+  padding: 14px 16px 16px;
+  border-top: 1px solid #e0e8f3;
+  background: #fff;
+}
+.batch-details-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.batch-detail-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 10px 12px;
+  border: 1px solid #e7edf6;
+  border-radius: 9px;
+  background: #f8fafc;
+  min-width: 0;
+}
+.batch-detail-field > span:first-child { color: #64748b; font-size: 12px; }
+.batch-detail-field strong { font-size: 12px; font-weight: 700; color: #10254a; overflow-wrap: anywhere; }
+.batch-detail-field .batch-status { justify-self: unset; }
+.batch-details-panel .company-batch-metadata { margin: 0; }
+@media (max-width: 760px) {
+  .batch-details-summary { grid-template-columns: 1fr; }
+  .batch-accordion-heading { padding-inline: 12px; }
+}
+
+/* Persistent batch summary: dates, counts and status outside details toggle. */
+.batch-accordion > .batch-details-summary {
+  margin: 0 15px 12px;
+  grid-template-columns: 1.25fr 1.5fr .7fr;
+  align-items: stretch;
+}
+.batch-accordion > .batch-details-summary .batch-detail-field {
+  background: #fff;
+  padding: 9px 12px;
+}
+.batch-accordion > .batch-details-summary .batch-detail-field strong {
+  font-size: 13px;
+}
+.batch-accordion > .batch-details-summary .batch-status {
+  align-self: flex-start;
+}
+@media (max-width: 760px) {
+  .batch-accordion > .batch-details-summary {
+    grid-template-columns: 1fr;
+    margin-inline: 12px;
+  }
+}

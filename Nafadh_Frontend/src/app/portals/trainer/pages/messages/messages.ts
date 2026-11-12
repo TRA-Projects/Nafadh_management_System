@@ -1,5 +1,6 @@
 
-import { Component, OnInit, computed, signal, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, computed,signal,ChangeDetectorRef, ElementRef, ViewChild, AfterViewChecked
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -57,7 +58,27 @@ export interface TrainerMessage {
   templateUrl: './messages.html',
   styleUrl: './messages.scss'
 })
-export class TrainerMessages implements OnInit {
+export class TrainerMessages implements OnInit, AfterViewChecked {
+
+  @ViewChild('chatMessagesContainer')
+  chatMessagesContainer?: ElementRef<HTMLElement>;
+
+  private pendingScrollToBottom = false;
+
+  private scrollToLatestMessage(): void {
+    this.pendingScrollToBottom = true;
+    this.cdr.markForCheck();
+  }
+
+  ngAfterViewChecked(): void {
+    if (!this.pendingScrollToBottom) return;
+
+    const container = this.chatMessagesContainer?.nativeElement;
+    if (!container) return;
+
+    container.scrollTop = container.scrollHeight;
+    this.pendingScrollToBottom = false;
+  }
 
   constructor(
   private api: TrainerApi,
@@ -387,8 +408,8 @@ this.cdr.markForCheck();
 
       // لا يوجد batchId؟ أظهر الرسائل العادية على الأقل
       if (!batchId) {
-        this.messages = loadedMessages;
-        this.cdr.markForCheck();
+       this.messages = loadedMessages;
+this.scrollToLatestMessage();
         return;
       }
 
@@ -489,19 +510,19 @@ this.cdr.markForCheck();
               };
             });
 
-          // أظهر إشعارات الاجتماعات مع رسائل المجموعة
-          loadedMessages = [...meetingMessages, ...loadedMessages];
-          this.messages = loadedMessages;
-          this.cdr.markForCheck();
+         // أظهر إشعارات الاجتماعات مع رسائل المجموعة
+loadedMessages = [...meetingMessages, ...loadedMessages];
+this.messages = loadedMessages;
+this.scrollToLatestMessage();
         },
        error: (error) => {
   if (this.selectedBatchGroupId !== conversationId) return;
 
   console.error('تعذر تحميل اجتماعات الدفعة:', error);
 
-          // إذا فشل جلب الاجتماعات، لا نخفي الرسائل العادية
-          this.messages = loadedMessages;
-          this.cdr.markForCheck();
+        // إذا فشل جلب الاجتماعات، لا نخفي الرسائل العادية
+this.messages = loadedMessages;
+this.scrollToLatestMessage();
         }
       });
     },

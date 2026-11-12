@@ -340,8 +340,8 @@
       }
     </div>
 
-    <!-- Batches Section (Horizontal Progress Style matching Nafath Reports) -->
-    <div class="card card-pad section-card">
+    <!-- Batches: compact names with accessible, expandable details -->
+    <div class="card card-pad section-card" dir="rtl">
       <div class="card-title">
         <span class="title-main">الدفعات التدريبية</span>
         <span>{{ p.batches.length }} دفعات</span>
@@ -350,68 +350,85 @@
       @if (p.batches && p.batches.length) {
         <div class="batches-list">
           @for (batch of p.batches; track batch.batchId) {
-            <div class="batch-row">
-              <div class="batch-name">
-                <strong>{{ batch.batchName }}</strong>
+            <div class="batch-accordion" [class.is-open]="expandedBatchId() === batch.batchId">
+              <div class="batch-accordion-heading">
+                <strong class="batch-accordion-name">{{ batch.batchName }}</strong>
+                <button
+                  type="button"
+                  class="batch-details-toggle"
+                  (click)="toggleBatchDetails(batch.batchId)"
+                  [attr.aria-expanded]="expandedBatchId() === batch.batchId"
+                  [attr.aria-controls]="'batch-detail-' + batch.batchId"
+                  [attr.aria-label]="(expandedBatchId() === batch.batchId ? 'إخفاء تفاصيل ' : 'عرض تفاصيل ') + batch.batchName"
+                  [title]="expandedBatchId() === batch.batchId ? 'إخفاء التفاصيل' : 'عرض التفاصيل'"
+                >
+                  <svg class="batch-info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M12 11v5"></path>
+                    <path d="M12 8h.01"></path>
+                  </svg>
+                  <svg class="batch-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m6 9 6 6 6-6"></path>
+                  </svg>
+                </button>
               </div>
 
-              <div class="batch-date">
-                <i class="fa-regular fa-calendar"></i>
-                <span class="batch-range">
-                  من <bdi dir="ltr">{{ formatDate(batch.startDate) }}</bdi>
-                  إلى <bdi dir="ltr">{{ formatDate(batch.endDate) }}</bdi>
-                </span>
-              </div>
+                  <div class="batch-details-summary">
+                    <div class="batch-detail-field">
+                      <span>الفترة التدريبية</span>
+                      <strong>من <bdi dir="ltr">{{ formatDate(batch.startDate) }}</bdi> إلى <bdi dir="ltr">{{ formatDate(batch.endDate) }}</bdi></strong>
+                    </div>
+                    <div class="batch-detail-field">
+                      <span>التسجيلات والمقاعد</span>
+                      <strong>{{ batch.companyEnrollmentCount }} تسجيل لشركتكم · {{ batch.capacity }} مقعد إجمالي مشترك</strong>
+                    </div>
+                    <div class="batch-detail-field">
+                      <span>الحالة</span>
+                      <span
+                        class="batch-status"
+                        [class.status-completed]="batch.status === 'Completed'"
+                        [class.status-upcoming]="batch.status === 'Upcoming'"
+                        [class.status-suspended]="batch.status === 'Cancelled'"
+                      >{{ batchStatusLabel(batch.status) }}</span>
+                    </div>
+                  </div>
 
-              <div class="batch-capacity">
-                <i class="fa-solid fa-users"></i>
-                <span>
-                  {{ batch.companyEnrollmentCount }} تسجيل لشركتكم · {{ batch.capacity }} مقعد إجمالي مشترك
-                </span>
-              </div>
-
-              <span
-                class="batch-status"
-                [class.status-completed]="batch.status === 'Completed'"
-                [class.status-upcoming]="batch.status === 'Upcoming'"
-                [class.status-suspended]="batch.status === 'Cancelled'"
-              >
-                {{ batchStatusLabel(batch.status) }}
-              </span>
-              <div class="company-batch-metadata">
-                <strong>أوزان التقييم المعتمدة من الإدارة</strong>
-                <span>الحضور {{ batch.attendanceWeight }}% · الاختبارات {{ batch.quizzesWeight }}% · المهام {{ batch.tasksWeight }}% · المشاريع {{ batch.projectsWeight }}%</span>
-                <strong>معايير التصنيف للدفعة</strong>
-                <span>متميز: درجة {{ batch.excellentMinScore }}% وحضور {{ batch.excellentMinAttendance }}% فأعلى</span>
-                <span>جيد جدًا: درجة {{ batch.veryGoodMinScore }}% وحضور {{ batch.veryGoodMinAttendance }}% فأعلى</span>
-                <span>جيد: درجة {{ batch.goodMinScore }}% فأعلى · حد حضور التعثر {{ batch.atRiskMinAttendance }}%</span>
-                @for (assignment of batch.trainers; track assignment.scope + '-' + assignment.trainerId + '-' + (assignment.stageId ?? 0) + '-' + (assignment.itemId ?? 0)) {
-                  <span class="trainer-assignment">
-                    {{ assignment.trainerName }} —
-                    {{ assignment.scope === 'Batch' ? 'مدرب الدفعة' : assignment.scope === 'Plan' ? 'مدرب الخطة' : assignment.scope === 'Stage' ? 'مدرب مرحلة: ' + assignment.stageTitle : 'مدرب بند: ' + assignment.itemTitle }}
-                  </span>
-                }
-                @if (!batch.trainers.length) {
-                  <span>لم يُسند مدرب بعد، ويمكن تحديده لاحقًا قبل التنفيذ.</span>
-                }
-                @for (plan of batch.plans; track plan.planId) {
-                  <div class="company-plan-metadata">
-                    <strong>الخطة: {{ plan.title }}</strong>
-                    <span>الساعات المعتمدة {{ plan.durationHours }} · الحالة {{ plan.approvalStatus }} / {{ plan.executionStatus }}</span>
-                    <span>المدة: {{ formatDate(plan.startDate) }} – {{ formatDate(plan.endDate) }}</span>
-                    @for (stage of plan.stages; track stage.stageId) {
-                      <span>المرحلة: {{ stage.title }} · {{ formatDate(stage.startDate) }} – {{ formatDate(stage.endDate) }} · {{ stage.status }} (ساعات المرحلة غير محددة في بيانات Admin)</span>
+              @if (expandedBatchId() === batch.batchId) {
+                <div class="batch-details-panel" [id]="'batch-detail-' + batch.batchId">
+                  <div class="company-batch-metadata">
+                    <strong>أوزان التقييم المعتمدة من الإدارة</strong>
+                    <span>الحضور {{ $any(batch).attendanceWeight ?? 0 }}% · الاختبارات {{ $any(batch).quizzesWeight ?? 0 }}% · المهام {{ $any(batch).tasksWeight ?? 0 }}% · المشاريع {{ $any(batch).projectsWeight ?? 0 }}%</span>
+                    <strong>معايير التصنيف للدفعة</strong>
+                    <span>متميز: درجة {{ $any(batch).excellentMinScore ?? 0 }}% وحضور {{ $any(batch).excellentMinAttendance ?? 0 }}% فأعلى</span>
+                    <span>جيد جدًا: درجة {{ $any(batch).veryGoodMinScore ?? 0 }}% وحضور {{ $any(batch).veryGoodMinAttendance ?? 0 }}% فأعلى</span>
+                    <span>جيد: درجة {{ $any(batch).goodMinScore ?? 0 }}% فأعلى · حد حضور التعثر {{ $any(batch).atRiskMinAttendance ?? 0 }}%</span>
+                    @for (assignment of $any(batch).trainers ?? []; track assignment.scope + '-' + assignment.trainerId + '-' + (assignment.stageId ?? 0) + '-' + (assignment.itemId ?? 0)) {
+                      <span class="trainer-assignment">
+                        {{ assignment.trainerName }} —
+                        {{ assignment.scope === 'Batch' ? 'مدرب الدفعة' : assignment.scope === 'Plan' ? 'مدرب الخطة' : assignment.scope === 'Stage' ? 'مدرب مرحلة: ' + assignment.stageTitle : 'مدرب بند: ' + assignment.itemTitle }}
+                      </span>
+                    }
+                    @if (!($any(batch).trainers ?? []).length) {
+                      <span>لم يُسند مدرب بعد، ويمكن تحديده لاحقًا قبل التنفيذ.</span>
+                    }
+                    @for (plan of $any(batch).plans ?? []; track $any(plan).planId) {
+                      <div class="company-plan-metadata">
+                        <strong>الخطة: {{ $any(plan).title }}</strong>
+                        <span>الساعات المعتمدة {{ $any(plan).durationHours }} · الحالة {{ $any(plan).approvalStatus }} / {{ $any(plan).executionStatus }}</span>
+                        <span>المدة: {{ formatDate($any(plan).startDate) }} – {{ formatDate($any(plan).endDate) }}</span>
+                        @for (stage of $any(plan).stages ?? []; track $any(stage).stageId) {
+                          <span>المرحلة: {{ $any(stage).title }} · {{ formatDate($any(stage).startDate) }} – {{ formatDate($any(stage).endDate) }} · {{ $any(stage).status }} (ساعات المرحلة غير محددة في بيانات Admin)</span>
+                        }
+                      </div>
                     }
                   </div>
-                }
-              </div>
+                </div>
+              }
             </div>
           }
         </div>
       } @else {
-        <div class="empty-state">
-          لا توجد دفعات تدريبية مسجلة لهذا البرنامج.
-        </div>
+        <div class="empty-state">لا توجد دفعات تدريبية مسجلة لهذا البرنامج.</div>
       }
     </div>
 

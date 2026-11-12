@@ -44,6 +44,22 @@
 
   @else {
 
+    @if (failedEnrollmentIds().length > 0) {
+      <section class="partial-warning" role="alert" aria-live="polite">
+        <div>
+          <strong>بيانات نتائج الاختبارات غير مكتملة</strong>
+          <p>
+            تعذر جلب نتائج {{ failedEnrollmentIds().length }} تسجيلًا.
+            الأرقام والقوائم المعروضة تستند فقط إلى النتائج المتاحة،
+            ولا يُعتبر هؤلاء المتدربون حاصلين على صفر.
+          </p>
+        </div>
+        <button type="button" class="clear-btn" (click)="reloadResults()">
+          إعادة محاولة جلب النتائج
+        </button>
+      </section>
+    }
+
     <!-- الإحصائيات -->
     <section
       class="stats-grid"
@@ -53,10 +69,10 @@
       <article class="stat-card stat-blue">
         <div class="stat-top">
           <span class="stat-icon">▤</span>
-          <span class="stat-caption">عدد النتائج</span>
+          <span class="stat-caption">عدد المحاولات</span>
         </div>
         <strong>{{ filteredCount() }}</strong>
-        <p>نتائج الاختبارات المطابقة للفلاتر</p>
+        <p>جميع المحاولات المصححة المطابقة للفلاتر</p>
       </article>
 
       <article class="stat-card stat-purple">
@@ -71,7 +87,7 @@
       <article class="stat-card stat-teal">
         <div class="stat-top">
           <span class="stat-icon">◷</span>
-          <span class="stat-caption">متوسط الدرجات</span>
+          <span class="stat-caption">متوسط أداء الاختبارات</span>
         </div>
         <strong>
           @if (averageScore() !== null) {
@@ -81,7 +97,7 @@
             —
           }
         </strong>
-        <p>متوسط نسب نتائج الاختبارات المطابقة</p>
+        <p>متوسط أداء المتدربين، بأفضل محاولة لكل اختبار ضمن الفلاتر</p>
       </article>
     </section>
 
@@ -97,7 +113,7 @@
           <div>
             <span class="performance-icon trophy-icon">🏆</span>
             <h2>أفضل المتدربين</h2>
-            <p>مرتّبون حسب متوسط نتائج محاولات اختباراتهم.</p>
+            <p>حسب متوسط أفضل محاولة لكل اختبار ضمن البحث والفترة المحددة.</p>
           </div>
 
           <label class="count-selector">
@@ -129,7 +145,7 @@
 
                 <div class="performance-person">
                   <strong>{{ trainee.traineeName }}</strong>
-                  <span>عدد المحاولات: {{ trainee.attemptCount }}</span>
+                  <span>الاختبارات: {{ trainee.quizCount }} · المحاولات: {{ trainee.attemptCount }}</span>
                 </div>
 
                 <span
@@ -156,12 +172,12 @@
         <div class="performance-heading">
           <div>
             <span class="performance-icon risk-icon">⚠️</span>
-            <h2>المتدربون المتعثرون</h2>
-            <p>المتدربون الذين يقل متوسط درجاتهم عن 60%.</p>
+            <h2>المتدربون منخفضو نتائج الاختبارات</h2>
+            <p>مؤشر متابعة للاختبارات فقط: متوسط أفضل المحاولات أقل من 60%، وليس تصنيف تعثر رسميًا.</p>
           </div>
 
           <label class="count-selector">
-            <span>عدد المتعثرين</span>
+            <span>عدد المعروضين</span>
             <select
               [ngModel]="riskCount()"
               (ngModelChange)="riskCount.set(+$event)"
@@ -188,7 +204,7 @@
 
                 <div class="performance-person">
                   <strong>{{ trainee.traineeName }}</strong>
-                  <span>عدد المحاولات: {{ trainee.attemptCount }}</span>
+                  <span>الاختبارات: {{ trainee.quizCount }} · المحاولات: {{ trainee.attemptCount }}</span>
                 </div>
 
                 <span
@@ -202,7 +218,7 @@
           </div>
         } @else {
           <p class="performance-empty">
-            لا يوجد متدربون بمتوسط أقل من 60% حاليًا.
+            لا توجد نتائج اختبارات متاحة بأقل من 60% ضمن الفلاتر الحالية.
           </p>
         }
       </article>
@@ -312,7 +328,7 @@
         </div>
 
         <span class="total-badge">
-          {{ filteredCount() }} نتيجة
+          {{ filteredCount() }} محاولة
         </span>
       </div>
 
@@ -452,10 +468,11 @@
     <!-- ملاحظة -->
     <p class="page-note">
       <span aria-hidden="true">ⓘ</span>
-      الدرجات المعروضة هي النسب المئوية المحسوبة
-      لنتائج محاولات الاختبارات في النظام.
-      المتدرب الذي لا يملك نتائج اختبارات
-      لا يُعامل على أنه حاصل على صفر.
+      يحتفظ الجدول بجميع المحاولات المصححة. مؤشرات الأداء تحتسب
+      أفضل محاولة لكل اختبار ولكل متدرب ضمن البحث والفترة المحددة؛
+      ولا تمثل النتيجة النهائية الموزونة للدفعة أو تصنيف Admin الرسمي.
+      المحاولات التي لم يكتمل تصحيحها لا تظهر بعد،
+      والمتدرب بلا نتائج لا يُعامل على أنه حاصل على صفر.
     </p>
   }
 </div>

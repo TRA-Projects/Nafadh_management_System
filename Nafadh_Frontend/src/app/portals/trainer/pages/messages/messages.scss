@@ -415,13 +415,16 @@ max-height: 600px;
 /* =========================================================
    TRAINEES LIST
 ========================================================= */
-
-.trainees-list {
+.conversations-scroll {
   flex: 1;
-
   min-height: 0;
-
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #b5cbd8 #f5f9fc;
+}
+.trainees-list {
+  min-height: 0;
+  overflow: visible;
 }
 
 

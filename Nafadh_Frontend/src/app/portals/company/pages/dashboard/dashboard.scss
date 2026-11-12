@@ -503,6 +503,13 @@
   font-size: 11px; /* تم التكبير */
 }
 
+
+/* Fix 16.1: keep non-numeric attendance states legible in the KPI card. */
+.kpi-value.kpi-value-empty {
+  font-size: 15px;
+  line-height: 1.45;
+}
+
 /* Page head */
 .page-head {
   min-height: 44px;
@@ -1558,4 +1565,80 @@ a:focus-visible {
 
 @media (max-width: 900px) {
   .plans-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Company-only periodic-performance selector. Does not style Admin pages. */
+.company-performance-period {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--nfd-border);
+}
+
+.period-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.period-heading strong {
+  font-size: 15px;
+  color: var(--nfd-text);
+}
+
+.period-heading p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--nfd-muted);
+}
+
+.period-applied {
+  border-radius: 9px;
+  padding: 5px 10px;
+  background: #eef5ff;
+  color: var(--nfd-navy);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.period-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.period-controls label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--nfd-text);
+}
+
+.period-controls select,
+.period-controls input {
+  padding: 7px 10px;
+  border: 1px solid var(--nfd-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--nfd-text);
+  font: inherit;
+  min-height: 36px;
+  max-width: 100%;
+}
+
+.period-controls button { min-height: 36px; }
+
+.period-error {
+  color: #a91e30;
+  font-weight: 650;
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .period-controls { align-items: stretch; }
+  .period-controls select,
+  .period-controls input { width: 100%; }
 }

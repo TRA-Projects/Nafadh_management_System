@@ -12,6 +12,7 @@ import {
   CompanyDto,
   CompanySupervisorDto,
   CompanyDashboardDto,
+  CompanyDashboardTraineeDto,
   CompanyWeightedEvaluationDto,
   ConversationDetailDto,
   ConversationListItemDto,
@@ -82,6 +83,14 @@ export interface CompanyQuizResult {
   status: string;
 }
 
+/** Temporary, date-filtered Company performance (never the final batch grade). */
+export interface CompanyDashboardPeriodPerformanceDto {
+  topPerformers: CompanyDashboardTraineeDto[];
+  topPerformersCount: number;
+  topPerformersAveragePercent: number;
+  atRiskTrainees: CompanyDashboardTraineeDto[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class CompanyApi {
   private readonly http = inject(HttpClient);
@@ -94,6 +103,21 @@ export class CompanyApi {
   getDashboard(companyId: number): Observable<CompanyDashboardDto> {
     return this.http.get<CompanyDashboardDto>(
       `${this.base}/CompanyDashboard/${companyId}`
+    );
+  }
+
+  /** Same period dashboard evaluation as Admin, restricted server-side to this company. */
+  getDashboardPeriodPerformance(
+    companyId: number,
+    startDate: string | null,
+    endDate: string | null
+  ): Observable<CompanyDashboardPeriodPerformanceDto> {
+    let params = new HttpParams();
+    if (startDate) params = params.set('startDate', startDate);
+    if (endDate) params = params.set('endDate', endDate);
+    return this.http.get<CompanyDashboardPeriodPerformanceDto>(
+      `${this.base}/CompanyDashboard/${companyId}/period-performance`,
+      { params }
     );
   }
 

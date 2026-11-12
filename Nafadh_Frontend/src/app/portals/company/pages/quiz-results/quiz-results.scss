@@ -1246,3 +1246,35 @@ table {
     scroll-behavior: auto !important;
   }
 }
+
+/* Fix 17: preserve usable results when some enrollment requests fail. */
+.partial-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  border: 1px solid #edce81;
+  border-radius: 14px;
+  background: #fff9e9;
+  color: #74500a;
+
+  strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.9;
+    font-size: 13px;
+  }
+
+  .clear-btn {
+    flex-shrink: 0;
+    background: #fff;
+  }
+}

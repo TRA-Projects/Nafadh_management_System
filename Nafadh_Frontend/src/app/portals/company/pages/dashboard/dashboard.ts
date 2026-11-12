@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
 
 import { catchError, forkJoin, of } from 'rxjs';
 
-import { CompanyApi } from '../../services/company-api';
+import { CompanyApi, CompanyDashboardPeriodPerformanceDto } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { NafadhWarningTypesService } from '../../../../core/services/nafadh-warning-types.service';
 
@@ -29,6 +29,8 @@ import {
   CompanyDashboardDto,
   CompanyDashboardTraineeDto,
 } from '../../../../core/models/dtos';
+
+type PerformancePeriod = 'month' | 'year' | 'all' | 'custom';
 
 @Component({
   selector: 'app-company-dashboard',
@@ -96,6 +98,65 @@ export class CompanyDashboard implements OnInit {
 
   topPerformers =
     signal<CompanyDashboardTraineeDto[]>([]);
+
+  // Admin-equivalent interim performance, not a final evaluation.
+  performancePeriod = signal<PerformancePeriod>('month');
+  performanceStartDate = signal('');
+  performanceEndDate = signal('');
+  performancePeriodError = signal('');
+  periodDataAvailable = signal(false);
+  appliedPeriodLabel = signal('هذا الشهر');
+
+  setPerformancePeriod(value: string): void {
+    if (this.loading()) return;
+    if (!['month', 'year', 'all', 'custom'].includes(value)) return;
+    this.performancePeriod.set(value as PerformancePeriod);
+    this.performancePeriodError.set('');
+    if (value !== 'custom') this.refreshData();
+  }
+
+  setPerformanceStartDate(value: string): void {
+    this.performanceStartDate.set(value);
+  }
+
+  setPerformanceEndDate(value: string): void {
+    this.performanceEndDate.set(value);
+  }
+
+  applyCustomPerformancePeriod(): void {
+    if (this.loading()) return;
+    const start = this.performanceStartDate();
+    const end = this.performanceEndDate();
+    if (!start || !end) {
+      this.performancePeriodError.set('يرجى تحديد تاريخ البداية والنهاية.');
+      return;
+    }
+    if (start > end) {
+      this.performancePeriodError.set('تاريخ البداية يجب ألا يكون بعد تاريخ النهاية.');
+      return;
+    }
+    this.performancePeriodError.set('');
+    this.refreshData();
+  }
+
+  private performanceDates(): {startDate: string | null; endDate: string | null; label: string} {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const monthLastDay = String(new Date(year, today.getMonth() + 1, 0).getDate()).padStart(2, '0');
+    switch (this.performancePeriod()) {
+      case 'month':
+        return {startDate: `${year}-${month}-01`, endDate: `${year}-${month}-${monthLastDay}`, label: 'هذا الشهر'};
+      case 'year':
+        return {startDate: `${year}-01-01`, endDate: `${year}-12-31`, label: 'هذه السنة'};
+      case 'all':
+        return {startDate: null, endDate: null, label: 'جميع الفترات'};
+      case 'custom':
+        return {startDate: this.performanceStartDate(), endDate: this.performanceEndDate(),
+          label: `${this.performanceStartDate()} إلى ${this.performanceEndDate()}`};
+    }
+  }
+
 
   // How many rows each bottom card shows (user picks 5 / 10 / 15 / all).
   // 0 means "all".
@@ -238,8 +299,8 @@ export class CompanyDashboard implements OnInit {
   // Real count of at-risk trainees (the lists are no longer capped).
   kpiAtRisk = computed(() => this.atRisk());
 
-  // Average performance of ALL active trainees with performance >= 80%
-  // (calculated by the backend, not from the displayed rows).
+  // Average of ALL interim top performers in the chosen period.
+  // Backend alone classifies trainees using each batch thresholds.
   topPerformersAverage = computed(() =>
     Math.round(Number(this.topPerformersAveragePercent() || 0))
   );
@@ -283,6 +344,16 @@ export class CompanyDashboard implements OnInit {
       return;
     }
 
+    // The temporary-performance request must use the exact same selection
+    // throughout this refresh (including when the user chooses all periods).
+    const performanceDates = this.performanceDates();
+    if (this.performancePeriod() === 'custom' &&
+        (!performanceDates.startDate || !performanceDates.endDate ||
+         performanceDates.startDate > performanceDates.endDate)) {
+      this.performancePeriodError.set('يرجى تحديد فترة مخصصة صحيحة.');
+      return;
+    }
+
     this.loading.set(true);
     this.loadError.set(false);
     this.announcementsError.set(false);
@@ -302,6 +373,21 @@ export class CompanyDashboard implements OnInit {
     forkJoin({
       dashboard:
         this.api.getDashboard(companyId),
+
+      // A failure here must NOT silently replace interim classifications
+      // with final grades from the legacy dashboard endpoint.
+      periodPerformance:
+        this.api.getDashboardPeriodPerformance(
+          companyId,
+          performanceDates.startDate,
+          performanceDates.endDate
+        ).pipe(
+          catchError((error) => {
+            console.warn('Company period performance failed:', error);
+            this.performancePeriodError.set('تعذر تحميل الأداء الدوري للفترة المحددة.');
+            return of(null as CompanyDashboardPeriodPerformanceDto | null);
+          })
+        ),
 
       // Announcements are secondary content: if they fail, the dashboard
       // must still render its company statistics.
@@ -327,6 +413,7 @@ export class CompanyDashboard implements OnInit {
     }).subscribe({
       next: ({
         dashboard,
+        periodPerformance,
         announcements,
         plans,
       }) => {
@@ -335,6 +422,7 @@ export class CompanyDashboard implements OnInit {
           announcements
         );
 
+        this.applyPeriodPerformance(periodPerformance, performanceDates.label);
         this.plansOverview.set(plans);
 
         this.loading.set(false);
@@ -363,6 +451,24 @@ export class CompanyDashboard implements OnInit {
         this.barsAnimating.set(false);
       },
     });
+  }
+
+  // Interim scores replace ONLY the top/at-risk performance cards.
+  // Warnings, attendance, capacity, plans and the official final reports
+  // never depend on this date-filtered endpoint.
+  private applyPeriodPerformance(
+    period: CompanyDashboardPeriodPerformanceDto | null,
+    label: string
+  ): void {
+    this.periodDataAvailable.set(period !== null);
+    this.topPerformers.set(period?.topPerformers ?? []);
+    this.topPerformersCount.set(period?.topPerformersCount ?? 0);
+    this.topPerformersAveragePercent.set(period?.topPerformersAveragePercent ?? 0);
+    this.atRisk.set(period?.atRiskTrainees ?? []);
+    if (period !== null) {
+      this.appliedPeriodLabel.set(label);
+      this.performancePeriodError.set('');
+    }
   }
 
   // ============================================================
@@ -417,38 +523,9 @@ export class CompanyDashboard implements OnInit {
       )
     );
 
-    // ------------------------------------------------------------
-    // Top performers
-    //
-    // Backend already determined who belongs here.
-    // Do not filter or recalculate their status locally.
-    // ------------------------------------------------------------
-
-    this.topPerformers.set(
-      dashboard.topPerformers ?? []
-    );
-
-    this.topPerformersCount.set(
-      Number(dashboard.topPerformersCount || 0)
-    );
-
-    this.topPerformersAveragePercent.set(
-      Number(dashboard.topPerformersAveragePercent || 0)
-    );
-
-    // ------------------------------------------------------------
-    // At-risk trainees
-    //
-    // Backend is the single source of truth.
-    // No local status detection.
-    // No 75% fallback rule.
-    // No merging with top performers.
-    // No duplicate map required.
-    // ------------------------------------------------------------
-
-    this.atRisk.set(
-      dashboard.atRiskTrainees ?? []
-    );
+    // Period-based performance comes exclusively from the separate
+    // Company period-performance endpoint (applyPeriodPerformance).
+    // Do not use final batch grades for monthly monitoring here.
 
     // ------------------------------------------------------------
     // Warnings
@@ -490,6 +567,8 @@ export class CompanyDashboard implements OnInit {
 
     this.capacity.set(null);
 
+    this.periodDataAvailable.set(false);
+    this.performancePeriodError.set('');
     this.topPerformers.set([]);
     this.topPerformersCount.set(0);
     this.topPerformersAveragePercent.set(0);
