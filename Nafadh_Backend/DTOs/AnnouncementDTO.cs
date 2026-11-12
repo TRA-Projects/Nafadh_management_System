@@ -19,6 +19,8 @@ namespace Nafadh_Backend.DTOs
 
         public string? TargetScope { get; set; }
 
+        public string Priority { get; set; } = "normal";
+
         public DateTime Date { get; set; }
 
         public int CreatedByUserId { get; set; }
@@ -27,7 +29,9 @@ namespace Nafadh_Backend.DTOs
     public class AnnouncementChannelsDTO
     {
         public bool InApp { get; set; } = true;
+
         public bool Email { get; set; } = true;
+
         public bool Sms { get; set; } = false;
     }
 
@@ -49,7 +53,9 @@ namespace Nafadh_Backend.DTOs
         public int CreatedByUserId { get; set; }
 
         public List<int>? CompanyIds { get; set; }
+
         public List<int>? TraineeIds { get; set; }
+
         public List<int>? TrainerIds { get; set; }
 
         public AnnouncementChannelsDTO? Channels { get; set; }
@@ -64,5 +70,7 @@ namespace Nafadh_Backend.DTOs
 
         [Required]
         public string Message { get; set; } = string.Empty;
+
+        public string? Priority { get; set; }
     }
 }

@@ -11,7 +11,8 @@ import {
   TaskDto,
   TraineeProfileDto,
   EnrollmentDto,
-  BatchDto
+  BatchDto,
+  ProjectMemberDto
 } from '../../../../core/models/dtos';
 
 @Component({
@@ -43,6 +44,117 @@ export class TraineeTasks implements OnInit {
 
   selected = signal<TaskDto | null>(null);
   selectedProject = signal<ProjectDto | null>(null);
+
+
+
+  // =========================================================
+  // PROJECT TEAM — READ ONLY
+  // =========================================================
+
+  projectMembers = signal<ProjectMemberDto[]>([]);
+
+  batchTrainees = signal<
+    { traineeId: number; fullName: string }[]
+  >([]);
+
+  loadingProjectMembers = signal(false);
+  projectMembersError = signal('');
+
+  getProjectMemberName(traineeId: number): string {
+    const trainee = this.batchTrainees().find(
+      item => Number(item.traineeId) === Number(traineeId)
+    );
+
+    return trainee?.fullName || `متدرب رقم ${traineeId}`;
+  }
+
+  getProjectMemberRole(role: string): string {
+    switch (role?.toLowerCase()) {
+      case 'lead':
+        return 'قائد الفريق';
+
+      case 'contributor':
+        return 'عضو الفريق';
+
+      default:
+        return role || 'عضو الفريق';
+    }
+  }
+
+  isCurrentTraineeMember(): boolean {
+    const traineeId = this.traineeId();
+
+    if (!traineeId) {
+      return false;
+    }
+
+    return this.projectMembers().some(
+      member => Number(member.traineeId) === Number(traineeId)
+    );
+  }
+
+  loadBatchTraineesForProjects(): void {
+    const batchId = this.batchId();
+
+    if (!batchId) {
+      this.batchTrainees.set([]);
+      return;
+    }
+
+    this.api.getBatchTrainees(batchId).subscribe({
+      next: trainees => {
+        this.batchTrainees.set(
+          (trainees ?? []).map(trainee => ({
+            traineeId: trainee.traineeId,
+            fullName: trainee.fullName || `متدرب رقم ${trainee.traineeId}`
+          }))
+        );
+      },
+
+      error: error => {
+        console.error(
+          'Error loading project trainee names:',
+          error
+        );
+
+        this.batchTrainees.set([]);
+      }
+    });
+  }
+
+  loadProjectMembers(projectId: number): void {
+    this.loadingProjectMembers.set(true);
+    this.projectMembersError.set('');
+    this.projectMembers.set([]);
+
+    this.api.getProjectMembers(projectId).subscribe({
+      next: members => {
+        if (this.selectedProject()?.projectId !== projectId) {
+          return;
+        }
+
+        this.projectMembers.set(members ?? []);
+        this.loadingProjectMembers.set(false);
+      },
+
+      error: error => {
+        if (this.selectedProject()?.projectId !== projectId) {
+          return;
+        }
+
+        console.error(
+          'Error loading project members:',
+          error
+        );
+
+        this.projectMembers.set([]);
+        this.projectMembersError.set(
+          'تعذر تحميل أعضاء فريق المشروع.'
+        );
+        this.loadingProjectMembers.set(false);
+      }
+    });
+  }
 
   submissionLink = '';
 
@@ -171,6 +283,7 @@ export class TraineeTasks implements OnInit {
 
         this.batchData.set(batch);
         this.programId.set(batch.programId);
+this.loadBatchTraineesForProjects();
 
         this.loadTasks(batchId);
 
@@ -312,56 +425,78 @@ export class TraineeTasks implements OnInit {
   // URL VALIDATION
   // =========================================================
 
-  isValidSubmissionUrl(value: string): boolean {
 
-    if (!value) return false;
 
-    const url = value.trim();
-    if (!url) return false;
+isValidSubmissionUrl(value: string): boolean {
+  if (!value || !value.trim()) {
+    return false;
+  }
 
-    try {
-      const parsedUrl = new URL(url);
+  try {
+    const url = new URL(value.trim());
 
-      if (
-        parsedUrl.protocol !== 'http:' &&
-        parsedUrl.protocol !== 'https:'
-      ) {
-        return false;
-      }
-
-      if (!parsedUrl.hostname) return false;
-
-      const hostname = parsedUrl.hostname.toLowerCase();
-
-      if (
-        hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
-        hostname === '0.0.0.0'
-      ) {
-        return false;
-      }
-
-      return true;
-
-    } catch {
+    // Require HTTPS
+    if (url.protocol !== 'https:') {
       return false;
     }
-  }
 
-  getSubmissionUrlError(): string {
-
-    const value = this.submissionLink.trim();
-
-    if (!value) {
-      return 'يرجى إدخال رابط التسليم.';
+    // Reject credentials and non-standard ports
+    if (url.username || url.password || url.port) {
+      return false;
     }
 
-    if (!this.isValidSubmissionUrl(value)) {
-      return 'الرابط غير صحيح. يرجى إدخال رابط يبدأ بـ https:// أو http:// مثل: https://github.com/...';
+    // Only accept GitHub repository URLs
+    if (
+      url.hostname.toLowerCase() !== 'github.com' &&
+      url.hostname.toLowerCase() !== 'www.github.com'
+    ) {
+      return false;
     }
 
-    return '';
+    // Require username and repository name
+    const parts = url.pathname.split('/').filter(Boolean);
+
+    if (parts.length < 2) {
+      return false;
+    }
+
+    const username = parts[0];
+    const repository = parts[1];
+
+    if (!/^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,38})$/.test(username)) {
+      return false;
+    }
+
+    if (!/^[a-zA-Z0-9._-]+$/.test(repository)) {
+      return false;
+    }
+
+    if (repository === '.' || repository === '..') {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
   }
+}
+
+
+
+getSubmissionUrlError(): string {
+  const value = this.submissionLink.trim();
+
+  if (!value) {
+    return 'يرجى إدخال رابط المهمة.';
+  }
+
+  if (!this.isValidSubmissionUrl(value)) {
+    return 'رابط GitHub غير مكتمل. يرجى إدخال الرابط كاملًا مثل: https://github.com/username/repository';
+  }
+
+  return '';
+}
+
 
   // =========================================================
   // Deadline
@@ -610,13 +745,11 @@ export class TraineeTasks implements OnInit {
       this.errorMessage.set('يرجى إدخال رابط التسليم.');
       return;
     }
-
-    if (!this.isValidSubmissionUrl(link)) {
-      this.errorMessage.set(
-        'الرابط غير صحيح. يرجى إدخال رابط صالح يبدأ بـ https:// أو http://'
-      );
-      return;
-    }
+if (!this.isValidSubmissionUrl(link)) {
+  this.errorMessage.set(this.getSubmissionUrlError());
+  return;
+}
+    
 
     const isLate = this.isDeadlinePassed(task);
     const daysLate = this.getDaysLate(task);
@@ -690,18 +823,30 @@ export class TraineeTasks implements OnInit {
   // Select Project
   // =========================================================
 
+
   selectProject(project: ProjectDto): void {
     this.selectedProject.set(project);
     this.selected.set(null);
+
     this.errorMessage.set('');
     this.successMessage.set('');
+
+    this.projectMembers.set([]);
+    this.projectMembersError.set('');
+
+    this.loadProjectMembers(project.projectId);
   }
 
   backToProjects(): void {
     this.selectedProject.set(null);
+    this.projectMembers.set([]);
+    this.projectMembersError.set('');
+    this.loadingProjectMembers.set(false);
+
     this.errorMessage.set('');
     this.successMessage.set('');
   }
+
 
   // =========================================================
   // Project Dates

@@ -54,6 +54,13 @@ namespace Nafadh_Backend.Services
         {
             ValidateQuestion(question);
 
+            if (!question.ModuleId.HasValue ||
+    !await _repository.ModuleExistsAsync(question.ModuleId.Value))
+            {
+                throw new ArgumentException(
+                    "الوحدة المحددة غير موجودة أو مؤرشفة.");
+            }
+
             await CatalogSelectionPolicy.RequireActiveAsync(_constants, question.Difficulty);
             await CatalogSelectionPolicy.RequireActiveAsync(_constants, question.QuestionType);
             question.QuestionId = 0;
@@ -87,6 +94,13 @@ namespace Nafadh_Backend.Services
         {
             ValidateQuestion(updatedQuestion);
 
+            if (!updatedQuestion.ModuleId.HasValue ||
+    !await _repository.ModuleExistsAsync(updatedQuestion.ModuleId.Value))
+            {
+                throw new ArgumentException(
+                    "الوحدة المحددة غير موجودة أو مؤرشفة.");
+            }
+
             var existingQuestion =
                 await _repository.GetByIdAsync(questionId);
 
@@ -113,6 +127,9 @@ namespace Nafadh_Backend.Services
 
             existingQuestion.Difficulty =
                 updatedQuestion.Difficulty;
+
+            existingQuestion.ModuleId =
+    updatedQuestion.ModuleId;
 
             existingQuestion.Points =
                 updatedQuestion.Points;
@@ -231,10 +248,18 @@ namespace Nafadh_Backend.Services
                 }
             }
 
+            // =============================================
+            // التعديل الجديد: 
+            // السماح لسؤال المقالي وسؤال رفع الملف بالعمل 
+            // دون الحاجة إلى خيارات (Options)
+            // =============================================
             if (question.QuestionType ==
-                NFD_QuizQuestionType.Essay)
+                NFD_QuizQuestionType.Essay ||
+                question.QuestionType ==
+                NFD_QuizQuestionType.FileUpload)
             {
                 question.Options.Clear();
+                return; // الخروج من الدالة لتجاهل التحقق من الخيارات
             }
 
             foreach (var option in options)

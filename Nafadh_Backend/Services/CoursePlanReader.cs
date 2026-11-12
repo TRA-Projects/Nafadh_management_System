@@ -31,7 +31,8 @@ namespace Nafadh_Backend.Services
                 .Include(p => p.CreatedByUser)
                 .Include(p => p.Trainers).ThenInclude(pt => pt.Trainer).ThenInclude(t => t.User)
                 .Include(p => p.Stages).ThenInclude(s => s.Trainers).ThenInclude(st => st.Trainer).ThenInclude(t => t.User)
-                .Include(p => p.Stages).ThenInclude(s => s.Items)
+                .Include(p => p.Stages).ThenInclude(s => s.Trainer).ThenInclude(t => t!.User)
+.Include(p => p.Stages).ThenInclude(s => s.Items).ThenInclude(i => i.Trainer).ThenInclude(t => t!.User)
                 .AsSplitQuery();
         }
 
@@ -132,10 +133,27 @@ namespace Nafadh_Backend.Services
             dto.CompanyName = plan.Company?.CompanyName ?? string.Empty;
             dto.ProgramId = plan.ProgramId;
             dto.BatchId = plan.BatchId;
+            dto.DirectPlanTrainers = plan.Trainers
+                .Select(pt => pt.Trainer)
+                .GroupBy(t => t.TrainerId)
+                .Select(g => g.First())
+                .OrderBy(t => t.User.FullName)
+                .Select(t => new CoursePlanTrainerOptionDTO
+                {
+                    TrainerId = t.TrainerId,
+                    FullName = t.User.FullName,
+                    Specialty = t.Specialty
+                })
+                .ToList();
+            // A display-only union: stage-only / item-only trainers keep their narrower assignment.
             dto.Trainers = plan.Trainers
                 .Select(pt => pt.Trainer)
                 .Concat(plan.Stages.SelectMany(st => st.Trainers.Select(x => x.Trainer)))
                 .Concat(plan.Stages.Where(st => st.Trainer is not null).Select(st => st.Trainer!))
+                .Concat(plan.Stages
+    .SelectMany(st => st.Items)
+    .Where(i => i.Trainer != null)
+    .Select(i => i.Trainer!))
                 .GroupBy(t => t.TrainerId)
                 .Select(g => g.First())
                 .OrderBy(t => t.User.FullName)

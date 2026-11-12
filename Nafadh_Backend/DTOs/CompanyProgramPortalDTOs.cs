@@ -23,9 +23,8 @@ namespace Nafadh_Backend.DTOs
         public decimal UtilizationPercentage { get; set; }
 
         // ── Seats in OPEN batches (not cancelled, not yet ended) ──────────
-        // Batch capacity is shared by every company, so these numbers describe
-        // the real seats of the program: capacity of the open batches versus
-        // ALL InProgress enrollments in them (any company). The older
+        // The open batches are those linked to this company; seats are shared
+        // within each linked batch, so occupancy includes every participant in it. The older
         // AllocatedCapacity/UsedCapacity/... fields above are kept unchanged
         // for backward compatibility.
         public decimal OpenSeatCapacity { get; set; }
@@ -56,6 +55,57 @@ namespace Nafadh_Backend.DTOs
         public decimal Capacity { get; set; }
         public int CompanyEnrollmentCount { get; set; }
         public string Status { get; set; } = string.Empty;
+
+        // Batch-owned evaluation parameters configured by Admin; no Company-side computation.
+        public decimal AttendanceWeight { get; set; }
+        public decimal QuizzesWeight { get; set; }
+        public decimal TasksWeight { get; set; }
+        public decimal ProjectsWeight { get; set; }
+        public decimal ExcellentMinScore { get; set; }
+        public decimal ExcellentMinAttendance { get; set; }
+        public decimal VeryGoodMinScore { get; set; }
+        public decimal VeryGoodMinAttendance { get; set; }
+        public decimal GoodMinScore { get; set; }
+        public decimal AtRiskMinAttendance { get; set; }
+
+        public List<CompanyProgramTrainerAssignmentDTO> Trainers { get; set; } = new();
+        public List<CompanyProgramPlanDTO> Plans { get; set; } = new();
+    }
+
+    // Each assignment retains its own scope: a stage trainer is NOT a whole-plan trainer.
+    public sealed class CompanyProgramTrainerAssignmentDTO
+    {
+        public int TrainerId { get; set; }
+        public string TrainerName { get; set; } = string.Empty;
+        public string Scope { get; set; } = string.Empty; // Batch, Plan, Stage or Item
+        public int? PlanId { get; set; }
+        public int? StageId { get; set; }
+        public int? ItemId { get; set; }
+        public string? StageTitle { get; set; }
+        public string? ItemTitle { get; set; }
+    }
+
+    public sealed class CompanyProgramPlanDTO
+    {
+        public int PlanId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public decimal DurationHours { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public string ApprovalStatus { get; set; } = string.Empty;
+        public string ExecutionStatus { get; set; } = string.Empty;
+        public List<CompanyProgramStageDTO> Stages { get; set; } = new();
+    }
+
+    public sealed class CompanyProgramStageDTO
+    {
+        public int StageId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public string Status { get; set; } = string.Empty;
+        // No fictitious stage hours: the existing schema stores dates, not hours per stage.
+        public List<CompanyProgramTrainerAssignmentDTO> Trainers { get; set; } = new();
     }
 
     public sealed class CompanyProgramEnrollmentDTO

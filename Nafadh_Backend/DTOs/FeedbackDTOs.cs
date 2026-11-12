@@ -50,6 +50,9 @@ namespace Nafadh_Backend.DTOs
 
         public string? Comment { get; set; }
 
+        public string? EvaluationPeriod { get; set; }
+
+
         [Required]
         [MinLength(1, ErrorMessage = "At least one criterion score is required.")]
         public List<FeedbackScoreInputDTO> Scores { get; set; } = new List<FeedbackScoreInputDTO>();
@@ -66,6 +69,9 @@ namespace Nafadh_Backend.DTOs
         public int ModuleId { get; set; }
         public int? TrainerId { get; set; }
         public int? BatchId { get; set; }
+
+        public string? EvaluationPeriod { get; set; }
+
         public string? Comment { get; set; }
         public DateTime SubmittedAt { get; set; }
         public List<FeedbackScoreInputDTO> Scores { get; set; } = new List<FeedbackScoreInputDTO>();

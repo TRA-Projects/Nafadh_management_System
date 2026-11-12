@@ -23,151 +23,151 @@ const approvalKeyByBatchStatus = new Map([
   styleUrls: ['./programs.css']
 })
 export class AdminPrograms implements OnInit {
-traineeAddMode: 'manual' | 'excel' | 'existing' = 'manual';
+  traineeAddMode: 'manual' | 'excel' | 'existing' = 'manual';
 
-private router = inject(Router);
-private route = inject(ActivatedRoute);
-private notificationPlanId: number | null = null;
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private notificationPlanId: number | null = null;
 
-readonly constants = inject(NafadhConstantsService);
+  readonly constants = inject(NafadhConstantsService);
   private fb = inject(FormBuilder);
   private adminApi = inject(AdminApi);
 
 
-systemSettings = signal<Record<string, number>>({});
+  systemSettings = signal<Record<string, number>>({});
 
-setting(key: string): number {
-  const value = this.systemSettings()[key];
+  setting(key: string): number {
+    const value = this.systemSettings()[key];
 
-  if (value === undefined || !Number.isFinite(value)) {
-    throw new Error(`إعداد النظام غير متوفر: ${key}`);
+    if (value === undefined || !Number.isFinite(value)) {
+      throw new Error(`إعداد النظام غير متوفر: ${key}`);
+    }
+
+    return value;
   }
+  programMinDurationErrorMessage = signal<string>('');
+  systemSettingsLoaded = signal<boolean>(false);
+  systemSettingsMessages = signal<Record<string, string>>({});
 
-  return value;
-}
-programMinDurationErrorMessage = signal<string>('');
-systemSettingsLoaded = signal<boolean>(false);
-systemSettingsMessages = signal<Record<string, string>>({});
+  private getSystemSettingsMessage(key: string): string {
+    return this.systemSettingsMessages()[key] ?? '';
+  }
+  private loadSystemSettings(): void {
+    const requiredKeys = [
+      'PROGRAM_DEFAULT_DURATION_WEEKS',
+      'PROGRAM_WEEKLY_HOURS',
+      'PROGRAM_MIN_DURATION_WEEKS',
+      'BATCH_DEFAULT_CAPACITY',
+      'PROJECT_PASS_PERCENT',
+      'QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT',
+      'QUIZ_CHEATING_RISK_PERCENT'
+    ];
 
-private getSystemSettingsMessage(key: string): string {
-  return this.systemSettingsMessages()[key] ?? '';
-}
-private loadSystemSettings(): void {
-  const requiredKeys = [
-    'PROGRAM_DEFAULT_DURATION_WEEKS',
-   'PROGRAM_WEEKLY_HOURS',
-    'PROGRAM_MIN_DURATION_WEEKS',
-    'BATCH_DEFAULT_CAPACITY',
-    'PROJECT_PASS_PERCENT',
-    'QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT',
-    'QUIZ_CHEATING_RISK_PERCENT'
-  ];
+    this.systemSettingsLoaded.set(false);
 
-  this.systemSettingsLoaded.set(false);
+    this.adminApi.getSystemVariables().subscribe({
+      next: (rows) => {
+        const values: Record<string, number> = {};
+        const messages: Record<string, string> = {};
 
-  this.adminApi.getSystemVariables().subscribe({
-    next: (rows) => {
-      const values: Record<string, number> = {};
-      const messages: Record<string, string> = {};
+        for (const row of rows) {
+          const key = row.variableKey ?? row.VariableKey;
+          const rawValue = row.value ?? row.Value;
+          if (
+            key === 'SYSTEM_SETTINGS_MISSING_MESSAGE' ||
+            key === 'SYSTEM_SETTINGS_LOAD_ERROR_MESSAGE'
+          ) {
+            messages[key] = String(rawValue ?? '');
+            continue;
+          }
 
-      for (const row of rows) {
-        const key = row.variableKey ?? row.VariableKey;
-        const rawValue = row.value ?? row.Value;
-        if (
-  key === 'SYSTEM_SETTINGS_MISSING_MESSAGE' ||
-  key === 'SYSTEM_SETTINGS_LOAD_ERROR_MESSAGE'
-) {
-  messages[key] = String(rawValue ?? '');
-  continue;
-}
+          if (key === 'PROGRAM_MIN_DURATION_ERROR_MESSAGE') {
+            this.programMinDurationErrorMessage.set(
+              String(rawValue ?? '')
+            );
+            continue;
+          }
 
-        if (key === 'PROGRAM_MIN_DURATION_ERROR_MESSAGE') {
-          this.programMinDurationErrorMessage.set(
-            String(rawValue ?? '')
-          );
-          continue;
+          if (!requiredKeys.includes(key)) continue;
+
+          if (
+            rawValue === null ||
+            rawValue === undefined ||
+            String(rawValue).trim() === ''
+          ) {
+            continue;
+          }
+
+          const value = Number(rawValue);
+
+          if (Number.isFinite(value) && value >= 0) {
+            values[key] = value;
+          }
         }
-
-        if (!requiredKeys.includes(key)) continue;
-
-        if (
-          rawValue === null ||
-          rawValue === undefined ||
-          String(rawValue).trim() === ''
-        ) {
-          continue;
-        }
-
-        const value = Number(rawValue);
-
-        if (Number.isFinite(value) && value >= 0) {
-          values[key] = value;
-        }
-      }
         this.systemSettingsMessages.set(messages);
-        
-      const missingKeys = requiredKeys.filter(
-        key => values[key] === undefined
-      );
 
-    if (missingKeys.length > 0) {
-  console.error('إعدادات النظام ناقصة:', missingKeys);
+        const missingKeys = requiredKeys.filter(
+          key => values[key] === undefined
+        );
 
-  this.showToast(
-    this.getSystemSettingsMessage('SYSTEM_SETTINGS_MISSING_MESSAGE'),
-    'error'
-  );
+        if (missingKeys.length > 0) {
+          console.error('إعدادات النظام ناقصة:', missingKeys);
 
-  return;
-}
+          this.showToast(
+            this.getSystemSettingsMessage('SYSTEM_SETTINGS_MISSING_MESSAGE'),
+            'error'
+          );
 
-      this.systemSettings.set(values);
-      this.applySystemSettings();
-      this.systemSettingsLoaded.set(true);
-    },
+          return;
+        }
 
- error: (err) => {
-  console.error('تعذر تحميل إعدادات النظام:', err);
+        this.systemSettings.set(values);
+        this.applySystemSettings();
+        this.systemSettingsLoaded.set(true);
+      },
 
-  this.showToast(
-    this.getSystemSettingsMessage('SYSTEM_SETTINGS_LOAD_ERROR_MESSAGE')
-      || 'تعذر تحميل إعدادات النظام من قاعدة البيانات.',
-    'error'
-  );
-}
-  });
-}
-private applySystemSettings(): void {
-  const settings = this.systemSettings();
+      error: (err) => {
+        console.error('تعذر تحميل إعدادات النظام:', err);
 
-  const minWeeks = settings['PROGRAM_MIN_DURATION_WEEKS'];
-  const defaultWeeks = settings['PROGRAM_DEFAULT_DURATION_WEEKS'];
-  const batchCapacity = settings['BATCH_DEFAULT_CAPACITY'];
-
-  if (
-    !Number.isFinite(minWeeks) ||
-    !Number.isFinite(defaultWeeks) ||
-    !Number.isFinite(batchCapacity) ||
-    minWeeks <= 0 ||
-    defaultWeeks < minWeeks ||
-    batchCapacity <= 0
-  ) {
-    console.error('Invalid or missing system settings');
-    return;
+        this.showToast(
+          this.getSystemSettingsMessage('SYSTEM_SETTINGS_LOAD_ERROR_MESSAGE')
+          || 'تعذر تحميل إعدادات النظام من قاعدة البيانات.',
+          'error'
+        );
+      }
+    });
   }
+  private applySystemSettings(): void {
+    const settings = this.systemSettings();
 
-  const durationControl = this.programForm.get('durationWeeks');
+    const minWeeks = settings['PROGRAM_MIN_DURATION_WEEKS'];
+    const defaultWeeks = settings['PROGRAM_DEFAULT_DURATION_WEEKS'];
+    const batchCapacity = settings['BATCH_DEFAULT_CAPACITY'];
 
-  durationControl?.setValidators([
-    Validators.required,
-    Validators.min(minWeeks)
-  ]);
+    if (
+      !Number.isFinite(minWeeks) ||
+      !Number.isFinite(defaultWeeks) ||
+      !Number.isFinite(batchCapacity) ||
+      minWeeks <= 0 ||
+      defaultWeeks < minWeeks ||
+      batchCapacity <= 0
+    ) {
+      console.error('Invalid or missing system settings');
+      return;
+    }
 
-  durationControl?.setValue(defaultWeeks);
-  durationControl?.updateValueAndValidity();
+    const durationControl = this.programForm.get('durationWeeks');
 
-  this.batchForm.get('capacity')?.setValue(batchCapacity);
-}
+    durationControl?.setValidators([
+      Validators.required,
+      Validators.min(minWeeks)
+    ]);
+
+    durationControl?.setValue(defaultWeeks);
+    durationControl?.updateValueAndValidity();
+
+    this.batchForm.get('capacity')?.setValue(batchCapacity);
+  }
   // ==========================================================
   // 1. Data Signals
   // ==========================================================
@@ -219,29 +219,29 @@ private applySystemSettings(): void {
   readonly planFilterOptions = computed(() =>
     ['بانتظار الاعتماد', 'معتمدة', 'مرفوضة'].map(value => ({ value, label: this.batchPlanLabel(value) }))
   );
-  readonly batchStatusKeys = ['Upcoming','Ongoing','Completed','Cancelled'] as const;
-  readonly batchStatusFallback = {Upcoming:'قادمة', Ongoing:'جارية', Completed:'مكتملة', Cancelled:'ملغاة'} as const;
+  readonly batchStatusKeys = ['Upcoming', 'Ongoing', 'Completed', 'Cancelled'] as const;
+  readonly batchStatusFallback = { Upcoming: 'قادمة', Ongoing: 'جارية', Completed: 'مكتملة', Cancelled: 'ملغاة' } as const;
   get batchFilterKey() {
     return this.batchStatusKeys.find(key => this.batchStatusFallback[key] === this.statusFilter()) ?? 'all';
   }
   get batchFilterChoices() {
-    const supported = (['Ongoing','Upcoming','Completed'] as const).map(value => ({value,label:this.batchStatusFallback[value]}));
-    return [{value:'all' as const,label:'الدفعات',labelEn:'All'}, ...this.constants.supportedChoices('NFD_BAT_STAT',supported,true)];
+    const supported = (['Ongoing', 'Upcoming', 'Completed'] as const).map(value => ({ value, label: this.batchStatusFallback[value] }));
+    return [{ value: 'all' as const, label: 'الدفعات', labelEn: 'All' }, ...this.constants.supportedChoices('NFD_BAT_STAT', supported, true)];
   }
   chooseBatchFilter(key: 'all' | 'Ongoing' | 'Upcoming' | 'Completed') {
     this.statusFilter.set(key === 'all' ? 'الكل' : this.batchStatusFallback[key]);
     this.currentPage.set(1);
   }
   get batchStatusChoices() {
-    return this.constants.supportedChoices('NFD_BAT_STAT', this.batchStatusKeys.map(value => ({value,label:this.batchStatusFallback[value]})));
+    return this.constants.supportedChoices('NFD_BAT_STAT', this.batchStatusKeys.map(value => ({ value, label: this.batchStatusFallback[value] })));
   }
   get planPickerKey() {
     return approvalKeyByBatchStatus.get(this.planFilter()) ?? (this.planFilter() === 'لم تُرفع بعد' ? 'no-plan' : 'all');
   }
   get planPickerChoices() {
-    return [{value:'all',label:'كل الحالات',labelEn:'All'}, ...this.constants.supportedChoices('NFD_CPA_STAT',
-      this.planFilterOptions().map(o => ({value:approvalKeyByBatchStatus.get(o.value)!,label:o.label})), true),
-      {value:'no-plan',label:'لم تُرفع بعد',labelEn:'Not submitted'}];
+    return [{ value: 'all', label: 'كل الحالات', labelEn: 'All' }, ...this.constants.supportedChoices('NFD_CPA_STAT',
+      this.planFilterOptions().map(o => ({ value: approvalKeyByBatchStatus.get(o.value)!, label: o.label })), true),
+    { value: 'no-plan', label: 'لم تُرفع بعد', labelEn: 'Not submitted' }];
   }
   choosePlanFilter(key: string) {
     const legacy = this.planFilterOptions().find(o => approvalKeyByBatchStatus.get(o.value) === key)?.value;
@@ -369,51 +369,51 @@ private applySystemSettings(): void {
 
   // المحاولات المفلترة بحسب التبويب المحدد
 
-private isSuspiciousQuizAttempt(a: any): boolean {
-  if (!this.systemSettingsLoaded()) {
-    return false;
-  }
+  private isSuspiciousQuizAttempt(a: any): boolean {
+    if (!this.systemSettingsLoaded()) {
+      return false;
+    }
 
-  return (
-    Number(a.cheatingRiskPercentage ?? 0) >
+    return (
+      Number(a.cheatingRiskPercentage ?? 0) >
       this.setting('QUIZ_CHEATING_RISK_PERCENT') ||
 
-    Number(a.tabSwitchCount ?? 0) >
+      Number(a.tabSwitchCount ?? 0) >
       this.setting('QUIZ_SUSPICIOUS_TAB_SWITCH_LIMIT') ||
 
-    Number(a.cameraDisconnectionsCount ?? 0) > 0
-  );
-}
-
-filteredQuizAttempts = computed(() => {
-  const list = this.activeQuizAttempts();
-  const filter = this.auditFilter;
-
-  if (filter === 'all') return list;
-
-  if (filter === 'passed') {
-    return list.filter(a => a.status === 'Passed');
-  }
-
-  if (filter === 'failed') {
-    return list.filter(a => a.status === 'Failed');
-  }
-
-  if (filter === 'absent') {
-    return list.filter(a =>
-      a.status === 'Absent' ||
-      a.status === 'NotAttempted' ||
-      !a.submittedAt ||
-      a.excuseStatus
+      Number(a.cameraDisconnectionsCount ?? 0) > 0
     );
   }
 
-  if (filter === 'cheating') {
-    return list.filter(a => this.isSuspiciousQuizAttempt(a));
-  }
+  filteredQuizAttempts = computed(() => {
+    const list = this.activeQuizAttempts();
+    const filter = this.auditFilter;
 
-  return list;
-});
+    if (filter === 'all') return list;
+
+    if (filter === 'passed') {
+      return list.filter(a => a.status === 'Passed');
+    }
+
+    if (filter === 'failed') {
+      return list.filter(a => a.status === 'Failed');
+    }
+
+    if (filter === 'absent') {
+      return list.filter(a =>
+        a.status === 'Absent' ||
+        a.status === 'NotAttempted' ||
+        !a.submittedAt ||
+        a.excuseStatus
+      );
+    }
+
+    if (filter === 'cheating') {
+      return list.filter(a => this.isSuspiciousQuizAttempt(a));
+    }
+
+    return list;
+  });
 
 
   // ==========================================================
@@ -480,18 +480,131 @@ filteredQuizAttempts = computed(() => {
     });
   }
 
+
   private openPlanFromNotification(planId: number, batches: any[]): void {
-    this.adminApi.getBatchForCoursePlan(planId).subscribe({
-      next: ({ batchId }) => {
-        const batch = batches.find((b: any) => Number(b.batchId ?? b.BatchId ?? b.id) === Number(batchId));
-        if (batch) this.onViewPlan(batch);
-        else this.showToast('تعذر العثور على الدفعة المرتبطة بالخطة في قائمة الإدارة.', 'error');
+    this.selectedPlan.set(null);
+    this.selectedPlanBatch.set(null);
+    this.planErrorMessage.set(null);
+    this.isLoadingPlan.set(true);
+    this.isPlanModalOpen.set(true);
+    this.activePlanTab.set('curriculum');
+
+    this.approvalNotes = '';
+    this.rejectionNotes = '';
+    this.selectedModifications = [];
+
+    this.adminApi.getCoursePlanDetails(planId).subscribe({
+      next: (plan: any) => {
+        const actualPlanId = Number(plan?.planId ?? plan?.PlanId);
+
+        if (actualPlanId !== planId) {
+          this.planErrorMessage.set(
+            'تعذر التحقق من هوية الخطة التدريبية المطلوبة.'
+          );
+          this.isLoadingPlan.set(false);
+          return;
+        }
+
+        const rawBatchId = plan?.batchId ?? plan?.BatchId;
+        const batchId =
+          rawBatchId === null || rawBatchId === undefined
+            ? null
+            : Number(rawBatchId);
+
+        if (batchId === null) {
+          // Legacy plan: show details without allowing approval.
+          this.selectedPlan.set(plan);
+
+          this.selectedPlanBatch.set({
+            batchId: null,
+            batchName: 'خطة قديمة بدون دفعة',
+            companyId: plan.companyId ?? plan.CompanyId,
+            companyName:
+              plan.companyName ?? plan.CompanyName ?? '',
+            programId: plan.programId ?? plan.ProgramId
+          });
+
+          this.planErrorMessage.set(
+            'هذه الخطة التدريبية قديمة وغير مرتبطة بدفعة. ' +
+            'يمكنك مراجعة تفاصيلها، لكن لا يمكن اعتمادها أو رفضها ' +
+            'حتى يتم تصحيح ارتباطها بالدفعة.'
+          );
+
+          this.isLoadingPlan.set(false);
+          return;
+        }
+
+        if (!Number.isInteger(batchId) || batchId <= 0) {
+          this.planErrorMessage.set(
+            'رقم الدفعة المرتبطة بالخطة غير صالح.'
+          );
+          this.isLoadingPlan.set(false);
+          return;
+        }
+
+        const batch = batches.find(
+          (b: any) =>
+            Number(b.batchId ?? b.BatchId ?? b.id) === batchId
+        );
+
+        if (!batch) {
+          this.selectedPlan.set(plan);
+
+          this.selectedPlanBatch.set({
+            batchId,
+            batchName: `الدفعة ${batchId}`,
+            companyId: plan.companyId ?? plan.CompanyId,
+            companyName:
+              plan.companyName ?? plan.CompanyName ?? '',
+            programId: plan.programId ?? plan.ProgramId
+          });
+
+          this.planErrorMessage.set(
+            'تعذر التحقق من الدفعة المرتبطة بالخطة في قائمة الإدارة. ' +
+            'يمكن عرض التفاصيل، لكن الاعتماد والرفض غير متاحين.'
+          );
+
+          this.isLoadingPlan.set(false);
+          return;
+        }
+
+        // Verify the actual batch relationship before enabling review.
+        this.adminApi.getBatchForCoursePlan(planId).subscribe({
+          next: (result: { batchId: number }) => {
+            if (Number(result.batchId) !== batchId) {
+              this.planErrorMessage.set(
+                'الدفعة المرتبطة بالخطة لا تطابق بيانات النظام.'
+              );
+            }
+
+            this.selectedPlan.set(plan);
+            this.selectedPlanBatch.set(batch);
+            this.isLoadingPlan.set(false);
+          },
+          error: (err: any) => {
+            this.selectedPlan.set(plan);
+            this.selectedPlanBatch.set(batch);
+
+            this.planErrorMessage.set(
+              err?.error?.message ||
+              'تعذر التحقق من ارتباط الخطة بالدفعة. الاعتماد غير متاح.'
+            );
+
+            this.isLoadingPlan.set(false);
+          }
+        });
       },
-      error: (err: any) => this.showToast(
-        err?.error?.message || 'لا يمكن تحديد الدفعة المرتبطة بهذا الإشعار.', 'error')
+
+      error: (err: any) => {
+        this.isLoadingPlan.set(false);
+
+        this.planErrorMessage.set(
+          err?.error?.message ||
+          'تعذر تحميل تفاصيل الخطة التدريبية.'
+        );
+      }
     });
   }
-
   // ==========================================================
   // 7. Navigation Handlers & شاشة التفاصيل (زر العين)
   // ==========================================================
@@ -966,11 +1079,11 @@ filteredQuizAttempts = computed(() => {
   }
 
 
-getCheatingSuspectsCount(): number {
-  return this.activeQuizAttempts().filter(a =>
-    this.isSuspiciousQuizAttempt(a)
-  ).length;
-}
+  getCheatingSuspectsCount(): number {
+    return this.activeQuizAttempts().filter(a =>
+      this.isSuspiciousQuizAttempt(a)
+    ).length;
+  }
 
   // ==========================================================
   // 12. استعراض الأعذار الطبية (للاطلاع فقط للأدمن)
@@ -1047,38 +1160,38 @@ getCheatingSuspectsCount(): number {
   // 13.1 سجل ومحضر مشاريع GitHub والواجبات (Full-Page Dossier)
   // ==========================================================
 
-openProjectDossier(event: any): void {
-  this.activeProjectEvent = event;
-  this.projectFilter.set('all');
+  openProjectDossier(event: any): void {
+    this.activeProjectEvent = event;
+    this.projectFilter.set('all');
 
-  const submissions =
-    this.generateSampleProjectSubmissions(event);
+    const submissions =
+      this.generateSampleProjectSubmissions(event);
 
-  const passPercent =
-    this.setting('PROJECT_PASS_PERCENT');
+    const passPercent =
+      this.setting('PROJECT_PASS_PERCENT');
 
-  const updatedSubmissions = submissions.map(sub => {
-    if (sub.score === null || sub.score === undefined) {
-      return sub;
-    }
+    const updatedSubmissions = submissions.map(sub => {
+      if (sub.score === null || sub.score === undefined) {
+        return sub;
+      }
 
-    return {
-      ...sub,
-      status: Number(sub.score) >= passPercent
-        ? 'مكتمل ومعتمد'
-        : 'يتطلب تحسينات'
-    };
-  });
+      return {
+        ...sub,
+        status: Number(sub.score) >= passPercent
+          ? 'مكتمل ومعتمد'
+          : 'يتطلب تحسينات'
+      };
+    });
 
-  this.projectSubmissions.set(updatedSubmissions);
+    this.projectSubmissions.set(updatedSubmissions);
 
-  this.isProjectAuditFullPageOpen.set(true);
-  this.isProjectDossierOpen.set(true);
-  this.isQuizAuditFullPageOpen.set(false);
-  this.isDetailsPageOpen.set(false);
+    this.isProjectAuditFullPageOpen.set(true);
+    this.isProjectDossierOpen.set(true);
+    this.isQuizAuditFullPageOpen.set(false);
+    this.isDetailsPageOpen.set(false);
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
 
   closeProjectAuditFullPage(): void {
@@ -1107,7 +1220,7 @@ openProjectDossier(event: any): void {
 
   onOpenProjectGradeModal(sub: any): void {
     this.selectedProjectForGrading = sub;
-   this.gradingScoreInput = sub?.score ?? 0;
+    this.gradingScoreInput = sub?.score ?? 0;
     this.gradingFeedbackInput = sub?.reviewerFeedback || '';
     this.isProjectGradeModalOpen = true;
   }
@@ -1588,7 +1701,7 @@ openProjectDossier(event: any): void {
     this.adminApi.getBatchCoursePlan(batchId).subscribe({
       next: (plan: any) => {
         if (!plan || Number(plan.planId ?? plan.PlanId) <= 0 ||
-            Number(plan.batchId ?? plan.BatchId) !== batchId) {
+          Number(plan.batchId ?? plan.BatchId) !== batchId) {
           this.planErrorMessage.set('الخطة لا تتطابق مع الدفعة المحددة؛ تم إيقاف المراجعة لحماية البيانات.');
         } else {
           this.selectedPlan.set(plan);
@@ -1600,8 +1713,8 @@ openProjectDossier(event: any): void {
         this.planErrorMessage.set(
           err?.error?.message ||
           (err?.status === 404 ? 'لم تُرسل خطة لهذه الدفعة بعد.' :
-           err?.status === 409 ? 'ربط خطة الدفعة غير واضح ويحتاج تصحيحًا من الإدارة.' :
-           'تعذر تحميل الخطة والتحقق من ربطها بالدفعة.')
+            err?.status === 409 ? 'ربط خطة الدفعة غير واضح ويحتاج تصحيحًا من الإدارة.' :
+              'تعذر تحميل الخطة والتحقق من ربطها بالدفعة.')
         );
       }
     });
@@ -1723,20 +1836,69 @@ openProjectDossier(event: any): void {
     return null;
   }
 
-  private initBatchForm(): void {
-    this.batchForm = this.fb.group({
-      batchName: ['', [Validators.required]],
-      programId: ['', [Validators.required]],
-      companyId: ['', []],
-      startDate: ['', [Validators.required]],
-      endDate: ['', [Validators.required]],
-      capacity: [null, [
-        Validators.required,
-        Validators.min(1),
-        Validators.pattern(/^[1-9]\d*$/)
-      ]]
-    }, { validators: this.dateRangeValidator });
+  evaluationWeightsValidator(group: FormGroup) {
+  const keys = [
+    'attendanceWeight',
+    'quizzesWeight',
+    'tasksWeight',
+    'projectsWeight'
+  ];
+
+  const values = keys.map(key => {
+    const value = group.get(key)?.value;
+
+    if (value === null || value === undefined || value === '') {
+      return NaN;
+    }
+
+    return Number(value);
+  });
+
+  if (values.some(value => !Number.isFinite(value))) {
+    return { invalidEvaluationWeights: true };
   }
+
+
+  const total = values.reduce((sum, value) => sum + value, 0);
+
+  return Math.abs(total - 100) < 0.001
+    ? null
+    : { evaluationWeightsTotalInvalid: true };
+}
+
+  private initBatchForm(): void {
+  this.batchForm = this.fb.group({
+    batchName: ['', [Validators.required]],
+    programId: ['', [Validators.required]],
+    companyId: ['', []],
+    startDate: ['', [Validators.required]],
+    endDate: ['', [Validators.required]],
+    capacity: [null, [
+      Validators.required,
+      Validators.min(1),
+      Validators.pattern(/^[1-9]\d*$/)
+    ]],
+
+    // Evaluation weights
+    attendanceWeight: [20, [Validators.required, Validators.min(0), Validators.max(100)]],
+    quizzesWeight: [20, [Validators.required, Validators.min(0), Validators.max(100)]],
+    tasksWeight: [30, [Validators.required, Validators.min(0), Validators.max(100)]],
+    projectsWeight: [30, [Validators.required, Validators.min(0), Validators.max(100)]],
+
+    // Evaluation classification thresholds
+    excellentMinScore: [80, [Validators.required, Validators.min(0), Validators.max(100)]],
+    excellentMinAttendance: [90, [Validators.required, Validators.min(0), Validators.max(100)]],
+    veryGoodMinScore: [70, [Validators.required, Validators.min(0), Validators.max(100)]],
+    veryGoodMinAttendance: [80, [Validators.required, Validators.min(0), Validators.max(100)]],
+    goodMinScore: [60, [Validators.required, Validators.min(0), Validators.max(100)]],
+    atRiskMinAttendance: [80, [Validators.required, Validators.min(0), Validators.max(100)]]
+  }, {
+    validators: [
+      this.dateRangeValidator,
+      this.evaluationWeightsValidator
+    ]
+  });
+}
 
 private initEditBatchForm(): void {
   this.editBatchForm = this.fb.group({
@@ -1749,9 +1911,29 @@ private initEditBatchForm(): void {
       null,
       [Validators.required, Validators.min(1)]
     ],
-    status: [null, [Validators.required]]
-  }, { validators: this.dateRangeValidator });
+    status: [null, [Validators.required]],
+
+    // Evaluation weights
+    attendanceWeight: [20, [Validators.required, Validators.min(0), Validators.max(100)]],
+    quizzesWeight: [20, [Validators.required, Validators.min(0), Validators.max(100)]],
+    tasksWeight: [30, [Validators.required, Validators.min(0), Validators.max(100)]],
+    projectsWeight: [30, [Validators.required, Validators.min(0), Validators.max(100)]],
+
+    // Evaluation classification thresholds
+    excellentMinScore: [80, [Validators.required, Validators.min(0), Validators.max(100)]],
+    excellentMinAttendance: [90, [Validators.required, Validators.min(0), Validators.max(100)]],
+    veryGoodMinScore: [70, [Validators.required, Validators.min(0), Validators.max(100)]],
+    veryGoodMinAttendance: [80, [Validators.required, Validators.min(0), Validators.max(100)]],
+    goodMinScore: [60, [Validators.required, Validators.min(0), Validators.max(100)]],
+    atRiskMinAttendance: [80, [Validators.required, Validators.min(0), Validators.max(100)]]
+  }, {
+    validators: [
+      this.dateRangeValidator,
+      this.evaluationWeightsValidator
+    ]
+  });
 }
+
 private initProgramForm(): void {
   this.programForm = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(2)]],
@@ -1893,141 +2075,141 @@ private initProgramForm(): void {
 
 
 
-  
-addManualTrainee(): void {
-  this.traineeImportError.set(null);
 
-  const fullName = String(this.manualTrainee.fullName ?? '')
-    .trim()
-    .replace(/\s+/g, ' ');
+  addManualTrainee(): void {
+    this.traineeImportError.set(null);
 
-  const email = String(this.manualTrainee.email ?? '')
-    .trim()
-    .toLowerCase();
+    const fullName = String(this.manualTrainee.fullName ?? '')
+      .trim()
+      .replace(/\s+/g, ' ');
 
-  const nationalIdText = String(
-    this.manualTrainee.nationalId ?? ''
-  ).trim();
+    const email = String(this.manualTrainee.email ?? '')
+      .trim()
+      .toLowerCase();
 
-  const phone = String(this.manualTrainee.phone ?? '').trim();
+    const nationalIdText = String(
+      this.manualTrainee.nationalId ?? ''
+    ).trim();
 
-  const errors: Record<string, string> = {};
+    const phone = String(this.manualTrainee.phone ?? '').trim();
 
-  // التحقق من الاسم الثلاثي
-  if (fullName.split(' ').filter(Boolean).length < 3) {
-    errors['fullName'] = 'يرجى إدخال الاسم الثلاثي.';
-  }
+    const errors: Record<string, string> = {};
 
-  // التحقق من البريد الإلكتروني
-  if (!email) {
-    errors['email'] = 'البريد الإلكتروني مطلوب.';
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    errors['email'] = 'يرجى إدخال بريد إلكتروني صحيح.';
-  }
+    // التحقق من الاسم الثلاثي
+    if (fullName.split(' ').filter(Boolean).length < 3) {
+      errors['fullName'] = 'يرجى إدخال الاسم الثلاثي.';
+    }
 
-  // التحقق من الرقم المدني: 8 إلى 10 أرقام، ضمن نطاق int
-  if (!/^\d{8,10}$/.test(nationalIdText)) {
-    errors['nationalId'] =
-      'يجب أن يتكون الرقم المدني من 8 إلى 10 أرقام.';
-  } else if (Number(nationalIdText) > 2147483647) {
-    errors['nationalId'] = 'الرقم المدني يتجاوز الحد المسموح به.';
-  }
+    // التحقق من البريد الإلكتروني
+    if (!email) {
+      errors['email'] = 'البريد الإلكتروني مطلوب.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors['email'] = 'يرجى إدخال بريد إلكتروني صحيح.';
+    }
 
-  // الهاتف اختياري
-  if (phone && !/^\d{8,15}$/.test(phone)) {
-    errors['phone'] =
-      'رقم الهاتف يجب أن يتكون من 8 إلى 15 رقمًا.';
-  }
+    // التحقق من الرقم المدني: 8 إلى 10 أرقام، ضمن نطاق int
+    if (!/^\d{8,10}$/.test(nationalIdText)) {
+      errors['nationalId'] =
+        'يجب أن يتكون الرقم المدني من 8 إلى 10 أرقام.';
+    } else if (Number(nationalIdText) > 2147483647) {
+      errors['nationalId'] = 'الرقم المدني يتجاوز الحد المسموح به.';
+    }
 
-  this.manualTraineeErrors.set(errors);
+    // الهاتف اختياري
+    if (phone && !/^\d{8,15}$/.test(phone)) {
+      errors['phone'] =
+        'رقم الهاتف يجب أن يتكون من 8 إلى 15 رقمًا.';
+    }
 
-  if (Object.keys(errors).length > 0) {
-    return;
-  }
+    this.manualTraineeErrors.set(errors);
 
-  const nationalId = Number(nationalIdText);
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
 
-  if (!Number.isSafeInteger(nationalId)) {
-    this.manualTraineeErrors.set({
-      nationalId: 'الرقم المدني غير صالح.'
-    });
-    return;
-  }
+    const nationalId = Number(nationalIdText);
 
-  const data: any = {
-    FullName: fullName,
-    Email: email,
-    NationalId: nationalId,
-    University: String(this.manualTrainee.university ?? '').trim() || null,
-    Major: String(this.manualTrainee.major ?? '').trim() || null,
-    AcademicLevel:
-      String(this.manualTrainee.academicLevel ?? '').trim() || null
-  };
+    if (!Number.isSafeInteger(nationalId)) {
+      this.manualTraineeErrors.set({
+        nationalId: 'الرقم المدني غير صالح.'
+      });
+      return;
+    }
 
-  if (phone) {
-    data.PhoneNumber = phone;
-  }
+    const data: any = {
+      FullName: fullName,
+      Email: email,
+      NationalId: nationalId,
+      University: String(this.manualTrainee.university ?? '').trim() || null,
+      Major: String(this.manualTrainee.major ?? '').trim() || null,
+      AcademicLevel:
+        String(this.manualTrainee.academicLevel ?? '').trim() || null
+    };
 
-  // منع التكرار ضمن القائمة المتاحة حاليًا
-  const duplicate = this.availableBatchTrainees().some(
-    t =>
-      String(t.email ?? t.Email ?? '')
-        .trim()
-        .toLowerCase() === email
-  );
+    if (phone) {
+      data.PhoneNumber = phone;
+    }
 
-  if (duplicate) {
-    this.manualTraineeErrors.set({
-      email:
-        'هذا البريد موجود ضمن القائمة؛ اختاري المتدرب بدل إنشاء سجل مكرر.'
-    });
-    return;
-  }
+    // منع التكرار ضمن القائمة المتاحة حاليًا
+    const duplicate = this.availableBatchTrainees().some(
+      t =>
+        String(t.email ?? t.Email ?? '')
+          .trim()
+          .toLowerCase() === email
+    );
 
-  this.isCreatingManualTrainee.set(true);
+    if (duplicate) {
+      this.manualTraineeErrors.set({
+        email:
+          'هذا البريد موجود ضمن القائمة؛ اختاري المتدرب بدل إنشاء سجل مكرر.'
+      });
+      return;
+    }
 
-  this.adminApi.createTrainee(data).subscribe({
-    next: (created: any) => {
-      const createdId = Number(
-        created?.traineeId ?? created?.TraineeId ?? created?.id ?? created?.Id ??
-        created?.data?.traineeId ?? created?.data?.TraineeId
-      );
-      if (Number.isInteger(createdId) && createdId > 0) {
-        this.selectedTraineeIds.update(old => [...new Set([...old, createdId])]);
-      }
-      this.findAndSelectTraineesByEmail([email], () => {
+    this.isCreatingManualTrainee.set(true);
+
+    this.adminApi.createTrainee(data).subscribe({
+      next: (created: any) => {
+        const createdId = Number(
+          created?.traineeId ?? created?.TraineeId ?? created?.id ?? created?.Id ??
+          created?.data?.traineeId ?? created?.data?.TraineeId
+        );
+        if (Number.isInteger(createdId) && createdId > 0) {
+          this.selectedTraineeIds.update(old => [...new Set([...old, createdId])]);
+        }
+        this.findAndSelectTraineesByEmail([email], () => {
+          this.isCreatingManualTrainee.set(false);
+
+          this.manualTrainee = {
+            fullName: '',
+            email: '',
+            nationalId: '',
+            phone: '',
+            university: '',
+            major: '',
+            academicLevel: ''
+          };
+
+          this.manualTraineeErrors.set({});
+
+          this.showToast(
+            'تم حفظ بيانات المتدرب. اضغطي «حفظ التعديلات/إنشاء الدفعة» لإتمام إسناده إلى الدفعة.',
+            'success'
+          );
+        });
+      },
+      error: (err: any) => {
         this.isCreatingManualTrainee.set(false);
 
-        this.manualTrainee = {
-          fullName: '',
-          email: '',
-          nationalId: '',
-          phone: '',
-          university: '',
-          major: '',
-          academicLevel: ''
-        };
-
-        this.manualTraineeErrors.set({});
-
-        this.showToast(
-          'تم حفظ بيانات المتدرب. اضغطي «حفظ التعديلات/إنشاء الدفعة» لإتمام إسناده إلى الدفعة.',
-          'success'
+        this.traineeImportError.set(
+          this.getApiErrorMessage(
+            err,
+            'تعذر حفظ المتدرب. تحققي من البيانات أو من اتصال الخادم.'
+          )
         );
-      });
-    },
-    error: (err: any) => {
-      this.isCreatingManualTrainee.set(false);
-
-      this.traineeImportError.set(
-        this.getApiErrorMessage(
-          err,
-          'تعذر حفظ المتدرب. تحققي من البيانات أو من اتصال الخادم.'
-        )
-      );
-    }
-  });
-}
+      }
+    });
+  }
 
 
 
@@ -2149,35 +2331,35 @@ addManualTrainee(): void {
       }
     });
   }
-onCreateBatch(): void {
-  if (!this.systemSettingsLoaded()) {
-    console.warn('System settings are not loaded yet');
-    return;
+  onCreateBatch(): void {
+    if (!this.systemSettingsLoaded()) {
+      console.warn('System settings are not loaded yet');
+      return;
+    }
+
+    this.batchForm.reset({
+      batchName: '',
+      programId: '',
+      companyId: '',
+      startDate: '',
+      endDate: '',
+      capacity: this.setting('BATCH_DEFAULT_CAPACITY')
+    });
+
+    this.batchFormSubmitted = false;
+    this.batchErrorMessage = null;
+
+    this.selectedTraineeIds.set([]);
+    this.traineePickerError.set(null);
+    this.traineeImportError.set(null);
+
+    this.loadAvailableBatchTrainees();
+
+    this.isBatchModalOpen = false;
+    this.isCreateBatchPageOpen.set(true);
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-
-  this.batchForm.reset({
-    batchName: '',
-    programId: '',
-    companyId: '',
-    startDate: '',
-    endDate: '',
-    capacity: this.setting('BATCH_DEFAULT_CAPACITY')
-  });
-
-  this.batchFormSubmitted = false;
-  this.batchErrorMessage = null;
-
-  this.selectedTraineeIds.set([]);
-  this.traineePickerError.set(null);
-  this.traineeImportError.set(null);
-
-  this.loadAvailableBatchTrainees();
-
-  this.isBatchModalOpen = false;
-  this.isCreateBatchPageOpen.set(true);
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
   onCloseBatchModal(): void {
     this.isCreateBatchPageOpen.set(false);
     this.isBatchModalOpen = false;
@@ -2188,33 +2370,33 @@ onCreateBatch(): void {
   }
 
 
-  
-onCreateProgram(): void {
-  if (!this.systemSettingsLoaded()) {
-  console.warn('System settings are not loaded yet');
-  return;
-}
-  const minWeeks = Math.max(
-    1,
-    this.setting('PROGRAM_MIN_DURATION_WEEKS')
-  );
 
-  const defaultWeeks = Math.max(
-    minWeeks,
-    this.setting('PROGRAM_DEFAULT_DURATION_WEEKS')
-  );
+  onCreateProgram(): void {
+    if (!this.systemSettingsLoaded()) {
+      console.warn('System settings are not loaded yet');
+      return;
+    }
+    const minWeeks = Math.max(
+      1,
+      this.setting('PROGRAM_MIN_DURATION_WEEKS')
+    );
 
-  this.programForm.reset({
-    title: '',
-    trackId: null,
-    durationWeeks: defaultWeeks,
-    description: ''
-  });
+    const defaultWeeks = Math.max(
+      minWeeks,
+      this.setting('PROGRAM_DEFAULT_DURATION_WEEKS')
+    );
 
-  this.programFormSubmitted = false;
-  this.programErrorMessage = null;
-  this.isProgramModalOpen = true;
-}
+    this.programForm.reset({
+      title: '',
+      trackId: null,
+      durationWeeks: defaultWeeks,
+      description: ''
+    });
+
+    this.programFormSubmitted = false;
+    this.programErrorMessage = null;
+    this.isProgramModalOpen = true;
+  }
 
 
   onCloseProgramModal(): void {
@@ -2227,20 +2409,62 @@ onCreateProgram(): void {
 
   onEdit(batch: any): void {
     if (!this.systemSettingsLoaded()) {
-  console.warn('System settings are not loaded yet');
-  return;
-}
+      console.warn('System settings are not loaded yet');
+      return;
+    }
     this.selectedBatch = batch;
 
-    this.editBatchForm.patchValue({
-      batchName: batch.batchName ?? '',
-      programId: batch.programId ?? null,
-      companyId: batch.companyId ?? null,
-      startDate: batch.startDate ? batch.startDate.split('T')[0] : '',
-      endDate: batch.endDate ? batch.endDate.split('T')[0] : '',
-     capacity: batch.capacity ?? this.setting('BATCH_DEFAULT_CAPACITY'),
-      status: this.getBatchStatusValue(batch.status)
-    });
+
+// Preserve existing custom settings.
+// Apply defaults only to legacy batches with no evaluation configuration.
+const weights = {
+  attendance: Number(batch.attendanceWeight ?? batch.AttendanceWeight ?? 0),
+  quizzes: Number(batch.quizzesWeight ?? batch.QuizzesWeight ?? 0),
+  tasks: Number(batch.tasksWeight ?? batch.TasksWeight ?? 0),
+  projects: Number(batch.projectsWeight ?? batch.ProjectsWeight ?? 0)
+};
+
+const hasConfiguredWeights =
+  weights.attendance + weights.quizzes +
+  weights.tasks + weights.projects > 0;
+
+const thresholds = {
+  excellentScore: batch.excellentMinScore ?? batch.ExcellentMinScore,
+  excellentAttendance: batch.excellentMinAttendance ?? batch.ExcellentMinAttendance,
+  veryGoodScore: batch.veryGoodMinScore ?? batch.VeryGoodMinScore,
+  veryGoodAttendance: batch.veryGoodMinAttendance ?? batch.VeryGoodMinAttendance,
+  goodScore: batch.goodMinScore ?? batch.GoodMinScore,
+  atRiskAttendance: batch.atRiskMinAttendance ?? batch.AtRiskMinAttendance
+};
+
+const hasConfiguredThresholds = Object.values(thresholds)
+  .some(value => value != null && Number(value) !== 0);
+
+this.editBatchForm.patchValue({
+  batchName: batch.batchName ?? batch.BatchName ?? '',
+  programId: batch.programId ?? batch.ProgramId ?? null,
+  companyId: batch.companyId ?? batch.CompanyId ?? null,
+  startDate: (batch.startDate ?? batch.StartDate)
+    ? (batch.startDate ?? batch.StartDate).split('T')[0]
+    : '',
+  endDate: (batch.endDate ?? batch.EndDate)
+    ? (batch.endDate ?? batch.EndDate).split('T')[0]
+    : '',
+  capacity: batch.capacity ?? batch.Capacity ?? this.setting('BATCH_DEFAULT_CAPACITY'),
+  status: this.getBatchStatusValue(batch.status ?? batch.Status),
+
+    attendanceWeight: hasConfiguredWeights ? weights.attendance : 20,
+  quizzesWeight: hasConfiguredWeights ? weights.quizzes : 20,
+  tasksWeight: hasConfiguredWeights ? weights.tasks : 30,
+  projectsWeight: hasConfiguredWeights ? weights.projects : 30,
+
+  excellentMinScore: hasConfiguredThresholds ? thresholds.excellentScore : 80,
+  excellentMinAttendance: hasConfiguredThresholds ? thresholds.excellentAttendance : 90,
+  veryGoodMinScore: hasConfiguredThresholds ? thresholds.veryGoodScore : 70,
+  veryGoodMinAttendance: hasConfiguredThresholds ? thresholds.veryGoodAttendance : 80,
+  goodMinScore: hasConfiguredThresholds ? thresholds.goodScore : 60,
+  atRiskMinAttendance: hasConfiguredThresholds ? thresholds.atRiskAttendance : 80
+});
 
     this.editBatchFormSubmitted = false;
     this.editBatchErrorMessage = null;
@@ -2269,8 +2493,11 @@ onCreateProgram(): void {
       });
     }
 
-    this.isEditModalOpen = true;
-  }
+   this.isEditModalOpen = true;
+
+// Prevent background page scrolling while editing
+document.body.style.overflow = 'hidden';
+}
 
   private getBatchStatusValue(status: any): number {
     if (typeof status === 'number' && status >= 0 && status <= 3) {
@@ -2307,13 +2534,17 @@ onCreateProgram(): void {
   }
 
 
-  onCloseEditModal(): void {
-    this.isEditModalOpen = false;
-    this.editBatchFormSubmitted = false;
-    if (!this.isDetailsPageOpen()) {
-      this.selectedBatch = null;
-    }
+onCloseEditModal(): void {
+  this.isEditModalOpen = false;
+  this.editBatchFormSubmitted = false;
+
+  // Restore page scrolling
+  document.body.style.overflow = '';
+
+  if (!this.isDetailsPageOpen()) {
+    this.selectedBatch = null;
   }
+}
 
 
 
@@ -2334,16 +2565,30 @@ onCreateProgram(): void {
     }
 
     const payload = {
-      batchName: String(formValue.batchName || '').trim(),
-      programId: Number(formValue.programId),
-      companyId:
-        formValue.companyId === '' || formValue.companyId == null
-          ? null
-          : Number(formValue.companyId),
-      startDate: formValue.startDate,
-      endDate: formValue.endDate,
-      capacity: Number(formValue.capacity)
-    };
+  batchName: String(formValue.batchName || '').trim(),
+  programId: Number(formValue.programId),
+  companyId:
+    formValue.companyId === '' || formValue.companyId == null
+      ? null
+      : Number(formValue.companyId),
+  startDate: formValue.startDate,
+  endDate: formValue.endDate,
+  capacity: Number(formValue.capacity),
+
+  // Evaluation weights
+  attendanceWeight: Number(formValue.attendanceWeight),
+  quizzesWeight: Number(formValue.quizzesWeight),
+  tasksWeight: Number(formValue.tasksWeight),
+  projectsWeight: Number(formValue.projectsWeight),
+
+  // Classification thresholds
+  excellentMinScore: Number(formValue.excellentMinScore),
+  excellentMinAttendance: Number(formValue.excellentMinAttendance),
+  veryGoodMinScore: Number(formValue.veryGoodMinScore),
+  veryGoodMinAttendance: Number(formValue.veryGoodMinAttendance),
+  goodMinScore: Number(formValue.goodMinScore),
+  atRiskMinAttendance: Number(formValue.atRiskMinAttendance)
+};
 
     this.isSubmittingBatch = true;
 
@@ -2467,9 +2712,9 @@ onCreateProgram(): void {
 
   onSubmitProgram(): void {
     if (!this.systemSettingsLoaded()) {
-  console.warn('System settings are not loaded yet');
-  return;
-}
+      console.warn('System settings are not loaded yet');
+      return;
+    }
     this.programFormSubmitted = true;
 
     if (this.programForm.invalid) {
@@ -2483,7 +2728,7 @@ onCreateProgram(): void {
     const payload = {
       title: val.title,
       trackId: Number(val.trackId),
-   durationHours: Number(val.durationWeeks || this.setting('PROGRAM_DEFAULT_DURATION_WEEKS')) * this.setting('PROGRAM_WEEKLY_HOURS'),
+      durationHours: Number(val.durationWeeks || this.setting('PROGRAM_DEFAULT_DURATION_WEEKS')) * this.setting('PROGRAM_WEEKLY_HOURS'),
       description: val.description || '',
       category: 'تقنية المعلومات'
     };
@@ -2539,7 +2784,7 @@ onCreateProgram(): void {
 
     const formValue = this.editBatchForm.getRawValue();
     if (this.getBatchStatusValue(this.selectedBatch?.status) !== formValue.status &&
-        !this.constants.isSelectable('NFD_BAT_STAT', this.batchStatusKeys[formValue.status])) {
+      !this.constants.isSelectable('NFD_BAT_STAT', this.batchStatusKeys[formValue.status])) {
       this.editBatchErrorMessage = 'اختر حالة دفعة مفعّلة.';
       return;
     }
@@ -2575,14 +2820,28 @@ onCreateProgram(): void {
     this.editBatchErrorMessage = null;
 
     const payload = {
-      batchName: formValue.batchName,
-      programId: Number(formValue.programId),
-      companyId: companyId,
-      startDate: formValue.startDate,
-      endDate: formValue.endDate,
-      capacity: capacity,
-      status: Number(formValue.status)
-    };
+  batchName: formValue.batchName,
+  programId: Number(formValue.programId),
+  companyId: companyId,
+  startDate: formValue.startDate,
+  endDate: formValue.endDate,
+  capacity: capacity,
+  status: Number(formValue.status),
+
+  // Evaluation weights
+  attendanceWeight: Number(formValue.attendanceWeight),
+  quizzesWeight: Number(formValue.quizzesWeight),
+  tasksWeight: Number(formValue.tasksWeight),
+  projectsWeight: Number(formValue.projectsWeight),
+
+  // Classification thresholds
+  excellentMinScore: Number(formValue.excellentMinScore),
+  excellentMinAttendance: Number(formValue.excellentMinAttendance),
+  veryGoodMinScore: Number(formValue.veryGoodMinScore),
+  veryGoodMinAttendance: Number(formValue.veryGoodMinAttendance),
+  goodMinScore: Number(formValue.goodMinScore),
+  atRiskMinAttendance: Number(formValue.atRiskMinAttendance)
+};
 
     this.adminApi.updateBatch(batchId, payload).subscribe({
       next: () => {
@@ -2838,7 +3097,7 @@ onCreateProgram(): void {
   onOpenProjectEvaluation(sub: any): void {
     this.selectedProjectForView = sub;
     this.selectedProjectForGrading = sub;
-   this.gradingScoreInput = sub?.score ?? 0;
+    this.gradingScoreInput = sub?.score ?? 0;
     this.gradingFeedbackInput = sub?.reviewerFeedback || '';
     this.isProjectEvaluationFullPageOpen.set(true);
     this.isProjectAuditFullPageOpen.set(false);

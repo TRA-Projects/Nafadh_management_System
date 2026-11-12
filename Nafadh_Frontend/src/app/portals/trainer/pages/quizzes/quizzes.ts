@@ -72,6 +72,7 @@ export class TrainerQuizzes implements OnInit {
 
   showForm = signal(false);
   editingQuizId = signal<number | null>(null);
+  quizToPublish = signal<QuizDto | null>(null);
 
   form: QuizForm = this.emptyForm();
 
@@ -409,7 +410,47 @@ const matchesStatus =
       this.loadQuizzes(trainerId);
     }
   }
+  publishQuiz(quiz: QuizDto): void {
+  if (this.getStatusNumber(quiz.status) !== 0 || this.saving()) {
+    return;
+  }
 
+  this.quizToPublish.set(quiz);
+}
+
+confirmPublishQuiz(): void {
+  const quiz = this.quizToPublish();
+  const trainerId = this.trainer()?.trainerId;
+
+  if (!quiz || !trainerId || this.saving()) {
+    return;
+  }
+
+  this.saving.set(true);
+  this.errorMessage.set('');
+
+  this.api.publishQuiz(quiz.quizId, trainerId).subscribe({
+    next: () => {
+      this.saving.set(false);
+      this.quizToPublish.set(null);
+      this.successMessage.set('تم نشر الاختبار بنجاح.');
+      this.loadQuizzes(trainerId);
+    },
+    error: error => {
+      this.saving.set(false);
+      this.quizToPublish.set(null);
+      this.errorMessage.set(
+        error?.error?.message || 'تعذر نشر الاختبار.'
+      );
+    }
+  });
+}
+
+cancelPublishQuiz(): void {
+  if (!this.saving()) {
+    this.quizToPublish.set(null);
+  }
+}
 
   getStatusLabel(status: number | string): string {
 

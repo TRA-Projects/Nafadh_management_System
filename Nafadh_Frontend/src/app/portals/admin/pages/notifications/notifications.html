@@ -31,21 +31,24 @@
   <!-- Canonical pending approvals, visible even when a notification was missed. -->
   <section class="toolbar-card" aria-label="قائمة الخطط بانتظار الاعتماد" style="margin-bottom: 16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-      <h2 style="font-size:1.1rem;margin:0;">الخطط — {{ constants.administrativeLabel('NFD_CPA_STAT', 'PendingApproval') }} ({{ pendingCoursePlans().length }})</h2>
+      <h2 style="font-size:1.1rem;margin:0;">الخطط — {{ constants.administrativeLabel('NFD_CPA_STAT', 'PendingApproval')
+        }} ({{ pendingCoursePlans().length }})</h2>
       <button type="button" class="btn btn-secondary" (click)="loadPlanRequests()">تحديث القائمة</button>
     </div>
     @if (pendingPlansError()) { <p role="alert">{{ pendingPlansError() }}</p> }
     @else if (!pendingCoursePlans().length) { <p>لا توجد خطط معلقة في قائمة الهيئة.</p> }
     @else {
-      <div style="display:grid;gap:10px;margin-top:12px;">
-        @for (plan of pendingCoursePlans(); track plan.planId) {
-          <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-            <div><strong>{{ plan.title }}</strong> — خطة رقم {{ plan.planId }}<br />
-              <small>تاريخ التقديم: {{ plan.submittedAt | date:'yyyy/MM/dd HH:mm' }}</small></div>
-            <button type="button" class="btn btn-primary" (click)="openPlanById(plan.planId)">مراجعة واعتماد</button>
-          </div>
-        }
+    <div style="display:grid;gap:10px;margin-top:12px;">
+      @for (plan of pendingCoursePlans(); track plan.planId) {
+      <div
+        style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div><strong>{{ plan.title }}</strong> — خطة رقم {{ plan.planId }}<br />
+          <small>تاريخ التقديم: {{ plan.submittedAt | date:'yyyy/MM/dd HH:mm' }}</small>
+        </div>
+        <button type="button" class="btn btn-primary" (click)="openPlanById(plan.planId)">مراجعة واعتماد</button>
       </div>
+      }
+    </div>
     }
   </section>
 
@@ -53,25 +56,57 @@
   <section class="toolbar-card" aria-label="طلبات اعتماد الخطط التدريبية" style="margin-bottom: 16px;">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
       <h2 style="font-size:1.1rem;margin:0;">طلبات اعتماد الخطط التدريبية</h2>
-      <button class="btn btn-secondary" type="button" (click)="loadPlanRequests()" [disabled]="planRequestsLoading()">تحديث الطلبات</button>
+      <button class="btn btn-secondary" type="button" (click)="loadPlanRequests()"
+        [disabled]="planRequestsLoading()">تحديث الطلبات</button>
     </div>
     @if (planRequestsLoading()) { <p>جارٍ تحميل طلبات الاعتماد...</p> }
     @else if (planRequestsError()) { <p role="alert">{{ planRequestsError() }}</p> }
     @else if (!planRequestNotifications().length) { <p>لا توجد إشعارات تقديم خطط لهذا الحساب.</p> }
     @else {
-      <div style="display:grid;gap:10px;margin-top:12px;">
-        @for (request of planRequestNotifications(); track request.notificationId) {
-          <div style="border:1px solid #e2e8f0;padding:12px;border-radius:9px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-            <div>
-              <strong>{{ request.title }}</strong>
-              @if (!request.isRead) { <span style="color:#0756aa;margin-inline:8px;">جديد</span> }
-              <div>{{ request.message }}</div>
-              <small>{{ request.createdAt | date:'yyyy/MM/dd HH:mm' }}</small>
-            </div>
-            <button type="button" class="btn btn-primary" (click)="openPlanRequest(request)">مراجعة الخطة</button>
-          </div>
-        }
+    <div style="display:grid;gap:10px;margin-top:12px;">
+      @for (request of planRequestNotifications(); track request.notificationId) {
+      <div
+        style="border:1px solid #e2e8f0;padding:12px;border-radius:9px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <strong>{{ request.title }}</strong>
+          @if (!request.isRead) { <span style="color:#0756aa;margin-inline:8px;">جديد</span> }
+          <div>{{ request.message }}</div>
+          <small>{{ request.createdAt | date:'yyyy/MM/dd HH:mm' }}</small>
+        </div>
+        <button type="button" class="btn btn-primary" (click)="openPlanRequest(request)">مراجعة الخطة</button>
       </div>
+      }
+    </div>
+    }
+  </section>
+
+  <!-- 🌟 قسم مخصص لطلبات معالجة الإنذارات الواردة من الشركات 🌟 -->
+  <section class="toolbar-card" aria-label="طلبات معالجة الإنذارات" style="margin-bottom: 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <h2 style="font-size:1.1rem;margin:0;">⚠️ طلبات معالجة الإنذارات (الواردة من الشركات)</h2>
+      <button class="btn btn-secondary" type="button" (click)="loadPlanRequests()"
+        [disabled]="planRequestsLoading()">تحديث الطلبات</button>
+    </div>
+    @if (planRequestsLoading()) { <p>جارٍ تحميل طلبات المعالجة...</p> }
+    @else if (planRequestsError()) { <p role="alert">{{ planRequestsError() }}</p> }
+    @else if (!remediationNotifications().length) { 
+      <p style="color:#64748b;margin-top:8px;">لا توجد طلبات معالجة إنذارات جديدة حالياً.</p> 
+    }
+    @else {
+    <div style="display:grid;gap:10px;margin-top:12px;">
+      @for (request of remediationNotifications(); track request.notificationId) {
+      <div
+        style="border:1px solid #e2e8f0;padding:12px;border-radius:9px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#f8fafc;">
+        <div>
+          <strong style="color:#0f172a;">{{ request.title }}</strong>
+          @if (!request.isRead) { <span style="background:#ef4444;color:#fff;padding:2px 6px;border-radius:4px;font-size:0.75rem;margin-inline:8px;">جديد</span> }
+          <div style="color:#334155;margin:4px 0;">{{ request.message }}</div>
+          <small style="color:#64748b;">{{ request.createdAt | date:'yyyy/MM/dd HH:mm' }}</small>
+        </div>
+        <button type="button" class="btn btn-primary" (click)="openRemediationRequest(request)">مراجعة طلب المعالجة</button>
+      </div>
+      }
+    </div>
     }
   </section>
 
@@ -114,16 +149,28 @@
   <!-- 3. شريط الفلترة والبحث الذكي -->
   <div class="toolbar-card">
     <div class="tabs-segmented-control">
-      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">الكل <span class="tab-badge">{{ stats().total }}</span></button>
-      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'unread'" (click)="setFilter('unread')">غير مقروءة <span class="tab-badge unread">{{ stats().unread }}</span></button>
-      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'announcement'" (click)="setFilter('announcement')">إعلانات النظام</button>
-      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'alert'" (click)="setFilter('alert')">تنبيهات وإنذارات</button>
-      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'company'" (click)="setFilter('company')">شؤون الشركات</button>
+      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">الكل
+        <span class="tab-badge">{{ stats().total }}</span></button>
+      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'unread'"
+        (click)="setFilter('unread')">غير مقروءة <span class="tab-badge unread">{{ stats().unread }}</span></button>
+      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'announcement'"
+        (click)="setFilter('announcement')">إعلانات النظام</button>
+      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'alert'"
+        (click)="setFilter('alert')">تنبيهات وإنذارات</button>
+      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'company'"
+        (click)="setFilter('company')">شؤون الشركات</button>
+      
+      <!-- إضافة تبويب المسودات المحفوظة -->
+      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'drafts'"
+        (click)="setFilter('drafts')">
+        📝 المسودات المحفوظة <span class="tab-badge" style="background:#f59e0b;color:#fff;">{{ drafts().length }}</span>
+      </button>
     </div>
     <div class="search-filter-wrap">
       <div class="search-input-box">
         <span class="search-icon">🔍</span>
-        <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" placeholder="ابحث بالعنوان، الرسالة، أو الجهة المصدرة..." />
+        <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+          placeholder="ابحث بالعنوان، الرسالة، أو الجهة المصدرة..." />
         @if (searchQuery) {
         <button type="button" class="clear-search" (click)="searchQuery = ''; onSearchChange()">✕</button>
         }
@@ -137,23 +184,69 @@
     </div>
   </div>
 
-  <!-- 4. قائمة الإشعارات -->
-  @if (loading()) {
+  <!-- 4. قائمة الإشعارات والمسودات -->
+  @if (activeFilter() === 'drafts') {
+  <div class="notifications-list drafts-list">
+    @if (!drafts().length) {
+      <div class="state-card empty">
+        <div class="empty-icon-circle">📝</div>
+        <h3>لا توجد مسودات محفوظة حالياً</h3>
+        <p>يمكنك كتابة أي إعلان واختيار "حفظ كمسودة" للرجوع إليه وتعديله أو نشره لاحقاً.</p>
+      </div>
+    } @else {
+      @for (draft of drafts(); track draft.id) {
+      <article class="notification-card" style="border-right: 4px solid #f59e0b; background: #fffbeb;">
+        <div class="card-icon-wrap" style="background: #fef3c7; color: #b45309;">
+          <span>📝</span>
+        </div>
+        <div class="card-content">
+          <div class="title-row">
+            <h2 class="notification-title">{{ draft.title }}</h2>
+            <span class="badge-category" style="background:#fef3c7; color:#b45309; font-weight:700;">مسودة محفوظة</span>
+            @if (draft.priority === 'urgent') { <span class="badge-priority urgent">🔴 عاجل</span> }
+            @else if (draft.priority === 'important' || draft.priority === 'high') { <span class="badge-priority high">🟡 هام</span> }
+          </div>
+          <p class="notification-message">{{ draft.content }}</p>
+          <div class="notification-meta">
+            <span class="meta-item"><span class="meta-icon">⏱</span> تاريخ الحفظ: {{ draft.updatedAt | date:'yyyy/MM/dd HH:mm' }}</span>
+          </div>
+        </div>
+        <div class="card-actions" style="display:flex; gap: 8px; align-items:center;">
+          <button type="button" class="btn btn-sm" style="background:#10b981; color:#fff; border:none; border-radius:6px; padding:6px 14px; font-weight:700; cursor:pointer;" (click)="publishDraft(draft)">
+            🚀 نشر الآن
+          </button>
+          <button type="button" class="btn btn-sm" style="background:#0284c7; color:#fff; border:none; border-radius:6px; padding:6px 12px; cursor:pointer;" (click)="editDraft(draft)">
+            ✏️ تعديل
+          </button>
+          <button type="button" class="btn btn-sm" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;" (click)="deleteDraft(draft.id)">
+            🗑️
+          </button>
+        </div>
+      </article>
+      }
+    }
+  </div>
+  } @else if (loading()) {
   <div class="state-card loading">
-    <div class="spinner"></div><h3>جاري جلب الإعلانات...</h3>
+    <div class="spinner"></div>
+    <h3>جاري جلب الإعلانات...</h3>
   </div>
   } @else if (error()) {
   <div class="state-card error">
-    <span class="state-icon">⚠️</span><h3>حدث خطأ</h3><p>{{ error() }}</p>
+    <span class="state-icon">⚠️</span>
+    <h3>حدث خطأ</h3>
+    <p>{{ error() }}</p>
   </div>
   } @else if (!filteredNotifications().length) {
   <div class="state-card empty">
-    <div class="empty-icon-circle">🔔</div><h3>لا توجد إشعارات مطابقة</h3>
+    <div class="empty-icon-circle">🔔</div>
+    <h3>لا توجد إشعارات مطابقة</h3>
   </div>
   } @else {
   <div class="notifications-list">
     @for (item of filteredNotifications(); track trackById($index, item)) {
-    <article class="notification-card" [class.unread]="!item.isRead" (click)="openDetails(item, $event)" tabindex="0" (keyup.enter)="openDetails(item, $event)">
+    <article class="notification-card" [class.unread]="!item.isRead" (click)="openDetails(item, $event)" tabindex="0"
+      (keyup.enter)="openDetails(item, $event)">
       <div class="card-icon-wrap" [class.unread]="!item.isRead">
         @switch (item.category) {
         @case ('announcement') { <span>📣</span> }
@@ -167,6 +260,7 @@
         <div class="title-row">
           <h2 class="notification-title">{{ item.title }}</h2>
           @if (!item.isRead) { <span class="badge-new">جديد</span> }
+          @if (item.isPinned) { <span class="badge-priority" style="background:#fef3c7;color:#b45309;font-weight:700;">📌 مثبت</span> }
           <span class="badge-category" [ngClass]="item.category">{{ getCategoryLabel(item.category) }}</span>
           @if (item.priority === 'urgent') { <span class="badge-priority urgent">🔴 عاجل</span> }
           @else if (item.priority === 'high') { <span class="badge-priority high">🟡 هام</span> }
@@ -179,25 +273,31 @@
         </div>
       </div>
       <div class="card-actions" (click)="$event.stopPropagation()">
-        <button type="button" class="action-btn toggle-read" [class.read]="item.isRead" (click)="toggleReadStatus(item, $event)">{{ item.isRead ? '✉️' : '✓✓' }}</button>
+        <button type="button" class="action-btn toggle-read" [class.read]="item.isRead"
+          (click)="toggleReadStatus(item, $event)">{{ item.isRead ? '✉️' : '✓✓' }}</button>
         <button type="button" class="action-btn view-details" (click)="openDetails(item, $event)">👁</button>
-        <button type="button" class="action-btn delete-btn" (click)="deleteNotification(item.notificationId, $event)">🗑</button>
+        <button type="button" class="action-btn delete-btn"
+          (click)="deleteNotification(item.notificationId, $event)">🗑</button>
       </div>
     </article>
     }
   </div>
   }
 
-  <!-- 🌟 5. النافذة المنبثقة الجديدة (إعلان جديد) 🌟 -->
+  <!-- 🌟 5. النافذة المنبثقة (إعلان جديد) 🌟 -->
   @if (showAnnounce()) {
   <div class="modal-backdrop" (click)="closeAnnounceModal()">
     <div class="announcement-modal" (click)="$event.stopPropagation()">
-      
+
       <!-- رأس النافذة -->
       <div class="modal-header-new">
         <div class="header-right">
           <div class="icon-circle">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="#10b981" stroke-width="2">
+              <path d="M3 11l18-5v12L3 14v-3z" />
+              <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
+            </svg>
           </div>
           <div>
             <h3>إنشاء ونشر إعلان في المنظومة</h3>
@@ -205,17 +305,13 @@
           </div>
         </div>
         <div class="header-left">
-          <div class="tab-switcher">
-            <button [class.active]="activeAnnounceTab === 'preview'" (click)="activeAnnounceTab = 'preview'">المعاينة الحية</button>
-            <button [class.active]="activeAnnounceTab === 'edit'" (click)="activeAnnounceTab = 'edit'">نموذج التحرير</button>
-          </div>
           <button class="close-btn-x" (click)="closeAnnounceModal()">✕</button>
         </div>
       </div>
 
       <!-- جسم النافذة (نموذج التحرير) -->
-      <div class="modal-body-new" *ngIf="activeAnnounceTab === 'edit'">
-        
+      <div class="modal-body-new" [hidden]="activeAnnounceTab !== 'edit'">
+
         <!-- الصف الأول: العنوان والأهمية -->
         <div class="form-row-top">
           <div class="form-group flex-2">
@@ -223,7 +319,8 @@
               <label class="required">عنوان الإعلان</label>
               <span class="char-count">{{ newAnnounceData.title.length }}/120 حرف</span>
             </div>
-            <input type="text" [(ngModel)]="newAnnounceData.title" maxlength="120" placeholder="مثال: بدء التسجيل في برنامج التدريب الميداني...">
+            <input type="text" [(ngModel)]="newAnnounceData.title" maxlength="120"
+              placeholder="مثال: بدء التسجيل في برنامج التدريب الميداني...">
           </div>
           <div class="form-group flex-1">
             <label class="required">مستوى الأهمية</label>
@@ -249,27 +346,36 @@
           </div>
 
           <p class="section-title">الفئة المستهدفة الرئيسية:</p>
-          
-          <app-catalog-picker caption="الفئة المستهدفة الرئيسية" [options]="audienceChoices" [value]="scopeByAudience[newAnnounceData.mainAudience]" (valueChange)="chooseAudience($event)" />
 
-          <!-- إعدادات التخصيص للشركات (التصميم الجديد) -->
+          <app-catalog-picker class="custom-select" caption="الفئة المستهدفة الرئيسية" [options]="audienceChoices"
+            [value]="scopeByAudience[newAnnounceData.mainAudience]" (valueChange)="chooseAudience($event)" />
+
+          <!-- إعدادات التخصيص للشركات -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'companies'">
             <div class="radio-group" style="margin-bottom: 16px;">
-              <label><input type="radio" [(ngModel)]="newAnnounceData.companyScope" value="all_companies"> كافة الشركات</label>
-              <label><input type="radio" [(ngModel)]="newAnnounceData.companyScope" value="specific_companies"> تحديد شركات معينة</label>
+              <label><input type="radio" [(ngModel)]="newAnnounceData.companyScope" value="all_companies"> كافة
+                الشركات</label>
+              <label><input type="radio" [(ngModel)]="newAnnounceData.companyScope" value="specific_companies"> تحديد
+                شركات معينة</label>
             </div>
 
             <div class="smart-selector-wrapper" *ngIf="newAnnounceData.companyScope === 'specific_companies'">
-              
+
               <!-- شريط البحث الذكي -->
               <div class="smart-search-bar">
                 <button class="smart-filter-btn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                  </svg>
                   التصفية الذكية
                 </button>
                 <div class="search-input-container">
                   <input type="text" [(ngModel)]="companySearch" placeholder="ابحث باسم الشركة أو السجل التجاري...">
-                  <svg class="search-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <svg class="search-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8"
+                    stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
                 </div>
               </div>
 
@@ -287,10 +393,13 @@
                         <option value="">كافة المجالات ({{ dbCompanies().length }})</option>
                         <option *ngFor="let wf of getUniqueCompanyWorkFields()" [value]="wf">{{ wf }}</option>
                       </select>
-                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b"
+                        stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
                     </div>
                   </div>
-                  
+
                   <div class="filter-select">
                     <label>السعة الاستيعابية:</label>
                     <div class="custom-select-wrapper">
@@ -300,7 +409,10 @@
                         <option value="medium">سعة متوسطة (50 - 99 متدرب)</option>
                         <option value="low">سعة منخفضة (أقل من 50 متدرب)</option>
                       </select>
-                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b"
+                        stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
                     </div>
                   </div>
                 </div>
@@ -317,27 +429,34 @@
                 <div class="selection-status-bar">
                   <div class="status-right">
                     <span class="dot-indicator"></span>
-                    <span>تم تحديد <strong>{{ newAnnounceData.selectedCompanyIds.length }}</strong> من أصل <strong>{{ getFilteredCompanies().length }}</strong></span>
+                    <span>تم تحديد <strong>{{ newAnnounceData.selectedCompanyIds.length }}</strong> من أصل <strong>{{
+                        getFilteredCompanies().length }}</strong></span>
                     <div class="progress-bar-bg">
-                      <div class="progress-bar-fill" [style.width.%]="(newAnnounceData.selectedCompanyIds.length / (getFilteredCompanies().length || 1)) * 100"></div>
+                      <div class="progress-bar-fill"
+                        [style.width.%]="(newAnnounceData.selectedCompanyIds.length / (getFilteredCompanies().length || 1)) * 100">
+                      </div>
                     </div>
                   </div>
                   <label class="select-all-label">
-                    <input type="checkbox" (change)="selectAllCompanies($event)" [checked]="newAnnounceData.selectedCompanyIds.length > 0 && newAnnounceData.selectedCompanyIds.length === getFilteredCompanies().length">
+                    <input type="checkbox" (change)="selectAllCompanies($event)"
+                      [checked]="newAnnounceData.selectedCompanyIds.length > 0 && newAnnounceData.selectedCompanyIds.length === getFilteredCompanies().length">
                     <span>تحديد الكل ({{ getFilteredCompanies().length }})</span>
                   </label>
                 </div>
 
                 <div class="smart-dropdown-list">
-                  <div class="smart-dropdown-item" *ngFor="let c of getFilteredCompanies()" (click)="toggleCompany(c.id)">
+                  <div class="smart-dropdown-item" *ngFor="let c of getFilteredCompanies()"
+                    (click)="toggleCompany(c.id)">
                     <div class="checkbox-wrapper">
-                      <input type="checkbox" [checked]="isCompanySelected(c.id)" (click)="$event.stopPropagation(); toggleCompany(c.id)">
+                      <input type="checkbox" [checked]="isCompanySelected(c.id)"
+                        (click)="$event.stopPropagation(); toggleCompany(c.id)">
                     </div>
                     <div class="avatar-circle" style="background: #e0e7ff; color: #3730a3;">🏢</div>
                     <div class="item-info">
                       <div class="item-title-row">
                         <span class="d-title">{{ c.name }}</span>
-                        <span class="d-code" style="background: #f1f5f9; color: #475569; border-color: #cbd5e1;">{{ c.commercialRegister }}</span>
+                        <span class="d-code" style="background: #f1f5f9; color: #475569; border-color: #cbd5e1;">{{
+                          c.commercialRegister }}</span>
                       </div>
                       <div class="d-sub">مجال العمل: {{ c.workField }} • السعة: {{ c.capacity }} متدرب</div>
                     </div>
@@ -358,19 +477,28 @@
           <!-- إعدادات التخصيص للمتدربين -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'trainees'">
             <div class="radio-group" style="margin-bottom: 16px;">
-              <label><input type="radio" [(ngModel)]="newAnnounceData.traineeScope" value="all_trainees"> كافة المتدربين</label>
-              <label><input type="radio" [(ngModel)]="newAnnounceData.traineeScope" value="specific_trainees"> تحديد متدربين معينين بالاسم</label>
+              <label><input type="radio" [(ngModel)]="newAnnounceData.traineeScope" value="all_trainees"> كافة
+                المتدربين</label>
+              <label><input type="radio" [(ngModel)]="newAnnounceData.traineeScope" value="specific_trainees"> تحديد
+                متدربين معينين بالاسم</label>
             </div>
 
             <div class="smart-selector-wrapper" *ngIf="newAnnounceData.traineeScope === 'specific_trainees'">
               <div class="smart-search-bar">
                 <button class="smart-filter-btn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                  </svg>
                   التصفية الذكية
                 </button>
                 <div class="search-input-container">
-                  <input type="text" [(ngModel)]="traineeSearch" placeholder="ابحث بالاسم الكامل، الرقم التعريفي (TRN-2026-104)، المسار، أو الشركة...">
-                  <svg class="search-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <input type="text" [(ngModel)]="traineeSearch"
+                    placeholder="ابحث بالاسم الكامل، الرقم التعريفي (TRN-2026-104)، المسار، أو الشركة...">
+                  <svg class="search-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8"
+                    stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
                 </div>
               </div>
 
@@ -387,7 +515,10 @@
                         <option value="">كافة التخصصات ({{ dbTrainees().length }})</option>
                         <option *ngFor="let tr of getUniqueTracks()" [value]="tr">{{ tr }}</option>
                       </select>
-                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b"
+                        stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
                     </div>
                   </div>
                   <div class="filter-select">
@@ -397,7 +528,10 @@
                         <option value="">كافة الدفعات</option>
                         <option *ngFor="let b of getUniqueBatches()" [value]="b">{{ b }}</option>
                       </select>
-                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b"
+                        stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
                     </div>
                   </div>
                   <div class="filter-select">
@@ -407,7 +541,10 @@
                         <option value="">كافة المنشآت الشريكة</option>
                         <option *ngFor="let c of getUniqueTraineeCompanies()" [value]="c">{{ c }}</option>
                       </select>
-                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b"
+                        stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
                     </div>
                   </div>
                 </div>
@@ -422,23 +559,32 @@
                 <div class="selection-status-bar">
                   <div class="status-right">
                     <span class="dot-indicator"></span>
-                    <span>تم تحديد <strong>{{ newAnnounceData.selectedTraineeIds.length }}</strong> من أصل <strong>{{ getFilteredTrainees().length }}</strong></span>
+                    <span>تم تحديد <strong>{{ newAnnounceData.selectedTraineeIds.length }}</strong> من أصل <strong>{{
+                        getFilteredTrainees().length }}</strong></span>
                     <div class="progress-bar-bg">
-                      <div class="progress-bar-fill" [style.width.%]="(newAnnounceData.selectedTraineeIds.length / (getFilteredTrainees().length || 1)) * 100"></div>
+                      <div class="progress-bar-fill"
+                        [style.width.%]="(newAnnounceData.selectedTraineeIds.length / (getFilteredTrainees().length || 1)) * 100">
+                      </div>
                     </div>
-                    <span class="percentage">{{ (newAnnounceData.selectedTraineeIds.length / (getFilteredTrainees().length || 1)) * 100 | number:'1.0-0' }}%</span>
+                    <span class="percentage">{{ (newAnnounceData.selectedTraineeIds.length /
+                      (getFilteredTrainees().length || 1)) * 100 | number:'1.0-0' }}%</span>
                   </div>
                   <label class="select-all-label">
-                    <input type="checkbox" (change)="selectAllTrainees($event)" [checked]="newAnnounceData.selectedTraineeIds.length > 0 && newAnnounceData.selectedTraineeIds.length === getFilteredTrainees().length">
+                    <input type="checkbox" (change)="selectAllTrainees($event)"
+                      [checked]="newAnnounceData.selectedTraineeIds.length > 0 && newAnnounceData.selectedTraineeIds.length === getFilteredTrainees().length">
                     <span>تحديد الكل في هذه النتائج ({{ getFilteredTrainees().length }})</span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
                   </label>
                 </div>
 
                 <div class="smart-dropdown-list">
-                  <div class="smart-dropdown-item" *ngFor="let t of getFilteredTrainees()" (click)="toggleTrainee(t.id)">
+                  <div class="smart-dropdown-item" *ngFor="let t of getFilteredTrainees()"
+                    (click)="toggleTrainee(t.id)">
                     <div class="checkbox-wrapper">
-                      <input type="checkbox" [checked]="isTraineeSelected(t.id)" (click)="$event.stopPropagation(); toggleTrainee(t.id)">
+                      <input type="checkbox" [checked]="isTraineeSelected(t.id)"
+                        (click)="$event.stopPropagation(); toggleTrainee(t.id)">
                     </div>
                     <div class="avatar-circle">{{ t.name.charAt(0) }}</div>
                     <div class="item-info">
@@ -449,7 +595,8 @@
                       <div class="d-sub">{{ t.track }} • {{ t.companyName }} • {{ t.batch }}</div>
                     </div>
                   </div>
-                  <div *ngIf="getFilteredTrainees().length === 0" class="no-results">لا توجد نتائج مطابقة لبحثك أو لا يوجد متدربين في النظام.</div>
+                  <div *ngIf="getFilteredTrainees().length === 0" class="no-results">لا توجد نتائج مطابقة لبحثك أو لا
+                    يوجد متدربين في النظام.</div>
                 </div>
               </ng-container>
 
@@ -461,24 +608,32 @@
             </div>
           </div>
 
-          <!-- إعدادات التخصيص للمدربين (التصميم الجديد) -->
+          <!-- إعدادات التخصيص للمدربين -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'trainers'">
             <div class="radio-group" style="margin-bottom: 16px;">
-              <label><input type="radio" [(ngModel)]="newAnnounceData.trainerScope" value="all_trainers"> كافة المدربين</label>
-              <label><input type="radio" [(ngModel)]="newAnnounceData.trainerScope" value="specific_trainers"> تحديد مدربين معينين بالاسم</label>
+              <label><input type="radio" [(ngModel)]="newAnnounceData.trainerScope" value="all_trainers"> كافة
+                المدربين</label>
+              <label><input type="radio" [(ngModel)]="newAnnounceData.trainerScope" value="specific_trainers"> تحديد
+                مدربين معينين بالاسم</label>
             </div>
 
             <div class="smart-selector-wrapper" *ngIf="newAnnounceData.trainerScope === 'specific_trainers'">
-              
+
               <!-- شريط البحث الذكي -->
               <div class="smart-search-bar">
                 <button class="smart-filter-btn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                  </svg>
                   التصفية الذكية
                 </button>
                 <div class="search-input-container">
                   <input type="text" [(ngModel)]="trainerSearch" placeholder="ابحث باسم المدرب أو التخصص...">
-                  <svg class="search-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <svg class="search-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8"
+                    stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
                 </div>
               </div>
 
@@ -496,10 +651,13 @@
                         <option value="">كافة التخصصات ({{ dbTrainers().length }})</option>
                         <option *ngFor="let sp of getUniqueTrainerSpecialties()" [value]="sp">{{ sp }}</option>
                       </select>
-                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b"
+                        stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
                     </div>
                   </div>
-                  
+
                   <div class="filter-select">
                     <label>سنوات الخبرة:</label>
                     <div class="custom-select-wrapper">
@@ -509,7 +667,10 @@
                         <option value="medium">خبرة متوسطة (2 - 4 سنوات)</option>
                         <option value="low">خبرة مبتدئة (أقل من سنتين)</option>
                       </select>
-                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b"
+                        stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
                     </div>
                   </div>
                 </div>
@@ -526,21 +687,27 @@
                 <div class="selection-status-bar">
                   <div class="status-right">
                     <span class="dot-indicator"></span>
-                    <span>تم تحديد <strong>{{ newAnnounceData.selectedTrainerIds.length }}</strong> من أصل <strong>{{ getFilteredTrainers().length }}</strong></span>
+                    <span>تم تحديد <strong>{{ newAnnounceData.selectedTrainerIds.length }}</strong> من أصل <strong>{{
+                        getFilteredTrainers().length }}</strong></span>
                     <div class="progress-bar-bg">
-                      <div class="progress-bar-fill" [style.width.%]="(newAnnounceData.selectedTrainerIds.length / (getFilteredTrainers().length || 1)) * 100"></div>
+                      <div class="progress-bar-fill"
+                        [style.width.%]="(newAnnounceData.selectedTrainerIds.length / (getFilteredTrainers().length || 1)) * 100">
+                      </div>
                     </div>
                   </div>
                   <label class="select-all-label">
-                    <input type="checkbox" (change)="selectAllTrainers($event)" [checked]="newAnnounceData.selectedTrainerIds.length > 0 && newAnnounceData.selectedTrainerIds.length === getFilteredTrainers().length">
+                    <input type="checkbox" (change)="selectAllTrainers($event)"
+                      [checked]="newAnnounceData.selectedTrainerIds.length > 0 && newAnnounceData.selectedTrainerIds.length === getFilteredTrainers().length">
                     <span>تحديد الكل ({{ getFilteredTrainers().length }})</span>
                   </label>
                 </div>
 
                 <div class="smart-dropdown-list">
-                  <div class="smart-dropdown-item" *ngFor="let t of getFilteredTrainers()" (click)="toggleTrainer(t.id)">
+                  <div class="smart-dropdown-item" *ngFor="let t of getFilteredTrainers()"
+                    (click)="toggleTrainer(t.id)">
                     <div class="checkbox-wrapper">
-                      <input type="checkbox" [checked]="isTrainerSelected(t.id)" (click)="$event.stopPropagation(); toggleTrainer(t.id)">
+                      <input type="checkbox" [checked]="isTrainerSelected(t.id)"
+                        (click)="$event.stopPropagation(); toggleTrainer(t.id)">
                     </div>
                     <div class="avatar-circle" style="background: #fef3c7; color: #b45309;">🎓</div>
                     <div class="item-info">
@@ -565,82 +732,89 @@
         </div>
 
         <!-- محتوى الإعلان -->
-        <div class="form-group mt-4" style="margin-top: 20px;">
+        <div class="form-group mt-4 announcement-content-group">
           <label class="required">محتوى الإعلان</label>
-          <div class="editor-toolbar" style="display: flex; gap: 8px; margin-bottom: 8px; background: #f8fafc; padding: 6px; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <button style="padding: 4px 10px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; font-weight: bold; cursor: pointer;">B</button>
-            <button style="padding: 4px 10px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; font-style: italic; cursor: pointer;">I</button>
-            <button style="padding: 4px 10px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; text-decoration: underline; cursor: pointer;">U</button>
-            <span style="border-left: 1px solid #cbd5e1; margin: 0 4px;"></span>
-            <select style="padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; font-family: 'Cairo', sans-serif; font-size: 12px;">
-              <option>إدراج متغير...</option>
-              <option>&#123;اسم_المستلم&#125;</option>
-              <option>&#123;رقم_المتدرب&#125;</option>
-              <option>&#123;اسم_الشركة&#125;</option>
-            </select>
+
+          <div class="editor-toolbar">
+            <button type="button" title="Bold" (mousedown)="$event.preventDefault()"
+              (click)="applyAnnouncementFormat('bold')">
+              <b>B</b>
+            </button>
+            <button type="button" title="Italic" (mousedown)="$event.preventDefault()"
+              (click)="applyAnnouncementFormat('italic')">
+              <i>I</i>
+            </button>
+            <button type="button" title="Underline" (mousedown)="$event.preventDefault()"
+              (click)="applyAnnouncementFormat('underline')">
+              <u>U</u>
+            </button>
+            <span class="toolbar-divider"></span>
+            <button type="button" title="Bullet List" (mousedown)="$event.preventDefault()"
+              (click)="applyAnnouncementFormat('insertUnorderedList')">
+              • List
+            </button>
+            <button type="button" title="Numbered List" (mousedown)="$event.preventDefault()"
+              (click)="applyAnnouncementFormat('insertOrderedList')">
+              1. List
+            </button>
           </div>
-          <textarea rows="5" [(ngModel)]="newAnnounceData.content" placeholder="اكتب تفاصيل الإعلان هنا..."></textarea>
-        </div>
-
-        <!-- قسم خيارات النشر والقنوات المتزامنة -->
-        <div class="publishing-options-section">
-          <h4 class="pub-title">خيارات النشر والقنوات المتزامنة:</h4>
-          
-          <div class="pub-cards-container">
-            <label class="pub-card">
-              <div class="pub-info">
-                <span class="pub-name">البوابة الإلكترونية</span>
-                <span class="pub-desc">إشعار فوري داخل نظام نفاذ</span>
-              </div>
-              <input type="checkbox" [(ngModel)]="newAnnounceData.channels.inApp" class="custom-checkbox">
-            </label>
-
-            <label class="pub-card">
-              <div class="pub-info">
-                <span class="pub-name">البريد الإلكتروني</span>
-                <span class="pub-desc">نسخة رسمية للبريد المسجل</span>
-              </div>
-              <input type="checkbox" [(ngModel)]="newAnnounceData.channels.email" class="custom-checkbox">
-            </label>
-
-            <label class="pub-card">
-              <div class="pub-info">
-                <span class="pub-name">📌 تثبيت في أعلى البوابة</span>
-                <span class="pub-desc">يبقى ظاهراً في صدارة الإعلانات</span>
-              </div>
-              <input type="checkbox" [(ngModel)]="newAnnounceData.isPinned" class="custom-checkbox">
-            </label>
+          <div #announcementEditor class="announcement-rich-editor" contenteditable="true" dir="auto"
+            [innerHTML]="newAnnounceData.content" (input)="onAnnouncementEditorInput($event)"
+            data-placeholder="اكتب تفاصيل الإعلان هنا...">
           </div>
-        </div>
 
-      </div>
+          <!-- قسم خيارات النشر والقنوات المتزامنة -->
+          <div class="publishing-options-section">
+            <h4 class="pub-title">خيارات النشر والقنوات المتزامنة:</h4>
 
-      <!-- جسم النافذة (المعاينة الحية) -->
-      <div class="modal-body-new preview-mode" *ngIf="activeAnnounceTab === 'preview'">
-        <div class="preview-card" [ngClass]="newAnnounceData.priority">
-          <div class="preview-header">
-            <h3>{{ newAnnounceData.title || 'عنوان الإعلان هنا' }}</h3>
-            <span class="badge-priority" [ngClass]="newAnnounceData.priority === 'urgent' ? 'urgent' : (newAnnounceData.priority === 'important' ? 'high' : 'normal')">
-              {{ newAnnounceData.priority === 'urgent' ? 'عاجل' : (newAnnounceData.priority === 'important' ? 'هام' : 'عادي') }}
-            </span>
+            <div class="pub-cards-container">
+              <label class="pub-card">
+                <div class="pub-info">
+                  <span class="pub-name">البوابة الإلكترونية</span>
+                  <span class="pub-desc">إشعار فوري داخل نظام نفاذ</span>
+                </div>
+                <input type="checkbox" [(ngModel)]="newAnnounceData.channels.inApp" class="custom-checkbox">
+              </label>
+
+              <label class="pub-card">
+                <div class="pub-info">
+                  <span class="pub-name">البريد الإلكتروني</span>
+                  <span class="pub-desc">نسخة رسمية للبريد المسجل</span>
+                </div>
+                <input type="checkbox" [(ngModel)]="newAnnounceData.channels.email" class="custom-checkbox">
+              </label>
+
+              <label class="pub-card">
+                <div class="pub-info">
+                  <span class="pub-name">📌 تثبيت في أعلى البوابة</span>
+                  <span class="pub-desc">يبقى ظاهراً في صدارة الإعلانات</span>
+                </div>
+                <input type="checkbox" [(ngModel)]="newAnnounceData.isPinned" class="custom-checkbox">
+              </label>
+            </div>
           </div>
-          <div class="preview-content">
-            {{ newAnnounceData.content || 'محتوى الإعلان سيظهر هنا...' }}
-          </div>
+
         </div>
       </div>
 
       <!-- ذيل النافذة (Footer) -->
       <div class="modal-footer-new">
         <div class="footer-note">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
           سيتم توثيق هذا الإجراء في سجل العمليات الإدارية لنظام نفاذ
         </div>
         <div class="footer-actions">
           <button class="nfd-btn secondary-btn" (click)="closeAnnounceModal()">إلغاء</button>
-          <button class="nfd-btn secondary-btn" (click)="closeAnnounceModal()">حفظ كمسودة</button>
+          <button class="nfd-btn secondary-btn" type="button" (click)="saveAsDraft()">حفظ كمسودة</button>
           <button class="nfd-btn primary-btn publish-btn" (click)="postAnnouncement()" [disabled]="posting()">
-            <svg *ngIf="!posting()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            <svg *ngIf="!posting()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
             <span *ngIf="!posting()">نشر الإعلان الآن</span>
             <span *ngIf="posting()">جاري النشر...</span>
           </button>

@@ -1,4 +1,4 @@
-﻿
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -117,6 +117,26 @@ namespace Nafadh_Backend.Repositories
 
                 .AsSplitQuery()
                 .OrderByDescending(a => a.StartedAt)
+                .ThenByDescending(a => a.AttemptId)
+                .ToListAsync();
+        }
+
+        // Enrollment and quiz must belong to the same batch and trainee.
+        // Authorization for the company is enforced in the controller.
+        public async Task<List<NFD_QuizAttempt>> GetCompanyEnrollmentResultsAsync(int enrollmentId)
+        {
+            return await _context.NFD_QuizAttempts
+                .AsNoTracking()
+                .Where(a => _context.NFD_Enrollments.Any(e =>
+                    e.EnrollmentId == enrollmentId &&
+                    e.TraineeId == a.TraineeId &&
+                    e.BatchId == a.Quiz.BatchId))
+                .Include(a => a.Quiz).ThenInclude(q => q.Batch)
+                .Include(a => a.Trainee).ThenInclude(t => t.User)
+                .Include(a => a.AttemptQuestions).ThenInclude(aq => aq.Question)
+                .Include(a => a.AttemptQuestions).ThenInclude(aq => aq.Answers)
+                .AsSplitQuery()
+                .OrderByDescending(a => a.SubmittedAt)
                 .ThenByDescending(a => a.AttemptId)
                 .ToListAsync();
         }

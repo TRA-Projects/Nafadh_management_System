@@ -27,7 +27,7 @@
 
   <div class="relative z-50 flex flex-wrap items-center gap-3">
     <div class="min-w-[16rem] flex-1 sm:max-w-md">
-      <app-catalog-picker [options]="lookupSelectOptions()" [value]="selectedLookupCode()"
+      <app-catalog-picker class="form-input min-h-[42px] w-full ltr:text-left rtl:text-right" [options]="lookupSelectOptions()" [value]="selectedLookupCode()"
         [caption]="lookupGroupPlaceholder" (valueChange)="onLookupSelectionChange($event ? [$event] : [])" />
     </div>
 

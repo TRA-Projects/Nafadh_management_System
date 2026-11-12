@@ -33,10 +33,18 @@ namespace Nafadh_Backend.Services
         Task<ReportOutputDTO> GenerateTrainerTraineesReportAsync(
             TrainerTraineesReportInputDto dto
         );
-
+        // Resolves the physical PDF path for Trainer Trainees reports.
+        Task<string?> GetTrainerTraineesReportFilePathAsync(
+            int reportId
+        );
         // NEW: analytics/aggregation endpoints — see DTOs/ReportAnalyticsDTOs.cs
         Task<DashboardChartsDTO> GetDashboardChartsAsync();
         Task<AdminDashboardSummaryDTO> GetAdminDashboardSummaryAsync();
+        // Admin Portal only - dashboard performance period filtering.
+        Task<AdminDashboardSummaryDTO> GetAdminDashboardSummaryByPeriodAsync(
+            DateTime? startDate,
+            DateTime? endDate
+        );
         Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(int batchId, int pageNumber, int pageSize);
         // Admin Reports - Company Batch Performance
         Task<AdminCompanyBatchPerformanceDTO?> GetAdminCompanyBatchPerformanceAsync(
@@ -52,7 +60,16 @@ namespace Nafadh_Backend.Services
         Task<List<int>> GetCompanyAtRiskTraineeIdsAsync(int companyId, int take);
         Task<TrainerKpisDTO> GetTrainerKpisAsync(int trainerId);
         // Admin Reports - Companies Summary
+        // Admin Reports - Companies Summary
         Task<AdminCompaniesSummaryDTO> GetAdminCompaniesSummaryAsync();
 
+        // Admin Reports - Master Trainees Transcript
+        Task<AdminTraineesTranscriptDTO> GetAdminTraineesTranscriptAsync(
+            int pageNumber,
+            int pageSize,
+            int? companyId,
+            int? batchId,
+            int? traineeId
+        );
     }
 }

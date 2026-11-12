@@ -234,9 +234,13 @@ namespace Nafadh_Backend.Services
 
             var quiz = await GetOwnedQuizAsync(id, trainerId);
 
-            if (quiz.Status != NFD_QuizStatus.Draft)
+            if (quiz.Status != NFD_QuizStatus.Draft &&
+     !(quiz.Status == NFD_QuizStatus.Scheduled &&
+       DateTime.UtcNow < quiz.StartDateTime))
+            {
                 throw new InvalidOperationException(
-                    "يمكن تعديل إعدادات الاختبار في حالة المسودة فقط.");
+                    "لا يمكن تعديل الاختبار بعد بدء موعده أو إذا كانت حالته لا تسمح بالتعديل.");
+            }
 
             if (await _quizQuestionRepository.HasQuizAttemptsAsync(id))
                 throw new InvalidOperationException(

@@ -1,0 +1,386 @@
+.trainer-attendance-page {
+    padding: 28px 32px 50px;
+    color: #17345f;
+}
+
+/* Header */
+.page-header {
+    margin-bottom: 24px;
+    padding: 26px 30px;
+    border: 1px solid #dce9f5;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #f4fbff, #eef7fd);
+}
+
+.page-header h1 {
+    margin: 0 0 8px;
+    color: #06488f;
+    font-size: 30px;
+    font-weight: 800;
+}
+
+.page-header p {
+    margin: 0;
+    color: #71839b;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Summary */
+.attendance-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.summary-card {
+    min-height: 105px;
+    padding: 20px 22px;
+    box-sizing: border-box;
+    border: 1px solid #e0eaf4;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 5px 18px rgba(31, 72, 112, 0.06);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.summary-card span {
+    color: #71839b;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.summary-card strong {
+    color: #17345f;
+    font-size: 30px;
+    font-weight: 800;
+}
+
+.summary-card.present strong {
+    color: #16804b;
+}
+
+.summary-card.late strong {
+    color: #c27600;
+}
+
+.summary-card.absent strong {
+    color: #d12b3f;
+}
+
+/* States */
+.state {
+    padding: 35px;
+    text-align: center;
+    color: #6d819b;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.state.error {
+    color: #c62828;
+}
+
+/* Attendance records */
+.attendance-table {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.attendance-row {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr 1fr 1fr 1.4fr;
+    gap: 18px;
+    padding: 22px 24px;
+    border: 1px solid #e1eaf3;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(30, 70, 110, 0.05);
+}
+
+.attendance-row>div:not(.excuse-section) {
+    min-width: 0;
+}
+
+.attendance-row>div:not(.excuse-section)>span {
+    display: block;
+    margin-bottom: 8px;
+    color: #8192a8;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.attendance-row>div:not(.excuse-section)>strong {
+    color: #17345f;
+    font-size: 14px;
+    font-weight: 750;
+}
+
+/* Status */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+}
+
+.status-badge.present {
+    color: #147a47 !important;
+    background: #e8f8ef;
+}
+
+.status-badge.late {
+    color: #b86b00 !important;
+    background: #fff2d9;
+}
+
+.status-badge.absent {
+    color: #c52238 !important;
+    background: #ffe8ec;
+}
+
+.status-badge.excused {
+    color: #3867a8 !important;
+    background: #e8f1ff;
+}
+
+/* Excuse section */
+.excuse-section {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    padding: 20px;
+    border: 1px solid #e0eaf4;
+    border-radius: 14px;
+    background: #f8fbfe;
+}
+
+.excuse-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.excuse-status-row>span {
+    color: #71839b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.excuse-status-row>strong {
+    color: #17345f;
+    font-size: 13px;
+}
+
+.excuse-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 190px;
+    gap: 20px;
+}
+
+.excuse-field label,
+.proof-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: #71839b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.excuse-input {
+    width: 100%;
+    min-height: 85px;
+    padding: 12px 14px;
+    box-sizing: border-box;
+    border: 1px solid #d7e3ee;
+    border-radius: 11px;
+    background: #fff;
+    color: #17345f;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.7;
+    resize: vertical;
+    outline: none;
+}
+
+.excuse-input:focus {
+    border-color: #1675c8;
+    box-shadow: 0 0 0 3px rgba(22, 117, 200, 0.08);
+}
+
+.excuse-input:disabled {
+    background: #f0f3f6;
+    color: #8b98a8;
+}
+
+.save-excuse-btn {
+    margin-top: 9px;
+    padding: 9px 18px;
+    border: 0;
+    border-radius: 9px;
+    background: #06488f;
+    color: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.save-excuse-btn:hover:not(:disabled) {
+    background: #053a73;
+}
+
+.save-excuse-btn:disabled {
+    background: #c8d2de;
+    cursor: not-allowed;
+}
+
+/* Proof */
+.proof-field {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.upload-proof-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border: 1px solid #cbd9e7;
+    border-radius: 9px;
+    background: #fff;
+    color: #06488f;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.upload-proof-btn:hover:not(.disabled) {
+    background: #f1f7fc;
+}
+
+.upload-proof-btn.disabled {
+    background: #eef1f4;
+    color: #98a5b4;
+    cursor: not-allowed;
+}
+
+.proof-link {
+    margin-top: 9px;
+    color: #0969b5;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.proof-link:hover {
+    text-decoration: underline;
+}
+
+.excuse-closed {
+    display: block;
+    margin-top: 8px;
+    color: #c62828;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 1000px) {
+    .attendance-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .attendance-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .excuse-section {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 650px) {
+    .trainer-attendance-page {
+        padding: 18px 14px 35px;
+    }
+
+    .attendance-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .attendance-row {
+        grid-template-columns: 1fr;
+        padding: 18px;
+    }
+
+    .excuse-form {
+        grid-template-columns: 1fr;
+    }
+
+    .page-header h1 {
+        font-size: 25px;
+    }
+}
+
+.attendance-page-header {
+    min-height: 150px;
+    padding: 28px 34px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 20px;
+    box-sizing: border-box;
+}
+
+.attendance-page-header .header-icon {
+    width: 58px;
+    height: 58px;
+    flex: 0 0 58px;
+    border-radius: 16px;
+    background: #e8f7fb;
+    color: #08a9bd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 27px;
+}
+
+.attendance-page-header .header-content {
+    text-align: right;
+    flex: 1;
+}
+
+.attendance-page-header .header-section {
+    display: block;
+    margin-bottom: 8px;
+    color: #009eb5;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.attendance-page-header h1 {
+    margin: 0 0 8px;
+    color: #06488f;
+    font-size: 32px;
+    font-weight: 800;
+}
+
+.attendance-page-header p {
+    margin: 0;
+    color: #71839b;
+    font-size: 14px;
+    font-weight: 500;
+}

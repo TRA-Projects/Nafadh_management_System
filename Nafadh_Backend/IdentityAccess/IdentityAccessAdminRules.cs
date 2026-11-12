@@ -182,75 +182,101 @@ namespace Nafadh_Backend.IdentityAccess
             return Math.Min(index, totalPages - 1);
         }
 
-        public static bool TryMapProfileType(string userTypeCode, string groupCode, out int profileType)
+
+        public static bool TryMapProfileType(
+            string userTypeCode,
+            string groupCode,
+            out int profileType)
         {
             profileType = 0;
-            if (string.IsNullOrWhiteSpace(userTypeCode) || string.IsNullOrWhiteSpace(groupCode))
+
+            if (string.IsNullOrWhiteSpace(userTypeCode) ||
+                string.IsNullOrWhiteSpace(groupCode))
             {
                 return false;
             }
 
-            if (string.Equals(userTypeCode, UserTypeCodes.System, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(groupCode, UserGroupCodes.SystemAdmin, StringComparison.OrdinalIgnoreCase))
+            // System: all groups use Admin ProfileType.
+            // Permissions are controlled by the assigned role.
+            if (string.Equals(
+                userTypeCode,
+                UserTypeCodes.System,
+                StringComparison.OrdinalIgnoreCase))
             {
                 profileType = (int)Enums.ProfileTypes.Admin;
                 return true;
             }
 
-            if (string.Equals(userTypeCode, UserTypeCodes.Individual, StringComparison.OrdinalIgnoreCase))
+            // Individual
+            if (string.Equals(
+                userTypeCode,
+                UserTypeCodes.Individual,
+                StringComparison.OrdinalIgnoreCase))
             {
-                if (string.Equals(groupCode, UserGroupCodes.Jobseeker, StringComparison.OrdinalIgnoreCase))
-                {
-                    profileType = (int)Enums.ProfileTypes.JobSeeker;
-                    return true;
-                }
-
-                if (string.Equals(groupCode, UserGroupCodes.Freelancer, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(
+                    groupCode,
+                    UserGroupCodes.Freelancer,
+                    StringComparison.OrdinalIgnoreCase))
                 {
                     profileType = (int)Enums.ProfileTypes.FreeLancer;
                     return true;
                 }
 
-                return false;
-            }
-
-            if (!string.Equals(userTypeCode, UserTypeCodes.Corporate, StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-
-            if (string.Equals(groupCode, UserGroupCodes.SME, StringComparison.OrdinalIgnoreCase))
-            {
-                profileType = (int)Enums.ProfileTypes.SME;
+                // Jobseeker and custom Individual groups
+                profileType = (int)Enums.ProfileTypes.JobSeeker;
                 return true;
             }
 
-            if (string.Equals(groupCode, UserGroupCodes.NonSME, StringComparison.OrdinalIgnoreCase))
+            // Corporate
+            if (string.Equals(
+                userTypeCode,
+                UserTypeCodes.Corporate,
+                StringComparison.OrdinalIgnoreCase))
             {
-                profileType = (int)Enums.ProfileTypes.Non_SME;
-                return true;
-            }
+                if (string.Equals(
+                    groupCode,
+                    UserGroupCodes.SME,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    profileType = (int)Enums.ProfileTypes.SME;
+                    return true;
+                }
 
-            if (string.Equals(groupCode, UserGroupCodes.Operator, StringComparison.OrdinalIgnoreCase))
-            {
-                profileType = (int)Enums.ProfileTypes.Operator;
-                return true;
-            }
+                if (string.Equals(
+                    groupCode,
+                    UserGroupCodes.NonSME,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    profileType = (int)Enums.ProfileTypes.Non_SME;
+                    return true;
+                }
 
-            if (string.Equals(groupCode, UserGroupCodes.Staff, StringComparison.OrdinalIgnoreCase))
-            {
+                if (string.Equals(
+                    groupCode,
+                    UserGroupCodes.Operator,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    profileType = (int)Enums.ProfileTypes.Operator;
+                    return true;
+                }
+
+                if (string.Equals(
+                    groupCode,
+                    UserGroupCodes.Contractor,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    profileType = (int)Enums.ProfileTypes.Contractor;
+                    return true;
+                }
+
+                // Staff and custom Corporate groups
                 profileType = (int)Enums.ProfileTypes.Staff;
-                return true;
-            }
-
-            if (string.Equals(groupCode, UserGroupCodes.Contractor, StringComparison.OrdinalIgnoreCase))
-            {
-                profileType = (int)Enums.ProfileTypes.Contractor;
                 return true;
             }
 
             return false;
         }
+
 
         public static int DefaultActionFlags(string userTypeCode)
             => IdentityAccessPermissionDefaults.ActionFlagsForUserType(userTypeCode);

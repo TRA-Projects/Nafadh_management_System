@@ -39,7 +39,6 @@ interface StageCard {
   module: ModuleDto;
   orderIndex: number;
   statusRaw: string;
-  progressPercent: number;
   evaluations: EvaluationDto[];
   averageScore: number | null;
 }
@@ -261,7 +260,7 @@ export class AdminTraineeProfile implements OnInit {
     private route: ActivatedRoute,
     private api: AdminApi,
     private location: Location
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.constants.ensure('NFD_WDR_STAT', 'NFD_WRN_LVL', 'NFD_MOD_STAT');
@@ -359,7 +358,66 @@ export class AdminTraineeProfile implements OnInit {
 
     this.generateAndDownloadHtmlCv(safeName);
   }
+openProfileCvInNewTab(): void {
+    const rawUrl = this.resumeUrl();
 
+    // 1. إذا كان رابطاً حقيقياً وليس تجريبياً (لا يحتوي على nafadh.test)
+    if (rawUrl && !rawUrl.includes('nafadh.test') && (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'))) {
+      window.open(rawUrl, '_blank');
+      return;
+    }
+
+    const t = (this as any).trainee ? (this as any).trainee() : null;
+    const name = (this as any).fullName ? (this as any).fullName() : (t?.fullName || 'متدرب');
+    const email = t?.email || '';
+    const phone = t?.phone || '—';
+    const nationalId = t?.nationalId || '—';
+    const university = t?.university || '—';
+    const major = t?.major || '—';
+    const company = t?.companyName || 'لم يوزّع بعد';
+    const batch = t?.batchName || '—';
+    const track = t?.trackName || 'غير محدد';
+
+    const cvHtml = `
+      <!DOCTYPE html>
+      <html lang="ar" dir="rtl">
+      <head>
+        <meta charset="UTF-8">
+        <title>السيرة الذاتية - ${name}</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; padding: 40px; background: #f8fafc; color: #0f172a; line-height: 1.8; }
+          .card { max-width: 800px; margin: 0 auto; background: #fff; padding: 35px; border-radius: 16px; box-shadow: 0 4px 25px rgba(0,0,0,0.08); border-top: 6px solid #0a1172; }
+          h1 { color: #0a1172; margin-top: 0; font-size: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+          h2 { color: #1e293b; font-size: 20px; margin-top: 10px; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 25px; }
+          .item { background: #f1f5f9; padding: 14px 18px; border-radius: 10px; }
+          .label { font-size: 13px; color: #64748b; display: block; font-weight: 600; margin-bottom: 4px; }
+          .val { font-weight: bold; font-size: 15px; color: #0f172a; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>السيرة الذاتية والملف المهني للمتدرب</h1>
+          <h2>${name}</h2>
+          <div class="grid">
+            <div class="item"><span class="label">البريد الإلكتروني</span><span class="val">${email}</span></div>
+            <div class="item"><span class="label">رقم الهاتف</span><span class="val" dir="ltr">${phone}</span></div>
+            <div class="item"><span class="label">الرقم المدني</span><span class="val">${nationalId}</span></div>
+            <div class="item"><span class="label">الجامعة أو الكلية</span><span class="val">${university}</span></div>
+            <div class="item"><span class="label">التخصص الأكاديمي</span><span class="val">${major}</span></div>
+            <div class="item"><span class="label">الشركة المستضيفة</span><span class="val">${company}</span></div>
+            <div class="item"><span class="label">الدفعة التدريبية</span><span class="val">${batch}</span></div>
+            <div class="item"><span class="label">المسار التدريبي</span><span class="val">${track}</span></div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([cvHtml], { type: 'text/html;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(blob);
+    window.open(blobUrl, '_blank');
+  }
   private generateAndDownloadHtmlCv(safeName: string): void {
     const t = this.trainee() || {};
     const e = this.enrollment();
@@ -402,9 +460,9 @@ export class AdminTraineeProfile implements OnInit {
     <div class="section">
       <div class="section-title">المؤهل الأكاديمي وجهة التدريب</div>
       <div class="grid">
-        <div class="item"><span class="label">الجامعة / الكلية</span><span class="val">${t.university || 'جامعة السلطان قابوس'}</span></div>
-        <div class="item"><span class="label">التخصص الأكاديمي</span><span class="val">${t.major || 'علوم الحاسوب'}</span></div>
-        <div class="item"><span class="label">الشركة المستضيفة</span><span class="val">${e?.companyName || t.companyName || '—'}</span></div>
+        <div class="item"><span class="label">الجامعة / الكلية</span><span class="val">${t.university || 'غير محدد'}</span></div>
+        <div class="item"><span class="label">التخصص الأكاديمي</span><span class="val">${t.major || 'غير محدد'}</span></div>
+        <div class="item"><span class="label">الشركة المستضيفة</span><span class="val">${e?.companyName || t.companyName || 'غير محدد'}</span></div>
         <div class="item"><span class="label">نسبة الإنجاز ومتوسط التقييم</span><span class="val">الإنجاز: ${this.completionPercentage()}% | التقييم: ${this.overallAverageScore() ?? '—'}%</span></div>
       </div>
     </div>
@@ -459,7 +517,7 @@ export class AdminTraineeProfile implements OnInit {
       const json = JSON.stringify(msgs);
       localStorage.setItem(`nfd_dm_trainee_${traineeId}`, json);
       localStorage.setItem('nafadh_chat_' + traineeId, json);
-    } catch {}
+    } catch { }
   }
 
   private clearUnreadReplyForTrainee(traineeId: number): void {
@@ -469,7 +527,7 @@ export class AdminTraineeProfile implements OnInit {
       const list: any[] = JSON.parse(raw);
       const updated = list.filter((r) => r.traineeId !== traineeId);
       localStorage.setItem('nafadh_unread_replies', JSON.stringify(updated));
-    } catch {}
+    } catch { }
   }
 
   openDirectMessageModal(): void {
@@ -581,10 +639,12 @@ export class AdminTraineeProfile implements OnInit {
     this.api
       .createAnnouncement({
         title: `رسالة مباشرة إلى ${this.fullName()}`,
-        content: text,
+        message: text,   // 👈 الحقل المطلوب في الباك إند
+        Message: text,   // 👈 حرف كبير احتياطاً للـ C# DTO
+        content: text,   // تركناه احتياطاً
         scopeType: 'Platform',
         createdByUserId: 1,
-      })
+      } as any)
       .pipe(catchError(() => of(true)))
       .subscribe(() => {
         const updated = [...this.messageHistory(), newMsg];
@@ -650,7 +710,7 @@ export class AdminTraineeProfile implements OnInit {
             }
             this.showToast(
               res?.message ||
-                `تم اعتماد انسحاب "${this.fullName()}" وإلغاء صلاحية دخوله للمنصة نهائياً وإرسال الإيميل بنجاح.`
+              `تم اعتماد انسحاب "${this.fullName()}" وإلغاء صلاحية دخوله للمنصة نهائياً وإرسال الإيميل بنجاح.`
             );
           } else {
             const meta = { status: 'Rejected' as const, reason: finalReasonToSend, date: new Date().toISOString() };
@@ -658,7 +718,7 @@ export class AdminTraineeProfile implements OnInit {
             this.withdrawalStatus.set('Rejected');
             this.showToast(
               res?.message ||
-                `تم رفض طلب انسحاب "${this.fullName()}" وإرسال سبب الرفض لبريده الإلكتروني.`
+              `تم رفض طلب انسحاب "${this.fullName()}" وإرسال سبب الرفض لبريده الإلكتروني.`
             );
           }
 
@@ -684,7 +744,7 @@ export class AdminTraineeProfile implements OnInit {
         this.withdrawalStatus.set(parsed.status || 'None');
         this.withdrawalReason.set(parsed.reason || '');
       }
-    } catch {}
+    } catch { }
 
     this.api.getTrainee(traineeId).subscribe({
       next: (profile) => {
@@ -835,21 +895,18 @@ export class AdminTraineeProfile implements OnInit {
       const avg =
         moduleEvals.length > 0
           ? Math.round(
-              (moduleEvals.reduce((sum, e) => sum + Number(e.score), 0) / moduleEvals.length) * 10
-            ) / 10
+            (moduleEvals.reduce((sum, e) => sum + Number(e.score), 0) / moduleEvals.length) * 10
+          ) / 10
           : null;
 
-      const progressPercent =
-        statusRaw === 'Completed' ? 100 : statusRaw === 'InProgress' ? 50 : 0;
-
-      return {
-        module: m,
-        orderIndex: m.orderIndex,
-        statusRaw,
-        progressPercent,
-        evaluations: moduleEvals,
-        averageScore: avg,
-      };
+return {
+  module: m,
+  orderIndex: m.orderIndex,
+  statusRaw,
+  evaluations: moduleEvals,
+  averageScore: avg,
+};
+      
     });
 
     this.stages.set(cards);

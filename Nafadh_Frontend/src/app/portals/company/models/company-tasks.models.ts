@@ -45,7 +45,10 @@ export interface CoursePlanSummaryDto {
   submittedAt?: string | null;
   reviewedAt?: string | null;
   reviewNote?: string | null;
+  /** All participating trainers, display only. */
   trainers: CoursePlanTrainerOptionDto[];
+  /** Direct plan assignments; only these may be sent to setCoursePlanTrainers. */
+  directPlanTrainers: CoursePlanTrainerOptionDto[];
 }
 
 export interface CoursePlansOverviewDto {
@@ -130,6 +133,16 @@ export interface CoursePlanProgramOptionDto {
   price: number;
   trackId: number;
   status: string;
+  attendanceWeight: number;
+  quizzesWeight: number;
+  tasksWeight: number;
+  projectsWeight: number;
+  excellentMinScore: number;
+  excellentMinAttendance: number;
+  veryGoodMinScore: number;
+  veryGoodMinAttendance: number;
+  goodMinScore: number;
+  atRiskMinAttendance: number;
 }
 
 export interface CoursePlanTrackOptionDto {

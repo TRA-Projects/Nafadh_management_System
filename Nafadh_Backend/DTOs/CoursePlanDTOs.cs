@@ -63,7 +63,10 @@ namespace Nafadh_Backend.DTOs
         public DateTime? SubmittedAt { get; set; }
         public DateTime? ReviewedAt { get; set; }
         public string? ReviewNote { get; set; }
+        // Union for read-only presentation; never submit this as a plan-level assignment.
         public List<CoursePlanTrainerOptionDTO> Trainers { get; set; } = new();
+        // Only direct rows from NFD_CoursePlanTrainers (editable plan assignment).
+        public List<CoursePlanTrainerOptionDTO> DirectPlanTrainers { get; set; } = new();
     }
 
     public class CoursePlanDetailDTO : CoursePlanSummaryDTO
@@ -155,6 +158,17 @@ namespace Nafadh_Backend.DTOs
         public decimal Price { get; set; }
         public int TrackId { get; set; }
         public string Status { get; set; } = string.Empty;
+        // Read-only Admin settings, specific to this assigned batch.
+        public decimal AttendanceWeight { get; set; }
+        public decimal QuizzesWeight { get; set; }
+        public decimal TasksWeight { get; set; }
+        public decimal ProjectsWeight { get; set; }
+        public decimal ExcellentMinScore { get; set; }
+        public decimal ExcellentMinAttendance { get; set; }
+        public decimal VeryGoodMinScore { get; set; }
+        public decimal VeryGoodMinAttendance { get; set; }
+        public decimal GoodMinScore { get; set; }
+        public decimal AtRiskMinAttendance { get; set; }
     }
 
     public class CoursePlanTrackOptionDTO

@@ -3,14 +3,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
+using Nafadh_Backend.Services;
 using System.Globalization;
 using System.Security.Claims;
 
 namespace Nafadh_Backend.Controllers
 {
     // Company Portal only.
-    // This endpoint is dedicated to the Company Dashboard and does not
-    // change the shared ReportController or any other portal.
+    // Company Dashboard and weighted results use the Admin report evaluator,
+    // restricted to the authenticated supervisor's company.
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "CompanySupervisor")]
@@ -18,9 +19,54 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly Nafadhcontext _context;
 
-        public CompanyDashboardController(Nafadhcontext context)
+        private readonly Nafadh_Backend.Repositories.IReportRepository _reports;
+
+        public CompanyDashboardController(
+            Nafadhcontext context,
+            Nafadh_Backend.Repositories.IReportRepository reports)
         {
             _context = context;
+            _reports = reports;
+        }
+
+        // Detailed batch results for Company Reports: same Admin report evaluator.
+        [HttpGet("{companyId:int}/weighted-results")]
+        public async Task<ActionResult<List<CompanyWeightedEvaluationDTO>>> GetWeightedResults(int companyId)
+        {
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue("sub");
+            if (!int.TryParse(userIdValue, out var userId)) return Unauthorized();
+            if (!await _context.NFD_CompanySupervisors.AsNoTracking().AnyAsync(s =>
+                    s.UserId == userId && s.CompanyId == companyId)) return Forbid();
+            return Ok(await _reports.GetCompanyWeightedEvaluationsAsync(companyId));
+        }
+
+        // Company-only periodic *temporary* performance, matching the Admin
+        // dashboard's observed-component weighting and selected date range.
+        // Final weighted grades and official warnings remain unchanged.
+        [HttpGet("{companyId:int}/period-performance")]
+        [ProducesResponseType(typeof(CompanyDashboardPeriodPerformanceDTO), StatusCodes.Status200OK)]
+        public async Task<ActionResult<CompanyDashboardPeriodPerformanceDTO>> GetPeriodPerformance(
+            int companyId,
+            [FromQuery] DateTime? startDate,
+            [FromQuery] DateTime? endDate)
+        {
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue("sub");
+            if (!int.TryParse(userIdValue, out var userId)) return Unauthorized();
+
+            var ownsCompany = await _context.NFD_CompanySupervisors.AsNoTracking()
+                .AnyAsync(s => s.UserId == userId && s.CompanyId == companyId);
+            if (!ownsCompany) return Forbid();
+
+            if (startDate.HasValue && endDate.HasValue &&
+                startDate.Value.Date > endDate.Value.Date)
+            {
+                return BadRequest(new { message = "startDate cannot be later than endDate." });
+            }
+
+            var evaluator = new CompanyDashboardPeriodPerformanceService(_context);
+            return Ok(await evaluator.GetAsync(companyId, startDate, endDate));
         }
 
         [HttpGet("{companyId:int}")]
@@ -87,7 +133,7 @@ namespace Nafadh_Backend.Controllers
             //   -> Batch
             //   -> Program
             //   -> Attendance
-            //   -> Evaluations
+            //   -> Attendance excuses (evaluation is calculated in ReportRepository)
             // ============================================================
 
             var enrollments = await _context.NFD_Enrollments
@@ -100,8 +146,7 @@ namespace Nafadh_Backend.Controllers
                     .ThenInclude(b => b.Program)
 
                 .Include(e => e.DailyAttendances)
-
-                .Include(e => e.Evaluations)
+                    .ThenInclude(a => a.Excuses)
 
                 .Where(e => e.CompanyId == companyId)
 
@@ -124,6 +169,7 @@ namespace Nafadh_Backend.Controllers
                     e.CompletionStatus ==
                     NFD_EnrollmentCompletionStatus.InProgress)
                 .SelectMany(e => e.DailyAttendances)
+                .Where(a => !a.Excuses.Any(x => x.Status == NFD_ExcuseStatus.Approved))
                 .ToList();
 
             // ============================================================
@@ -173,279 +219,56 @@ namespace Nafadh_Backend.Controllers
             // 10. Build common dashboard rows
             // ============================================================
 
-            var baseRows = activeEnrollments
-                .Select(e =>
-                {
-                    var evaluations = e.Evaluations
-                        .Where(x =>
-                            x.EnrollmentId ==
-                            e.EnrollmentId)
-                        .ToList();
+            // Final assessment must be identical to Admin batch-performance.
+            // Incomplete grades remain null; we do not invent 0% classifications.
+            // One row per EnrollmentId: a trainee may have multiple active batches.
+            var weightedRows = await _reports.GetCompanyWeightedEvaluationsAsync(companyId);
 
-                    var attendances =
-                        e.DailyAttendances.ToList();
-
-                    // ----------------------------------------------------
-                    // Overall performance
-                    //
-                    // IMPORTANT:
-                    // We use ALL evaluations belonging to the enrollment.
-                    // We do NOT restrict them to the current month.
-                    // ----------------------------------------------------
-
-                    var performance =
-                        evaluations.Count > 0
-                            ? Math.Round(
-                                (double)evaluations.Average(
-                                    x => x.Score),
-                                1)
-                            : 0;
-
-                    // ----------------------------------------------------
-                    // Overall attendance
-                    // ----------------------------------------------------
-
-                    var attendance =
-                        attendances.Count > 0
-                            ? Math.Round(
-                                attendances.Count(x =>
-                                    x.Status ==
-                                    NFD_AttendanceStatus.Present)
-                                * 100.0
-                                / attendances.Count,
-                                1)
-                            : 0;
-
-                    var isActive =
-                        e.CompletionStatus ==
-                        NFD_EnrollmentCompletionStatus.InProgress;
-
-                    return new
-                    {
-                        e.EnrollmentId,
-
-                        e.TraineeId,
-
-                        FullName =
-                            e.Trainee?.User?.FullName,
-
-                        Major =
-                            e.Trainee?.Major,
-
-                        // ------------------------------------------------
-                        // Program comes from:
-                        //
-                        // Enrollment -> Batch -> Program -> Title
-                        // ------------------------------------------------
-
-                        ProgramName =
-                            e.Batch?.Program?.Title,
-
-                        GitHubUrl =
-                            e.Trainee?.GitHubUrl,
-
-                        LinkedInUrl =
-                            e.Trainee?.LinkedInUrl,
-
-                        Performance =
-                            performance,
-
-                        Attendance =
-                            attendance,
-
-                        Active =
-                            isActive,
-
-                        CompletionStatus =
-                            e.CompletionStatus,
-
-                        Evaluations =
-                            evaluations,
-
-                        Attendances =
-                            attendances
-                    };
-                })
-                // A trainee with more than one active enrollment must appear once.
-                .GroupBy(x => x.TraineeId)
-                .Select(g => g.OrderByDescending(x => x.EnrollmentId).First())
+            var topPerformerRows = weightedRows
+                .Where(x => x.IsComplete && x.Level == "ممتاز")
+                .OrderByDescending(x => x.FinalScore)
+                .ThenByDescending(x => x.AttendancePercent)
                 .ToList();
 
-            // ============================================================
-            // 11. TOP PERFORMERS
-            //
-            // IMPORTANT:
-            // Do NOT filter by current month.
-            //
-            // The trainee is considered a top performer when they have
-            // at least one evaluation. Their overall average evaluation
-            // score is used for ranking.
-            //
-            // This prevents Top Performers from becoming 0 just because
-            // the current month has no new evaluations.
-            // ============================================================
-
-            // Top performer = ACTIVE trainee with at least one evaluation
-            // and overall performance >= 80%.
-            const double TopPerformerThreshold = 80;
-
-            var topPerformerRows = baseRows
-                .Where(x =>
-                    x.Evaluations.Count > 0
-                    && x.Performance >= TopPerformerThreshold)
-                .ToList();
-
-            // KPI values cover ALL qualifying trainees (not only the
-            // 15 rows returned for the list below).
             var topPerformersCount = topPerformerRows.Count;
+            var topPerformersAveragePercent = topPerformersCount == 0
+                ? 0 : Math.Round(topPerformerRows.Average(x => (double)x.FinalScore!.Value), 1);
 
-            var topPerformersAveragePercent =
-                topPerformersCount == 0
-                    ? 0
-                    : Math.Round(
-                        topPerformerRows.Average(x => x.Performance),
-                        1);
+            var topPerformers = topPerformerRows.Select(x => new CompanyDashboardTraineeDTO
+            {
+                TraineeId = x.TraineeId,
+                EnrollmentId = x.EnrollmentId,
+                FullName = x.FullName,
+                Major = x.Major,
+                ProgramName = x.ProgramName,
+                GitHubUrl = x.GitHubUrl,
+                LinkedInUrl = x.LinkedInUrl,
+                PerformancePercent = (double)x.FinalScore!.Value,
+                AttendancePercent = x.AttendancePercent,
+                RiskReason = null
+            }).ToList();
 
-            var topPerformers = topPerformerRows
-                .OrderByDescending(x =>
-                    x.Performance)
-
-                .ThenByDescending(x =>
-                    x.Attendance)
-
+            // "متعثر" and "راسب" here are academic classifications.
+            // Real issued warnings remain sourced from NFD_Warnings below.
+            var atRiskTrainees = weightedRows
+                .Where(x => x.IsComplete && (x.Level == "متعثر" || x.Level == "راسب"))
+                .OrderBy(x => x.AttendancePercent)
+                .ThenBy(x => x.FinalScore)
                 .Select(x => new CompanyDashboardTraineeDTO
                 {
-                    TraineeId =
-                        x.TraineeId,
-
-                    EnrollmentId =
-                        x.EnrollmentId,
-
-                    FullName =
-                        x.FullName,
-
-                    Major =
-                        x.Major,
-
-                    ProgramName =
-                        x.ProgramName,
-
-                    GitHubUrl =
-                        x.GitHubUrl,
-
-                    LinkedInUrl =
-                        x.LinkedInUrl,
-
-                    PerformancePercent =
-                        x.Performance,
-
-                    AttendancePercent =
-                        x.Attendance,
-
-                    RiskReason =
-                        null
-                })
-
-                .ToList();
-
-            // ============================================================
-            // 12. AT-RISK TRAINEES
-            //
-            // A trainee is considered at risk when:
-            //
-            // - Attendance < 80%
-            // OR
-            // - They have evaluations and performance < 60%
-            //
-            // The backend generates the reason so the frontend does not
-            // have to duplicate business rules.
-            // ============================================================
-
-            var riskRows = baseRows
-                .Where(x =>
-                    (x.Attendances.Count > 0 && x.Attendance < 80)
-                    ||
-                    (
-                        x.Evaluations.Count > 0
-                        &&
-                        x.Performance < 60
-                    ))
-
-                .OrderBy(x =>
-                    x.Attendance)
-
-                .ThenBy(x =>
-                    x.Performance)
-
-                .ToList();
-
-            var atRiskTrainees = riskRows
-                .Select(x =>
-                {
-                    string riskReason;
-
-                    var lowAttendance =
-                        x.Attendances.Count > 0
-                        && x.Attendance < 80;
-
-                    if (
-                        lowAttendance
-                        &&
-                        x.Evaluations.Count > 0
-                        &&
-                        x.Performance < 60
-                    )
-                    {
-                        riskReason =
-                            $"انخفاض الحضور ({Math.Round(x.Attendance)}%) ومستوى الأداء ({Math.Round(x.Performance)}%)";
-                    }
-                    else if (lowAttendance)
-                    {
-                        riskReason =
-                            $"انخفاض الحضور ({Math.Round(x.Attendance)}%)";
-                    }
-                    else
-                    {
-                        riskReason =
-                            $"انخفاض مستوى الأداء ({Math.Round(x.Performance)}%)";
-                    }
-
-                    return new CompanyDashboardTraineeDTO
-                    {
-                        TraineeId =
-                            x.TraineeId,
-
-                        EnrollmentId =
-                            x.EnrollmentId,
-
-                        FullName =
-                            x.FullName,
-
-                        Major =
-                            x.Major,
-
-                        // Program displayed in the Company Dashboard
-                        ProgramName =
-                            x.ProgramName,
-
-                        GitHubUrl =
-                            x.GitHubUrl,
-
-                        LinkedInUrl =
-                            x.LinkedInUrl,
-
-                        PerformancePercent =
-                            x.Performance,
-
-                        AttendancePercent =
-                            x.Attendance,
-
-                        RiskReason =
-                            riskReason
-                    };
-                })
-
-                .ToList();
+                    TraineeId = x.TraineeId,
+                    EnrollmentId = x.EnrollmentId,
+                    FullName = x.FullName,
+                    Major = x.Major,
+                    ProgramName = x.ProgramName,
+                    GitHubUrl = x.GitHubUrl,
+                    LinkedInUrl = x.LinkedInUrl,
+                    PerformancePercent = (double)x.FinalScore!.Value,
+                    AttendancePercent = x.AttendancePercent,
+                    RiskReason = x.Level == "متعثر"
+                        ? "الحضور دون الحد المعتمد للدفعة"
+                        : "الدرجة النهائية دون الحد المعتمد للدفعة"
+                }).ToList();
 
             // ============================================================
             // 13. Attendance chart
@@ -481,7 +304,7 @@ namespace Nafadh_Backend.Controllers
                     new CompanyDashboardChartPointDTO
                     {
                         Label =
-                            $"أسبوع {g.Key.Week}",
+                            $"أسبوع {g.Key.Week} / {g.Key.Year}",
 
                         Value =
                             Math.Round(

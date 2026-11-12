@@ -96,6 +96,9 @@ namespace Nafadh_Backend.IdentityAccess
         public string Email { get; set; }
         public string Password { get; set; }
         public int UserGroupId { get; set; }
+
+        // Required when creating an account for an existing organization.
+        public int? OrganizationId { get; set; }
     }
 
     public class UpdateAdminUserRequestDto

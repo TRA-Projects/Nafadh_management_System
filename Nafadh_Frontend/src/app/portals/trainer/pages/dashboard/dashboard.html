@@ -77,6 +77,12 @@
           — {{ session.sessionDate | date: 'shortDate' }}
           الساعة {{ session.startTime }}
         </p>
+        <a
+  routerLink="/trainer/live-sessions"
+  class="hero-btn primary">
+  <i class="fa-solid fa-video"></i>
+  الانتقال إلى الجلسات المباشرة
+</a>
       }
     </div>
   </section>
@@ -886,6 +892,11 @@
 
 
           <!-- ACTIONS -->
+           @if (sessionFormError()) {
+  <div class="session-validation-error" role="alert">
+    {{ sessionFormError() }}
+  </div>
+}
 
           <div class="session-modal-actions">
 

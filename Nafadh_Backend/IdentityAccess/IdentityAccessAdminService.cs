@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.IdentityAccess
@@ -10,12 +11,15 @@ namespace Nafadh_Backend.IdentityAccess
     public class IdentityAccessAdminService : IIdentityAccessAdminService
     {
         private readonly Nafadhcontext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public IdentityAccessAdminService(Nafadhcontext context)
+        public IdentityAccessAdminService(
+            Nafadhcontext context,
+            UserManager<AppUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
-
         public async Task<PagedListResponseDto<IdentityAccessUserRowDto>> GetUsersPageAsync(
             int? pageIndex,
             int? pageSize,
@@ -381,14 +385,267 @@ namespace Nafadh_Backend.IdentityAccess
             return MapUser(created, callerUserId, 2);
         }
 
-        public Task<IdentityAccessUserRowDto> CreateAdminUserAsync(CreateAdminUserRequestDto body, string callerUserId)
+
+        public async Task<IdentityAccessUserRowDto> CreateAdminUserAsync(
+            CreateAdminUserRequestDto body,
+            string callerUserId)
         {
-            // Not ported yet: creating a brand-new user also inserts a full Profiles row
-            // (owned columns) and goes through Bidding's UserRepository/UserManager.
-            throw new SafeExecutionHelper.MethodNotAllowedException(
-                "NotSupported",
-                "Creating a new admin user is not available in the Nafadh backend yet.");
+            if (body == null ||
+                !IdentityAccessAdminRules.HasCreateAdminUserRequiredFields(
+                    body.Name,
+                    body.Email,
+                    body.Password,
+                    body.UserGroupId))
+            {
+                throw new SafeExecutionHelper.BadRequestException(
+                    "Name, email, password and user group are required.");
+            }
+
+            var name = body.Name.Trim();
+            var email = body.Email.Trim();
+
+            // 1. Get selected group and its user type
+            var group = await _context.UserGroups
+                .Include(g => g.UserType)
+                .FirstOrDefaultAsync(g =>
+                    g.Id == body.UserGroupId &&
+                    g.IsActive);
+
+            if (group == null ||
+                group.UserType == null ||
+                !group.UserType.IsActive)
+            {
+                throw new SafeExecutionHelper.BadRequestException(
+                    "The selected user group is invalid or inactive.");
+            }
+
+            var typeCode = group.UserType.Code;
+            var groupCode = group.Code;
+
+            // 2. Resolve organization for Corporate users
+            var needsOrganization =
+                IdentityAccessAdminRules.NeedsOrganization(typeCode);
+
+            Organization organization = null;
+
+            if (needsOrganization)
+            {
+                int? organizationId = body.OrganizationId;
+
+                // If no organization was provided, use the
+                // organization of the current admin account.
+                if (!organizationId.HasValue ||
+                    organizationId.Value <= 0)
+                {
+                    organizationId = await _context.Users
+                        .AsNoTracking()
+                        .Where(u => u.Id == callerUserId)
+                        .Select(u => u.OrganizationId)
+                        .FirstOrDefaultAsync();
+                }
+
+                if (!organizationId.HasValue ||
+                    organizationId.Value <= 0)
+                {
+                    throw new SafeExecutionHelper.BadRequestException(
+                        "Cannot determine an organization for this corporate user.");
+                }
+
+                organization = await _context.Organizations
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(o =>
+                        o.Id == organizationId.Value &&
+                        o.IsActive);
+
+                if (organization == null)
+                {
+                    throw new SafeExecutionHelper.BadRequestException(
+                        "The selected organization was not found or is inactive.");
+                }
+            }
+            else if (body.OrganizationId.HasValue)
+            {
+                throw new SafeExecutionHelper.BadRequestException(
+                    "This user type does not support an organization.");
+            }
+
+            // 3. Check duplicate email
+            var existingUser =
+                await _userManager.FindByEmailAsync(email);
+
+            if (existingUser != null ||
+                await _context.Users.AnyAsync(u =>
+                    u.Email != null &&
+                    u.Email.ToLower() == email.ToLower()))
+            {
+                throw new SafeExecutionHelper.BadRequestException(
+                    "A user with this email already exists.");
+            }
+
+            // 4. Find active template role for the selected group
+            var templateRoleName =
+                IdentityAccessAdminRules.TemplateRoleName(
+                    typeCode,
+                    groupCode);
+
+            var templateRole = await _context.Roles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r =>
+                    r.Name == templateRoleName &&
+                    r.IsTemplate &&
+                    r.IsActive);
+
+            if (templateRole == null)
+            {
+                throw new SafeExecutionHelper.BadRequestException(
+                    "The selected group does not have an active template role.");
+            }
+
+            // 5. Resolve ProfileType
+            int profileType;
+
+            if (!IdentityAccessAdminRules.TryMapProfileType(
+                typeCode,
+                groupCode,
+                out profileType))
+            {
+                // Custom groups may not have a fixed ProfileType mapping.
+                // Reuse the type only if an existing user in the same
+                // group provides an established mapping.
+                var existingGroupProfileType = await _context.Users
+                    .AsNoTracking()
+                    .Where(u =>
+                        u.UserGroupId == group.Id &&
+                        u.Profile != null)
+                    .Select(u => (int?)u.Profile.ProfileType)
+                    .FirstOrDefaultAsync();
+
+                if (!existingGroupProfileType.HasValue)
+                {
+                    throw new SafeExecutionHelper.BadRequestException(
+                        "Profile type could not be determined for this group. " +
+                        "The custom group requires a profile type mapping.");
+                }
+
+                profileType = existingGroupProfileType.Value;
+            }
+
+            // 6. Create profile and user in one transaction
+            var now = DateTime.UtcNow;
+
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var profile = new Profile
+                {
+                    Name = name,
+                    NameAr = name,
+                    EmailAddress = email,
+
+                    InsertedById = callerUserId,
+                    InsertedDate = now,
+
+                    ProfileType = profileType,
+                    ProfileStatus = 0,
+
+                    IsActive = true,
+                    IsVerified = false,
+                    IsVerifiedInMol = false,
+                    IsOmani = false,
+
+                    JoinDate = now,
+                    TotalExperience = 0,
+
+                    IsHead = false,
+                    IsPostOpertunity = false
+                };
+
+                _context.Profiles.Add(profile);
+                await _context.SaveChangesAsync();
+
+                var user = new AppUser
+                {
+                    Id = Guid.NewGuid().ToString(),
+
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = false,
+
+                    ProfileId = profile.Id,
+                    UserGroupId = group.Id,
+
+                    OrganizationId = organization?.Id,
+
+                    IsActive = true,
+                    IsPrimary = true,
+                    isRegisterbyAdmin = true,
+
+                    CreatedDate = now
+                };
+
+                // 7. Create Identity user
+                var createResult =
+                    await _userManager.CreateAsync(
+                        user,
+                        body.Password);
+
+                if (!createResult.Succeeded)
+                {
+                    var errors = string.Join(
+                        "; ",
+                        createResult.Errors.Select(e => e.Description));
+
+                    throw new SafeExecutionHelper.BadRequestException(
+                        errors);
+                }
+
+                // 8. Assign selected group's template role
+                var roleResult =
+                    await _userManager.AddToRoleAsync(
+                        user,
+                        templateRole.Name);
+
+                if (!roleResult.Succeeded)
+                {
+                    var errors = string.Join(
+                        "; ",
+                        roleResult.Errors.Select(e => e.Description));
+
+                    throw new SafeExecutionHelper.BadRequestException(
+                        errors);
+                }
+
+                // 9. Audit
+                await WriteAuditAsync(
+                    callerUserId,
+                    "UserAccount",
+                    user.Id,
+                    "UserGroupId",
+                    null,
+                    group.Id.ToString(),
+                    SystemAuditActions.Create);
+
+                await transaction.CommitAsync();
+
+                // 10. Return created user
+                var created = await _context.Users
+                    .AsNoTracking()
+                    .Include(u => u.Profile)
+                    .Include(u => u.UserGroup)
+                        .ThenInclude(g => g.UserType)
+                    .FirstAsync(u => u.Id == user.Id);
+
+                return MapUser(created, callerUserId, 1);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
+
 
         public async Task RemoveProfileAccountAsync(string userId, string callerUserId)
         {

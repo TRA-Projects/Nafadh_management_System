@@ -70,7 +70,8 @@ namespace Nafadh_Backend.Controllers
 
             // Trainer Portal - Prevent joining cancelled,
             // postponed or completed sessions.
-            if (session.Status != NFD_SessionStatus.Scheduled)
+            if (session.Status != NFD_SessionStatus.Scheduled &&
+    session.Status != NFD_SessionStatus.InProgress)
                 return Conflict(new
                 {
                     message = "This session is not available for joining."

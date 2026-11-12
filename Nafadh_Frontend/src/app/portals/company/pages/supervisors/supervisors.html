@@ -1,6 +1,6 @@
 
 <!-- إدارة المشرفين -->
-<div class="page-header-section">
+<div class="page-header-section" data-guide="company-supervisors-header" [attr.data-guide-loading]="loading ? 'true' : null">
   <div class="page-head-text">
     <div class="title-row">
       <div class="title-icon">
@@ -11,51 +11,75 @@
         </svg>
       </div>
       <div>
-        <h1>إدارة المشرفين</h1>
-        <p>إدارة المشرفين المعتمدين ومتابعة الأداء وتوزيع المدربين</p>
+        @if (activeView === 'trainers') {
+          <h1>إدارة المدربين</h1>
+          <p>متابعة الحضور والتقييمات وإدارة ملفات المدربين</p>
+        } @else if (activeView === 'evaluations') {
+          <h1>التقييمات</h1>
+          <p>متابعة تقييمات المدربين ومراجعة الدرجات والملاحظات</p>
+        } @else {
+          <h1>إدارة المشرفين</h1>
+          <p>إدارة المشرفين المعتمدين ومتابعة الأداء وتوزيع المدربين</p>
+        }
       </div>
     </div>
   </div>
 
   <div class="header-actions">
-    <button class="btn-refresh" type="button" (click)="refreshData()">
-      <span>↻</span> تحديث
+    <button class="btn-refresh" data-guide="company-supervisors-refresh" type="button" (click)="refreshData()">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M3 21v-5h5"/></svg> تحديث
     </button>
 
-    <!-- زر إضافة مدرب مستقل -->
-    <button class="btn-add" type="button" (click)="openAddTrainerModal()">
-      <span>＋</span> إضافة مدرب
-    </button>
+    @if (activeView === 'supervisors') {
+      <button class="btn-add" data-guide="company-supervisors-add" type="button" (click)="openAddModal()">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> إضافة مشرف
+      </button>
+    } @else if (activeView === 'trainers') {
+      <button class="btn-add" data-guide="company-supervisors-trainer-add" type="button" (click)="openAddTrainerModal()">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> إضافة مدرب
+      </button>
+    }
   </div>
 </div>
 
 <!-- تبويبات الصفحة -->
-<div class="supervisors-view-tabs" role="tablist" aria-label="أقسام إدارة المشرفين">
-  <button
-    type="button"
-    role="tab"
-    [attr.aria-selected]="activeView === 'supervisors'"
-    [class.active]="activeView === 'supervisors'"
-    (click)="showSupervisorsView()">
-    إدارة المشرفين
-  </button>
+<div class="supervisors-navigation" data-guide="company-supervisors-tabs">
+  <div class="supervisors-view-tabs" role="tablist" aria-label="أقسام إدارة المشرفين">
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="activeView === 'supervisors'"
+      [class.active]="activeView === 'supervisors'"
+      (click)="showSupervisorsView()">
+      إدارة المشرفين
+    </button>
 
-  <button
-    type="button"
-    role="tab"
-    [attr.aria-selected]="activeView === 'evaluations'"
-    [class.active]="activeView === 'evaluations'"
-    (click)="showEvaluationHistory()">
-    سجل التقييمات
-    <span class="tab-count">{{ readEvaluationCount() }}</span>
-  </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="activeView === 'trainers'"
+      [class.active]="activeView === 'trainers'"
+      (click)="showTrainersView()">
+      إدارة المدربين
+    </button>
+
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="activeView === 'evaluations'"
+      [class.active]="activeView === 'evaluations'"
+      (click)="showEvaluationHistory()">
+      التقييمات
+      <span class="tab-count">{{ readEvaluationCount() }}</span>
+    </button>
+  </div>
 </div>
 
 <!-- عرض إدارة المشرفين -->
 @if (activeView === 'supervisors') {
-  <div class="top-stats-container">
+  <div class="top-stats-container" data-guide="company-supervisors-stats">
     <div class="top-stat-card">
-      <div class="stat-icon navy">♙</div>
+      <div class="stat-icon navy"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/></svg></div>
       <div class="stat-content">
         <span class="stat-num">{{ supervisors.length }}</span>
         <span class="stat-label">المشرفون المعتمدون</span>
@@ -63,7 +87,7 @@
     </div>
 
     <div class="top-stat-card">
-      <div class="stat-icon cyan">♧</div>
+      <div class="stat-icon cyan"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
       <div class="stat-content">
         <span class="stat-num">{{ totalAssignedTrainees }}</span>
         <span class="stat-label">إجمالي المدربين الموزعين</span>
@@ -71,7 +95,7 @@
     </div>
 
     <div class="top-stat-card">
-      <div class="stat-icon gold">⌁</div>
+      <div class="stat-icon gold"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
       <div class="stat-content">
         <span class="stat-num">{{ averageAttendance }}%</span>
         <span class="stat-label">متوسط الحضور العام</span>
@@ -79,7 +103,7 @@
     </div>
 
     <div class="top-stat-card">
-      <div class="stat-icon red">!</div>
+      <div class="stat-icon red"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg></div>
       <div class="stat-content">
         <span class="stat-num">{{ supervisorsNeedingAttention }}</span>
         <span class="stat-label">مشرفون يحتاجون متابعة</span>
@@ -88,9 +112,9 @@
   </div>
 
   <!-- البحث والفلاتر -->
-  <div class="filters-bar">
-    <div class="search-box">
-      <span>⌕</span>
+  <div class="filters-bar" data-guide="company-supervisors-filters">
+    <div class="search-box" data-guide="company-supervisors-search">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input
         type="text"
         placeholder="البحث باسم المشرف أو البريد أو القسم..."
@@ -106,7 +130,7 @@
       }
     </div>
 
-    <div class="department-filters">
+    <div class="department-filters" data-guide="company-supervisors-departments">
       <button
         type="button"
         [class.active]="selectedDept === 'all'"
@@ -152,9 +176,11 @@
       <button type="button" (click)="refreshData()">إعادة المحاولة</button>
     </div>
   } @else if (filteredSupervisors.length > 0) {
-    <div class="grid">
+    <div class="grid" data-guide="company-supervisors-list">
       @for (s of filteredSupervisors; track s.supervisorId) {
         <div class="card" [class.inactive]="s.isInactive">
+          <div class="card-cover" [ngClass]="s.avatarColor || 'navy'"></div>
+          <div class="card-body">
           <div class="card-head">
             <div class="avatar-wrapper">
               <div class="avatar" [ngClass]="s.avatarColor || 'navy'">
@@ -176,7 +202,7 @@
                   {{ s.department || 'القسم العام' }} — {{ s.position || 'مشرف' }}
                 </span>
 
-                <span class="email">✉ {{ s.email || 'لا يوجد بريد' }}</span>
+                <span class="email"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg> {{ s.email || 'لا يوجد بريد' }}</span>
 
                 @if (s.lastActivity) {
                   <span class="last-activity">
@@ -187,38 +213,38 @@
               </div>
             </div>
 
-            <div class="dropdown-container">
+            <div class="dropdown-container" data-guide="company-supervisors-menu">
               <button
                 class="icon-box"
                 type="button"
                 (click)="toggleDropdown(s, $event)"
                 aria-label="خيارات المشرف">
-                ⋮
+                <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
               </button>
 
               @if (s.showMenu) {
                 <div class="dropdown-menu">
                   <button type="button" (click)="editSupervisor(s)">
-                    <span>✎</span> تعديل البيانات
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> تعديل البيانات
                   </button>
 
                   <button type="button" (click)="openDistributeModal(s)">
-                    <span>⇄</span> توزيع المدربين
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg> توزيع المدربين
                   </button>
 
                   <button type="button" (click)="openSupervisorEvaluations(s, $event)">
-                    <span>★</span> تقييم المدرب
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1Z"/></svg> تقييم المدرب
                   </button>
 
                   <button type="button" (click)="toggleStatus(s)">
-                    <span>◐</span>
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M10 15V9M14 15V9"/></svg>
                     {{ s.isInactive ? 'تنشيط الحساب' : 'تجميد الحساب' }}
                   </button>
 
                   <div class="menu-divider"></div>
 
                   <button type="button" class="danger" (click)="deleteSupervisor(s)">
-                    <span>⌫</span> حذف المشرف
+                    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> حذف المشرف
                   </button>
                 </div>
               }
@@ -259,19 +285,19 @@
             <span class="chip">الحضور</span>
           </div>
 
-          <div class="card-actions">
+          <div class="card-actions" data-guide="company-supervisors-actions">
             <button
               class="btn btn-primary-soft"
               type="button"
               (click)="openDistributeModal(s)">
-              ⇄ توزيع المدربين
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg> توزيع المدربين
             </button>
 
             <button
               class="btn btn-evaluate"
               type="button"
               (click)="openSupervisorEvaluations(s, $event)">
-              ★ تقييم المدرب
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1Z"/></svg> تقييم المدرب
             </button>
 
             <button
@@ -281,12 +307,13 @@
               عرض الملف الشخصي
             </button>
           </div>
+          </div>
         </div>
       }
     </div>
   } @else {
     <div class="empty-state">
-      <div class="empty-icon">⌕</div>
+      <div class="empty-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
       <h3>لا توجد نتائج</h3>
       <p>لم يتم العثور على مشرفين مطابقين لخيارات البحث الحالية.</p>
       <button type="button" (click)="clearFilters()">إعادة ضبط البحث</button>
@@ -294,9 +321,341 @@
   }
 }
 
+@if (activeView === 'trainers') {
+  <section aria-labelledby="company-trainers-heading">
+    <div class="top-stats-container">
+      <div class="top-stat-card">
+        <div class="stat-icon navy"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="stat-content">
+          <span class="stat-num">{{ companyTrainers.length }}</span>
+          <span class="stat-label">المدربون المسجلون</span>
+        </div>
+      </div>
+
+      <div class="top-stat-card">
+        <div class="stat-icon cyan" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5 5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></div>
+        <div class="stat-content">
+          <span class="stat-num">{{ trainerAttendanceSummary?.recorded ? trainerAttendanceSummary!.rate + '%' : '—' }}</span>
+          <span class="stat-label">نسبة الحضور · آخر 30 يومًا</span>
+        </div>
+      </div>
+
+      <div class="top-stat-card">
+        <div class="stat-icon gold" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></div>
+        <div class="stat-content">
+          <span class="stat-num">{{ trainerAttendanceSummary?.recorded ?? '—' }}</span>
+          <span class="stat-label">سجلات الدوام · آخر 30 يومًا</span>
+        </div>
+      </div>
+
+      <div class="top-stat-card">
+        <div class="stat-icon red" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+        <div class="stat-content">
+          <span class="stat-num">{{ trainerAttendanceSummary?.absent ?? '—' }}</span>
+          <span class="stat-label">حالات الغياب · آخر 30 يومًا</span>
+        </div>
+      </div>
+    </div>
+
+    @if (trainerSummaryLoading) {
+      <p class="modal-subtext" role="status">جارٍ تحميل ملخص الحضور...</p>
+    } @else if (!trainerAttendanceSummary) {
+      <p class="modal-subtext" role="status">تعذر تحميل ملخص الحضور. اضغطي «تحديث» للمحاولة مرة أخرى.</p>
+    }
+
+    <div class="filters-bar">
+      <div class="search-box">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" aria-label="البحث عن مدرب"
+          placeholder="البحث باسم المدرب أو التخصص..."
+          [(ngModel)]="trainerSearch" (ngModelChange)="trainerPage = 1" />
+      </div>
+      <button class="btn-add-trainer" type="button"
+        [disabled]="!hasTrainerFilters" (click)="clearTrainerFilters()">
+        مسح الفلاتر
+      </button>
+    </div>
+
+    <div class="results-header">
+      <div>
+        <h2 id="company-trainers-heading">المدربون</h2>
+        <span>عرض {{ filteredCompanyTrainers.length }} من {{ companyTrainers.length }} مدرب</span>
+      </div>
+    </div>
+
+    @if (trainersLoading) {
+      <div class="empty-state" role="status">جارٍ تحميل المدربين...</div>
+    } @else if (trainersLoadFailed) {
+      <div class="empty-state">
+        <p>تعذر تحميل قائمة المدربين.</p>
+        <button type="button" (click)="loadCompanyTrainers()">إعادة المحاولة</button>
+      </div>
+    } @else if (companyTrainers.length === 0) {
+      <div class="empty-state">لا يوجد مدربون مسجلون لهذه الشركة.</div>
+    } @else {
+      <div class="trainers-table-wrap" [class.filters-open]="trainerColumnFilter !== null"
+        (keydown.escape)="trainerColumnFilter = null"
+        (document:click)="closeTrainerFilterOnOutsideClick($event)">
+        <table data-guide="company-supervisors-trainers-table" class="trainers-table" aria-labelledby="company-trainers-heading">
+          <thead>
+            <tr>
+              <th scope="col">
+                <div class="trainer-column-heading">
+                  المدرب
+                  <button class="icon-box trainer-filter-toggle" type="button"
+                    aria-label="فلترة حسب المدرب" aria-controls="trainer-name-filter"
+                    [attr.aria-expanded]="trainerColumnFilter === 'name'"
+                    [class.filter-active]="trainerIdFilter !== null"
+                    (click)="toggleTrainerColumnFilter('name')">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                      stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                      <path d="M4 6h16M7 12h10m-7 6h4" />
+                    </svg>
+                  </button>
+                  <div class="trainer-filter-menu" id="trainer-name-filter" [hidden]="trainerColumnFilter !== 'name'">
+                    <div class="trainer-filter-options">
+                      <button type="button" class="trainer-filter-all" [class.active]="trainerIdFilter === null"
+                        (click)="trainerIdFilter = null; trainerPage = 1; trainerColumnFilter = null">جميع المدربين</button>
+                      @for (trainer of companyTrainers; track trainer.id) {
+                        <button type="button" [class.active]="trainerIdFilter === trainer.id"
+                          (click)="trainerIdFilter = trainer.id; trainerPage = 1; trainerColumnFilter = null">{{ trainer.name }}</button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </th>
+              <th scope="col">
+                <div class="trainer-column-heading">
+                  التخصص
+                  <button class="icon-box trainer-filter-toggle" type="button"
+                    aria-label="فلترة حسب التخصص" aria-controls="trainer-specialty-menu"
+                    [attr.aria-expanded]="trainerColumnFilter === 'specialty'"
+                    [class.filter-active]="!!trainerSpecialtyFilter"
+                    (click)="toggleTrainerColumnFilter('specialty')">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                      stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                      <path d="M4 6h16M7 12h10m-7 6h4" />
+                    </svg>
+                  </button>
+                  <div class="trainer-filter-menu" id="trainer-specialty-menu" [hidden]="trainerColumnFilter !== 'specialty'">
+                    <div class="trainer-filter-options">
+                      <button type="button" class="trainer-filter-all" [class.active]="!trainerSpecialtyFilter"
+                        (click)="trainerSpecialtyFilter = ''; trainerPage = 1; trainerColumnFilter = null">جميع التخصصات</button>
+                      @for (specialty of trainerSpecialties; track specialty) {
+                        <button type="button" [class.active]="trainerSpecialtyFilter === specialty"
+                          (click)="trainerSpecialtyFilter = specialty; trainerPage = 1; trainerColumnFilter = null">{{ specialty }}</button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </th>
+              <th scope="col">الحضور <small>آخر 30 يومًا</small></th>
+              <th scope="col">التقييمات</th>
+              <th scope="col">الملف الشخصي</th>
+              <th scope="col">السجل</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (trainer of pagedCompanyTrainers; track trainer.id) {
+              <tr>
+                <th scope="row">
+                  <div class="trainer-table-person">
+                    <span class="trainer-table-avatar" aria-hidden="true">{{ initials(trainer.name) }}</span>
+                    <div>
+                      <strong>{{ trainer.name }}</strong>
+                      @if (trainer.status) {
+                        <small>{{ trainerStatusLabels[trainer.status] || trainer.status }}</small>
+                      }
+                    </div>
+                  </div>
+                </th>
+                <td>{{ trainer.specialty }}</td>
+                <td>{{ trainerAttendanceRates[trainer.id] != null ? trainerAttendanceRates[trainer.id] + '%' : '—' }}</td>
+                <td>{{ trainerEvaluationCount(trainer.id) }}</td>
+                <td>
+                  <button class="icon-box trainer-details-button" type="button"
+                    [attr.aria-label]="'عرض الملف الشخصي: ' + trainer.name" title="عرض الملف الشخصي"
+                    (click)="selectedTrainerDetails = trainer">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                      stroke-width="2" aria-hidden="true">
+                      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+                      <circle cx="12" cy="12" r="2.5" />
+                    </svg>
+                  </button>
+                </td>
+                <td>
+                  <button class="btn-add-trainer" type="button" (click)="openTrainerProfile(trainer)">
+                    عرض الحضور والتقييمات
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6">لا يوجد مدربون مطابقون للبحث والفلاتر.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <nav data-guide="company-supervisors-trainers-pagination" class="trainer-pagination" aria-label="صفحات المدربين">
+        <label>
+          عدد المدربين في الصفحة
+          <select class="form-input" [(ngModel)]="trainerPageSize" (ngModelChange)="trainerPage = 1">
+            <option [ngValue]="5">5</option>
+            <option [ngValue]="10">10</option>
+            <option [ngValue]="20">20</option>
+          </select>
+        </label>
+        <span class="trainer-page-range" aria-live="polite">
+          @if (pagedCompanyTrainers.length) {
+            عرض {{ (visibleTrainerPage - 1) * trainerPageSize + 1 }}–{{ (visibleTrainerPage - 1) * trainerPageSize + pagedCompanyTrainers.length }} من {{ filteredCompanyTrainers.length }}
+          } @else {
+            لا توجد نتائج
+          }
+        </span>
+        <div class="trainer-page-controls">
+          <button class="icon-box" type="button" aria-label="الصفحة السابقة"
+            [disabled]="visibleTrainerPage <= 1" (click)="trainerPage = visibleTrainerPage - 1"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+          <span dir="ltr">{{ visibleTrainerPage }} / {{ trainerPageCount }}</span>
+          <button class="icon-box" type="button" aria-label="الصفحة التالية"
+            [disabled]="visibleTrainerPage >= trainerPageCount" (click)="trainerPage = visibleTrainerPage + 1"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+        </div>
+      </nav>
+    }
+  </section>
+}
+
+@if (selectedTrainerDetails; as trainer) {
+  <div class="modal-backdrop" (click)="selectedTrainerDetails = null" (keydown.escape)="selectedTrainerDetails = null">
+    <div class="modal-card supervisor-profile-modal" role="dialog" aria-modal="true"
+      aria-labelledby="trainer-details-title" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="modal-kicker">ملف المدرب</span>
+          <h2 id="trainer-details-title">بيانات المدرب</h2>
+        </div>
+        <button class="close-btn" type="button" aria-label="إغلاق" (click)="selectedTrainerDetails = null">×</button>
+      </div>
+      <div class="profile-content">
+        <div class="profile-avatar navy">{{ initials(trainer.name) }}</div>
+        <h3>{{ trainer.name }}</h3>
+        <span class="profile-role">{{ trainer.specialty }}</span>
+        <div class="profile-info-grid">
+          <div class="profile-info-item info-email">
+            <div class="info-icon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></div>
+            <div class="info-text">
+              <span>البريد الإلكتروني</span>
+              <strong><bdi>{{ trainer.email || 'غير متوفر' }}</bdi></strong>
+            </div>
+          </div>
+          <div class="profile-info-item info-phone">
+            <div class="info-icon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg></div>
+            <div class="info-text">
+              <span>رقم الهاتف</span>
+              <strong><bdi>{{ trainer.phone || 'غير متوفر' }}</bdi></strong>
+            </div>
+          </div>
+          <div class="profile-info-item info-department">
+            <div class="info-icon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg></div>
+            <div class="info-text"><span>التخصص</span><strong>{{ trainer.specialty }}</strong></div>
+          </div>
+          <div class="profile-info-item info-status">
+            <div class="info-icon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
+            <div class="info-text"><span>حالة الحساب</span><strong>{{ trainerStatusLabels[trainer.status] || trainer.status || 'غير محددة' }}</strong></div>
+          </div>
+          <div class="profile-info-item info-id">
+            <div class="info-icon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg></div>
+            <div class="info-text"><span>رقم المدرب</span><strong>{{ trainer.id }}</strong></div>
+          </div>
+          <div class="profile-info-item info-position">
+            <div class="info-icon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1Z"/></svg></div>
+            <div class="info-text"><span>عدد التقييمات</span><strong>{{ trainerEvaluationCount(trainer.id) }}</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (selectedCompanyTrainer; as trainer) {
+  <div class="modal-backdrop" (click)="closeTrainerProfile()" (keydown.escape)="closeTrainerProfile()">
+    <div class="modal-card supervisor-profile-modal" role="dialog" aria-modal="true"
+      aria-labelledby="trainer-profile-title" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <span class="modal-kicker">{{ trainer.specialty }}</span>
+          <h2 id="trainer-profile-title">{{ trainer.name }}</h2>
+        </div>
+        <button class="close-btn" type="button" aria-label="إغلاق" (click)="closeTrainerProfile()">×</button>
+      </div>
+      <div class="profile-content trainer-profile-content">
+        <section>
+          <h3>سجل الحضور</h3>
+          <div class="form-row">
+            <label class="form-group">
+              من
+              <input class="form-input" type="date" [ngModel]="trainerAttendanceFrom"
+                (ngModelChange)="trainerAttendanceFrom = $event; loadTrainerAttendance()" required />
+            </label>
+            <label class="form-group">
+              إلى
+              <input class="form-input" type="date" [ngModel]="trainerAttendanceTo"
+                (ngModelChange)="trainerAttendanceTo = $event; loadTrainerAttendance()" required />
+            </label>
+          </div>
+          @if (!trainerAttendanceFrom || !trainerAttendanceTo) {
+            <p>حددي تاريخ البداية والنهاية لعرض السجل.</p>
+          } @else if (trainerAttendanceFrom > trainerAttendanceTo) {
+            <p>تاريخ النهاية لازم يكون في نفس يوم البداية أو بعده.</p>
+          } @else if (trainerAttendanceState === 'loading') {
+            <p role="status">جارٍ تحميل الحضور...</p>
+          } @else if (trainerAttendanceState === 'error') {
+            <p role="alert">تعذر تحميل سجل الحضور.</p>
+            <button class="btn-add-trainer" type="button" (click)="loadTrainerAttendance()">إعادة المحاولة</button>
+          } @else {
+            @for (record of trainerAttendance; track record.trainerAttendanceId) {
+              <div class="profile-info-item trainer-attendance-row">
+                <strong class="trainer-attendance-date"><bdi>{{ record.date.slice(0, 10) }}</bdi></strong>
+                <div class="trainer-attendance-times">
+                  <span>الدخول <bdi>{{ record.checkInTime || '—' }}</bdi></span>
+                  <span>الخروج <bdi>{{ record.checkOutTime || '—' }}</bdi></span>
+                </div>
+                <div class="trainer-attendance-reason">{{ record.reason }}</div>
+                <span class="trainer-attendance-badge" [attr.data-status]="record.status">
+                  {{ attendanceLabels[record.status] || record.status || 'لم يسجّل' }}
+                </span>
+              </div>
+            } @empty {
+              <p>لا توجد سجلات حضور في هذه الفترة.</p>
+            }
+          }
+        </section>
+        <section>
+          <h3>تقييمات المشرفين</h3>
+          @if (trainerEvaluationsState === 'loading') {
+            <p role="status">جارٍ تحميل تقييمات النظام...</p>
+          } @else if (trainerEvaluationsState === 'error') {
+            <p role="alert">تعذر تحميل تقييمات النظام.</p>
+          }
+          @for (evaluation of selectedTrainerEvaluationRecords; track $index) {
+            <div class="profile-info-item trainer-evaluation-row">
+              <div class="info-text"><span>التقييم</span><strong><bdi dir="ltr">{{ evaluation.rating }} / 5</bdi></strong></div>
+              <div class="info-text"><span>المقيّم</span><strong>{{ evaluation.supervisorName }}</strong></div>
+              <div class="info-text"><span>تاريخ التقييم</span><strong>{{ evaluation.savedAt ? formatEvaluationDate(evaluation.savedAt) : 'غير متوفر' }}</strong></div>
+              <div class="info-text"><span>الملاحظات</span><strong>{{ evaluation.comment || 'لا توجد ملاحظات' }}</strong></div>
+            </div>
+          } @empty {
+            @if (trainerEvaluationsState === 'ready') {
+              <p>لا توجد تقييمات مسجلة لهذا المدرب.</p>
+            }
+          }
+        </section>
+      </div>
+    </div>
+  </div>
+}
+
 <!-- سجل التقييمات المحفوظة -->
 @if (activeView === 'evaluations') {
-  <section class="evaluation-history-section" dir="rtl">
+  <section data-guide="company-supervisors-evaluations" class="evaluation-history-section" dir="rtl">
     <div class="evaluation-history-heading">
       <div>
         <span class="modal-kicker">متابعة الأداء</span>
@@ -311,7 +670,7 @@
     </div>
 
     <div class="evaluation-history-search">
-      <span>⌕</span>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input
         type="search"
         [(ngModel)]="evaluationSearch"
@@ -369,7 +728,7 @@
       </div>
     } @else {
       <div class="evaluation-history-empty">
-        <div class="empty-icon">★</div>
+        <div class="empty-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1Z"/></svg></div>
         <h3>
           {{ evaluationSearch ? 'لا توجد نتائج مطابقة' : 'لا توجد تقييمات محفوظة حتى الآن' }}
         </h3>
@@ -439,6 +798,10 @@
           </div>
         </div>
 
+        @if (!editingSupervisor) {
+          <p class="form-hint">سيتم إنشاء كلمة مرور مؤقتة آليًا وإرسالها إلى البريد الإلكتروني للمشرف.</p>
+        }
+
         @if (editingSupervisor) {
           <div class="status-select-box">
             <div>
@@ -458,8 +821,8 @@
 
         <div class="modal-actions">
           <button type="button" class="btn-cancel-modal" (click)="closeAddModal()">إلغاء</button>
-          <button type="submit" class="btn-save-modal" [disabled]="supervisorForm.invalid">
-            {{ editingSupervisor ? 'حفظ التعديلات' : 'إضافة المشرف' }}
+          <button type="submit" class="btn-save-modal" [disabled]="supervisorForm.invalid || savingSupervisor">
+            {{ savingSupervisor ? 'جارٍ الحفظ...' : (editingSupervisor ? 'حفظ التعديلات' : 'إضافة المشرف') }}
           </button>
         </div>
       </form>
@@ -476,44 +839,41 @@
         <div>
           <span class="modal-kicker">إدارة المدربين</span>
           <h2>إضافة ملف مدرب</h2>
-          <p class="modal-subtext">أدخلي بيانات ملف المدرب وربطيه بحساب مستخدم موجود.</p>
+          <p class="modal-subtext">أدخلي بيانات المدرب لإنشاء حساب وربطه بالشركة.</p>
         </div>
 
         <button
           class="close-btn"
           type="button"
           (click)="closeTrainerModal()"
-          aria-label="إغلاق">
+          aria-label="إغلاق"
+          [disabled]="savingTrainer">
           ×
         </button>
       </div>
 
-      <div class="trainer-form-note">
-        <strong>تنبيه:</strong>
-        يجب أن يكون رقم المستخدم مرتبطًا بحساب موجود مسبقًا في النظام.
-        هذه العملية تنشئ ملف المدرب ولا تنشئ حساب مستخدم جديدًا.
-      </div>
-
+      <div class="trainer-form-note">سيُنشأ حساب المدرب ويُربط تلقائيًا بشركتك.</div>
       <form (ngSubmit)="submitTrainer()" #trainerForm="ngForm">
-
         <div class="form-group">
-          <label for="trainerUserId">رقم حساب المستخدم <span>*</span></label>
-          <input
-            id="trainerUserId"
-            class="form-input"
-            type="number"
-            min="1"
-            placeholder="أدخلي رقم المستخدم User ID"
-            [(ngModel)]="newTrainer.userId"
-            name="userId"
-            required />
+          <label for="trainerName">اسم المدرب <span>*</span></label>
+          <input id="trainerName" class="form-input" type="text" maxlength="150" [(ngModel)]="newTrainer.fullName" name="fullName" required />
         </div>
+        <div class="form-group">
+          <label for="trainerEmail">البريد الإلكتروني <span>*</span></label>
+          <input id="trainerEmail" class="form-input" type="email" maxlength="150" [(ngModel)]="newTrainer.email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label for="trainerPhone">الهاتف</label>
+          <input id="trainerPhone" class="form-input" type="tel" maxlength="20" [(ngModel)]="newTrainer.phone" name="phone" />
+        </div>
+        <p class="form-hint">سيتم إنشاء كلمة مرور مؤقتة آليًا وإرسالها إلى البريد الإلكتروني للمدرب.</p>
 
         <div class="form-group">
           <label for="trainerSpecialty">التخصص <span>*</span></label>
           <input
             id="trainerSpecialty"
             class="form-input"
+            maxlength="150"
             type="text"
             placeholder="مثال: تقنية المعلومات"
             [(ngModel)]="newTrainer.specialty"
@@ -551,6 +911,7 @@
           <input
             id="trainerCvUrl"
             class="form-input"
+            maxlength="300"
             type="url"
             placeholder="https://example.com/cv.pdf"
             [(ngModel)]="newTrainer.cvUrl"
@@ -674,11 +1035,26 @@
         <strong>{{ selectedSupervisor.fullName }}</strong>
       </div>
 
-      @if (evaluationLoading) {
+      @if (evaluationSaved) {
+        <div class="evaluation-list">
+          <p role="status">تم حفظ التقييم بنجاح.</p>
+        </div>
+      } @else if (evaluationLoading) {
         <div class="distribution-loading">جارٍ تحميل المدربين...</div>
       } @else if (supervisorTrainers.length > 0) {
         <div class="evaluation-list">
-          @for (trainer of supervisorTrainers; track trainer.id) {
+          @if (!editingSavedEvaluation) {
+            <div class="form-group">
+              <label for="evaluation-trainer-select">اختاري المدرب للتقييم</label>
+              <select class="form-input" id="evaluation-trainer-select" [(ngModel)]="evaluationTrainerId" [disabled]="savingEvaluation">
+                <option [ngValue]="null">اختاري مدربًا من القائمة</option>
+                @for (trainer of supervisorTrainers; track trainer.id) {
+                  <option [ngValue]="trainer.id">{{ trainer.name }} — {{ trainer.track }}</option>
+                }
+              </select>
+            </div>
+          }
+          @if (evaluationTrainer; as trainer) {
             <div class="evaluation-trainer-row detailed-evaluation-row">
               <div class="trainee-info">
                 <div class="avatar" [ngClass]="trainer.color">{{ trainer.initials }}</div>
@@ -756,7 +1132,7 @@
                 <button
                   type="button"
                   class="btn-save-modal"
-                  [disabled]="!trainer.currentRating"
+                  [disabled]="savingEvaluation || !trainer.currentRating"
                   (click)="saveTrainerEvaluation(trainer)">
                   {{ editingSavedEvaluation ? 'حفظ التعديلات' : 'حفظ التقييم' }}
                 </button>
@@ -773,6 +1149,11 @@
 
       <div class="modal-footer-actions">
         <button type="button" class="btn-cancel-modal" (click)="closeEvaluationModal()">إغلاق</button>
+        @if (evaluationSaved || (!editingSavedEvaluation && evaluationTrainer && supervisorTrainers.length > 1)) {
+          <button type="button" class="btn-save-modal" [disabled]="savingEvaluation" (click)="startNewTrainerEvaluation()">
+            ＋ إضافة تقييم
+          </button>
+        }
       </div>
     </div>
   </div>
@@ -802,7 +1183,7 @@
 
         <div class="profile-info-grid">
           <div class="profile-info-item info-email">
-            <div class="info-icon">✉</div>
+            <div class="info-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></div>
             <div class="info-text">
               <span>البريد الإلكتروني</span>
               <strong>{{ selectedProfileSupervisor.email || 'غير متوفر' }}</strong>
@@ -810,7 +1191,7 @@
           </div>
 
           <div class="profile-info-item info-phone">
-            <div class="info-icon">☎</div>
+            <div class="info-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg></div>
             <div class="info-text">
               <span>رقم الهاتف</span>
               <strong>{{ selectedProfileSupervisor.phone || 'غير متوفر' }}</strong>
@@ -818,7 +1199,7 @@
           </div>
 
           <div class="profile-info-item info-department">
-            <div class="info-icon">▦</div>
+            <div class="info-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></svg></div>
             <div class="info-text">
               <span>القسم</span>
               <strong>{{ selectedProfileSupervisor.department || 'غير محدد' }}</strong>
@@ -826,7 +1207,7 @@
           </div>
 
           <div class="profile-info-item info-position">
-            <div class="info-icon">★</div>
+            <div class="info-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
             <div class="info-text">
               <span>المنصب</span>
               <strong>{{ selectedProfileSupervisor.position || 'مشرف' }}</strong>
@@ -834,7 +1215,7 @@
           </div>
 
           <div class="profile-info-item info-status">
-            <div class="info-icon">✓</div>
+            <div class="info-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
             <div class="info-text">
               <span>حالة الحساب</span>
               <strong
@@ -846,7 +1227,7 @@
           </div>
 
           <div class="profile-info-item info-id">
-            <div class="info-icon">#</div>
+            <div class="info-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg></div>
             <div class="info-text">
               <span>رقم المشرف</span>
               <strong>{{ selectedProfileSupervisor.supervisorId }}</strong>
@@ -856,19 +1237,19 @@
 
         <div class="profile-stats">
           <div class="profile-stat evaluations">
-            <div class="stat-icon">▣</div>
+            <div class="stat-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></div>
             <strong>{{ selectedProfileSupervisor.stats?.monthlyEvaluations ?? 0 }}</strong>
             <span>تقييمات هذا الشهر</span>
           </div>
 
           <div class="profile-stat attendance">
-            <div class="stat-icon">✓</div>
+            <div class="stat-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
             <strong>{{ selectedProfileSupervisor.stats?.attendanceRate ?? 0 }}%</strong>
             <span>متوسط الحضور</span>
           </div>
 
           <div class="profile-stat trainees">
-            <div class="stat-icon">♟</div>
+            <div class="stat-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
             <strong>{{ selectedProfileSupervisor.stats?.assignedTrainees ?? 0 }}</strong>
             <span>مدرب موزع</span>
           </div>

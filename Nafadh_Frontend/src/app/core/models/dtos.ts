@@ -228,7 +228,7 @@ export interface TrainerDto {
   experienceYears: number;
   biography?: string;
   cvUrl?: string;
-  linkedinUrl?: string | null;
+  linkedInUrl?: string | null;
   // Public URL of the trainer profile image.
 profileImageUrl?: string | null;
   status: TrainerStatus;
@@ -321,6 +321,49 @@ export interface CompanyProgramBatchDto {
   capacity: number;
   companyEnrollmentCount: number;
   status: string;
+  attendanceWeight: number;
+  quizzesWeight: number;
+  tasksWeight: number;
+  projectsWeight: number;
+  excellentMinScore: number;
+  excellentMinAttendance: number;
+  veryGoodMinScore: number;
+  veryGoodMinAttendance: number;
+  goodMinScore: number;
+  atRiskMinAttendance: number;
+  trainers: CompanyProgramTrainerAssignmentDto[];
+  plans: CompanyProgramPlanDto[];
+}
+
+export interface CompanyProgramTrainerAssignmentDto {
+  trainerId: number;
+  trainerName: string;
+  scope: 'Batch' | 'Plan' | 'Stage' | 'Item';
+  planId?: number | null;
+  stageId?: number | null;
+  itemId?: number | null;
+  stageTitle?: string | null;
+  itemTitle?: string | null;
+}
+
+export interface CompanyProgramPlanDto {
+  planId: number;
+  title: string;
+  durationHours: number;
+  startDate: string;
+  endDate: string;
+  approvalStatus: string;
+  executionStatus: string;
+  stages: CompanyProgramStageDto[];
+}
+
+export interface CompanyProgramStageDto {
+  stageId: number;
+  title: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  trainers: CompanyProgramTrainerAssignmentDto[];
 }
 
 export interface CompanyProgramEnrollmentDto {
@@ -449,6 +492,23 @@ status: 'Scheduled' | 'InProgress' | 'Completed' | 'Cancelled' | 'Postponed';
 export interface CompanyDashboardChartPointDto {
   label: string;
   value: number;
+}
+
+/** Fix 12: a final weighted batch result, never an unweighted score. */
+export interface CompanyWeightedEvaluationDto {
+  enrollmentId: number;
+  traineeId: number;
+  batchId: number;
+  batchName?: string | null;
+  programName?: string | null;
+  fullName?: string | null;
+  major?: string | null;
+  gitHubUrl?: string | null;
+  linkedInUrl?: string | null;
+  attendancePercent: number;
+  finalScore: number | null;
+  isComplete: boolean;
+  level: string;
 }
 
 export interface CompanyDashboardTraineeDto {
@@ -656,7 +716,7 @@ export interface ProjectDto {
 }
 
 export interface ProjectMemberDto {
-  id: number;
+ memberId: number;
   role: string;
   projectId: number;
   traineeId: number;
@@ -769,6 +829,8 @@ export interface ConversationMessageDto {
   senderName?: string;
   receiverId?: number;
   ticketId?: number;
+  attachmentUrl?: string | null;
+attachmentFileName?: string | null;
 }
 
 export interface ConversationDetailDto extends ConversationListItemDto {
@@ -893,6 +955,10 @@ export interface BatchPerformanceReportDto {
 }
  
 export interface AttendanceReportRowDto {
+  enrollmentId: number;
+  batchId: number;
+  departmentId?: number | null;
+  departmentName?: string | null;
   traineeId: number;
   traineeName?: string;
   presentDays: number;
@@ -1000,6 +1066,8 @@ export interface TraineeQuizListItemDto {
     | 'Completed'
     | 'Upcoming'
     | 'Missed';
+      isGradingCompleted: boolean;
+
 }
 
 export interface TraineeQuizzesOverviewDto {

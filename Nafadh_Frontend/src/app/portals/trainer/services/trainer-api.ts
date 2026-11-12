@@ -1,4 +1,3 @@
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -38,6 +37,7 @@ export interface QuestionBankDto {
   questionText: string;
   questionType: number;
   difficulty: number;
+  moduleId: number;
   points: number;
   explanation?: string | null;
   isActive: boolean;
@@ -76,6 +76,9 @@ export interface AttemptAnswerDetailsDto {
   questionText: string;
   questionType: string;
   points: number;
+  
+  fileUrl?: string;
+  originalFileName?: string;
 
   selectedOptionId?: number | null;
   selectedOptionText?: string | null;
@@ -121,8 +124,23 @@ export interface CreateQuestionDto {
   questionType: number;
   difficulty: number;
   points: number;
+  moduleId: number;
   explanation?: string | null;
   options: CreateQuestionOptionDto[];
+}
+export interface QuestionAttachmentDto {
+  questionAttachmentId: number;
+  questionId: number;
+  fileName: string;
+  fileUrl: string;
+  uploadedAt: string;
+  uploadedByUserId: number | null;
+}
+
+export interface CreateQuestionAttachmentDto {
+  questionId: number;
+  file: File;
+  fileUrl?: string;
 }
 
 export interface GradeQuizAnswerDto {
@@ -141,6 +159,11 @@ export interface QuizAnswerDetailsDto {
   selectedOptionId: number | null;
   selectedOptionText: string | null;
   textAnswer: string | null;
+  
+  // 🟢 التعديل: إضافة الحقلين هنا
+  fileUrl?: string | null;
+  originalFileName?: string | null;
+
   maxPoints: number;
   awardedPoints: number;
   isCorrect: boolean | null;
@@ -342,6 +365,28 @@ export class TrainerApi {
     }>(`${this.base}/management/lookups/question-difficulties`);
   }
 
+
+getTrainerSkills(trainerId: number): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.base}/TrainerSkill/trainer/${trainerId}`
+  );
+}
+
+addTrainerSkill(
+  trainerId: number,
+  skillName: string
+): Observable<any> {
+  return this.http.post<any>(
+    `${this.base}/TrainerSkill/trainer/${trainerId}`,
+    { skillName }
+  );
+}
+
+deleteTrainerSkill(skillId: number): Observable<void> {
+  return this.http.delete<void>(
+    `${this.base}/TrainerSkill/${skillId}`
+  );
+}
 
   // =====================================================
   // Dashboard / Batches
@@ -594,6 +639,31 @@ export class TrainerApi {
     );
   }
 
+  // =====================================================
+  // UPDATE LESSON
+  // =====================================================
+
+  updateLesson(
+    lessonId: number,
+    dto: {
+      title: string;
+      contentBody?: string | null;
+      orderIndex: number;
+    }
+  ): Observable<void> {
+    return this.http.put<void>(
+      `${this.base}/Lesson/${lessonId}`,
+      dto
+    );
+  }
+
+
+deleteLesson(lessonId: number): Observable<void> {
+  return this.http.delete<void>(
+    `${this.base}/Lesson/${lessonId}`
+  );
+}
+
   createMaterial(
     dto: {
       fileUrl: string;
@@ -845,6 +915,54 @@ export class TrainerApi {
       }
     );
 
+  }
+    // =====================================================
+  // TRAINER PROJECTS
+  // =====================================================
+
+  getProjectsByProgram(programId: number): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.base}/Project/program/${programId}`
+    );
+  }
+
+  createProject(dto: unknown): Observable<any> {
+    return this.http.post<any>(
+      `${this.base}/Project`,
+      dto
+    );
+  }
+
+  getProjectMembers(projectId: number): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.base}/ProjectMember/project/${projectId}`
+    );
+  }
+
+  addProjectMember(dto: {
+    projectId: number;
+    traineeId: number;
+    role: string;
+  }): Observable<any> {
+    return this.http.post<any>(
+      `${this.base}/ProjectMember`,
+      dto
+    );
+  }
+ deleteProjectMember(memberId: number): Observable<string> {
+  return this.http.delete(
+    `${this.base}/ProjectMember/${memberId}`,
+    { responseType: 'text' }
+  );
+}
+
+  getProjectGrades(
+    batchId: number,
+    projectId: number
+  ): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.base}/trainer/project-grades/batch/${batchId}/project/${projectId}`
+    );
   }
 
   // =====================================================
@@ -1340,6 +1458,21 @@ export class TrainerApi {
     );
   }
   // =====================================================
+// TRAINER TRAINEES REPORT FILE
+// =====================================================
+
+getTrainerTraineesReportFile(
+  reportId: number
+): Observable<Blob> {
+
+  return this.http.get(
+    `${this.base}/Report/trainer-trainees/${reportId}/file`,
+    {
+      responseType: 'blob'
+    }
+  );
+}
+  // =====================================================
   // Profile
   // =====================================================
 
@@ -1465,18 +1598,18 @@ export class TrainerApi {
   }
 
   publishQuiz(
-  quizId: number,
-  trainerId: number
-) {
-  const params = new HttpParams()
-    .set('trainerId', trainerId.toString());
+    quizId: number,
+    trainerId: number
+  ) {
+    const params = new HttpParams()
+      .set('trainerId', trainerId.toString());
 
-  return this.http.post(
-    `${this.base}/Quizzes/${quizId}/publish`,
-    {},
-    { params }
-  );
-}
+    return this.http.post(
+      `${this.base}/Quizzes/${quizId}/publish`,
+      {},
+      { params }
+    );
+  }
   // =====================================
   // QUESTION BANK - بنك الأسئلة
   // =====================================
@@ -1547,7 +1680,56 @@ export class TrainerApi {
       { params }
     );
   }
+  // =====================================
+  // QUESTION ATTACHMENTS - مرفقات الأسئلة
+  // =====================================
 
+  getQuestionAttachments(
+    questionId: number
+  ): Observable<QuestionAttachmentDto[]> {
+    return this.http.get<QuestionAttachmentDto[]>(
+      `${this.base}/QuestionAttachment/question/${questionId}`
+    );
+  }
+
+  uploadQuestionAttachment(
+    questionId: number,
+    file: File
+  ): Observable<QuestionAttachmentDto> {
+
+    const formData = new FormData();
+
+    formData.append(
+      'QuestionId',
+      questionId.toString()
+    );
+
+    formData.append(
+      'File',
+      file
+    );
+
+    return this.http.post<QuestionAttachmentDto>(
+      `${this.base}/QuestionAttachment/upload`,
+      formData
+    );
+  }
+
+  deleteQuestionAttachment(
+    attachmentId: number
+  ): Observable<void> {
+    return this.http.delete<void>(
+      `${this.base}/QuestionAttachment/${attachmentId}`
+    );
+  }
+
+  getQuestionAttachmentDownloadUrl(
+    attachmentId: number
+  ): Observable<{ DownloadUrl: string }> {
+    return this.http.get<{ DownloadUrl: string }>(
+      `${this.base}/QuestionAttachment/${attachmentId}/download`
+    );
+  }
   addQuestionsToQuiz(
     quizId: number,
     trainerId: number,
@@ -1560,6 +1742,26 @@ export class TrainerApi {
     return this.http.post<{ message: string }>(
       `${this.base}/quizzes/${quizId}/questions`,
       { questionIds },
+      { params }
+    );
+  }
+
+  addRandomQuestionsToQuiz(
+    quizId: number,
+    trainerId: number,
+    dto: {
+      moduleId: number;
+      difficulty: number;
+      count: number;
+    }
+  ): Observable<{ message: string }> {
+
+    const params = new HttpParams()
+      .set('trainerId', trainerId.toString());
+
+    return this.http.post<{ message: string }>(
+      `${this.base}/quizzes/${quizId}/questions/random`,
+      dto,
       { params }
     );
   }
@@ -1622,30 +1824,30 @@ export class TrainerApi {
       `${this.base}/quiz-results/trainer/${trainerId}/attempts/${attemptId}`
     );
   }
-// =====================================
-// QUIZ PROCTORING
-// =====================================
+  // =====================================
+  // QUIZ PROCTORING
+  // =====================================
 
-getQuizAttemptProctoring(
-  attemptId: number
-): Observable<any> {
+  getQuizAttemptProctoring(
+    attemptId: number
+  ): Observable<any> {
 
-  return this.http.get<any[]>(
-    `${this.base}/quiz-attempts/${attemptId}/proctoring`
-  );
-}
+    return this.http.get<any[]>(
+      `${this.base}/quiz-attempts/${attemptId}/proctoring`
+    );
+  }
 
-getProctoringSnapshot(
-  eventId: number
-): Observable<Blob> {
+  getProctoringSnapshot(
+    eventId: number
+  ): Observable<Blob> {
 
-  return this.http.get(
-    `${this.base}/quiz-attempts/proctoring/events/${eventId}/snapshot`,
-    {
-      responseType: 'blob'
-    }
-  );
-}
+    return this.http.get(
+      `${this.base}/quiz-attempts/proctoring/events/${eventId}/snapshot`,
+      {
+        responseType: 'blob'
+      }
+    );
+  }
   // ==========================================
   // TRAINER LIVE SESSIONS
   // ==========================================
@@ -1686,14 +1888,14 @@ getProctoringSnapshot(
   }
 
   postponeTrainerLiveSession(
-  sessionId: number,
-  dto: PostponeTrainerLiveSessionDto
-): Observable<TrainerLiveSessionDto> {
-  return this.http.put<TrainerLiveSessionDto>(
-    `${this.base}/trainer/live-sessions/${sessionId}/postpone`,
-    dto
-  );
-}
+    sessionId: number,
+    dto: PostponeTrainerLiveSessionDto
+  ): Observable<TrainerLiveSessionDto> {
+    return this.http.put<TrainerLiveSessionDto>(
+      `${this.base}/trainer/live-sessions/${sessionId}/postpone`,
+      dto
+    );
+  }
 
   changeTrainerLiveSessionStatus(
     sessionId: number,
@@ -1712,13 +1914,13 @@ getProctoringSnapshot(
       `${this.base}/trainer/live-sessions/${sessionId}/attendance`
     );
   }
-getLiveAttendance(
-  sessionId: number
-): Observable<LiveAttendanceResponse> {
-  return this.http.get<LiveAttendanceResponse>(
-    `${this.base}/trainer/live-sessions/${sessionId}/room/attendance/live`
-  );
-}
+  getLiveAttendance(
+    sessionId: number
+  ): Observable<LiveAttendanceResponse> {
+    return this.http.get<LiveAttendanceResponse>(
+      `${this.base}/trainer/live-sessions/${sessionId}/room/attendance/live`
+    );
+  }
 
   updateTrainerSessionAttendance(
     sessionId: number,
@@ -1750,13 +1952,13 @@ getLiveAttendance(
   }
 
   endTrainerLiveRoom(
-  sessionId: number
-): Observable<unknown> {
-  return this.http.post(
-    `${this.base}/trainer/live-sessions/${sessionId}/room/end`,
-    {}
-  );
-}
+    sessionId: number
+  ): Observable<unknown> {
+    return this.http.post(
+      `${this.base}/trainer/live-sessions/${sessionId}/room/end`,
+      {}
+    );
+  }
 
   getTrainerLiveRoom(
     sessionId: number
@@ -1765,65 +1967,93 @@ getLiveAttendance(
       `${this.base}/trainer/live-sessions/${sessionId}/room`
     );
   }
-getTrainerLivePolls(
-  sessionId: number
-): Observable<TrainerLivePollListResponse> {
-  return this.http.get<TrainerLivePollListResponse>(
-    `${this.base}/trainer/live-sessions/${sessionId}/polls`
-  );
-}
+  getTrainerLivePolls(
+    sessionId: number
+  ): Observable<TrainerLivePollListResponse> {
+    return this.http.get<TrainerLivePollListResponse>(
+      `${this.base}/trainer/live-sessions/${sessionId}/polls`
+    );
+  }
 
-createTrainerLivePoll(
-  sessionId: number,
-  dto: { question: string; options: string[] }
-): Observable<TrainerLivePoll> {
-  return this.http.post<TrainerLivePoll>(
-    `${this.base}/trainer/live-sessions/${sessionId}/polls`,
-    dto
-  );
-}
+  createTrainerLivePoll(
+    sessionId: number,
+    dto: { question: string; options: string[] }
+  ): Observable<TrainerLivePoll> {
+    return this.http.post<TrainerLivePoll>(
+      `${this.base}/trainer/live-sessions/${sessionId}/polls`,
+      dto
+    );
+  }
 
-openTrainerLivePoll(
-  sessionId: number,
-  pollId: number
-): Observable<unknown> {
-  return this.http.post(
-    `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/open`,
-    {}
-  );
-}
+  openTrainerLivePoll(
+    sessionId: number,
+    pollId: number
+  ): Observable<unknown> {
+    return this.http.post(
+      `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/open`,
+      {}
+    );
+  }
 
-closeTrainerLivePoll(
-  sessionId: number,
-  pollId: number
-): Observable<unknown> {
-  return this.http.post(
-    `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/close`,
-    {}
-  );
-}
+  closeTrainerLivePoll(
+    sessionId: number,
+    pollId: number
+  ): Observable<unknown> {
+    return this.http.post(
+      `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/close`,
+      {}
+    );
+  }
 
-getTrainerLivePollResults(
-  sessionId: number,
-  pollId: number
-): Observable<TrainerLivePollResultsResponse> {
-  return this.http.get<TrainerLivePollResultsResponse>(
-    `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/results`
-  );
-}
-getTrainerLiveSessionReport(
-  sessionId: number
-): Observable<TrainerLiveSessionReport> {
-  return this.http.get<TrainerLiveSessionReport>(
-    `${this.base}/trainer/live-sessions/${sessionId}/report`
-  );
-}
-getTrainerSessionSurveyResults(
-  sessionId: number
-): Observable<TrainerSessionSurveyReport> {
-  return this.http.get<TrainerSessionSurveyReport>(
-    `${this.base}/trainer/live-sessions/${sessionId}/survey/results`
-  );
-}
+  getTrainerLivePollResults(
+    sessionId: number,
+    pollId: number
+  ): Observable<TrainerLivePollResultsResponse> {
+    return this.http.get<TrainerLivePollResultsResponse>(
+      `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/results`
+    );
+  }
+  getTrainerLiveSessionReport(
+    sessionId: number
+  ): Observable<TrainerLiveSessionReport> {
+    return this.http.get<TrainerLiveSessionReport>(
+      `${this.base}/trainer/live-sessions/${sessionId}/report`
+    );
+  }
+  getTrainerSessionSurveyResults(
+    sessionId: number
+  ): Observable<TrainerSessionSurveyReport> {
+    return this.http.get<TrainerSessionSurveyReport>(
+      `${this.base}/trainer/live-sessions/${sessionId}/survey/results`
+    );
+  }
 
+getMyTrainerAttendance(): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.base}/TrainerAttendance/my`
+  );
+}
+uploadTrainerAttendanceProof(
+  attendanceId: number,
+  formData: FormData
+): Observable<any> {
+  return this.http.post<any>(
+    `${this.base}/TrainerAttendance/${attendanceId}/proof`,
+    formData
+  );
+}
+isExcuseWindowOpen(attendanceId: number): Observable<{ isOpen: boolean }> {
+  return this.http.get<{ isOpen: boolean }>(
+    `${this.base}/TrainerAttendance/${attendanceId}/excuse-window`
+  );
+}
+submitTrainerAttendanceExcuse(
+  attendanceId: number,
+  reason: string
+): Observable<any> {
+  return this.http.put<any>(
+    `${this.base}/TrainerAttendance/${attendanceId}/excuse`,
+    { reason }
+  );
+}
 }

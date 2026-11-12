@@ -95,5 +95,55 @@ namespace Nafadh_Backend.Controllers
             if (!TryGetCurrentUserId(out var userId)) return Unauthorized();
             return Ok(await _service.GetUnreadCountAsync(userId));
         }
+        [HttpPost("trainer/send")]
+        public async Task<IActionResult> SendToBatch(
+    [FromBody] SendBatchNotificationDTO dto)
+        {
+            if (dto.BatchId <= 0 ||
+                string.IsNullOrWhiteSpace(dto.Title) ||
+                string.IsNullOrWhiteSpace(dto.Message))
+            {
+                return BadRequest(new
+                {
+                    message = "يرجى تحديد الدفعة وكتابة عنوان الإشعار ومحتواه."
+                });
+            }
+
+            var count = await _service.SendToBatchAsync(
+                dto.BatchId,
+                dto.TraineeId,
+                dto.Title,
+                dto.Message);
+
+            if (count == 0)
+                return BadRequest(new
+                {
+                    message = "لم يتم العثور على متدربين لإرسال الإشعار."
+                });
+
+            return Ok(new
+            {
+                message = "تم إرسال الإشعارات بنجاح.",
+                sentCount = count
+            });
+        }
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            if (!TryGetCurrentUserId(out var userId))
+                return Unauthorized();
+
+            var deleted = await _service.DeleteAsync(id, userId);
+
+            if (!deleted)
+                return NotFound(new
+                {
+                    message = "الإشعار غير موجود."
+                });
+
+            return NoContent();
+        }
     }
+
+
 }

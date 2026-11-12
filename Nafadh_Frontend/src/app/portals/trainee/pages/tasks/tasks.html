@@ -276,7 +276,7 @@
           class="nfd-input submission-input"
           dir="ltr"
           [(ngModel)]="submissionLink"
-          placeholder="https://github.com/..."
+        placeholder="https://github.com/username/repository"
           autocomplete="url"
           [disabled]="submitting()"
         />
@@ -328,274 +328,223 @@
   }
 
 
-  <!-- =========================================================
-       PROJECTS LIST
-  ========================================================= -->
-  @if (tab() === 'projects' && !selectedProject()) {
+ 
+<!-- =========================================================
+     PROJECTS — TRAINER STYLE / TRAINEE READ ONLY
+========================================================= -->
+
+@if (tab() === 'projects' && !selectedProject()) {
+
+  <section class="trainee-projects-section" dir="rtl">
+
+    <div class="trainee-projects-heading">
+      <div>
+       <h2>المشاريع التدريبية </h2>
+        <p>
+          استعراض المشاريع وتفاصيلها وأعضاء فرق العمل
+        </p>
+      </div>
+    </div>
 
     @if (loadingProfile() || loadingProjects()) {
 
-      <div class="projects-loading">
-        <p class="nfd-muted">جاري تحميل المشاريع...</p>
+      <div class="nfd-card trainee-project-empty">
+        جاري تحميل المشاريع...
+      </div>
+
+    } @else if (projects().length === 0) {
+
+      <div class="nfd-card trainee-project-empty">
+        <h3>لا توجد مشاريع</h3>
+        <p>لم يتم إنشاء مشاريع لهذا البرنامج حتى الآن.</p>
       </div>
 
     } @else {
 
-      @if (projects().length > 0) {
+      <div class="trainee-projects-grid">
 
-        <div class="projects-stack">
+        @for (project of projects(); track project.projectId) {
 
-          @for (project of projects(); track project.projectId) {
+          <article class="nfd-card trainee-project-item">
 
-            <div class="nfd-card project-card" (click)="selectProject(project)">
+            <h3>{{ project.title }}</h3>
 
-              <div class="project-card-top">
+            <p class="trainee-project-description">
+              {{ project.description || 'لا يوجد وصف للمشروع' }}
+            </p>
 
-                <div class="project-icon">
-                  <svg
-                    width="27"
-                    height="27"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--color-navy)"
-                    stroke-width="1.7"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <rect x="3" y="4" width="18" height="16" rx="3"></rect>
-                    <path d="M8 4V2"></path>
-                    <path d="M16 4V2"></path>
-                    <path d="M3 9h18"></path>
-                    <path d="M8 13h3"></path>
-                    <path d="M8 16h5"></path>
-                  </svg>
+            <div class="trainee-project-info">
+              <p>
+                <strong>البداية:</strong>
+                {{ project.startDate | date:'dd/MM/yyyy' }}
+              </p>
+
+              <p>
+                <strong>النهاية:</strong>
+                {{ project.endDate | date:'dd/MM/yyyy' }}
+              </p>
+            </div>
+
+            <div class="trainee-project-status">
+              @switch (project.status) {
+                @case ('Planned') { مخطط له }
+                @case ('InProgress') { قيد التنفيذ }
+                @case ('Completed') { مكتمل }
+                @case ('Cancelled') { ملغي }
+                @default { {{ project.status }} }
+              }
+            </div>
+
+            <div class="trainee-project-footer">
+              <button
+                type="button"
+                class="nfd-btn primary"
+                (click)="selectProject(project)"
+              >
+                عرض تفاصيل المشروع والفريق
+              </button>
+            </div>
+
+          </article>
+
+        }
+
+      </div>
+    }
+
+  </section>
+}
+
+<!-- =========================================================
+     PROJECT DETAILS & TEAM MEMBERS
+========================================================= -->
+
+@if (tab() === 'projects' && selectedProject(); as project) {
+
+  <section class="trainee-project-details" dir="rtl">
+
+    <button
+      type="button"
+      class="nfd-btn ghost"
+      (click)="backToProjects()"
+    >
+      العودة إلى المشاريع
+    </button>
+
+    <div class="nfd-card trainee-project-details-card">
+
+      <div class="trainee-project-details-header">
+        <div>
+          <h2>{{ project.title }}</h2>
+          <p>
+            {{ project.description || 'لا يوجد وصف للمشروع' }}
+          </p>
+        </div>
+
+        <span
+          class="nfd-badge"
+          [style.background]="projectStatusBackground(project)"
+          [style.color]="projectStatusForeground(project)"
+        >
+          {{ displayProjectStatus(project) }}
+        </span>
+      </div>
+
+      <div class="trainee-project-details-dates">
+
+        <div>
+          <span>تاريخ البداية</span>
+          <strong>
+            {{ project.startDate | date:'dd/MM/yyyy' }}
+          </strong>
+        </div>
+
+        <div>
+          <span>تاريخ النهاية</span>
+          <strong>
+            {{ project.endDate | date:'dd/MM/yyyy' }}
+          </strong>
+        </div>
+
+      </div>
+
+      <div class="trainee-project-team">
+
+        <div class="trainee-project-team-heading">
+          <h3>أعضاء فريق المشروع</h3>
+
+          @if (!loadingProjectMembers()) {
+            <span>
+              {{ projectMembers().length }} أعضاء
+            </span>
+          }
+        </div>
+
+        @if (loadingProjectMembers()) {
+
+          <p class="nfd-muted">
+            جاري تحميل أعضاء الفريق...
+          </p>
+
+        } @else if (projectMembersError()) {
+
+          <p class="trainee-project-error">
+            {{ projectMembersError() }}
+          </p>
+
+        } @else if (projectMembers().length === 0) {
+
+          <p class="nfd-muted">
+            لم تتم إضافة أعضاء إلى هذا المشروع حتى الآن.
+          </p>
+
+        } @else {
+
+          @if (isCurrentTraineeMember()) {
+            <p class="trainee-project-member-notice">
+              أنت عضو في فريق هذا المشروع.
+            </p>
+          }
+
+          <div class="trainee-project-members-grid">
+
+        @for (member of projectMembers(); track $index) {
+
+              <div class="trainee-project-member-card">
+
+                <div class="trainee-project-member-avatar">
+                <span aria-hidden="true">👤</span>
                 </div>
 
-                <div class="project-main">
+                <div class="trainee-project-member-content">
 
-                  <div class="project-title-row">
-                    <h3 class="project-title">{{ project.title }}</h3>
-                    <span
-                      class="nfd-badge project-status-badge"
-                      [style.background]="projectStatusBackground(project)"
-                      [style.color]="projectStatusForeground(project)"
-                    >
-                      {{ displayProjectStatus(project) }}
-                    </span>
-                  </div>
+                  <strong>
+                    {{ getProjectMemberName(member.traineeId) }}
+                  </strong>
 
-                  <p class="project-description">{{ project.description }}</p>
+                  <span>
+                    {{ getProjectMemberRole(member.role) }}
+                  </span>
 
-                  <div class="project-dates-row">
-                    <span>
-                      البداية:
-                      <strong style="color: var(--color-text-secondary); font-weight: 500;">
-                        {{ projectStartDate(project) | date:'dd-MM-yyyy' }}
-                      </strong>
-                    </span>
-
-                    <span class="project-date-dot"></span>
-
-                    <span>
-                      النهاية:
-                      <strong style="color: var(--color-text-secondary); font-weight: 500;">
-                        {{ projectEndDate(project) | date:'dd-MM-yyyy' }}
-                      </strong>
-                    </span>
-                  </div>
-
-                </div>
-
-              </div>
-
-
-              <!-- PROJECT STAGES -->
-              <div class="project-stages">
-                <div class="project-stages-row">
-
-                  @for (
-                    stage of ['التخطيط','التطوير','الاختبار','التسليم'];
-                    track stage;
-                    let i = $index
-                  ) {
-
-                    <div class="stage-wrapper">
-
-                      <div class="stage-column">
-
-                        <div
-                          class="stage-circle"
-                          [style.background]="projectStagesCompleted(project) ? 'var(--color-navy)' : '#e2e8f0'"
-                          [style.color]="projectStagesCompleted(project) ? '#ffffff' : '#64748b'"
-                        >
-                          {{ i + 1 }}
-                        </div>
-
-                        <span
-                          class="stage-label"
-                          [style.color]="projectStagesCompleted(project) ? 'var(--color-navy)' : 'var(--color-text-secondary)'"
-                          [style.font-weight]="projectStagesCompleted(project) ? '700' : '400'"
-                        >
-                          {{ stage }}
-                        </span>
-
-                      </div>
-
-                      @if (i < 3) {
-                        <div
-                          class="stage-line"
-                          [style.background]="projectStagesCompleted(project) ? 'var(--color-navy)' : '#dfe4ec'"
-                        ></div>
-                      }
-
-                    </div>
-
+                  @if (member.traineeId === traineeId()) {
+                    <small>أنت</small>
                   }
 
                 </div>
+
               </div>
 
-            </div>
+            }
 
-          }
-
-        </div>
-
-      } @else {
-
-        <div class="nfd-card empty-projects">
-          <p class="nfd-muted">لا توجد مشاريع لهذا البرنامج حاليًا.</p>
-        </div>
-
-      }
-    }
-  }
-
-
-  <!-- =========================================================
-       PROJECT DETAILS
-  ========================================================= -->
-  @if (tab() === 'projects' && selectedProject(); as project) {
-
-    <button class="nfd-muted back-btn" (click)="backToProjects()">
-      ← العودة إلى المشاريع
-    </button>
-
-    <div class="nfd-card project-detail-card">
-
-      <div class="project-detail-header">
-
-        <div class="project-detail-icon">
-          <svg
-            width="30"
-            height="30"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--color-navy)"
-            stroke-width="1.7"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <rect x="3" y="4" width="18" height="16" rx="3"></rect>
-            <path d="M8 4V2"></path>
-            <path d="M16 4V2"></path>
-            <path d="M3 9h18"></path>
-            <path d="M8 13h3"></path>
-            <path d="M8 16h5"></path>
-          </svg>
-        </div>
-
-        <div class="project-detail-main">
-
-          <div class="project-detail-title-row">
-            <h3 class="project-detail-title">{{ project.title }}</h3>
-            <span
-              class="nfd-badge project-detail-status-badge"
-              [style.background]="projectStatusBackground(project)"
-              [style.color]="projectStatusForeground(project)"
-            >
-              {{ displayProjectStatus(project) }}
-            </span>
           </div>
 
-          <p class="project-detail-description">{{ project.description }}</p>
-
-        </div>
-
-      </div>
-
-
-      <!-- DATES -->
-      <div class="project-dates-grid">
-
-        <div class="project-date-box">
-          <span class="project-date-label">تاريخ البداية</span>
-          <strong class="project-date-value">
-            {{ projectStartDate(project) | date:'yyyy-MM-dd' }}
-          </strong>
-        </div>
-
-        <div class="project-date-box">
-          <span class="project-date-label">تاريخ النهاية</span>
-          <strong class="project-date-value">
-            {{ projectEndDate(project) | date:'yyyy-MM-dd' }}
-          </strong>
-        </div>
-
-      </div>
-
-
-      <!-- PROJECT STAGES -->
-      <div class="project-detail-stages">
-
-        <strong class="project-detail-stages-title">مراحل المشروع</strong>
-
-        <div class="project-detail-stages-row">
-
-          @for (
-            stage of ['التخطيط','التطوير','الاختبار','التسليم'];
-            track stage;
-            let i = $index
-          ) {
-
-            <div class="detail-stage-wrapper">
-
-              <div class="detail-stage-column">
-
-                <div
-                  class="detail-stage-circle"
-                  [style.background]="projectStagesCompleted(project) ? 'var(--color-navy)' : '#e2e8f0'"
-                  [style.color]="projectStagesCompleted(project) ? '#ffffff' : '#64748b'"
-                >
-                  {{ i + 1 }}
-                </div>
-
-                <span
-                  class="detail-stage-label"
-                  [style.color]="projectStagesCompleted(project) ? 'var(--color-navy)' : 'var(--color-text-secondary)'"
-                  [style.font-weight]="projectStagesCompleted(project) ? '700' : '400'"
-                >
-                  {{ stage }}
-                </span>
-
-              </div>
-
-              @if (i < 3) {
-                <div
-                  class="detail-stage-line"
-                  [style.background]="projectStagesCompleted(project) ? 'var(--color-navy)' : '#e2e8f0'"
-                ></div>
-              }
-
-            </div>
-
-          }
-
-        </div>
+        }
 
       </div>
 
     </div>
-  }
+
+  </section>
+}
 
 </div>

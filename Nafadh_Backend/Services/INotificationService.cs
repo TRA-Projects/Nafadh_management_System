@@ -10,5 +10,7 @@ namespace Nafadh_Backend.Services
         Task MarkAsReadAsync(int id, int userId);
         Task MarkAllAsReadAsync(int userId);
         Task<UnreadCountDTO> GetUnreadCountAsync(int userId);
+        Task<int> SendToBatchAsync( int batchId, int? traineeId,string title, string message);
+        Task<bool> DeleteAsync(int id, int userId);
     }
 }

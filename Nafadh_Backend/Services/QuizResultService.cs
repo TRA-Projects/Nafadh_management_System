@@ -1,4 +1,3 @@
-﻿
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +23,8 @@ namespace Nafadh_Backend.Services
 
         Task<List<QuizResultDto>> GetAdminTraineeResultsAsync(
             int traineeId);
+
+        Task<List<QuizResultDto>> GetCompanyEnrollmentResultsAsync(int enrollmentId);
 
         Task<QuizAttemptDetailsDto> GetTrainerAttemptDetailsAsync(
             int attemptId,
@@ -65,11 +66,11 @@ namespace Nafadh_Backend.Services
             }
 
             return attempt.AttemptQuestions.All(aq =>
-                aq.Question.QuestionType !=
-                    NFD_QuizQuestionType.Essay ||
-
+                (aq.Question.QuestionType !=
+                    NFD_QuizQuestionType.Essay &&
+                 aq.Question.QuestionType !=
+                    NFD_QuizQuestionType.FileUpload) ||
                 !aq.Answers.Any() ||
-
                 aq.Answers.All(answer =>
                     answer.IsManuallyGraded));
         }
@@ -205,6 +206,17 @@ namespace Nafadh_Backend.Services
                 .ToList();
         }
 
+        // Company Portal: show only completed, fully graded results from
+        // quizzes in the enrollment's batch (not other batches for the trainee).
+        public async Task<List<QuizResultDto>> GetCompanyEnrollmentResultsAsync(int enrollmentId)
+        {
+            var attempts = await _repository.GetCompanyEnrollmentResultsAsync(enrollmentId);
+            return attempts
+                .Where(a => IsGradingCompleted(a))
+                .Select(MapResult)
+                .ToList();
+        }
+
         // ==========================================
         // 4. تفاصيل المحاولة للمدرب
         // ==========================================
@@ -264,6 +276,10 @@ namespace Nafadh_Backend.Services
                             aq.Question.QuestionType ==
                             NFD_QuizQuestionType.Essay;
 
+                        var isFileUpload =
+                            aq.Question.QuestionType ==
+                            NFD_QuizQuestionType.FileUpload;
+
                         return new QuizAnswerDetailsDto
                         {
                             AnswerId =
@@ -290,6 +306,10 @@ namespace Nafadh_Backend.Services
 
                             TextAnswer = answer?.TextAnswer,
 
+                            // 🟢 إضافة حقول الملفات هنا
+                            FileUrl = answer?.FileUrl,
+                            OriginalFileName = answer?.OriginalFileName,
+
                             MaxPoints = aq.Points,
 
                             AwardedPoints =
@@ -304,7 +324,7 @@ namespace Nafadh_Backend.Services
                                 answer?.IsMarkedForReview ?? false,
 
                             RequiresManualGrading =
-                                isEssay &&
+                                (isEssay || isFileUpload) &&
                                 answer != null &&
                                 !answer.IsManuallyGraded
                         };

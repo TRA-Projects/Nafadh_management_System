@@ -31,6 +31,49 @@
       </button>
     </header>
 
+    <!-- Periodic monitoring matches Admin's period dashboard logic.
+         This filter affects ONLY performance KPIs and lists, not warnings,
+         attendance/capacity or any final weighted grade in Reports. -->
+    <div class="card company-performance-period" data-guide="company-performance-period">
+      <div class="period-heading">
+        <div>
+          <strong>متابعة أداء المتدربين خلال الفترة</strong>
+          <p>تصنيف متابعة مؤقت باستخدام الأوزان والمعايير المعتمدة لكل دفعة، وليس النتيجة النهائية.</p>
+        </div>
+        <span class="period-applied">الفترة المعروضة: {{ appliedPeriodLabel() }}</span>
+      </div>
+      <div class="period-controls">
+        <label for="companyPerformancePeriod">فترة تقييم المتميزين والمتعثرين</label>
+        <select id="companyPerformancePeriod"
+                [disabled]="loading()"
+                [value]="performancePeriod()"
+                (change)="setPerformancePeriod($any($event.target).value)">
+          <option value="month">هذا الشهر</option>
+          <option value="year">هذه السنة</option>
+          <option value="all">جميع الفترات</option>
+          <option value="custom">فترة مخصصة</option>
+        </select>
+        @if (performancePeriod() === 'custom') {
+          <label for="companyPeriodStart">من</label>
+          <input id="companyPeriodStart" type="date"
+                 [disabled]="loading()"
+                 [value]="performanceStartDate()"
+                 (change)="setPerformanceStartDate($any($event.target).value)"/>
+          <label for="companyPeriodEnd">إلى</label>
+          <input id="companyPeriodEnd" type="date"
+                 [disabled]="loading()"
+                 [value]="performanceEndDate()"
+                 (change)="setPerformanceEndDate($any($event.target).value)"/>
+          <button type="button" class="btn btn-outline btn-sm"
+                  [disabled]="loading()"
+                  (click)="applyCustomPerformancePeriod()">تطبيق الفترة</button>
+        }
+      </div>
+      @if (performancePeriodError()) {
+        <div class="period-error" role="alert">{{ performancePeriodError() }}</div>
+      }
+    </div>
+
     @if (!announcementsDismissed()) {
       <div class="card announcements-card" data-guide="company-dashboard-announcements">
         <div class="announcements-header">
@@ -123,10 +166,18 @@
         </div>
         <div class="kpi-info">
           <span class="kpi-label">متوسط الحضور</span>
-          <strong class="kpi-value">
-            {{ attendanceAverage() | number:'1.0-0' }}%
+          <strong class="kpi-value" [class.kpi-value-empty]="!attendanceWeeks().length">
+            @if (loadError()) {
+              تعذّر تحميل البيانات
+            } @else if (loading() && !attendanceWeeks().length) {
+              جارٍ التحميل…
+            } @else if (attendanceWeeks().length) {
+              {{ attendanceAverage() | number:'1.0-0' }}%
+            } @else {
+              لا توجد بيانات
+            }
           </strong>
-          <small>من سجلات حضور المتدربين النشطين</small>
+          <small>جميع سجلات الحضور المحتسبة للتسجيلات النشطة، باستثناء الأعذار المعتمدة. لا يتبع فلتر فترة الأداء.</small>
         </div>
       </article>
 
@@ -138,8 +189,8 @@
         </div>
         <div class="kpi-info">
           <span class="kpi-label">المتدربون المتميزون</span>
-          <strong class="kpi-value">{{ kpiTopPerformersCount() }}</strong>
-          <small>النشطون بأداء 80% فأعلى</small>
+          <strong class="kpi-value">{{ periodDataAvailable() ? kpiTopPerformersCount() : '—' }}</strong>
+          <small>المتميزون خلال الفترة المعروضة وفق معايير الدفعات</small>
         </div>
       </article>
 
@@ -152,9 +203,9 @@
         <div class="kpi-info">
           <span class="kpi-label">متوسط أداء المتميزين</span>
           <strong class="kpi-value">
-            {{ topPerformersAverage() | number:'1.0-0' }}%
+            {{ periodDataAvailable() ? topPerformersAverage() + '%' : '—' }}
           </strong>
-          <small>متوسط أداء النشطين بأداء 80% فأعلى</small>
+          <small>متوسط الأداء المؤقت للمتميزين خلال الفترة</small>
         </div>
       </article>
 
@@ -167,9 +218,9 @@
           </svg>
         </div>
         <div class="kpi-info">
-          <span class="kpi-label">متعثرون بحاجة لمتابعة</span>
-          <strong class="kpi-value">{{ kpiAtRisk().length }}</strong>
-          <small>من المتدربين النشطين</small>
+          <span class="kpi-label">المتدربون المتعثرون</span>
+          <strong class="kpi-value">{{ periodDataAvailable() ? kpiAtRisk().length : '—' }}</strong>
+          <small>تعثر محتمل خلال الفترة بحسب معايير كل دفعة</small>
         </div>
       </article>
     </div>
@@ -286,7 +337,16 @@
         <div class="card-title">
           متوسط الحضور الأسبوعي للمتدربين 
           <span class="hint">
-            المعدل العام: {{ attendanceAverage() | number:'1.1-1' }}%
+            المعدل العام للتسجيلات النشطة (جميع الفترات):
+            @if (loadError()) {
+              تعذّر تحميل البيانات
+            } @else if (loading() && !attendanceWeeks().length) {
+              جارٍ التحميل…
+            } @else if (attendanceWeeks().length) {
+              {{ attendanceAverage() | number:'1.1-1' }}%
+            } @else {
+              لا توجد بيانات
+            }
           </span>
         </div>
 
@@ -348,7 +408,7 @@
         <div class="card-title">
           <span>
             <span class="icon-star">★</span>
-            المتدربون المتميزون 
+            المتدربون المتميزون خلال الفترة
           </span>
           <label class="limit-picker">
             <span>عدد المعروض</span>
@@ -405,11 +465,11 @@
 
               <div class="performance">
                 <b>{{ performanceValue(trainee) }}%</b>
-                <span>أداء</span>
+                <span>أداء الفترة</span>
               </div>
             </div>
           } @empty {
-            <div class="empty">لا توجد بيانات للمتميزين حاليًا.</div>
+            <div class="empty">{{ periodDataAvailable() ? 'لا يوجد متميزون ضمن الفترة المحددة.' : 'بيانات أداء الفترة غير متاحة حاليًا.' }}</div>
           }
         </div>
       </div>
@@ -419,7 +479,7 @@
         <div class="card-title warning-title">
           <span>
             <span class="icon-warn">⚠️</span>
-            المتدربون المتعثرون
+            المتدربون المعرضون للتعثر خلال الفترة
           </span>
           <label class="limit-picker">
             <span>عدد المعروض</span>
@@ -492,8 +552,8 @@
             </div>
           } @empty {
             <div class="empty">
-              <b>لا يوجد متعثرون حاليًا</b>
-              <span>أداء مستقر وجيد للمتدربين.</span>
+              <b>{{ periodDataAvailable() ? 'لا يوجد متدربون مصنفون كمعرضين للتعثر في هذه الفترة' : 'بيانات أداء الفترة غير متاحة حاليًا' }}</b>
+              <span>{{ periodDataAvailable() ? 'هذا لا يعني اكتمال التقييم النهائي لكل متدرب.' : 'أعد المحاولة أو اختر فترة أخرى.' }}</span>
             </div>
           }
         </div>
@@ -504,7 +564,7 @@
         <div class="card-title">
           <span>
             <span class="icon-bell">🔔</span>
-            أحدث الإنذارات
+            أحدث إنذارات المتدربين
           </span>
           <label class="limit-picker">
             <span>عدد المعروض</span>
@@ -568,7 +628,7 @@
               </div>
             </div>
           } @empty {
-            <div class="empty">لا توجد إنذارات حديثة.</div>
+            <div class="empty">لا توجد إنذارات حديثة للمتدربين.</div>
           }
         </div>
       </div>

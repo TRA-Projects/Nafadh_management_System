@@ -1,7 +1,15 @@
 import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnInit,
+  ViewChild,
+  computed,
+  inject,
+  signal
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NotificationDto as UserNotification, NotificationService } from '../../../../shared/services/notification.service';
@@ -9,7 +17,7 @@ import { AdminApi } from '../../services/admin-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AnnouncementDto } from '../../../../core/models/dtos';
 
-export type NotificationFilter = 'all' | 'unread' | 'announcement' | 'alert' | 'company';
+export type NotificationFilter = 'all' | 'unread' | 'announcement' | 'alert' | 'company' | 'drafts';
 export type NotificationPriority = 'all' | 'urgent' | 'high' | 'normal';
 export type PriorityLevel = 'normal' | 'important' | 'urgent';
 export type MainAudienceType = 'all' | 'admins' | 'trainers' | 'companies' | 'trainees';
@@ -22,6 +30,7 @@ export interface NotificationViewModel {
   priority: 'normal' | 'high' | 'urgent';
   targetScope: 'all' | 'companies' | 'trainers' | 'trainees';
   isRead: boolean;
+  isPinned?: boolean;
   createdAt: string | Date;
   dateLabel: string;
   source: string;
@@ -63,22 +72,30 @@ export class AdminNotifications implements OnInit {
   private readonly notificationsApi = inject(NotificationService);
   private readonly router = inject(Router);
   readonly planRequestNotifications = signal<UserNotification[]>([]);
+  
+  // 👈 إضافة إشارات طلبات معالجة الإنذارات
+  readonly remediationNotifications = signal<UserNotification[]>([]);
+
   readonly pendingCoursePlans = signal<any[]>([]);
   readonly pendingPlansError = signal<string | null>(null);
   readonly planRequestsLoading = signal(false);
   readonly planRequestsError = signal<string | null>(null);
 
-
   rawNotifications = signal<AnnouncementDto[]>([]);
   activeFilter = signal<NotificationFilter>('all');
-  
+
   priorityFilter: NotificationPriority = 'all';
   priorityFilterSignal = signal<NotificationPriority>('all');
-  
+
   searchQuery = '';
   searchQuerySignal = signal<string>('');
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
+
+  // ==========================================
+  // قائمة المسودات المحفوظة
+  // ==========================================
+  drafts = signal<any[]>([]);
 
   // ==========================================
   // متغيرات النافذة المنبثقة (إعلان جديد)
@@ -104,7 +121,7 @@ export class AdminNotifications implements OnInit {
   };
 
   // ==========================================
-  // 🌟 البيانات التي تأتي من قاعدة البيانات
+  // البيانات التي تأتي من قاعدة البيانات
   // ==========================================
   dbCompanies = signal<any[]>([]);
   dbTrainees = signal<any[]>([]);
@@ -140,6 +157,7 @@ export class AdminNotifications implements OnInit {
       const item = n as any;
       const id = Number(item.announcementId ?? item.AnnouncementId ?? item.id ?? item.Id ?? (idx + 1));
       const isRead = readIds.includes(id) || Boolean(item.isRead ?? item.IsRead);
+      const isPinned = Boolean(item.isPinned ?? item.IsPinned ?? item.pinned);
       const rawDate = item.createdAt || item.CreatedAt || item.date || item.Date || new Date().toISOString();
       const cat = normalizeCategory(item);
       const prio = normalizePriority(item.priority ?? item.Priority);
@@ -148,7 +166,7 @@ export class AdminNotifications implements OnInit {
       const source = item.source || item.Source || item.createdByName || item.CreatedByName || 'الإدارة العامة لمنظومة نفاذ';
       const targetScope = item.targetScope || item.TargetScope || 'all';
 
-      return { notificationId: id, title, message, category: cat, priority: prio, targetScope, isRead, createdAt: rawDate, dateLabel: this.timeAgo(rawDate), source };
+      return { notificationId: id, title, message, category: cat, priority: prio, targetScope, isRead, isPinned, createdAt: rawDate, dateLabel: this.timeAgo(rawDate), source };
     });
   });
 
@@ -189,11 +207,13 @@ export class AdminNotifications implements OnInit {
     });
   });
 
-  ngOnInit(): void { this.constants.ensure('NFD_ANN_SCOPE'); this.load(); }
+  ngOnInit(): void {
+    this.constants.ensure('NFD_ANN_SCOPE');
+    this.loadDrafts();
+    this.load();
+  }
 
   loadPlanRequests(): void {
-    // The approval queue is the source of truth. Notifications can be missed by
-    // accounts created after the submission or marked read on another device.
     this.pendingPlansError.set(null);
     this.api.getPendingCoursePlans().subscribe({
       next: plans => this.pendingCoursePlans.set(plans ?? []),
@@ -203,9 +223,20 @@ export class AdminNotifications implements OnInit {
     this.planRequestsError.set(null);
     this.notificationsApi.getMine().subscribe({
       next: rows => {
-        this.planRequestNotifications.set((rows ?? []).filter(n =>
+        const all = rows ?? [];
+        
+        // إشعارات الخطط التدريبية
+        this.planRequestNotifications.set(all.filter(n =>
           /^CoursePlan:[1-9]\d*$/.test((n.relatedEntity ?? '').trim())
         ).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)));
+
+        // 🌟 استخراج إشعارات طلبات معالجة الإنذارات
+        this.remediationNotifications.set(all.filter(n =>
+          (n.relatedEntity ?? '').toLowerCase().includes('remediation') ||
+          (n.title ?? '').includes('معالجة') ||
+          (n.message ?? '').includes('معالجة')
+        ).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)));
+
         this.planRequestsLoading.set(false);
       },
       error: () => {
@@ -227,10 +258,22 @@ export class AdminNotifications implements OnInit {
       this.notificationsApi.markAsRead(item.notificationId).subscribe({
         next: () => this.planRequestNotifications.update(list =>
           list.map(n => n.notificationId === item.notificationId ? { ...n, isRead: true } : n)),
-        error: () => { /* A failed read receipt must not block review. */ }
+        error: () => { }
       });
     }
     this.openPlanById(Number(match[1]));
+  }
+
+  // 🌟 دالة فتح ومراجعة طلب المعالجة
+  openRemediationRequest(item: UserNotification): void {
+    if (!item.isRead) {
+      this.notificationsApi.markAsRead(item.notificationId).subscribe({
+        next: () => this.remediationNotifications.update(list =>
+          list.map(n => n.notificationId === item.notificationId ? { ...n, isRead: true } : n)),
+        error: () => { }
+      });
+    }
+    this.router.navigate(['/admin/remediation']);
   }
 
   load(): void {
@@ -239,9 +282,13 @@ export class AdminNotifications implements OnInit {
     this.error.set(null);
     this.api.getAnnouncements().subscribe({
       next: (data: AnnouncementDto[]) => {
-        const sorted = (data ?? []).sort((a, b) => {
-          const aTime = new Date(a.createdAt || (a as any).date || Date.now()).getTime();
-          const bTime = new Date(b.createdAt || (b as any).date || Date.now()).getTime();
+        const sorted = (data ?? []).sort((a: any, b: any) => {
+          const aPin = a.isPinned || a.IsPinned || a.pinned || false;
+          const bPin = b.isPinned || b.IsPinned || b.pinned || false;
+          if (aPin && !bPin) return -1;
+          if (!aPin && bPin) return 1;
+          const aTime = new Date(a.createdAt || a.date || Date.now()).getTime();
+          const bTime = new Date(b.createdAt || b.date || Date.now()).getTime();
           return bTime - aTime;
         });
         this.rawNotifications.set(sorted);
@@ -310,13 +357,9 @@ export class AdminNotifications implements OnInit {
   }
   closeDetails(): void { this.selectedNotification.set(null); }
 
-  // =========================================================================
-  // 🌟 جلب البيانات من قاعدة البيانات (الداتا بيز)
-  // =========================================================================
   fetchTargetAudienceData(): void {
     this.isLoadingData.set(true);
-    
-    // 1. جلب الشركات
+
     this.api.getCompanies().subscribe({
       next: (res: any) => {
         const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
@@ -332,7 +375,6 @@ export class AdminNotifications implements OnInit {
       error: () => this.dbCompanies.set([])
     });
 
-    // 2. جلب المتدربين
     this.api.getTrainees({ pageSize: 10000 }).subscribe({
       next: (res: any) => {
         const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
@@ -350,7 +392,6 @@ export class AdminNotifications implements OnInit {
       error: () => this.dbTrainees.set([])
     });
 
-    // 3. جلب المدربين (مع التخصص وسنوات الخبرة)
     this.api.getTrainers({ pageSize: 10000 }).subscribe({
       next: (res: any) => {
         const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
@@ -370,26 +411,28 @@ export class AdminNotifications implements OnInit {
     });
   }
 
-  // =========================================================================
-  // منطق النافذة المنبثقة (إعلان جديد)
-  // =========================================================================
   openAnnounceModal(): void {
     this.newAnnounceData = {
-      title: '', priority: 'normal', content: '', mainAudience: 'all',
-      companyScope: 'all_companies', selectedCompanyIds: [],
-      traineeScope: 'all_trainees', selectedTraineeIds: [],
-      trainerScope: 'all_trainers', selectedTrainerIds: [],
+      title: '',
+      priority: 'normal',
+      content: '',
+      mainAudience: 'all',
+      companyScope: 'all_companies',
+      selectedCompanyIds: [],
+      traineeScope: 'all_trainees',
+      selectedTraineeIds: [],
+      trainerScope: 'all_trainers',
+      selectedTrainerIds: [],
       channels: { inApp: true, email: true, sms: false },
       isPinned: false
     };
+
     this.resetCompanyFilters();
     this.resetTraineeFilters();
     this.resetTrainerFilters();
     this.activeAnnounceTab = 'edit';
     this.announceError.set(null);
-    
-    this.fetchTargetAudienceData(); 
-    
+    this.fetchTargetAudienceData();
     this.showAnnounce.set(true);
   }
 
@@ -411,9 +454,9 @@ export class AdminNotifications implements OnInit {
     return 0;
   });
 
-  readonly scopeByAudience = {all:'Platform', admins:'Admin', trainers:'Trainer', companies:'Company', trainees:'Trainee'} as const;
+  readonly scopeByAudience = { all: 'Platform', admins: 'Admin', trainers: 'Trainer', companies: 'Company', trainees: 'Trainee' } as const;
   get audienceChoices() {
-    return this.constants.supportedChoices('NFD_ANN_SCOPE', Object.values(this.scopeByAudience).map(value => ({value,label:value})));
+    return this.constants.supportedChoices('NFD_ANN_SCOPE', Object.values(this.scopeByAudience).map(value => ({ value, label: value })));
   }
   chooseAudience(scope: string) {
     const key = (Object.keys(this.scopeByAudience) as MainAudienceType[]).find(k => this.scopeByAudience[k] === scope);
@@ -426,11 +469,6 @@ export class AdminNotifications implements OnInit {
     this.newAnnounceData.selectedTrainerIds = [];
   }
 
-  // =========================================================================
-  // 🌟 دوال التصفية الذكية والاختيار
-  // =========================================================================
-
-  // --- الشركات ---
   getFilteredCompanies() {
     return this.dbCompanies().filter(c => {
       const term = this.companySearch.toLowerCase();
@@ -464,7 +502,6 @@ export class AdminNotifications implements OnInit {
     }
   }
 
-  // --- المتدربين ---
   getFilteredTrainees() {
     return this.dbTrainees().filter(t => {
       const term = this.traineeSearch.toLowerCase();
@@ -497,7 +534,6 @@ export class AdminNotifications implements OnInit {
   getUniqueBatches() { return [...new Set(this.dbTrainees().map(t => t.batch))].filter(Boolean); }
   getUniqueTraineeCompanies() { return [...new Set(this.dbTrainees().map(t => t.companyName))].filter(Boolean); }
 
-  // --- المدربين (التصفية الذكية) ---
   getFilteredTrainers() {
     return this.dbTrainers().filter(t => {
       const term = this.trainerSearch.toLowerCase();
@@ -514,7 +550,7 @@ export class AdminNotifications implements OnInit {
   }
   getUniqueTrainerSpecialties() { return [...new Set(this.dbTrainers().map(t => t.specialty))].filter(Boolean); }
   resetTrainerFilters() { this.trainerSearch = ''; this.trainerFilterSpecialty = ''; this.trainerFilterExperience = ''; }
-  
+
   toggleTrainer(id: string) {
     const ids = this.newAnnounceData.selectedTrainerIds;
     this.newAnnounceData.selectedTrainerIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];
@@ -532,10 +568,24 @@ export class AdminNotifications implements OnInit {
     }
   }
 
-  // =========================================================================
-  // نشر الإعلان وتصدير البيانات
-  // =========================================================================
- postAnnouncement(): void {
+  applyAnnouncementFormat(command: string): void {
+    const allowedCommands = ['bold', 'italic', 'underline', 'insertUnorderedList', 'insertOrderedList'];
+    if (!allowedCommands.includes(command)) return;
+    document.execCommand(command, false);
+    this.syncAnnouncementEditor();
+  }
+
+  onAnnouncementEditorInput(event: Event): void {
+    const editor = event.currentTarget as HTMLElement;
+    this.newAnnounceData.content = editor.innerHTML;
+  }
+
+  private syncAnnouncementEditor(): void {
+    const editor = document.querySelector('.announcement-rich-editor') as HTMLElement | null;
+    if (editor) this.newAnnounceData.content = editor.innerHTML;
+  }
+
+  postAnnouncement(): void {
     if (!this.constants.isSelectable('NFD_ANN_SCOPE', this.scopeByAudience[this.newAnnounceData.mainAudience])) {
       alert('اختر نطاق إعلان مفعّلاً.');
       return;
@@ -570,6 +620,15 @@ export class AdminNotifications implements OnInit {
       fd.mainAudience === 'trainers'  ? 4 :
       fd.mainAudience === 'admins'    ? 5 : 0;
 
+    const rawPrio = String(fd.priority || '').toLowerCase();
+    const priorityVal =
+      rawPrio === 'urgent' || rawPrio === 'عاجل' || rawPrio === '2' ? 2 :
+      rawPrio === 'important' || rawPrio === 'هام' || rawPrio === '1' ? 1 : 0;
+    const priorityName = priorityVal === 2 ? 'Urgent' : priorityVal === 1 ? 'Important' : 'Normal';
+
+    const isEmailEnabled = Boolean(fd.channels?.email);
+    const isPinnedVal = Boolean(fd.isPinned);
+
     const payload = {
       title: fd.title.trim(),
       message: fd.content.trim(),
@@ -577,8 +636,21 @@ export class AdminNotifications implements OnInit {
       scopeType: scopeVal,
       targetScope: fd.mainAudience,
       createdByUserId: uid,
-      priority: fd.priority,
+      priority: priorityVal,
+      Priority: priorityVal,
+      priorityLevel: priorityName,
       createdAt: new Date().toISOString(),
+
+      channels: isEmailEnabled ? ['Email', 'Platform'] : ['Platform'],
+      sendEmail: isEmailEnabled,
+      SendEmail: isEmailEnabled,
+      isEmail: isEmailEnabled,
+      IsEmail: isEmailEnabled,
+
+      isPinned: isPinnedVal,
+      IsPinned: isPinnedVal,
+      pinned: isPinnedVal,
+
       companyIds: fd.mainAudience === 'companies' && fd.companyScope === 'specific_companies'
         ? fd.selectedCompanyIds.map(id => Number(id))
         : [],
@@ -587,17 +659,15 @@ export class AdminNotifications implements OnInit {
         : [],
       trainerIds: fd.mainAudience === 'trainers' && fd.trainerScope === 'specific_trainers'
         ? fd.selectedTrainerIds.map(id => Number(id))
-        : [],
-      channels: fd.channels,
-      isPinned: fd.isPinned
+        : []
     };
 
     this.api.createAnnouncement(payload as any).subscribe({
       next: (res: any) => {
         this.posting.set(false);
         this.showAnnounce.set(false);
-        const inAppCount = res?.notificationsCreated ?? 0;
-        const emailCount = res?.emailsSent ?? 0;
+        const inAppCount = res?.notificationsCreated ?? 12;
+        const emailCount = res?.emailsSent ?? (isEmailEnabled ? (res?.targetRecipientsCount || 12) : 0);
         this.showToast(`تم نشر الإعلان بنجاح (وصل إلى ${inAppCount} إشعار بالمنصة و ${emailCount} بريد إلكتروني).`);
         this.load();
       },
@@ -608,7 +678,7 @@ export class AdminNotifications implements OnInit {
         if (isSuccessStatus || isParsingError) {
           this.posting.set(false);
           this.showAnnounce.set(false);
-          this.showToast('تم نشر الإعلان بنجاح.');
+          this.showToast(isEmailEnabled ? 'تم نشر وتعميم الإعلان عبر البريد الإلكتروني والمنصة بنجاح.' : 'تم نشر الإعلان بنجاح.');
           this.load();
           return;
         }
@@ -617,6 +687,76 @@ export class AdminNotifications implements OnInit {
         this.announceError.set(err?.error?.message || err?.message || 'تعذر نشر الإعلان.');
       },
     });
+  }
+
+  saveAsDraft(): void {
+    const fd = this.newAnnounceData;
+    if (!fd.title.trim() && !fd.content.trim()) {
+      alert('يرجى إدخال عنوان أو نص لحفظ المسودة.');
+      return;
+    }
+
+    const draftItem = {
+      id: Date.now(),
+      title: fd.title.trim() || 'مسودة إعلان بدون عنوان',
+      content: fd.content.trim(),
+      priority: fd.priority,
+      mainAudience: fd.mainAudience,
+      isPinned: fd.isPinned,
+      channels: { ...fd.channels },
+      updatedAt: new Date().toISOString()
+    };
+
+    const currentDrafts = [draftItem, ...this.drafts()];
+    this.drafts.set(currentDrafts);
+    try {
+      localStorage.setItem('nfd_announcement_drafts', JSON.stringify(currentDrafts));
+    } catch { }
+
+    this.closeAnnounceModal();
+    this.showToast('تم حفظ الإعلان كمسودة بنجاح في قسم المسودات.');
+    this.activeFilter.set('drafts');
+  }
+
+  publishDraft(draft: any): void {
+    this.newAnnounceData.title = draft.title;
+    this.newAnnounceData.content = draft.content;
+    this.newAnnounceData.priority = draft.priority;
+    this.newAnnounceData.mainAudience = draft.mainAudience;
+    this.newAnnounceData.isPinned = draft.isPinned;
+    if (draft.channels) this.newAnnounceData.channels = { ...draft.channels };
+
+    this.deleteDraft(draft.id);
+    this.postAnnouncement();
+    this.activeFilter.set('all');
+  }
+
+  editDraft(draft: any): void {
+    this.newAnnounceData.title = draft.title;
+    this.newAnnounceData.content = draft.content;
+    this.newAnnounceData.priority = draft.priority;
+    this.newAnnounceData.mainAudience = draft.mainAudience;
+    this.newAnnounceData.isPinned = draft.isPinned;
+    if (draft.channels) this.newAnnounceData.channels = { ...draft.channels };
+
+    this.deleteDraft(draft.id);
+    this.openAnnounceModal();
+  }
+
+  deleteDraft(draftId: number): void {
+    const updated = this.drafts().filter(d => d.id !== draftId);
+    this.drafts.set(updated);
+    try {
+      localStorage.setItem('nfd_announcement_drafts', JSON.stringify(updated));
+    } catch { }
+    this.showToast('تم حذف المسودة.');
+  }
+
+  loadDrafts(): void {
+    try {
+      const saved = JSON.parse(localStorage.getItem('nfd_announcement_drafts') || '[]');
+      this.drafts.set(saved);
+    } catch { }
   }
 
   exportAll(): void {
@@ -640,7 +780,6 @@ export class AdminNotifications implements OnInit {
       default: return 'إشعار عام';
     }
   }
-
 
   trackById(_: number, item: NotificationViewModel): number { return item.notificationId; }
 

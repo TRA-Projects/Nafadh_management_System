@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 
-import { Component, ElementRef, HostListener, OnInit, QueryList, ViewChildren, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, computed, inject, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
-import { forkJoin } from 'rxjs';
-import * as XLSX from 'xlsx';
+import { forkJoin, of, catchError } from 'rxjs';
+import { buildCompanyWorkbook, downloadBlob, CompanyWorkbookSheet } from '../trainees/xlsx-writer';
+import { openCompanyPrintReport } from '../../utils/print-report';
 
 import { CompanyApi } from '../../services/company-api';
 
@@ -35,6 +37,8 @@ interface TrainerAttendanceDto {
 
   trainerId: number;
 
+  trainerName?: string | null;
+
   date: string;
 
   status: TrainerAttendanceStatus;
@@ -48,6 +52,8 @@ interface TrainerAttendanceDto {
   isConfirmed?: boolean;
 
   excuseProofUrl?: string | null;
+  /** Supplied by the backend, not calculated in the company UI. */
+  excuseReviewStatus?: 'Pending' | 'Approved' | 'Rejected' | null;
 
 }
 
@@ -141,11 +147,16 @@ const TRAINER_STATUS_LABELS: Record<string, string> = {
 
 })
 
-export class CompanyDailyAttendance implements OnInit {
+export class CompanyDailyAttendance implements OnInit, OnDestroy {
 
   private readonly api = inject(CompanyApi);
 
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+
+  // Optional deep link from a stored trainer-excuse notification.
+  private linkedAttendanceId: number | null = null;
+  private linkedAttendanceDate: string | null = null;
 
 
 
@@ -170,9 +181,6 @@ export class CompanyDailyAttendance implements OnInit {
 
 
   private companyId = 0;
-attachmentMaxSizeMB = signal<number | null>(null);
-attachmentAllowedExtensions = signal<string[]>([]);
-attachmentSettingsLoaded = signal(false);
 
 
   @ViewChildren('trainerFilterMenu') trainerFilterMenus!: QueryList<ElementRef<HTMLDetailsElement>>;
@@ -208,7 +216,8 @@ attachmentSettingsLoaded = signal(false);
   trainerSearch = signal('');
   filteredTrainerOptions = computed(() => {
     const query = this.trainerSearch().trim().toLocaleLowerCase();
-    return this.trainers().filter(trainer =>
+    const roster = this.view() === 'day' ? this.trainers() : this.historicalTrainers();
+    return roster.filter(trainer =>
       !query || (trainer.fullName ?? '').toLocaleLowerCase().includes(query)
     );
   });
@@ -224,6 +233,29 @@ attachmentSettingsLoaded = signal(false);
   });
 
   trainers = signal<CompanyTrainerDto[]>([]);
+  // Staff directory supplies optional metadata; the period attendance records define history.
+  private directoryTrainers = signal<CompanyTrainerDto[]>([]);
+  historicalTrainers = computed<CompanyTrainerDto[]>(() => {
+    const month = `${this.selectedAttendanceMonth()}-`;
+    const lookup = new Map<number, CompanyTrainerDto>();
+    for (const trainer of [...this.directoryTrainers(), ...this.trainers()]) {
+      lookup.set(trainer.trainerId, trainer);
+    }
+    const historic = new Map<number, CompanyTrainerDto>();
+    for (const record of this.records()) {
+      const date = this.dateOf(record.date);
+      if (!date.startsWith(month) || date > this.todayKey) continue;
+      const metadata = lookup.get(record.trainerId);
+      historic.set(record.trainerId, {
+        trainerId: record.trainerId,
+        fullName: record.trainerName || metadata?.fullName || `مدرب #${record.trainerId}`,
+        specialty: metadata?.specialty || '—',
+        profileImageUrl: metadata?.profileImageUrl ?? null,
+        status: metadata?.status || 'Inactive',
+      });
+    }
+    return [...historic.values()].sort((a, b) => (a.fullName ?? '').localeCompare(b.fullName ?? '', 'ar'));
+  });
 
   failedTrainerImages = signal<number[]>([]);
 
@@ -244,6 +276,43 @@ attachmentSettingsLoaded = signal(false);
   loadError = signal(false);
 
   errorMessage = signal<string | null>(null);
+  successMessage = signal<string | null>(null);
+  private noticeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** Hide each distinct notification after four seconds. Repeated identical errors
+   * do not extend the duration or keep the banner on screen indefinitely. */
+  private showNotice(kind: 'error' | 'success', message: string): void {
+    const isSameVisibleNotice = kind === 'error'
+      ? this.errorMessage() === message && this.successMessage() === null
+      : this.successMessage() === message && this.errorMessage() === null;
+    if (isSameVisibleNotice && this.noticeTimer !== null) return;
+
+    this.dismissNotice();
+    if (kind === 'error') this.errorMessage.set(message);
+    else this.successMessage.set(message);
+    this.noticeTimer = setTimeout(() => {
+      this.noticeTimer = null;
+      this.errorMessage.set(null);
+      this.successMessage.set(null);
+    }, 4000);
+  }
+
+  private showSuccess(message: string): void {
+    this.showNotice('success', message);
+  }
+
+  dismissNotice(): void {
+    if (this.noticeTimer !== null) {
+      clearTimeout(this.noticeTimer);
+      this.noticeTimer = null;
+    }
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+  }
+
+  ngOnDestroy(): void {
+    this.dismissNotice();
+  }
 
   view = signal<ViewMode>('day');
 
@@ -251,12 +320,71 @@ attachmentSettingsLoaded = signal(false);
   // Export menus are independent of the selected display tab.
   exportMenu = signal<'week' | 'month' | null>(null);
 
+  /** Historical attendance period. Defaults to the current month. */
+  readonly maxAttendanceMonth = this.todayKey.slice(0, 7);
+  readonly minAttendanceMonth = (() => {
+    const date = new Date();
+    date.setDate(1);
+    date.setMonth(date.getMonth() - 11);
+    return this.dayKey(date).slice(0, 7);
+  })();
+  selectedAttendanceMonth = signal(this.maxAttendanceMonth);
+  selectedExportWeek = signal(0);
+
+  onAttendanceMonthChange(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(value) ||
+        value < this.minAttendanceMonth || value > this.maxAttendanceMonth) {
+      (event.target as HTMLInputElement).value = this.selectedAttendanceMonth();
+      return;
+    }
+    if (value === this.selectedAttendanceMonth()) return;
+    this.selectedAttendanceMonth.set(value);
+    this.selectedTrainerId.set(null); // A trainer selected in another month may have no records here.
+    this.selectedWeek.set(null);
+    this.selectedExportWeek.set(this.initialWeekIndex());
+    this.load();
+  }
+
+  onExportWeekChange(event: Event): void {
+    const value = Number((event.target as HTMLSelectElement).value);
+    if (Number.isInteger(value) && value >= 0 && value < this.monthWeeks().length) {
+      this.selectedExportWeek.set(value);
+    }
+  }
+
+  private initialWeekIndex(): number {
+    if (this.selectedAttendanceMonth() !== this.maxAttendanceMonth) return 0;
+    const index = this.monthWeeks().findIndex(w => this.todayKey >= this.dayKey(w.start) && this.todayKey <= this.dayKey(w.end));
+    return index < 0 ? 0 : index;
+  }
+
+
   toggleExportMenu(mode: 'week' | 'month'): void {
     this.exportMenu.update(current => current === mode ? null : mode);
   }
 
+  private exportPeriodLabel(mode: 'week' | 'month'): string {
+    if (mode === 'week') return this.currentWeek()?.label ?? '—';
+    const [year, month] = this.selectedAttendanceMonth().split('-').map(Number);
+    return new Date(year, month - 1, 1).toLocaleDateString('ar-OM', { month: 'long', year: 'numeric' });
+  }
+
   private exportWeeks(mode: 'week' | 'month') {
     return mode === 'week' ? [this.currentWeek()] : this.monthWeeks();
+  }
+
+  /** Display-only effective status: an approved *absence* is "بعذر".
+   * Preserve the stored Absent status for audit, existing reports and attendance metrics.
+   * Late and EarlyLeave never become "بعذر".
+   */
+  isExcusedAbsence(record: TrainerAttendanceDto | null | undefined): boolean {
+    return record?.status === 'Absent' && record.excuseReviewStatus === 'Approved';
+  }
+
+  attendanceDisplayLabel(record: TrainerAttendanceDto | null | undefined): string {
+    if (this.isExcusedAbsence(record)) return 'بعذر';
+    return this.statusText(record?.status);
   }
 
   private statusText(status?: TrainerAttendanceStatus): string {
@@ -283,7 +411,7 @@ attachmentSettingsLoaded = signal(false);
     const excuses = summaries.flatMap(w => w.rows.flatMap(r => r.days
       .filter(d => d.record && (d.record.status === 'Absent' || !!d.record.reason || !!d.record.excuseProofUrl))
       .map(d => ({ week: w.title, name: r.name, date: d.key,
-        status: this.statusText(d.record?.status), reason: d.record?.reason || 'لا يوجد سبب',
+        status: this.attendanceDisplayLabel(d.record), reason: d.record?.reason || 'لا يوجد سبب',
         proof: d.record?.excuseProofUrl ? this.fileUrl(d.record.excuseProofUrl) : '',
       }))));
     return { summaries, excuses };
@@ -293,31 +421,30 @@ attachmentSettingsLoaded = signal(false);
     this.exportMenu.set(null);
     if (this.loading() || this.loadError()) return;
     const { summaries, excuses } = this.exportData(mode);
-    const book = XLSX.utils.book_new();
-    for (const [i, week] of summaries.entries()) {
-      const table: (string | number)[][] = [
-        [week.title, week.label],
-        ['المدرب', 'التخصص', ...week.days.map(d => `${d.label} ${d.key}`), 'نسبة الالتزام'],
-        ...week.rows.map(r => [r.name, r.specialty, ...r.days.map(d => this.statusText(d.record?.status)), r.rate === null ? '—' : `${r.rate}%`]),
-        [],
-        ['حاضر', week.stats.Present, 'متأخر', week.stats.Late, 'غائب', week.stats.Absent, 'انصراف مبكر', week.stats.EarlyLeave],
-        ['نسبة الالتزام', week.stats.rate === null ? '—' : `${week.stats.rate}%`],
-      ];
-      const sheet = XLSX.utils.aoa_to_sheet(table);
-      sheet['!cols'] = [{ wch: 30 }, { wch: 26 }, ...week.days.map(() => ({ wch: 23 })), { wch: 18 }];
-      sheet['!views'] = [{ rightToLeft: true }];
-      XLSX.utils.book_append_sheet(book, sheet, `الأسبوع ${i + 1}`);
+    const sheets: CompanyWorkbookSheet[] = summaries.map((week, i) => ({
+      name: `الأسبوع ${i + 1}`,
+      headers: ['المدرب', 'التخصص', ...week.days.map(d => `${d.label} ${d.key}`), 'الالتزام (%)'],
+      rows: week.rows.map(r => [
+        r.name, r.specialty, ...r.days.map(d => this.attendanceDisplayLabel(d.record)),
+        r.rate === null ? 'غير متاح' : r.rate
+      ]),
+      note: `${week.title} - ${week.label} | حاضر: ${week.stats.Present}، متأخر: ${week.stats.Late}، غائب: ${week.stats.Absent}، انصراف مبكر: ${week.stats.EarlyLeave}، نسبة الالتزام: ${week.stats.rate === null ? 'غير متاحة' : week.stats.rate + '%'}`
+    }));
+    sheets.push({
+      name: 'الأعذار',
+      headers: ['الأسبوع', 'المدرب', 'التاريخ', 'الحالة', 'سبب / ملاحظة', 'رابط إثبات العذر'],
+      rows: excuses.map(e => [e.week, e.name, e.date, e.status, e.reason, e.proof || 'غير مرفق']),
+      note: 'تظل حالة الحضور الأصلية محفوظة، وقرار العذر يعرض بشكل مستقل.'
+    });
+    try {
+      downloadBlob(
+        buildCompanyWorkbook(mode === 'week' ? 'تقرير حضور المدربين الأسبوعي' : 'تقرير حضور المدربين الشهري', sheets),
+        `TrainerAttendance_${mode}_${this.selectedAttendanceMonth()}${mode === 'week' ? `_week_${this.selectedExportWeek() + 1}` : ''}.xlsx`
+      );
+    } catch (error) {
+      console.error('Trainer attendance Excel export:', error);
+      this.showNotice('error', 'تعذر إنشاء ملف Excel.');
     }
-    const excuseRows = [
-      ['الأسبوع', 'المدرب', 'التاريخ', 'الحالة', 'سبب / ملاحظة', 'رابط إثبات العذر'],
-      ...excuses.map(e => [e.week, e.name, e.date, e.status, e.reason, e.proof || 'غير مرفق']),
-    ];
-    if (!excuses.length) excuseRows.push(['لا توجد أعذار مسجلة']);
-    const excuseSheet = XLSX.utils.aoa_to_sheet(excuseRows);
-    excuseSheet['!cols'] = [{ wch: 18 }, { wch: 30 }, { wch: 16 }, { wch: 20 }, { wch: 55 }, { wch: 65 }];
-    excuseSheet['!views'] = [{ rightToLeft: true }];
-    XLSX.utils.book_append_sheet(book, excuseSheet, 'الأعذار');
-    XLSX.writeFile(book, `TrainerAttendance_${mode}_${this.todayKey}.xlsx`);
   }
 
   private escapeReport(value: unknown): string {
@@ -330,58 +457,32 @@ attachmentSettingsLoaded = signal(false);
     if (this.loading() || this.loadError()) return;
     const { summaries, excuses } = this.exportData(mode);
     const esc = (v: unknown) => this.escapeReport(v);
-    const title = mode === 'week' ? 'تقرير الحضور الأسبوعي' : 'تقرير الحضور الشهري';
+    const title = mode === 'week' ? 'تقرير حضور المدربين الأسبوعي' : 'تقرير حضور المدربين الشهري';
     const sections = summaries.map(week => `
-      <section class="week"><h2>${esc(week.title)} <small>${esc(week.label)}</small></h2>
-      <div class="stats">حاضر: ${week.stats.Present} &nbsp; | &nbsp; متأخر: ${week.stats.Late} &nbsp; | &nbsp; غائب: ${week.stats.Absent} &nbsp; | &nbsp; انصراف مبكر: ${week.stats.EarlyLeave} &nbsp; | &nbsp; نسبة الالتزام: ${week.stats.rate === null ? '—' : week.stats.rate + '%'}</div>
-      <table><thead><tr><th>المدرب</th><th>التخصص</th>${week.days.map(d => `<th>${esc(d.label)}<br><small>${esc(d.key)}</small></th>`).join('')}<th>الالتزام</th></tr></thead>
-      <tbody>${week.rows.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.specialty)}</td>${r.days.map(d => `<td class="${d.record?.status === 'Absent' ? 'absent' : ''}">${esc(this.statusText(d.record?.status))}</td>`).join('')}<td>${r.rate === null ? '—' : r.rate + '%'}</td></tr>`).join('')}</tbody></table></section>`).join('');
-    const excuseTable = `<section class="excuses"><h2>جدول الأعذار والملاحظات</h2>
-      <table><thead><tr><th>الأسبوع</th><th>المدرب</th><th>التاريخ</th><th>الحالة</th><th>السبب / الملاحظة</th><th>إثبات العذر</th></tr></thead><tbody>
-      ${excuses.length ? excuses.map(e => `<tr><td>${esc(e.week)}</td><td>${esc(e.name)}</td><td>${esc(e.date)}</td><td>${esc(e.status)}</td><td>${esc(e.reason)}</td><td>${e.proof ? `<a href="${esc(e.proof)}" target="_blank" rel="noopener">عرض الإثبات</a>` : 'غير مرفق'}</td></tr>`).join('') : '<tr><td colspan="6">لا توجد أعذار مسجلة</td></tr>'}
+      <section class="section"><h2>${esc(week.title)} <small>${esc(week.label)}</small></h2>
+      <p class="note">حاضر: ${week.stats.Present} | متأخر: ${week.stats.Late} | غائب: ${week.stats.Absent} | انصراف مبكر: ${week.stats.EarlyLeave} | نسبة الالتزام: ${week.stats.rate === null ? 'غير متاحة' : week.stats.rate + '%'}</p>
+      <table><thead><tr><th>المدرب</th><th>التخصص</th>${week.days.map(d => `<th>${esc(d.label)} ${esc(d.key)}</th>`).join('')}<th>الالتزام (%)</th></tr></thead>
+      <tbody>${week.rows.length ? week.rows.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.specialty)}</td>${r.days.map(d => `<td>${esc(this.attendanceDisplayLabel(d.record))}</td>`).join('')}<td>${r.rate === null ? '—' : esc(r.rate) + '%'}</td></tr>`).join('') : `<tr><td colspan="${week.days.length + 3}">لا توجد سجلات.</td></tr>`}</tbody></table></section>`).join('');
+    const excuseTable = `<section class="section"><h2>جدول الأعذار والملاحظات</h2>
+      <table><thead><tr><th>الأسبوع</th><th>المدرب</th><th>التاريخ</th><th>الحالة</th><th>السبب / الملاحظة</th><th>رابط إثبات العذر</th></tr></thead><tbody>
+      ${excuses.length ? excuses.map(e => `<tr><td>${esc(e.week)}</td><td>${esc(e.name)}</td><td>${esc(e.date)}</td><td>${esc(e.status)}</td><td>${esc(e.reason)}</td><td>${esc(e.proof || 'غير مرفق')}</td></tr>`).join('') : '<tr><td colspan="6">لا توجد أعذار مسجلة</td></tr>'}
       </tbody></table></section>`;
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) { this.errorMessage.set('المتصفح منع فتح نافذة التقرير. اسمحي بالنوافذ المنبثقة ثم أعيدي المحاولة.'); return; }
-    printWindow.document.open();
-    printWindow.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${title}</title><style>
-      @page { size: A4 landscape; margin: 12mm; }
-      *{box-sizing:border-box}body{font-family:Tahoma,Arial,sans-serif;color:#14213d;margin:0;direction:rtl;font-size:11px}
-      header{border-bottom:3px solid #172b85;padding-bottom:12px;margin-bottom:18px}h1{margin:0 0 8px;font-size:21px;color:#101d78}h2{font-size:15px;color:#101d78;margin:18px 0 10px}small{font-size:10px;color:#64748b;font-weight:normal}
-      .stats{background:#eef3ff;padding:10px;border-radius:6px;margin-bottom:10px;font-weight:bold}table{width:100%;border-collapse:collapse;table-layout:auto;direction:rtl}th,td{border:1px solid #d7e0ef;padding:7px 6px;text-align:right;vertical-align:top;overflow-wrap:anywhere}th{background:#edf2fb;color:#12277b}tbody tr:nth-child(even){background:#f8faff}.absent{color:#c62828;font-weight:bold}a{color:#1453c8}.week{break-inside:avoid-page;margin-bottom:20px}.excuses{break-before:page}thead{display:table-header-group}tr{break-inside:avoid}footer{margin-top:20px;color:#64748b;font-size:10px}
-      @media screen{body{max-width:1200px;margin:75px auto 24px;padding:20px}.report-actions{position:fixed;left:20px;top:15px;display:flex;gap:9px;z-index:10}.report-actions button{color:white;border:0;border-radius:7px;padding:10px 16px;cursor:pointer;font-family:inherit;font-weight:bold}.print-btn{background:#172b85}.save-btn{background:#087c63}}
-      @media print{.report-actions{display:none!important}}
-      #attendance-report{background:#fff;padding:10px} .report-actions button:disabled{opacity:.55;cursor:wait}
-      </style></head><body><div class="report-actions"><button class="print-btn" onclick="window.print()">🖨 طباعة</button><button class="save-btn" onclick="saveAsPdf()">↓ حفظ PDF</button></div><main id="attendance-report"><header><h1>${title}</h1><div>تاريخ إعداد التقرير: ${esc(this.todayKey)} | ${esc(this.rangeLabel())}</div></header>${sections}${excuseTable}<footer>البيانات من سجلات حضور المدربين المحملة في النظام. روابط الإثبات تتطلب صلاحية الوصول للملفات.</footer></main><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script><script>
-      async function saveAsPdf(){
-        const button=document.querySelector(".save-btn");
-        if(!window.html2pdf){alert("تعذر تحميل أداة حفظ PDF. تأكدي من الاتصال بالإنترنت ثم أعيدي فتح التقرير.");return;}
-        button.disabled=true;button.textContent="جاري تجهيز PDF...";
-        try{
-          await window.html2pdf().set({
-            margin:8, filename:"TrainerAttendance_${mode}_${this.todayKey}.pdf",
-            image:{type:"jpeg",quality:0.98},
-            html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",scrollY:0},
-            jsPDF:{unit:"mm",format:"a4",orientation:"landscape"},
-            pagebreak:{mode:["css","legacy"],avoid:["tr"]}
-          }).from(document.getElementById("attendance-report")).save();
-        }catch(error){console.error(error);alert("تعذر حفظ التقرير. حاولي مرة أخرى.");}
-        finally{button.disabled=false;button.textContent="↓ حفظ PDF";}
-      }
-      </script></body></html>`);
-    printWindow.document.close();
-    printWindow.focus();
+    const opened = openCompanyPrintReport(
+      title,
+      `${sections}${excuseTable}<footer>البيانات من سجلات حضور المدربين. روابط الإثبات ظاهرة كنص ولا تتجاوز صلاحيات الوصول.</footer>`,
+      { landscape: true, subtitle: this.exportPeriodLabel(mode) }
+    );
+    if (!opened) this.showNotice('error', 'المتصفح منع فتح نافذة التقرير. اسمح بالنوافذ المنبثقة ثم أعد المحاولة.');
   }
 
   selectedWeek = signal<number | null>(null);
 
-  /** Company attendance rate for recorded entries in the current month. */
+  /** Company attendance rate for recorded entries in the selected month. */
   monthlyAttendanceRate = computed<number | null>(() => {
-    const now = new Date();
-    const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`;
-    const trainerIds = new Set(this.trainers().map(t => t.trainerId));
+    const monthPrefix = `${this.selectedAttendanceMonth()}-`;
     const monthRecords = this.records().filter(record => {
       const date = this.dateOf(record.date);
-      return date.startsWith(monthPrefix) && date <= this.todayKey && trainerIds.has(record.trainerId);
+      return date.startsWith(monthPrefix) && date <= this.todayKey;
     });
     if (!monthRecords.length) return null;
     return Math.round(monthRecords.reduce((sum, record) => sum + this.commitmentPoints(record.status), 0) / monthRecords.length);
@@ -396,40 +497,61 @@ attachmentSettingsLoaded = signal(false);
 
 
 
-  noteEditingId = signal<number | null>(null);
-
-  noteDraft = '';
 
   weeklyExcuse = signal<TrainerAttendanceDto | null>(null);
-  weeklyReason = '';
-  weeklyExcuseSaving = signal(false);
-  weeklyExcuseEditing = signal(false);
+
+  reviewingExcuseId = signal<number | null>(null);
+
+  isExcuseReviewed(record: TrainerAttendanceDto | null): boolean {
+    return record?.excuseReviewStatus === 'Approved' || record?.excuseReviewStatus === 'Rejected';
+  }
+
+  reviewLabel(record: TrainerAttendanceDto | null): string {
+    if (!record || !this.hasExcuse(record)) return 'لم يُقدّم عذر';
+    switch (record.excuseReviewStatus) {
+      case 'Approved': return 'العذر مقبول';
+      case 'Rejected': return 'العذر مرفوض';
+      default: return 'بانتظار المراجعة';
+    }
+  }
+
+  /** Review must persist on the backend; never mark a decision locally before success. */
+  reviewExcuse(record: TrainerAttendanceDto, decision: 'Approved' | 'Rejected'): void {
+    if (!this.canManageAttendance() || !this.hasExcuse(record) || this.isExcuseReviewed(record) || this.reviewingExcuseId() !== null) return;
+    this.reviewingExcuseId.set(record.trainerAttendanceId);
+    this.api.reviewTrainerAttendanceExcuse(record.trainerAttendanceId, decision).subscribe({
+      next: () => {
+        // Reload authoritative state (including review status) from the backend.
+        this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.todayKey).subscribe({
+          next: records => {
+            this.records.set(records ?? []);
+            const updated = (records ?? []).find(r => r.trainerAttendanceId === record.trainerAttendanceId);
+            if (updated) this.weeklyExcuse.set(updated);
+            this.reviewingExcuseId.set(null);
+            this.showSuccess(decision === 'Approved' ? 'تم قبول عذر المدرب بنجاح.' : 'تم رفض عذر المدرب بنجاح.');
+          },
+          error: err => {
+            this.showError(err, 'تم إرسال القرار لكن تعذّر تحديث السجل.');
+            this.reviewingExcuseId.set(null);
+          }
+        });
+      },
+      error: err => {
+        this.showError(err, 'تعذّر حفظ قرار مراجعة العذر.');
+        this.reviewingExcuseId.set(null);
+      }
+    });
+  }
+
+
 
   /** Attendance contribution per recorded day. */
   private commitmentPoints(status: TrainerAttendanceStatus): number {
     return status === 'Present' ? 100 : status === 'Absent' ? 0 : 75;
   }
 
-  /** Deadline: Friday 00:00, Asia/Muscat, for the Sunday–Thursday workweek. */
-  canEditWeeklyExcuse(record: TrainerAttendanceDto | null): boolean {
-    if (!record || !this.canManageAttendance()) return false;
-    if (!['Late', 'Absent', 'EarlyLeave'].includes(record.status)) return false;
-    const key = this.dateOf(record.date);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return false;
-    const [year, month, day] = key.split('-').map(Number);
-    const recordDate = new Date(Date.UTC(year, month - 1, day));
-    if (recordDate.getUTCFullYear() !== year || recordDate.getUTCMonth() !== month - 1 || recordDate.getUTCDate() !== day) return false;
-    const weekday = recordDate.getUTCDay();
-    if (weekday === 5 || weekday === 6) return false;
-    const thursday = new Date(recordDate);
-    thursday.setUTCDate(thursday.getUTCDate() + (4 - weekday));
-    const endKey = thursday.toISOString().slice(0, 10);
-    const omanToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Muscat', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-    return key <= omanToday && omanToday <= endKey;
-  }
-
-  weeklyStatusLabel(status: TrainerAttendanceStatus): string {
-    return this.statusText(status);
+  weeklyStatusLabel(record: TrainerAttendanceDto): string {
+    return this.attendanceDisplayLabel(record);
   }
 
   hasExcuse(record: TrainerAttendanceDto | null): boolean {
@@ -437,152 +559,13 @@ attachmentSettingsLoaded = signal(false);
   }
 
   openWeeklyExcuse(record: TrainerAttendanceDto): void {
-    if (!['week', 'month'].includes(this.view()) || !['Absent', 'Late', 'EarlyLeave'].includes(record.status)) return;
-    if (this.view() === 'month' && !this.hasExcuse(record)) return;
+    // Company supervisors review trainer-submitted excuses; proof upload belongs to the trainer flow.
+    if (!['week', 'month'].includes(this.view()) || !this.hasExcuse(record)) return;
     this.weeklyExcuse.set(record);
-    this.weeklyReason = record.reason ?? '';
-    this.weeklyExcuseEditing.set(this.view() === 'week' && !this.hasExcuse(record) && this.canEditWeeklyExcuse(record));
   }
 
   closeWeeklyExcuse(): void {
-    if (!this.weeklyExcuseSaving()) {
-      this.weeklyExcuse.set(null);
-      this.weeklyExcuseEditing.set(false);
-    }
-  }
-
-  startWeeklyExcuseEdit(): void {
-    const record = this.weeklyExcuse();
-    if (this.view() === 'week' && record && this.canEditWeeklyExcuse(record) && !this.weeklyExcuseSaving()) {
-      this.weeklyReason = record.reason ?? '';
-      this.weeklyExcuseEditing.set(true);
-    }
-  }
-
-  cancelWeeklyExcuseEdit(): void {
-    this.weeklyReason = this.weeklyExcuse()?.reason ?? '';
-    this.weeklyExcuseEditing.set(false);
-  }
-
-  saveWeeklyReason(): void {
-    if (!this.canManageAttendance()) return;
-    const record = this.weeklyExcuse();
-    if (this.view() !== 'week' || !record || !this.canEditWeeklyExcuse(record) || !this.weeklyExcuseEditing() || this.weeklyExcuseSaving()) return;
-    this.weeklyExcuseSaving.set(true);
-    this.api.saveTrainerAttendance({
-      companyId: this.companyId,
-      trainerId: record.trainerId,
-      date: this.dateOf(record.date),
-      status: record.status,
-      reason: this.weeklyReason.trim() || null,
-      checkInTime: record.checkInTime ?? null,
-      checkOutTime: record.checkOutTime ?? null,
-    }).subscribe({
-      next: saved => {
-        this.upsertRecord(saved);
-        this.weeklyExcuse.set(saved);
-        this.weeklyReason = saved.reason ?? '';
-        this.weeklyExcuseEditing.set(false);
-        this.weeklyExcuseSaving.set(false);
-      },
-      error: err => {
-        this.showError(err, 'تعذر حفظ السبب أو الملاحظة.');
-        this.weeklyExcuseSaving.set(false);
-      }
-    });
-  }
-
-  uploadWeeklyProof(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    const record = this.weeklyExcuse();
-    if (!file || !record || this.view() !== 'week' || !this.canEditWeeklyExcuse(record) || !this.weeklyExcuseEditing() || this.weeklyExcuseSaving()) return;
-
-   if (!this.attachmentSettingsLoaded()) {
-  this.errorMessage.set('تعذر تحميل إعدادات المرفقات. أعيدي تحميل الصفحة.');
-  return;
-}
-
-const maxSizeMB = this.attachmentMaxSizeMB();
-const allowedExtensions = this.attachmentAllowedExtensions();
-
-const proofExtensions = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
-const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
-
-const allowedTypes = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'application/pdf'
-];
-
-if (
-  !allowedExtensions.includes(extension) ||
-  !proofExtensions.includes(extension) ||
-  !allowedTypes.includes(file.type.toLowerCase())
-) {
-  this.errorMessage.set('نوع الملف غير مدعوم. اختاري JPG أو PNG أو WEBP أو PDF.');
-  return;
-}
-
-if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
-  this.errorMessage.set(
-    `حجم الإثبات كبير جدًا. الحد الأقصى المسموح ${maxSizeMB} ميجابايت.`
-  );
-  return;
-}
-
-    this.weeklyExcuseSaving.set(true);
-    this.errorMessage.set(null);
-    this.api.uploadTrainerAttendanceProof(record.trainerAttendanceId, file).subscribe({
-      next: response => {
-        // Some API versions return the proof path only when the attendance list is fetched again.
-        const returnedPath = response?.excuseProofUrl;
-        if (returnedPath) {
-          this.patchRecord(record.trainerAttendanceId, { excuseProofUrl: returnedPath });
-          this.weeklyExcuse.set({ ...record, excuseProofUrl: returnedPath });
-        }
-        this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.todayKey).subscribe({
-          next: records => {
-            const fresh = (records ?? []).find(item => item.trainerAttendanceId === record.trainerAttendanceId);
-            if (fresh?.excuseProofUrl) {
-              this.records.set(records ?? []);
-              this.weeklyExcuse.set(fresh);
-            } else if (!returnedPath) {
-              this.errorMessage.set('تم إرسال الملف، لكن الخادم لم يرجع رابط الإثبات. تحققي من حفظه في الـ Backend.');
-            }
-            this.weeklyExcuseSaving.set(false);
-          },
-          error: () => {
-            if (!returnedPath) this.errorMessage.set('تم إرسال الملف لكن تعذر تحديث رابط الإثبات من الخادم.');
-            this.weeklyExcuseSaving.set(false);
-          }
-        });
-      },
-      error: err => {
-        this.showError(err, 'تعذر رفع الإثبات. حاولي مرة أخرى.');
-        this.weeklyExcuseSaving.set(false);
-      }
-    });
-  }
-
-  removeWeeklyProof(): void {
-    if (!this.canManageAttendance()) return;
-    const record = this.weeklyExcuse();
-    if (this.view() !== 'week' || !record || !this.canEditWeeklyExcuse(record) || !this.weeklyExcuseEditing() || this.weeklyExcuseSaving()) return;
-    this.weeklyExcuseSaving.set(true);
-    this.api.removeTrainerAttendanceProof(record.trainerAttendanceId).subscribe({
-      next: () => {
-        this.patchRecord(record.trainerAttendanceId, { excuseProofUrl: null });
-        this.weeklyExcuse.set({ ...record, excuseProofUrl: null });
-        this.weeklyExcuseSaving.set(false);
-      },
-      error: err => {
-        this.showError(err, 'تعذر حذف الإثبات.');
-        this.weeklyExcuseSaving.set(false);
-      }
-    });
+    this.weeklyExcuse.set(null);
   }
 
   private upsertRecord(saved: TrainerAttendanceDto): void {
@@ -685,96 +668,40 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
   /** Sunday–Thursday workweek, including partial weeks at month boundaries. */
 
   monthWeeks = computed(() => {
-
-    const now = new Date();
-
-    const first = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
+    const [year, month] = this.selectedAttendanceMonth().split('-').map(Number);
+    const first = new Date(year, month - 1, 1);
+    const last = new Date(year, month, 0);
     const weeks: { index: number; start: Date; end: Date; days: { key: string; label: string }[]; label: string }[] = [];
-
     const cursor = new Date(first);
-
     cursor.setDate(cursor.getDate() - cursor.getDay());
-
     const dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
-
     while (cursor <= last) {
-
       const start = new Date(cursor);
-
       const end = new Date(cursor);
-
       end.setDate(end.getDate() + 6);
-
       const days = dayNames.map((label, offset) => {
-
         const date = new Date(start);
-
-        date.setDate(date.getDate() + offset);
-
+        date.setDate(start.getDate() + offset);
         return { key: this.dayKey(date), label };
-
       }).filter(day => day.key >= this.dayKey(first) && day.key <= this.dayKey(last));
-
       if (days.length) {
-
-        const format = (d: Date) => d.toLocaleDateString('ar-OM', { day: 'numeric', month: 'long' });
-
+        const format = (date: Date) => date.toLocaleDateString('ar-OM', { day: 'numeric', month: 'long' });
         weeks.push({ index: weeks.length, start, end, days,
-
           label: `${format(start < first ? first : start)} – ${format(end > last ? last : end)}` });
-
       }
-
       cursor.setDate(cursor.getDate() + 7);
-
     }
-
     return weeks;
-
   });
 
-
-
-  currentWeek = computed(() => {
-
-    const now = new Date();
-
-    const start = new Date(now);
-
-    start.setDate(now.getDate() - now.getDay());
-
-    const end = new Date(start);
-
-    end.setDate(start.getDate() + 6);
-
-    const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'].map((label, i) => {
-
-      const date = new Date(start);
-
-      date.setDate(start.getDate() + i);
-
-      return { key: this.dayKey(date), label };
-
-    });
-
-    const format = (d: Date) => d.toLocaleDateString('ar-OM', { day: 'numeric', month: 'long' });
-
-    return { index: 0, start, end, days, label: `${format(start)} – ${format(end)}` };
-
-  });
-
-
+  currentWeek = computed(() => this.monthWeeks()[this.selectedExportWeek()] ?? this.monthWeeks()[0]);
 
   rangeLabel = computed(() => this.view() === 'week'
-
-    ? this.currentWeek().label
-
-    : new Date().toLocaleDateString('ar-OM', { month: 'long', year: 'numeric' }));
-
-
+    ? (this.currentWeek()?.label ?? '—')
+    : (() => {
+        const [year, month] = this.selectedAttendanceMonth().split('-').map(Number);
+        return new Date(year, month - 1, 1).toLocaleDateString('ar-OM', { month: 'long', year: 'numeric' });
+      })());
 
   /** Returns a status grid for a given week, based only on recorded attendance. */
 
@@ -782,8 +709,13 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
 
     const map = this.recordMap();
 
-    return this.trainers().filter(trainer =>
-      !applyTrainerFilter || this.selectedTrainerId() === null || trainer.trainerId === this.selectedTrainerId()
+    const periodKeys = new Set(week.days.map(day => day.key));
+    const periodTrainerIds = new Set(this.records()
+      .filter(record => periodKeys.has(this.dateOf(record.date)))
+      .map(record => record.trainerId));
+    return this.historicalTrainers().filter(trainer =>
+      periodTrainerIds.has(trainer.trainerId) &&
+      (!applyTrainerFilter || this.selectedTrainerId() === null || trainer.trainerId === this.selectedTrainerId())
     ).map((trainer, index) => {
 
       const days = week.days.map(day => ({
@@ -804,18 +736,16 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
 
 
 
-  statusSymbol(status?: TrainerAttendanceStatus): string {
-
-    return ({ Present: 'ح', Late: 'ت', Absent: 'غ', EarlyLeave: 'م' } as Record<TrainerAttendanceStatus, string>)[status!] ?? '—';
-
+  statusSymbol(record: TrainerAttendanceDto | null): string {
+    if (this.isExcusedAbsence(record)) return 'ع';
+    return ({ Present: 'ح', Late: 'ت', Absent: 'غ', EarlyLeave: 'م' } as Record<TrainerAttendanceStatus, string>)[record?.status!] ?? '—';
   }
 
 
 
-  statusClass(status?: TrainerAttendanceStatus): string {
-
-    return status ? `badge-${status}` : 'badge-empty';
-
+  statusClass(record: TrainerAttendanceDto | null): string {
+    if (this.isExcusedAbsence(record)) return 'badge-Excused';
+    return record?.status ? `badge-${record.status}` : 'badge-empty';
   }
 
 
@@ -824,13 +754,11 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
 
     const keys = new Set(week.days.map(d => d.key));
 
-    const trainerIds = new Set(this.trainers().map(t => t.trainerId));
-
     const counts = { Present: 0, Late: 0, Absent: 0, EarlyLeave: 0 };
 
     for (const record of this.records()) {
 
-      if (keys.has(this.dateOf(record.date)) && trainerIds.has(record.trainerId)) counts[record.status]++;
+      if (keys.has(this.dateOf(record.date))) counts[record.status]++;
 
     }
 
@@ -845,25 +773,24 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
 ngOnInit(): void {
   this.companyId = this.auth.companyId ?? 0;
 
-  console.log('Company ID:', this.companyId);
+  // A notification provides the attendance record ID and its calendar date.
+  // Keep the existing attendance page/UI, changing only the initial selection.
+  const params = this.route.snapshot.queryParamMap;
+  const idParam = params.get('attendanceId');
+  const attendanceId = idParam && /^[1-9]\d*$/.test(idParam) ? Number(idParam) : null;
+  const dateParam = params.get('date');
+  const validDate = dateParam && /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(dateParam)
+    && this.dayKey(new Date(`${dateParam}T12:00:00`)) === dateParam && dateParam <= this.todayKey;
 
+  if (attendanceId && Number.isSafeInteger(attendanceId) && validDate) {
+    this.linkedAttendanceId = attendanceId;
+    this.linkedAttendanceDate = dateParam;
+    this.selectedAttendanceMonth.set(dateParam.slice(0, 7));
+    this.view.set('week');
+  }
+
+  this.selectedExportWeek.set(this.initialWeekIndex());
   this.load();
-
-  this.api.getAttachmentSettings().subscribe({
-    next: settings => {
-      this.attachmentMaxSizeMB.set(settings.maxSizeMB);
-      this.attachmentAllowedExtensions.set(settings.allowedExtensions);
-      this.attachmentSettingsLoaded.set(
-        Number.isFinite(settings.maxSizeMB) &&
-        settings.maxSizeMB > 0 &&
-        settings.allowedExtensions.length > 0
-      );
-    },
-    error: err => {
-      console.error('Failed to load attachment settings.', err);
-      this.attachmentSettingsLoaded.set(false);
-    }
-  });
 }
 
 
@@ -878,13 +805,13 @@ ngOnInit(): void {
 
     forkJoin({
 
-      trainers: this.api.getCompanyTrainers(this.companyId),
-
-      records: this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.todayKey),
+      trainers: this.api.getCompanyTrainers(this.companyId, this.todayKey),
+      directory: this.api.getCompanyTrainerDirectory(this.companyId).pipe(catchError(() => of([]))),
+      records: this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.loadToKey()),
 
     }).subscribe({
 
-      next: ({ trainers, records }) => {
+      next: ({ trainers, directory, records }) => {
 
         this.failedTrainerImages.set([]);
         this.trainers.set((trainers ?? []).map(trainer => ({
@@ -893,8 +820,12 @@ ngOnInit(): void {
             (trainer as CompanyTrainerDto & { ProfileImageUrl?: string | null }).ProfileImageUrl ?? null,
         })));
 
+        this.directoryTrainers.set(directory ?? []);
         this.records.set(records ?? []);
 
+        // Open the specific trainer excuse only after the correct date range
+        // has been fetched from the server. Never alter the saved attendance.
+        this.openLinkedExcuseIfAvailable(records ?? []);
         this.loading.set(false);
 
       },
@@ -914,6 +845,37 @@ ngOnInit(): void {
   }
 
 
+
+  private openLinkedExcuseIfAvailable(records: TrainerAttendanceDto[]): void {
+    const id = this.linkedAttendanceId;
+    const date = this.linkedAttendanceDate;
+    if (id === null || date === null) return;
+
+    const record = records.find(item =>
+      item.trainerAttendanceId === id && this.dateOf(item.date) === date);
+    if (!record) {
+      this.showNotice('error', 'تعذر العثور على سجل العذر المرتبط بهذا الإشعار.');
+      return;
+    }
+
+    const weekIndex = this.monthWeeks().findIndex(week =>
+      this.dayKey(week.start) <= date && date <= this.dayKey(week.end));
+    if (weekIndex >= 0) {
+      this.selectedExportWeek.set(weekIndex);
+      this.selectedWeek.set(weekIndex);
+    }
+    this.selectedTrainerId.set(record.trainerId);
+    this.view.set('week');
+    if (this.hasExcuse(record)) {
+      this.openWeeklyExcuse(record);
+    } else {
+      this.showNotice('error', 'سجل الحضور موجود، لكن لا يحتوي على عذر مرفق.');
+    }
+    // Opening the deep link is a one-time navigation action, not a new
+    // review/approval. Subsequent refreshes must not re-open the dialog.
+    this.linkedAttendanceId = null;
+    this.linkedAttendanceDate = null;
+  }
 
   setView(mode: ViewMode): void {
 
@@ -999,184 +961,6 @@ ngOnInit(): void {
 
 
 
-  // ----------------------------------------------------------------- notes
-
-
-
-  startNote(row: AttendanceRow): void {
-    if (!this.canManageAttendance()) return;
-
-    if (!row.record || row.record.status === 'Present' || this.isConfirmed()) return;
-
-    this.noteEditingId.set(row.trainer.trainerId);
-
-    this.noteDraft = row.record.reason ?? '';
-
-  }
-
-
-
-  saveNote(row: AttendanceRow): void {
-    if (!this.canManageAttendance()) return;
-
-    if (!row.record || row.record.status === 'Present' || this.isConfirmed()) return;
-
-
-
-    this.save(row.trainer.trainerId, {
-
-      status: row.record.status,
-
-      reason: this.noteDraft.trim() || null,
-
-      checkInTime: row.record.checkInTime ?? null,
-
-      checkOutTime: row.record.checkOutTime ?? null,
-
-    });
-
-    this.noteEditingId.set(null);
-
-  }
-
-
-
-  cancelNote(): void {
-
-    this.noteEditingId.set(null);
-
-  }
-
-
-
-  // ----------------------------------------------------------------- proof
-
-
-
-  onProofSelected(row: AttendanceRow, event: Event): void {
-    if (!this.canManageAttendance()) return;
-
-    const input = event.target as HTMLInputElement;
-
-    const file = input.files?.[0];
-
-    input.value = '';
-
-    if (!file || !row.record || row.record.status === 'Present' || this.isConfirmed()) return;
-
-
-if (!this.attachmentSettingsLoaded()) {
-  this.errorMessage.set(
-    'تعذر تحميل إعدادات المرفقات. أعيدي تحميل الصفحة.'
-  );
-  return;
-}
-
-const maxSizeMB = this.attachmentMaxSizeMB();
-const allowedExtensions = this.attachmentAllowedExtensions();
-
-const proofExtensions = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
-
-const extension = file.name
-  .split('.')
-  .pop()
-  ?.toLowerCase() ?? '';
-
-const allowedTypes = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'application/pdf'
-];
-
-if (
-  !allowedExtensions.includes(extension) ||
-  !proofExtensions.includes(extension) ||
-  !allowedTypes.includes(file.type.toLowerCase())
-) {
-  this.errorMessage.set(
-    'نوع الملف غير مدعوم. اختاري JPG أو PNG أو WEBP أو PDF.'
-  );
-  return;
-}
-
-if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
-  this.errorMessage.set(
-    `حجم الإثبات كبير جدًا. الحد الأقصى المسموح ${maxSizeMB} ميجابايت.`
-  );
-  return;
-}
-   
-
-    const attendanceId = row.record.trainerAttendanceId;
-
-    this.setSaving(row.trainer.trainerId, true);
-
-
-
-    this.api.uploadTrainerAttendanceProof(attendanceId, file).subscribe({
-
-      next: (response) => {
-
-        this.patchRecord(attendanceId, { excuseProofUrl: response.excuseProofUrl });
-
-        this.errorMessage.set(null);
-
-        this.setSaving(row.trainer.trainerId, false);
-
-      },
-
-      error: (err) => {
-
-        this.showError(err, 'تعذر رفع إثبات العذر.');
-
-        this.setSaving(row.trainer.trainerId, false);
-
-      },
-
-    });
-
-  }
-
-
-
-  removeProof(row: AttendanceRow): void {
-    if (!this.canManageAttendance()) return;
-
-    if (!row.record || row.record.status === 'Present' || this.isConfirmed()) return;
-
-
-
-    const attendanceId = row.record.trainerAttendanceId;
-
-    this.setSaving(row.trainer.trainerId, true);
-
-
-
-    this.api.removeTrainerAttendanceProof(attendanceId).subscribe({
-
-      next: () => {
-
-        this.patchRecord(attendanceId, { excuseProofUrl: null });
-
-        this.setSaving(row.trainer.trainerId, false);
-
-      },
-
-      error: (err) => {
-
-        this.showError(err, 'تعذر حذف إثبات العذر.');
-
-        this.setSaving(row.trainer.trainerId, false);
-
-      },
-
-    });
-
-  }
-
-
-
   // --------------------------------------------------------------- confirm
 
 
@@ -1187,6 +971,20 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
     if (!this.canManageAttendance()) return;
     if (!this.canConfirm()) return;
     if (!this.showConfirmPopover()) return;
+
+    const missingArrival = this.rows().find(row => row.record?.status === 'Late' && !row.record.checkInTime);
+    if (missingArrival) {
+      this.showConfirmPopover.set(false);
+      this.errorMessage.set('يجب تحديد وقت الوصول للمدرب المتأخر قبل تأكيد سجل الحضور.');
+      return;
+    }
+    const missingDeparture = this.rows().find(row => row.record?.status === 'EarlyLeave' && !row.record.checkOutTime);
+    if (missingDeparture) {
+      this.showConfirmPopover.set(false);
+      this.errorMessage.set('يجب تحديد وقت الانصراف المبكر قبل تأكيد سجل الحضور.');
+      return;
+    }
+
     this.showConfirmPopover.set(false);
     this.confirming.set(true);
     // Persist the default Present status only for trainers without a record.
@@ -1223,13 +1021,13 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
 
         // Reload so every record carries the confirmed flag from the backend.
 
-        this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.todayKey).subscribe({
+        this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.loadToKey()).subscribe({
 
           next: (records) => {
 
             this.records.set(records ?? []);
 
-            this.errorMessage.set(null);
+            this.showSuccess('تم تأكيد سجل اليوم بنجاح.');
 
             this.confirming.set(false);
 
@@ -1268,9 +1066,7 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
 
 
   dismissError(): void {
-
-    this.errorMessage.set(null);
-
+    this.dismissNotice();
   }
 
 
@@ -1382,7 +1178,7 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
 
           });
 
-          this.errorMessage.set(null);
+          this.showSuccess('تم حفظ حالة الحضور بنجاح.');
 
           this.setSaving(trainerId, false);
 
@@ -1445,11 +1241,7 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
   raw.includes('mb') ||
   error?.status === 413
 ) {
-  const maxSizeMB = this.attachmentMaxSizeMB();
-
-  message = maxSizeMB !== null
-    ? `حجم الإثبات كبير جدًا. الحد الأقصى المسموح ${maxSizeMB} ميجابايت.`
-    : 'حجم الإثبات يتجاوز الحد المسموح في إعدادات النظام.';
+  message = 'حجم الملف يتجاوز الحد المسموح في إعدادات النظام.';
 } else if (raw.includes('file type') || raw.includes('invalid file') || raw.includes('only jpg') || raw.includes('extension')) {
       message = 'نوع الملف غير مدعوم. اختاري صورة JPG أو PNG أو WEBP أو ملف PDF.';
     } else if (raw.includes('proof file is required') || raw.includes('empty file')) {
@@ -1467,7 +1259,7 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
     } else if (error?.status === 500) {
       message = 'حدث خطأ في الخادم أثناء معالجة الطلب. حاولي لاحقًا.';
     }
-    this.errorMessage.set(message);
+    this.showNotice('error', message);
   }
 
   private recordKey(trainerId: number, date: string): string {
@@ -1520,20 +1312,18 @@ if (maxSizeMB === null || file.size > maxSizeMB * 1024 * 1024) {
 
 
 
-  /** Earliest day needed by any view: the first of the month or 6 days ago, whichever is earlier. */
-
+  /** Fetch both the selected historical period and today's record for the daily tab. */
   private loadFromKey(): string {
+    const selectedFirst = `${this.selectedAttendanceMonth()}-01`;
+    const today = new Date();
+    const currentWeekStart = new Date(today);
+    currentWeekStart.setDate(today.getDate() - today.getDay());
+    const currentMonthFirst = `${this.maxAttendanceMonth}-01`;
+    return [selectedFirst, currentMonthFirst, this.dayKey(currentWeekStart)].sort()[0];
+  }
 
-    const monthStart = new Date();
-
-    monthStart.setDate(1);
-
-    const weekStart = new Date();
-
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-
-    return this.dayKey(monthStart < weekStart ? monthStart : weekStart);
-
+  private loadToKey(): string {
+    return this.todayKey;
   }
 
 }

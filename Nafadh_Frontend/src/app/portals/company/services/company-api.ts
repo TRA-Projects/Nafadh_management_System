@@ -12,6 +12,8 @@ import {
   CompanyDto,
   CompanySupervisorDto,
   CompanyDashboardDto,
+  CompanyDashboardTraineeDto,
+  CompanyWeightedEvaluationDto,
   ConversationDetailDto,
   ConversationListItemDto,
   ConversationMessageDto,
@@ -81,6 +83,14 @@ export interface CompanyQuizResult {
   status: string;
 }
 
+/** Temporary, date-filtered Company performance (never the final batch grade). */
+export interface CompanyDashboardPeriodPerformanceDto {
+  topPerformers: CompanyDashboardTraineeDto[];
+  topPerformersCount: number;
+  topPerformersAveragePercent: number;
+  atRiskTrainees: CompanyDashboardTraineeDto[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class CompanyApi {
   private readonly http = inject(HttpClient);
@@ -93,6 +103,28 @@ export class CompanyApi {
   getDashboard(companyId: number): Observable<CompanyDashboardDto> {
     return this.http.get<CompanyDashboardDto>(
       `${this.base}/CompanyDashboard/${companyId}`
+    );
+  }
+
+  /** Same period dashboard evaluation as Admin, restricted server-side to this company. */
+  getDashboardPeriodPerformance(
+    companyId: number,
+    startDate: string | null,
+    endDate: string | null
+  ): Observable<CompanyDashboardPeriodPerformanceDto> {
+    let params = new HttpParams();
+    if (startDate) params = params.set('startDate', startDate);
+    if (endDate) params = params.set('endDate', endDate);
+    return this.http.get<CompanyDashboardPeriodPerformanceDto>(
+      `${this.base}/CompanyDashboard/${companyId}/period-performance`,
+      { params }
+    );
+  }
+
+  /** Final weighted classifications from the same calculator as Admin reports. */
+  getCompanyWeightedEvaluations(companyId: number): Observable<CompanyWeightedEvaluationDto[]> {
+    return this.http.get<CompanyWeightedEvaluationDto[]>(
+      `${this.base}/CompanyDashboard/${companyId}/weighted-results`
     );
   }
 
@@ -136,12 +168,12 @@ export class CompanyApi {
     );
   }
 
+  // Dedicated company endpoint: authenticated supervisor, company-scoped
+  // administrative warnings only. Trainee warnings stay in Dashboard.
   getCompanyWarnings(companyId: number): Observable<WarningDto[]> {
-    const params = new HttpParams()
-      .set('scope', 'Company')
-      .set('companyId', companyId);
-
-    return this.http.get<WarningDto[]>(`${this.base}/Warning`, { params });
+    return this.http.get<WarningDto[]>(
+      `${this.base}/CompanyAdministrativeWarnings/${companyId}`
+    );
   }
 
   getPlatformAnnouncements(): Observable<AnnouncementDto[]> {
@@ -182,8 +214,22 @@ export class CompanyApi {
     );
   }
 
+  getTrainerProfile(trainerId: number): Observable<{
+    email?: string | null;
+    phone?: string | null;
+    experienceYears?: number | null;
+    biography?: string | null;
+  }> {
+    return this.http.get<{
+      email?: string | null;
+      phone?: string | null;
+      experienceYears?: number | null;
+      biography?: string | null;
+    }>(`${this.base}/Trainer/${trainerId}`);
+  }
+
   addTrainer(dto: unknown): Observable<unknown> {
-    return this.http.post<unknown>(`${this.base}/Trainer`, dto);
+    return this.http.post<unknown>(`${this.base}/company-staff/trainers`, dto);
   }
   // ============================================================
   // Trainees
@@ -279,6 +325,10 @@ export class CompanyApi {
     return this.http.get<CompanySupervisorDto[]>(
       `${this.base}/CompanySupervisor/company/${companyId}`
     );
+  }
+
+  registerCompanySupervisor(dto: unknown): Observable<unknown> {
+    return this.http.post<unknown>(`${this.base}/company-staff/supervisors`, dto);
   }
 
   addSupervisor(dto: unknown): Observable<unknown> {
@@ -556,7 +606,7 @@ export class CompanyApi {
     reply: string
   ): Observable<unknown> {
     return this.http.put(
-      `${this.base}/Warning/${warningId}/reply?companyId=${companyId}`,
+      `${this.base}/CompanyAdministrativeWarnings/${companyId}/${warningId}/reply`,
       { reply }
     );
   }
@@ -818,20 +868,55 @@ getAttachmentSettings(): Observable<{
     }))
   );
 }
-  getCompanyTrainers(companyId: number): Observable<CompanyTrainerDto[]> {
+  // Staff listing includes trainers before and after an active training period.
+  // DailyAttendance continues using getCompanyTrainers(), which is date-restricted.
+  getCompanyTrainerDirectory(companyId: number): Observable<CompanyTrainerDto[]> {
     return this.http.get<CompanyTrainerDto[]>(
-      `${this.base}/TrainerAttendance/company/${companyId}/trainers`
+      `${this.base}/CompanyCoursePlan/company/${companyId}/trainers/directory`
+    );
+  }
+
+  getCompanyTrainers(companyId: number, date?: string): Observable<CompanyTrainerDto[]> {
+    return this.http.get<CompanyTrainerDto[]>(
+      `${this.base}/TrainerAttendance/company/${companyId}/trainers`,
+      { params: date ? new HttpParams().set('date', date) : undefined }
     );
   }
 
   getTrainerAttendance(
     companyId: number,
     from: string,
-    to: string
+    to: string,
+    trainerId?: number
   ): Observable<TrainerAttendanceDto[]> {
+    let params = new HttpParams().set('from', from).set('to', to);
+    if (trainerId !== undefined) {
+      params = params.set('trainerId', String(trainerId));
+    }
+
     return this.http.get<TrainerAttendanceDto[]>(
       `${this.base}/TrainerAttendance/company/${companyId}`,
-      { params: { from, to } }
+      { params }
+    );
+  }
+
+  saveSupervisorTrainerEvaluation(supervisorId: number, trainerId: number, rating: number, comment: string): Observable<unknown> {
+    return this.http.put(
+      `${this.base}/CompanySupervisor/${supervisorId}/trainer-evaluations/${trainerId}`,
+      { rating, comment }
+    );
+  }
+
+  getSupervisorTrainerEvaluations(supervisorId: number): Observable<{
+    trainerId: number;
+    rating: number;
+    comment?: string | null;
+    evaluatedAt?: string;
+    updatedAt?: string;
+    createdAt?: string;
+  }[]> {
+    return this.http.get<{ trainerId: number; rating: number; comment?: string | null; evaluatedAt?: string; updatedAt?: string; createdAt?: string }[]>(
+      `${this.base}/CompanySupervisor/${supervisorId}/trainer-evaluations`
     );
   }
 
@@ -863,6 +948,17 @@ getAttachmentSettings(): Observable<{
     );
   }
 
+  /** Only a company supervisor can accept/reject a trainer-submitted excuse. */
+  reviewTrainerAttendanceExcuse(
+    attendanceId: number,
+    decision: 'Approved' | 'Rejected'
+  ): Observable<TrainerAttendanceDto> {
+    return this.http.put<TrainerAttendanceDto>(
+      `${this.base}/TrainerAttendance/${attendanceId}/excuse-review`,
+      { decision }
+    );
+  }
+
   confirmTrainerAttendanceDay(
     dto: TrainerAttendanceConfirmDto
   ): Observable<{ confirmedRecords: number }> {
@@ -885,7 +981,7 @@ getAttachmentSettings(): Observable<{
     return this.http.get<CompanyDto>(`${this.portalBase}/company/${id}`);
   }
   updatePortalCompanyContact(id: number, dto: { phone: string; email: string }): Observable<{ phone: string; email: string }> {
-    return this.http.patch<{ phone: string; email: string }>(`${this.portalBase}/company/${id}/contact`, { phone: dto.phone, email: dto.email });
+    return this.http.patch<{ phone: string; email: string }>(`${this.base}/Company/${id}/contact`, { phone: dto.phone, email: dto.email });
   }
   getPortalBranches(id: number): Observable<CompanyBranchDto[]> {
     return this.http.get<CompanyBranchDto[]>(`${this.portalBase}/company/${id}/branches`);

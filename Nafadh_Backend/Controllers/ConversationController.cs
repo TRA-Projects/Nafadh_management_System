@@ -16,11 +16,19 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly IConversationService _service;
         private readonly IConversationRepository _repository;
+        private readonly INotificationService _notificationService;
+        private readonly ILogger<ConversationController> _logger;
 
-        public ConversationController(IConversationService service, IConversationRepository repository)
+        public ConversationController(
+            IConversationService service,
+            IConversationRepository repository,
+            INotificationService notificationService,
+            ILogger<ConversationController> logger)
         {
             _service = service;
             _repository = repository;
+            _notificationService = notificationService;
+            _logger = logger;
         }
 
         private bool TryGetUserId(out int userId) =>
@@ -147,6 +155,32 @@ namespace Nafadh_Backend.Controllers
             {
                 var message = await _service.AddMessageAsync(id, dto);
                 message.SenderName ??= User.FindFirstValue(ClaimTypes.Name) ?? User.Identity?.Name;
+
+                // Company threads are addressed to the authority. An authority reply must
+                // notify the company user who owns the thread, not the sender or a
+                // client-provided receiver ID. Notify only after the message is saved.
+                if (ticket.Type == NFD_ConversationType.CompanyThread &&
+                    IsAdmin && ticket.UserId > 0 && ticket.UserId != userId)
+                {
+                    try
+                    {
+                        await _notificationService.CreateAsync(new CreateNotificationDTO
+                        {
+                            UserId = ticket.UserId,
+                            Title = "رسالة جديدة من الإدارة",
+                            Message = $"لديك رد جديد على المحادثة: {ticket.Subject}",
+                            RelatedEntity = $"Conversation:{id}"
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        // Message persistence succeeded. Do not return a failed send,
+                        // which could cause a client retry and a duplicate message.
+                        _logger.LogError(ex,
+                            "Failed to create company message notification for conversation {ConversationId}", id);
+                    }
+                }
+
                 return Ok(message);
             }
             catch (KeyNotFoundException)

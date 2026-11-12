@@ -87,7 +87,23 @@ export class TraineeNotifications implements OnInit {
   error =
     signal<string | null>(null);
 
+selectedNotification = signal<NotificationDto | null>(null);
 
+expandedNotificationId: number | null = null;
+
+toggleNotificationDetails(notification: NotificationDto): void {
+  const id = notification.notificationId;
+
+  if (this.expandedNotificationId === id) {
+    this.expandedNotificationId = null;
+    return;
+  }
+
+  this.expandedNotificationId = id;
+
+  // Keep the existing mark-as-read behavior
+  this.markRead(notification);
+}
   // =========================================================
   // Filter notifications
   // =========================================================
@@ -513,6 +529,19 @@ export class TraineeNotifications implements OnInit {
   // =========================================================
   // Mark one notification as read
   // =========================================================
+// Open notification details for any notification type
+openNotificationDetails(notification: NotificationDto): void {
+  this.selectedNotification.set(notification);
+
+  // Preserve existing read-status behavior
+  this.markRead(notification);
+}
+
+// Close notification details
+closeNotificationDetails(): void {
+  this.selectedNotification.set(null);
+}
+
 
   markRead(
     notification: NotificationDto

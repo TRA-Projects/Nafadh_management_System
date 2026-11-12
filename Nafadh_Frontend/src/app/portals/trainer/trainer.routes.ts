@@ -15,6 +15,7 @@ export const TRAINER_ROUTES: Routes = [
       {path: 'live-session-room/:sessionId',loadComponent: () =>import('./pages/live-session-room/live-session-room').then(m => m.LiveSessionRoom)},
       {path: 'live-session-attendance/:sessionId',loadComponent: () =>import('./pages/live-attendance/live-attendance').then((m) => m.LiveAttendanceComponent),},
       {path: 'attendance', loadComponent: () => import('./pages/attendance/attendance').then((m) => m.TrainerAttendance) },
+      { path: 'trainer-attendance', loadComponent: () => import('./pages/trainer-attendance/trainer-attendance').then((m) => m.TrainerAttendance) },
       {path: 'live-session-polls/:sessionId',loadComponent: () => import('./pages/live-polls/live-poll').then(m => m.TrainerLivePollsComponent) },
       { path: 'tasks', loadComponent: () => import('./pages/tasks/tasks').then((m) => m.TrainerTasks) },
       { path: 'trainees', loadComponent: () => import('./pages/trainees/trainees').then((m) => m.TrainerTrainees) },

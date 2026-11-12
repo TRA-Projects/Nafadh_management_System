@@ -8,6 +8,10 @@ namespace Nafadh_Backend.DTOs
         [Required]
         public string QuestionText { get; set; } = string.Empty;
 
+        [Range(1, int.MaxValue,
+            ErrorMessage = "يجب اختيار الوحدة.")]
+        public int ModuleId { get; set; }
+
         public NFD_QuizQuestionType QuestionType { get; set; }
 
         public NFD_QuestionDifficulty Difficulty { get; set; }

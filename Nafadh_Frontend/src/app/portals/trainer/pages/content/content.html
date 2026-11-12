@@ -37,29 +37,10 @@
 
     <div class="header-actions">
 
-      <button
-        type="button"
-        class="btn primary"
-        (click)="openCreateModal('module')"
-        [disabled]="!batch()"
-      >
-        <i class="fa-solid fa-plus"></i>
-        <span>إنشاء وحدة</span>
-      </button>
+     
 
 
-      <button
-        type="button"
-        class="btn secondary"
-        (click)="openCreateModal('lesson')"
-        [disabled]="
-          !batch() ||
-          activeModules().length === 0
-        "
-      >
-        <i class="fa-solid fa-file-circle-plus"></i>
-        <span>إنشاء درس</span>
-      </button>
+    
 
 
       <button
@@ -533,9 +514,20 @@
                       {{ module.title }}
                     </strong>
 
-                    <span class="module-active-badge">
-                      نشطة
-                    </span>
+                   <span
+  class="module-active-badge"
+  [class.module-incomplete-badge]="
+    getLessonsForModule(module.moduleId).length === 0 ||
+    getModuleMaterialCount(module.moduleId) === 0
+  "
+>
+  {{
+    getLessonsForModule(module.moduleId).length > 0 &&
+    getModuleMaterialCount(module.moduleId) > 0
+      ? 'نشطة'
+      : 'غير مكتملة'
+  }}
+</span>
 
                   </div>
 
@@ -560,6 +552,16 @@
 
 
               <div class="module-header-tools">
+                <button
+  type="button"
+  class="module-edit-btn"
+  (click)="openEditModuleModal(module)"
+  [disabled]="saving()"
+  title="تعديل الوحدة"
+>
+  <i class="fa-solid fa-pen-to-square"></i>
+  <span>تعديل</span>
+</button>
 
                 <button
                   type="button"
@@ -616,7 +618,36 @@
                     track lesson.lessonId
                   ) {
 
-                    <div class="program-lesson-row">
+                   
+<div class="program-lesson-row">
+
+  <div class="lesson-actions">
+
+    <button
+      type="button"
+      class="lesson-edit-btn"
+      (click)="openEditLessonModal(lesson)"
+      [disabled]="saving()"
+      title="تعديل الدرس"
+    >
+      <i class="fa-solid fa-pen-to-square"></i>
+      <span>تعديل</span>
+    </button>
+
+    <button
+      type="button"
+      class="lesson-delete-btn"
+      (click)="openDeleteLessonModal(lesson)"
+      [disabled]="saving()"
+      title="حذف الدرس"
+    >
+      <i class="fa-solid fa-trash"></i>
+      <span>حذف</span>
+    </button>
+
+  </div>
+
+
 
                       <div class="program-lesson-top">
 
@@ -1468,7 +1499,203 @@
       }
 
     </div>
-
-  </div>
+    </div>
 
 }
+
+<!-- EDIT MODULE MODAL -->
+@if (showEditModuleModal()) {
+  <div
+    class="modal-bg"
+    (click)="!saving() && showEditModuleModal.set(false)"
+  >
+    <div
+      class="modal-box"
+      (click)="$event.stopPropagation()"
+    >
+
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-title-icon">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </div>
+          <div>
+            <h3>تعديل الوحدة</h3>
+            <p>يمكنك تعديل اسم الوحدة التدريبية.</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="showEditModuleModal.set(false)"
+          [disabled]="saving()"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <label>اسم الوحدة</label>
+
+      <input
+        type="text"
+        class="form-control"
+        [(ngModel)]="editModuleTitle"
+        placeholder="أدخلي اسم الوحدة"
+      />
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn cancel"
+          (click)="showEditModuleModal.set(false)"
+          [disabled]="saving()"
+        >
+          إلغاء
+        </button>
+
+        <button
+          type="button"
+          class="btn primary"
+          (click)="saveEditModule()"
+          [disabled]="saving() || !editModuleTitle.trim()"
+        >
+          @if (saving()) {
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            جاري الحفظ...
+          } @else {
+            <i class="fa-solid fa-check"></i>
+            حفظ التعديلات
+          }
+        </button>
+      </div>
+
+    </div>
+    
+  </div>
+}
+<!-- EDIT LESSON MODAL -->
+@if (showEditLessonModal()) {
+  <div
+    class="modal-bg"
+    (click)="!saving() && showEditLessonModal.set(false)"
+  >
+    <div
+      class="modal-box"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-title-icon">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </div>
+          <div>
+            <h3>تعديل الدرس</h3>
+            <p>يمكنك تعديل اسم الدرس ومحتواه.</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="showEditLessonModal.set(false)"
+          [disabled]="saving()"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <label>اسم الدرس</label>
+      <input
+        type="text"
+        class="form-control"
+        [(ngModel)]="editLessonTitle"
+        placeholder="أدخلي اسم الدرس"
+      />
+
+      <label>محتوى الدرس</label>
+      <textarea
+        class="form-control"
+        [(ngModel)]="editLessonContentBody"
+        placeholder="أدخلي محتوى الدرس"
+        rows="5"
+      ></textarea>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn cancel"
+          (click)="showEditLessonModal.set(false)"
+          [disabled]="saving()"
+        >
+          إلغاء
+        </button>
+
+        <button
+          type="button"
+          class="btn primary"
+          (click)="saveEditLesson()"
+          [disabled]="saving() || !editLessonTitle.trim()"
+        >
+          @if (saving()) {
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            جاري الحفظ...
+          } @else {
+            <i class="fa-solid fa-check"></i>
+            حفظ التعديلات
+          }
+        </button>
+     
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete Lesson Confirmation Modal -->
+
+@if (showDeleteLessonModal()) {
+  <div class="modal-bg">
+    <div class="modal-box">
+
+      <h3>تأكيد حذف الدرس</h3>
+
+      <p>
+        هل أنت متأكد من حذف الدرس
+        <strong>{{ lessonToDelete()?.title }}</strong>؟
+      </p>
+
+      <p>
+        لا يمكن التراجع عن الحذف.
+        لا يمكن حذف الدرس إذا كان يحتوي على مواد تعليمية
+        أو تقييمات مرتبطة به.
+      </p>
+
+      @if (errorMessage()) {
+        <p class="error-message">
+          {{ errorMessage() }}
+        </p>
+      }
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          (click)="closeDeleteLessonModal()"
+          [disabled]="saving()"
+        >
+          إلغاء
+        </button>
+
+        <button
+          type="button"
+          class="lesson-delete-btn"
+          (click)="confirmDeleteLesson()"
+          [disabled]="saving()"
+        >
+          {{ saving() ? 'جارٍ الحذف...' : 'تأكيد الحذف' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+

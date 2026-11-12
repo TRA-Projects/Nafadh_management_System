@@ -45,8 +45,8 @@
       </div>
 
       <div class="header-text">
-        <h1>إدارة الإنذارات</h1>
-        <p>متابعة الإنذارات الواردة إلى الشركة ومراجعة تفاصيلها وحالتها.</p>
+        <h1>الإنذارات الإدارية للشركة</h1>
+        <p>متابعة الإنذارات الرسمية الموجهة إلى الشركة من الإدارة، مع الاطلاع على حالتها والرد عليها.</p>
       </div>
     </div>
 
@@ -165,7 +165,7 @@
 
       <div class="filter-field">
         <label for="warningStatus">الحالة</label>
-        <app-catalog-picker caption="حالة الإنذار" [options]="warningStatusChoices" [value]="selectedStatus" (valueChange)="selectedStatus = $event" />
+        <app-catalog-picker inputId="warningStatus" caption="حالة الإنذار" [options]="warningStatusChoices" [value]="selectedStatus" (valueChange)="selectedStatus = $event" />
       </div>
 
       <button
@@ -275,7 +275,7 @@
           <p>
             {{
               warnings.length === 0
-                ? 'ستظهر هنا الإنذارات التي يرسلها الأدمن إلى الشركة.'
+                ? 'ستظهر هنا الإنذارات الإدارية التي تصدرها الإدارة إلى الشركة.'
                 : 'جرّبي تغيير كلمات البحث أو مسح الفلاتر.'
             }}
           </p>

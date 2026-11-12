@@ -1,5 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
+using Nafadh_Backend.Enums;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -12,29 +13,79 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // A trainer belongs to the company when they teach a batch that the company has enrollments in.
-        // NOTE: assumes NFD_Enrollment has CompanyId + BatchId and NFD_BatchTrainer has TrainerId + BatchId.
-        private IQueryable<NFD_Trainer> CompanyTrainersQuery(int companyId)
+        // Only trainers teaching an ongoing company batch, plan or stage are eligible
+        // for attendance on the requested day. CompanyId is authoritative when set;
+        // a NULL legacy CompanyId may be resolved from a company-specific assignment.
+        // Historical attendance records are queried independently by GetRangeAsync.
+        private IQueryable<NFD_Trainer> EligibleForAttendance(int companyId, DateTime date)
         {
-            var batchIds = _context.NFD_Enrollments
-                .Where(e => e.CompanyId == companyId)
-                .Select(e => e.BatchId);
+            var day = date.Date;
+            var nextDay = day.AddDays(1);
 
-            return _context.NFD_Trainers
-                .Where(t => t.BatchTrainers.Any(bt => batchIds.Contains(bt.BatchId)));
+            var ongoingBatchIds = _context.NFD_Batches
+                .Where(b => b.Status == NFD_BatchStatus.Ongoing &&
+                            b.StartDate < nextDay && b.EndDate >= day &&
+                            (b.CompanyId == companyId ||
+                             (b.CompanyId == null && _context.NFD_Enrollments
+                                  .Any(e => e.BatchId == b.BatchId && e.CompanyId == companyId))))
+                .Select(b => b.BatchId);
+
+            var ongoingPlans = _context.NFD_CoursePlans
+                .Where(p => p.CompanyId == companyId &&
+                            p.ApprovalStatus == NFD_CoursePlanApprovalStatus.Approved &&
+                            p.ExecutionStatus == NFD_CoursePlanExecutionStatus.InProgress &&
+                            p.StartDate < nextDay && p.EndDate >= day);
+
+            var assignedToOngoingPlan = _context.NFD_CoursePlanTrainers
+                .Where(a => ongoingPlans.Any(p => p.PlanId == a.PlanId))
+                .Select(a => a.TrainerId);
+
+            var assignedToOngoingStage = _context.NFD_CoursePlanStageTrainers
+                .Where(a => a.Stage.Status == NFD_CoursePlanProgressStatus.InProgress &&
+                            a.Stage.StartDate < nextDay && a.Stage.EndDate >= day &&
+                            ongoingPlans.Any(p => p.PlanId == a.Stage.PlanId))
+                .Select(a => a.TrainerId);
+
+            var assignedLegacyStage = _context.NFD_CoursePlanStages
+                .Where(st => st.TrainerId.HasValue &&
+                             st.Status == NFD_CoursePlanProgressStatus.InProgress &&
+                             st.StartDate < nextDay && st.EndDate >= day &&
+                             ongoingPlans.Any(p => p.PlanId == st.PlanId))
+                .Select(st => st.TrainerId!.Value);
+
+            // An item-only trainer is eligible only while that assigned item is active
+            // within an in-progress stage/plan, and never gains whole-plan assignment.
+            var assignedToOngoingItem = _context.NFD_CoursePlanItems
+                .Where(i => i.TrainerId.HasValue &&
+                            i.Status == NFD_CoursePlanProgressStatus.InProgress &&
+                            i.Stage.Status == NFD_CoursePlanProgressStatus.InProgress &&
+                            i.Stage.StartDate < nextDay && i.Stage.EndDate >= day &&
+                            i.DueDate >= day &&
+                            ongoingPlans.Any(p => p.PlanId == i.Stage.PlanId))
+                .Select(i => i.TrainerId!.Value);
+
+            // Require an actual assignment, not mere company membership.
+            return _context.NFD_Trainers.Where(t =>
+                t.Status == NFD_TrainerStatus.Active &&
+                (t.CompanyId == companyId || t.CompanyId == null) &&
+                (t.BatchTrainers.Any(bt => ongoingBatchIds.Contains(bt.BatchId)) ||
+                 assignedToOngoingPlan.Contains(t.TrainerId) ||
+                 assignedToOngoingStage.Contains(t.TrainerId) ||
+                 assignedLegacyStage.Contains(t.TrainerId) ||
+                 assignedToOngoingItem.Contains(t.TrainerId)));
         }
 
-        public async Task<List<NFD_Trainer>> GetCompanyTrainersAsync(int companyId)
+        public async Task<List<NFD_Trainer>> GetCompanyTrainersAsync(int companyId, DateTime date)
         {
-            return await CompanyTrainersQuery(companyId)
+            return await EligibleForAttendance(companyId, date)
                 .Include(t => t.User)
                 .OrderBy(t => t.TrainerId)
                 .ToListAsync();
         }
 
-        public async Task<bool> TrainerBelongsToCompanyAsync(int companyId, int trainerId)
+        public async Task<bool> TrainerBelongsToCompanyAsync(int companyId, int trainerId, DateTime date)
         {
-            return await CompanyTrainersQuery(companyId).AnyAsync(t => t.TrainerId == trainerId);
+            return await EligibleForAttendance(companyId, date).AnyAsync(t => t.TrainerId == trainerId);
         }
 
         public async Task<List<NFD_TrainerAttendance>> GetRangeAsync(int companyId, DateTime from, DateTime to, int? trainerId)
@@ -99,7 +150,17 @@ namespace Nafadh_Backend.Repositories
                 .Include(a => a.Trainer).ThenInclude(t => t.User)
                 .FirstOrDefaultAsync(a => a.TrainerAttendanceId == id);
         }
-
+        public async Task<List<NFD_TrainerAttendance>> GetByTrainerIdAsync(int trainerId)
+        {
+            return await _context.Set<NFD_TrainerAttendance>()
+                .AsNoTracking()
+                .Include(a => a.Trainer)
+                    .ThenInclude(t => t.User)
+                .Where(a => a.TrainerId == trainerId)
+                .OrderByDescending(a => a.Date)
+                .ThenByDescending(a => a.TrainerAttendanceId)
+                .ToListAsync();
+        }
         public async Task AddAsync(NFD_TrainerAttendance attendance)
         {
             await _context.Set<NFD_TrainerAttendance>().AddAsync(attendance);

@@ -76,7 +76,9 @@ namespace Nafadh_Backend.Controllers
                     Price = p.Price,
                     Status = p.Status.ToString(),
                     ApprovedForCompany = approvedProgramIds.Contains(p.ProgramId),
-                    BatchCount = p.Batches.Count,
+                    // A company's program approval does not confer ownership of every batch.
+                    BatchCount = p.Batches.Count(b => b.CompanyId == companyId ||
+                        b.Enrollments.Any(e => e.CompanyId == companyId)),
                     EnrollmentCount = p.Batches
                         .SelectMany(b => b.Enrollments)
                         .Count(e => e.CompanyId == companyId),
@@ -86,16 +88,23 @@ namespace Nafadh_Backend.Controllers
                     // "Used" = seats currently occupied (InProgress), the same rule the
                     // Company Dashboard uses. Completed / dropped / failed enrollments
                     // no longer occupy a seat (they stay in EnrollmentCount).
-                    AllocatedCapacity = p.Batches.Sum(b => b.Capacity),
+                    AllocatedCapacity = p.Batches
+                        .Where(b => b.CompanyId == companyId || b.Enrollments.Any(e => e.CompanyId == companyId))
+                        .Sum(b => b.Capacity),
                     UsedCapacity = p.Batches.SelectMany(b => b.Enrollments)
                         .Count(e => e.CompanyId == companyId && e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress),
-                    RemainingCapacity = Math.Max(0, (int)p.Batches.Sum(b => b.Capacity)
+                    RemainingCapacity = Math.Max(0, (int)p.Batches
+                        .Where(b => b.CompanyId == companyId || b.Enrollments.Any(e => e.CompanyId == companyId))
+                        .Sum(b => b.Capacity)
                         - p.Batches.SelectMany(b => b.Enrollments)
                             .Count(e => e.CompanyId == companyId && e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress)),
-                    UtilizationPercentage = p.Batches.Sum(b => b.Capacity) > 0
+                    UtilizationPercentage = p.Batches
+                        .Where(b => b.CompanyId == companyId || b.Enrollments.Any(e => e.CompanyId == companyId))
+                        .Sum(b => b.Capacity) > 0
                         ? Math.Round((decimal)p.Batches.SelectMany(b => b.Enrollments)
                             .Count(e => e.CompanyId == companyId && e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress) * 100m
-                            / p.Batches.Sum(b => b.Capacity), 1)
+                            / p.Batches.Where(b => b.CompanyId == companyId ||
+                                b.Enrollments.Any(e => e.CompanyId == companyId)).Sum(b => b.Capacity), 1)
                         : 0m,
                     Departments = p.Batches
                         .SelectMany(b => b.Enrollments)
@@ -107,7 +116,7 @@ namespace Nafadh_Backend.Controllers
                 })
                 .ToListAsync();
 
-            var openSeats = await LoadOpenSeatsAsync(programs.Select(p => p.ProgramId).ToList());
+            var openSeats = await LoadOpenSeatsAsync(companyId, programs.Select(p => p.ProgramId).ToList());
             foreach (var program in programs)
                 ApplyOpenSeats(program, openSeats);
 
@@ -151,7 +160,8 @@ namespace Nafadh_Backend.Controllers
 
             var batches = await _context.NFD_Batches
                 .AsNoTracking()
-                .Where(b => b.ProgramId == programId)
+                .Where(b => b.ProgramId == programId &&
+                    (b.CompanyId == companyId || b.Enrollments.Any(e => e.CompanyId == companyId)))
                 .OrderBy(b => b.StartDate)
                 .Select(b => new CompanyProgramBatchDTO
                 {
@@ -161,9 +171,115 @@ namespace Nafadh_Backend.Controllers
                     EndDate = b.EndDate,
                     Capacity = b.Capacity,
                     CompanyEnrollmentCount = b.Enrollments.Count(e => e.CompanyId == companyId),
-                    Status = b.Status.ToString()
+                    Status = b.Status.ToString(),
+                    AttendanceWeight = b.AttendanceWeight,
+                    QuizzesWeight = b.QuizzesWeight,
+                    TasksWeight = b.TasksWeight,
+                    ProjectsWeight = b.ProjectsWeight,
+                    ExcellentMinScore = b.ExcellentMinScore,
+                    ExcellentMinAttendance = b.ExcellentMinAttendance,
+                    VeryGoodMinScore = b.VeryGoodMinScore,
+                    VeryGoodMinAttendance = b.VeryGoodMinAttendance,
+                    GoodMinScore = b.GoodMinScore,
+                    AtRiskMinAttendance = b.AtRiskMinAttendance
                 })
                 .ToListAsync();
+
+            // Load only the actual batch assignments and plans owned by the current company.
+            // A program may have unrelated batches/plans owned by other companies.
+            var visibleBatchIds = batches.Select(x => x.BatchId).ToList();
+            if (visibleBatchIds.Count > 0)
+            {
+                var batchTrainers = await _context.NFD_BatchTrainers
+                    .AsNoTracking()
+                    .Where(bt => visibleBatchIds.Contains(bt.BatchId) &&
+                        (bt.Trainer.CompanyId == companyId ||
+                         (bt.Trainer.CompanyId == null && bt.Batch.CompanyId == companyId)))
+                    .Select(bt => new
+                    {
+                        bt.BatchId,
+                        bt.TrainerId,
+                        TrainerName = bt.Trainer.User.FullName
+                    })
+                    .ToListAsync();
+                foreach (var link in batchTrainers)
+                {
+                    batches.First(x => x.BatchId == link.BatchId).Trainers.Add(new CompanyProgramTrainerAssignmentDTO
+                    {
+                        TrainerId = link.TrainerId,
+                        TrainerName = link.TrainerName,
+                        Scope = "Batch"
+                    });
+                }
+
+                var plans = await _context.NFD_CoursePlans.AsNoTracking()
+                    .Where(p => p.CompanyId == companyId && p.ProgramId == programId &&
+                        p.BatchId.HasValue && visibleBatchIds.Contains(p.BatchId.Value))
+                    .Include(p => p.Trainers).ThenInclude(pt => pt.Trainer).ThenInclude(t => t.User)
+                    .Include(p => p.Stages).ThenInclude(st => st.Trainer).ThenInclude(t => t!.User)
+                    .Include(p => p.Stages).ThenInclude(st => st.Trainers).ThenInclude(stt => stt.Trainer).ThenInclude(t => t.User)
+                    .Include(p => p.Stages).ThenInclude(st => st.Items).ThenInclude(i => i.Trainer).ThenInclude(t => t!.User)
+                    .AsSplitQuery().ToListAsync();
+                foreach (var plan in plans)
+                {
+                    var batchDto = batches.First(x => x.BatchId == plan.BatchId);
+                    var planDto = new CompanyProgramPlanDTO
+                    {
+                        PlanId = plan.PlanId, Title = plan.Title, DurationHours = plan.DurationHours,
+                        StartDate = plan.StartDate, EndDate = plan.EndDate,
+                        ApprovalStatus = plan.ApprovalStatus.ToString(),
+                        ExecutionStatus = plan.ExecutionStatus.ToString()
+                    };
+                    foreach (var pt in plan.Trainers.Where(pt => pt.Trainer.CompanyId == companyId || pt.Trainer.CompanyId == null))
+                        batchDto.Trainers.Add(new CompanyProgramTrainerAssignmentDTO
+                        {
+                            TrainerId = pt.TrainerId,
+                            TrainerName = pt.Trainer.User.FullName,
+                            Scope = "Plan", PlanId = plan.PlanId
+                        });
+                    foreach (var stage in plan.Stages.OrderBy(st => st.OrderIndex))
+                    {
+                        var stageDto = new CompanyProgramStageDTO
+                        {
+                            StageId = stage.StageId, Title = stage.Title,
+                            StartDate = stage.StartDate, EndDate = stage.EndDate,
+                            Status = stage.Status.ToString()
+                        };
+                        var stageTrainers = stage.Trainers
+                            .Where(st => st.Trainer.CompanyId == companyId || st.Trainer.CompanyId == null)
+                            .Select(st => new CompanyProgramTrainerAssignmentDTO
+                        {
+                            TrainerId = st.TrainerId, TrainerName = st.Trainer.User.FullName,
+                            Scope = "Stage", PlanId = plan.PlanId,
+                            StageId = stage.StageId, StageTitle = stage.Title
+                        }).ToList();
+                        if (stage.TrainerId.HasValue && stage.Trainer is not null &&
+                            (stage.Trainer.CompanyId == companyId || stage.Trainer.CompanyId == null) &&
+                            !stageTrainers.Any(t => t.TrainerId == stage.TrainerId.Value))
+                            stageTrainers.Add(new CompanyProgramTrainerAssignmentDTO
+                            {
+                                TrainerId = stage.TrainerId.Value,
+                                TrainerName = stage.Trainer.User.FullName,
+                                Scope = "Stage", PlanId = plan.PlanId,
+                                StageId = stage.StageId, StageTitle = stage.Title
+                            });
+                        stageDto.Trainers.AddRange(stageTrainers);
+                        batchDto.Trainers.AddRange(stageTrainers);
+                        foreach (var item in stage.Items.Where(i => i.TrainerId.HasValue && i.Trainer != null &&
+                            (i.Trainer.CompanyId == companyId || i.Trainer.CompanyId == null)))
+                            batchDto.Trainers.Add(new CompanyProgramTrainerAssignmentDTO
+                            {
+                                TrainerId = item.TrainerId!.Value,
+                                TrainerName = item.Trainer!.User.FullName,
+                                Scope = "Item", PlanId = plan.PlanId,
+                                StageId = stage.StageId, StageTitle = stage.Title,
+                                ItemId = item.ItemId, ItemTitle = item.Title
+                            });
+                        planDto.Stages.Add(stageDto);
+                    }
+                    batchDto.Plans.Add(planDto);
+                }
+            }
 
             // The stored Batch.Status is edited by hand and drifts away from the dates
             // (e.g. "Ongoing" for a batch that ended last month). The portal shows the
@@ -269,7 +385,7 @@ namespace Nafadh_Backend.Controllers
                 Modules = modules
             };
 
-            ApplyOpenSeats(result, await LoadOpenSeatsAsync(new List<int> { programId }));
+            ApplyOpenSeats(result, await LoadOpenSeatsAsync(companyId, new List<int> { programId }));
 
             return Ok(result);
         }
@@ -341,10 +457,10 @@ namespace Nafadh_Backend.Controllers
                 return NotFound();
             return NoContent();
         }
-        // Open batch = not cancelled and not yet ended (same date rule as DeriveBatchStatus).
-        // Capacity belongs to the batch and is shared by all companies, so occupancy
-        // counts InProgress enrollments of every company, not only the caller's.
-        private async Task<Dictionary<int, (decimal Capacity, int Occupied)>> LoadOpenSeatsAsync(List<int> programIds)
+        // Include only batches directly assigned to the company or with its enrollments.
+        // Within an included shared batch, capacity and occupancy are shared with all
+        // enrolled companies; individual records from other companies are not returned.
+        private async Task<Dictionary<int, (decimal Capacity, int Occupied)>> LoadOpenSeatsAsync(int companyId, List<int> programIds)
         {
             if (programIds.Count == 0)
                 return new Dictionary<int, (decimal Capacity, int Occupied)>();
@@ -354,6 +470,7 @@ namespace Nafadh_Backend.Controllers
             var rows = await _context.NFD_Batches
                 .AsNoTracking()
                 .Where(b => programIds.Contains(b.ProgramId)
+                            && (b.CompanyId == companyId || b.Enrollments.Any(e => e.CompanyId == companyId))
                             && b.Status != Nafadh_Backend.Enums.NFD_BatchStatus.Cancelled
                             && b.EndDate >= today)
                 .Select(b => new

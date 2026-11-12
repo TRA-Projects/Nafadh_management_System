@@ -4,6 +4,11 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using Nafadh_Backend.Models;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
@@ -11,14 +16,40 @@ namespace Nafadh_Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Admin,CompanySupervisor")]
     public class CompanyBranchController : ControllerBase
     {
         private readonly ICompanyBranchService _service;
+        private readonly Nafadhcontext _context;
+
+        private async Task<bool> CanAccessCompanyAsync(int companyId)
+        {
+            if (companyId <= 0) return false;
+            if (User.IsInRole("Admin")) return true;
+            var claim = User.FindFirstValue("userId") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (!int.TryParse(claim, out var userId)) return false;
+            return await _context.NFD_Companies.AnyAsync(c => c.CompanyId == companyId && c.UserId == userId)
+                || await _context.NFD_CompanySupervisors.AnyAsync(s => s.CompanyId == companyId && s.UserId == userId && s.Status == NFD_SupervisorStatus.Active);
+        }
+
+        private static string CleanLocation(string value) => System.Text.RegularExpressions.Regex.Replace(value.Trim(), @"\s+", " ");
+        private static string CleanPhone(string? value) => (value ?? string.Empty).Trim().Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");
+
+        private async Task<bool> IsDuplicateAsync(int companyId, string location, string phone, int? exceptId = null)
+        {
+            var companyBranches = await _context.NFD_CompanyBranches.AsNoTracking()
+                .Where(b => b.CompanyId == companyId && (!exceptId.HasValue || b.BranchId != exceptId.Value))
+                .Select(b => new { b.Location, b.ContactPoint })
+                .ToListAsync();
+            return companyBranches.Any(b => string.Equals(CleanLocation(b.Location), location, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(CleanPhone(b.ContactPoint), phone, StringComparison.Ordinal));
+        }
 
         // Constructor - inject Company Branch Service
-        public CompanyBranchController(ICompanyBranchService service)
+        public CompanyBranchController(ICompanyBranchService service, Nafadhcontext context)
         {
             _service = service;
+            _context = context;
         }
 
         // GET: api/CompanyBranch/company/{companyId}
@@ -27,6 +58,7 @@ namespace Nafadh_Backend.Controllers
         public async Task<ActionResult<IEnumerable<NFD_CompanyBranchOutputDTO>>>
         GetByCompanyId(int companyId)
         {
+            if (!await CanAccessCompanyAsync(companyId)) return Forbid();
             var branches = await _service.GetByCompanyIdAsync(companyId);
 
             return Ok(branches);
@@ -40,6 +72,7 @@ namespace Nafadh_Backend.Controllers
         {
             var branch = await _service.GetCompanyBranchByIdAsync(branchId);
 
+            if (branch != null && !await CanAccessCompanyAsync(branch.CompanyId)) return Forbid();
             if (branch == null)
                 return NotFound(new
                 {
@@ -55,6 +88,15 @@ namespace Nafadh_Backend.Controllers
         public async Task<ActionResult<NFD_CompanyBranchOutputDTO>>
             AddCompanyBranch([FromBody] NFD_CompanyBranchInputDTO dto)
         {
+            if (!await CanAccessCompanyAsync(dto.CompanyId)) return Forbid();
+            var location = CleanLocation(dto.Location ?? string.Empty);
+            var phone = CleanPhone(dto.ContactPoint);
+            if (location.Length == 0 || location.Length > 200 || !System.Text.RegularExpressions.Regex.IsMatch(phone, @"^\+?[0-9]{8,15}$"))
+                return BadRequest(new { message = "أدخل موقعًا ورقم هاتف صحيحين للفرع." });
+            if (await IsDuplicateAsync(dto.CompanyId, location, phone))
+                return Conflict(new { message = "الفرع موجود مسبقًا بنفس الموقع ورقم الهاتف." });
+            dto.Location = location;
+            dto.ContactPoint = phone;
             var branch = await _service.AddCompanyBranchAsync(dto);
 
             return CreatedAtAction(
@@ -72,10 +114,18 @@ namespace Nafadh_Backend.Controllers
                 int branchId,
                 [FromBody] NFD_CompanyBranchInputDTO dto)
         {
-            var branch = await _service.UpdateCompanyBranchAsync(
-                branchId,
-                dto
-            );
+            var existing = await _service.GetCompanyBranchByIdAsync(branchId);
+            if (existing == null) return NotFound(new { message = "Company branch not found." });
+            if (!await CanAccessCompanyAsync(existing.CompanyId) || existing.CompanyId != dto.CompanyId) return Forbid();
+            var location = CleanLocation(dto.Location ?? string.Empty);
+            var phone = CleanPhone(dto.ContactPoint);
+            if (location.Length == 0 || location.Length > 200 || !System.Text.RegularExpressions.Regex.IsMatch(phone, @"^\+?[0-9]{8,15}$"))
+                return BadRequest(new { message = "أدخل موقعًا ورقم هاتف صحيحين للفرع." });
+            if (await IsDuplicateAsync(dto.CompanyId, location, phone, branchId))
+                return Conflict(new { message = "الفرع موجود مسبقًا بنفس الموقع ورقم الهاتف." });
+            dto.Location = location;
+            dto.ContactPoint = phone;
+            var branch = await _service.UpdateCompanyBranchAsync(branchId, dto);
 
             if (branch == null)
                 return NotFound(new
@@ -91,6 +141,9 @@ namespace Nafadh_Backend.Controllers
         [HttpDelete("{branchId}")]
         public async Task<IActionResult> DeleteCompanyBranch(int branchId)
         {
+            var existing = await _service.GetCompanyBranchByIdAsync(branchId);
+            if (existing == null) return NotFound(new { message = "Company branch not found." });
+            if (!await CanAccessCompanyAsync(existing.CompanyId)) return Forbid();
             var deleted = await _service.DeleteCompanyBranchAsync(branchId);
 
             if (!deleted)

@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
- AnnouncementDto,
+  AnnouncementDto,
   AuditLogDto,
   BatchDto,
   BatchPerformanceReportDto,
@@ -45,13 +45,13 @@ export interface TraineeCertificateStatusDto {
 export class AdminApi {
   private base = environment.apiBaseUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
   // جلب إعدادات النظام للأدمن
-getSystemVariables(): Observable<any[]> {
-  return this.http.get<any[]>(
-    `${this.base}/system-variables`
-  );
-}
+  getSystemVariables(): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.base}/system-variables`
+    );
+  }
 
   // ==========================================================
   // 1. Helper Methods
@@ -69,6 +69,29 @@ getSystemVariables(): Observable<any[]> {
   // جلب جميع مؤشرات لوحة الإدارة من Report API دون الاعتماد على مسار بديل.
   getAdminDashboardSummary(): Observable<any> {
     return this.http.get<any>(`${this.base}/Report/dashboard-summary`);
+  }
+
+  // Admin Dashboard - Date-filtered performance summary
+  // This method is used only by the Admin Dashboard date filter.
+  // The existing dashboard summary method remains unchanged.
+  getAdminDashboardSummaryByPeriod(
+    startDate?: string | null,
+    endDate?: string | null
+  ): Observable<any> {
+    let params = new HttpParams();
+
+    if (startDate) {
+      params = params.set('startDate', startDate);
+    }
+
+    if (endDate) {
+      params = params.set('endDate', endDate);
+    }
+
+    return this.http.get<any>(
+      `${this.base}/Report/admin-dashboard-summary-by-period`,
+      { params }
+    );
   }
 
   getDashboardCharts(): Observable<DashboardChartsDto> {
@@ -151,18 +174,18 @@ getSystemVariables(): Observable<any[]> {
     return this.http.get<any[]>(`${this.base}/Enrollment/trainee/${cleanId}`);
   }
 
-createEnrollment(dto: {
-  batchId: number;
-  traineeId: number;
-  companyId: number;
-  departmentId: number | null;
-  supervisorId: number | null;
-}): Observable<EnrollmentDto> {
-  return this.http.post<EnrollmentDto>(
-    `${this.base}/Enrollment`,
-    dto
-  );
-}
+  createEnrollment(dto: {
+    batchId: number;
+    traineeId: number;
+    companyId: number;
+    departmentId: number | null;
+    supervisorId: number | null;
+  }): Observable<EnrollmentDto> {
+    return this.http.post<EnrollmentDto>(
+      `${this.base}/Enrollment`,
+      dto
+    );
+  }
 
   getTraineeProgressPercentage(traineeId: number): Observable<{ traineeId: number; percentage: number }> {
     const cleanId = this.sanitizeId(traineeId);
@@ -188,11 +211,41 @@ createEnrollment(dto: {
 
 
   // Admin Reports - Companies Summary
-getAdminCompaniesSummary(): Observable<any> {
-  return this.http.get<any>(
-    `${this.base}/Report/admin-companies-summary`
-  );
-}
+  getAdminCompaniesSummary(): Observable<any> {
+    return this.http.get<any>(
+      `${this.base}/Report/admin-companies-summary`
+    );
+  }
+
+  // Admin Reports - Master Trainees Transcript
+  getAdminTraineesTranscript(
+    pageNumber: number = 1,
+    pageSize: number = 1000,
+    companyId?: number,
+    batchId?: number,
+    traineeId?: number
+  ): Observable<any> {
+    let params = new HttpParams()
+      .set('pageNumber', String(pageNumber))
+      .set('pageSize', String(pageSize));
+
+    if (companyId != null) {
+      params = params.set('companyId', String(companyId));
+    }
+
+    if (batchId != null) {
+      params = params.set('batchId', String(batchId));
+    }
+
+    if (traineeId != null) {
+      params = params.set('traineeId', String(traineeId));
+    }
+
+    return this.http.get<any>(
+      `${this.base}/Report/admin-trainees-transcript`,
+      { params }
+    );
+  }
 
 
   getCompany(id: number): Observable<CompanyDto> { return this.http.get<CompanyDto>(`${this.base}/Company/${this.sanitizeId(id)}`); }
@@ -201,16 +254,45 @@ getAdminCompaniesSummary(): Observable<any> {
   approveCompany(id: number) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}/approve`, {}); }
   suspendCompany(id: number) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}/suspend`, {}); }
 
-  // ==========================================================
-  // 6. Programs & Batches
-  // ==========================================================
-  getBatches(): Observable<BatchDto[]> {
-    return this.http.get<BatchDto[]>(`${this.base}/Batch`);
-  }
+// ==========================================================
+// 6. Programs & Batches
+// ==========================================================
+
+getBatches(): Observable<BatchDto[]> {
+  return this.http.get<BatchDto[]>(`${this.base}/Batch`);
+}
+
+// Admin Certificates - Get companies and tracks linked to batches
+getAdminCertificateFilterOptions(): Observable<{
+  companies: {
+    companyId: number;
+    companyName: string;
+    batchIds: number[];
+  }[];
+  tracks: {
+    trackId: number;
+    trackName: string;
+  }[];
+}> {
+  return this.http.get<{
+    companies: {
+      companyId: number;
+      companyName: string;
+      batchIds: number[];
+    }[];
+    tracks: {
+      trackId: number;
+      trackName: string;
+    }[];
+  }>(`${this.base}/admin/certificates/filter-options`);
+}
+ 
+
+  
 
   createBatch(dto: unknown) { return this.http.post(`${this.base}/Batch`, dto); }
   updateBatch(id: number, dto: unknown) { return this.http.put(`${this.base}/Batch/${this.sanitizeId(id)}`, dto); }
-  
+
   getPrograms(): Observable<ProgramDto[]> { return this.http.get<ProgramDto[]>(`${this.base}/Program`); }
   createProgram(dto: unknown) { return this.http.post(`${this.base}/Program`, dto); }
 
@@ -233,16 +315,16 @@ getAdminCompaniesSummary(): Observable<any> {
     return this.http.get(`${this.base}/Trainer`, { params });
   }
 
-   // جلب مؤشرات أداء مدرب محدد
+  // جلب مؤشرات أداء مدرب محدد
   getTrainerKpis(trainerId: number): Observable<any> {
-  return this.http.get(`${this.base}/Report/trainer-kpis/${trainerId}`);
- }
- // تقييمات المتدربين للمدرب - بيانات حقيقية
-getTrainerFeedback(trainerId: number): Observable<any> {
-  return this.http.get<any>(
-    `${this.base}/Feedback/trainer/${this.sanitizeId(trainerId)}`
-  );
-}
+    return this.http.get(`${this.base}/Report/trainer-kpis/${trainerId}`);
+  }
+  // تقييمات المتدربين للمدرب - بيانات حقيقية
+  getTrainerFeedback(trainerId: number): Observable<any> {
+    return this.http.get<any>(
+      `${this.base}/Feedback/trainer/${this.sanitizeId(trainerId)}`
+    );
+  }
 
   // دفعات مدرب معيّن (تُستخدم لمعرفة المدرب الراصد لكل دفعة)
   getTrainerBatches(trainerId: number): Observable<any[]> {
@@ -292,20 +374,14 @@ getTrainerFeedback(trainerId: number): Observable<any> {
     );
   }
 
-  // يبحث في قائمة الخطط المتاحة عن خطة الدفعة؛ لا يفترض أن batchId هو planId.
-  getBatchCoursePlan(batchId: number): Observable<any> {
-    const cleanId = this.sanitizeId(batchId);
-    return this.getPendingCoursePlans().pipe(
-      map((response: any) => {
-        const plans: any[] = Array.isArray(response)
-          ? response
-          : (response?.items ?? response?.data ?? response?.results ?? []);
-        return plans.find((plan: any) =>
-          Number(plan?.batchId ?? plan?.batch?.batchId) === cleanId
-        ) ?? null;
-      })
-    );
-  }
+  // Get the full course plan details by Batch ID
+getBatchCoursePlan(batchId: number): Observable<any> {
+  const cleanId = this.sanitizeId(batchId);
+
+  return this.http.get<any>(
+    `${this.base}/CoursePlanApproval/batch/${cleanId}/plan`
+  );
+}
 
   // قرار الاعتماد يتم حسب planId وليس batchId.
   reviewBatchCoursePlan(batchId: number, planId: number, payload: any): Observable<any> {
@@ -337,6 +413,29 @@ getTrainerFeedback(trainerId: number): Observable<any> {
   getAttendance(enrollmentId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(enrollmentId);
     return this.http.get<any[]>(`${this.base}/DailyAttendance/enrollment/${cleanId}`);
+  }
+
+  getBatchDailyAttendance(batchId: number, date: string): Observable<any[]> {
+    const cleanId = this.sanitizeId(batchId);
+
+    return this.http.get<any[]>(
+      `${this.base}/DailyAttendance/batch/${cleanId}`,
+      {
+        params: new HttpParams().set('date', date)
+      }
+    );
+  }
+
+  getLatestRecordedAttendanceDate(): Observable<{
+    date: string | null;
+    hasRecords: boolean;
+  }> {
+    return this.http.get<{
+      date: string | null;
+      hasRecords: boolean;
+    }>(
+      `${this.base}/DailyAttendance/latest-recorded-date`
+    );
   }
 
   // ==========================================================
@@ -403,11 +502,11 @@ getTrainerFeedback(trainerId: number): Observable<any> {
     return this.http.get<WarningDto[]>(`${this.base}/Warning`, { params: httpParams });
   }
 
-// جلب تفاصيل الإنذار كاملة من Backend بما فيها Evidence و Resolution.
-getWarningById(id: number): Observable<any> {
-  const cleanId = this.sanitizeId(id);
-  return this.http.get<any>(`${this.base}/Warning/${cleanId}`);
-}
+  // جلب تفاصيل الإنذار كاملة من Backend بما فيها Evidence و Resolution.
+  getWarningById(id: number): Observable<any> {
+    const cleanId = this.sanitizeId(id);
+    return this.http.get<any>(`${this.base}/Warning/${cleanId}`);
+  }
   createWarning(dto: unknown) { return this.http.post(`${this.base}/Warning`, dto); }
   resolveWarning(id: number, dto: unknown) { return this.http.put(`${this.base}/Warning/${this.sanitizeId(id)}/resolve`, dto); }
 
@@ -467,31 +566,31 @@ getWarningById(id: number): Observable<any> {
   // ==========================================================
 
 
- // Get trainer attendance records for Admin - Read Only
- getAdminTrainerAttendance(
-  from: string,
-  to: string,
-  trainerId?: number,
-  companyId?: number
- ): Observable<any[]> {
+  // Get trainer attendance records for Admin - Read Only
+  getAdminTrainerAttendance(
+    from: string,
+    to: string,
+    trainerId?: number,
+    companyId?: number
+  ): Observable<any[]> {
 
-  let params = new HttpParams()
-    .set('from', from)
-    .set('to', to);
+    let params = new HttpParams()
+      .set('from', from)
+      .set('to', to);
 
-  if (trainerId !== undefined) {
-    params = params.set('trainerId', String(this.sanitizeId(trainerId)));
+    if (trainerId !== undefined) {
+      params = params.set('trainerId', String(this.sanitizeId(trainerId)));
+    }
+
+    if (companyId !== undefined) {
+      params = params.set('companyId', String(this.sanitizeId(companyId)));
+    }
+
+    return this.http.get<any[]>(
+      `${this.base}/admin/reports/trainer-attendance`,
+      { params }
+    );
   }
-
-  if (companyId !== undefined) {
-    params = params.set('companyId', String(this.sanitizeId(companyId)));
-  }
-
-  return this.http.get<any[]>(
-    `${this.base}/admin/reports/trainer-attendance`,
-    { params }
-  );
- }
 
 
   // Get supervisor reports for Admin
@@ -528,21 +627,21 @@ getWarningById(id: number): Observable<any> {
   }
 
   getAdminCompanyBatchPerformanceReport(
-  companyId: number,
-  batchId: number,
-  pageNumber: number = 1,
-  pageSize: number = 15
-): Observable<any> {
-  return this.http.get<any>(
-    `${this.base}/Report/admin-company-batch-performance/${companyId}/${batchId}`,
-    {
-      params: {
-        pageNumber: pageNumber.toString(),
-        pageSize: pageSize.toString()
+    companyId: number,
+    batchId: number,
+    pageNumber: number = 1,
+    pageSize: number = 15
+  ): Observable<any> {
+    return this.http.get<any>(
+      `${this.base}/Report/admin-company-batch-performance/${companyId}/${batchId}`,
+      {
+        params: {
+          pageNumber: pageNumber.toString(),
+          pageSize: pageSize.toString()
+        }
       }
-    }
-  );
-}
+    );
+  }
 
   getEvaluationBucketRollup(enrollmentId: number): Observable<EvaluationBucketRollupDto> {
     return this.http.get<EvaluationBucketRollupDto>(`${this.base}/Evaluation/enrollment/${this.sanitizeId(enrollmentId)}/by-bucket`);
@@ -582,7 +681,7 @@ getWarningById(id: number): Observable<any> {
 
   submitWithdrawalDecision(traineeId: number, dto: { approved: boolean; adminReason?: string }): Observable<any> {
     const cleanId = this.sanitizeId(traineeId);
-    return this.http.put<any>(`${this.base}/Trainee/${cleanId}/withdrawal-decision`, dto);
+    return this.http.post<any>(`${this.base}/Trainee/${cleanId}/withdrawal-decision`, dto);
   }
 
   getTraineeWithdrawalRequests(traineeId: number): Observable<Array<{ status: string | number }>> {
@@ -610,7 +709,7 @@ getWarningById(id: number): Observable<any> {
   // ==========================================================
   // 🟢 دوال الاختبارات والنزاهة الحقيقية من الباك إند
   // ==========================================================
-  
+
   // 1. جلب اختبارات الدفعة المقررة من جدول NFD_Quizzes
   getBatchQuizzes(batchId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(batchId);

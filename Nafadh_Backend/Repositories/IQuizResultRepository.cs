@@ -1,4 +1,4 @@
-﻿
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Nafadh_Backend.Models;
@@ -19,6 +19,8 @@ namespace Nafadh_Backend.Repositories
         // عرض جميع نتائج المتدرب للأدمن
         Task<List<NFD_QuizAttempt>> GetAdminTraineeResultsAsync(
             int traineeId);
+
+        Task<List<NFD_QuizAttempt>> GetCompanyEnrollmentResultsAsync(int enrollmentId);
 
         // عرض تفاصيل محاولة محددة للمدرب
         Task<NFD_QuizAttempt?> GetTrainerAttemptDetailsAsync(

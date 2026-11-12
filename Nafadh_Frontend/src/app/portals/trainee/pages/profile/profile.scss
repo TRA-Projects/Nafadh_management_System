@@ -984,4 +984,37 @@
   .popup-title {
     font-size: 14px;
   }
+  .cv-file-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  direction: rtl;
+}
+
+.cv-file-name {
+  overflow-wrap: anywhere;
+  color: #166534;
+}
+
+.cv-download-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #15803d;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cv-download-btn:hover {
+  background: #dcfce7;
+}
 }

@@ -41,7 +41,18 @@ namespace Nafadh_Backend.DTOs
 
     public class UpdateCompanySupervisorDto
     {
+        [System.ComponentModel.DataAnnotations.MaxLength(150)]
+        public string? FullName { get; set; }
+        [System.ComponentModel.DataAnnotations.EmailAddress]
+        [System.ComponentModel.DataAnnotations.MaxLength(150)]
+        public string? Email { get; set; }
+        [System.ComponentModel.DataAnnotations.MaxLength(20)]
+        public string? Phone { get; set; }
+        [System.ComponentModel.DataAnnotations.MaxLength(100)]
         public string? Department { get; set; }
+        [System.ComponentModel.DataAnnotations.MaxLength(100)]
         public string? Position { get; set; }
+        // Only Active/Inactive may be set by a company supervisor.
+        public string? Status { get; set; }
     }
 }

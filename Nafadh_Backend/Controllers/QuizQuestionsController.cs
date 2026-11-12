@@ -57,6 +57,48 @@ namespace Nafadh_Backend.Controllers
             }
         }
 
+        // إضافة أسئلة عشوائية حسب الوحدة والصعوبة
+        [HttpPost("{quizId:int}/questions/random")]
+        public async Task<IActionResult> AddRandomQuestionsToQuiz(
+            int quizId,
+            [FromBody] SelectRandomQuizQuestionsDto dto,
+            [FromQuery] int trainerId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _service.AddRandomQuestionsToQuizAsync(
+                    quizId,
+                    dto,
+                    trainerId);
+
+                return Ok(new
+                {
+                    message = "تمت إضافة الأسئلة العشوائية إلى الاختبار بنجاح."
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+        }
+
         // عرض أسئلة الاختبار
         [HttpGet("{quizId:int}/questions")]
         public async Task<IActionResult> GetQuizQuestions(

@@ -86,5 +86,21 @@ namespace Nafadh_Backend.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+        public async Task<bool> DeleteAsync(int id, int userId)
+        {
+            var notification = await _context.NFD_Notifications
+                .FirstOrDefaultAsync(n =>
+                    n.NotificationId == id &&
+                    n.UserId == userId);
+
+            if (notification == null)
+                return false;
+
+            _context.NFD_Notifications.Remove(notification);
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
     }
 }

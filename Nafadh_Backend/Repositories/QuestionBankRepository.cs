@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -51,6 +52,33 @@ namespace Nafadh_Backend.Repositories
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> ModuleExistsAsync(int moduleId)
+        {
+            return await _context.NFD_Modules
+                .AnyAsync(m =>
+                    m.ModuleId == moduleId &&
+                    !m.IsArchived);
+        }
+
+        public async Task<List<NFD_QuestionBank>> GetRandomQuestionsAsync(
+      int trainerId,
+      int moduleId,
+      NFD_QuestionDifficulty difficulty,
+      int count,
+      HashSet<int> excludedQuestionIds)
+        {
+            return await _context.NFD_QuestionBanks
+                .Where(q =>
+                    q.TrainerId == trainerId &&
+                    q.ModuleId == moduleId &&
+                    q.Difficulty == difficulty &&
+                    q.IsActive &&
+                    !excludedQuestionIds.Contains(q.QuestionId))
+                .OrderBy(q => Guid.NewGuid())
+                .Take(count)
+                .ToListAsync();
         }
     }
 }

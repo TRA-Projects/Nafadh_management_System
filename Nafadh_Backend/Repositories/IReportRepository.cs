@@ -20,14 +20,26 @@ namespace Nafadh_Backend.Repositories
         // NEW: analytics/aggregation queries — see DTOs/ReportAnalyticsDTOs.cs
         Task<DTOs.DashboardChartsDTO> GetDashboardChartsAsync();
         Task<AdminDashboardSummaryDTO> GetAdminDashboardSummaryAsync();
+
+        // Admin Portal ONLY - Period-based dashboard classification
+        Task<AdminDashboardSummaryDTO> GetAdminDashboardSummaryByPeriodAsync(
+            DateTime? startDate,
+            DateTime? endDate
+        );
         Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(int batchId, int pageNumber, int pageSize);
+        Task<List<CompanyWeightedEvaluationDTO>> GetCompanyWeightedEvaluationsAsync(int companyId);
         Task<DTOs.AttendanceReportDTO?> GetCompanyAttendanceReportAsync(int companyId);
         Task<List<DTOs.ChartPointDTO>> GetCompanyAttendanceChartAsync(int companyId);
         Task<List<DTOs.ChartPointDTO>> GetCompanyProgramDistributionAsync(int companyId);
         Task<List<int>> GetCompanyTopPerformerTraineeIdsAsync(int companyId, int take);
         Task<List<int>> GetCompanyAtRiskTraineeIdsAsync(int companyId, int take);
         Task<TrainerKpisDTO> GetTrainerKpisAsync(
-    int trainerId);
+      int trainerId);
+
+        Task<TrainerKpisDTO> GetTrainerReportKpisAsync(
+            int trainerId,
+            int? batchId,
+            int? traineeId);
 
         Task<List<DTOs.TrainerTraineesReportRowDto>> GetTrainerTraineesReportRowsAsync(
     int trainerId, int? batchId, int? traineeId);
@@ -37,10 +49,19 @@ namespace Nafadh_Backend.Repositories
 
         // Admin Reports - Company-specific Batch Performance
         Task<AdminCompanyBatchPerformanceDTO?> GetAdminCompanyBatchPerformanceAsync(
-            int companyId,
-            int batchId,
+     int companyId,
+     int batchId,
+     int pageNumber,
+     int pageSize
+ );
+
+        // Admin Reports - Master Trainees Transcript
+        Task<AdminTraineesTranscriptDTO> GetAdminTraineesTranscriptAsync(
             int pageNumber,
-            int pageSize
+            int pageSize,
+            int? companyId,
+            int? batchId,
+            int? traineeId
         );
 
     }

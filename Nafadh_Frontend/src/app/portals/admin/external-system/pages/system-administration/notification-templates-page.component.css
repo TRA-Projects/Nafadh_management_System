@@ -35,7 +35,7 @@
 
 .notification-templates-container button,
 .notification-templates-container input,
-.notification-templates-container select,
+.notification-templates-container :is(select, app-catalog-picker),
 .notification-templates-container textarea {
   font: inherit;
 }
@@ -46,7 +46,7 @@
 
 .notification-templates-container button:focus-visible,
 .notification-templates-container input:focus-visible,
-.notification-templates-container select:focus-visible,
+.notification-templates-container :is(select, app-catalog-picker):focus-visible,
 .notification-templates-container textarea:focus-visible {
   outline: 3px solid rgb(37 99 235 / 20%);
   outline-offset: 2px;
@@ -209,7 +209,7 @@
 
 .filter-field select,
 .pagination-controls select,
-.form-field select,
+.form-field :is(select, app-catalog-picker),
 .form-field input,
 .form-field textarea {
   width: 100%;
@@ -232,7 +232,7 @@
 .search-input-wrapper input:focus,
 .filter-field select:focus,
 .pagination-controls select:focus,
-.form-field select:focus,
+.form-field :is(select, app-catalog-picker):focus-within,
 .form-field input:focus,
 .form-field textarea:focus {
   border-color: var(--nt-primary);
@@ -712,7 +712,7 @@
 }
 
 .form-field input,
-.form-field select {
+.form-field :is(select, app-catalog-picker) {
   min-height: 41px;
   padding: 9px 11px;
   font-size: 13px;

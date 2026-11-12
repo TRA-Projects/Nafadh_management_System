@@ -319,14 +319,12 @@
 
       @if (ex.proofUrl) {
 
-        <a
-          class="proof-btn"
-          [href]="ex.proofUrl"
-          target="_blank"
-          rel="noopener"
-        >
-          ▤ عرض الإثبات
-        </a>
+    <button
+  type="button"
+  class="proof-btn"
+  (click)="openExcuseProof(ex)">
+  ▤ عرض الإثبات
+</button>
 
       } @else {
 

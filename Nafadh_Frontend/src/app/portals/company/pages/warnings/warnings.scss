@@ -35,7 +35,7 @@
 
 .warnings-page button,
 .warnings-page input,
-.warnings-page select,
+.warnings-page :is(select, app-catalog-picker),
 .warnings-page textarea {
   font: inherit;
 }
@@ -347,7 +347,7 @@
 }
 
 .search-field input:focus,
-.filter-field select:focus {
+.filter-field :is(select, app-catalog-picker):focus-within {
   border-color: #8ba7e0;
   box-shadow: 0 0 0 3px rgb(49 87 164 / 9%);
 }
@@ -365,7 +365,7 @@
   font-weight: 700;
 }
 
-.filter-field select {
+.filter-field :is(select, app-catalog-picker) {
   width: 100%;
   min-height: 43px;
   padding: 9px 10px;

@@ -2,13 +2,14 @@ import { CatalogPicker } from '../../../../core/models/catalog-picker';
 import { NafadhConstantsService } from '../../../../core/services/nafadh-constants.service';
 import { inject, Component, OnInit, signal, computed, ViewEncapsulation } from '@angular/core';
 import { CommonModule, NgClass, NgStyle } from '@angular/common';
-import { Router } from '@angular/router'; // 👈 تم استيراد الراوتر للتنقل للبروفايل
+import { Router } from '@angular/router'; 
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
 import { AdminApi } from '../../services/admin-api';
+import { environment } from '../../../../../environments/environment';
 import { TRAINEE_STATUS_LABELS } from '../../../../core/models/enums';
 
 export interface EnrichedTraineeItem {
@@ -61,12 +62,14 @@ export interface TraineeAttendanceRecord {
   batchName?: string | null;
   track?: string | null;
   profileImageUrl?: string | null;
-  status: 'Present' | 'Late' | 'Absent' | 'Excused';
+  status: 'Present' | 'Late' | 'Absent' | 'Excused' | 'NotRecorded';
   checkInTime: string;
   notes: string;
   recordedByTrainer?: string;
   recordedAt?: string;
   excuseReason?: string;
+  dailyAttendanceId?: number | null;
+  enrollmentId?: number | null;
 }
 
 @Component({
@@ -181,18 +184,153 @@ export class AdminTrainees implements OnInit {
   // 🌟 نظام حضور وغياب المتدربين الشامل (Full Screen)
   // =========================================================================
   showBatchAttendanceModal = signal<boolean>(false);
-  attendanceStep = signal<1 | 2>(1); 
+  attendanceStep = signal<1 | 2>(1);
   selectedAttendanceBatch = signal<any | null>(null);
   attendanceDate = signal<string>(new Date().toISOString().substring(0, 10));
-  
+
   attendanceBatchDropdownFilter = signal<string>('');
   attendanceBatchSearch = signal<string>('');
-  
+
   attendanceSearchQuery = signal<string>('');
   attendanceTrackFilter = signal<string>('');
-  attendanceStatusFilter = signal<'ALL' | 'Present' | 'Late' | 'Absent' | 'Excused'>('ALL');
-  
+  attendanceStatusFilter = signal<'ALL' | 'Present' | 'Late' | 'Absent' | 'Excused' | 'NotRecorded'>('ALL');
+
   attendanceRecords = signal<TraineeAttendanceRecord[]>([]);
+  allBatchesAttendanceSummary = signal({
+    total: 0,
+    present: 0,
+    late: 0,
+    absent: 0,
+    excused: 0,
+    notRecorded: 0,
+    rate: 0
+  });
+
+  isLoadingAllBatchesAttendance = signal(false);
+  allBatchesAttendanceError = signal(false);
+  private attendanceSummaryRequestId = 0;
+
+  loadAllBatchesAttendanceSummary(): void {
+    const requestId = ++this.attendanceSummaryRequestId;
+    const date = this.attendanceDate();
+
+    const batches = this.availableAttendanceBatches().filter(
+      (batch: any) =>
+        Number.isInteger(Number(batch.batchId)) &&
+        Number(batch.batchId) > 0
+    );
+
+    this.isLoadingAllBatchesAttendance.set(true);
+    this.allBatchesAttendanceError.set(false);
+
+    const emptySummary = {
+      total: 0,
+      present: 0,
+      late: 0,
+      absent: 0,
+      excused: 0,
+      notRecorded: 0,
+      rate: 0
+    };
+
+    if (batches.length === 0) {
+      this.allBatchesAttendanceSummary.set(emptySummary);
+      this.isLoadingAllBatchesAttendance.set(false);
+      return;
+    }
+
+    const requests = batches.map((batch: any) =>
+      this.api.getBatchDailyAttendance(
+        Number(batch.batchId),
+        date
+      ).pipe(
+        catchError(() => of(null))
+      )
+    );
+
+    forkJoin(requests).subscribe({
+      next: (responses: any[]) => {
+        if (requestId !== this.attendanceSummaryRequestId) {
+          return;
+        }
+
+        const summary = { ...emptySummary };
+        let hasError = false;
+
+        responses.forEach((response: any) => {
+          if (response === null) {
+            hasError = true;
+            return;
+          }
+
+          const rows: any[] =
+            Array.isArray(response) ? response :
+              Array.isArray(response?.items) ? response.items :
+                Array.isArray(response?.Items) ? response.Items :
+                  Array.isArray(response?.data) ? response.data :
+                    Array.isArray(response?.Data) ? response.Data :
+                      Array.isArray(response?.data?.items) ? response.data.items :
+                        [];
+
+          rows.forEach((item: any) => {
+            summary.total++;
+
+            const hasRecord =
+              item.hasAttendanceRecord ??
+              item.HasAttendanceRecord;
+
+            const status = String(
+              item.status ??
+              item.Status ??
+              'NotRecorded'
+            ).trim().toLowerCase();
+
+            if (hasRecord === false) {
+              summary.notRecorded++;
+              return;
+            }
+
+            switch (status) {
+              case 'present':
+                summary.present++;
+                break;
+              case 'late':
+                summary.late++;
+                break;
+              case 'absent':
+                summary.absent++;
+                break;
+              case 'excused':
+                summary.excused++;
+                break;
+              default:
+                summary.notRecorded++;
+                break;
+            }
+          });
+        });
+
+
+
+        summary.rate = summary.total > 0
+          ? Math.round(
+            ((summary.present + summary.late) / summary.total) * 100
+          )
+          : 0;
+
+        this.allBatchesAttendanceSummary.set(summary);
+        this.allBatchesAttendanceError.set(hasError);
+        this.isLoadingAllBatchesAttendance.set(false);
+      },
+      error: () => {
+        if (requestId !== this.attendanceSummaryRequestId) return;
+        this.allBatchesAttendanceError.set(true);
+        this.isLoadingAllBatchesAttendance.set(false);
+      }
+    });
+  }
+
+  isLoadingAttendance = signal<boolean>(false);
   isSavingAttendance = signal<boolean>(false);
 
   isLoadingTrainers = signal<boolean>(false);
@@ -250,44 +388,60 @@ export class AdminTrainees implements OnInit {
     this.attendanceRecords().forEach(r => {
       if (r.track && r.track.trim()) set.add(r.track.trim());
     });
-    ['NET Track.', 'Cloud & DevOps Track', 'برنامج التدريب التقني', 'Full Stack Development', 'Cybersecurity', 'AI & Data Science'].forEach(m => set.add(m));
     return Array.from(set).filter(Boolean);
   });
 
+  // =========================================================================
+  // 👈 بطاقات الدفعات: تم تعديل السطور لتظهر الأرقام دائماً بدلاً من الشُّرط (—)
+  // =========================================================================
   availableAttendanceBatches = computed(() => {
-    const all = this.allDbTrainees().length > 0 ? this.allDbTrainees() : this.trainees();
-    const dbBatches = this.batches();
+    return this.batches()
+      .map((b: any, idx: number) => {
+        const batchId = Number(
+          b.batchId ?? b.BatchId ?? b.id ?? b.Id ?? (idx + 1)
+        );
 
-    const defaultBatches = [
-      { name: 'دفعة عامة', track: 'برنامج التدريب التقني', count: all.length || 801, companies: 60, rating: '4.9', programs: 1 },
-      { name: 'الدفعة الأولى — دفعة الاختبار', track: 'NET Track.', count: 24, companies: 6, rating: '4.9', programs: 1 },
-      { name: 'الدفعة 2', track: 'NET Track.', count: 35, companies: 8, rating: '4.9', programs: 1 },
-      { name: 'الدفعة 3', track: 'NET Track.', count: 42, companies: 12, rating: '4.9', programs: 1 },
-      { name: 'الدفعة 4', track: 'Cloud & DevOps Track', count: 28, companies: 7, rating: '4.9', programs: 1 },
-      { name: 'الدفعة 5', track: 'Cloud & DevOps Track', count: 30, companies: 9, rating: '4.9', programs: 1 },
-      { name: 'الدفعة 6', track: 'Full Stack Development', count: 18, companies: 5, rating: '4.8', programs: 1 },
-      { name: 'الدفعة 7', track: 'Cybersecurity', count: 22, companies: 4, rating: '5.0', programs: 1 }
-    ];
+        const name = String(
+          b.batchName ?? b.BatchName ??
+          b.name ?? b.Name ??
+          b.title ?? b.Title ?? `الدفعة ${idx + 1}`
+        ).trim();
 
-    const map = new Map<string, any>();
-    defaultBatches.forEach(b => map.set(b.name, { ...b }));
+        const countVal = Number(
+          b.totalTraineesCount ?? b.TotalTraineesCount ??
+          b.traineesCount ?? b.TraineesCount ?? b.count ?? 0
+        );
 
-    dbBatches.forEach((b: any) => {
-      const name = b.batchName || b.name || b.title;
-      if (name && !map.has(name)) {
-        map.set(name, {
-          name: name,
-          track: b.trackName || b.track || 'برنامج التدريب التقني',
-          count: b.traineesCount || b.count || 0,
-          companies: b.companiesCount || 1,
-          rating: '4.9',
-          programs: 1,
-          trainerName: b.trainerName || b.supervisorName || null
-        });
-      }
-    });
+        const companiesVal = Number(
+          b.companiesCount ?? b.CompaniesCount ?? 0
+        );
 
-    return Array.from(map.values());
+        const calcRating = b.rating ?? b.Rating ?? null;
+
+        const calcPrograms = Number(
+          b.programsCount ?? b.ProgramsCount ?? b.programs ?? 0
+        );
+
+        const calcCompanies = companiesVal;
+        const calcCount = countVal;
+
+        return {
+          ...b,
+          batchId,
+          name,
+          track: b.trackName ?? b.TrackName ?? b.track ?? 'غير محدد',
+          count: calcCount,
+          companies: calcCompanies,
+          rating: calcRating,
+          programs: calcPrograms,
+          trainerName: b.trainerName ?? b.supervisorName ?? null
+        };
+      })
+      .filter(b =>
+        Number.isInteger(b.batchId) &&
+        b.batchId > 0 &&
+        b.name.length > 0
+      );
   });
 
   filteredAttendanceBatches = computed(() => {
@@ -300,7 +454,7 @@ export class AdminTrainees implements OnInit {
     }
 
     if (q) {
-      list = list.filter(b => 
+      list = list.filter(b =>
         b.name.toLowerCase().includes(q) || b.track.toLowerCase().includes(q)
       );
     }
@@ -321,13 +475,15 @@ export class AdminTrainees implements OnInit {
     let list = this.attendanceRecords();
     const q = this.attendanceSearchQuery().trim().toLowerCase();
     const status = this.attendanceStatusFilter();
+    const track = this.attendanceTrackFilter();
+    if (track) list = list.filter(r => (r.track ?? '') === track);
 
     if (status !== 'ALL') {
       list = list.filter(r => r.status === status);
     }
 
     if (q) {
-      list = list.filter(r => 
+      list = list.filter(r =>
         (r.fullName && r.fullName.toLowerCase().includes(q)) ||
         (r.nationalId && r.nationalId.toString().includes(q)) ||
         (r.email && r.email.toLowerCase().includes(q))
@@ -353,8 +509,10 @@ export class AdminTrainees implements OnInit {
     const late = records.filter(r => r.status === 'Late').length;
     const absent = records.filter(r => r.status === 'Absent').length;
     const excused = records.filter(r => r.status === 'Excused').length;
+    const notRecorded = records.filter(r => r.status === 'NotRecorded').length;
     const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
-    return { total, present, late, absent, excused, rate };
+
+    return { total, present, late, absent, excused, notRecorded, rate };
   });
 
   filtered = computed(() => {
@@ -384,18 +542,9 @@ export class AdminTrainees implements OnInit {
 
       if (q) {
         const hay = [
-          item.fullName,
-          item.email,
-          String(item.nationalId || ''),
-          item.university,
-          item.major,
-          item.companyName,
-          item.batchName,
-          item.skills
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
+          item.fullName, item.email, String(item.nationalId || ''), item.university,
+          item.major, item.companyName, item.batchName, item.skills
+        ].filter(Boolean).join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }
 
@@ -410,7 +559,6 @@ export class AdminTrainees implements OnInit {
       }
 
       if (batch !== 'ALL' && item.batchName !== batch) return false;
-
       if (cv === 'WITH_CV' && !item.resumeUrl) return false;
       if (cv === 'WITHOUT_CV' && !!item.resumeUrl) return false;
 
@@ -422,14 +570,15 @@ export class AdminTrainees implements OnInit {
 
   constructor(
     private api: AdminApi,
-    private router: Router, // 👈 الراوتر متاح الآن
+    private router: Router,
     private sanitizer: DomSanitizer
-  ) {}
+  ) { }
 
   get attendancePickerChoices() {
-    const rows = [{value:'Present',label:'حاضر'}, {value:'Late',label:'متأخر'}, {value:'Absent',label:'غائب'}, {value:'Excused',label:'بعذر'}] as const;
-    return [{value:'ALL' as const,label:'الكل',labelEn:'All'}, ...this.constants.supportedChoices('NFD_ATT_STAT',rows,true)];
+    const rows = [{ value: 'Present', label: 'حاضر' }, { value: 'Late', label: 'متأخر' }, { value: 'Absent', label: 'غائب' }, { value: 'Excused', label: 'بعذر' }] as const;
+    return [{ value: 'ALL' as const, label: 'الكل', labelEn: 'All' }, ...this.constants.supportedChoices('NFD_ATT_STAT', rows, true), { value: 'NotRecorded' as const, label: 'قيد الرصد', labelEn: 'Not Recorded' }];
   }
+
   ngOnInit() {
     this.constants.ensure('NFD_ATT_STAT');
     this.constants.ensure('NFD_WDR_STAT');
@@ -472,7 +621,7 @@ export class AdminTrainees implements OnInit {
       fullName: item.fullName || item.name || item.FullName || item.Name || 'متدرب',
       email: item.email || item.Email || item.userEmail || '',
       phone: item.phone || item.Phone || '',
-      nationalId: (item.nationalId ?? item.NationalId ?? item.civilId ?? item.CivilId ?? item.nationalID ?? item.studentId ?? item.StudentId ?? item.idNumber ?? item.IdNumber ?? item.universityId) 
+      nationalId: (item.nationalId ?? item.NationalId ?? item.civilId ?? item.CivilId ?? item.nationalID ?? item.studentId ?? item.StudentId ?? item.idNumber ?? item.IdNumber ?? item.universityId)
         ? Number(item.nationalId ?? item.NationalId ?? item.civilId ?? item.CivilId ?? item.nationalID ?? item.studentId ?? item.StudentId ?? item.idNumber ?? item.IdNumber ?? item.universityId)
         : (id ? (10293800 + Number(id)) : null),
       university: item.university || item.University || item.college || '',
@@ -497,9 +646,6 @@ export class AdminTrainees implements OnInit {
     };
   }
 
-  // =========================================================================
-  // 🌟 دالة التنقل لصفحة البروفايل (المعاينة)
-  // =========================================================================
   viewTraineeDetails(traineeId: number) {
     if (traineeId) {
       this.router.navigate(['/admin/trainees', traineeId]);
@@ -513,9 +659,6 @@ export class AdminTrainees implements OnInit {
     return all.find(t => t.traineeId === traineeId) || null;
   }
 
-  // =========================================================================
-  // دوال الحضور والغياب (التي كان يشتكي منها المترجم)
-  // =========================================================================
   openBatchAttendanceModal() {
     this.attendanceStep.set(1);
     this.attendanceBatchDropdownFilter.set('');
@@ -524,6 +667,8 @@ export class AdminTrainees implements OnInit {
     this.batchCurrentPage.set(1);
     this.attendanceCurrentPage.set(1);
     this.showBatchAttendanceModal.set(true);
+    this.goToLatestRecordedAttendanceDate();
+    this.loadAllBatchesAttendanceSummary();
     this.scrollToTop();
   }
 
@@ -547,60 +692,177 @@ export class AdminTrainees implements OnInit {
     this.scrollToTop();
   }
 
+  // =========================================================================
+  // 👈 رصد الحضور: تم تعديل السطور ليظهر الحضور الفعلي بدلاً من أصفار وقيد الرصد
+  // =========================================================================
   prepareBatchAttendanceRoster(batch: any) {
-    const all = this.allDbTrainees().length > 0 ? this.allDbTrainees() : this.trainees();
-    let batchTrainees = all;
-    
-    if (batch.name !== 'دفعة عامة') {
-      const match = all.filter(t => t.batchName === batch.name);
-      if (match.length > 0) batchTrainees = match;
-    }
+    const batchId = Number(batch?.batchId);
 
-    const assignedTrainer = this.trainerFor(batch);
-
-    const records: TraineeAttendanceRecord[] = batchTrainees.map((t, idx) => {
-      let recordedStatus: 'Present' | 'Late' | 'Absent' | 'Excused' = 'Present';
-      let checkIn = '08:30 ص';
-      let note = 'تم الحضور في الوقت المحدد';
-
-      if (idx % 11 === 0 && idx !== 0) {
-        recordedStatus = 'Late';
-        checkIn = '09:15 ص';
-        note = 'تأخير بعذر مروري مُسجل من المدرب';
-      } else if (idx % 17 === 0 && idx !== 0) {
-        recordedStatus = 'Absent';
-        checkIn = '—';
-        note = 'غياب بدون عذر - تم إشعار المتدرب';
-      } else if (idx % 23 === 0 && idx !== 0) {
-        recordedStatus = 'Excused';
-        checkIn = '—';
-        note = 'إجازة رسمية معتمدة من إدارة التدريب';
-      }
-
-      return {
-        traineeId: t.traineeId,
-        fullName: t.fullName,
-        nationalId: t.nationalId || (10293800 + (t.traineeId || idx + 1)),
-        phone: t.phone,
-        email: t.email,
-        university: t.university,
-        major: t.major,
-        companyName: t.companyName || 'مجموعة أفق التقنية',
-        batchName: t.batchName || batch.name,
-        track: t.trackName || batch.track || 'برنامج التدريب التقني',
-        profileImageUrl: t.profileImageUrl,
-        status: recordedStatus,
-        checkInTime: checkIn,
-        notes: note,
-        recordedByTrainer: assignedTrainer,
-        recordedAt: this.attendanceDate() + ' ' + (checkIn !== '—' ? checkIn : '08:00 ص')
-      };
-    });
-
-    this.attendanceRecords.set(records);
+    this.attendanceRecords.set([]);
     this.attendanceSearchQuery.set('');
     this.attendanceStatusFilter.set('ALL');
     this.attendanceTrackFilter.set('');
+    this.attendanceCurrentPage.set(1);
+
+    if (!Number.isInteger(batchId) || batchId <= 0) {
+      this.showToast('معرف الدفعة غير صحيح، تعذر تحميل الحضور.', 'error');
+      return;
+    }
+
+    this.isLoadingAttendance.set(true);
+
+    this.api.getBatchDailyAttendance(
+      batchId,
+      this.attendanceDate()
+    ).subscribe({
+      next: (response: any) => {
+        let rows: any[] = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.items)
+            ? response.items
+            : Array.isArray(response?.data)
+              ? response.data
+              : Array.isArray(response?.data?.items)
+                ? response.data.items
+                : [];
+
+
+
+        const records: TraineeAttendanceRecord[] =
+          rows.map((item: any) => {
+            const traineeId = Number(
+              item.traineeId ?? item.TraineeId
+            );
+
+            const trainee = this.getTraineeById(traineeId);
+
+            const rawStatus = String(
+              item.status ?? item.Status ?? 'NotRecorded'
+            ).trim().toLowerCase();
+
+            const statusMap: Record<string, TraineeAttendanceRecord['status']> = {
+              present: 'Present',
+              late: 'Late',
+              absent: 'Absent',
+              excused: 'Excused',
+              notrecorded: 'NotRecorded'
+            };
+
+            const hasAttendanceRecord =
+              item.hasAttendanceRecord ?? item.HasAttendanceRecord;
+
+            const status: TraineeAttendanceRecord['status'] =
+              hasAttendanceRecord === false
+                ? 'NotRecorded'
+                : (statusMap[rawStatus] ?? 'NotRecorded');
+
+            const checkIn =
+              status === 'NotRecorded'
+                ? null
+                : (item.checkInTime ?? item.CheckInTime ?? null);
+
+            return {
+              traineeId,
+              enrollmentId:
+                item.enrollmentId ??
+                item.EnrollmentId ?? null,
+              dailyAttendanceId:
+                item.dailyAttendanceId ??
+                item.DailyAttendanceId ?? null,
+              fullName:
+                item.traineeName ??
+                item.TraineeName ??
+                trainee?.fullName ??
+                'متدرب',
+              nationalId: trainee?.nationalId ?? null,
+              phone: trainee?.phone ?? '',
+              email: trainee?.email ?? '',
+              university: trainee?.university ?? '',
+              major: trainee?.major ?? '',
+              companyName:
+                item.companyName ??
+                item.CompanyName ??
+                trainee?.companyName ??
+                'غير محدد',
+              batchName:
+                item.batchName ??
+                item.BatchName ??
+                batch.name,
+              track:
+                item.trackName ??
+                item.TrackName ??
+                trainee?.trackName ??
+                batch.track ??
+                'غير محدد',
+              profileImageUrl:
+                trainee?.profileImageUrl ?? null,
+              status,
+              checkInTime: checkIn
+                ? String(checkIn)
+                : '—',
+              notes:
+                item.note ??
+                item.Note ??
+                item.notes ??
+                '',
+              recordedByTrainer: this.trainerFor(batch),
+              recordedAt:
+                item.recordedAt ??
+                item.RecordedAt ??
+                undefined
+            };
+          });
+
+        this.attendanceRecords.set(records);
+        this.isLoadingAttendance.set(false);
+      },
+      error: () => {
+        this.attendanceRecords.set([]);
+        this.isLoadingAttendance.set(false);
+        this.showToast('تعذر جلب سجلات الحضور من قاعدة البيانات.', 'error');
+      }
+    });
+  }
+
+  onAttendanceDateChange(date: string) {
+    if (!date || date === this.attendanceDate()) {
+      return;
+    }
+
+    this.attendanceDate.set(date);
+    this.attendanceCurrentPage.set(1);
+    this.loadAllBatchesAttendanceSummary();
+
+    const batch = this.selectedAttendanceBatch();
+
+    if (batch && this.attendanceStep() === 2) {
+      this.prepareBatchAttendanceRoster(batch);
+    }
+  }
+
+  goToLatestRecordedAttendanceDate(): void {
+    this.api.getLatestRecordedAttendanceDate().subscribe({
+      next: (response) => {
+        if (!response.hasRecords || !response.date) {
+          return;
+        }
+
+        const latestDate = response.date;
+
+        if (latestDate !== this.attendanceDate()) {
+          this.onAttendanceDateChange(latestDate);
+        } else {
+          this.loadAllBatchesAttendanceSummary();
+
+          const batch = this.selectedAttendanceBatch();
+
+          if (batch && this.attendanceStep() === 2) {
+            this.prepareBatchAttendanceRoster(batch);
+          }
+        }
+      },
+      error: () => { }
+    });
   }
 
   onBatchDropdownFilterChange(batchName: string) {
@@ -671,8 +933,8 @@ export class AdminTrainees implements OnInit {
 
     this.api.getTrainers().pipe(catchError(() => of(null))).subscribe((res: any) => {
       const raw: any[] = Array.isArray(res?.items) ? res.items
-                       : Array.isArray(res?.Items) ? res.Items
-                       : Array.isArray(res) ? res : [];
+        : Array.isArray(res?.Items) ? res.Items
+          : Array.isArray(res) ? res : [];
 
       const trainers = raw
         .map(t => ({
@@ -693,8 +955,8 @@ export class AdminTrainees implements OnInit {
 
         results.forEach((batchesRes, i) => {
           const list: any[] = Array.isArray(batchesRes) ? batchesRes
-                            : Array.isArray(batchesRes?.items) ? batchesRes.items
-                            : Array.isArray(batchesRes?.Items) ? batchesRes.Items : [];
+            : Array.isArray(batchesRes?.items) ? batchesRes.items
+              : Array.isArray(batchesRes?.Items) ? batchesRes.Items : [];
 
           list.forEach(b => {
             const key = this.normBatch(b.batchName ?? b.BatchName ?? b.name ?? b.Name ?? b.title ?? b.Title);
@@ -721,35 +983,54 @@ export class AdminTrainees implements OnInit {
   }
 
   saveAttendanceRecords() {
-    this.isSavingAttendance.set(true);
+    if (this.isSavingAttendance()) return;
+    const saveMethod = (this.api as any).saveAttendanceRecords;
+    if (typeof saveMethod !== 'function') {
+      this.showToast('خدمة حفظ الحضور غير متوفرة في AdminApi. لم يتم حفظ أي بيانات.', 'error');
+      return;
+    }
+    const batch = this.selectedAttendanceBatch();
+    if (!batch || !Number.isInteger(Number(batch.batchId)) || Number(batch.batchId) <= 0) {
+      this.showToast('معرف الدفعة غير صالح.', 'error');
+      return;
+    }
+    const records = this.attendanceRecords().filter(r => r.status !== 'NotRecorded');
+    if (records.length === 0) {
+      this.showToast('لا توجد سجلات حضور مرصودة لحفظها.', 'info');
+      return;
+    }
     const payload = {
+      batchId: Number(batch.batchId),
       date: this.attendanceDate(),
-      batchName: this.selectedAttendanceBatch()?.name,
-      records: this.attendanceRecords().map(r => ({
+      batchName: batch.name,
+      records: records.map(r => ({
         traineeId: r.traineeId,
+        enrollmentId: r.enrollmentId,
+        dailyAttendanceId: r.dailyAttendanceId,
         status: r.status,
-        checkInTime: r.checkInTime,
+        checkInTime: r.checkInTime === '—' ? null : r.checkInTime,
         notes: r.notes
       }))
     };
-
-    const saveObservable = (this.api as any).saveAttendanceRecords 
-      ? (this.api as any).saveAttendanceRecords(payload)
-      : of({ success: true });
-
-    saveObservable.pipe(
-      catchError(() => of({ success: true }))
-    ).subscribe({
-      next: () => {
-        this.isSavingAttendance.set(false);
-        this.showToast(`تم حفظ سجل حضور متدربي (${this.selectedAttendanceBatch()?.name}) بنجاح لتاريخ ${this.attendanceDate()}!`, 'success');
-        this.closeBatchAttendanceModal();
-      },
-      error: () => {
-        this.isSavingAttendance.set(false);
-        this.showToast('تعذر حفظ سجل الحضور، يرجى المحاولة لاحقاً.', 'error');
-      }
-    });
+    this.isSavingAttendance.set(true);
+    try {
+      saveMethod.call(this.api, payload).subscribe({
+        next: () => {
+          this.isSavingAttendance.set(false);
+          this.showToast('تم حفظ سجلات الحضور بنجاح.', 'success');
+          this.prepareBatchAttendanceRoster(batch);
+        },
+        error: (error: any) => {
+          console.error('Failed to save attendance:', error);
+          this.isSavingAttendance.set(false);
+          this.showToast('تعذر حفظ سجل الحضور في قاعدة البيانات.', 'error');
+        }
+      });
+    } catch (error) {
+      console.error('Failed to start attendance save:', error);
+      this.isSavingAttendance.set(false);
+      this.showToast('تعذر بدء عملية حفظ الحضور.', 'error');
+    }
   }
 
   exportAttendanceToExcel() {
@@ -804,8 +1085,8 @@ export class AdminTrainees implements OnInit {
         clean(r.email || '—'),
         clean(r.phone || '—'),
         clean(r.batchName || batchName),
-        clean(r.track || 'برنامج التدريب التقني'),
-        clean(r.companyName || 'مجموعة أفق التقنية'),
+        clean(r.track || '—'),
+        clean(r.companyName || '—'),
         clean(getStatusArabic(r.status)),
         clean(r.notes || '—'),
         clean(dateStr),
@@ -885,6 +1166,7 @@ export class AdminTrainees implements OnInit {
     <div>متأخر: <strong style="color:#d97706;">${summary.late}</strong></div>
     <div>غائب: <strong style="color:#dc2626;">${summary.absent}</strong></div>
     <div>بعذر: <strong style="color:#0284c7;">${summary.excused}</strong></div>
+    <div>قيد الرصد: <strong>${summary.notRecorded}</strong></div>
     <div>نسبة الالتزام: <strong>${summary.rate}%</strong></div>
   </div>
   <table>
@@ -954,8 +1236,8 @@ export class AdminTrainees implements OnInit {
       const allRaw: any[] = Array.isArray(allRes?.items)
         ? allRes.items
         : Array.isArray(allRes)
-        ? allRes
-        : [];
+          ? allRes
+          : [];
 
       const mappedAll = allRaw.map(r => this.mapRawTrainee(r));
       const withdrawalsList: any[] = Array.isArray(withdrawalRequests) ? withdrawalRequests : [];
@@ -1034,7 +1316,7 @@ export class AdminTrainees implements OnInit {
         ? of(null)
         : this.api.getTrainees({ pageNumber: 1, pageSize: 2000 }).pipe(catchError(() => of(null)))
     }).subscribe(({ withdrawals, allRes }: any) => {
-      const withdrawalsList: any[] = Array.isArray(withdrawals) ? withdrawalRequestsOrArray(withdrawals) : [];
+      const withdrawalsList: any[] = Array.isArray(withdrawals) ? withdrawals : [];
 
       let baseAll = this.allDbTrainees();
       if (baseAll.length === 0 && allRes) {
@@ -1112,10 +1394,10 @@ export class AdminTrainees implements OnInit {
             const baseItem = prof
               ? this.mapRawTrainee({ ...prof, traineeId: prof.traineeId ?? prof.id ?? tId })
               : this.mapRawTrainee({
-                  traineeId: tId,
-                  fullName: req.traineeName ?? req.fullName ?? `متدرب #${tId}`,
-                  email: req.traineeEmail ?? req.email ?? ''
-                });
+                traineeId: tId,
+                fullName: req.traineeName ?? req.fullName ?? `متدرب #${tId}`,
+                email: req.traineeEmail ?? req.email ?? ''
+              });
 
             const normStatus = this.normalizeWithdrawalStatus(req.status ?? req.Status);
             matchedMap.set(baseItem.traineeId, {
@@ -1133,10 +1415,6 @@ export class AdminTrainees implements OnInit {
         });
       }
     });
-
-    function withdrawalRequestsOrArray(arr: any[]): any[] {
-      return arr;
-    }
   }
 
   loadTrainees() {
@@ -1155,6 +1433,35 @@ export class AdminTrainees implements OnInit {
       pageNumber: this.currentPage(),
       pageSize: this.pageSize()
     };
+
+    const searchTerm = this.searchQuery().trim();
+
+    if (searchTerm) {
+      queryParams['searchTerm'] = searchTerm;
+    }
+
+    const university = this.universityFilter();
+
+    if (university !== 'ALL') {
+      queryParams['university'] = university;
+    }
+
+    const company = this.companyFilter();
+
+    if (company !== 'ALL' && company !== 'UNASSIGNED') {
+      const selectedCompany = this.companies().find(
+        (c: any) =>
+          (c.companyName ?? c.name ?? c.CompanyName) === company
+      );
+
+      const companyId = Number(
+        selectedCompany?.companyId ?? selectedCompany?.CompanyId
+      );
+
+      if (Number.isInteger(companyId) && companyId > 0) {
+        queryParams['companyId'] = companyId;
+      }
+    }
 
     if (statusParam !== null && !isNaN(statusParam)) {
       queryParams['status'] = statusParam;
@@ -1384,94 +1691,113 @@ export class AdminTrainees implements OnInit {
     const mapper = (item: EnrichedTraineeItem) =>
       item.traineeId === traineeId
         ? {
-            ...item,
-            withdrawalRequestId: requestId || item.withdrawalRequestId,
-            withdrawalStatus: status,
-            withdrawalReason: reason,
-            withdrawalDate: date,
-            completionStatus: status === 'Approved' ? 'Dropped' : item.completionStatus
-          }
+          ...item,
+          withdrawalRequestId: requestId || item.withdrawalRequestId,
+          withdrawalStatus: status,
+          withdrawalReason: reason,
+          withdrawalDate: date,
+          completionStatus: status === 'Approved' ? 'Dropped' : item.completionStatus
+        }
         : item;
 
     this.trainees.update(list => list.map(mapper));
     this.allDbTrainees.update(list => list.map(mapper));
   }
 
-  exportToExcel() {
-    this.isExporting.set(true);
-    this.showToast('جاري تجهيز وتصدير ملف Excel من قاعدة البيانات...', 'info');
-
-    const statusVal = this.statusFilter();
-    const statusParam = (statusVal === '0' || statusVal === '1' || statusVal === '2') ? Number(statusVal) : null;
-
-    const queryParams: Record<string, unknown> = {
-      pageNumber: 1,
-      pageSize: 2000
-    };
-    if (statusParam !== null && !isNaN(statusParam)) {
-      queryParams['status'] = statusParam;
+  exportToExcel(): void {
+    if (this.isExporting()) {
+      return;
     }
 
-    this.api.getTrainees(queryParams).pipe(catchError(() => of(null))).subscribe((res: any) => {
-      const rawList: any[] = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : [];
-      const sourceList = rawList.length > 0 ? rawList.map(r => this.mapRawTrainee(r)) : this.filtered();
+    this.isExporting.set(true);
 
-      const q = this.searchQuery().trim().toLowerCase();
-      const uni = this.universityFilter();
-      const comp = this.companyFilter();
-      const batch = this.batchFilter();
-      const cv = this.cvFilter();
+    try {
+      const finalList = this.filtered();
 
-      const finalList = sourceList.filter(item => {
-        if (q) {
-          const hay = [item.fullName, item.email, String(item.nationalId || ''), item.university, item.major, item.companyName, item.batchName]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase();
-          if (!hay.includes(q)) return false;
-        }
-        if (uni !== 'ALL' && item.university !== uni) return false;
-        if (comp !== 'ALL') {
-          if (comp === 'UNASSIGNED' && item.companyName) return false;
-          if (comp !== 'UNASSIGNED' && item.companyName !== comp) return false;
-        }
-        if (batch !== 'ALL' && item.batchName !== batch) return false;
-        if (cv === 'WITH_CV' && !item.resumeUrl) return false;
-        if (cv === 'WITHOUT_CV' && !!item.resumeUrl) return false;
-        return true;
-      });
+      const headers = [
+        'م',
+        'رقم المتدرب',
+        'الاسم الكامل',
+        'البريد الإلكتروني',
+        'رقم الهاتف',
+        'الرقم المدني / الهوية',
+        'الجامعة / الكلية',
+        'التخصص الأكاديمي',
+        'المستوى الأكاديمي',
+        'الشركة المستضيفة',
+        'الدفعة',
+        'المسار التدريبي',
+        'الحالة',
+        'حالة طلب الانسحاب',
+        'نسبة الإنجاز (%)',
+        'رابط LinkedIn',
+        'رابط GitHub',
+        'السيرة الذاتية (CV)'
+      ];
 
-      const excelRows = finalList.map((t, idx) => ({
-        'م': idx + 1,
-        'رقم المتدرب': t.traineeId,
-        'الاسم الكامل': t.fullName,
-        'البريد الإلكتروني': t.email,
-        'رقم الهاتف': t.phone || '—',
-        'الرقم المدني / الهوية': t.nationalId || '—',
-        'الجامعة / الكلية': t.university || '—',
-        'التخصص الأكاديمي': t.major || '—',
-        'المستوى الأكاديمي': t.academicLevel || '—',
-        'الشركة المستضيفة': t.companyName || 'لم يوزّع بعد',
-        'الدفعة': t.batchName || '—',
-        'المسار التدريبي': t.trackName || '—',
-        'الحالة': this.labelFor(t),
-        'حالة طلب الانسحاب': t.withdrawalRequestId ? this.constants.administrativeLabel('NFD_WDR_STAT', t.withdrawalStatus) : '',
-        'نسبة الإنجاز (%)': `${this.getProgressValue(t)}%`,
-        'رابط LinkedIn': t.linkedInUrl || '—',
-        'رابط GitHub': t.gitHubUrl || '—',
-        'السيرة الذاتية (CV)': t.resumeUrl || 'غير مرفق'
+      const excelRows = finalList.map((t, idx) => [
+        idx + 1,
+        t.traineeId,
+        t.fullName,
+        t.email,
+        t.phone || '—',
+        t.nationalId || '—',
+        t.university || '—',
+        t.major || '—',
+        t.academicLevel || '—',
+        t.companyName || 'لم يوزّع بعد',
+        t.batchName || '—',
+        t.trackName || '—',
+        this.labelFor(t),
+        t.withdrawalRequestId
+          ? this.constants.administrativeLabel(
+            'NFD_WDR_STAT',
+            t.withdrawalStatus
+          )
+          : '',
+        `${this.getProgressValue(t)}%`,
+        t.linkedInUrl || '—',
+        t.gitHubUrl || '—',
+        t.resumeUrl || 'غير مرفق'
+      ]);
+
+      const worksheet = XLSX.utils.aoa_to_sheet([
+        headers,
+        ...excelRows
+      ]);
+
+      worksheet['!cols'] = headers.map(() => ({
+        wch: 24
       }));
 
-      const worksheet = XLSX.utils.json_to_sheet(excelRows);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'قائمة المتدربين');
 
-      const dateStr = new Date().toISOString().slice(0, 10);
-      XLSX.writeFile(workbook, `Nafadh_Trainees_${dateStr}.xlsx`);
+      XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        'قائمة المتدربين'
+      );
 
+      const dateStr = new Date()
+        .toISOString()
+        .slice(0, 10);
+
+      XLSX.writeFile(
+        workbook,
+        `Nafadh_Trainees_${dateStr}.xlsx`
+      );
+
+      this.showToast(
+        `تم تصدير ${finalList.length} متدرب بنجاح إلى Excel.`,
+        'success'
+      );
+
+    } catch (error) {
+      console.error('Trainee Excel export failed:', error);
+      this.showToast('تعذر تصدير قائمة المتدربين.', 'error');
+    } finally {
       this.isExporting.set(false);
-      this.showToast(`تم تصدير ${excelRows.length} متدرب إلى ملف Excel بنجاح!`, 'success');
-    });
+    }
   }
 
   updateFormField(field: string, value: any) {
@@ -1588,6 +1914,13 @@ export class AdminTrainees implements OnInit {
     return Object.keys(this.formErrors()).length === 0;
   }
 
+  onTraineeSearchChange(value: string): void {
+    this.searchQuery.set(value);
+    this.currentPage.set(1);
+    this.loadTrainees();
+  }
+
+
   onStatusFilterChange(newStatus: string) {
     this.statusFilter.set(newStatus);
     this.currentPage.set(1);
@@ -1627,9 +1960,19 @@ export class AdminTrainees implements OnInit {
     this.api.getCompanies().pipe(catchError(() => of([]))).subscribe({
       next: (res: any) => this.companies.set(Array.isArray(res) ? res : res?.items ?? [])
     });
-    this.api.getBatches().pipe(catchError(() => of([]))).subscribe({
-      next: (res: any) => this.batches.set(Array.isArray(res) ? res : res?.items ?? [])
-    });
+    this.api.getBatches()
+      .pipe(catchError(() => of([])))
+      .subscribe({
+        next: (res: any) => {
+          this.batches.set(
+            Array.isArray(res) ? res : res?.items ?? []
+          );
+
+          if (this.showBatchAttendanceModal()) {
+            this.loadAllBatchesAttendanceSummary();
+          }
+        }
+      });
   }
 
   getInitials(name: string | undefined | null): string {
@@ -1703,7 +2046,7 @@ export class AdminTrainees implements OnInit {
       const json = JSON.stringify(msgs);
       localStorage.setItem(`nafadh_chat_${traineeId}`, json);
       localStorage.setItem(`nfd_dm_trainee_${traineeId}`, json);
-    } catch {}
+    } catch { }
     const current = { ...this.localMessagesCache() };
     current[traineeId] = msgs;
     this.localMessagesCache.set(current);
@@ -1715,13 +2058,13 @@ export class AdminTrainees implements OnInit {
       if (raw) {
         this.unreadReplies.set(JSON.parse(raw));
       }
-    } catch {}
+    } catch { }
   }
 
   private saveUnreadReplies(list: UnreadReplyNotification[]) {
     try {
       localStorage.setItem('nafadh_unread_replies', JSON.stringify(list));
-    } catch {}
+    } catch { }
   }
 
   hasUnreadReply(itemOrId: EnrichedTraineeItem | number): boolean {
@@ -1822,13 +2165,15 @@ export class AdminTrainees implements OnInit {
 
     const convId = this.activeConversationId();
     const request$ = convId
-      ? this.api.replyToConversation(convId, { body: text, senderUserId: 1 })
+      ? this.api.replyToConversation(convId, { body: text, message: text, senderUserId: 1 })
       : this.api.createAnnouncement({
-          title: this.messageSubject() || `رسالة إدارية إلى ${trainee.fullName}`,
-          content: text,
-          scopeType: 'Platform',
-          createdByUserId: 1
-        });
+        title: this.messageSubject() || `رسالة إدارية إلى ${trainee.fullName}`,
+        message: text,
+        Message: text,
+        content: text,
+        scopeType: 'Platform',
+        createdByUserId: 1
+      });
 
     request$.subscribe({
       next: () => {
@@ -1852,119 +2197,174 @@ export class AdminTrainees implements OnInit {
     });
   }
 
-  openCvModal(item: EnrichedTraineeItem) {
-    this.activeTrainee.set(item);
+  openCvModal(item: EnrichedTraineeItem): void {
+    if (!item) return;
+    this.activeTrainee.set({
+      ...item,
+      resumeUrl: item.resumeUrl || 'generated-profile-cv'
+    });
     this.showCvModal.set(true);
   }
 
-  closeCvModal() {
+  closeCvModal(): void {
     this.showCvModal.set(false);
+    this.activeTrainee.set(null);
   }
 
-  getSafeUrl(url: string): SafeResourceUrl {
-    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
-  }
-
-  downloadCv(item: EnrichedTraineeItem) {
-    if (!item) return;
-    const safeName = (item.fullName || 'Trainee').replace(/\s+/g, '_');
-
-    if (item.resumeUrl) {
-      const normalized =
-        item.resumeUrl.startsWith('http') || item.resumeUrl.startsWith('/')
-          ? item.resumeUrl
-          : `https://${item.resumeUrl}`;
-
-      this.showToast(`جاري تنزيل السيرة الذاتية للمتدرب "${item.fullName}"...`, 'info');
-
-      fetch(normalized)
-        .then(res => {
-          if (!res.ok) throw new Error('Network error');
-          return res.blob();
-        })
-        .then(blob => {
-          const blobUrl = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = blobUrl;
-          a.download = `CV_${safeName}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          window.URL.revokeObjectURL(blobUrl);
-          this.showToast(`تم تنزيل السيرة الذاتية للمتدرب "${item.fullName}" بنجاح!`, 'success');
-        })
-        .catch(() => {
-          const a = document.createElement('a');
-          a.href = normalized;
-          a.download = `CV_${safeName}.pdf`;
-          a.target = '_blank';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          this.showToast(`تم بدء تنزيل السيرة الذاتية للمتدرب "${item.fullName}".`, 'success');
-        });
-      return;
+  private resolveCvUrl(url: string): string | null {
+    const value = (url || '').trim();
+    if (!value || value === 'generated-profile-cv' || this.isLegacyUnavailableCv(value)) {
+      return null;
     }
+    try {
+      const backendOrigin = new URL(environment.apiBaseUrl, window.location.origin).origin;
+      if (/^https?:\/\//i.test(value)) return value;
+      return new URL(value, backendOrigin + '/').toString();
+    } catch {
+      return null;
+    }
+  }
 
-    const skillsHtml = item.skills
-      ? item.skills
-          .split(',')
-          .map(s => `<span style="background:#e0f2fe;color:#0369a1;padding:4px 10px;border-radius:6px;margin:4px;display:inline-block;font-size:13px;">${s.trim()}</span>`)
-          .join(' ')
-      : 'غير مسجل';
+  isLegacyUnavailableCv(url: string): boolean {
+    return /^https?:\/\/cdn\.nafadh\.test\//i.test(url || '');
+  }
 
-    const cvContent = `<!DOCTYPE html>
+  private escapeCvText(value: unknown): string {
+    return String(value ?? '').replace(/[&<>"']/g, char => {
+      const entities: Record<string, string> = {
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      };
+      return entities[char];
+    });
+  }
+
+  private buildProfileCvHtml(item: EnrichedTraineeItem): string {
+    const esc = (value: unknown) => this.escapeCvText(value);
+    const info = (value: unknown) => esc(value || 'غير محدد');
+    const skills = (item.skills || '').split(',').map(x => x.trim()).filter(Boolean);
+    const skillsHtml = skills.length
+      ? skills.map(x => `<span class="skill">${esc(x)}</span>`).join('')
+      : '<span>غير مسجل</span>';
+    const progress = this.getProgressValue(item);
+    const safeLink = (url: string | null) => {
+      if (!url) return '';
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '';
+        return `<a href="${esc(parsed.toString())}" target="_blank" rel="noopener noreferrer">${esc(url)}</a>`;
+      } catch { return ''; }
+    };
+    return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>السيرة الذاتية - ${item.fullName}</title>
-  <style>
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f8fafc; color: #0f172a; padding: 40px; }
-    .card { max-width: 750px; margin: auto; background: #fff; border: 1px solid #cbd5e1; border-radius: 16px; padding: 32px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-    .header { border-bottom: 3px solid #0a1172; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
-    h1 { margin: 0; color: #0a1172; font-size: 24px; }
-    .sub { color: #64748b; font-size: 14px; margin-top: 4px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-    .box { background: #f8fafc; padding: 12px 16px; border-radius: 10px; border: 1px solid #e2e8f0; }
-    .label { font-size: 12px; color: #64748b; display: block; margin-bottom: 4px; }
-    .val { font-size: 15px; font-weight: bold; color: #1e293b; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>السيرة الذاتية - ${esc(item.fullName)}</title>
+<style>
+  *{box-sizing:border-box}body{margin:0;padding:32px;background:#f1f5f9;color:#172554;font-family:Tahoma,Arial,sans-serif;line-height:1.8}
+  .cv{max-width:850px;margin:auto;background:white;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px #0f172a14}
+  header{background:linear-gradient(120deg,#101d65,#1e40af);color:white;padding:35px}
+  header h1{font-size:29px;margin:0 0 8px}header p{margin:0;color:#dbeafe}
+  main{padding:30px 35px}h2{font-size:18px;color:#1e40af;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-top:25px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{background:#f8fafc;padding:10px 14px;border-radius:9px;overflow-wrap:anywhere}
+  .label{display:block;color:#64748b;font-size:12px}.value{font-weight:600;color:#0f172a}
+  .skill{display:inline-block;margin:5px;padding:5px 13px;background:#dbeafe;color:#1d4ed8;border-radius:20px;font-size:13px}
+  .progress{height:11px;background:#e2e8f0;border-radius:9px;overflow:hidden}.fill{height:100%;background:#2563eb;width:${progress}%}
+  a{color:#1d4ed8;overflow-wrap:anywhere}footer{text-align:center;padding:18px;color:#64748b;font-size:12px;background:#f8fafc}
+  @media(max-width:600px){body{padding:0}.grid{grid-template-columns:1fr}main{padding:20px}}
+  @media print{body{padding:0;background:white}.cv{box-shadow:none}}
+</style>
 </head>
-<body>
-  <div class="card">
-    <div class="header">
-      <div>
-        <h1>${item.fullName}</h1>
-        <div class="sub">${item.university || 'جامعة غير محددة'} — ${item.major || 'تخصص غير محدد'}</div>
-      </div>
-      <div style="text-align:left;font-weight:bold;color:#0066c4;">منصة نفاذ الوطنية</div>
-    </div>
-    <div class="grid">
-      <div class="box"><span class="label">الرقم المدني</span><span class="val">${item.nationalId || '—'}</span></div>
-      <div class="box"><span class="label">البريد الإلكتروني</span><span class="val">${item.email || '—'}</span></div>
-      <div class="box"><span class="label">رقم الهاتف</span><span class="val">${item.phone || '—'}</span></div>
-      <div class="box"><span class="label">المستوى الأكاديمي</span><span class="val">${item.academicLevel || 'بكالوريوس'}</span></div>
-      <div class="box"><span class="label">الشركة المستضيفة</span><span class="val">${item.companyName || 'لم يوزّع بعد'}</span></div>
-      <div class="box"><span class="label">الدفعة / المسار</span><span class="val">${item.batchName || '—'}</span></div>
-    </div>
-    <div class="box">
-      <span class="label">المهارات التقنية المسجلة</span>
-      <div style="margin-top:8px;">${skillsHtml}</div>
-    </div>
-  </div>
-</body>
-</html>`;
+<body><div class="cv">
+<header><h1>${esc(item.fullName)}</h1><p>${info(item.major)} — ${info(item.university)}</p></header>
+<main>
+<h2>المعلومات الشخصية</h2>
+<div class="grid">
+<div class="field"><span class="label">البريد الإلكتروني</span><span class="value">${info(item.email)}</span></div>
+<div class="field"><span class="label">رقم الهاتف</span><span class="value">${info(item.phone)}</span></div>
+<div class="field"><span class="label">الرقم المدني</span><span class="value">${info(item.nationalId)}</span></div>
+<div class="field"><span class="label">المستوى الأكاديمي</span><span class="value">${info(item.academicLevel)}</span></div>
+</div>
+<h2>المعلومات الأكاديمية والتدريبية</h2>
+<div class="grid">
+<div class="field"><span class="label">الجامعة</span><span class="value">${info(item.university)}</span></div>
+<div class="field"><span class="label">التخصص</span><span class="value">${info(item.major)}</span></div>
+<div class="field"><span class="label">الشركة المستضيفة</span><span class="value">${info(item.companyName)}</span></div>
+<div class="field"><span class="label">الدفعة التدريبية</span><span class="value">${info(item.batchName)}</span></div>
+<div class="field"><span class="label">المسار التدريبي</span><span class="value">${info(item.trackName)}</span></div>
+<div class="field"><span class="label">الحالة</span><span class="value">${esc(this.labelFor(item))}</span></div>
+</div>
+<h2>نسبة الإنجاز — ${progress}%</h2><div class="progress"><div class="fill"></div></div>
+<h2>المهارات</h2><div>${skillsHtml}</div>
+${item.linkedInUrl || item.gitHubUrl ? `<h2>الحسابات المهنية</h2>${item.linkedInUrl ? `<p>LinkedIn: ${safeLink(item.linkedInUrl)}</p>` : ''}${item.gitHubUrl ? `<p>GitHub: ${safeLink(item.gitHubUrl)}</p>` : ''}` : ''}
+</main><footer>منصة نفاذ — الملف المهني للمتدرب</footer>
+</div></body></html>`;
+  }
 
-    const blob = new Blob([cvContent], { type: 'text/html;charset=utf-8' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `CV_${safeName}.html`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-    this.showToast(`تم تنزيل ملف السيرة الذاتية للمتدرب "${item.fullName}" بنجاح!`, 'success');
+  getCvPreviewHtml(): string {
+    const item = this.activeTrainee();
+    return item ? this.buildProfileCvHtml(item) : '';
+  }
+
+  private cvPreviewBlobUrl: string | null = null;
+  private cvPreviewSafeUrl: SafeResourceUrl | null = null;
+
+  getSafeUrl(_url: string): SafeResourceUrl {
+    if (this.cvPreviewSafeUrl) return this.cvPreviewSafeUrl;
+    const item = this.activeTrainee();
+    if (!item) return this.sanitizer.bypassSecurityTrustResourceUrl('about:blank');
+    const html = this.buildProfileCvHtml(item);
+    this.cvPreviewBlobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+    this.cvPreviewSafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.cvPreviewBlobUrl);
+    return this.cvPreviewSafeUrl;
+  }
+
+  private downloadGeneratedCv(item: EnrichedTraineeItem): void {
+    const safeName = (item.fullName || 'Trainee').replace(/[^\p{L}\p{N}_-]+/gu, '_');
+    const html = this.buildProfileCvHtml(item);
+    const blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+    const anchor = document.createElement('a');
+    anchor.href = blobUrl;
+    anchor.download = `CV_${safeName}.html`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    this.showToast('تم تنزيل السيرة الذاتية بنجاح.', 'success');
+  }
+
+  downloadCv(item: EnrichedTraineeItem): void {
+    if (!item) return;
+    const resolvedUrl = this.resolveCvUrl(item.resumeUrl || '');
+    if (!resolvedUrl) {
+      this.downloadGeneratedCv(item);
+      return;
+    }
+    this.showToast('جاري تنزيل السيرة الذاتية...', 'info');
+    fetch(resolvedUrl)
+      .then(response => {
+        if (!response.ok) throw new Error(`CV download failed: ${response.status}`);
+        return response.blob();
+      })
+      .then(blob => {
+        const blobUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        const safeName = (item.fullName || 'Trainee').replace(/[^\p{L}\p{N}_-]+/gu, '_');
+        anchor.href = blobUrl;
+        anchor.download = `CV_${safeName}${this.getCvExtension(item.resumeUrl || '')}`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        this.showToast('تم تنزيل السيرة الذاتية بنجاح.', 'success');
+      })
+      .catch(() => this.downloadGeneratedCv(item));
+  }
+
+  private getCvExtension(url: string): string {
+    const path = url.split('?')[0].split('#')[0];
+    const match = path.match(/\.(pdf|docx?)$/i);
+    return match ? `.${match[1].toLowerCase()}` : '.pdf';
   }
 
   onFileSelected(event: Event) {

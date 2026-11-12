@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { inject, Component, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { environment } from '../../../../../environments/environment'; // 🟢 إضافة هذا السطر
 
 
 import {
@@ -467,9 +468,17 @@ closeSnapshot(): void {
       result.score ?? '',
       `${result.percentage ?? 0}%`,
       this.getResultStatusLabel(result),
-      result.submittedAt
-        ? new Date(result.submittedAt).toLocaleString('ar-OM')
-        : 'لم يُسلّم'
+     result.submittedAt
+  ? new Date(result.submittedAt).toLocaleString('ar-OM', {
+      timeZone: 'Asia/Muscat',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    })
+  : 'لم يُسلّم'
     ]);
 
     const csv = [
@@ -914,6 +923,29 @@ closeSnapshot(): void {
 
   }
 
+  // =========================================
+  // 🟢 FILE URL HELPER (الدالة المضافة)
+  // =========================================
+  getFileUrl(fileUrl: string | null | undefined): string {
+    if (!fileUrl || !fileUrl.trim()) {
+      return '';
+    }
 
+    const url = fileUrl.trim();
+
+    if (/^https?:\/\//i.test(url)) {
+      return url;
+    }
+
+    const baseUrl = environment.apiBaseUrl
+      .replace(/\/api\/?$/i, '')
+      .replace(/\/$/, '');
+
+    const normalizedPath = url.startsWith('/')
+      ? url
+      : `/${url}`;
+
+    return `${baseUrl}${normalizedPath}`;
+  }
 
 }
