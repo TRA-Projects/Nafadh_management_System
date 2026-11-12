@@ -99,9 +99,10 @@
 
 
       <!-- TRAINEES -->
+      
       <!-- BATCH GROUP -->
 
-
+       <div class="conversations-scroll">
       @for (group of filteredBatchGroups; track group.conversationId) {
 
       <button type="button" class="batch-group-item" (click)="selectBatchGroup(group.conversationId)">
@@ -198,7 +199,7 @@
         }
 
       </div>
-
+    </div>
     </aside>
 
 
