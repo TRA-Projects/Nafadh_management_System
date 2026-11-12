@@ -7,105 +7,53 @@
   }
 
   <!-- =========================================================
-       HEADER
+       HERO: حلقة التقدم + العنوان + الإحصائيات
   ========================================================== -->
-  <header class="page-header">
-    <div class="page-header-text">
+  <header class="hero">
+
+    <div class="hero-ring"
+         role="img"
+         [attr.aria-label]="'إكمال البرنامج ' + progressPercentage() + '%'"
+         [style.background]="'conic-gradient(#2dd4bf ' + progressPercentage() + '%, rgba(255,255,255,.16) 0)'">
+      <div class="hero-ring-inner">
+        <strong>{{ progressPercentage() }}%</strong>
+        <span>إكمال البرنامج</span>
+      </div>
+    </div>
+
+    <div class="hero-text">
       <h2 class="nfd-page-title">الإنجازات والشهادات</h2>
       <p class="nfd-page-sub">تابع تقدمك، إنجازاتك وشهاداتك التدريبية</p>
-    </div>
-  </header>
-
-  <!-- =========================================================
-       SUMMARY  (3 بطاقات + شاركنا تجربتك في صف واحد)
-  ========================================================== -->
-  <section class="achievement-summary">
-
-    <div class="summary-item">
-      <div class="summary-icon progress-icon">
-        <i class="fas fa-percent"></i>
-      </div>
-      <div>
-        <span>إكمال البرنامج</span>
-        <strong>{{ progressPercentage() }}%</strong>
-      </div>
+      <span class="hero-program">
+        <i class="fas fa-graduation-cap"></i>
+        {{ programTitle() }}
+      </span>
     </div>
 
-    <div class="summary-item">
-      <div class="summary-icon score-icon">
-        <i class="fas fa-star"></i>
-      </div>
-      <div>
-        <span>التقييم الكلي</span>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span><i class="fas fa-star"></i> التقييم الكلي</span>
         <strong>{{ certificateFinalScore() }}</strong>
       </div>
-    </div>
 
-    <div class="summary-item">
-      <div class="summary-icon certificate-icon">
-        <i class="fas fa-certificate"></i>
-      </div>
-      <div>
-        <span>الشهادة</span>
-        <strong class="summary-status"
+      <div class="hero-stat">
+        <span><i class="fas fa-certificate"></i> الشهادة</span>
+        <strong class="hero-stat-status"
                 [class.ok]="canDownloadCertificate()">
           {{ canDownloadCertificate() ? 'متاحة' : 'بانتظار الإصدار' }}
         </strong>
       </div>
     </div>
 
-    <!-- شاركنا تجربتك: بجانب البطاقات الصغيرة -->
-    <div class="feedback-strip">
-      <div class="feedback-info">
-        <span class="feedback-icon"><i class="fas fa-comment-dots"></i></span>
-        <strong>شاركنا تجربتك في البرنامج التدريبي</strong>
-      </div>
-
-      <div class="feedback-buttons">
-        <button
-          type="button"
-          class="feedback-btn"
-          (click)="openFeedback('TrainerRating')">
-          <i class="fas fa-star"></i>
-          {{ constants.administrativeLabel('NFD_FBK_TYPE', 'TrainerRating') }}
-        </button>
-
-        <button
-          type="button"
-          class="feedback-btn"
-          (click)="openFeedback('BatchExperienceRating')">
-          <i class="fas fa-chart-bar"></i>
-          {{ constants.administrativeLabel('NFD_FBK_TYPE', 'BatchExperienceRating') }}
-        </button>
-      </div>
-    </div>
-
-  </section>
+  </header>
 
   <!-- =========================================================
-       MAIN GRID  (التقدم ثم الشهادة تحته)
+       DASHBOARD: الوحدات (يمين) | شاركنا تجربتك (يسار)
   ========================================================== -->
- <div
-  class="main-grid"
-  style="
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    width: 100% !important;
-    max-width: none !important;
-    gap: 20px !important;
-  ">
+  <div class="dash-grid">
 
-    <!-- ===================== PROGRESS ===================== -->
-    <section
-  class="nfd-card progress-card"
-  style="
-    display: block;
-    width: 100% !important;
-    max-width: none !important;
-    flex: 0 0 100% !important;
-    box-sizing: border-box;
-  ">
+    <!-- ===================== PROGRESS (يمين) ===================== -->
+    <section class="nfd-card progress-card">
 
       <div class="card-header">
         <div>
@@ -167,110 +115,121 @@
       </div>
     </section>
 
-    <!-- ===================== CERTIFICATE ===================== -->
-   <!-- ===================== CERTIFICATE ===================== -->
-<section class="certificate-card nfd-card">
+    <!-- ===================== FEEDBACK (يسار) ===================== -->
+    <section class="nfd-card feedback-card">
 
-  <!-- 1. Certificate title -->
-  <div class="certificate-info">
-
-    <div class="certificate-title">
-      <div class="certificate-icon">
-        <i class="fas fa-certificate"></i>
+      <div class="feedback-head">
+        <span class="feedback-icon"><i class="fas fa-comment-dots"></i></span>
+        <div>
+          <strong>شاركنا تجربتك في البرنامج التدريبي</strong>
+          <p class="feedback-note">ساعدنا في تحسين تجربتك التدريبية</p>
+        </div>
       </div>
 
-      <div>
-        <h3>
-          {{ certificateDocument(issuedCertificate()?.type).ar }}
-        </h3>
+      <div class="feedback-options">
 
-        <p>
-          @if (!issuedCertificate()) {
-            <i class="fas fa-clock"></i>
-            الشهادة بانتظار إصدارها من الإدارة.
-          } @else {
-            <i class="fas fa-check-circle"></i>
-            تم إصدار الشهادة، ويمكنك مشاهدتها وتحميلها.
-          }
-        </p>
+        <button
+          type="button"
+          class="feedback-option trainer"
+          (click)="openFeedback('TrainerRating')">
+          <span class="fo-icon"><i class="fas fa-star"></i></span>
+          <span class="fo-body">
+            <strong>{{ constants.administrativeLabel('NFD_FBK_TYPE', 'TrainerRating') }}</strong>
+            <small>تقييم أسبوعي أو شهري لكل مدرب</small>
+          </span>
+          <i class="fas fa-chevron-left fo-arrow"></i>
+        </button>
+
+        <button
+          type="button"
+          class="feedback-option batch"
+          (click)="openFeedback('BatchExperienceRating')">
+          <span class="fo-icon"><i class="fas fa-chart-bar"></i></span>
+          <span class="fo-body">
+            <strong>{{ constants.administrativeLabel('NFD_FBK_TYPE', 'BatchExperienceRating') }}</strong>
+            <small>يتاح عند اكتمال البرنامج 100%</small>
+          </span>
+          <i class="fas fa-chevron-left fo-arrow"></i>
+        </button>
+
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- =========================================================
+       CERTIFICATE  (آخر سكشن - بنفس تنسيق الـ HERO)
+  ========================================================== -->
+  <section class="hero certificate-hero"
+           [class.is-pending]="!issuedCertificate()">
+
+    <div class="hero-ring" [class.locked]="!issuedCertificate()">
+      <div class="hero-ring-inner">
+        @if (!issuedCertificate()) {
+          <i class="fas fa-lock"></i>
+        } @else {
+          <i class="fas fa-award"></i>
+        }
+        <span>NAFADH</span>
       </div>
     </div>
 
-    <div class="certificate-status">
+    <div class="hero-text">
       @if (canDownloadCertificate()) {
-        <span class="available">
+        <h2 class="nfd-page-title">تهانينا على إكمالك برنامج نفاذ بنجاح</h2>
+        <p class="nfd-page-sub">يمكنك الآن مشاهدة شهادتك وتحميلها.</p>
+        <span class="hero-program">
           <i class="fas fa-check-circle"></i>
-          متاحة
+          شهادتك متاحة
         </span>
       } @else {
-        <span class="pending">
+        <h2 class="nfd-page-title">
+          {{ certificateDocument(issuedCertificate()?.type).ar }}
+        </h2>
+        <p class="nfd-page-sub">الشهادة بانتظار إصدارها من الإدارة.</p>
+        <span class="hero-program">
           <i class="fas fa-clock"></i>
           قيد الإصدار
         </span>
       }
     </div>
 
-  </div>
+    <div class="hero-stats">
+      @if (canDownloadCertificate()) {
 
-  <!-- 2. NAFADH certificate preview -->
-  <div class="certificate-preview">
+        <button
+          type="button"
+          class="download-btn enabled view"
+          [disabled]="loading()"
+          (click)="viewCertificate()">
+          <i class="fas fa-eye"></i>
+          مشاهدة
+        </button>
 
-    <div class="certificate-brand">
-      NAFADH
+        <button
+          type="button"
+          class="download-btn enabled download"
+          [disabled]="loading()"
+          (click)="downloadCertificate()">
+          <i class="fas fa-download"></i>
+          تحميل
+        </button>
+
+      } @else {
+
+        <button
+          type="button"
+          class="download-btn"
+          disabled>
+          <i class="fas fa-lock"></i>
+          بانتظار إصدار الشهادة
+        </button>
+
+      }
     </div>
 
-    <div class="certificate-text">
-      <span>
-        {{ certificateDocument(issuedCertificate()?.type).ar }}
-      </span>
-
-      <strong>{{ traineeName() }}</strong>
-
-      <small>{{ programTitle() }}</small>
-    </div>
-
-  </div>
-
-  <!-- 3. Action buttons -->
-  @if (canDownloadCertificate()) {
-
-    <div class="certificate-actions">
-
-      <button
-        type="button"
-        class="download-btn enabled"
-        [disabled]="loading()"
-        (click)="viewCertificate()">
-        <i class="fas fa-eye"></i>
-        مشاهدة
-      </button>
-
-      <button
-        type="button"
-        class="download-btn enabled"
-        [disabled]="loading()"
-        (click)="downloadCertificate()">
-        <i class="fas fa-download"></i>
-        تحميل
-      </button>
-
-    </div>
-
-  } @else {
-
-    <div class="certificate-actions">
-      <button
-        type="button"
-        class="download-btn"
-        disabled>
-        <i class="fas fa-lock"></i>
-        بانتظار إصدار الشهادة
-      </button>
-    </div>
-
-  }
-
-</section>
+  </section>
 
   <!-- =========================================================
        OFFICIAL CERTIFICATE PREVIEW (النافذة المنبثقة)
