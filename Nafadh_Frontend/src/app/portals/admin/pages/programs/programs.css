@@ -5889,9 +5889,59 @@
 
 /* نموذج الإضافة اليدوية */
 .manual-trainee-form {
-  display: block;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
   width: 100%;
   margin-top: 24px;
+  align-items: start;
+}
+
+.manual-trainee-form > h4,
+.manual-trainee-form > .create-batch-field-error {
+  grid-column: 1 / -1;
+}
+
+.manual-trainee-form > label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  font-weight: 600;
+}
+
+.manual-trainee-form > label > input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font: inherit;
+}
+
+.manual-trainee-form > label > input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.manual-trainee-form > .create-batch-save-btn {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+@media (max-width: 900px) {
+  .manual-trainee-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .manual-trainee-form {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* تحسين عرض أزرار اختيار الطريقة */
@@ -6027,18 +6077,7 @@
   border-radius: 8px;
   font-weight: 600;
 }
-.manual-trainee-form label {
-  display: block;
-  margin: 12px 0 6px;
-}
-.manual-trainee-form input:not([type="checkbox"]):not([type="file"]) {
-  display: block;
-  width: 100%;
-  min-height: 46px;
-  box-sizing: border-box;
-  margin-top: 6px;
-  padding: 10px 12px;
-}
+
 .trainee-import-preview button.create-batch-save-btn,
 .trainee-import-preview button:first-of-type {
   background: #14258f;
@@ -6064,4 +6103,137 @@
   color: #334155;
   border-color: #cbd5e1;
   min-height: 44px;
+}
+
+/* Edit Batch — Final Page Layout */
+/* Edit Batch — Final Page Layout */
+
+.edit-batch-page {
+  position: fixed;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100dvh;
+  padding: 0;
+  margin: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  direction: ltr;
+  background: #f8fafc;
+  backdrop-filter: none;
+  box-sizing: border-box;
+  z-index: 99999;
+}
+
+.edit-batch-page > .modal-container {
+  display: block;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100%;
+  max-height: none !important;
+  height: auto;
+  margin: 0;
+  padding: 28px clamp(16px, 3vw, 48px);
+  overflow: visible !important;
+  border-radius: 0;
+  box-shadow: none;
+  background: #f8fafc;
+  direction: rtl;
+  box-sizing: border-box;
+}
+
+/* Back button */
+.edit-batch-page .create-batch-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #fff;
+  color: #334155;
+  font-weight: 700;
+}
+
+.edit-batch-page .create-batch-back-btn:hover {
+  border-color: #0d1c8c;
+  background: #eef2ff;
+  color: #0d1c8c;
+}
+
+/* Center page heading */
+.edit-batch-page .create-batch-heading {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  margin: 20px 0 32px;
+}
+
+.edit-batch-page .create-batch-heading h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* Full-width form */
+.edit-batch-page .modal-form {
+  display: flex;
+  flex-direction: column;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 0;
+  height: auto;
+  margin: 0 !important;
+  padding: 0;
+  overflow: visible !important;
+  box-sizing: border-box;
+}
+
+/* Full-width sections */
+.edit-batch-page .modal-form > .form-group,
+.edit-batch-page .modal-form > .create-batch-section,
+.edit-batch-page .modal-form > .batch-trainee-picker,
+.edit-batch-page .modal-form > .modal-footer-buttons {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.edit-batch-page .form-group input,
+.edit-batch-page .form-group select,
+.edit-batch-page .form-group textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Prevent a second vertical scrollbar */
+.edit-batch-page .batch-trainee-picker {
+  max-height: none !important;
+  height: auto;
+  overflow: visible !important;
+}
+
+.edit-batch-page .edit-batch-trainees {
+  max-height: none;
+  height: auto;
+  overflow: visible;
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+  .edit-batch-page > .modal-container {
+    padding: 18px 14px;
+  }
+
+  .edit-batch-page .create-batch-heading h2 {
+    font-size: 20px;
+  }
+}
+
+.edit-batch-page input[type="tel"] {
+  direction: rtl;
+  text-align: right;
 }

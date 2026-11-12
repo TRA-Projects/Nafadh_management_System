@@ -50,7 +50,7 @@
               <span>·</span>
               <span>تخصص: <strong>{{ tp.major }}</strong></span>
               <span>·</span>
-              <span>العمر: <strong>{{ tp.age }} سنة</strong></span>
+              <span>العمر: <strong>{{ tp.age != null && tp.age > 0 ? tp.age + ' سنة' : '—' }}</strong></span>
               <span>·</span>
               <span>الرقم المدني: {{ tp.nationalId }}</span>
             </div>
@@ -1220,29 +1220,185 @@
       </div>
 
       <div class="chart-card">
+             <!-- Top 5 programs distribution -->
+      <div class="chart-card program-distribution-card">
+
         <div class="chart-header">
           <h3 class="chart-title">توزيع المتدربين حسب البرنامج</h3>
-          <span class="chart-subtitle">أعلى البرامج التدريبية التحاقاً</span>
+          <span class="chart-subtitle">
+            أعلى 5 برامج تدريبية التحاقاً
+          </span>
         </div>
 
         <div class="h-bars-list">
-          @for (prog of summary()?.programDistribution || []; track prog.label) {
-          <div class="h-bar-row">
-            <div class="h-bar-label truncate-text" [title]="prog.label">{{ prog.label }}</div>
-            <div class="h-bar-track">
-              <div class="h-bar-fill" [style.width.%]="getBarWidth(prog.value)">
-                <span class="h-bar-inside-val">{{ prog.value }}</span>
+
+          @for (prog of topFivePrograms(); track prog.label) {
+
+            <div class="h-bar-row">
+
+              <div
+  class="h-bar-label truncate-text program-name-tooltip"
+  [attr.title]="prog.label"
+  [attr.aria-label]="prog.label">
+  {{ prog.label }}
+</div>
+
+              <div class="h-bar-track">
+                <div
+                  class="h-bar-fill"
+                  [style.width.%]="getBarWidth(prog.value)">
+
+                  <span class="h-bar-inside-val">
+                    {{ prog.value }}
+                  </span>
+
+                </div>
               </div>
+
+              <div class="h-bar-value">
+                {{ prog.value }} متدرب
+              </div>
+
             </div>
-            <div class="h-bar-value">{{ prog.value }} متدرب</div>
-          </div>
+
           } @empty {
-          <div class="empty-state">لا توجد بيانات توزيع برامج حالياً</div>
+
+            <div class="empty-state">
+              لا توجد بيانات توزيع برامج حالياً
+            </div>
+
           }
+
         </div>
+
+        @if (totalProgramsCount() > 5) {
+
+          <div class="program-distribution-footer">
+
+            <span class="programs-count">
+              عرض 5 من أصل {{ totalProgramsCount() }} برنامج
+            </span>
+
+            <button
+              type="button"
+              class="view-all-programs-btn"
+              (click)="openAllProgramsModal()">
+
+              عرض جميع البرامج
+            </button>
+
+          </div>
+
+        }
+
       </div>
     </div>
 
+        <!-- All programs distribution modal -->
+    @if (showAllProgramsModal()) {
+
+      <div
+        class="programs-modal-overlay"
+        (click)="closeAllProgramsModal()">
+
+        <div
+          class="programs-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="allProgramsModalTitle"
+          (click)="$event.stopPropagation()">
+
+          <div class="programs-modal-header">
+
+            <div>
+              <h3
+                id="allProgramsModalTitle"
+                class="chart-title">
+                توزيع المتدربين حسب جميع البرامج
+              </h3>
+
+              <p class="chart-subtitle">
+                إجمالي البرامج: {{ totalProgramsCount() }}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              class="programs-modal-close"
+              aria-label="إغلاق"
+              (click)="closeAllProgramsModal()">
+              ✕
+            </button>
+
+          </div>
+
+          <div class="programs-modal-body">
+
+            <div class="h-bars-list">
+
+              @for (
+                prog of summary()?.programDistribution || [];
+                track prog.label
+              ) {
+
+                <div class="h-bar-row">
+
+                  <div
+                    class="h-bar-label truncate-text"
+                    [title]="prog.label">
+                    {{ prog.label }}
+                  </div>
+
+                  <div class="h-bar-track">
+
+                    <div
+                      class="h-bar-fill"
+                      [style.width.%]="getBarWidth(prog.value)">
+
+                      <span class="h-bar-inside-val">
+                        {{ prog.value }}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                  <div class="h-bar-value">
+                    {{ prog.value }} متدرب
+                  </div>
+
+                </div>
+
+              } @empty {
+
+                <div class="empty-state">
+                  لا توجد بيانات توزيع برامج حالياً
+                </div>
+
+              }
+
+            </div>
+
+          </div>
+
+          <div class="programs-modal-footer">
+
+            <button
+              type="button"
+              class="view-all-programs-btn"
+              (click)="closeAllProgramsModal()">
+              إغلاق
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    }
+
+<div class="dashboard-lower-sections">
     <!-- الرسوم البيانية -->
     <div class="charts-grid">
       <div class="chart-card">
@@ -1524,7 +1680,7 @@
       </div>
       }
     </div>
-
+</div>
   </div>
 
 </div>

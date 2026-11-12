@@ -1,5 +1,28 @@
-
 <section class="live-room-page" dir="rtl">
+
+  <!-- إشعار ذكي لبدء الجلسة والرابط المباشر -->
+  @if (sessionStartedNotification()) {
+    <div class="session-alert-banner">
+      <div class="alert-content">
+        <i class="fa-solid fa-circle-check alert-icon"></i>
+        <div>
+          <strong>بدأت المحاضرة المباشرة الآن!</strong>
+          <p>يمكنك التفاعل مع المدرب وتفعيل الكاميرا والمايك المشاركة.</p>
+        </div>
+      </div>
+      <div class="alert-actions">
+        <button type="button" class="dismiss-btn" (click)="closeNotification()">إغلاق</button>
+      </div>
+    </div>
+  }
+
+  <!-- إشعار بوجود استطلاع جديد -->
+  @if (activePollNotification()) {
+    <div class="poll-alert-banner" (click)="togglePollsPanel()">
+      <i class="fa-solid fa-square-poll-vertical"></i>
+      <span>{{ activePollNotification() }} (اضغط للعرض)</span>
+    </div>
+  }
 
   <header class="room-header">
     <div>
@@ -30,8 +53,10 @@
   <div
     class="room-content"
     [class.has-participants]="showParticipants()"
-    [class.has-chat]="showChat()">
+    [class.has-chat]="showChat()"
+    [class.has-polls]="showPolls()">
 
+    <!-- لوحة المشاركين -->
     @if (showParticipants()) {
       <aside class="participants-panel">
         <h2>
@@ -44,6 +69,9 @@
             <span>
               <i class="fa-solid fa-user"></i>
               أنت (المتدرب)
+              @if (handRaised()) {
+                <span class="hand-raised-badge">✋ مرفوعة</span>
+              }
             </span>
             <i
               [class]="micEnabled()
@@ -73,6 +101,7 @@
       </aside>
     }
 
+    <!-- منطقة عرض الفيديو -->
     <main class="video-area">
       <div class="video-container" #videoContainer>
         @if (!cameraEnabled() && participantCount() <= 1) {
@@ -84,6 +113,7 @@
       </div>
     </main>
 
+    <!-- لوحة الشات -->
     @if (showChat()) {
       <aside class="chat-panel">
         <h2>
@@ -125,8 +155,58 @@
         </form>
       </aside>
     }
+
+    <!-- لوحة استطلاعات الرأي والتصويت -->
+    @if (showPolls()) {
+      <aside class="polls-panel">
+        <h2>
+          <i class="fa-solid fa-square-poll-vertical"></i>
+          الاستطلاعات والتصويت
+        </h2>
+
+        <div class="polls-list">
+          @for (poll of polls(); track poll.pollId) {
+            <div class="poll-card">
+              <h3>{{ poll.question }}</h3>
+
+              <div class="options-group">
+                @for (opt of poll.options; track opt.optionId) {
+                  <label class="option-item" [class.selected]="getSelectedOption(poll.pollId) === opt.optionId">
+                    <input
+                      type="radio"
+                      [name]="'poll-' + poll.pollId"
+                      [value]="opt.optionId"
+                      [disabled]="!poll.isOpen || poll.myVoteOptionId !== undefined"
+                      (change)="selectOption(poll.pollId, opt.optionId)" />
+                    <span>{{ opt.optionText }}</span>
+                  </label>
+                }
+              </div>
+
+              @if (poll.myVoteOptionId !== undefined) {
+                <p class="voted-msg"><i class="fa-solid fa-check"></i> تم تسجيل صوتك بنجاح</p>
+              } @else if (poll.isOpen) {
+                <button
+                  type="button"
+                  class="vote-submit-btn"
+                  [disabled]="!getSelectedOption(poll.pollId) || votingPollId() === poll.pollId"
+                  (click)="submitVote(poll.pollId)">
+                  {{ votingPollId() === poll.pollId ? 'جاري الإرسال...' : 'إرسال التصويت' }}
+                </button>
+              } @else {
+                <p class="closed-msg">هذا الاستطلاع مغلق</p>
+              }
+            </div>
+          } @empty {
+            <p class="empty-polls">لا توجد استطلاعات رأي متاحة حالياً.</p>
+          }
+        </div>
+      </aside>
+    }
+
   </div>
 
+  <!-- لوحة التحكم بأزرار الأدوات بنفس التصميم -->
   <section class="meeting-toolbar">
     <div class="toolbar-heading">
       <h2>
@@ -138,6 +218,7 @@
 
     <div class="toolbar-grid">
 
+      <!-- زر المايك -->
       <button
         type="button"
         class="tool-button"
@@ -150,6 +231,7 @@
         <span>{{ micEnabled() ? 'إيقاف المايك' : 'المايك' }}</span>
       </button>
 
+      <!-- زر الكاميرا -->
       <button
         type="button"
         class="tool-button"
@@ -162,6 +244,7 @@
         <span>{{ cameraEnabled() ? 'إيقاف الكاميرا' : 'الكاميرا' }}</span>
       </button>
 
+      <!-- زر مشاركة الشاشة -->
       <button
         type="button"
         class="tool-button"
@@ -174,6 +257,18 @@
         </span>
       </button>
 
+      <!-- زر رفع اليد -->
+      <button
+        type="button"
+        class="tool-button"
+        [class.tool-active]="handRaised()"
+        [disabled]="!connected()"
+        (click)="toggleRaiseHand()">
+        <i class="fa-solid fa-hand"></i>
+        <span>{{ handRaised() ? 'خفض اليد' : 'رفع اليد' }}</span>
+      </button>
+
+      <!-- زر المشاركون -->
       <button
         type="button"
         class="tool-button"
@@ -183,6 +278,7 @@
         <span>المشاركون ({{ participantCount() }})</span>
       </button>
 
+      <!-- زر الشات -->
       <button
         type="button"
         class="tool-button"
@@ -193,6 +289,18 @@
         <span>الشات</span>
       </button>
 
+      <!-- زر الاستطلاعات والتصويت -->
+      <button
+        type="button"
+        class="tool-button"
+        [class.tool-active]="showPolls()"
+        [disabled]="!connected()"
+        (click)="togglePollsPanel()">
+        <i class="fa-solid fa-square-poll-vertical"></i>
+        <span>التصويت</span>
+      </button>
+
+      <!-- زر التحكم بالصوت -->
       <button
         type="button"
         class="tool-button"
@@ -216,6 +324,55 @@
       مغادرة المحاضرة
     </button>
   </section>
+
+  <!-- نافذة تقييم المحاضرة بعد الجلسة -->
+  @if (showFeedbackModal()) {
+    <div class="feedback-modal-overlay">
+      <div class="feedback-modal">
+        <h2>تقييم المحاضرة المباشرة</h2>
+        <p>يرجى مشاركتنا رأيك حول جودة المحاضرة والشرح:</p>
+
+        @if (feedbackSuccess()) {
+          <div class="feedback-success">
+            <i class="fa-solid fa-circle-check"></i>
+            <p>شكراً لك! تم إرسال تقييمك بنجاح.</p>
+          </div>
+        } @else {
+          <div class="rating-stars">
+            @for (star of [1, 2, 3, 4, 5]; track star) {
+              <i
+                class="fa-star"
+                [class.fa-solid]="star <= feedbackRating()"
+                [class.fa-regular]="star > feedbackRating()"
+                (click)="feedbackRating.set(star)"></i>
+            }
+          </div>
+
+          <textarea
+            placeholder="اكتب ملاحظاتك أو انطباعك عن الجلسة (اختياري)..."
+            [(ngModel)]="feedbackNote"
+            rows="3"></textarea>
+
+          <div class="modal-actions">
+            <button
+              type="button"
+              class="submit-btn"
+              [disabled]="submittingFeedback()"
+              (click)="submitFeedback()">
+              {{ submittingFeedback() ? 'جاري الإرسال...' : 'إرسال التقييم' }}
+            </button>
+            <button
+              type="button"
+              class="skip-btn"
+              [disabled]="submittingFeedback()"
+              (click)="closeFeedbackModal()">
+              تخطي
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
 
   <div #audioContainer class="audio-container"></div>
 

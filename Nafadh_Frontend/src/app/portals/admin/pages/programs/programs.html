@@ -2216,7 +2216,7 @@
   </div>
 
   <!-- إضافة متدرب يدويًا -->
-  <div *ngIf="traineeAddMode === 'manual'">
+   <div *ngIf="traineeAddMode === 'manual'" class="trainee-mode-content manual-trainee-form">
     <h4>بيانات المتدرب</h4>
 
     <label>الاسم الكامل
@@ -2398,11 +2398,20 @@
 </div>
 
 
-<div *ngIf="isEditModalOpen" (click)="onCloseEditModal()" class="modal-overlay" dir="rtl">
-  <div (click)="$event.stopPropagation()" class="modal-container">
-    <div class="modal-header">
-      <h3 class="modal-title">تعديل الدفعة</h3>
-      <button type="button" (click)="onCloseEditModal()" class="modal-close-btn">&times;</button>
+<div *ngIf="isEditModalOpen" class="modal-overlay edit-batch-page" dir="rtl">
+  <div class="modal-container">
+
+    <div class="create-batch-topbar">
+      <button type="button"
+              class="create-batch-back-btn"
+              (click)="onCloseEditModal()">
+        <span aria-hidden="true">→</span>
+        العودة إلى البرامج والدفعات
+      </button>
+    </div>
+
+    <div class="create-batch-heading">
+      <h2>تعديل تفاصيل الدفعة</h2>
     </div>
 
     <form [formGroup]="editBatchForm" (ngSubmit)="onSaveBatch()" class="modal-form">

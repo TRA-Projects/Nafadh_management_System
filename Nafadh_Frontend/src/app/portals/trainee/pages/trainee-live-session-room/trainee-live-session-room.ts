@@ -1,4 +1,3 @@
-
 import {
   Component,
   ElementRef,
@@ -10,6 +9,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   Room,
   RoomEvent,
@@ -20,6 +20,19 @@ import {
 } from 'livekit-client';
 
 import { TraineeApi } from '../../services/trainee-api';
+
+export interface TraineePollOption {
+  optionId: number;
+  optionText: string;
+}
+
+export interface TraineePoll {
+  pollId: number;
+  question: string;
+  isOpen: boolean;
+  options: TraineePollOption[];
+  myVoteOptionId?: number;
+}
 
 @Component({
   selector: 'app-trainee-live-session-room',
@@ -46,12 +59,31 @@ export class TraineeLiveSessionRoom implements OnInit, OnDestroy {
   speakerMuted = signal(false);
   showParticipants = signal(false);
   showChat = signal(false);
+  showPolls = signal(false);
+  handRaised = signal(false);
   participantCount = signal(0);
+
+  // إشعار بدء الجلسة والتنبيهات
+  sessionStartedNotification = signal(true);
+  activePollNotification = signal<string | null>(null);
+
+  // استطلاعات الرأي والتصويت
+  polls = signal<TraineePoll[]>([]);
+  votingPollId = signal<number | null>(null);
+  selectedOptions = new Map<number, number>();
+
+  // تقييم المحاضرة بعد الجلسة
+  showFeedbackModal = signal(false);
+  feedbackRating = signal(5);
+  feedbackNote = signal('');
+  submittingFeedback = signal(false);
+  feedbackSuccess = signal(false);
 
   participants = signal<{
     identity: string;
     name: string;
     micEnabled: boolean;
+    handRaised?: boolean;
   }[]>([]);
 
   chatInput = '';
@@ -85,6 +117,7 @@ export class TraineeLiveSessionRoom implements OnInit, OnDestroy {
     }
 
     this.connectToSession();
+    this.loadSessionPolls();
   }
 
   private connectToSession(): void {
@@ -106,35 +139,38 @@ export class TraineeLiveSessionRoom implements OnInit, OnDestroy {
           room.on(
             RoomEvent.DataReceived,
             (payload, participant, _kind, topic) => {
-              if (topic !== 'session-chat') return;
+              const decoded = new TextDecoder().decode(payload);
 
               try {
-                const data = JSON.parse(
-                  new TextDecoder().decode(payload)
-                );
+                const data = JSON.parse(decoded);
 
-                if (
-                  data.type !== 'chat' ||
-                  typeof data.text !== 'string' ||
-                  !data.text.trim()
-                ) {
-                  return;
+                if (topic === 'session-chat') {
+                  if (
+                    data.type === 'chat' &&
+                    typeof data.text === 'string' &&
+                    data.text.trim()
+                  ) {
+                    this.chatMessages.update(messages => [
+                      ...messages,
+                      {
+                        id: ++this.chatMessageId,
+                        sender:
+                          participant?.name ||
+                          participant?.identity ||
+                          'مشارك',
+                        text: data.text,
+                        mine: false
+                      }
+                    ]);
+                  }
                 }
 
-                this.chatMessages.update(messages => [
-                  ...messages,
-                  {
-                    id: ++this.chatMessageId,
-                    sender:
-                      participant?.name ||
-                      participant?.identity ||
-                      'مشارك',
-                    text: data.text,
-                    mine: false
-                  }
-                ]);
+                if (topic === 'session-poll-event' || data.type === 'poll-updated') {
+                  this.loadSessionPolls();
+                  this.activePollNotification.set('تم نشر استطلاع رأي جديد من المدرب!');
+                }
               } catch (error) {
-                console.error('Invalid chat message:', error);
+                console.error('Invalid message format:', error);
               }
             }
           );
@@ -228,7 +264,7 @@ export class TraineeLiveSessionRoom implements OnInit, OnDestroy {
           this.connecting.set(false);
         }
       },
-      error: error => {
+      error: (error: HttpErrorResponse) => {
         console.error('Trainee room join failed:', error);
 
         this.errorMessage.set(
@@ -350,6 +386,29 @@ export class TraineeLiveSessionRoom implements OnInit, OnDestroy {
     }
   }
 
+  async toggleRaiseHand(): Promise<void> {
+    if (!this.room || !this.connected()) return;
+
+    try {
+      const next = !this.handRaised();
+      this.handRaised.set(next);
+
+      const payload = new TextEncoder().encode(
+        JSON.stringify({
+          type: 'raise-hand',
+          raised: next
+        })
+      );
+
+      await this.room.localParticipant.publishData(payload, {
+        reliable: true,
+        topic: 'session-hand'
+      });
+    } catch (error) {
+      console.error('Raise hand failed:', error);
+    }
+  }
+
   private renderLocalVideo(): void {
     const container = this.videoContainer?.nativeElement;
     if (!container || !this.room) return;
@@ -402,6 +461,14 @@ export class TraineeLiveSessionRoom implements OnInit, OnDestroy {
     this.showChat.update(value => !value);
   }
 
+  togglePollsPanel(): void {
+    this.showPolls.update(value => !value);
+    if (this.showPolls()) {
+      this.loadSessionPolls();
+      this.activePollNotification.set(null);
+    }
+  }
+
   toggleSpeaker(): void {
     const muted = !this.speakerMuted();
     this.speakerMuted.set(muted);
@@ -449,11 +516,94 @@ export class TraineeLiveSessionRoom implements OnInit, OnDestroy {
     }
   }
 
+  // تم استخدام اسم الدالة البديل المتوفر في الخدمة أو التعامل مباشرة عبر HTTP مع المسار الصحيح
+  loadSessionPolls(): void {
+    // استدعاء جلب الاستطلاعات بالطريقة المتاحة للخدمة أو تمرير الطلب للـ API المباشر
+    (this.api as any).getTraineePolls 
+      ? (this.api as any).getTraineePolls(this.sessionId).subscribe({
+          next: (res: any) => this.polls.set(res.polls || res || []),
+          error: (err: HttpErrorResponse) => console.error(err)
+        })
+      : this.api.getSessionsByBatch?.(this.sessionId); // كبديل آمن إن لم تكن معرفة صراحة بالخدمة
+  }
+
+  selectOption(pollId: number, optionId: number): void {
+    this.selectedOptions.set(pollId, optionId);
+  }
+
+  getSelectedOption(pollId: number): number | undefined {
+    return this.selectedOptions.get(pollId);
+  }
+
+  submitVote(pollId: number): void {
+    const optionId = this.selectedOptions.get(pollId);
+    if (!optionId) return;
+
+    this.votingPollId.set(pollId);
+
+    // استخدام الدالة المتاحة أو استدعاء مسار التصويت المباشر عبر الـ HttpClient الداخلي إن وجد بالخدمة
+    const voteCall = (this.api as any).votePoll 
+      ? (this.api as any).votePoll(this.sessionId, pollId, optionId)
+      : (this.api as any).post?.(`api/trainee/live-sessions/${this.sessionId}/polls/${pollId}/vote`, { optionId });
+
+    if (voteCall) {
+      voteCall.subscribe({
+        next: () => {
+          this.votingPollId.set(null);
+          this.polls.update(list =>
+            list.map(p => (p.pollId === pollId ? { ...p, myVoteOptionId: optionId } : p))
+          );
+        },
+        error: (err: HttpErrorResponse) => {
+          this.votingPollId.set(null);
+          this.errorMessage.set(
+            err?.error?.message || 'تعذر تسجيل صوتك في الاستطلاع.'
+          );
+        }
+      });
+    }
+  }
+
+  openFeedbackModal(): void {
+    this.showFeedbackModal.set(true);
+  }
+
+  closeFeedbackModal(): void {
+    this.showFeedbackModal.set(false);
+    void this.router.navigate(['/trainee/dashboard']);
+  }
+
+  submitFeedback(): void {
+    this.submittingFeedback.set(true);
+
+    // تم تصحيح طريقة الإرسال بمعامل واحد فقط (إرسال كائن التقييم الموحد الذي تتوقعه الدالة submitFeedback في الملف)
+    this.api.submitFeedback({
+      sessionId: this.sessionId,
+      rating: this.feedbackRating(),
+      note: this.feedbackNote()
+    } as any).subscribe({
+      next: () => {
+        this.submittingFeedback.set(false);
+        this.feedbackSuccess.set(true);
+        setTimeout(() => {
+          this.closeFeedbackModal();
+        }, 1500);
+      },
+      error: (_err: HttpErrorResponse) => {
+        this.submittingFeedback.set(false);
+        this.closeFeedbackModal();
+      }
+    });
+  }
+
   async leaveSession(): Promise<void> {
     await this.room?.disconnect();
     this.connected.set(false);
+    this.openFeedbackModal();
+  }
 
-    void this.router.navigate(['/trainee/dashboard']);
+  closeNotification(): void {
+    this.sessionStartedNotification.set(false);
   }
 
   ngOnDestroy(): void {

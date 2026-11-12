@@ -39,7 +39,6 @@ interface StageCard {
   module: ModuleDto;
   orderIndex: number;
   statusRaw: string;
-  progressPercent: number;
   evaluations: EvaluationDto[];
   averageScore: number | null;
 }
@@ -377,7 +376,7 @@ openProfileCvInNewTab(): void {
     const major = t?.major || '—';
     const company = t?.companyName || 'لم يوزّع بعد';
     const batch = t?.batchName || '—';
-    const track = t?.trackName || '.NET Track';
+    const track = t?.trackName || 'غير محدد';
 
     const cvHtml = `
       <!DOCTYPE html>
@@ -461,9 +460,9 @@ openProfileCvInNewTab(): void {
     <div class="section">
       <div class="section-title">المؤهل الأكاديمي وجهة التدريب</div>
       <div class="grid">
-        <div class="item"><span class="label">الجامعة / الكلية</span><span class="val">${t.university || 'جامعة السلطان قابوس'}</span></div>
-        <div class="item"><span class="label">التخصص الأكاديمي</span><span class="val">${t.major || 'علوم الحاسوب'}</span></div>
-        <div class="item"><span class="label">الشركة المستضيفة</span><span class="val">${e?.companyName || t.companyName || '—'}</span></div>
+        <div class="item"><span class="label">الجامعة / الكلية</span><span class="val">${t.university || 'غير محدد'}</span></div>
+        <div class="item"><span class="label">التخصص الأكاديمي</span><span class="val">${t.major || 'غير محدد'}</span></div>
+        <div class="item"><span class="label">الشركة المستضيفة</span><span class="val">${e?.companyName || t.companyName || 'غير محدد'}</span></div>
         <div class="item"><span class="label">نسبة الإنجاز ومتوسط التقييم</span><span class="val">الإنجاز: ${this.completionPercentage()}% | التقييم: ${this.overallAverageScore() ?? '—'}%</span></div>
       </div>
     </div>
@@ -900,17 +899,14 @@ openProfileCvInNewTab(): void {
           ) / 10
           : null;
 
-      const progressPercent =
-        statusRaw === 'Completed' ? 100 : statusRaw === 'InProgress' ? 50 : 0;
-
-      return {
-        module: m,
-        orderIndex: m.orderIndex,
-        statusRaw,
-        progressPercent,
-        evaluations: moduleEvals,
-        averageScore: avg,
-      };
+return {
+  module: m,
+  orderIndex: m.orderIndex,
+  statusRaw,
+  evaluations: moduleEvals,
+  averageScore: avg,
+};
+      
     });
 
     this.stages.set(cards);

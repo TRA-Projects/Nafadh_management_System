@@ -357,9 +357,17 @@
             [class.pill-progress]="s.statusRaw === 'InProgress'" [class.pill-muted]="s.statusRaw === 'NotStarted'">
             {{ constants.administrativeLabel('NFD_MOD_STAT', s.statusRaw) }}
           </span>
-        </div>
-        <div class="stage-progress-track">
-          <div class="stage-progress-fill" [style.width.%]="s.progressPercent"></div>
+
+          <div class="stage-status-info">
+            @if (s.statusRaw === 'Completed') {
+            <span class="stage-status-text">تم إكمال الوحدة</span>
+            } @else if (s.statusRaw === 'InProgress') {
+            <span class="stage-status-text">الوحدة قيد التقدم</span>
+            } @else {
+            <span class="stage-status-text">لم يبدأ المتدرب هذه الوحدة بعد</span>
+            }
+          </div>
+
         </div>
 
         @if (s.evaluations.length === 0) {
@@ -482,7 +490,8 @@
           <div
             style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; margin-bottom: 16px;">
             <div>
-              <h4 style="margin: 0 0 4px 0; font-size: 1.15rem; color: #0a1172; font-weight: 800;">{{ fullName() }}</h4>
+              <h4 style="margin: 0 0 4px 0; font-size: 1.15rem; color: #0a1172; font-weight: 800;">{{ fullName() }}
+              </h4>
               <p style="margin: 0; font-size: 0.88rem; color: #475569;">{{ programLine() || 'متدرب في برنامج نفاذ
                 الوطني' }}</p>
             </div>
@@ -494,18 +503,22 @@
             <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
               <span style="display: block; font-size: 0.76rem; color: #64748b; margin-bottom: 3px;">الجامعة /
                 الكلية</span>
-              <strong style="font-size: 0.92rem; color: #1e293b;">{{ trainee()?.university || 'جامعة السلطان قابوس'
-                }}</strong>
+              <strong style="font-size: 0.92rem; color: #1e293b;">{{ trainee()?.university || 'غير محدد' }}
+                
+              </strong>
             </div>
             <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
               <span style="display: block; font-size: 0.76rem; color: #64748b; margin-bottom: 3px;">التخصص
                 الأكاديمي</span>
-              <strong style="font-size: 0.92rem; color: #1e293b;">{{ trainee()?.major || 'علوم الحاسوب وهندسة البرمجيات'
-                }}</strong>
+              <strong style="font-size: 0.92rem; color: #1e293b;">{{ trainee()?.major || 'غير محدد' }}
+        
+              
+            </strong>
             </div>
             <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
               <span style="display: block; font-size: 0.76rem; color: #64748b; margin-bottom: 3px;">جهة التدريب</span>
-              <strong style="font-size: 0.92rem; color: #1e293b;">{{ enrollment()?.companyName || trainee()?.companyName
+              <strong style="font-size: 0.92rem; color: #1e293b;">{{ enrollment()?.companyName ||
+                trainee()?.companyName
                 || 'غير محدد' }}</strong>
             </div>
             <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
@@ -618,7 +631,8 @@
         <button class="prof-close-btn" (click)="showExamResultsModal.set(false)">×</button>
       </div>
       <div class="prof-modal-body" style="direction: rtl; text-align: right;">
-        <p style="color: #64748b; font-size: 13.5px; margin-bottom: 16px;">هذا الكشف يوضح كافة درجات الاختبارات الدورية
+        <p style="color: #64748b; font-size: 13.5px; margin-bottom: 16px;">هذا الكشف يوضح كافة درجات الاختبارات
+          الدورية
           والنهائية والتقييمات الأكاديمية الخاصة بالمتدرب.</p>
 
         <div class="table-responsive" style="overflow-x: auto;">
@@ -634,13 +648,16 @@
             <tbody>
               @for (exam of traineeExams(); track exam.attemptId ?? exam.id) {
               <tr style="border-bottom: 1px solid #f1f5f9;">
-                <td style="padding: 10px; font-weight: 700;">{{ exam.quizTitle || exam.examTitle || exam.title || '—' }}
+                <td style="padding: 10px; font-weight: 700;">{{ exam.quizTitle || exam.examTitle || exam.title || '—'
+                  }}
                 </td>
                 <td style="padding: 10px; text-align: center; font-weight: 800; color: #047857;">{{ (exam.status ===
-                  'Graded' || exam.status === 'Completed') && exam.percentage != null ? (exam.percentage + '%') : '—' }}
+                  'Graded' || exam.status === 'Completed') && exam.percentage != null ? (exam.percentage + '%') : '—'
+                  }}
                 </td>
                 <td style="padding: 10px; text-align: center;">{{ examStatusLabel(exam.status) }}</td>
-                <td style="padding: 10px; text-align: center; color: #64748b;">{{ (exam.submittedAt || exam.startedAt) ?
+                <td style="padding: 10px; text-align: center; color: #64748b;">{{ (exam.submittedAt || exam.startedAt)
+                  ?
                   ((exam.submittedAt || exam.startedAt) | date:'dd/MM/yyyy') : '—' }}</td>
               </tr>
               }
@@ -668,7 +685,8 @@
           <p style="margin: 0 0 6px 0;"><strong>الوحدة / الدفعة:</strong> {{ selectedExam()?.moduleName ||
             selectedExam()?.moduleTitle || selectedExam()?.batchName || '—' }}</p>
           <p style="margin: 0 0 6px 0;"><strong>الدرجة النهائية:</strong> {{ (selectedExam()?.status === 'Graded' ||
-            selectedExam()?.status === 'Completed') && selectedExam()?.percentage != null ? (selectedExam()?.percentage
+            selectedExam()?.status === 'Completed') && selectedExam()?.percentage != null ?
+            (selectedExam()?.percentage
             + '%') : '—' }}</p>
           <p style="margin: 0;"><strong>الحالة:</strong> {{ examStatusLabel(selectedExam()?.status) }}</p>
         </div>

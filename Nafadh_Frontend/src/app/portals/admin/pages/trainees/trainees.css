@@ -1992,3 +1992,57 @@
     min-width: 120px;
   }
 }
+
+
+/* Trainees table: readable content and horizontal scrolling */
+.trainees-container,
+.trainees-container .table-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.trainees-container .table-responsive {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.trainees-table {
+  min-width: 1150px;
+  table-layout: auto;
+}
+
+.trainees-table .trainee-meta-cell {
+  min-width: 240px;
+}
+
+.trainees-table .trainee-name-wrap {
+  min-width: 160px;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.trainees-table .trainee-name-wrap strong {
+  white-space: nowrap;
+}
+
+.trainees-table .trainee-name-wrap span {
+  display: block;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: ltr;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .trainees-container {
+    padding: 12px;
+  }
+
+  .trainees-container .table-card {
+    overflow: hidden;
+  }
+}

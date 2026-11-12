@@ -149,129 +149,129 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   readonly warningTypes = inject(NafadhWarningTypesService);
   summary = signal<AdminDashboardSummary | null>(null);
   // Admin Dashboard performance period filter
-performancePeriod = signal<'month' | 'year' | 'all' | 'custom'>('month');
+  performancePeriod = signal<'month' | 'year' | 'all' | 'custom'>('month');
 
-performanceStartDate = signal<string>('');
-performanceEndDate = signal<string>('');
+  performanceStartDate = signal<string>('');
+  performanceEndDate = signal<string>('');
 
-performancePeriodLoading = signal<boolean>(false);
-performancePeriodError = signal<string>('');
+  performancePeriodLoading = signal<boolean>(false);
+  performancePeriodError = signal<string>('');
 
-private performanceRequestId = 0;
+  private performanceRequestId = 0;
 
-private getPerformancePeriodDates(): {
-  startDate: string | null;
-  endDate: string | null;
-} {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
+  private getPerformancePeriodDates(): {
+    startDate: string | null;
+    endDate: string | null;
+  } {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
 
-  switch (this.performancePeriod()) {
-    case 'month':
-      return {
-        startDate: `${year}-${month}-01`,
-        endDate: `${year}-${month}-${new Date(year, today.getMonth() + 1, 0).getDate()}`
-      };
+    switch (this.performancePeriod()) {
+      case 'month':
+        return {
+          startDate: `${year}-${month}-01`,
+          endDate: `${year}-${month}-${new Date(year, today.getMonth() + 1, 0).getDate()}`
+        };
 
-    case 'year':
-      return {
-        startDate: `${year}-01-01`,
-        endDate: `${year}-12-31`
-      };
+      case 'year':
+        return {
+          startDate: `${year}-01-01`,
+          endDate: `${year}-12-31`
+        };
 
-    case 'all':
-      return {
-        startDate: null,
-        endDate: null
-      };
+      case 'all':
+        return {
+          startDate: null,
+          endDate: null
+        };
 
-    case 'custom':
-      return {
-        startDate: this.performanceStartDate() || null,
-        endDate: this.performanceEndDate() || null
-      };
-  }
-}
-
-changePerformancePeriod(value: string): void {
-  if (
-    value !== 'month' &&
-    value !== 'year' &&
-    value !== 'all' &&
-    value !== 'custom'
-  ) {
-    return;
+      case 'custom':
+        return {
+          startDate: this.performanceStartDate() || null,
+          endDate: this.performanceEndDate() || null
+        };
+    }
   }
 
-  this.performancePeriod.set(value);
+  changePerformancePeriod(value: string): void {
+    if (
+      value !== 'month' &&
+      value !== 'year' &&
+      value !== 'all' &&
+      value !== 'custom'
+    ) {
+      return;
+    }
 
-  if (value !== 'custom') {
+    this.performancePeriod.set(value);
+
+    if (value !== 'custom') {
+      this.loadPerformancePeriod();
+    }
+  }
+
+  applyCustomPerformancePeriod(): void {
+    const start = this.performanceStartDate();
+    const end = this.performanceEndDate();
+
+    if (!start || !end) {
+      this.performancePeriodError.set('يرجى تحديد تاريخ البداية والنهاية.');
+      return;
+    }
+
+    if (start > end) {
+      this.performancePeriodError.set('تاريخ البداية يجب ألا يكون بعد تاريخ النهاية.');
+      return;
+    }
+
     this.loadPerformancePeriod();
   }
-}
 
-applyCustomPerformancePeriod(): void {
-  const start = this.performanceStartDate();
-  const end = this.performanceEndDate();
+  loadPerformancePeriod(): void {
+    const dates = this.getPerformancePeriodDates();
 
-  if (!start || !end) {
-    this.performancePeriodError.set('يرجى تحديد تاريخ البداية والنهاية.');
-    return;
+    const requestId = ++this.performanceRequestId;
+
+    this.performancePeriodLoading.set(true);
+    this.performancePeriodError.set('');
+
+    this.api.getAdminDashboardSummaryByPeriod(
+      dates.startDate,
+      dates.endDate
+    ).subscribe({
+      next: (result: AdminDashboardSummary) => {
+        if (requestId !== this.performanceRequestId) return;
+
+        this.summary.update(current => {
+          if (!current) return current;
+
+          return {
+            ...current,
+            topPerformersCount: result.topPerformersCount,
+            topPerformersAvgScore: result.topPerformersAvgScore,
+            atRiskCount: result.atRiskCount,
+            topPerformers: result.topPerformers || [],
+            atRiskTrainees: result.atRiskTrainees || []
+          };
+        });
+
+        this.allTopPerformers.set(result.topPerformers || []);
+        this.allAtRiskTrainees.set(result.atRiskTrainees || []);
+
+        this.topPage.set(1);
+        this.riskPage.set(1);
+
+        this.performancePeriodLoading.set(false);
+      },
+      error: () => {
+        if (requestId !== this.performanceRequestId) return;
+
+        this.performancePeriodError.set('تعذر تحميل بيانات الفترة المحددة.');
+        this.performancePeriodLoading.set(false);
+      }
+    });
   }
-
-  if (start > end) {
-    this.performancePeriodError.set('تاريخ البداية يجب ألا يكون بعد تاريخ النهاية.');
-    return;
-  }
-
-  this.loadPerformancePeriod();
-}
-
-loadPerformancePeriod(): void {
-  const dates = this.getPerformancePeriodDates();
-
-  const requestId = ++this.performanceRequestId;
-
-  this.performancePeriodLoading.set(true);
-  this.performancePeriodError.set('');
-
-  this.api.getAdminDashboardSummaryByPeriod(
-    dates.startDate,
-    dates.endDate
-  ).subscribe({
-    next: (result: AdminDashboardSummary) => {
-      if (requestId !== this.performanceRequestId) return;
-
-      this.summary.update(current => {
-        if (!current) return current;
-
-        return {
-          ...current,
-          topPerformersCount: result.topPerformersCount,
-          topPerformersAvgScore: result.topPerformersAvgScore,
-          atRiskCount: result.atRiskCount,
-          topPerformers: result.topPerformers || [],
-          atRiskTrainees: result.atRiskTrainees || []
-        };
-      });
-
-      this.allTopPerformers.set(result.topPerformers || []);
-      this.allAtRiskTrainees.set(result.atRiskTrainees || []);
-
-      this.topPage.set(1);
-      this.riskPage.set(1);
-
-      this.performancePeriodLoading.set(false);
-    },
-    error: () => {
-      if (requestId !== this.performanceRequestId) return;
-
-      this.performancePeriodError.set('تعذر تحميل بيانات الفترة المحددة.');
-      this.performancePeriodLoading.set(false);
-    }
-  });
-}
 
   announcements = signal<any[]>([]);
   showAnnouncements = signal<boolean>(true);
@@ -599,11 +599,34 @@ loadPerformancePeriod(): void {
     return Math.min(100, Math.round((cap.used / cap.total) * 100));
   });
 
-  maxDistributionValue = computed(() => {
+    maxDistributionValue = computed(() => {
     const list = this.summary()?.programDistribution || [];
     if (!list.length) return 1;
     return Math.max(...list.map(x => x.value), 1);
   });
+
+  // Program distribution: show only the top 5 on the dashboard.
+  showAllProgramsModal = signal<boolean>(false);
+
+  topFivePrograms = computed(() => {
+    const programs = this.summary()?.programDistribution || [];
+
+    return [...programs]
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  });
+
+  totalProgramsCount = computed(() => {
+    return this.summary()?.programDistribution?.length ?? 0;
+  });
+
+  openAllProgramsModal(): void {
+    this.showAllProgramsModal.set(true);
+  }
+
+  closeAllProgramsModal(): void {
+    this.showAllProgramsModal.set(false);
+  }
 
   private barChartInstance: Chart | null = null;
   private donutChartInstance: Chart | null = null;
@@ -687,7 +710,7 @@ loadPerformancePeriod(): void {
       }
 
       // مصدر أرقام ومؤشرات لوحة الإدارة هو ملخص Backend فقط؛ لا نستبدل القيم بحسابات محلية.
-            const summaryData = adminSummary as AdminDashboardSummary | null;
+      const summaryData = adminSummary as AdminDashboardSummary | null;
       if (summaryData) {
         this.summary.set(summaryData);
         this.allTopPerformers.set(summaryData.topPerformers || []);
@@ -809,6 +832,53 @@ loadPerformancePeriod(): void {
     this.selectedWarningDetail.set(null);
   }
 
+  private calculateAge(dateOfBirth?: string | Date | null): number | undefined {
+    if (!dateOfBirth) {
+      return undefined;
+    }
+
+    const value = String(dateOfBirth);
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+
+    if (!match) {
+      return undefined;
+    }
+
+    const birthYear = Number(match[1]);
+    const birthMonth = Number(match[2]);
+    const birthDay = Number(match[3]);
+
+    const birthDate = new Date(birthYear, birthMonth - 1, birthDay);
+
+    if (
+      birthDate.getFullYear() !== birthYear ||
+      birthDate.getMonth() !== birthMonth - 1 ||
+      birthDate.getDate() !== birthDay
+    ) {
+      return undefined;
+    }
+
+    const today = new Date();
+
+    if (birthDate > today) {
+      return undefined;
+    }
+
+    let age = today.getFullYear() - birthYear;
+
+    if (
+      today.getMonth() + 1 < birthMonth ||
+      (
+        today.getMonth() + 1 === birthMonth &&
+        today.getDate() < birthDay
+      )
+    ) {
+      age--;
+    }
+
+    return age >= 0 ? age : undefined;
+  }
+
   openTraineePreview(traineeItem: any, index: number = 0) {
     this.selectedWarningDetail.set(null);
 
@@ -864,6 +934,9 @@ loadPerformancePeriod(): void {
       fullName,
       initials: this.getInitials(fullName),
       avatarColor: this.getAvatarColor(index),
+      age: this.calculateAge(
+        traineeItem?.dateOfBirth ?? cachedTrainee?.dateOfBirth
+      ),
       nationalId: cachedTrainee?.nationalId ?? '',
       university: cachedTrainee?.university ?? '—',
       major: traineeItem?.major ?? cachedTrainee?.major ?? '—',
@@ -960,6 +1033,11 @@ loadPerformancePeriod(): void {
           ...initialView,
           enrollmentId,
           fullName: profile?.fullName || initialView.fullName,
+
+          age: profile?.dateOfBirth != null
+            ? this.calculateAge(profile.dateOfBirth)
+            : initialView.age,
+
           nationalId: String(profile?.nationalId || initialView.nationalId),
           university: profile?.university || initialView.university,
           major: profile?.major || initialView.major,

@@ -2493,8 +2493,11 @@ this.editBatchForm.patchValue({
       });
     }
 
-    this.isEditModalOpen = true;
-  }
+   this.isEditModalOpen = true;
+
+// Prevent background page scrolling while editing
+document.body.style.overflow = 'hidden';
+}
 
   private getBatchStatusValue(status: any): number {
     if (typeof status === 'number' && status >= 0 && status <= 3) {
@@ -2531,13 +2534,17 @@ this.editBatchForm.patchValue({
   }
 
 
-  onCloseEditModal(): void {
-    this.isEditModalOpen = false;
-    this.editBatchFormSubmitted = false;
-    if (!this.isDetailsPageOpen()) {
-      this.selectedBatch = null;
-    }
+onCloseEditModal(): void {
+  this.isEditModalOpen = false;
+  this.editBatchFormSubmitted = false;
+
+  // Restore page scrolling
+  document.body.style.overflow = '';
+
+  if (!this.isDetailsPageOpen()) {
+    this.selectedBatch = null;
   }
+}
 
 
 
