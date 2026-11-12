@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, HostListener, computed, inject } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
 import { AppShell, ShellNavItem } from '../../../shared/ui/app-shell/app-shell';
@@ -22,6 +22,38 @@ import {
     />
     <app-trainer-guide-help />
     <app-trainer-guide-tour />
+@if (showTrainerScrollTop) {
+  <button
+    type="button"
+    (click)="scrollToTop()"
+    title="الرجوع لأعلى الصفحة"
+    aria-label="الرجوع لأعلى الصفحة"
+    style="
+  position: fixed;
+bottom: 125px;
+left: 70px;
+transform: translateX(-50%);
+width: 42px;
+height: 42px;
+       z-index: 100;
+      min-width: 42px;
+      min-height: 42px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      background: #003b80;
+      color: #ffffff;
+      font-size: 17px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 59, 128, 0.2);
+    "
+  >
+    <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+  </button>
+}
   `,
 })
 export class TrainerLayout implements OnInit, OnDestroy {
@@ -30,7 +62,16 @@ export class TrainerLayout implements OnInit, OnDestroy {
   private readonly pagePermissions: PagePermissionService = inject(PagePermissionService);
 
   private navigationSubscription?: Subscription;
+  showTrainerScrollTop = false;
 
+@HostListener('window:scroll')
+onTrainerScroll(): void {
+  this.showTrainerScrollTop =
+    (window.scrollY || document.documentElement.scrollTop) > 280;
+}
+scrollToTop(): void {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
   ngOnInit(): void {
     this.updateCurrentGuide();
 
