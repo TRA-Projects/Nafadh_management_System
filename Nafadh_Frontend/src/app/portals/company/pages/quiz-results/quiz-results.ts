@@ -3,7 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, of, throwError } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { CompanyApi } from '../../services/company-api';
@@ -11,6 +11,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 
 interface QuizResultRow {
   attemptId: number;
+  quizId: number;
   traineeName: string;
   enrollmentId: number;
   testName: string;
@@ -29,11 +30,17 @@ interface TraineePerformance {
   traineeName: string;
   averageScore: number | null;
   attemptCount: number;
+  quizCount: number;
   hasResults: boolean;
 }
 
 interface EvaluatedTraineePerformance extends TraineePerformance {
   averageScore: number;
+}
+
+interface QuizResultsLoad {
+  rows: QuizResultRow[];
+  failedEnrollmentIds: number[];
 }
 
 @Component({
@@ -51,6 +58,7 @@ export class CompanyQuizResults implements OnInit {
 
   readonly loading = signal(true);
   readonly error = signal('');
+  readonly failedEnrollmentIds = signal<number[]>([]);
   readonly results = signal<QuizResultRow[]>([]);
   readonly programTitle = signal('نتائج الاختبارات');
 
@@ -103,51 +111,72 @@ export class CompanyQuizResults implements OnInit {
       );
   });
 
-  // حساب أداء كل متدرب من نتائج محاولاته
-  readonly traineePerformance = computed<TraineePerformance[]>(() => {
-    const grouped = new Map<number, QuizResultRow[]>();
+  // Best fully graded attempt for EACH quiz and enrollment, within the
+  // currently selected search/date filters. Keep all attempts in the table.
+  readonly bestFilteredResults = computed<QuizResultRow[]>(() => {
+    const best = new Map<string, QuizResultRow>();
 
-    for (const result of this.results()) {
-      if (
-        !Number.isFinite(result.enrollmentId) ||
-        !Number.isFinite(result.score)
-      ) {
+    for (const attempt of this.filteredResults()) {
+      if (!Number.isFinite(attempt.quizId) || attempt.quizId <= 0) {
         continue;
       }
 
-      const attempts = grouped.get(result.enrollmentId) ?? [];
-      attempts.push(result);
-      grouped.set(result.enrollmentId, attempts);
+      const key = `${attempt.enrollmentId}:${attempt.quizId}`;
+      const previous = best.get(key);
+      if (
+        !previous ||
+        attempt.score > previous.score ||
+        (attempt.score === previous.score && attempt.attemptId > previous.attemptId)
+      ) {
+        best.set(key, attempt);
+      }
     }
 
-    return this.programTrainees().map((trainee) => {
-      const attempts = grouped.get(trainee.enrollmentId) ?? [];
-      const attemptCount = attempts.length;
-
-      const totalScore = attempts.reduce(
-        (sum, attempt) => sum + attempt.score,
-        0
-      );
-
-      return {
-        enrollmentId: trainee.enrollmentId,
-        traineeName: trainee.traineeName,
-        averageScore:
-          attemptCount > 0 ? totalScore / attemptCount : null,
-        attemptCount,
-        hasResults: attemptCount > 0,
-      };
-    });
+    return [...best.values()];
   });
 
-  // المتدربون الذين لا يملكون نتائج
+  // Each trainee's quiz-performance average is calculated from one best
+  // result PER quiz. A failed enrollment request is never treated as 0%.
+  readonly traineePerformance = computed<TraineePerformance[]>(() => {
+    const bestByEnrollment = new Map<number, QuizResultRow[]>();
+    const attemptsByEnrollment = new Map<number, number>();
+    const failed = new Set(this.failedEnrollmentIds());
+
+    for (const attempt of this.filteredResults()) {
+      attemptsByEnrollment.set(
+        attempt.enrollmentId,
+        (attemptsByEnrollment.get(attempt.enrollmentId) ?? 0) + 1
+      );
+    }
+
+    for (const result of this.bestFilteredResults()) {
+      const quizzes = bestByEnrollment.get(result.enrollmentId) ?? [];
+      quizzes.push(result);
+      bestByEnrollment.set(result.enrollmentId, quizzes);
+    }
+
+    return this.programTrainees()
+      .filter((trainee) => !failed.has(trainee.enrollmentId))
+      .map((trainee) => {
+        const quizzes = bestByEnrollment.get(trainee.enrollmentId) ?? [];
+        const quizCount = quizzes.length;
+        const total = quizzes.reduce((sum, quiz) => sum + quiz.score, 0);
+
+        return {
+          enrollmentId: trainee.enrollmentId,
+          traineeName: trainee.traineeName,
+          averageScore: quizCount > 0 ? total / quizCount : null,
+          attemptCount: attemptsByEnrollment.get(trainee.enrollmentId) ?? 0,
+          quizCount,
+          hasResults: quizCount > 0,
+        };
+      });
+  });
+
   readonly traineesWithoutResults = computed(() =>
-    this.traineePerformance().filter(
-      (trainee) => !trainee.hasResults
-    )
+    this.traineePerformance().filter((trainee) => !trainee.hasResults)
   );
 
-  // أفضل المتدربين
   readonly topPerformers = computed<EvaluatedTraineePerformance[]>(() =>
     this.traineePerformance()
       .filter(
@@ -158,7 +187,8 @@ export class CompanyQuizResults implements OnInit {
       .slice(0, this.topCount())
   );
 
-  // المتدربون الذين يقل متوسط نتائجهم عن 60%
+  // Exam-specific early-warning indicator, NOT the formal weighted
+  // classification set by Admin for the full batch assessment.
   readonly atRiskTrainees = computed<EvaluatedTraineePerformance[]>(() =>
     this.traineePerformance()
       .filter(
@@ -196,108 +226,112 @@ export class CompanyQuizResults implements OnInit {
       ).size
   );
 
-  // متوسط النسب المئوية لنتائج الاختبارات
+  // Average of the trainees' per-quiz best-attempt averages, so repeated
+  // attempts do not inflate the average and each trainee counts equally.
   readonly averageScore = computed(() => {
-    const rows = this.filteredResults();
-
-    if (rows.length === 0) {
-      return null;
-    }
-
-    return (
-      rows.reduce((sum, result) => sum + result.score, 0) /
-      rows.length
+    const trainees = this.traineePerformance().filter(
+      (trainee): trainee is EvaluatedTraineePerformance =>
+        trainee.averageScore !== null && trainee.hasResults
     );
+
+    return trainees.length
+      ? trainees.reduce((sum, trainee) => sum + trainee.averageScore, 0) /
+          trainees.length
+      : null;
   });
 
   ngOnInit(): void {
+    this.reloadResults();
+  }
+
+  reloadResults(): void {
     const programId = Number(this.route.snapshot.paramMap.get('id'));
     const companyId = this.auth.companyId;
 
-    if (
-      !companyId ||
-      !Number.isFinite(programId) ||
-      programId <= 0
-    ) {
+    if (!companyId || !Number.isInteger(programId) || programId <= 0) {
       this.error.set('تعذر تحديد البرنامج أو الشركة الحالية.');
       this.loading.set(false);
       return;
     }
 
+    this.loading.set(true);
+    this.error.set('');
+    this.failedEnrollmentIds.set([]);
+    this.results.set([]);
+    this.programTrainees.set([]);
+
     this.api
       .getCompanyProgramDetails(companyId, programId)
       .pipe(
         switchMap((details) => {
-          this.programTitle.set(
-            details.title || 'نتائج الاختبارات'
-          );
-
+          this.programTitle.set(details.title || 'نتائج الاختبارات');
           const trainees = details.enrollments ?? [];
 
           this.programTrainees.set(
             trainees.map((trainee) => ({
               enrollmentId: Number(trainee.enrollmentId),
-              traineeName:
-                trainee.traineeName?.trim() || 'متدرب بدون اسم',
+              traineeName: trainee.traineeName?.trim() || 'متدرب بدون اسم',
             }))
           );
 
           if (trainees.length === 0) {
-            return of([] as QuizResultRow[]);
+            return of({ rows: [], failedEnrollmentIds: [] } as QuizResultsLoad);
           }
 
           const requests = trainees.map((trainee) =>
-            this.api
-              .getQuizResultsForEnrollment(trainee.enrollmentId)
-              .pipe(
-                map((quizResults) =>
-                  (quizResults ?? [])
-                    .filter(
-                      (result) =>
-                        result.percentage !== null &&
-                        result.percentage !== undefined &&
-                        Number.isFinite(
-                          Number(result.percentage)
-                        ) &&
-                        Number.isFinite(
-                          Number(result.attemptId)
-                        )
-                    )
-                    .map(
-                      (result): QuizResultRow => ({
-                        attemptId: Number(result.attemptId),
-                        traineeName:
-                          trainee.traineeName?.trim() ||
-                          'متدرب بدون اسم',
-                        enrollmentId: Number(
-                          trainee.enrollmentId
-                        ),
-                        testName:
-                          result.quizTitle || 'اختبار بدون اسم',
-                        score: Number(result.percentage),
-                        submittedAt: result.submittedAt || '',
-                        status: result.status || '',
-                      })
-                    )
-                ),
-                catchError((err) => {
-                  console.error(
-                    `تعذر تحميل نتائج اختبارات التسجيل ${trainee.enrollmentId}:`,
-                    err
-                  );
-
-                  return throwError(() => err);
-                })
-              )
+            this.api.getQuizResultsForEnrollment(trainee.enrollmentId).pipe(
+              map((quizResults) => ({
+                rows: (quizResults ?? [])
+                  .filter(
+                    (result) =>
+                      result.percentage !== null &&
+                      result.percentage !== undefined &&
+                      Number.isFinite(Number(result.percentage)) &&
+                      Number.isFinite(Number(result.attemptId)) &&
+                      Number.isInteger(Number(result.quizId)) &&
+                      Number(result.quizId) > 0
+                  )
+                  .map(
+                    (result): QuizResultRow => ({
+                      attemptId: Number(result.attemptId),
+                      quizId: Number(result.quizId),
+                      traineeName:
+                        trainee.traineeName?.trim() || 'متدرب بدون اسم',
+                      enrollmentId: Number(trainee.enrollmentId),
+                      testName: result.quizTitle || 'اختبار بدون اسم',
+                      score: Number(result.percentage),
+                      submittedAt: result.submittedAt || '',
+                      status: result.status || '',
+                    })
+                  ),
+                failedEnrollmentId: null as number | null,
+              })),
+              catchError((err) => {
+                console.error(
+                  `تعذر تحميل نتائج اختبارات التسجيل ${trainee.enrollmentId}:`,
+                  err
+                );
+                // Keep other enrollment results available; report the missing data.
+                return of({
+                  rows: [] as QuizResultRow[],
+                  failedEnrollmentId: Number(trainee.enrollmentId),
+                });
+              })
+            )
           );
 
           return forkJoin(requests).pipe(
-            map((groups) => groups.flat())
+            map((groups): QuizResultsLoad => ({
+              rows: groups.flatMap((group) => group.rows),
+              failedEnrollmentIds: groups
+                .map((group) => group.failedEnrollmentId)
+                .filter((id): id is number => id !== null),
+            }))
           );
         })
       )
       .subscribe({
-        next: (rows) => {
+        next: ({ rows, failedEnrollmentIds }) => {
           const sortedRows = [...rows].sort(
             (a, b) =>
               this.getTimestamp(b.submittedAt) -
@@ -305,21 +339,14 @@ export class CompanyQuizResults implements OnInit {
               b.attemptId - a.attemptId
           );
 
+          this.failedEnrollmentIds.set(failedEnrollmentIds);
           this.results.set(sortedRows);
           this.currentPage.set(1);
           this.loading.set(false);
         },
-
         error: (err) => {
-          console.error(
-            'تعذر تحميل تفاصيل البرنامج أو نتائجه:',
-            err
-          );
-
-          this.error.set(
-            'تعذر تحميل نتائج الاختبارات. يرجى المحاولة مرة أخرى.'
-          );
-
+          console.error('تعذر تحميل تفاصيل البرنامج أو نتائجه:', err);
+          this.error.set('تعذر تحميل تفاصيل البرنامج. يرجى المحاولة مرة أخرى.');
           this.loading.set(false);
         },
       });
