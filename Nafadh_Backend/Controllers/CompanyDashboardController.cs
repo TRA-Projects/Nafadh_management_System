@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
+using Nafadh_Backend.Services;
 using System.Globalization;
 using System.Security.Claims;
 
@@ -38,6 +39,34 @@ namespace Nafadh_Backend.Controllers
             if (!await _context.NFD_CompanySupervisors.AsNoTracking().AnyAsync(s =>
                     s.UserId == userId && s.CompanyId == companyId)) return Forbid();
             return Ok(await _reports.GetCompanyWeightedEvaluationsAsync(companyId));
+        }
+
+        // Company-only periodic *temporary* performance, matching the Admin
+        // dashboard's observed-component weighting and selected date range.
+        // Final weighted grades and official warnings remain unchanged.
+        [HttpGet("{companyId:int}/period-performance")]
+        [ProducesResponseType(typeof(CompanyDashboardPeriodPerformanceDTO), StatusCodes.Status200OK)]
+        public async Task<ActionResult<CompanyDashboardPeriodPerformanceDTO>> GetPeriodPerformance(
+            int companyId,
+            [FromQuery] DateTime? startDate,
+            [FromQuery] DateTime? endDate)
+        {
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue("sub");
+            if (!int.TryParse(userIdValue, out var userId)) return Unauthorized();
+
+            var ownsCompany = await _context.NFD_CompanySupervisors.AsNoTracking()
+                .AnyAsync(s => s.UserId == userId && s.CompanyId == companyId);
+            if (!ownsCompany) return Forbid();
+
+            if (startDate.HasValue && endDate.HasValue &&
+                startDate.Value.Date > endDate.Value.Date)
+            {
+                return BadRequest(new { message = "startDate cannot be later than endDate." });
+            }
+
+            var evaluator = new CompanyDashboardPeriodPerformanceService(_context);
+            return Ok(await evaluator.GetAsync(companyId, startDate, endDate));
         }
 
         [HttpGet("{companyId:int}")]
